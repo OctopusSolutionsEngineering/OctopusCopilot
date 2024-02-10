@@ -46,11 +46,14 @@ for model_name in ["phi", "mistral", "llama2", "orca2"]:
         #function_call={"name": "get_current_weather"},
     )
 
-    model.invoke("what is the weather in Boston?")
-    model.invoke("what is the weather in Boston?")
+    try:
+        model.invoke("what is the weather in Boston?")
+        model.invoke("what is the weather in Boston?")
 
-    start = datetime.now()
-    output = model.invoke("what is the weather in Boston?")
-    end = datetime.now()
+        start = datetime.now()
+        output = model.invoke("what is the weather in Boston?")
+        end = datetime.now()
 
-    print(model_name + " " + str(end - start))
+        print(model_name + " " + str(end - start))
+    except Exception as e:
+        print(e)
