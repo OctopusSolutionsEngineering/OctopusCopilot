@@ -1,11 +1,28 @@
 from datetime import datetime
 from langchain_experimental.llms.ollama_functions import OllamaFunctions
 
-
 model = OllamaFunctions(model="phi")
 
 model = model.bind(
     functions=[
+        {
+            "name": "find_user",
+            "description": "Rerturn the details of a user",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The city and state, " "e.g. San Francisco, CA",
+                    },
+                    "city": {
+                        "type": "string",
+                        "description": "The location of the user"
+                    },
+                },
+                "required": ["name"],
+            },
+        },
         {
             "name": "get_current_weather",
             "description": "Get the current weather in a given location",
@@ -24,26 +41,9 @@ model = model.bind(
                 "required": ["location"],
             },
         },
-{
-            "name": "find_user",
-            "description": "Rerturn the details of a user",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "The city and state, " "e.g. San Francisco, CA",
-                    },
-                    "city": {
-                        "type": "string",
-                        "description": "The location of the user"
-                    },
-                },
-                "required": ["name"],
-            },
-        }
+
     ],
-    #function_call={"name": "get_current_weather"},
+    # function_call={"name": "get_current_weather"},
 )
 
 try:
@@ -56,4 +56,4 @@ try:
     print(output.additional_kwargs['function_call']['arguments'])
     print(str(end - start))
 except Exception as e:
-    print(e)
+    print("error: " + str(e))
