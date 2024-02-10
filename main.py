@@ -61,12 +61,7 @@ model = model.bind(
                 },
                 "required": ["location"],
             },
-        },
-{
-            "name": "fallback",
-            "description": "This function is the fallback when other functions do not match the question",
-            "parameters": {},
-        },
+        }
 
     ],
     # function_call={"name": "get_current_weather"},
