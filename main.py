@@ -1,7 +1,10 @@
 from datetime import datetime
 from langchain_experimental.llms.ollama_functions import OllamaFunctions
 
-model = OllamaFunctions(model="llama2")
+#model = OllamaFunctions(model="mistral")
+#model = OllamaFunctions(model="llama2")
+#model = OllamaFunctions(model="llama2:13b")
+model = OllamaFunctions(model="mixtral")
 
 model = model.bind(
     functions=[
@@ -59,6 +62,11 @@ model = model.bind(
                 "required": ["location"],
             },
         },
+{
+            "name": "fallback",
+            "description": "This function is the fallback when other functions do not match the question",
+            "parameters": {},
+        },
 
     ],
     # function_call={"name": "get_current_weather"},
@@ -66,7 +74,20 @@ model = model.bind(
 
 try:
     start = datetime.now()
-    output = model.invoke("return the details of release 1.4.5 to the production environment")
+    output = model.invoke("how big is the earth")
+    end = datetime.now()
+
+    print(output)
+    print(output.additional_kwargs['function_call']['name'])
+    print(output.additional_kwargs['function_call']['arguments'])
+    print(str(end - start))
+except Exception as e:
+    print("error: " + str(e))
+
+
+try:
+    start = datetime.now()
+    output = model.invoke("get the details of release 1.2.3")
     end = datetime.now()
 
     print(output)
