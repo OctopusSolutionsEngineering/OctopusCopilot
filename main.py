@@ -1,93 +1,51 @@
-from datetime import datetime
-from langchain_experimental.llms.ollama_functions import OllamaFunctions
+from langchain.callbacks.manager import CallbackManager
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain_community.llms import LlamaCpp
 
-#model = OllamaFunctions(model="mistral")
-#model = OllamaFunctions(model="llama2")
-#model = OllamaFunctions(model="llama2:13b")
-model = OllamaFunctions(model="mixtral")
+from llm_functions import LlmFunctions
 
-model = model.bind(
-    functions=[
-        {
-            "name": "find_user",
-            "description": "Return the details of a person",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "The name of the person, " "e.g. John or Jessica"
-                    },
-                    "city": {
-                        "type": "string",
-                        "description": "The location of the person, " "e.g. San Francisco, CA",
-                    },
-                },
-                "required": ["name"],
-            },
-        },
-{
-            "name": "get_deployments",
-            "description": "Return the details of a deployment",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "release_version": {
-                        "type": "string",
-                        "description": "The release version associated with the deployment, " "e.g. 1.2.3 or 0.0.1"
-                    },
-                    "environment": {
-                        "type": "string",
-                        "description": "The name of the environment the release was deployed to, " "e.g. Development, Test, Production",
-                    },
-                },
-                "required": ["release_version", "environment"],
-            },
-        },
-        {
-            "name": "get_current_weather",
-            "description": "Get the current weather in a given location",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "location": {
-                        "type": "string",
-                        "description": "The city and state, " "e.g. San Francisco, CA",
-                    },
-                    "unit": {
-                        "type": "string",
-                        "enum": ["celsius", "fahrenheit"],
-                    },
-                },
-                "required": ["location"],
-            },
-        }
 
-    ],
-    # function_call={"name": "get_current_weather"},
+def multiply(a: int, b: int) -> int:
+    """Multiply two integers together.
+
+    Args:
+        a: First integer
+        b: Second integer
+    """
+    return a * b
+
+
+callback_manager = CallbackManager([StreamingStdOutCallbackHandler()])
+llm = LlamaCpp(
+    model_path="/home/matthew/Downloads/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf",
+    temperature=0,
+    max_tokens=100,
+    top_p=1,
+    callback_manager=callback_manager,
+    verbose=True,  # Verbose is required to pass to the callback manager
+    grammar_path="json.gbnf"  # https://github.com/ggerganov/llama.cpp/blob/master/grammars/json.gbnf
 )
 
-try:
-    start = datetime.now()
-    output = model.invoke("how big is the earth")
-    end = datetime.now()
+model = LlmFunctions(llm=llm)
+model = model.bind(functions=[
+        {
+            "name": "multiply",
+            "description": "Multiply two integers together",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "a": {
+                        "type": "int",
+                        "description": "First integer",
+                    },
+                    "b": {
+                        "type": "int",
+                        "description": "Second integer",
+                    },
+                },
+                "required": ["a", "b"],
+            },
+        }
+    ])
 
-    print(output)
-    print(output.additional_kwargs['function_call']['name'])
-    print(output.additional_kwargs['function_call']['arguments'])
-    print(str(end - start))
-except Exception as e:
-    print("error: " + str(e))
-
-
-try:
-    start = datetime.now()
-    output = model.invoke("get the details of release 1.2.3")
-    end = datetime.now()
-
-    print(output)
-    print(output.additional_kwargs['function_call']['name'])
-    print(output.additional_kwargs['function_call']['arguments'])
-    print(str(end - start))
-except Exception as e:
-    print("error: " + str(e))
+model.invoke("what's 5 times three")
