@@ -12,16 +12,19 @@ from langchain_core.prompts import SystemMessagePromptTemplate
 
 from langchain_experimental.pydantic_v1 import root_validator
 
-DEFAULT_SYSTEM_TEMPLATE = """You have access to the following tools:
+# This prompt is tuned for Mixtral-8x7B-Instruct-v0.1
+# https://huggingface.co/mistralai/Mixtral-8x7B-Instruct-v0.1#instruction-format
+# See https://www.promptingguide.ai/models/mistral-7b for examples
+DEFAULT_SYSTEM_TEMPLATE = """<s>[INST]You have access to the following tools:
 
 {tools}
 
-You must always select one of the above tools and respond with only a JSON object matching the following schema:
+You must always select one of the above tools and respond with only a JSON object matching the following schema:[/INST]
 
 {{
   "tool": <name of the selected tool>,
   "tool_input": <parameters for the selected tool, matching the tool's JSON schema>
-}}
+}}</s>
 """  # noqa: E501
 
 
