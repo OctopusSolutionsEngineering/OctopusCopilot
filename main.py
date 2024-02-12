@@ -16,8 +16,9 @@ def multiply(a: int, b: int) -> int:
 
 
 callback_manager = CallbackManager([StreamingStdOutCallbackHandler()])
+
 llm = LlamaCpp(
-    model_path="/home/matthew/Downloads/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf",
+    model_path="mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf",
     temperature=0,
     max_tokens=100,
     top_p=1,

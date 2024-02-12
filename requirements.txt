@@ -1,0 +1,5 @@
+langchain==0.1.6
+langchain-core==0.1.22
+langchain_community==0.0.19
+langchain_experimental==0.0.50
+llama-cpp-python==0.2.40
