@@ -1,5 +1,5 @@
-langchain==0.1.6
-langchain-core==0.1.22
-langchain_community==0.0.19
-langchain_experimental==0.0.50
-llama-cpp-python==0.2.40
+# Do not include azure-functions-worker in this file
+# The Python Worker is managed by the Azure Functions platform
+# Manually managing azure-functions-worker may cause unexpected issues
+
+azure-functions
