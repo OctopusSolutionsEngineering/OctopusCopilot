@@ -6,12 +6,14 @@ from langchain_core.tools import StructuredTool
 
 from domain.app_logging import configure_logging
 from domain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
+from domain.function_call import FunctionCall
+from domain.function_definition import FunctionDefinitions, FunctionDefinition
 from infrastructure.octopus_projects import get_octopus_projects
 
 my_log = configure_logging()
 
-def handle_copilot_chat(query):
-    tools = build_tools()
+
+def handle_copilot_chat(query, tools):
     # Version comes from https://github.com/openai/openai-python/issues/926#issuecomment-1839426482
     # Note that for function calling you need 3.5-turbo-16k
     # https://github.com/openai/openai-python/issues/926#issuecomment-1920037903
@@ -27,8 +29,8 @@ def handle_copilot_chat(query):
     action = agent.plan([], input=query)
     my_log.debug(action)
 
-    my_log.debug(globals()[action.tool](**action.tool_input))
+    return FunctionCall(action.tool, action.tool_input)
 
 
 def build_tools():
-    return [StructuredTool.from_function(get_octopus_projects)]
+    return FunctionDefinitions([FunctionDefinition(get_octopus_projects)])
