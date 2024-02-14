@@ -1,5 +1,6 @@
 import argparse
 
+from domain.app_logging import configure_logging
 from domain.copilot_handler import handle_copilot_chat
 
 
