@@ -1,13 +1,13 @@
 import unittest
 
 from domain.copilot_handler import handle_copilot_chat
-from tests.build_test_tools import build_test_tools
+from tests.infrastructure.build_test_tools import build_test_tools
 
 
 class MockTestProjects(unittest.TestCase):
     def test_get_projects(self):
         """
-        Test that it can sum a list of integers
+        Tests that the llm can find the appropriate mock function and arguments
         """
 
         functions = build_test_tools()

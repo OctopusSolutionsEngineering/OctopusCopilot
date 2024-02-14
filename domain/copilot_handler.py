@@ -32,5 +32,4 @@ def handle_copilot_chat(query, tools):
     return FunctionCall(action.tool, action.tool_input)
 
 
-def build_tools():
-    return FunctionDefinitions([FunctionDefinition(get_octopus_projects)])
+
