@@ -32,12 +32,12 @@ class LiveRequests(unittest.TestCase):
     def tearDownClass(cls):
         try:
             cls.octopus.stop()
-        except:
+        except Exception:
             pass
 
         try:
             cls.mssql.stop()
-        except:
+        except Exception:
             pass
 
     def test_get_projects(self):
