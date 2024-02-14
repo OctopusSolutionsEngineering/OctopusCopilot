@@ -7,7 +7,7 @@ from domain.logging.app_logging import configure_logging
 from domain.tools.build_tools import build_tools
 from domain.tools.function_call import FunctionCall
 
-NO_FUNCTION_RESPONSE = "I did not understand that request"
+NO_FUNCTION_RESPONSE = "Sorry, I did not understand that request."
 my_log = configure_logging()
 
 
