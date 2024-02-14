@@ -17,8 +17,7 @@ name: Python Build
   push: {}
 jobs:
   build:
-    runs-on:
-      labels: 4core-ubuntu-runner
+    runs-on: 4core-ubuntu-runner
     steps:
     - uses: actions/checkout@v3
       with:
