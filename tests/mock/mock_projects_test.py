@@ -1,7 +1,7 @@
 import unittest
 
-from domain.copilot_handler import handle_copilot_chat
-from tests.infrastructure.build_test_tools import build_test_tools
+from domain.handlers.copilot_handler import handle_copilot_chat
+from tests.infrastructure.tools.build_test_tools import build_test_tools
 
 
 class MockTestProjects(unittest.TestCase):

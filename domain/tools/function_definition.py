@@ -1,6 +1,6 @@
 from langchain_core.tools import StructuredTool
 
-from domain.function_call import FunctionCall
+from domain.tools.function_call import FunctionCall
 
 
 class FunctionDefinition:

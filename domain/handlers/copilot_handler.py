@@ -1,14 +1,10 @@
-import logging
 import os
 
 from langchain.agents import OpenAIFunctionsAgent
-from langchain_core.tools import StructuredTool
 
-from domain.app_logging import configure_logging
-from domain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
-from domain.function_call import FunctionCall
-from domain.function_definition import FunctionDefinitions, FunctionDefinition
-from infrastructure.octopus_projects import get_octopus_projects
+from domain.logging.app_logging import configure_logging
+from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
+from domain.tools.function_call import FunctionCall
 
 my_log = configure_logging()
 

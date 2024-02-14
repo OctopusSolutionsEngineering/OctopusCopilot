@@ -58,14 +58,15 @@ jobs:
       with:
         name: Dependencies Updates
         path: dependencyUpdates.txt
-    - name: Test
-      run: |
-        pip install pytest
-        PYTHONPATH=$(pwd) pytest --junitxml=results.xml
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        OPENAI_ENDPOINT: ${{ secrets.OPENAI_ENDPOINT }}
-      shell: bash
+     # Requires OpenAI instance to allow GitHub runner's IP address
+#    - name: Test
+#      run: |
+#        pip install pytest
+#        PYTHONPATH=$(pwd) pytest --junitxml=results.xml
+#      env:
+#        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#        OPENAI_ENDPOINT: ${{ secrets.OPENAI_ENDPOINT }}
+#      shell: bash
     - if: always()
       name: Report
       uses: dorny/test-reporter@v1
