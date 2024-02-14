@@ -43,7 +43,9 @@ jobs:
         version: latest
     - name: Linting
       shell: bash
-      run: find . -path ./venv -prune -o -name "*.py" -print0 | xargs -0 -n1 pep8 --ignore=E501
+      run: |
+        sudo apt-get install -y pep8
+        find . -path ./venv -prune -o -name "*.py" -print0 | xargs -0 -n1 pep8 --ignore=E501
     - name: Install Dependencies
       run: pip install -r requirements.txt
       shell: bash
