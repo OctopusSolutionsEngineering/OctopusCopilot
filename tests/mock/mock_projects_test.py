@@ -4,7 +4,7 @@ from domain.handlers.copilot_handler import handle_copilot_chat
 from tests.infrastructure.tools.build_test_tools import build_test_tools
 
 
-class MockTestProjects(unittest.TestCase):
+class MockRequests(unittest.TestCase):
     def test_get_projects(self):
         """
         Tests that the llm can find the appropriate mock function and arguments

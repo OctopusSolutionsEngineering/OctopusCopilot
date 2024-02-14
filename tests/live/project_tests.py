@@ -11,7 +11,7 @@ from tests.infrastructure.tools.build_test_tools import build_test_tools
 logger = configure_logging()
 
 
-class MockTestProjects(unittest.TestCase):
+class LiveRequests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.mssql = DockerContainer("mcr.microsoft.com/mssql/server:2022-latest").with_bind_ports(1433, 11433).with_env(
