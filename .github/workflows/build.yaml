@@ -90,7 +90,7 @@ jobs:
         octo pack \
          --basePath ${SOURCEPATH} \
          --outFolder ${OUTPUTPATH} \
-         --id RandomQuotes-Python \
+         --id OctopusCopilot \
          --version ${{ steps.determine_version.outputs.semVer }} \
          --format zip \
          --overwrite \
@@ -129,7 +129,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ steps.determine_version.outputs.semVer }}+run${{ github.run_number }}-attempt${{ github.run_attempt }}
-        files: RandomQuotes-Python.${{ steps.determine_version.outputs.semVer }}.zip
+        files: OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip
 permissions:
   id-token: write
   checks: write
