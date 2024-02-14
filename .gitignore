@@ -1,3 +1,4 @@
 *.gguf
 venv
 *.xml
+bom.json
