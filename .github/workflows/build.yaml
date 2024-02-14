@@ -17,7 +17,8 @@ name: Python Build
   push: {}
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on:
+      labels: 4core-ubuntu-runner
     steps:
     - uses: actions/checkout@v3
       with:
@@ -59,22 +60,22 @@ jobs:
         name: Dependencies Updates
         path: dependencyUpdates.txt
      # Requires OpenAI instance to allow GitHub runner's IP address
-#    - name: Test
-#      run: |
-#        pip install pytest
-#        PYTHONPATH=$(pwd) pytest --junitxml=results.xml
-#      env:
-#        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-#        OPENAI_ENDPOINT: ${{ secrets.OPENAI_ENDPOINT }}
-#      shell: bash
-#    - if: always()
-#      name: Report
-#      uses: dorny/test-reporter@v1
-#      with:
-#        name: Python Tests
-#        path: results.xml
-#        reporter: java-junit
-#        fail-on-error: 'false'
+    - name: Test
+      run: |
+        pip install pytest
+        PYTHONPATH=$(pwd) pytest --junitxml=results.xml
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        OPENAI_ENDPOINT: ${{ secrets.OPENAI_ENDPOINT }}
+      shell: bash
+    - if: always()
+      name: Report
+      uses: dorny/test-reporter@v1
+      with:
+        name: Python Tests
+        path: results.xml
+        reporter: java-junit
+        fail-on-error: 'false'
     - name: Generate SBOM
       run: |
         python -m pip install cyclonedx-bom
