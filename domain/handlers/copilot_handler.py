@@ -7,6 +7,7 @@ from domain.logging.app_logging import configure_logging
 from domain.tools.build_tools import build_tools
 from domain.tools.function_call import FunctionCall
 
+NO_FUNCTION_RESPONSE="I did not understand that request"
 my_log = configure_logging()
 
 
@@ -28,5 +29,9 @@ def handle_copilot_chat(query, llm_tools=build_tools):
 
     action = agent.plan([], input=query)
     my_log.debug(action)
+
+    # In the event that there was no matched function, return a canned response
+    if not hasattr(action, "tool"):
+        return FunctionCall(lambda: NO_FUNCTION_RESPONSE, {})
 
     return FunctionCall(functions.get_function(action.tool), action.tool_input)
