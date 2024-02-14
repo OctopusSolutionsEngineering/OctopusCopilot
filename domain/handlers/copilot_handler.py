@@ -2,11 +2,19 @@ import os
 
 from langchain.agents import OpenAIFunctionsAgent
 
-from domain.logging.app_logging import configure_logging
 from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
+from domain.logging.app_logging import configure_logging
+from domain.tools.build_tools import build_tools
 from domain.tools.function_call import FunctionCall
 
 my_log = configure_logging()
+
+
+def handle_copilot_chat_live(query):
+    tools = build_tools()
+    function = handle_copilot_chat(query, tools.get_tools())
+    result = tools.call_function(function)
+    return result
 
 
 def handle_copilot_chat(query, tools):
@@ -26,6 +34,3 @@ def handle_copilot_chat(query, tools):
     my_log.debug(action)
 
     return FunctionCall(action.tool, action.tool_input)
-
-
-

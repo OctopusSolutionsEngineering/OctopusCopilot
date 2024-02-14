@@ -1,6 +1,6 @@
 import argparse
 
-from domain.handlers.copilot_handler import handle_copilot_chat
+from domain.handlers.copilot_handler import handle_copilot_chat, handle_copilot_chat_live
 from domain.tools.build_tools import build_tools
 
 
@@ -15,7 +15,5 @@ def init_argparse():
 
 parser, _ = init_argparse()
 
-tools = build_tools()
-function = handle_copilot_chat(parser.query, tools.get_tools())
-result = tools.call_function(function)
+result = handle_copilot_chat_live(parser.query)
 print(result)
