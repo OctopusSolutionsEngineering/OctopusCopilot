@@ -10,12 +10,11 @@ class MockTestProjects(unittest.TestCase):
         Tests that the llm can find the appropriate mock function and arguments
         """
 
-        functions = build_test_tools()
-        function = handle_copilot_chat("What are the projects associated with space MySpace?", functions.get_tools())
+        function = handle_copilot_chat("What are the projects associated with space MySpace?", build_test_tools)
 
-        self.assertEqual(function.function_name, "get_octopus_projects")
+        self.assertEqual(function.function.__name__, "get_octopus_projects")
         self.assertEqual(function.function_args["space_name"], "MySpace")
-        self.assertEqual(functions.call_function(function), ["Project1", "Project2"])
+        self.assertEqual(function.call_function(), ["Project1", "Project2"])
 
 
 if __name__ == '__main__':

@@ -8,8 +8,8 @@ from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.logging.app_logging import configure_logging
 from tests.infrastructure.tools.build_test_tools import build_test_tools
 
-
 logger = configure_logging()
+
 
 class MockTestProjects(unittest.TestCase):
     @classmethod
@@ -21,7 +21,7 @@ class MockTestProjects(unittest.TestCase):
 
         cls.octopus = DockerContainer("octopusdeploy/octopusdeploy").with_bind_ports(8080, 8080).with_env(
             "ACCEPT_EULA", "Y").with_env("DB_CONNECTION_STRING",
-                                            "Server=172.17.0.1,11433;Database=OctopusDeploy;User=sa;Password=Password01!").with_env(
+                                         "Server=172.17.0.1,11433;Database=OctopusDeploy;User=sa;Password=Password01!").with_env(
             "ADMIN_API_KEY", "API-ABCDEFGHIJKLMNOPQURTUVWXYZ12345").with_env("DISABLE_DIND", "Y").with_env(
             "ADMIN_USERNAME", "admin").with_env("ADMIN_PASSWORD", "Password01!").with_env(
             "OCTOPUS_SERVER_BASE64_LICENSE", os.environ["LICENSE"])
