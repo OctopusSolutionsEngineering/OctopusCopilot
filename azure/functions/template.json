@@ -47,7 +47,7 @@
             "tags": {
                 "octopus-environment": "Production",
                 "octopus-role": "Azure.Functions.OctopusCopilot",
-                "octopus-space": "OctopusCopilot",
+                "octopus-space": "Octopus Copilot",
                 "octopus-project": "Octopus Copilot",
                 "hidden-link: /app-insights-resource-id": "/subscriptions/3b50dcf4-f74d-442e-93cb-301b13e1e2d5/resourceGroups/OctopusCopilot/providers/Microsoft.Insights/components/octopus-copilot"
             },
