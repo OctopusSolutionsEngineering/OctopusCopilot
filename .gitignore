@@ -1,4 +1,5 @@
 *.gguf
 venv
+.venv
 *.xml
 bom.json
