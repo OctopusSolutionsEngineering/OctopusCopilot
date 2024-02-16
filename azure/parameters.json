@@ -1,0 +1,39 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "subscriptionId": {
+            "value": "3b50dcf4-f74d-442e-93cb-301b13e1e2d5"
+        },
+        "name": {
+            "value": "octopus-copilot"
+        },
+        "location": {
+            "value": "East US"
+        },
+        "ftpsState": {
+            "value": "FtpsOnly"
+        },
+        "storageAccountName": {
+            "value": "octopuscopilota572"
+        },
+        "use32BitWorkerProcess": {
+            "value": false
+        },
+        "linuxFxVersion": {
+            "value": "DOCKER|docker.io/octopussamples/octopuscopilot"
+        },
+        "environmentName": {
+            "value": "managedEnvironment-OctopusCopilot-aa94"
+        },
+        "workspaceName": {
+            "value": "workspaceoctopuscopilota0f9"
+        },
+        "workspaceLocation": {
+            "value": "eastus"
+        },
+        "managedEnvironmentId": {
+            "value": "/subscriptions/3b50dcf4-f74d-442e-93cb-301b13e1e2d5/resourceGroups/OctopusCopilot/providers/Microsoft.App/managedEnvironments/managedEnvironment-OctopusCopilot-aa94"
+        }
+    }
+}

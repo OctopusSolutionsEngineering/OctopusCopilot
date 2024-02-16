@@ -1,0 +1,191 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "subscriptionId": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "use32BitWorkerProcess": {
+            "type": "bool"
+        },
+        "ftpsState": {
+            "type": "string"
+        },
+        "storageAccountName": {
+            "type": "string"
+        },
+        "linuxFxVersion": {
+            "type": "string"
+        },
+        "environmentName": {
+            "type": "string"
+        },
+        "workspaceName": {
+            "type": "string"
+        },
+        "workspaceLocation": {
+            "type": "string"
+        },
+        "managedEnvironmentId": {
+            "type": "string"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "apiVersion": "2018-11-01",
+            "name": "[parameters('name')]",
+            "type": "Microsoft.Web/sites",
+            "kind": "functionapp,linux,container,azurecontainerapps",
+            "location": "[parameters('location')]",
+            "tags": {
+                "octopus-environment": "Production",
+                "octopus-role": "Azure.Functions.OctopusCopilot",
+                "octopus-space": "OctopusCopilot",
+                "octopus-project": "Octopus Copilot",
+                "hidden-link: /app-insights-resource-id": "/subscriptions/3b50dcf4-f74d-442e-93cb-301b13e1e2d5/resourceGroups/OctopusCopilot/providers/Microsoft.Insights/components/octopus-copilot"
+            },
+            "dependsOn": [
+                "microsoft.insights/components/octopus-copilot",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+                "[concat('Microsoft.App/managedEnvironments/', parameters('environmentName'))]"
+            ],
+            "properties": {
+                "name": "[parameters('name')]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~4"
+                        },
+                        {
+                            "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                            "value": "[reference('microsoft.insights/components/octopus-copilot', '2015-05-01').ConnectionString]"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
+                        }
+                    ],
+                    "use32BitWorkerProcess": "[parameters('use32BitWorkerProcess')]",
+                    "ftpsState": "[parameters('ftpsState')]",
+                    "linuxFxVersion": "[parameters('linuxFxVersion')]"
+                },
+                "clientAffinityEnabled": false,
+                "virtualNetworkSubnetId": null,
+                "managedEnvironmentId": "[parameters('managedEnvironmentId')]"
+            }
+        },
+        {
+            "apiVersion": "2020-02-02-preview",
+            "name": "octopus-copilot",
+            "type": "microsoft.insights/components",
+            "location": "eastus",
+            "tags": {
+                "octopus-environment": "Production",
+                "octopus-role": "Azure.Functions.OctopusCopilot",
+                "octopus-space": "OctopusCopilot",
+                "octopus-project": "Octopus Copilot"
+            },
+            "dependsOn": [
+                "newWorkspaceTemplate"
+            ],
+            "properties": {
+                "ApplicationId": "[parameters('name')]",
+                "Request_Source": "IbizaWebAppExtensionCreate",
+                "Flow_Type": "Redfield",
+                "Application_Type": "web",
+                "WorkspaceResourceId": "/subscriptions/3b50dcf4-f74d-442e-93cb-301b13e1e2d5/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-3b50dcf4-f74d-442e-93cb-301b13e1e2d5-EUS"
+            }
+        },
+        {
+            "apiVersion": "2022-05-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "octopus-environment": "Production",
+                "octopus-role": "Azure.Functions.OctopusCopilot",
+                "octopus-space": "OctopusCopilot",
+                "octopus-project": "Octopus Copilot"
+            },
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "properties": {
+                "supportsHttpsTrafficOnly": true,
+                "minimumTlsVersion": "TLS1_2",
+                "defaultToOAuthAuthentication": true
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "newWorkspaceTemplate",
+            "resourceGroup": "DefaultResourceGroup-EUS",
+            "subscriptionId": "[parameters('subscriptionId')]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "apiVersion": "2020-08-01",
+                            "name": "DefaultWorkspace-3b50dcf4-f74d-442e-93cb-301b13e1e2d5-EUS",
+                            "type": "Microsoft.OperationalInsights/workspaces",
+                            "location": "eastus",
+                            "properties": {}
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "apiVersion": "2023-05-02-preview",
+            "name": "[parameters('environmentName')]",
+            "type": "Microsoft.App/managedEnvironments",
+            "location": "East US",
+            "tags": {
+                "octopus-environment": "Production",
+                "octopus-role": "Azure.Functions.OctopusCopilot",
+                "octopus-space": "OctopusCopilot",
+                "octopus-project": "Octopus Copilot"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+            ],
+            "properties": {
+                "appLogsConfiguration": {
+                    "destination": "log-analytics",
+                    "logAnalyticsConfiguration": {
+                        "customerId": "[reference(concat('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2020-08-01').customerId]",
+                        "sharedKey": "[listKeys(concat('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName')), '2020-08-01').primarySharedKey]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2020-08-01",
+            "name": "[parameters('workspaceName')]",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "location": "[parameters('workspaceLocation')]",
+            "dependsOn": [],
+            "properties": {
+                "sku": {
+                    "name": "PerGB2018"
+                },
+                "retentionInDays": 30,
+                "workspaceCapping": {}
+            }
+        }
+    ]
+}
