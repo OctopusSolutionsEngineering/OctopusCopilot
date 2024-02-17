@@ -42,7 +42,7 @@
             "apiVersion": "2018-11-01",
             "name": "[parameters('name')]",
             "type": "Microsoft.Web/sites",
-            "kind": "functionapp,linux,container,azurecontainerapps",
+            "kind": "functionapp,linux,container",
             "location": "[parameters('location')]",
             "tags": {
                 "octopus-environment": "#{Octopus.Environment.Name}",
