@@ -63,10 +63,10 @@ def get_octopus_project_names_response(space_name, projects):
     :return: A conversational response
     """
 
-    if projects is None and (space_name is None or not space_name.strip()):
+    if not projects and (space_name is None or not space_name.strip()):
         return "I found no projects."
 
-    if projects is None:
+    if not projects:
         return f"I found no projects in the space {space_name}."
 
     if space_name is None or not space_name.strip():
