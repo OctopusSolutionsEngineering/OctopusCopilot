@@ -39,6 +39,6 @@ def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
         result = handle_copilot_chat(req_body["query"], build_form_tools).call_function()
-        return func.HttpResponse(result)
+        return func.HttpResponse(", ".join(result))
     except Exception as e:
         return func.HttpResponse(getattr(e, 'message', repr(e)))
