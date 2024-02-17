@@ -23,7 +23,7 @@ def build_octopus_url(my_get_octopus_api, path, query):
     return urlunsplit((parsed.scheme, parsed.netloc, path, query, ""))
 
 
-def get_space_id_from_name(space_name, my_get_octopus_api, my_get_api_key):
+def get_space_id_and_name_from_name(space_name, my_get_octopus_api, my_get_api_key):
     api = build_octopus_url(my_get_octopus_api, "api/spaces", dict(take=TAKE_ALL))
     resp = http.request("GET", api, headers=get_headers(my_get_api_key))
 
@@ -34,25 +34,25 @@ def get_space_id_from_name(space_name, my_get_octopus_api, my_get_api_key):
 
     filtered_spaces = list(filter(lambda s: s["Name"] == space_name, json["Items"]))
     if len(filtered_spaces) == 1:
-        return filtered_spaces[0]["Id"]
+        return filtered_spaces[0]["Id"], filtered_spaces[0]["Name"]
 
     # try case-insensitive match and stripping and whitespace
     filtered_spaces = list(filter(lambda s: s["Name"].lower().strip() == space_name.lower().strip(), json["Items"]))
     if len(filtered_spaces) == 1:
-        return filtered_spaces[0]["Id"]
+        return filtered_spaces[0]["Id"], filtered_spaces[0]["Name"]
 
     raise SpaceNotFound(f"No space with name '{space_name}' found")
 
 
 @retry(HTTPError, tries=3, delay=2)
 def get_octopus_project_names_base(space_name, my_get_api_key, my_get_octopus_api):
-    space_id = get_space_id_from_name(space_name, my_get_octopus_api, my_get_api_key)
+    space_id, actual_space_name = get_space_id_and_name_from_name(space_name, my_get_octopus_api, my_get_api_key)
     api = build_octopus_url(my_get_octopus_api, "api/" + space_id + "/Projects", dict(take=TAKE_ALL))
     resp = http.request("GET", api, headers=get_headers(my_get_api_key))
     json = resp.json()
     projects = list(map(lambda p: p["Name"], json["Items"]))
 
-    return projects
+    return actual_space_name, projects
 
 
 def get_octopus_project_names_response(space_name, projects):
@@ -72,4 +72,4 @@ def get_octopus_project_names_response(space_name, projects):
     if space_name is None or not space_name.strip():
         return f"I found {len(projects)} projects:\n* " + "\n * ".join(projects)
 
-    return f"I found {len(projects)} projects in the space {space_name.strip()}:\n* " + "\n* ".join(projects)
+    return f"I found {len(projects)} projects in the space \"{space_name.strip()}\":\n* " + "\n* ".join(projects)
