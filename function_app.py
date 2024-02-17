@@ -10,7 +10,6 @@ app = func.FunctionApp()
 
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
 def query_form(req: func.HttpRequest) -> func.HttpResponse:
-
     with open("html/query.html", "r") as file:
         return func.HttpResponse(file.read())
 
@@ -40,5 +39,3 @@ def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(result)
     except Exception as e:
         return func.HttpResponse(str(e))
-
-
