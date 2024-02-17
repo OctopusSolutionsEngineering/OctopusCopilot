@@ -6,7 +6,7 @@
             "value": "3b50dcf4-f74d-442e-93cb-301b13e1e2d5"
         },
         "name": {
-            "value": "octopus-copilot"
+            "value": "octopus-copilot-#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
         },
         "location": {
             "value": "East US"
@@ -15,7 +15,7 @@
             "value": "FtpsOnly"
         },
         "storageAccountName": {
-            "value": "octopuscopilota572"
+            "value": "octopuscopilot-#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
         },
         "use32BitWorkerProcess": {
             "value": false
@@ -24,16 +24,16 @@
             "value": "DOCKER|docker.io/octopussamples/octopuscopilot"
         },
         "environmentName": {
-            "value": "managedEnvironment-OctopusCopilot-aa94"
+            "value": "managedEnvironment-OctopusCopilot--#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
         },
         "workspaceName": {
-            "value": "workspaceoctopuscopilota0f9"
+            "value": "workspaceoctopuscopilot-#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
         },
         "workspaceLocation": {
             "value": "eastus"
         },
         "managedEnvironmentId": {
-            "value": "/subscriptions/3b50dcf4-f74d-442e-93cb-301b13e1e2d5/resourceGroups/OctopusCopilot/providers/Microsoft.App/managedEnvironments/managedEnvironment-OctopusCopilot-aa94"
+            "value": "/subscriptions/3b50dcf4-f74d-442e-93cb-301b13e1e2d5/resourceGroups/OctopusCopilot/providers/Microsoft.App/managedEnvironments/managedEnvironment-OctopusCopilot--#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
         }
     }
 }
