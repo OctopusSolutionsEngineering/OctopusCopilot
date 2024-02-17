@@ -14,5 +14,8 @@ def init_argparse():
 
 parser, _ = init_argparse()
 
-result = handle_copilot_chat(parser.query).call_function()
-print(result)
+try:
+    result = handle_copilot_chat(parser.query).call_function()
+    print(result)
+except Exception as e:
+    print(e)

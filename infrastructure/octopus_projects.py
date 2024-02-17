@@ -5,6 +5,7 @@ import urllib3
 from retry import retry
 from urllib3.exceptions import HTTPError
 
+from domain.exceptions.request_failed import RequestFailed
 from domain.exceptions.space_not_found import SpaceNotFound
 
 TAKE_ALL = 10000
@@ -19,21 +20,25 @@ def get_octopus_api():
     return os.environ.get('OCTOPUS_CLI_SERVER')
 
 
-def get_headers():
+def get_headers(my_get_api_key):
     return {
-        "X-Octopus-ApiKey": get_api_key()
+        "X-Octopus-ApiKey": my_get_api_key()
     }
 
 
-def build_octopus_url(api, path, query):
-    parsed = urlparse(api)
+def build_octopus_url(my_get_octopus_api, path, query):
+    parsed = urlparse(my_get_octopus_api())
     query = urlencode(query) if query is not None else ""
     return urlunsplit((parsed.scheme, parsed.netloc, path, query, ""))
 
 
-def get_space_id_from_name(space_name):
-    api = build_octopus_url(get_octopus_api(), "api/spaces", dict(take=TAKE_ALL))
-    resp = http.request("GET", api, headers=get_headers())
+def get_space_id_from_name(space_name, my_get_octopus_api, my_get_api_key):
+    api = build_octopus_url(my_get_octopus_api, "api/spaces", dict(take=TAKE_ALL))
+    resp = http.request("GET", api, headers=get_headers(my_get_api_key))
+
+    if resp.status != 200:
+        raise RequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+
     json = resp.json()
 
     filtered_spaces = list(filter(lambda s: s["Name"] == space_name, json["Items"]))
@@ -44,6 +49,16 @@ def get_space_id_from_name(space_name):
 
 
 @retry(HTTPError, tries=3, delay=2)
+def get_octopus_project_names_base(space_name, my_get_api_key, my_get_octopus_api):
+    space_id = get_space_id_from_name(space_name, my_get_octopus_api, my_get_api_key)
+    api = build_octopus_url(my_get_octopus_api, "api/" + space_id + "/Projects", dict(take=TAKE_ALL))
+    resp = http.request("GET", api, headers=get_headers(my_get_api_key))
+    json = resp.json()
+    projects = list(map(lambda p: p["Name"], json["Items"]))
+
+    return projects
+
+
 def get_octopus_project_names(space_name):
     """Return a list of project names in an Octopus space
 
@@ -51,10 +66,4 @@ def get_octopus_project_names(space_name):
             space_name: The name of the space containing the projects
     """
 
-    space_id = get_space_id_from_name(space_name)
-    api = build_octopus_url(get_octopus_api(), "api/" + space_id + "/Projects", dict(take=TAKE_ALL))
-    resp = http.request("GET", api, headers=get_headers())
-    json = resp.json()
-    projects = list(map(lambda p: p["Name"], json["Items"]))
-
-    return projects
+    return get_octopus_project_names_base(space_name, get_api_key, get_octopus_api)

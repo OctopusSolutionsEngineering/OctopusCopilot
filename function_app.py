@@ -1,27 +1,44 @@
 import logging
 
 import azure.functions as func
+from domain.handlers.copilot_handler import handle_copilot_chat
+from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
+from infrastructure.octopus_projects import get_octopus_project_names_base
 
 app = func.FunctionApp()
 
 
-@app.route(route="Copilot", auth_level=func.AuthLevel.ANONYMOUS)
-def Copilot(req: func.HttpRequest) -> func.HttpResponse:
+@app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
+def query_form(req: func.HttpRequest) -> func.HttpResponse:
+
+    with open("html/query.html", "r") as file:
+        return func.HttpResponse(file.read())
+
+
+@app.route(route="form_handler", auth_level=func.AuthLevel.ANONYMOUS)
+def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
-    name = req.params.get('name')
-    if not name:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            name = req_body.get('name')
+    req_body = req.get_json()
 
-    if name:
-        return func.HttpResponse(f"Hello, {name}. This HTTP triggered function executed successfully.")
-    else:
-        return func.HttpResponse(
-            "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-            status_code=200
-        )
+    def get_octopus_project_names_form(space_name):
+        """Return a list of project names in an Octopus space
+
+            Args:
+                space_name: The name of the space containing the projects
+        """
+
+        return get_octopus_project_names_base(space_name, req_body.url, req_body.api)
+
+    def build_form_tools():
+        return FunctionDefinitions([
+            FunctionDefinition(get_octopus_project_names_form),
+        ])
+
+    try:
+        result = handle_copilot_chat(req_body.query, build_form_tools).call_function()
+        return func.HttpResponse(result)
+    except Exception as e:
+        return func.HttpResponse(str(e))
+
+
