@@ -30,7 +30,7 @@ def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
                 space_name: The name of the space containing the projects
         """
 
-        return get_octopus_project_names_base(space_name, req_body.url, req_body.api)
+        return get_octopus_project_names_base(space_name, req_body["url"], req_body["api"])
 
     def build_form_tools():
         return FunctionDefinitions([
@@ -38,7 +38,7 @@ def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
         ])
 
     try:
-        result = handle_copilot_chat(req_body.query, build_form_tools).call_function()
+        result = handle_copilot_chat(req_body["query"], build_form_tools).call_function()
         return func.HttpResponse(result)
     except Exception as e:
         return func.HttpResponse(str(e))
