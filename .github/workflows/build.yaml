@@ -148,6 +148,15 @@ jobs:
       with:
         tag_name: ${{ steps.determine_version.outputs.semVer }}+run${{ github.run_number }}-attempt${{ github.run_attempt }}
         files: OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip
+    - name: Push packages to Octopus Deploy
+      uses: OctopusDeploy/push-package-action@v3
+      env:
+        OCTOPUS_API_KEY: ${{ secrets.COPILOT_OCTOPUS_API }}
+        OCTOPUS_URL: ${{ secrets.COPILOT_OCTOPUS_URL }}
+        OCTOPUS_SPACE: ${{ secrets.COPILOT_OCTOPUS_SPACE }}
+      with:
+        packages: OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip
+        overwrite_mode: OverwriteExisting
 permissions:
   id-token: write
   checks: write
