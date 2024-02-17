@@ -1,6 +1,5 @@
-import os
-
 import logging
+import os
 
 
 class OneLineExceptionFormatter(logging.Formatter):

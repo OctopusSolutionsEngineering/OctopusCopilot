@@ -1,5 +1,5 @@
 import os
-from urllib.parse import urlunsplit, urlsplit, urlparse, urlencode
+from urllib.parse import urlunsplit, urlparse, urlencode
 
 import urllib3
 from retry import retry

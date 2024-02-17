@@ -1,7 +1,6 @@
 import argparse
 
 from domain.handlers.copilot_handler import handle_copilot_chat
-from domain.tools.build_tools import build_tools
 
 
 def init_argparse():

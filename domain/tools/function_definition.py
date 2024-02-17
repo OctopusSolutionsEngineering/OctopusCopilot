@@ -1,7 +1,5 @@
 from langchain_core.tools import StructuredTool
 
-from domain.tools.function_call import FunctionCall
-
 
 class FunctionDefinition:
     def __init__(self, function):
