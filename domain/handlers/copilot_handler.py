@@ -4,14 +4,13 @@ from langchain.agents import OpenAIFunctionsAgent
 
 from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
 from domain.logging.app_logging import configure_logging
-from domain.tools.build_tools import build_tools
 from domain.tools.function_call import FunctionCall
 
 NO_FUNCTION_RESPONSE = "Sorry, I did not understand that request."
 my_log = configure_logging()
 
 
-def handle_copilot_chat(query, llm_tools=build_tools):
+def handle_copilot_chat(query, llm_tools):
     functions = llm_tools()
     tools = functions.get_tools()
 

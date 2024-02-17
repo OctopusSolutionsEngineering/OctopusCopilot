@@ -1,4 +1,3 @@
-import os
 from urllib.parse import urlunsplit, urlparse, urlencode
 
 import urllib3
@@ -10,14 +9,6 @@ from domain.exceptions.space_not_found import SpaceNotFound
 
 TAKE_ALL = 10000
 http = urllib3.PoolManager()
-
-
-def get_api_key():
-    return os.environ.get('OCTOPUS_CLI_API_KEY')
-
-
-def get_octopus_api():
-    return os.environ.get('OCTOPUS_CLI_SERVER')
 
 
 def get_headers(my_get_api_key):
@@ -57,13 +48,3 @@ def get_octopus_project_names_base(space_name, my_get_api_key, my_get_octopus_ap
     projects = list(map(lambda p: p["Name"], json["Items"]))
 
     return projects
-
-
-def get_octopus_project_names(space_name):
-    """Return a list of project names in an Octopus space
-
-        Args:
-            space_name: The name of the space containing the projects
-    """
-
-    return get_octopus_project_names_base(space_name, get_api_key, get_octopus_api)
