@@ -165,7 +165,7 @@ jobs:
           OCTOPUS_SPACE: ${{ secrets.COPILOT_OCTOPUS_SPACE }}
         with:
           project: Octopus Copilot Function
-          packages: OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip
+          packages: OctopusCopilot:${{ steps.determine_version.outputs.semVer }}
 permissions:
   id-token: write
   checks: write
