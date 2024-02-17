@@ -6,7 +6,7 @@
             "value": "#{Octopus.Action.Azure.SubscriptionId}"
         },
         "name": {
-            "value": "octopus-copilot-#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
+            "value": "octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
         },
         "location": {
             "value": "East US"
@@ -17,23 +17,35 @@
         "storageAccountName": {
             "value": "octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
         },
+        "sku": {
+            "value": "Dynamic"
+        },
+        "skuCode": {
+            "value": "Y1"
+        },
+        "workerSize": {
+            "value": "0"
+        },
+        "workerSizeId": {
+            "value": "0"
+        },
+        "numberOfWorkers": {
+            "value": "1"
+        },
         "use32BitWorkerProcess": {
             "value": false
         },
         "linuxFxVersion": {
-            "value": "DOCKER|docker.io/octopussamples/octopuscopilot"
+            "value": "Python|3.11"
         },
-        "environmentName": {
-            "value": "managedEnvironment-OctopusCopilot-#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
+        "hostingPlanName": {
+            "value": "ASP-OctopusCopilot-#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
         },
-        "workspaceName": {
-            "value": "workspaceoctopuscopilot-#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
+        "serverFarmResourceGroup": {
+            "value": "OctopusCopilot"
         },
-        "workspaceLocation": {
-            "value": "eastus"
-        },
-        "managedEnvironmentId": {
-            "value": "/subscriptions/#{Octopus.Action.Azure.SubscriptionId}/resourceGroups/OctopusCopilot/providers/Microsoft.App/managedEnvironments/managedEnvironment-OctopusCopilot-#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
+        "alwaysOn": {
+            "value": false
         }
     }
 }
