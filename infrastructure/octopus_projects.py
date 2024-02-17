@@ -36,6 +36,11 @@ def get_space_id_from_name(space_name, my_get_octopus_api, my_get_api_key):
     if len(filtered_spaces) == 1:
         return filtered_spaces[0]["Id"]
 
+    # try case-insensitive match and stripping and whitespace
+    filtered_spaces = list(filter(lambda s: s["Name"].lower().strip() == space_name.lower().strip(), json["Items"]))
+    if len(filtered_spaces) == 1:
+        return filtered_spaces[0]["Id"]
+
     raise SpaceNotFound(f"No space with name '{space_name}' found")
 
 
