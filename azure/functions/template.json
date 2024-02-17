@@ -1,182 +1,182 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "subscriptionId": {
-            "type": "string"
-        },
-        "name": {
-            "type": "string"
-        },
-        "location": {
-            "type": "string"
-        },
-        "use32BitWorkerProcess": {
-            "type": "bool"
-        },
-        "ftpsState": {
-            "type": "string"
-        },
-        "storageAccountName": {
-            "type": "string"
-        },
-        "linuxFxVersion": {
-            "type": "string"
-        },
-        "sku": {
-            "type": "string"
-        },
-        "skuCode": {
-            "type": "string"
-        },
-        "workerSize": {
-            "type": "string"
-        },
-        "workerSizeId": {
-            "type": "string"
-        },
-        "numberOfWorkers": {
-            "type": "string"
-        },
-        "hostingPlanName": {
-            "type": "string"
-        },
-        "serverFarmResourceGroup": {
-            "type": "string"
-        },
-        "alwaysOn": {
-            "type": "bool"
-        }
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subscriptionId": {
+      "type": "string"
     },
-    "variables": {},
-    "resources": [
-        {
-            "apiVersion": "2018-11-01",
-            "name": "[parameters('name')]",
-            "type": "Microsoft.Web/sites",
-            "kind": "functionapp,linux",
-            "location": "[parameters('location')]",
-            "tags": {
-                "octopus-environment": "#{Octopus.Environment.Name}",
-                "octopus-project": "Octopus Copilot",
-                "octopus-role": "Azure.Functions.OctopusCopilot",
-                "octopus-space": "Octopus Copilot",
-                "hidden-link: /app-insights-resource-id": "/subscriptions/#{Octopus.Action.Azure.SubscriptionId}/resourceGroups/OctopusCopilot/providers/Microsoft.Insights/components/octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
+    "name": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "use32BitWorkerProcess": {
+      "type": "bool"
+    },
+    "ftpsState": {
+      "type": "string"
+    },
+    "storageAccountName": {
+      "type": "string"
+    },
+    "linuxFxVersion": {
+      "type": "string"
+    },
+    "sku": {
+      "type": "string"
+    },
+    "skuCode": {
+      "type": "string"
+    },
+    "workerSize": {
+      "type": "string"
+    },
+    "workerSizeId": {
+      "type": "string"
+    },
+    "numberOfWorkers": {
+      "type": "string"
+    },
+    "hostingPlanName": {
+      "type": "string"
+    },
+    "serverFarmResourceGroup": {
+      "type": "string"
+    },
+    "alwaysOn": {
+      "type": "bool"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "apiVersion": "2018-11-01",
+      "name": "[parameters('name')]",
+      "type": "Microsoft.Web/sites",
+      "kind": "functionapp,linux",
+      "location": "[parameters('location')]",
+      "tags": {
+        "octopus-environment": "#{Octopus.Environment.Name}",
+        "octopus-project": "Octopus Copilot Function",
+        "octopus-role": "Azure.Functions.OctopusCopilot",
+        "octopus-space": "Octopus Copilot",
+        "hidden-link: /app-insights-resource-id": "/subscriptions/#{Octopus.Action.Azure.SubscriptionId}/resourceGroups/OctopusCopilot/providers/Microsoft.Insights/components/octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
+      },
+      "dependsOn": [
+        "microsoft.insights/components/octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}",
+        "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+      ],
+      "properties": {
+        "name": "[parameters('name')]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
             },
-            "dependsOn": [
-                "microsoft.insights/components/octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}",
-                "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
-            ],
-            "properties": {
-                "name": "[parameters('name')]",
-                "siteConfig": {
-                    "appSettings": [
-                        {
-                            "name": "FUNCTIONS_EXTENSION_VERSION",
-                            "value": "~4"
-                        },
-                        {
-                            "name": "FUNCTIONS_WORKER_RUNTIME",
-                            "value": "python"
-                        },
-                        {
-                            "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-                            "value": "[reference('microsoft.insights/components/octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}', '2015-05-01').ConnectionString]"
-                        },
-                        {
-                            "name": "AzureWebJobsStorage",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
-                        },
-                        {
-                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
-                        },
-                        {
-                            "name": "WEBSITE_CONTENTSHARE",
-                            "value": "octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}8977"
-                        }
-                    ],
-                    "cors": {
-                        "allowedOrigins": [
-                            "https://portal.azure.com"
-                        ]
-                    },
-                    "use32BitWorkerProcess": "[parameters('use32BitWorkerProcess')]",
-                    "ftpsState": "[parameters('ftpsState')]",
-                    "linuxFxVersion": "[parameters('linuxFxVersion')]"
-                },
-                "clientAffinityEnabled": false,
-                "virtualNetworkSubnetId": null,
-                "publicNetworkAccess": "Enabled",
-                "httpsOnly": true,
-                "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "python"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[reference('microsoft.insights/components/octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}', '2015-05-01').ConnectionString]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}8977"
             }
+          ],
+          "cors": {
+            "allowedOrigins": [
+              "https://portal.azure.com"
+            ]
+          },
+          "use32BitWorkerProcess": "[parameters('use32BitWorkerProcess')]",
+          "ftpsState": "[parameters('ftpsState')]",
+          "linuxFxVersion": "[parameters('linuxFxVersion')]"
         },
-        {
-            "apiVersion": "2018-11-01",
-            "name": "[parameters('hostingPlanName')]",
-            "type": "Microsoft.Web/serverfarms",
-            "location": "[parameters('location')]",
-            "kind": "linux",
-            "tags": {
-                "octopus-environment": "#{Octopus.Environment.Name}",
-                "octopus-project": "Octopus Copilot",
-                "octopus-role": "Azure.Functions.OctopusCopilot",
-                "octopus-space": "Octopus Copilot"
-            },
-            "dependsOn": [],
-            "properties": {
-                "name": "[parameters('hostingPlanName')]",
-                "workerSize": "[parameters('workerSize')]",
-                "workerSizeId": "[parameters('workerSizeId')]",
-                "numberOfWorkers": "[parameters('numberOfWorkers')]",
-                "reserved": true
-            },
-            "sku": {
-                "Tier": "[parameters('sku')]",
-                "Name": "[parameters('skuCode')]"
-            }
-        },
-        {
-            "apiVersion": "2020-02-02-preview",
-            "name": "octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}",
-            "type": "microsoft.insights/components",
-            "location": "eastus",
-            "tags": {
-                "octopus-environment": "#{Octopus.Environment.Name}",
-                "octopus-project": "Octopus Copilot",
-                "octopus-role": "Azure.Functions.OctopusCopilot",
-                "octopus-space": "Octopus Copilot"
-            },
-            "dependsOn": [],
-            "properties": {
-                "ApplicationId": "[parameters('name')]",
-                "Request_Source": "IbizaWebAppExtensionCreate",
-                "Flow_Type": "Redfield",
-                "Application_Type": "web",
-                "WorkspaceResourceId": "/subscriptions/#{Octopus.Action.Azure.SubscriptionId}/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-#{Octopus.Action.Azure.SubscriptionId}-EUS"
-            }
-        },
-        {
-            "apiVersion": "2022-05-01",
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[parameters('storageAccountName')]",
-            "location": "[parameters('location')]",
-            "tags": {
-                "octopus-environment": "#{Octopus.Environment.Name}",
-                "octopus-project": "Octopus Copilot",
-                "octopus-role": "Azure.Functions.OctopusCopilot",
-                "octopus-space": "Octopus Copilot"
-            },
-            "sku": {
-                "name": "Standard_LRS"
-            },
-            "properties": {
-                "supportsHttpsTrafficOnly": true,
-                "minimumTlsVersion": "TLS1_2",
-                "defaultToOAuthAuthentication": true
-            }
-        }
-    ]
+        "clientAffinityEnabled": false,
+        "virtualNetworkSubnetId": null,
+        "publicNetworkAccess": "Enabled",
+        "httpsOnly": true,
+        "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
+      }
+    },
+    {
+      "apiVersion": "2018-11-01",
+      "name": "[parameters('hostingPlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[parameters('location')]",
+      "kind": "linux",
+      "tags": {
+        "octopus-environment": "#{Octopus.Environment.Name}",
+        "octopus-project": "Octopus Copilot",
+        "octopus-role": "Azure.Functions.OctopusCopilot",
+        "octopus-space": "Octopus Copilot"
+      },
+      "dependsOn": [],
+      "properties": {
+        "name": "[parameters('hostingPlanName')]",
+        "workerSize": "[parameters('workerSize')]",
+        "workerSizeId": "[parameters('workerSizeId')]",
+        "numberOfWorkers": "[parameters('numberOfWorkers')]",
+        "reserved": true
+      },
+      "sku": {
+        "Tier": "[parameters('sku')]",
+        "Name": "[parameters('skuCode')]"
+      }
+    },
+    {
+      "apiVersion": "2020-02-02-preview",
+      "name": "octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}",
+      "type": "microsoft.insights/components",
+      "location": "eastus",
+      "tags": {
+        "octopus-environment": "#{Octopus.Environment.Name}",
+        "octopus-project": "Octopus Copilot",
+        "octopus-role": "Azure.Functions.OctopusCopilot",
+        "octopus-space": "Octopus Copilot"
+      },
+      "dependsOn": [],
+      "properties": {
+        "ApplicationId": "[parameters('name')]",
+        "Request_Source": "IbizaWebAppExtensionCreate",
+        "Flow_Type": "Redfield",
+        "Application_Type": "web",
+        "WorkspaceResourceId": "/subscriptions/#{Octopus.Action.Azure.SubscriptionId}/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-#{Octopus.Action.Azure.SubscriptionId}-EUS"
+      }
+    },
+    {
+      "apiVersion": "2022-05-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "octopus-environment": "#{Octopus.Environment.Name}",
+        "octopus-project": "Octopus Copilot",
+        "octopus-role": "Azure.Functions.OctopusCopilot",
+        "octopus-space": "Octopus Copilot"
+      },
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {
+        "supportsHttpsTrafficOnly": true,
+        "minimumTlsVersion": "TLS1_2",
+        "defaultToOAuthAuthentication": true
+      }
+    }
+  ]
 }
