@@ -24,7 +24,7 @@
             "value": "DOCKER|docker.io/octopussamples/octopuscopilot"
         },
         "environmentName": {
-            "value": "managedEnvironment-OctopusCopilot--#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
+            "value": "managedEnvironment-OctopusCopilot-#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
         },
         "workspaceName": {
             "value": "workspaceoctopuscopilot-#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
@@ -33,7 +33,7 @@
             "value": "eastus"
         },
         "managedEnvironmentId": {
-            "value": "/subscriptions/#{Octopus.Action.Azure.SubscriptionId}/resourceGroups/OctopusCopilot/providers/Microsoft.App/managedEnvironments/managedEnvironment-OctopusCopilot--#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
+            "value": "/subscriptions/#{Octopus.Action.Azure.SubscriptionId}/resourceGroups/OctopusCopilot/providers/Microsoft.App/managedEnvironments/managedEnvironment-OctopusCopilot-#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
         }
     }
 }
