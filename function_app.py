@@ -3,7 +3,7 @@ import logging
 import azure.functions as func
 from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
-from infrastructure.octopus_projects import get_octopus_project_names_base
+from infrastructure.octopus_projects import get_octopus_project_names_base, get_octopus_project_names_response
 
 app = func.FunctionApp()
 
@@ -30,7 +30,8 @@ def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
                 space_name: The name of the space containing the projects
         """
 
-        return get_octopus_project_names_base(space_name, lambda: req_body["api"], lambda: req_body["url"])
+        projects = get_octopus_project_names_base(space_name, lambda: req_body["api"], lambda: req_body["url"])
+        return get_octopus_project_names_response(space_name, projects)
 
     def build_form_tools():
         return FunctionDefinitions([

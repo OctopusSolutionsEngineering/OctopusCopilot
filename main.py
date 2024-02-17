@@ -3,7 +3,7 @@ import os
 
 from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
-from infrastructure.octopus_projects import get_octopus_project_names_base
+from infrastructure.octopus_projects import get_octopus_project_names_base, get_octopus_project_names_response
 
 
 def init_argparse():
@@ -33,7 +33,8 @@ def get_octopus_project_names_cli(space_name):
             space_name: The name of the space containing the projects
     """
 
-    return get_octopus_project_names_base(space_name, get_api_key, get_octopus_api)
+    projects = get_octopus_project_names_base(space_name, get_api_key, get_octopus_api)
+    return get_octopus_project_names_response(space_name, projects)
 
 
 def build_tools():

@@ -53,3 +53,23 @@ def get_octopus_project_names_base(space_name, my_get_api_key, my_get_octopus_ap
     projects = list(map(lambda p: p["Name"], json["Items"]))
 
     return projects
+
+
+def get_octopus_project_names_response(space_name, projects):
+    """
+    Provides a conversational response to the list of projects
+    :param space_name: The name of the space containing the projects
+    :param projects: The list of projects
+    :return: A conversational response
+    """
+
+    if projects is None and (space_name is None or not space_name.strip()):
+        return "I found no projects."
+
+    if projects is None:
+        return f"I found no projects in the space {space_name}."
+
+    if space_name is None or not space_name.strip():
+        return f"I found {len(projects)} projects:\n* " + "\n * ".join(projects)
+
+    return f"I found {len(projects)} projects in the space {space_name.strip()}:\n* " + "\n * ".join(projects)
