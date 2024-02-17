@@ -61,10 +61,10 @@
                 "octopus-project": "Octopus Copilot",
                 "octopus-role": "Azure.Functions.OctopusCopilot",
                 "octopus-space": "Octopus Copilot",
-                "hidden-link: /app-insights-resource-id": "/subscriptions/#{Octopus.Action.Azure.SubscriptionId}/resourceGroups/OctopusCopilot/providers/Microsoft.Insights/components/octopuscopilot"
+                "hidden-link: /app-insights-resource-id": "/subscriptions/#{Octopus.Action.Azure.SubscriptionId}/resourceGroups/OctopusCopilot/providers/Microsoft.Insights/components/octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
             },
             "dependsOn": [
-                "microsoft.insights/components/octopuscopilot",
+                "microsoft.insights/components/octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}",
                 "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
             ],
@@ -82,7 +82,7 @@
                         },
                         {
                             "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-                            "value": "[reference('microsoft.insights/components/octopuscopilot', '2015-05-01').ConnectionString]"
+                            "value": "[reference('microsoft.insights/components/octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}', '2015-05-01').ConnectionString]"
                         },
                         {
                             "name": "AzureWebJobsStorage",
