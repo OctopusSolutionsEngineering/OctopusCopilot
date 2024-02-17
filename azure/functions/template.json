@@ -45,7 +45,7 @@
             "kind": "functionapp,linux,container,azurecontainerapps",
             "location": "[parameters('location')]",
             "tags": {
-                "octopus-environment": "Production",
+                "octopus-environment": "#{Octopus.Environment.Name}",
                 "octopus-role": "Azure.Functions.OctopusCopilot",
                 "octopus-space": "Octopus Copilot",
                 "octopus-project": "Octopus Copilot",
