@@ -11,7 +11,7 @@ app = func.FunctionApp()
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
 def query_form(req: func.HttpRequest) -> func.HttpResponse:
     """
-    A function handler that returns a HTML form for testing
+    A function handler that returns an HTML form for testing
     :param req: The HTTP request
     :return: The HTML form
     """
@@ -47,7 +47,7 @@ def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
     def build_form_tools():
         """
         Builds a set of tools configured for use with HTTP requests (i.e. API key
-        and URL extracted from a HTTP request body).
+        and URL extracted from an HTTP request body).
         :return: The OpenAI tools
         """
         return FunctionDefinitions([
