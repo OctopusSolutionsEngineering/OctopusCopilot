@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "subscriptionId": {
-            "value": "3b50dcf4-f74d-442e-93cb-301b13e1e2d5"
+            "value": "#{Octopus.Action.Azure.SubscriptionId}"
         },
         "name": {
             "value": "octopus-copilot-#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
@@ -33,7 +33,7 @@
             "value": "eastus"
         },
         "managedEnvironmentId": {
-            "value": "/subscriptions/3b50dcf4-f74d-442e-93cb-301b13e1e2d5/resourceGroups/OctopusCopilot/providers/Microsoft.App/managedEnvironments/managedEnvironment-OctopusCopilot--#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
+            "value": "/subscriptions/#{Octopus.Action.Azure.SubscriptionId}/resourceGroups/OctopusCopilot/providers/Microsoft.App/managedEnvironments/managedEnvironment-OctopusCopilot--#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
         }
     }
 }

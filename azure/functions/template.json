@@ -49,7 +49,7 @@
                 "octopus-role": "Azure.Functions.OctopusCopilot",
                 "octopus-space": "Octopus Copilot",
                 "octopus-project": "Octopus Copilot",
-                "hidden-link: /app-insights-resource-id": "/subscriptions/3b50dcf4-f74d-442e-93cb-301b13e1e2d5/resourceGroups/OctopusCopilot/providers/Microsoft.Insights/components/octopus-copilot"
+                "hidden-link: /app-insights-resource-id": "/subscriptions/#{Octopus.Action.Azure.SubscriptionId}/resourceGroups/OctopusCopilot/providers/Microsoft.Insights/components/octopus-copilot"
             },
             "dependsOn": [
                 "microsoft.insights/components/octopus-copilot",
@@ -101,7 +101,7 @@
                 "Request_Source": "IbizaWebAppExtensionCreate",
                 "Flow_Type": "Redfield",
                 "Application_Type": "web",
-                "WorkspaceResourceId": "/subscriptions/3b50dcf4-f74d-442e-93cb-301b13e1e2d5/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-3b50dcf4-f74d-442e-93cb-301b13e1e2d5-EUS"
+                "WorkspaceResourceId": "/subscriptions/#{Octopus.Action.Azure.SubscriptionId}/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-#{Octopus.Action.Azure.SubscriptionId}-EUS"
             }
         },
         {
@@ -140,7 +140,7 @@
                     "resources": [
                         {
                             "apiVersion": "2020-08-01",
-                            "name": "DefaultWorkspace-3b50dcf4-f74d-442e-93cb-301b13e1e2d5-EUS",
+                            "name": "DefaultWorkspace-#{Octopus.Action.Azure.SubscriptionId}-EUS",
                             "type": "Microsoft.OperationalInsights/workspaces",
                             "location": "eastus",
                             "properties": {}
