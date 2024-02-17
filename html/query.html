@@ -35,7 +35,7 @@
 </form>
 </body>
 <script>
-    submit.onclick = function () {
+    submit.onclick = async function () {
         data = {
             url: url.value,
             api: api.value,
@@ -47,7 +47,9 @@
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(data), // body data type must match "Content-Type" header
-        });
+        })
+            .then(response => response.json())
+            .then(json => console.log(json()))
     }
 </script>
 </html>
