@@ -12,7 +12,7 @@ app = func.FunctionApp()
 def query_form(req: func.HttpRequest) -> func.HttpResponse:
     try:
         with open("html/query.html", "r") as file:
-            return func.HttpResponse(file.read(), headers={"Content-Type": "html"})
+            return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
     except Exception as e:
         return func.HttpResponse("Failed to read form HTML", status_code=500)
 
