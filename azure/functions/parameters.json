@@ -15,7 +15,7 @@
             "value": "FtpsOnly"
         },
         "storageAccountName": {
-            "value": "octopuscopilot-#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
+            "value": "octopuscopilot#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" \"_\"}"
         },
         "use32BitWorkerProcess": {
             "value": false
