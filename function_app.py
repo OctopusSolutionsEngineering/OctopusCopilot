@@ -30,7 +30,7 @@ def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
                 space_name: The name of the space containing the projects
         """
 
-        return get_octopus_project_names_base(space_name, req_body["url"], req_body["api"])
+        return get_octopus_project_names_base(space_name, lambda: req_body["url"], lambda: req_body["api"])
 
     def build_form_tools():
         return FunctionDefinitions([
