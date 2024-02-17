@@ -72,4 +72,4 @@ def get_octopus_project_names_response(space_name, projects):
     if space_name is None or not space_name.strip():
         return f"I found {len(projects)} projects:\n* " + "\n * ".join(projects)
 
-    return f"I found {len(projects)} projects in the space {space_name.strip()}:\n* " + "\n * ".join(projects)
+    return f"I found {len(projects)} projects in the space {space_name.strip()}:\n* " + "\n* ".join(projects)
