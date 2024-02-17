@@ -10,8 +10,11 @@ app = func.FunctionApp()
 
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
 def query_form(req: func.HttpRequest) -> func.HttpResponse:
-    with open("html/query.html", "r") as file:
-        return func.HttpResponse(file.read(), headers={"Content-Type": "html"})
+    try:
+        with open("html/query.html", "r") as file:
+            return func.HttpResponse(file.read(), headers={"Content-Type": "html"})
+    except:
+        return func.HttpResponse("Failed to read form HTML", status_code=500)
 
 
 @app.route(route="form_handler", auth_level=func.AuthLevel.ANONYMOUS)
