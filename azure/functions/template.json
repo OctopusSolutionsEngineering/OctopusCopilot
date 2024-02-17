@@ -88,7 +88,7 @@
             "type": "microsoft.insights/components",
             "location": "eastus",
             "tags": {
-                "octopus-environment": "Production",
+                "octopus-environment": "#{Octopus.Environment.Name}",
                 "octopus-role": "Azure.Functions.OctopusCopilot",
                 "octopus-space": "OctopusCopilot",
                 "octopus-project": "Octopus Copilot"
@@ -110,7 +110,7 @@
             "name": "[parameters('storageAccountName')]",
             "location": "[parameters('location')]",
             "tags": {
-                "octopus-environment": "Production",
+                "octopus-environment": "#{Octopus.Environment.Name}",
                 "octopus-role": "Azure.Functions.OctopusCopilot",
                 "octopus-space": "OctopusCopilot",
                 "octopus-project": "Octopus Copilot"
@@ -155,7 +155,7 @@
             "type": "Microsoft.App/managedEnvironments",
             "location": "East US",
             "tags": {
-                "octopus-environment": "Production",
+                "octopus-environment": "#{Octopus.Environment.Name}",
                 "octopus-role": "Azure.Functions.OctopusCopilot",
                 "octopus-space": "OctopusCopilot",
                 "octopus-project": "Octopus Copilot"
