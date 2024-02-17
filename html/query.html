@@ -41,7 +41,7 @@
 </form>
 </body>
 <script>
-    submit.onclick = async function () {
+    async function processQuery() {
         textarea.value = "Processing..."
         data = {
             url: url.value,
@@ -58,5 +58,12 @@
             .then(response => response.text())
             .then(text => textarea.value = text)
     }
+
+    submit.onclick = processQuery
+    query.addEventListener("keydown", function (e) {
+        if (e.code === "Enter") {
+            processQuery()
+        }
+    });
 </script>
 </html>
