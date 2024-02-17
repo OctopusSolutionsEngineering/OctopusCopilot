@@ -13,150 +13,159 @@
 
 name: Python Build
 'on':
-  workflow_dispatch: {}
-  push: {}
+  workflow_dispatch: { }
+  push: { }
 jobs:
   build:
     runs-on:
       group: ubuntu-large-runner
       labels: 4core-ubuntu-runner
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: '0'
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.x
-    - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v0.9.15
-      with:
-        versionSpec: 5.x
-    - id: determine_version
-      name: Determine Version
-      uses: gittools/actions/gitversion/execute@v0.9.15
-      with:
-        additionalArguments: /overrideconfig mode=Mainline
-    - name: Install Octopus Deploy CLI
-      uses: OctopusDeploy/install-octopus-cli-action@v1
-      with:
-        version: latest
-    - name: Linting
-      shell: bash
-      run: |
-        sudo apt-get install -y pep8
-        find . -path ./venv -prune -o -name "*.py" -print0 | xargs -0 -n1 pep8 --ignore=E501
-    - name: Install Dependencies
-      run: pip install -r requirements.txt
-      shell: bash
-    - name: List Dependencies
-      run: pip install pipdeptree; pipdeptree > dependencies.txt
-      shell: bash
-    - name: Collect Dependencies
-      uses: actions/upload-artifact@v2
-      with:
-        name: Dependencies
-        path: dependencies.txt
-    - name: List Dependency Updates
-      run: pip list --outdated --format=freeze > dependencyUpdates.txt || true
-      shell: bash
-    - name: Collect Dependency Updates
-      uses: actions/upload-artifact@v2
-      with:
-        name: Dependencies Updates
-        path: dependencyUpdates.txt
-     # Requires OpenAI instance to allow GitHub runner's IP address
-    - name: Test
-      run: |
-        pip install pytest
-        PYTHONPATH=$(pwd) pytest --junitxml=results.xml
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        OPENAI_ENDPOINT: ${{ secrets.OPENAI_ENDPOINT }}
-      shell: bash
-    - if: always()
-      name: Report
-      uses: dorny/test-reporter@v1
-      with:
-        name: Python Tests
-        path: results.xml
-        reporter: java-junit
-        fail-on-error: 'false'
-    - name: Generate SBOM
-      run: |
-        python -m pip install cyclonedx-bom
-        cyclonedx-py  environment > bom.json
-      shell: bash
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: Build and push
-      uses: docker/build-push-action@v5
-      with:
-        push: true
-        tags: octopussamples/octopuscopilot:latest
-    - name: Package
-      run: |-
-        SOURCEPATH=.
-        OUTPUTPATH=.
-        octo pack \
-         --basePath ${SOURCEPATH} \
-         --outFolder ${OUTPUTPATH} \
-         --id OctopusCopilot \
-         --version ${{ steps.determine_version.outputs.semVer }} \
-         --format zip \
-         --overwrite \
-         --include '**/*.py' \
-         --include '**/*.pyc' \
-         --include '**/*.html' \
-         --include '**/*.htm' \
-         --include '**/*.css' \
-         --include '**/*.js' \
-         --include '**/*.min' \
-         --include '**/*.map' \
-         --include '**/*.sql' \
-         --include '**/*.png' \
-         --include '**/*.jpg' \
-         --include '**/*.jpeg' \
-         --include '**/*.gif' \
-         --include '**/*.json' \
-         --include '**/*.env' \
-         --include '**/*.txt' \
-         --include '**/*.Procfile'
-      shell: bash
-    - name: Tag Release
-      uses: mathieudutour/github-tag-action@v6.1
-      with:
-        custom_tag: ${{ steps.determine_version.outputs.semVer }}
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-    - id: create_release
-      name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ steps.determine_version.outputs.semVer }}+run${{ github.run_number }}-attempt${{ github.run_attempt }}
-        release_name: Release ${{ steps.determine_version.outputs.semVer }} Run ${{ github.run_number }} Attempt ${{ github.run_attempt }}
-        draft: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
-        name: Release ${{ steps.determine_version.outputs.semVer }} Run ${{ github.run_number }} Attempt ${{ github.run_attempt }}
-    - name: Upload Release Asset
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ steps.determine_version.outputs.semVer }}+run${{ github.run_number }}-attempt${{ github.run_attempt }}
-        files: OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip
-    - name: Push packages to Octopus Deploy
-      uses: OctopusDeploy/push-package-action@v3
-      env:
-        OCTOPUS_API_KEY: ${{ secrets.COPILOT_OCTOPUS_API }}
-        OCTOPUS_URL: ${{ secrets.COPILOT_OCTOPUS_URL }}
-        OCTOPUS_SPACE: ${{ secrets.COPILOT_OCTOPUS_SPACE }}
-      with:
-        packages: OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip
-        overwrite_mode: OverwriteExisting
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: '0'
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.9.15
+        with:
+          versionSpec: 5.x
+      - id: determine_version
+        name: Determine Version
+        uses: gittools/actions/gitversion/execute@v0.9.15
+        with:
+          additionalArguments: /overrideconfig mode=Mainline
+      - name: Install Octopus Deploy CLI
+        uses: OctopusDeploy/install-octopus-cli-action@v1
+        with:
+          version: latest
+      - name: Linting
+        shell: bash
+        run: |
+          sudo apt-get install -y pep8
+          find . -path ./venv -prune -o -name "*.py" -print0 | xargs -0 -n1 pep8 --ignore=E501
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+        shell: bash
+      - name: List Dependencies
+        run: pip install pipdeptree; pipdeptree > dependencies.txt
+        shell: bash
+      - name: Collect Dependencies
+        uses: actions/upload-artifact@v2
+        with:
+          name: Dependencies
+          path: dependencies.txt
+      - name: List Dependency Updates
+        run: pip list --outdated --format=freeze > dependencyUpdates.txt || true
+        shell: bash
+      - name: Collect Dependency Updates
+        uses: actions/upload-artifact@v2
+        with:
+          name: Dependencies Updates
+          path: dependencyUpdates.txt
+      # Requires OpenAI instance to allow GitHub runner's IP address
+      - name: Test
+        run: |
+          pip install pytest
+          PYTHONPATH=$(pwd) pytest --junitxml=results.xml
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_ENDPOINT: ${{ secrets.OPENAI_ENDPOINT }}
+        shell: bash
+      - if: always()
+        name: Report
+        uses: dorny/test-reporter@v1
+        with:
+          name: Python Tests
+          path: results.xml
+          reporter: java-junit
+          fail-on-error: 'false'
+      - name: Generate SBOM
+        run: |
+          python -m pip install cyclonedx-bom
+          cyclonedx-py  environment > bom.json
+        shell: bash
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: octopussamples/octopuscopilot:latest
+      - name: Package
+        run: |-
+          SOURCEPATH=.
+          OUTPUTPATH=.
+          octo pack \
+           --basePath ${SOURCEPATH} \
+           --outFolder ${OUTPUTPATH} \
+           --id OctopusCopilot \
+           --version ${{ steps.determine_version.outputs.semVer }} \
+           --format zip \
+           --overwrite \
+           --include '**/*.py' \
+           --include '**/*.pyc' \
+           --include '**/*.html' \
+           --include '**/*.htm' \
+           --include '**/*.css' \
+           --include '**/*.js' \
+           --include '**/*.min' \
+           --include '**/*.map' \
+           --include '**/*.sql' \
+           --include '**/*.png' \
+           --include '**/*.jpg' \
+           --include '**/*.jpeg' \
+           --include '**/*.gif' \
+           --include '**/*.json' \
+           --include '**/*.env' \
+           --include '**/*.txt' \
+           --include '**/*.Procfile'
+        shell: bash
+      - name: Tag Release
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          custom_tag: ${{ steps.determine_version.outputs.semVer }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - id: create_release
+        name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.determine_version.outputs.semVer }}+run${{ github.run_number }}-attempt${{ github.run_attempt }}
+          release_name: Release ${{ steps.determine_version.outputs.semVer }} Run ${{ github.run_number }} Attempt ${{ github.run_attempt }}
+          draft: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
+          name: Release ${{ steps.determine_version.outputs.semVer }} Run ${{ github.run_number }} Attempt ${{ github.run_attempt }}
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.determine_version.outputs.semVer }}+run${{ github.run_number }}-attempt${{ github.run_attempt }}
+          files: OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip
+      - name: Push packages to Octopus Deploy
+        uses: OctopusDeploy/push-package-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.COPILOT_OCTOPUS_API }}
+          OCTOPUS_URL: ${{ secrets.COPILOT_OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ secrets.COPILOT_OCTOPUS_SPACE }}
+        with:
+          packages: OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip
+          overwrite_mode: OverwriteExisting
+      - name: Create Octopus Release
+        uses: OctopusDeploy/create-release-action@v3
+        env:
+          OCTOPUS_API_KEY: ${{ secrets.COPILOT_OCTOPUS_API }}
+          OCTOPUS_URL: ${{ secrets.COPILOT_OCTOPUS_URL }}
+          OCTOPUS_SPACE: ${{ secrets.COPILOT_OCTOPUS_SPACE }}
+        with:
+          project: Octopus Copilot Function
+          packages: OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip
 permissions:
   id-token: write
   checks: write
