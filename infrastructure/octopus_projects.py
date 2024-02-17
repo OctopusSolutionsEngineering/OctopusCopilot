@@ -12,18 +12,38 @@ http = urllib3.PoolManager()
 
 
 def get_headers(my_get_api_key):
+    """
+    Build the headers used to make an Octopus API request
+    :param my_get_api_key: The function used to get the Octopus API key
+    :return: The headers required to call the Octopus API
+    """
     return {
         "X-Octopus-ApiKey": my_get_api_key()
     }
 
 
 def build_octopus_url(my_get_octopus_api, path, query):
+    """
+    Create a URL from the Octopus URL, additional path, and query params
+    :param my_get_octopus_api: The Octopus UR:
+    :param path: The additional path
+    :param query: Additional query params
+    :return: The URL combining all the inputs
+    """
     parsed = urlparse(my_get_octopus_api())
     query = urlencode(query) if query is not None else ""
     return urlunsplit((parsed.scheme, parsed.netloc, path, query, ""))
 
 
 def get_space_id_and_name_from_name(space_name, my_get_octopus_api, my_get_api_key):
+    """
+    Gets a space ID and actual space name from a name extracted from a query.
+    Note that we are quite lenient here in terms of whitespace and capitalisation.
+    :param space_name: The name of the space
+    :param my_get_api_key: The function used to get the Octopus API key
+    :param my_get_octopus_api: The function used to get the Octopus URL
+    :return: The space ID and actual name
+    """
     api = build_octopus_url(my_get_octopus_api, "api/spaces", dict(take=TAKE_ALL))
     resp = http.request("GET", api, headers=get_headers(my_get_api_key))
 
@@ -46,6 +66,13 @@ def get_space_id_and_name_from_name(space_name, my_get_octopus_api, my_get_api_k
 
 @retry(HTTPError, tries=3, delay=2)
 def get_octopus_project_names_base(space_name, my_get_api_key, my_get_octopus_api):
+    """
+    The base function used to get a list of project names.
+    :param space_name: The name of the Octopus space containing the projects
+    :param my_get_api_key: The function used to get the Octopus API key
+    :param my_get_octopus_api: The function used to get the Octopus URL
+    :return: The list of projects in the space
+    """
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, my_get_octopus_api, my_get_api_key)
     api = build_octopus_url(my_get_octopus_api, "api/" + space_id + "/Projects", dict(take=TAKE_ALL))
     resp = http.request("GET", api, headers=get_headers(my_get_api_key))

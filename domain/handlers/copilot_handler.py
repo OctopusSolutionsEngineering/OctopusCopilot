@@ -11,6 +11,12 @@ my_log = configure_logging()
 
 
 def handle_copilot_chat(query, llm_tools):
+    """
+    This is the handler that responds to a chat request.
+    :param query: The pain text query
+    :param llm_tools: A function that returns the set of tools used by OpenAI
+    :return: The result of the function, defined by the set of tools, that was called in response to the query
+    """
     functions = llm_tools()
     tools = functions.get_tools()
 

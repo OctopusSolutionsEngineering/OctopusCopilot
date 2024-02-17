@@ -10,6 +10,11 @@ app = func.FunctionApp()
 
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
 def query_form(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    A function handler that returns a HTML form for testing
+    :param req: The HTTP request
+    :return: The HTML form
+    """
     try:
         with open("html/query.html", "r") as file:
             return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
@@ -19,6 +24,11 @@ def query_form(req: func.HttpRequest) -> func.HttpResponse:
 
 @app.route(route="form_handler", auth_level=func.AuthLevel.ANONYMOUS)
 def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    A function handler that processes a plain text query
+    :param req: The HTTP request
+    :return: A conversational string with the projects found in the space
+    """
     logging.info('Python HTTP trigger function processed a request.')
 
     req_body = req.get_json()
@@ -35,6 +45,11 @@ def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
         return get_octopus_project_names_response(actual_space_name, projects)
 
     def build_form_tools():
+        """
+        Builds a set of tools configured for use with HTTP requests (i.e. API key
+        and URL extracted from a HTTP request body).
+        :return: The OpenAI tools
+        """
         return FunctionDefinitions([
             FunctionDefinition(get_octopus_project_names_form),
         ])

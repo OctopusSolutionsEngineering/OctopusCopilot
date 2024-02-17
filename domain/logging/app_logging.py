@@ -15,6 +15,10 @@ class OneLineExceptionFormatter(logging.Formatter):
 
 
 def configure_logging():
+    """
+    Configures the Python logging system
+    :return: A custom logger
+    """
     handler = logging.StreamHandler()
     formatter = OneLineExceptionFormatter(logging.BASIC_FORMAT)
     handler.setFormatter(formatter)

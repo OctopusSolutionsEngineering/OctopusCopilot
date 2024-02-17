@@ -7,6 +7,10 @@ from infrastructure.octopus_projects import get_octopus_project_names_base, get_
 
 
 def init_argparse():
+    """
+    Returns the arguments passed to the application.
+    :return: The application arguments
+    """
     parser = argparse.ArgumentParser(
         usage='%(prog)s [OPTION] [FILE]...',
         description='Query the Octopus Copilot agent'
@@ -19,10 +23,18 @@ parser, _ = init_argparse()
 
 
 def get_api_key():
+    """
+    A function that extracts the API key from an environment variable
+    :return: The Octopus API key
+    """
     return os.environ.get('OCTOPUS_CLI_API_KEY')
 
 
 def get_octopus_api():
+    """
+    A function that extarcts the Octopus URL from an environment variable
+    :return: The Octopus URL
+    """
     return os.environ.get('OCTOPUS_CLI_SERVER')
 
 
@@ -38,6 +50,10 @@ def get_octopus_project_names_cli(space_name):
 
 
 def build_tools():
+    """
+    Builds the set of tools configured for use when called as a CLI application
+    :return: The OpenAI tools
+    """
     return FunctionDefinitions([
         FunctionDefinition(get_octopus_project_names_cli),
     ])
