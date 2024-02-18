@@ -17,6 +17,13 @@ def handle_copilot_chat(query, llm_tools):
     :param llm_tools: A function that returns the set of tools used by OpenAI
     :return: The result of the function, defined by the set of tools, that was called in response to the query
     """
+
+    if not query:
+        raise ValueError('query must be a non-empty string.')
+
+    if llm_tools is None:
+        raise ValueError('llm_tools must be a non-empty string.')
+
     functions = llm_tools()
     tools = functions.get_tools()
 

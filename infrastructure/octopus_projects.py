@@ -17,6 +17,10 @@ def get_headers(my_get_api_key):
     :param my_get_api_key: The function used to get the Octopus API key
     :return: The headers required to call the Octopus API
     """
+
+    if my_get_api_key is None:
+        raise ValueError('my_get_api_key must be function returning the Octopus API key.')
+
     return {
         "X-Octopus-ApiKey": my_get_api_key()
     }
@@ -30,6 +34,10 @@ def build_octopus_url(my_get_octopus_api, path, query):
     :param query: Additional query params
     :return: The URL combining all the inputs
     """
+
+    if my_get_octopus_api is None:
+        raise ValueError('my_get_api_key must be function returning the Octopus Url.')
+
     parsed = urlparse(my_get_octopus_api())
     query = urlencode(query) if query is not None else ""
     return urlunsplit((parsed.scheme, parsed.netloc, path, query, ""))
@@ -44,6 +52,16 @@ def get_space_id_and_name_from_name(space_name, my_get_octopus_api, my_get_api_k
     :param my_get_octopus_api: The function used to get the Octopus URL
     :return: The space ID and actual name
     """
+
+    if not space_name:
+        raise ValueError('space_name must be a non-empty string.')
+
+    if my_get_api_key is None:
+        raise ValueError('my_get_api_key must be function returning the Octopus API key.')
+
+    if my_get_octopus_api is None:
+        raise ValueError('my_get_api_key must be function returning the Octopus Url.')
+
     api = build_octopus_url(my_get_octopus_api, "api/spaces", dict(take=TAKE_ALL))
     resp = http.request("GET", api, headers=get_headers(my_get_api_key))
 
@@ -73,6 +91,16 @@ def get_octopus_project_names_base(space_name, my_get_api_key, my_get_octopus_ap
     :param my_get_octopus_api: The function used to get the Octopus URL
     :return: The list of projects in the space
     """
+
+    if not space_name:
+        raise ValueError('space_name must be a non-empty string.')
+
+    if my_get_api_key is None:
+        raise ValueError('my_get_api_key must be function returning the Octopus API key.')
+
+    if my_get_octopus_api is None:
+        raise ValueError('my_get_api_key must be function returning the Octopus Url.')
+
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, my_get_octopus_api, my_get_api_key)
     api = build_octopus_url(my_get_octopus_api, "api/" + space_id + "/Projects", dict(take=TAKE_ALL))
     resp = http.request("GET", api, headers=get_headers(my_get_api_key))

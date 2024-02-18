@@ -13,6 +13,10 @@ class FunctionDefinition:
         the OpenAI tool representation of the function.
         :param function:
         """
+
+        if function is None:
+            raise ValueError('function must reference a valid function.')
+
         self.name = function.__name__
         self.function = function
         self.tool = StructuredTool.from_function(function)
@@ -39,6 +43,10 @@ class FunctionDefinitions:
         :param function_name: The name of the function
         :return: The function associated with the name
         """
+
+        if not function_name:
+            raise ValueError('function_name must be a non-empty string.')
+
         function = list(filter(lambda f: f.name == function_name, self.functions))
         if len(function) == 1:
             return function[0].function
