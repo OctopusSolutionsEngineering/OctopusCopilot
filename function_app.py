@@ -71,7 +71,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         # Create data only SSE response
         # https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#data-only_messages
-        return func.HttpResponse("\n".join(map(lambda l: "data: " + l, result.split("\n"))), headers=headers)
+        return func.HttpResponse("\n".join(map(lambda l: "data: " + l, result.split("\n"))) + "\n\n", headers=headers)
     except Exception as e:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
