@@ -1,8 +1,12 @@
 import azure.functions as func
+from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.logging.app_logging import configure_logging
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
+from domain.validation.octopus_validation import is_hosted_octopus
+from infrastructure.github import get_github_user
 from infrastructure.octopus_projects import get_octopus_project_names_base, get_octopus_project_names_response
+from infrastructure.users import get_users_details, save_users_details
 
 app = func.FunctionApp()
 logger = configure_logging()
@@ -32,6 +36,26 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     :return: A conversational string with the projects found in the space
     """
 
+    def get_github_user_from_form():
+        return get_github_user(lambda: req.headers.get("X-GitHub-Token"))
+
+    def set_octopus_details_from_form(octopus_url):
+        """Sets or saves the Octopus instance of a user
+
+            Args:
+                octopus_url: The URL of an octopus instance, for example https://myinstance.octopus.app,
+                where "myinstance" can be any name
+        """
+
+        if not octopus_url or not octopus_url.strip():
+            raise ValueError('my_get_api_key must be function returning the Octopus Url.')
+
+        if not is_hosted_octopus(octopus_url):
+            raise ValueError('octopus_url must be a Octopus cloud instance.')
+
+        save_users_details(get_github_user_from_form(), octopus_url)
+        return "Successfully updated the Octopus instance"
+
     def get_octopus_project_names_form(space_name):
         """Return a list of project names in an Octopus space
 
@@ -39,9 +63,15 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
                 space_name: The name of the space containing the projects
         """
 
+        try:
+            github_username = get_github_user_from_form()
+            github_user = get_users_details(github_username)
+        except Exception as e:
+            raise UserNotConfigured()
+
         actual_space_name, projects = get_octopus_project_names_base(space_name,
                                                                      lambda: req.headers.get("OCTOPUS_API"),
-                                                                     lambda: req.headers.get("OCTOPUS_URL"))
+                                                                     lambda: github_user["OctopusUrl"])
         logger.info(f"Actual space name: {actual_space_name}")
         logger.info(f"Projects: " + str(projects))
         return get_octopus_project_names_response(actual_space_name, projects)
@@ -54,6 +84,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         """
         return FunctionDefinitions([
             FunctionDefinition(get_octopus_project_names_form),
+            FunctionDefinition(set_octopus_details_from_form),
         ])
 
     # We want to fake an SSE stream. Our "stream" has one result.
@@ -73,7 +104,14 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         # https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#data-only_messages
         # "Each notification is sent as a block of text terminated by a pair of newlines."
         return func.HttpResponse("\n".join(map(lambda l: "data: " + l, result.split("\n"))) + "\n\n", headers=headers)
+    except UserNotConfigured as e:
+        return func.HttpResponse(
+            "data: You must first configure the Octopus cloud instance you wish to interact with.\n" +
+            "data: To configure your Octopus instance, say " +
+            "\"Set my Octopus instance to https://myinstance.octopus.app\" " +
+            "(replacing \"myinstance\" with the name of your Octopus instance).\n\n",
+            status_code=200)
     except Exception as e:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
-        return func.HttpResponse(error_message, status_code=500)
+        return func.HttpResponse("data: " + error_message + "\n\n", status_code=500)
