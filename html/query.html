@@ -46,17 +46,16 @@
         data = {
             url: url.value,
             api: api.value,
-            query: query.value
+            messages: [{content: query.value}]
         }
-        fetch("/api/form_handler", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data), // body data type must match "Content-Type" header
-        })
-            .then(response => response.text())
-            .then(text => textarea.value = text)
+
+        const evtSource = new EventSource("/api/copilot_handler");
+
+        let response = ""
+        evtSource.onmessage = (event) => {
+            response += event.data + "\n"
+            textarea.value = response
+        };
     }
 
     submit.onclick = processQuery

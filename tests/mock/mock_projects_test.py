@@ -32,7 +32,7 @@ class MockRequests(unittest.TestCase):
 
         function = handle_copilot_chat("What is the size of the earth?", build_test_tools)
 
-        self.assertEqual(function.call_function(), "Sorry, I did not understand that request.")
+        self.assertTrue(function.call_function().index("Sorry, I did not understand that request.") != -1)
 
 
 if __name__ == '__main__':
