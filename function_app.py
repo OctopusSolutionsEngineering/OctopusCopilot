@@ -98,13 +98,12 @@ def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
     # Set the content type to text/event-stream
     headers = {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive'
+        'Cache-Control': 'no-cache'
     }
 
     try:
         query = "\n".join(map(lambda m: m["content"], req_body["messages"]))
         result = handle_copilot_chat(query, build_form_tools).call_function()
-        return func.HttpResponse("event: message\n" + result, headers=headers)
+        return func.HttpResponse("data: " + result, headers=headers)
     except Exception as e:
         return func.HttpResponse(getattr(e, 'message', repr(e)))
