@@ -55,11 +55,13 @@
 
         let response = ""
         evtSource.onmessage = (event) => {
+            console.log(event)
             evtSource.close()
             response += event.data + "\n"
             textarea.value = response
         };
         evtSource.onerror = (event) => {
+            console.log(event)
             evtSource.close()
             textarea.value = "The request resulted in an error"
         };
