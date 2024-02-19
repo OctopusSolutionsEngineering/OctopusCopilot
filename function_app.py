@@ -79,8 +79,8 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
                 space_name: The name of the space containing the projects
         """
 
-        actual_space_name, projects = get_octopus_project_names_base(space_name, lambda: req_body["api"],
-                                                                     lambda: req_body["url"])
+        actual_space_name, projects = get_octopus_project_names_base(space_name, lambda: req.headers["OCTOPUS_URL"],
+                                                                     lambda: req.headers["OCTOPUS_API"])
         return get_octopus_project_names_response(actual_space_name, projects)
 
     def build_form_tools():

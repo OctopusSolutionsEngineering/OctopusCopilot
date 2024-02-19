@@ -6,6 +6,7 @@
     <title>Octopus Copilot</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/event-source-polyfill@1.0.31/src/eventsource.min.js"></script>
 </head>
 <body class="m-3">
 <form>
@@ -49,7 +50,12 @@
             messages: [{content: query.value}]
         }
 
-        const evtSource = new EventSource("/api/copilot_handler");
+        var evtSource = new EventSourcePolyfill('/api/copilot_handler', {
+            headers: {
+                'OCTOPUS_URL': url.value,
+                'OCTOPUS_API': api.value
+            }
+        });
 
         let response = ""
         evtSource.onmessage = (event) => {
