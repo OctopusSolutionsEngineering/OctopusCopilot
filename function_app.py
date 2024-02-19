@@ -42,6 +42,8 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         actual_space_name, projects = get_octopus_project_names_base(space_name,
                                                                      lambda: req.headers["OCTOPUS_API"],
                                                                      lambda: req.headers["OCTOPUS_URL"])
+        logger.info(f"Actual space name: {actual_space_name}")
+        logger.info(f"Projects: " + str(projects))
         return get_octopus_project_names_response(actual_space_name, projects)
 
     def build_form_tools():
@@ -63,7 +65,9 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     }
 
     try:
-        result = handle_copilot_chat(req.params.get("message"), build_form_tools).call_function()
+        query = req.params.get("message")
+        logger.info("Query: " + query)
+        result = handle_copilot_chat(query, build_form_tools).call_function()
 
         # Create data only SSE response
         # https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#data-only_messages
