@@ -99,7 +99,7 @@ def get_octopus_project_names_base(space_name, my_get_api_key, my_get_octopus_ap
         raise ValueError('my_get_api_key must be function returning the Octopus API key.')
 
     if my_get_octopus_api is None:
-        raise ValueError('my_get_api_key must be function returning the Octopus Url.')
+        raise ValueError('my_get_octopus_api must be function returning the Octopus Url.')
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, my_get_octopus_api, my_get_api_key)
     api = build_octopus_url(my_get_octopus_api, "api/" + space_id + "/Projects", dict(take=TAKE_ALL))

@@ -40,8 +40,8 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         """
 
         actual_space_name, projects = get_octopus_project_names_base(space_name,
-                                                                     lambda: req.headers["OCTOPUS_API"],
-                                                                     lambda: req.headers["OCTOPUS_URL"])
+                                                                     lambda: req.headers.get("OCTOPUS_API"),
+                                                                     lambda: req.headers.get("OCTOPUS_URL"))
         logger.info(f"Actual space name: {actual_space_name}")
         logger.info(f"Projects: " + str(projects))
         return get_octopus_project_names_response(actual_space_name, projects)
