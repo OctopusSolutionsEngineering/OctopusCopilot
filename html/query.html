@@ -45,6 +45,7 @@
     async function processQuery() {
         textarea.value = "Processing..."
 
+        // Use the polyfill to get the ability to send headers.
         var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(query.value), {
             headers: {
                 'OCTOPUS_URL': url.value,
@@ -56,6 +57,9 @@
         evtSource.onmessage = (event) => {
             response += event.data + "\n"
             textarea.value = response
+        };
+        evtSource.onerror = (event) => {
+            textarea.value = "The request resulted in an error"
         };
     }
 
