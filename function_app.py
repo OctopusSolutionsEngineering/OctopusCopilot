@@ -75,4 +75,4 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     except Exception as e:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
-        return func.HttpResponse(error_message)
+        return func.HttpResponse(error_message, status_code=500)
