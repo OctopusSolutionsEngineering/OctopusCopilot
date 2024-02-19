@@ -1,3 +1,5 @@
+import os
+
 import azure.functions as func
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.handlers.copilot_handler import handle_copilot_chat
@@ -54,7 +56,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         if not is_hosted_octopus(octopus_url):
             raise ValueError('octopus_url must be a Octopus cloud instance.')
 
-        save_users_details(get_github_user_from_form(), octopus_url)
+        save_users_details(get_github_user_from_form(), octopus_url, lambda: os.environ.get("AzureWebJobsStorage"))
         return "Successfully updated the Octopus instance"
 
     def get_octopus_project_names_form(space_name):
@@ -66,7 +68,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         try:
             github_username = get_github_user_from_form()
-            github_user = get_users_details(github_username)
+            github_user = get_users_details(github_username, lambda: os.environ.get("AzureWebJobsStorage"))
         except Exception as e:
             raise UserNotConfigured()
 
@@ -108,8 +110,8 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             + "data: To configure your Octopus instance, say "
             + "\"Set my Octopus instance to https://myinstance.octopus.app\" "
             + "(replacing \"myinstance\" with the name of your Octopus instance).\n\n",
-            status_code=200)
+            status_code=200, headers=headers)
     except Exception as e:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
-        return func.HttpResponse("data: " + error_message + "\n\n", status_code=500)
+        return func.HttpResponse("data: " + error_message + "\n\n", status_code=500, headers=headers)

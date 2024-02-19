@@ -48,7 +48,7 @@
         // Use the polyfill to get the ability to send headers.
         var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(query.value), {
             headers: {
-                'X-GitHub-Token"': token.value,
+                'X-GitHub-Token': token.value,
                 'OCTOPUS_API': api.value
             }
         });
