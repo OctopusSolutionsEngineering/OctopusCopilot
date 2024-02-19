@@ -40,7 +40,6 @@ def handle_copilot_chat(query, llm_tools):
     )
 
     action = agent.plan([], input=query)
-    my_log.debug(action)
 
     # In the event that there was no matched function, return a canned response
     if not hasattr(action, "tool"):
