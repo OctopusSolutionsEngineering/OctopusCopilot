@@ -2,10 +2,12 @@ import logging
 
 import azure.functions as func
 from domain.handlers.copilot_handler import handle_copilot_chat
+from domain.logging.app_logging import configure_logging
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from infrastructure.octopus_projects import get_octopus_project_names_base, get_octopus_project_names_response
 
 app = func.FunctionApp()
+logger = configure_logging()
 
 
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
@@ -68,9 +70,6 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     :param req: The HTTP request
     :return: A conversational string with the projects found in the space
     """
-    logging.info('Python HTTP trigger function processed a request.')
-
-    req_body = req.get_json()
 
     def get_octopus_project_names_form(space_name):
         """Return a list of project names in an Octopus space
@@ -110,4 +109,6 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         # https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#data-only_messages
         return func.HttpResponse("data: " + result, headers=headers)
     except Exception as e:
-        return func.HttpResponse(getattr(e, 'message', repr(e)))
+        error_message = getattr(e, 'message', repr(e))
+        logger.error(error_message)
+        return func.HttpResponse(error_message)
