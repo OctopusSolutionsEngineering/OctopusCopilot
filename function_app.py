@@ -64,7 +64,7 @@ def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
 
 
 @app.route(route="copilot_handler", auth_level=func.AuthLevel.ANONYMOUS)
-def copilot_handler(req: func.HttpRequest, urlparse=None) -> func.HttpResponse:
+def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     """
     A function handler that processes a plain text query
     :param req: The HTTP request
