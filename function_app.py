@@ -3,6 +3,7 @@ from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.logging.app_logging import configure_logging
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
+from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.validation.octopus_validation import is_hosted_octopus
 from infrastructure.github import get_github_user
 from infrastructure.octopus_projects import get_octopus_project_names_base, get_octopus_project_names_response
@@ -100,16 +101,13 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         logger.info("Query: " + query)
         result = handle_copilot_chat(query, build_form_tools).call_function()
 
-        # Create data only SSE response
-        # https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#data-only_messages
-        # "Each notification is sent as a block of text terminated by a pair of newlines."
-        return func.HttpResponse("\n".join(map(lambda l: "data: " + l, result.split("\n"))) + "\n\n", headers=headers)
+        return func.HttpResponse(convert_to_sse_response(result), headers=headers)
     except UserNotConfigured as e:
         return func.HttpResponse(
-            "data: You must first configure the Octopus cloud instance you wish to interact with.\n" +
-            "data: To configure your Octopus instance, say " +
-            "\"Set my Octopus instance to https://myinstance.octopus.app\" " +
-            "(replacing \"myinstance\" with the name of your Octopus instance).\n\n",
+            "data: You must first configure the Octopus cloud instance you wish to interact with.\n"
+            + "data: To configure your Octopus instance, say "
+            + "\"Set my Octopus instance to https://myinstance.octopus.app\" "
+            + "(replacing \"myinstance\" with the name of your Octopus instance).\n\n",
             status_code=200)
     except Exception as e:
         error_message = getattr(e, 'message', repr(e))
