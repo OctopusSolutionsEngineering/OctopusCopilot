@@ -62,7 +62,7 @@ def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
 
 
 @app.route(route="copilot_handler", auth_level=func.AuthLevel.ANONYMOUS)
-def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
+def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     """
     A function handler that processes a plain text query
     :param req: The HTTP request
@@ -104,6 +104,9 @@ def query_form_handler(req: func.HttpRequest) -> func.HttpResponse:
     try:
         query = "\n".join(map(lambda m: m["content"], req_body["messages"]))
         result = handle_copilot_chat(query, build_form_tools).call_function()
+
+        # Create data only SSE response
+        # https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#data-only_messages
         return func.HttpResponse("data: " + result, headers=headers)
     except Exception as e:
         return func.HttpResponse(getattr(e, 'message', repr(e)))
