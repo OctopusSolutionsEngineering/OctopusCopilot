@@ -45,7 +45,7 @@
     async function processQuery() {
         textarea.value = "Processing..."
 
-        var evtSource = new EventSourcePolyfill('/api/copilot_handler?message=' + encodeURIComponent(query.value), {
+        var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(query.value), {
             headers: {
                 'OCTOPUS_URL': url.value,
                 'OCTOPUS_API': api.value
