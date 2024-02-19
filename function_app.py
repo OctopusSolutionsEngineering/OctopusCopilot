@@ -104,8 +104,8 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(convert_to_sse_response(result), headers=headers)
     except UserNotConfigured as e:
         return func.HttpResponse(
-            "data: You must first configure the Octopus cloud instance you wish to interact with.\n"
-            + "data: To configure your Octopus instance, say "
+            "data: You must first configure the Octopus cloud instance you wish to interact with."
+            + "\ndata: To configure your Octopus instance, say "
             + "\"Set my Octopus instance to https://myinstance.octopus.app\" "
             + "(replacing \"myinstance\" with the name of your Octopus instance).\n\n",
             status_code=200)
