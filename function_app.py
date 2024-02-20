@@ -1,4 +1,5 @@
 import os
+import traceback
 
 from azure.core.exceptions import HttpResponseError
 
@@ -178,4 +179,5 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     except Exception as e:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
+        logger.error(traceback.format_exc())
         return func.HttpResponse("data: " + error_message + "\n\n", status_code=500, headers=headers)
