@@ -37,7 +37,7 @@ def query_form(req: func.HttpRequest) -> func.HttpResponse:
 
 
 @app.route(route="login", auth_level=func.AuthLevel.ANONYMOUS)
-def query_form(req: func.HttpRequest) -> func.HttpResponse:
+def login(req: func.HttpRequest) -> func.HttpResponse:
     """
     A function handler that exchanges an OAuth code for an OIDC token
     :param req: The HTTP request
