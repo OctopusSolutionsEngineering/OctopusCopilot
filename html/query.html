@@ -18,12 +18,6 @@
         </div>
     </div>
     <div class="form-group row">
-        <label for="api" class="col-2 offset-2 col-form-label">Octopus API Key</label>
-        <div class="col-6">
-            <input id="api" name="api" type="password" class="form-control">
-        </div>
-    </div>
-    <div class="form-group row">
         <label for="query" class="col-2 offset-2 col-form-label">Query</label>
         <div class="col-6">
             <input id="query" name="query" type="text" class="form-control">
@@ -38,7 +32,6 @@
         <label class="col-2 offset-2 col-form-label" for="textarea">Response</label>
         <div class="col-6">
             <div id="markdown"></div>
-            <textarea readonly id="textarea" name="textarea" cols="40" rows="5" class="form-control"></textarea>
         </div>
     </div>
 </form>
@@ -50,8 +43,7 @@
         // Use the polyfill to get the ability to send headers.
         var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(query.value), {
             headers: {
-                'X-GitHub-Token': token.value,
-                'OCTOPUS_API': api.value
+                'X-GitHub-Token': token.value
             }
         });
 
