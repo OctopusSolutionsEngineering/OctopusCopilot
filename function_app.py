@@ -16,7 +16,7 @@ from infrastructure.azure_b2c import exchange_code
 from infrastructure.github import get_github_user
 from infrastructure.octopus_projects import get_octopus_project_names_base, get_octopus_project_names_response
 from infrastructure.users import get_users_details, save_users_octopus_url, save_users_id_token, save_login_state_id, \
-    get_login_details
+    get_login_details, delete_login_details
 
 app = func.FunctionApp()
 logger = configure_logging()
@@ -47,6 +47,7 @@ def login(req: func.HttpRequest) -> func.HttpResponse:
     try:
         pair_id = req.params.get("state")
         login_entity = get_login_details(pair_id, lambda: os.environ.get("AzureWebJobsStorage"))
+        delete_login_details(pair_id, lambda: os.environ.get("AzureWebJobsStorage"))
 
         if not login_entity["Username"]:
             raise LoginStateNotMatched()
@@ -109,6 +110,9 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         """
         github_username = get_github_user_from_form()
 
+        if not github_username:
+            return "You must be logged in to GitHub to chat"
+
         try:
             github_user = get_users_details(github_username, lambda: os.environ.get("AzureWebJobsStorage"))
             if not github_user["OctopusUrl"]:
@@ -155,12 +159,16 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         return func.HttpResponse(convert_to_sse_response(result), headers=headers)
     except UserNotLoggedIn as e:
+        # This exception means there is no ID token persisted for the GitHub user making the request.
+        # The user must perform a login with the Azure B2C tenant to generate an ID token.
         uuid = save_login_state_id(get_github_user_from_form(), lambda: os.environ.get("AzureWebJobsStorage"))
         return func.HttpResponse(
             "data: You must log in before you can query the Octopus instance.\n"
             + f"data: Click [here]({get_login_url()}&state={uuid}) to log into the chat agent\n\n",
             status_code=200, headers=headers)
     except UserNotConfigured as e:
+        # This exception means there is no Octopus instance configured for the GitHub user making the request.
+        # The Octopus instance is supplied via a chat message.
         return func.HttpResponse(
             "data: You must first configure the Octopus cloud instance you wish to interact with.\n"
             + "data: To configure your Octopus instance, say "
