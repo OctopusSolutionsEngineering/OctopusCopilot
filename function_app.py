@@ -101,8 +101,10 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         if not is_hosted_octopus(octopus_url):
             raise ValueError('octopus_url must be a Octopus cloud instance.')
 
-        save_users_octopus_url(get_github_user_from_form(), octopus_url,
+        save_users_octopus_url(get_github_user_from_form(),
+                               octopus_url,
                                lambda: os.environ.get("AzureWebJobsStorage"))
+        
         return "Successfully updated the Octopus instance"
 
     def get_octopus_project_names_form(space_name):
