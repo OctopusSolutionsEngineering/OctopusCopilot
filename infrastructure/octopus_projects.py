@@ -50,7 +50,7 @@ def get_space_id_and_name_from_name(space_name, my_get_octopus_api, my_get_api_k
     :return: The space ID and actual name
     """
 
-    if not space_name or not isinstance(space_name, str):
+    if not space_name or not isinstance(space_name, str) or not space_name.strip():
         raise ValueError('space_name must be a non-empty string.')
 
     if my_get_api_key is None:

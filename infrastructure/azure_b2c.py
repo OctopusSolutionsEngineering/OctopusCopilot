@@ -10,7 +10,7 @@ def exchange_code(code, get_url, get_client_secret, get_client_id, get_redirect_
     :param get_client_secret: A function returning the client secret
     :param get_client_id:   A function returning the client ID
     :param get_redirect_url: A function returning the redirection URL
-    :return:
+    :return: The ID token
     """
     resp = http.request_encode_body("POST",
                                     get_url(),

@@ -16,6 +16,7 @@ from domain.validation.octopus_validation import is_hosted_octopus
 from infrastructure.azure_b2c import exchange_code
 from infrastructure.github import get_github_user
 from infrastructure.octopus_projects import get_octopus_project_names_base, get_octopus_project_names_response
+from infrastructure.octopus_token import exchange_id_token_for_api_key
 from infrastructure.users import get_users_details, save_users_octopus_url, save_users_id_token, save_login_state_id, \
     get_login_details, delete_login_details
 
@@ -85,12 +86,15 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     def get_github_user_from_form():
         return get_github_user(lambda: req.headers.get("X-GitHub-Token"))
 
-    def set_octopus_details_from_form(octopus_url):
+    def set_octopus_details_from_form(octopus_url, service_account_id):
         """Sets or saves the Octopus instance of a user
 
             Args:
                 octopus_url: The URL of an octopus instance, for example https://myinstance.octopus.app,
                 where "myinstance" can be any name
+
+                service_account_id: The ID of an octopus service account in the form of a GUID, for example
+                ad1576ef-b053-4c85-b983-c0607045ae1f
         """
 
         logger.info("Calling set_octopus_details_from_form")
@@ -98,11 +102,15 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         if not octopus_url or not isinstance(octopus_url, str) or not octopus_url.strip():
             raise ValueError('octopus_url must be an Octopus Url.')
 
+        if not service_account_id or not isinstance(service_account_id, str) or not service_account_id.strip():
+            raise ValueError('service_account_id must be the ID of a service account.')
+
         if not is_hosted_octopus(octopus_url):
             raise ValueError('octopus_url must be a Octopus cloud instance.')
 
         save_users_octopus_url(get_github_user_from_form(),
                                octopus_url,
+                               service_account_id,
                                lambda: os.environ.get("AzureWebJobsStorage"))
 
         return "Successfully updated the Octopus instance"
@@ -123,16 +131,19 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         try:
             github_user = get_users_details(github_username, lambda: os.environ.get("AzureWebJobsStorage"))
-            if not github_user["OctopusUrl"]:
-                raise UserNotConfigured()
             if not github_user["IdToken"]:
                 raise UserNotLoggedIn()
+            if not github_user["OctopusUrl"] or not github_user["OctopusServiceAccountId"]:
+                raise UserNotConfigured()
         except HttpResponseError as e:
-            # assume any exception means the user must configure their Octopus instance
-            raise UserNotConfigured()
+            # assume any exception means the user must log in
+            raise UserNotLoggedIn()
 
         actual_space_name, projects = get_octopus_project_names_base(space_name,
-                                                                     lambda: github_user["IdToken"],
+                                                                     lambda: exchange_id_token_for_api_key(
+                                                                         github_user["IdToken"],
+                                                                         github_user["OctopusServiceAccountId"],
+                                                                         lambda: github_user["OctopusUrl"]),
                                                                      lambda: github_user["OctopusUrl"])
         logger.info(f"Actual space name: {actual_space_name}")
         logger.info(f"Projects: " + str(projects))
@@ -180,8 +191,8 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             "data: You must first configure the Octopus cloud instance you wish to interact with.\n"
             + "data: To configure your Octopus instance, say "
-            + "\"Set my Octopus instance to https://myinstance.octopus.app\" "
-            + "(replacing \"myinstance\" with the name of your Octopus instance).\n\n",
+            + "\"Set my Octopus instance to https://myinstance.octopus.app and service account ID to aeeffdee-94ca-4200-88bb-94689e86c961\" "
+            + "(replacing \"myinstance\" with the name of your Octopus instance, and the GUID to the ID of the service account with the OIDC identity to use).\n\n",
             status_code=200, headers=headers)
     except Exception as e:
         error_message = getattr(e, 'message', repr(e))
