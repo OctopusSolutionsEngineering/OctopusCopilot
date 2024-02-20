@@ -76,7 +76,7 @@ def save_login_state_id(username, connection_string):
     }
 
     table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
-    table_client = table_service_client.create_table_if_not_exists("user_login")
+    table_client = table_service_client.create_table_if_not_exists("userlogin")
     table_client.upsert_entity(user, mode=UpdateMode.REPLACE)
     return mapping_uuid
 
@@ -105,7 +105,7 @@ def get_login_details(state, connection_string):
         raise ValueError('connection_string must be function returning the connection string (get_login_details).')
 
     table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
-    table_client = table_service_client.create_table_if_not_exists("user_login")
+    table_client = table_service_client.create_table_if_not_exists("userlogin")
     return table_client.get_entity("github.com", state)
 
 
@@ -121,7 +121,7 @@ def delete_login_details(state, connection_string):
 
     try:
         table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
-        table_client = table_service_client.get_table_client(table_name="user_login")
+        table_client = table_service_client.get_table_client(table_name="userlogin")
         return table_client.delete_entity("github.com", state)
     except HttpResponseError as e:
         # Cleaning up old pairs is a best effort operation
