@@ -93,6 +93,8 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
                 where "myinstance" can be any name
         """
 
+        logger.info("Calling set_octopus_details_from_form")
+
         if not octopus_url or not isinstance(octopus_url, str) or not octopus_url.strip():
             raise ValueError('octopus_url must be an Octopus Url.')
 
@@ -109,6 +111,9 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             Args:
                 space_name: The name of the space containing the projects
         """
+
+        logger.info("Calling get_octopus_project_names_form")
+
         github_username = get_github_user_from_form()
 
         if not github_username:
