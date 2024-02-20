@@ -5,7 +5,10 @@ from urllib3.exceptions import HTTPError
 
 from domain.exceptions.request_failed import RequestFailed
 from domain.exceptions.space_not_found import SpaceNotFound
+from domain.logging.app_logging import configure_logging
 from infrastructure.http_pool import http, TAKE_ALL
+
+logger = configure_logging()
 
 
 def get_octopus_headers(my_get_api_key):
@@ -50,6 +53,8 @@ def get_space_id_and_name_from_name(space_name, my_get_octopus_api, my_get_api_k
     :return: The space ID and actual name
     """
 
+    logger.info("Calling get_space_id_and_name_from_name")
+
     if not space_name or not isinstance(space_name, str) or not space_name.strip():
         raise ValueError('space_name must be a non-empty string.')
 
@@ -88,6 +93,8 @@ def get_octopus_project_names_base(space_name, my_get_api_key, my_get_octopus_ap
     :param my_get_octopus_api: The function used to get the Octopus URL
     :return: The list of projects in the space
     """
+
+    logger.info("Calling get_octopus_project_names_base")
 
     if not space_name or not isinstance(space_name, str):
         raise ValueError('space_name must be a non-empty string.')
