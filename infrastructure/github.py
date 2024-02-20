@@ -53,4 +53,4 @@ def get_github_user(get_token):
 
     json = resp.json()
 
-    return json["id"]
+    return str(json["id"])
