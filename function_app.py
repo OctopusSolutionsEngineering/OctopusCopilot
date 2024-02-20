@@ -131,19 +131,21 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         try:
             github_user = get_users_details(github_username, lambda: os.environ.get("AzureWebJobsStorage"))
-            if not github_user["IdToken"]:
+            if "IdToken" not in github_user:
                 raise UserNotLoggedIn()
-            if not github_user["OctopusUrl"] or not github_user["OctopusServiceAccountId"]:
+            if "OctopusUrl" not in github_user or "OctopusServiceAccountId" not in github_user:
                 raise UserNotConfigured()
         except HttpResponseError as e:
             # assume any exception means the user must log in
             raise UserNotLoggedIn()
 
+        api_key = exchange_id_token_for_api_key(
+            github_user["IdToken"],
+            github_user["OctopusServiceAccountId"],
+            lambda: github_user["OctopusUrl"])
+
         actual_space_name, projects = get_octopus_project_names_base(space_name,
-                                                                     lambda: exchange_id_token_for_api_key(
-                                                                         github_user["IdToken"],
-                                                                         github_user["OctopusServiceAccountId"],
-                                                                         lambda: github_user["OctopusUrl"]),
+                                                                     lambda: api_key,
                                                                      lambda: github_user["OctopusUrl"])
         logger.info(f"Actual space name: {actual_space_name}")
         logger.info(f"Projects: " + str(projects))
