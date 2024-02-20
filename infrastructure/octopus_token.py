@@ -1,5 +1,8 @@
 from domain.exceptions.request_failed import RequestFailed
+from domain.logging.app_logging import configure_logging
 from infrastructure.http_pool import http
+
+logger = configure_logging()
 
 
 def exchange_id_token_for_api_key(id_token, service_account_id, my_get_octopus_api):
@@ -11,6 +14,8 @@ def exchange_id_token_for_api_key(id_token, service_account_id, my_get_octopus_a
     :param my_get_octopus_api: A function returning the Octopus URL
     :return: An octopus API key
     """
+
+    logger.info("Calling exchange_id_token_for_api_key")
 
     if not id_token or not isinstance(id_token, str) or not id_token.strip():
         raise ValueError('id_token must be a non-empty string.')
