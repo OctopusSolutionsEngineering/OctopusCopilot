@@ -1,7 +1,7 @@
 import uuid
 
 from azure.core.exceptions import HttpResponseError
-from azure.data.tables import TableServiceClient
+from azure.data.tables import TableServiceClient, UpdateMode
 
 from domain.logging.app_logging import configure_logging
 
@@ -77,7 +77,7 @@ def save_login_state_id(username, connection_string):
 
     table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
     table_client = table_service_client.create_table_if_not_exists("user_login")
-    table_client.upsert_entity(user)
+    table_client.upsert_entity(user, mode=UpdateMode.REPLACE)
     return mapping_uuid
 
 
