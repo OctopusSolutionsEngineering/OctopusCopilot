@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>Octopus Copilot Login</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body class="m-3">
+<form>
+    <div class="form-group row">
+        <div class="col-8">
+            You have successfully logged in. To allow Copilot to interact with Octopus, you must configure a
+            <a href="https://octopus.com/docs/security/users-and-teams/service-accounts#openid-connect-oidc">Service
+                Account</a>
+            with an OIDC identity matching the details below. This Service Account is then used to generate
+            temporary API tokens that Copilot authenticates with to access the Octopus API.
+        </div>
+    </div>
+    <div class="form-group row">
+        <label for="api" class="col-2 offset-2 col-form-label">Issuer</label>
+        <div class="col-6">
+            #{Issuer}
+        </div>
+    </div>
+    <div class="form-group row">
+        <label for="api" class="col-2 offset-2 col-form-label">Subject</label>
+        <div class="col-6">
+            #{Subject}
+        </div>
+    </div>
+
+</form>
+</body>
+</html>

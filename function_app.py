@@ -1,15 +1,22 @@
 import os
 
+from azure.core.exceptions import HttpResponseError
+
 import azure.functions as func
+from domain.exceptions.login_state_not_matched import LoginStateNotMatched
 from domain.exceptions.user_not_configured import UserNotConfigured
+from domain.exceptions.user_not_loggedin import UserNotLoggedIn
 from domain.handlers.copilot_handler import handle_copilot_chat
+from domain.jwt.oidc import parse_jwt
 from domain.logging.app_logging import configure_logging
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.validation.octopus_validation import is_hosted_octopus
+from infrastructure.azure_b2c import exchange_code
 from infrastructure.github import get_github_user
 from infrastructure.octopus_projects import get_octopus_project_names_base, get_octopus_project_names_response
-from infrastructure.users import get_users_details, save_users_details
+from infrastructure.users import get_users_details, save_users_octopus_url, save_users_id_token, save_login_state_id, \
+    get_login_details
 
 app = func.FunctionApp()
 logger = configure_logging()
@@ -27,6 +34,40 @@ def query_form(req: func.HttpRequest) -> func.HttpResponse:
             return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
     except Exception as e:
         return func.HttpResponse("Failed to read form HTML", status_code=500)
+
+
+@app.route(route="login", auth_level=func.AuthLevel.ANONYMOUS)
+def query_form(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    A function handler that exchanges an OAuth code for an OIDC token
+    :param req: The HTTP request
+    :return: The HTML form
+    """
+
+    try:
+        pair_id = req.params.get("state")
+        login_entity = get_login_details(pair_id, lambda: os.environ.get("AzureWebJobsStorage"))
+
+        if not login_entity["Username"]:
+            raise LoginStateNotMatched()
+
+        id_token = exchange_code(req.params.get("code"),
+                                 lambda: os.environ.get("OAUTH_TOKEN_URL"),
+                                 lambda: os.environ.get("OAUTH_CLIENTSECRET"),
+                                 lambda: os.environ.get("OAUTH_CLIENTID"),
+                                 lambda: os.environ.get("OAUTH_REDIRECTURL"))
+
+        save_users_id_token(login_entity["Username"], id_token,
+                            lambda: os.environ.get("AzureWebJobsStorage"))
+
+        jwt = parse_jwt(id_token)
+        with open("html/login.html", "r") as file:
+            html = file.read()
+            html = html.replace("#{Subject}", jwt["sub"])
+            html = html.replace("#{Issuer}", jwt["iss"])
+            return func.HttpResponse(html, headers={"Content-Type": "text/html"})
+    except Exception as e:
+        return func.HttpResponse("Login failed", status_code=500)
 
 
 @app.route(route="form_handler", auth_level=func.AuthLevel.ANONYMOUS)
@@ -56,7 +97,8 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         if not is_hosted_octopus(octopus_url):
             raise ValueError('octopus_url must be a Octopus cloud instance.')
 
-        save_users_details(get_github_user_from_form(), octopus_url, lambda: os.environ.get("AzureWebJobsStorage"))
+        save_users_octopus_url(get_github_user_from_form(), octopus_url,
+                               lambda: os.environ.get("AzureWebJobsStorage"))
         return "Successfully updated the Octopus instance"
 
     def get_octopus_project_names_form(space_name):
@@ -65,15 +107,20 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             Args:
                 space_name: The name of the space containing the projects
         """
+        github_username = get_github_user_from_form()
 
         try:
-            github_username = get_github_user_from_form()
             github_user = get_users_details(github_username, lambda: os.environ.get("AzureWebJobsStorage"))
-        except Exception as e:
+            if not github_user["OctopusUrl"]:
+                raise UserNotConfigured()
+            if not github_user["IdToken"]:
+                raise UserNotLoggedIn()
+        except HttpResponseError as e:
+            # assume any exception means the user must configure their Octopus instance
             raise UserNotConfigured()
 
         actual_space_name, projects = get_octopus_project_names_base(space_name,
-                                                                     lambda: req.headers.get("OCTOPUS_API"),
+                                                                     lambda: github_user["IdToken"],
                                                                      lambda: github_user["OctopusUrl"])
         logger.info(f"Actual space name: {actual_space_name}")
         logger.info(f"Projects: " + str(projects))
@@ -90,6 +137,9 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             FunctionDefinition(set_octopus_details_from_form),
         ])
 
+    def get_login_url():
+        return os.environ.get("OAUTH_LOGIN")
+
     # We want to fake an SSE stream. Our "stream" has one result.
 
     # Set the content type to text/event-stream
@@ -104,6 +154,12 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         result = handle_copilot_chat(query, build_form_tools).call_function()
 
         return func.HttpResponse(convert_to_sse_response(result), headers=headers)
+    except UserNotLoggedIn as e:
+        uuid = save_login_state_id(get_github_user_from_form(), lambda: os.environ.get("AzureWebJobsStorage"))
+        return func.HttpResponse(
+            "data: You must log in before you can query the Octopus instance.\n"
+            + f"data: Click [here]({get_login_url()}&state={uuid}) to log into the chat agent\n\n",
+            status_code=200, headers=headers)
     except UserNotConfigured as e:
         return func.HttpResponse(
             "data: You must first configure the Octopus cloud instance you wish to interact with.\n"
