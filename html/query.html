@@ -57,7 +57,7 @@
         evtSource.onerror = (event) => {
             console.log(event)
             evtSource.close()
-            textarea.value = "The request resulted in an error"
+            markdown.innerHTML = "The request resulted in an error"
         };
     }
 

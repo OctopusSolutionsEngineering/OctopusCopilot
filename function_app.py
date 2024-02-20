@@ -93,8 +93,8 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
                 where "myinstance" can be any name
         """
 
-        if not octopus_url or not octopus_url.strip():
-            raise ValueError('my_get_api_key must be function returning the Octopus Url.')
+        if not octopus_url or not isinstance(octopus_url, str) or not octopus_url.strip():
+            raise ValueError('octopus_url must be an Octopus Url.')
 
         if not is_hosted_octopus(octopus_url):
             raise ValueError('octopus_url must be a Octopus cloud instance.')
@@ -180,4 +180,5 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
         logger.error(traceback.format_exc())
-        return func.HttpResponse("data: " + error_message + "\n\n", status_code=500, headers=headers)
+        return func.HttpResponse("data: An exception was raised. See the logs for more details.\n\n", status_code=500,
+                                 headers=headers)
