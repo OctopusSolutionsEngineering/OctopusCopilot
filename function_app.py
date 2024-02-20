@@ -104,7 +104,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         save_users_octopus_url(get_github_user_from_form(),
                                octopus_url,
                                lambda: os.environ.get("AzureWebJobsStorage"))
-        
+
         return "Successfully updated the Octopus instance"
 
     def get_octopus_project_names_form(space_name):
