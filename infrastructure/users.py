@@ -67,7 +67,7 @@ def save_login_state_id(username, connection_string):
     if connection_string is None:
         raise ValueError('connection_string must be function returning the connection string (save_login_state_id).')
 
-    mapping_uuid = uuid.uuid4()
+    mapping_uuid = str(uuid.uuid4())
 
     user = {
         'PartitionKey': "github.com",
