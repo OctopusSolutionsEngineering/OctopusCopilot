@@ -167,21 +167,47 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     def get_login_url():
         return os.environ.get("OAUTH_LOGIN")
 
-    # We want to fake an SSE stream. Our "stream" has one result.
-
-    # Set the content type to text/event-stream
-    headers = {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache'
-    }
-
     try:
         query = req.params.get("message")
         logger.info("Query: " + query)
         result = handle_copilot_chat(query, build_form_tools).call_function()
 
-        return func.HttpResponse(convert_to_sse_response(result), headers=headers)
+        return func.HttpResponse(convert_to_sse_response(result), headers=get_sse_headers())
     except UserNotLoggedIn as e:
+        return redirect_to_login(get_github_user_from_form, get_login_url)
+    except UserNotConfigured as e:
+        return request_configu_details()
+    except Exception as e:
+        error_message = getattr(e, 'message', repr(e))
+        logger.error(error_message)
+        logger.error(traceback.format_exc())
+        return func.HttpResponse("data: An exception was raised. See the logs for more details.\n\n",
+                                 status_code=500,
+                                 headers=get_sse_headers())
+
+
+def get_sse_headers():
+    return {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache'
+    }
+
+
+def request_configu_details():
+    # This exception means there is no Octopus instance configured for the GitHub user making the request.
+    # The Octopus instance is supplied via a chat message.
+    logger.info("User has not configured Octopus instance")
+    return func.HttpResponse(
+        "data: You must first configure the Octopus cloud instance you wish to interact with.\n"
+        + "data: To configure your Octopus instance, say "
+        + "\"Set my Octopus instance to https://myinstance.octopus.app and service account ID to aeeffdee-94ca-4200-88bb-94689e86c961\" "
+        + "(replacing \"myinstance\" with the name of your Octopus instance, and the GUID to the ID of the service account with the OIDC identity to use).\n\n",
+        status_code=200,
+        headers=get_sse_headers())
+
+
+def redirect_to_login(get_github_user_from_form, get_login_url):
+    try:
         # This exception means there is no ID token persisted for the GitHub user making the request.
         # The user must perform a login with the Azure B2C tenant to generate an ID token.
         logger.info("User is not logged")
@@ -191,22 +217,11 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             "data: You must log in before you can query the Octopus instance.\n"
             + f"data: Click [here]({get_login_url()}&state={uuid}) to log into the chat agent\n\n",
             status_code=200,
-            headers=headers)
-    except UserNotConfigured as e:
-        # This exception means there is no Octopus instance configured for the GitHub user making the request.
-        # The Octopus instance is supplied via a chat message.
-        logger.info("User has not configured Octopus instance")
-        return func.HttpResponse(
-            "data: You must first configure the Octopus cloud instance you wish to interact with.\n"
-            + "data: To configure your Octopus instance, say "
-            + "\"Set my Octopus instance to https://myinstance.octopus.app and service account ID to aeeffdee-94ca-4200-88bb-94689e86c961\" "
-            + "(replacing \"myinstance\" with the name of your Octopus instance, and the GUID to the ID of the service account with the OIDC identity to use).\n\n",
-            status_code=200,
-            headers=headers)
+            headers=get_sse_headers())
     except Exception as e:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
         logger.error(traceback.format_exc())
         return func.HttpResponse("data: An exception was raised. See the logs for more details.\n\n",
                                  status_code=500,
-                                 headers=headers)
+                                 headers=get_sse_headers())
