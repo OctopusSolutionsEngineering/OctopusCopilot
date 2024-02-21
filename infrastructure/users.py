@@ -59,7 +59,7 @@ def save_users_id_token(username, id_token, connection_string):
 
 
 def save_login_state_id(username, connection_string):
-    logger.info("Calling save_login_state_id")
+    logger.info("save_login_state_id - Enter")
 
     if not username or not isinstance(username, str) or not username.strip():
         raise ValueError("username must be the GitHub user's ID (save_login_state_id).")
@@ -77,6 +77,8 @@ def save_login_state_id(username, connection_string):
 
     table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
     table_client = table_service_client.create_table_if_not_exists("userlogin")
+
+    logger.info("save_login_state_id - upsert")
     table_client.upsert_entity(user, mode=UpdateMode.REPLACE)
     return mapping_uuid
 
