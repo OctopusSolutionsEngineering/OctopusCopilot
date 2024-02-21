@@ -35,7 +35,7 @@ def resource_server_exists(get_auth0_domain, service_account_id, access_token):
     }
 
     resp = http.request("GET",
-                        get_auth0_domain() + " /api/v2/resource-servers/" + service_account_id,
+                        get_auth0_domain() + "/api/v2/resource-servers/" + service_account_id,
                         headers=headers)
 
     if resp.status == 200:
