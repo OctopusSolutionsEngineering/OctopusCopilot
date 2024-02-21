@@ -1,27 +1,18 @@
-import json
 import os
 import traceback
 
 from azure.core.exceptions import HttpResponseError
-from jwt.exceptions import JWTDecodeError
 
 import azure.functions as func
-from domain.exceptions.login_state_not_matched import LoginStateNotMatched
 from domain.exceptions.user_not_configured import UserNotConfigured
-from domain.exceptions.user_not_loggedin import UserNotLoggedIn
 from domain.handlers.copilot_handler import handle_copilot_chat
-from domain.jwt.oidc import parse_jwt
 from domain.logging.app_logging import configure_logging
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.validation.octopus_validation import is_hosted_octopus
-from infrastructure.auth0 import create_management_api_token, create_resource_server, resource_server_exists
-from infrastructure.azure_b2c import exchange_code
 from infrastructure.github import get_github_user
 from infrastructure.octopus_projects import get_octopus_project_names_base, get_octopus_project_names_response
-from infrastructure.octopus_token import exchange_id_token_for_api_key
-from infrastructure.users import get_users_details, save_users_octopus_url, save_users_id_token, save_login_state_id, \
-    get_login_details, delete_login_details
+from infrastructure.users import get_users_details, save_users_octopus_url
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
@@ -44,45 +35,6 @@ def query_form(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("Failed to read form HTML", status_code=500)
 
 
-@app.route(route="login", auth_level=func.AuthLevel.ANONYMOUS)
-def login(req: func.HttpRequest) -> func.HttpResponse:
-    """
-    A function handler that exchanges an OAuth code for an OIDC token
-    :param req: The HTTP request
-    :return: The HTML form
-    """
-
-    try:
-        pair_id = req.params.get("state")
-        login_entity = get_login_details(pair_id, lambda: os.environ.get("AzureWebJobsStorage"))
-        delete_login_details(pair_id, lambda: os.environ.get("AzureWebJobsStorage"))
-
-        if "Username" not in login_entity:
-            raise LoginStateNotMatched()
-
-        id_token = exchange_code(req.params.get("code"),
-                                 lambda: os.environ.get("OAUTH_TOKEN_URL"),
-                                 lambda: os.environ.get("OAUTH_CLIENTSECRET"),
-                                 lambda: os.environ.get("OAUTH_CLIENTID"),
-                                 lambda: os.environ.get("OAUTH_REDIRECTURL"))
-
-        save_users_id_token(login_entity["Username"], id_token,
-                            lambda: os.environ.get("AzureWebJobsStorage"))
-
-        jwt = parse_jwt(id_token)
-        with open("html/login.html", "r") as file:
-            html = file.read()
-            html = html.replace("#{Subject}", jwt["sub"])
-            html = html.replace("#{Issuer}",
-                                "https://octopuscopilot.b2clogin.com/octopuscopilot.onmicrosoft.com/B2C_1_Login/v2.0")
-            return func.HttpResponse(html, headers={"Content-Type": "text/html"})
-    except Exception as e:
-        error_message = getattr(e, 'message', repr(e))
-        logger.error(error_message)
-        logger.error(traceback.format_exc())
-        return func.HttpResponse("Login failed", status_code=500)
-
-
 @app.route(route="form_handler", auth_level=func.AuthLevel.ANONYMOUS)
 def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     """
@@ -95,22 +47,6 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
     def get_github_user_from_form():
         return get_github_user(lambda: req.headers.get("X-GitHub-Token"))
-
-    def get_id_token():
-        """Returns the parsed id token associated with the user.
-        """
-        github_username = get_github_user_from_form()
-        github_user = get_users_details(github_username, lambda: os.environ.get("AzureWebJobsStorage"))
-
-        if "IdToken" not in github_user:
-            logger.info("No IdToken")
-            return "There is no ID token associated with the current user"
-
-        try:
-            token = parse_jwt(github_user["IdToken"])
-            return json.dumps(token)
-        except JWTDecodeError as e:
-            return "There ID token is expired or invalid"
 
     def set_octopus_details_from_form(octopus_url, service_account_id):
         """Sets or saves the Octopus instance of a user
@@ -160,31 +96,16 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
             # We need to configure the Octopus details first because we need to know the service account id
             # before attempting to generate an ID token.
-            if "OctopusUrl" not in github_user or "OctopusServiceAccountId" not in github_user:
-                logger.info("No OctopusUrl or OctopusServiceAccountId")
+            if "OctopusUrl" not in github_user or "OctopusApiKey" not in github_user:
+                logger.info("No OctopusUrl or OctopusApiKey")
                 raise UserNotConfigured()
 
-            if "IdToken" not in github_user:
-                logger.info("No IdToken")
-                raise UserNotLoggedIn()
-
-            try:
-                parse_jwt(github_user["IdToken"])
-            except JWTDecodeError as e:
-                # Assume the inability to parse the token means it is invalid
-                logger.info("IdToken invalid")
-                raise UserNotLoggedIn()
         except HttpResponseError as e:
             # assume any exception means the user must log in
-            raise UserNotLoggedIn()
-
-        api_key = exchange_id_token_for_api_key(
-            github_user["IdToken"],
-            github_user["OctopusServiceAccountId"],
-            lambda: github_user["OctopusUrl"])
+            raise UserNotConfigured()
 
         actual_space_name, projects = get_octopus_project_names_base(space_name,
-                                                                     lambda: api_key,
+                                                                     lambda: github_user["OctopusApiKey"],
                                                                      lambda: github_user["OctopusUrl"])
         logger.info(f"Actual space name: {actual_space_name}")
         logger.info(f"Projects: " + str(projects))
@@ -199,14 +120,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         return FunctionDefinitions([
             FunctionDefinition(get_octopus_project_names_form),
             FunctionDefinition(set_octopus_details_from_form),
-            FunctionDefinition(get_id_token),
         ])
-
-    def get_azure_login_url():
-        return os.environ.get("OAUTH_LOGIN")
-
-    def get_auth0_login_url():
-        return os.environ.get("AUTH0_APPLICATION_LOGIN")
 
     try:
         query = req.params.get("message")
@@ -214,14 +128,11 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         result = handle_copilot_chat(query, build_form_tools).call_function()
 
         return func.HttpResponse(convert_to_sse_response(result), headers=get_sse_headers())
-    except UserNotLoggedIn as e:
-        # This exception means there is no ID token persisted for the GitHub user making the request.
-        # The user must perform a login with the Azure B2C tenant to generate an ID token.
-        return redirect_to_auth0_login(get_github_user_from_form, get_azure_login_url)
+
     except UserNotConfigured as e:
         # This exception means there is no Octopus instance configured for the GitHub user making the request.
         # The Octopus instance is supplied via a chat message.
-        return request_configu_details(get_github_user_from_form)
+        return request_config_details()
     except Exception as e:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
@@ -238,82 +149,16 @@ def get_sse_headers():
     }
 
 
-def request_configu_details(get_github_user_from_form):
+def request_config_details():
     try:
         logger.info("User has not configured Octopus instance")
-        github_user = get_users_details(get_github_user_from_form(), lambda: os.environ.get("AzureWebJobsStorage"))
-        id_token = github_user["IdToken"]
-        jwt = parse_jwt(id_token)
-        logger.info("JWT: %s", jwt)
-        sub = jwt['sub']
         return func.HttpResponse(convert_to_sse_response(
             "You must first configure the Octopus cloud instance you wish to interact with.\n"
             + "\n"
             + "To configure your Octopus instance, say "
-            + "`Set my Octopus instance to https://myinstance.octopus.app and service account ID to "
-            + "`{sub}` (replacing `myinstance` with the hostname of your Octopus "
-            + "instance, and `aeeffdee-94ca-4200-88bb-94689e86c961` with the ID of your OIDC enabled service "
-            + "account).\n"
-            + "\n"
-            + "See the [documentation]"
-            + "(https://octopus.com/docs/security/users-and-teams/service-accounts#openid-connect-oidc) for more "
-            + "details on configuring a service account with an OIDC identity and obtaining the service account ID.\n"
-            + "\n"
-            + f"Your OIDC subject is `{sub}` and the issuer is "
-            + "`https://octopuscopilot.b2clogin.com/octopuscopilot.onmicrosoft.com/B2C_1_Login/v2.0`."),
-            status_code=200,
-            headers=get_sse_headers())
-    except Exception as e:
-        error_message = getattr(e, 'message', repr(e))
-        logger.error(error_message)
-        logger.error(traceback.format_exc())
-        return func.HttpResponse("data: An exception was raised. See the logs for more details.\n\n",
-                                 status_code=500,
-                                 headers=get_sse_headers())
-
-
-def redirect_to_azure_login(get_github_user_from_form, get_login_url):
-    try:
-        logger.info("User is not logged")
-        uuid = save_login_state_id(get_github_user_from_form(), lambda: os.environ.get("AzureWebJobsStorage"))
-        logger.info("Redirecting to login")
-        return func.HttpResponse(
-            "data: You must log in before you can query the Octopus instance.\n"
-            + f"data: Click [here]({get_login_url()}&state={uuid}) to log into the chat agent.\n\n",
-            status_code=200,
-            headers=get_sse_headers())
-    except Exception as e:
-        error_message = getattr(e, 'message', repr(e))
-        logger.error(error_message)
-        logger.error(traceback.format_exc())
-        return func.HttpResponse("data: An exception was raised. See the logs for more details.\n\n",
-                                 status_code=500,
-                                 headers=get_sse_headers())
-
-
-def redirect_to_auth0_login(get_github_user_from_form, get_login_url):
-    try:
-        logger.info("User is not logged")
-        github_user = get_users_details(get_github_user_from_form(), lambda: os.environ.get("AzureWebJobsStorage"))
-        uuid = save_login_state_id(get_github_user_from_form(), lambda: os.environ.get("AzureWebJobsStorage"))
-        audience = os.environ.get("AUTH0_APPLICATION_DOMAIN")
-
-        logger.info("Creating access token")
-        access_token = create_management_api_token(lambda: os.environ.get("AUTH0_APPLICATION_DOMAIN"),
-                                                   lambda: os.environ.get("AUTH0_APPLICATION_CLIENTID"),
-                                                   lambda: os.environ.get("AUTH0_APPLICATION_CLIENTSECRET"))
-
-        logger.info("Checking for resource server")
-        if not resource_server_exists(lambda: os.environ.get("AUTH0_APPLICATION_DOMAIN"), audience, access_token):
-            logger.info("Creating resource server")
-            create_resource_server(lambda: os.environ.get("AUTH0_APPLICATION_DOMAIN"),
-                                   github_user['OctopusServiceAccountId'],
-                                   access_token)
-
-        logger.info("Redirecting to login")
-        return func.HttpResponse(
-            "data: You must log in before you can query the Octopus instance.\n"
-            + f"data: Click [here]({get_login_url()}&state={uuid}&audience={audience}) to log into the chat agent.\n\n",
+            + "`Set my Octopus instance to https://myinstance.octopus.app and API key to "
+            + "`API-ABCDEFGHIJKLMNOPQRSTUVWXYZ` (replacing `myinstance` with the hostname of your Octopus "
+            + "instance, and `API-ABCDEFGHIJKLMNOPQRSTUVWXYZ` with your Octopus API key)."),
             status_code=200,
             headers=get_sse_headers())
     except Exception as e:
