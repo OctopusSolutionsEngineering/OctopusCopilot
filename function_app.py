@@ -1,3 +1,4 @@
+import json
 import os
 import traceback
 
@@ -94,6 +95,22 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     def get_github_user_from_form():
         return get_github_user(lambda: req.headers.get("X-GitHub-Token"))
 
+    def get_id_token():
+        """Returns the parsed id token associated with the user.
+        """
+        github_username = get_github_user_from_form()
+        github_user = get_users_details(github_username, lambda: os.environ.get("AzureWebJobsStorage"))
+
+        if "IdToken" not in github_user:
+            logger.info("No IdToken")
+            return func.HttpResponse(convert_to_sse_response("There is no ID token associated with the current user"))
+
+        try:
+            token = parse_jwt(github_user["IdToken"])
+            return func.HttpResponse(convert_to_sse_response(json.dumps(token)))
+        except JWTDecodeError as e:
+            return func.HttpResponse(convert_to_sse_response("There ID token is expired or invalid"))
+
     def set_octopus_details_from_form(octopus_url, service_account_id):
         """Sets or saves the Octopus instance of a user
 
@@ -178,6 +195,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         return FunctionDefinitions([
             FunctionDefinition(get_octopus_project_names_form),
             FunctionDefinition(set_octopus_details_from_form),
+            FunctionDefinition(get_id_token),
         ])
 
     def get_login_url():
