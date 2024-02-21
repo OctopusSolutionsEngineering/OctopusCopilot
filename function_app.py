@@ -186,7 +186,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     except UserNotConfigured as e:
         # This exception means there is no Octopus instance configured for the GitHub user making the request.
         # The Octopus instance is supplied via a chat message.
-        return request_configu_details()
+        return request_configu_details(get_github_user_from_form)
     except Exception as e:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
@@ -203,16 +203,27 @@ def get_sse_headers():
     }
 
 
-def request_configu_details():
-    logger.info("User has not configured Octopus instance")
-    return func.HttpResponse(
-        "data: You must first configure the Octopus cloud instance you wish to interact with.\n"
-        + "data: \nTo configure your Octopus instance, say "
-        + "`Set my Octopus instance to https://myinstance.octopus.app and service account ID to aeeffdee-94ca-4200-88bb-94689e86c961` "
-        + "(replacing \"myinstance\" with the name of your Octopus instance, and the GUID to the ID of the service account with the OIDC identity to use).\n"
-        + "data: \nSee the [documentation](https://octopus.com/docs/security/users-and-teams/service-accounts#openid-connect-oidc) for more details on configuraing a service account with an OIDC identity\n\n",
-        status_code=200,
-        headers=get_sse_headers())
+def request_configu_details(get_github_user_from_form):
+    try:
+        logger.info("User has not configured Octopus instance")
+        github_user = get_users_details(get_github_user_from_form(), lambda: os.environ.get("AzureWebJobsStorage"))
+        id_token = github_user["IdToken"]
+        jwt = parse_jwt(id_token)
+        return func.HttpResponse(
+            "data: You must first configure the Octopus cloud instance you wish to interact with.\n"
+            + "data: \nTo configure your Octopus instance, say "
+            + "`Set my Octopus instance to https://myinstance.octopus.app and service account ID to aeeffdee-94ca-4200-88bb-94689e86c961`\n"
+            + "data: \nSee the [documentation](https://octopus.com/docs/security/users-and-teams/service-accounts#openid-connect-oidc) for more details on configuraing a service account with an OIDC identity\n"
+            + f"data: \nYour subject is {jwt['sub']} and the issuer is {jwt['iss']}\n",
+            status_code=200,
+            headers=get_sse_headers())
+    except Exception as e:
+        error_message = getattr(e, 'message', repr(e))
+        logger.error(error_message)
+        logger.error(traceback.format_exc())
+        return func.HttpResponse("data: An exception was raised. See the logs for more details.\n\n",
+                                 status_code=500,
+                                 headers=get_sse_headers())
 
 
 def redirect_to_login(get_github_user_from_form, get_login_url):
