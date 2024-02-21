@@ -13,10 +13,22 @@ from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.validation.octopus_validation import is_hosted_octopus
 from infrastructure.github import get_github_user
 from infrastructure.octopus_projects import get_octopus_project_names_base, get_octopus_project_names_response
-from infrastructure.users import get_users_details, save_users_octopus_url
+from infrastructure.users import get_users_details, save_users_octopus_url, delete_old_user_details
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
+
+
+@app.function_name(name="api_key_cleanup")
+@app.timer_trigger(schedule="0 1 0 * *",
+                   arg_name="mytimer",
+                   run_on_startup=True)
+def api_key_cleanup(mytimer: func.TimerRequest) -> None:
+    """
+    A function handler used to clean up old API keys
+    :param mytimer: The Timer request
+    """
+    delete_old_user_details(lambda: os.environ.get("AzureWebJobsStorage"))
 
 
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
