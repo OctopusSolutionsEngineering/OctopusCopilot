@@ -26,6 +26,9 @@ def exchange_id_token_for_api_key(id_token, service_account_id, my_get_octopus_a
     if my_get_octopus_api is None:
         raise ValueError('my_get_api_key must be function returning the Octopus Url.')
 
+    if not my_get_octopus_api() or not isinstance(my_get_octopus_api(), str) or not my_get_octopus_api().strip():
+        raise ValueError('my_get_api_key must return the Octopus Url.')
+
     # Look up the OpenID configuration endpoint
     open_id_configuration = my_get_octopus_api() + "/.well-known/openid-configuration"
     resp = http.request("GET", open_id_configuration)

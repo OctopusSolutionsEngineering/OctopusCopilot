@@ -71,7 +71,8 @@ def login(req: func.HttpRequest) -> func.HttpResponse:
         with open("html/login.html", "r") as file:
             html = file.read()
             html = html.replace("#{Subject}", jwt["sub"])
-            html = html.replace("#{Issuer}", jwt["iss"])
+            html = html.replace("#{Issuer}",
+                                "https://octopuscopilot.b2clogin.com/octopuscopilot.onmicrosoft.com/B2C_1_Login/v2.0")
             return func.HttpResponse(html, headers={"Content-Type": "text/html"})
     except Exception as e:
         error_message = getattr(e, 'message', repr(e))
@@ -220,7 +221,6 @@ def request_configu_details(get_github_user_from_form):
         jwt = parse_jwt(id_token)
         logger.info("JWT: %s", jwt)
         sub = jwt['sub']
-        iss = jwt['iss']
         return func.HttpResponse(convert_to_sse_response(
             "You must first configure the Octopus cloud instance you wish to interact with.\n"
             + "\n"
@@ -234,7 +234,8 @@ def request_configu_details(get_github_user_from_form):
             + "(https://octopus.com/docs/security/users-and-teams/service-accounts#openid-connect-oidc) for more "
             + "details on configuring a service account with an OIDC identity and obtaining the service account ID.\n"
             + "\n"
-            + f"Your OIDC subject is `{sub}` and the issuer is `{iss}`."),
+            + f"Your OIDC subject is `{sub}` and the issuer is "
+            + "`https://octopuscopilot.b2clogin.com/octopuscopilot.onmicrosoft.com/B2C_1_Login/v2.0`."),
             status_code=200,
             headers=get_sse_headers())
     except Exception as e:
