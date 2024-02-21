@@ -83,7 +83,8 @@ def delete_old_user_details(connection_string):
         table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
         table_client = table_service_client.get_table_client(table_name="users")
 
-        thirty_days_ago = datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        thirty_days_ago = datetime.now(datetime.timezone(datetime.timedelta(days=-30))).strftime(
+            "%Y-%m-%dT%H:%M:%S.%fZ")
 
         rows = table_client.query_entities(f"Timestamp lt datetime'{thirty_days_ago}'")
         for row in rows:
