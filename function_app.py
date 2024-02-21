@@ -186,6 +186,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         # The user must perform a login with the Azure B2C tenant to generate an ID token.
         logger.info("User is not logged")
         uuid = save_login_state_id(get_github_user_from_form(), lambda: os.environ.get("AzureWebJobsStorage"))
+        logger.info("Redirecting to login")
         return func.HttpResponse(
             "data: You must log in before you can query the Octopus instance.\n"
             + f"data: Click [here]({get_login_url()}&state={uuid}) to log into the chat agent\n\n",

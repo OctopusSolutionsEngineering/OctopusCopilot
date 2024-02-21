@@ -9,7 +9,7 @@ logger = configure_logging()
 
 
 def save_users_octopus_url(username, octopus_url, service_account_id, connection_string):
-    logger.info("Calling save_users_octopus_url")
+    logger.info("save_users_octopus_url - Enter")
 
     if not username or not isinstance(username, str) or not username.strip():
         raise ValueError("username must be the GitHub user's ID (save_users_octopus_url).")
@@ -36,7 +36,7 @@ def save_users_octopus_url(username, octopus_url, service_account_id, connection
 
 
 def save_users_id_token(username, id_token, connection_string):
-    logger.info("Calling save_users_id_token")
+    logger.info("save_users_id_token - Enter")
 
     if not username or not isinstance(username, str) or not username.strip():
         raise ValueError("username must be the GitHub user's ID (save_users_id_token).")
@@ -85,7 +85,7 @@ def save_login_state_id(username, connection_string):
 
 
 def get_users_details(username, connection_string):
-    logger.info("Calling get_users_details")
+    logger.info("get_users_details - Enter")
 
     if not username or not isinstance(username, str) or not username.strip():
         raise ValueError("username must be the GitHub user's ID (get_users_details).")
@@ -99,7 +99,7 @@ def get_users_details(username, connection_string):
 
 
 def get_login_details(state, connection_string):
-    logger.info("Calling get_login_details")
+    logger.info("get_login_details - Enter")
 
     if not state or not isinstance(state, str) or not state.strip():
         raise ValueError("state must be the random string passed when performing an Oauth login (get_login_details).")
@@ -113,7 +113,7 @@ def get_login_details(state, connection_string):
 
 
 def delete_login_details(state, connection_string):
-    logger.info("Calling delete_login_details")
+    logger.info("delete_login_details - Enter")
 
     if not state or not isinstance(state, str) or not state.strip():
         raise ValueError(
