@@ -218,13 +218,16 @@ def request_configu_details(get_github_user_from_form):
         github_user = get_users_details(get_github_user_from_form(), lambda: os.environ.get("AzureWebJobsStorage"))
         id_token = github_user["IdToken"]
         jwt = parse_jwt(id_token)
+        logger.info("JWT: %s", jwt)
+        sub = jwt['sub']
+        iss = jwt['iss']
         return func.HttpResponse(
             "data: You must first configure the Octopus cloud instance you wish to interact with.\n"
             + "data: \nTo configure your Octopus instance, say "
             + "`Set my Octopus instance to https://myinstance.octopus.app and service account ID to aeeffdee-94ca-4200-88bb-94689e86c961` "
             + "(replacing `myinstance` with the hostname of your Octopus instance, and `aeeffdee-94ca-4200-88bb-94689e86c961` with the ID of your OIDC enabled service account).\n"
             + "data: \nSee the [documentation](https://octopus.com/docs/security/users-and-teams/service-accounts#openid-connect-oidc) for more details on configuraing a service account with an OIDC identity and obtaining the service account ID.\n"
-            + f"data: \nYour OIDC subject is {jwt['sub']} and the issuer is {jwt['iss']}\n",
+            + f"data: \nYour OIDC subject is {sub} and the issuer is {iss}\n",
             status_code=200,
             headers=get_sse_headers())
     except Exception as e:
