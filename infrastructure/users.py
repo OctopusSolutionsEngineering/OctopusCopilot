@@ -80,6 +80,7 @@ def save_login_state_id(username, connection_string):
 
     logger.info("save_login_state_id - upsert")
     table_client.upsert_entity(user, mode=UpdateMode.REPLACE)
+    logger.info("save_login_state_id - upsert done")
     return mapping_uuid
 
 
