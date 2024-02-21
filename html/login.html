@@ -10,7 +10,7 @@
 <body class="m-3">
 <form>
     <div class="form-group row">
-        <div class="col-8">
+        <div class="col-8 offset-2">
             You have successfully logged in. To allow Copilot to interact with Octopus, you must configure a
             <a href="https://octopus.com/docs/security/users-and-teams/service-accounts#openid-connect-oidc">Service
                 Account</a>
@@ -19,13 +19,13 @@
         </div>
     </div>
     <div class="form-group row">
-        <label for="api" class="col-2 offset-2 col-form-label">Issuer</label>
+        <label class="col-2 offset-2 col-form-label">Issuer</label>
         <div class="col-6">
             #{Issuer}
         </div>
     </div>
     <div class="form-group row">
-        <label for="api" class="col-2 offset-2 col-form-label">Subject</label>
+        <label class="col-2 offset-2 col-form-label">Subject</label>
         <div class="col-6">
             #{Subject}
         </div>

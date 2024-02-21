@@ -26,12 +26,14 @@ def exchange_id_token_for_api_key(id_token, service_account_id, my_get_octopus_a
     if my_get_octopus_api is None:
         raise ValueError('my_get_api_key must be function returning the Octopus Url.')
 
+    # Look up the OpenID configuration endpoint
     open_id_configuration = my_get_octopus_api() + "/.well-known/openid-configuration"
     resp = http.request("GET", open_id_configuration)
 
     if resp.status != 200:
         raise RequestFailed(f"Request to {open_id_configuration} failed with {resp.data.decode('utf-8')}")
 
+    # Exchange the token
     resp = http.request_encode_body("POST",
                                     resp.json()['token_endpoint'],
                                     encode_multipart=False,
@@ -43,7 +45,7 @@ def exchange_id_token_for_api_key(id_token, service_account_id, my_get_octopus_a
                                     })
 
     if resp.status != 200:
-        raise RequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+        raise RequestFailed(f"Request to {resp.json()['token_endpoint']} failed with {resp.data.decode('utf-8')}")
 
     json = resp.json()
     return json['access_token']
