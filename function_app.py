@@ -221,9 +221,10 @@ def request_configu_details(get_github_user_from_form):
         logger.info("JWT: %s", jwt)
         sub = jwt['sub']
         iss = jwt['iss']
-        return func.HttpResponse(
+        return func.HttpResponse(convert_to_sse_response(
             "data: You must first configure the Octopus cloud instance you wish to interact with.\n"
-            + "data: \nTo configure your Octopus instance, say "
+            + "data: \n"
+            + "data: To configure your Octopus instance, say "
             + "`Set my Octopus instance to https://myinstance.octopus.app and service account ID to "
             + "aeeffdee-94ca-4200-88bb-94689e86c961` (replacing `myinstance` with the hostname of your Octopus "
             + "instance, and `aeeffdee-94ca-4200-88bb-94689e86c961` with the ID of your OIDC enabled service "
@@ -233,7 +234,7 @@ def request_configu_details(get_github_user_from_form):
             + "(https://octopus.com/docs/security/users-and-teams/service-accounts#openid-connect-oidc) for more "
             + "details on configuring a service account with an OIDC identity and obtaining the service account ID.\n"
             + "data: \n"
-            + f"data: Your OIDC subject is `{sub}` and the issuer is `{iss}`.\n",
+            + f"data: Your OIDC subject is `{sub}` and the issuer is `{iss}`."),
             status_code=200,
             headers=get_sse_headers())
     except Exception as e:
