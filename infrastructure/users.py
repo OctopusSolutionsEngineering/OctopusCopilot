@@ -5,7 +5,7 @@ from azure.data.tables import TableServiceClient, UpdateMode
 
 from domain.logging.app_logging import configure_logging
 
-logger = configure_logging()
+logger = configure_logging(__name__)
 
 
 def save_users_octopus_url(username, octopus_url, service_account_id, connection_string):

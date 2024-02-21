@@ -21,7 +21,7 @@ from infrastructure.users import get_users_details, save_users_octopus_url, save
     get_login_details, delete_login_details
 
 app = func.FunctionApp()
-logger = configure_logging()
+logger = configure_logging(__name__)
 
 
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
@@ -54,7 +54,7 @@ def login(req: func.HttpRequest) -> func.HttpResponse:
         login_entity = get_login_details(pair_id, lambda: os.environ.get("AzureWebJobsStorage"))
         delete_login_details(pair_id, lambda: os.environ.get("AzureWebJobsStorage"))
 
-        if not login_entity["Username"]:
+        if "Username" not in login_entity:
             raise LoginStateNotMatched()
 
         id_token = exchange_code(req.params.get("code"),
@@ -207,10 +207,10 @@ def request_configu_details():
     logger.info("User has not configured Octopus instance")
     return func.HttpResponse(
         "data: You must first configure the Octopus cloud instance you wish to interact with.\n"
-        + "data: To configure your Octopus instance, say "
+        + "data: \nTo configure your Octopus instance, say "
         + "`Set my Octopus instance to https://myinstance.octopus.app and service account ID to aeeffdee-94ca-4200-88bb-94689e86c961` "
         + "(replacing \"myinstance\" with the name of your Octopus instance, and the GUID to the ID of the service account with the OIDC identity to use).\n"
-        + "data: See the [documentation](https://octopus.com/docs/security/users-and-teams/service-accounts#openid-connect-oidc) for more details on configuraing a service account with an OIDC identity\n\n",
+        + "data: \nSee the [documentation](https://octopus.com/docs/security/users-and-teams/service-accounts#openid-connect-oidc) for more details on configuraing a service account with an OIDC identity\n\n",
         status_code=200,
         headers=get_sse_headers())
 

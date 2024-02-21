@@ -53,7 +53,7 @@ def get_space_id_and_name_from_name(space_name, my_get_octopus_api, my_get_api_k
     :return: The space ID and actual name
     """
 
-    logger.info("Calling get_space_id_and_name_from_name")
+    logger.info("get_space_id_and_name_from_name - Enter")
 
     if not space_name or not isinstance(space_name, str) or not space_name.strip():
         raise ValueError('space_name must be a non-empty string.')
@@ -94,7 +94,7 @@ def get_octopus_project_names_base(space_name, my_get_api_key, my_get_octopus_ap
     :return: The list of projects in the space
     """
 
-    logger.info("Calling get_octopus_project_names_base")
+    logger.info("get_octopus_project_names_base - Enter")
 
     if not space_name or not isinstance(space_name, str):
         raise ValueError('space_name must be a non-empty string.')

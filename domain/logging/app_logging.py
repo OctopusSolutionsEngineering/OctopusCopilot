@@ -14,7 +14,7 @@ class OneLineExceptionFormatter(logging.Formatter):
         return result
 
 
-def configure_logging():
+def configure_logging(name=__name__):
     """
     Configures the Python logging system
     :return: A custom logger
@@ -22,7 +22,7 @@ def configure_logging():
     handler = logging.StreamHandler()
     formatter = OneLineExceptionFormatter(logging.BASIC_FORMAT)
     handler.setFormatter(formatter)
-    log = logging.getLogger(__name__)
+    log = logging.getLogger(name)
     log.setLevel(os.environ.get("LOGLEVEL", "DEBUG"))
     log.addHandler(handler)
     return log
