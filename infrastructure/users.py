@@ -74,7 +74,7 @@ def get_users_details(username, connection_string):
 
 
 def delete_old_user_details(connection_string):
-    logger.info("delete_user_details - Enter")
+    logger.info("delete_old_user_details - Enter")
 
     if connection_string is None:
         raise ValueError('connection_string must be function returning the connection string (delete_login_details).')
@@ -87,8 +87,12 @@ def delete_old_user_details(connection_string):
             "%Y-%m-%dT%H:%M:%S.%fZ")
 
         rows = table_client.query_entities(f"Timestamp lt datetime'{thirty_days_ago}'")
+        counter = 0
         for row in rows:
+            counter = counter + 1
             table_client.delete_entity("github.com", row['RowKey'])
+
+        logger.info(f"Cleaned up {counter} entries.")
 
     except HttpResponseError as e:
         error_message = getattr(e, 'message', repr(e))
