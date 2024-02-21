@@ -146,6 +146,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
                 parse_jwt(github_user["IdToken"])
             except JWTDecodeError as e:
                 # Assume the inability to parse the token means it is invalid
+                logger.info("IdToken invalid")
                 raise UserNotLoggedIn()
 
             if "OctopusUrl" not in github_user or "OctopusServiceAccountId" not in github_user:
