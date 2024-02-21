@@ -71,7 +71,7 @@ def save_login_state_id(username, connection_string):
 
     user = {
         'PartitionKey': "github.com",
-        'RowKey': uuid,
+        'RowKey': mapping_uuid,
         'Username': username
     }
 

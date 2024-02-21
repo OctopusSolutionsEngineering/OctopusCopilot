@@ -174,8 +174,12 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         return func.HttpResponse(convert_to_sse_response(result), headers=get_sse_headers())
     except UserNotLoggedIn as e:
+        # This exception means there is no ID token persisted for the GitHub user making the request.
+        # The user must perform a login with the Azure B2C tenant to generate an ID token.
         return redirect_to_login(get_github_user_from_form, get_login_url)
     except UserNotConfigured as e:
+        # This exception means there is no Octopus instance configured for the GitHub user making the request.
+        # The Octopus instance is supplied via a chat message.
         return request_configu_details()
     except Exception as e:
         error_message = getattr(e, 'message', repr(e))
@@ -194,8 +198,6 @@ def get_sse_headers():
 
 
 def request_configu_details():
-    # This exception means there is no Octopus instance configured for the GitHub user making the request.
-    # The Octopus instance is supplied via a chat message.
     logger.info("User has not configured Octopus instance")
     return func.HttpResponse(
         "data: You must first configure the Octopus cloud instance you wish to interact with.\n"
@@ -208,8 +210,6 @@ def request_configu_details():
 
 def redirect_to_login(get_github_user_from_form, get_login_url):
     try:
-        # This exception means there is no ID token persisted for the GitHub user making the request.
-        # The user must perform a login with the Azure B2C tenant to generate an ID token.
         logger.info("User is not logged")
         uuid = save_login_state_id(get_github_user_from_form(), lambda: os.environ.get("AzureWebJobsStorage"))
         logger.info("Redirecting to login")
