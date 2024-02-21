@@ -103,13 +103,13 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         if "IdToken" not in github_user:
             logger.info("No IdToken")
-            return func.HttpResponse(convert_to_sse_response("There is no ID token associated with the current user"))
+            return "There is no ID token associated with the current user"
 
         try:
             token = parse_jwt(github_user["IdToken"])
-            return func.HttpResponse(convert_to_sse_response(json.dumps(token)))
+            return json.dumps(token)
         except JWTDecodeError as e:
-            return func.HttpResponse(convert_to_sse_response("There ID token is expired or invalid"))
+            return "There ID token is expired or invalid"
 
     def set_octopus_details_from_form(octopus_url, service_account_id):
         """Sets or saves the Octopus instance of a user
