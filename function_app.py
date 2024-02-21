@@ -73,6 +73,9 @@ def login(req: func.HttpRequest) -> func.HttpResponse:
             html = html.replace("#{Issuer}", jwt["iss"])
             return func.HttpResponse(html, headers={"Content-Type": "text/html"})
     except Exception as e:
+        error_message = getattr(e, 'message', repr(e))
+        logger.error(error_message)
+        logger.error(traceback.format_exc())
         return func.HttpResponse("Login failed", status_code=500)
 
 
