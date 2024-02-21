@@ -61,7 +61,7 @@ def create_resource_server(get_auth0_domain, service_account_id, access_token):
     }
 
     resp = http.request("POST",
-                        get_auth0_domain() + " /api/v2/resource-servers",
+                        get_auth0_domain() + "/api/v2/resource-servers",
                         resource_server,
                         headers=headers)
 
