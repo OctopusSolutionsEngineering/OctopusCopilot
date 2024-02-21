@@ -1,6 +1,7 @@
-from jwt import jwt
+from jwt import JWT
+
+instance = JWT()
 
 
 def parse_jwt(token):
-    return jwt.decode(jwt=token,
-                      algorithms=["HS256"])
+    return instance.decode(message=token, do_time_check=True, algorithms={"HS256"})
