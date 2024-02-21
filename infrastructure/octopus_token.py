@@ -15,7 +15,7 @@ def exchange_id_token_for_api_key(id_token, service_account_id, my_get_octopus_a
     :return: An octopus API key
     """
 
-    logger.info("Calling exchange_id_token_for_api_key")
+    logger.info("exchange_id_token_for_api_key - Enter")
 
     if not id_token or not isinstance(id_token, str) or not id_token.strip():
         raise ValueError('id_token must be a non-empty string.')
@@ -26,8 +26,14 @@ def exchange_id_token_for_api_key(id_token, service_account_id, my_get_octopus_a
     if my_get_octopus_api is None:
         raise ValueError('my_get_api_key must be function returning the Octopus Url.')
 
+    open_id_configuration = my_get_octopus_api() + "/.well-known/openid-configuration"
+    resp = http.request("GET", open_id_configuration)
+
+    if resp.status != 200:
+        raise RequestFailed(f"Request to {open_id_configuration} failed with {resp.data.decode('utf-8')}")
+
     resp = http.request_encode_body("POST",
-                                    my_get_octopus_api(),
+                                    resp.json()['token_endpoint'],
                                     encode_multipart=False,
                                     fields={
                                         'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
