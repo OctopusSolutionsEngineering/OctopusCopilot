@@ -35,6 +35,9 @@ def query_form(req: func.HttpRequest) -> func.HttpResponse:
         with open("html/query.html", "r") as file:
             return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
     except Exception as e:
+        error_message = getattr(e, 'message', repr(e))
+        logger.error(error_message)
+        logger.error(traceback.format_exc())
         return func.HttpResponse("Failed to read form HTML", status_code=500)
 
 
@@ -202,8 +205,9 @@ def request_configu_details():
     return func.HttpResponse(
         "data: You must first configure the Octopus cloud instance you wish to interact with.\n"
         + "data: To configure your Octopus instance, say "
-        + "\"Set my Octopus instance to https://myinstance.octopus.app and service account ID to aeeffdee-94ca-4200-88bb-94689e86c961\" "
-        + "(replacing \"myinstance\" with the name of your Octopus instance, and the GUID to the ID of the service account with the OIDC identity to use).\n\n",
+        + "`Set my Octopus instance to https://myinstance.octopus.app and service account ID to aeeffdee-94ca-4200-88bb-94689e86c961` "
+        + "(replacing \"myinstance\" with the name of your Octopus instance, and the GUID to the ID of the service account with the OIDC identity to use).\n"
+        + "data: See the [documentation](https://octopus.com/docs/security/users-and-teams/service-accounts#openid-connect-oidc) for more details on configuraing a service account with an OIDC identity\n\n",
         status_code=200,
         headers=get_sse_headers())
 
@@ -215,7 +219,7 @@ def redirect_to_login(get_github_user_from_form, get_login_url):
         logger.info("Redirecting to login")
         return func.HttpResponse(
             "data: You must log in before you can query the Octopus instance.\n"
-            + f"data: Click [here]({get_login_url()}&state={uuid}) to log into the chat agent\n\n",
+            + f"data: Click [here]({get_login_url()}&state={uuid}) to log into the chat agent.\n\n",
             status_code=200,
             headers=get_sse_headers())
     except Exception as e:
