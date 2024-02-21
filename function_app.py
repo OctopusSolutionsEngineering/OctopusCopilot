@@ -228,10 +228,12 @@ def request_configu_details(get_github_user_from_form):
             + "aeeffdee-94ca-4200-88bb-94689e86c961` (replacing `myinstance` with the hostname of your Octopus "
             + "instance, and `aeeffdee-94ca-4200-88bb-94689e86c961` with the ID of your OIDC enabled service "
             + "account).\n"
-            + "data: \nSee the [documentation]"
+            + "data: \n"
+            + "data: See the [documentation]"
             + "(https://octopus.com/docs/security/users-and-teams/service-accounts#openid-connect-oidc) for more "
             + "details on configuring a service account with an OIDC identity and obtaining the service account ID.\n"
-            + f"data: \nYour OIDC subject is `{sub}` and the issuer is `{iss}`.\n",
+            + "data: \n"
+            + f"data: Your OIDC subject is `{sub}` and the issuer is `{iss}`.\n",
             status_code=200,
             headers=get_sse_headers())
     except Exception as e:
