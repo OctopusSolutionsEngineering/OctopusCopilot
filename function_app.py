@@ -4,6 +4,7 @@ import traceback
 from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
+from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.logging.app_logging import configure_logging
@@ -128,6 +129,11 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         return func.HttpResponse(convert_to_sse_response(result), headers=get_sse_headers())
 
+    except SpaceNotFound as e:
+        return func.HttpResponse(convert_to_sse_response("The requested space was not found. "
+                                                         + "Either the space does not exist or the API key does not "
+                                                         + "have permissions to access it."),
+                                 headers=get_sse_headers())
     except UserNotConfigured as e:
         # This exception means there is no Octopus instance configured for the GitHub user making the request.
         # The Octopus instance is supplied via a chat message.
