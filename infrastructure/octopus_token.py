@@ -33,9 +33,13 @@ def exchange_id_token_for_api_key(id_token, service_account_id, my_get_octopus_a
     if resp.status != 200:
         raise RequestFailed(f"Request to {open_id_configuration} failed with {resp.data.decode('utf-8')}")
 
+    json = resp.json()
+
+    logger.info(json)
+
     # Exchange the token
     resp = http.request_encode_body("POST",
-                                    resp.json()['token_endpoint'],
+                                    json['token_endpoint'],
                                     encode_multipart=False,
                                     fields={
                                         'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
@@ -45,7 +49,7 @@ def exchange_id_token_for_api_key(id_token, service_account_id, my_get_octopus_a
                                     })
 
     if resp.status != 200:
-        raise RequestFailed(f"Request to {resp.json()['token_endpoint']} failed with {resp.data.decode('utf-8')}")
+        raise RequestFailed(f"Request to {json['token_endpoint']} failed with {resp.data.decode('utf-8')}")
 
     json = resp.json()
     return json['access_token']
