@@ -48,15 +48,14 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     def get_github_user_from_form():
         return get_github_user(lambda: req.headers.get("X-GitHub-Token"))
 
-    def set_octopus_details_from_form(octopus_url, service_account_id):
+    def set_octopus_details_from_form(octopus_url, api_key):
         """Sets or saves the Octopus instance of a user
 
             Args:
                 octopus_url: The URL of an octopus instance, for example https://myinstance.octopus.app,
                 where "myinstance" can be any name
 
-                service_account_id: The ID of an octopus service account in the form of a GUID, for example
-                ad1576ef-b053-4c85-b983-c0607045ae1f
+                api_key: The Octopus API key, e.g. API-xxxxxxxxxxxxxxxxxxxxxxx
         """
 
         logger.info("Calling set_octopus_details_from_form")
@@ -64,7 +63,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         if not octopus_url or not isinstance(octopus_url, str) or not octopus_url.strip():
             raise ValueError('octopus_url must be an Octopus Url.')
 
-        if not service_account_id or not isinstance(service_account_id, str) or not service_account_id.strip():
+        if not api_key or not isinstance(api_key, str) or not api_key.strip():
             raise ValueError('service_account_id must be the ID of a service account.')
 
         if not is_hosted_octopus(octopus_url):
@@ -72,7 +71,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         save_users_octopus_url(get_github_user_from_form(),
                                octopus_url,
-                               service_account_id,
+                               api_key,
                                lambda: os.environ.get("AzureWebJobsStorage"))
 
         return "Successfully updated the Octopus instance"
@@ -157,7 +156,7 @@ def request_config_details():
             + "\n"
             + "To configure your Octopus instance, say "
             + "`Set my Octopus instance to https://myinstance.octopus.app and API key to "
-            + "`API-ABCDEFGHIJKLMNOPQRSTUVWXYZ` (replacing `myinstance` with the hostname of your Octopus "
+            + "API-ABCDEFGHIJKLMNOPQRSTUVWXYZ` (replacing `myinstance` with the hostname of your Octopus "
             + "instance, and `API-ABCDEFGHIJKLMNOPQRSTUVWXYZ` with your Octopus API key)."),
             status_code=200,
             headers=get_sse_headers())

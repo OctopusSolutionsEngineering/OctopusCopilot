@@ -8,7 +8,7 @@ from domain.logging.app_logging import configure_logging
 logger = configure_logging(__name__)
 
 
-def save_users_octopus_url(username, octopus_url, service_account_id, connection_string):
+def save_users_octopus_url(username, octopus_url, api_key, connection_string):
     logger.info("save_users_octopus_url - Enter")
 
     if not username or not isinstance(username, str) or not username.strip():
@@ -17,7 +17,7 @@ def save_users_octopus_url(username, octopus_url, service_account_id, connection
     if not octopus_url or not isinstance(octopus_url, str) or not octopus_url.strip():
         raise ValueError("octopus_url must be an Octopus URL (save_users_octopus_url).")
 
-    if not service_account_id or not isinstance(service_account_id, str) or not service_account_id.strip():
+    if not api_key or not isinstance(api_key, str) or not api_key.strip():
         raise ValueError("service_account_id must be a the ID of a service account (save_users_octopus_url).")
 
     if connection_string is None:
@@ -27,7 +27,7 @@ def save_users_octopus_url(username, octopus_url, service_account_id, connection
         'PartitionKey': "github.com",
         'RowKey': username,
         'OctopusUrl': octopus_url,
-        'OctopusServiceAccountId': service_account_id
+        'OctopusApiKey': api_key
     }
 
     table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
