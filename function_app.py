@@ -22,7 +22,7 @@ logger = configure_logging(__name__)
 
 
 @app.function_name(name="api_key_cleanup")
-@app.timer_trigger(schedule="0 1 0 * *",
+@app.timer_trigger(schedule="0 * * * *",
                    arg_name="mytimer",
                    run_on_startup=True)
 def api_key_cleanup(mytimer: func.TimerRequest) -> None:
@@ -53,7 +53,8 @@ def query_form(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="login", auth_level=func.AuthLevel.ANONYMOUS)
 def login_form(req: func.HttpRequest) -> func.HttpResponse:
     """
-    A function handler that returns an HTML form logging in
+    A function handler that returns an HTML form logging in. The idea here is that we don't hold onto keys for long,
+    and instead rely on the browser to save the credentials exposed by this form.
     :param req: The HTTP request
     :return: The HTML form
     """

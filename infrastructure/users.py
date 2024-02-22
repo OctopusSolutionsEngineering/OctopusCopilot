@@ -107,6 +107,12 @@ def get_users_details(username, connection_string):
 
 
 def delete_old_user_details(connection_string):
+    """
+    We don't want to hold onto keys for very long. Every hour or so keys older than 8 hours are purged from the database
+    and users need to log in again.
+    :param connection_string: The database connection string
+    :return: The number of deleted records.
+    """
     logger.info("delete_old_user_details - Enter")
 
     if connection_string is None:
