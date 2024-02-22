@@ -139,3 +139,24 @@ def delete_old_user_details(connection_string):
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
         logger.error(traceback.format_exc())
+
+
+def delete_all_user_details(connection_string):
+    """
+    Delete all user details.
+    :param connection_string: The database connection string
+    :return: The number of deleted records.
+    """
+    logger.info("delete_all_user_details - Enter")
+
+    if connection_string is None:
+        raise ValueError('connection_string must be function returning the connection string (delete_login_details).')
+
+    try:
+        table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
+        table_service_client.delete_table("users")
+
+    except HttpResponseError as e:
+        error_message = getattr(e, 'message', repr(e))
+        logger.error(error_message)
+        logger.error(traceback.format_exc())

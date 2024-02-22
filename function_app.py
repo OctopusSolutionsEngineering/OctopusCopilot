@@ -15,7 +15,7 @@ from domain.validation.octopus_validation import is_hosted_octopus
 from infrastructure.github import get_github_user
 from infrastructure.octopus_projects import get_octopus_project_names_base, get_octopus_project_names_response
 from infrastructure.users import get_users_details, save_users_octopus_url, delete_old_user_details, save_login_uuid, \
-    save_users_octopus_url_from_login
+    save_users_octopus_url_from_login, delete_all_user_details
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
@@ -106,6 +106,12 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         count = delete_old_user_details(get_functions_connection_string)
         return f"Cleaned up {count} records"
 
+    def clean_up_all_records():
+        """Cleans up, or deletes, all user records
+        """
+        delete_all_user_details(get_functions_connection_string)
+        return f"Deleted all records"
+
     def set_octopus_details_from_form(octopus_url, api_key):
         """Sets or saves the Octopus instance of a user
 
@@ -183,6 +189,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             FunctionDefinition(get_octopus_project_names_form),
             FunctionDefinition(set_octopus_details_from_form),
             FunctionDefinition(clean_up_old_records),
+            FunctionDefinition(clean_up_all_records),
         ])
 
     try:
