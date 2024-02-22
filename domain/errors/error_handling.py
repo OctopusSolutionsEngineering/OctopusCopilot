@@ -8,6 +8,10 @@ logger = configure_logging(__name__)
 
 
 def handle_error(exception):
+    """
+    A common error handler that prints the exception message, stack trace, and sends the message to slack
+    :param exception: The exception to log
+    """
     error_message = getattr(exception, 'message', repr(exception))
     logger.error(error_message)
     logger.error(traceback.format_exc())
