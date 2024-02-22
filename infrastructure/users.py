@@ -82,8 +82,8 @@ def save_users_octopus_url_from_login(state, url, api, connection_string):
     finally:
         # Clean up the linking record
         table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
-        table_client = table_service_client.create_table_if_not_exists("userlogin")
-        table_client.delete_entity(state)
+        table_client = table_service_client.get_table_client("userlogin")
+        table_client.delete_entity("github.com", state)
 
 
 def get_users_details(username, connection_string):
