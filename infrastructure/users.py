@@ -94,6 +94,8 @@ def delete_old_user_details(connection_string):
 
         logger.info(f"Cleaned up {counter} entries.")
 
+        return counter
+
     except HttpResponseError as e:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
