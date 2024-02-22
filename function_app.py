@@ -12,6 +12,7 @@ from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.logging.app_logging import configure_logging
+from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.validation.octopus_validation import is_hosted_octopus
@@ -110,7 +111,9 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     def clean_up_all_records():
         """Cleans up, or deletes, all user records
         """
-        delete_all_user_details(get_github_user_from_form, get_admin_users, get_functions_connection_string)
+        is_admin_user(get_github_user_from_form,
+                      get_admin_users,
+                      lambda: delete_all_user_details(get_functions_connection_string))
         return f"Deleted all records"
 
     def set_octopus_details_from_form(octopus_url, api_key):

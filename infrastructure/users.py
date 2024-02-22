@@ -1,4 +1,3 @@
-import json
 import traceback
 import uuid
 from datetime import date, timedelta
@@ -7,7 +6,6 @@ from azure.core.exceptions import HttpResponseError
 from azure.data.tables import TableServiceClient
 
 from domain.config.slack import get_slack_url
-from domain.exceptions.not_authorized import NotAuthorized
 from domain.logging.app_logging import configure_logging
 from infrastructure.slack import send_slack_message
 
@@ -147,7 +145,7 @@ def delete_old_user_details(connection_string):
         send_slack_message(error_message, get_slack_url)
 
 
-def delete_all_user_details(user, get_admin_users, connection_string):
+def delete_all_user_details(connection_string):
     """
     Delete all user details.
     :param user: The current user
@@ -156,13 +154,6 @@ def delete_all_user_details(user, get_admin_users, connection_string):
     :return: The number of deleted records.
     """
     logger.info("delete_all_user_details - Enter")
-
-    try:
-        admin_users = json.loads(get_admin_users())
-        if user() not in admin_users:
-            raise NotAuthorized()
-    except Exception as e:
-        raise NotAuthorized()
 
     if connection_string is None:
         raise ValueError('connection_string must be function returning the connection string (delete_login_details).')
