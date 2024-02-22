@@ -1,5 +1,6 @@
 import json
 
+from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
 
 
@@ -13,9 +14,11 @@ def is_admin_user(user, get_admin_users, callback):
     """
     try:
         admin_users = json.loads(get_admin_users())
-        if user() not in admin_users:
-            raise NotAuthorized()
     except Exception as e:
+        handle_error(e)
+        raise NotAuthorized()
+
+    if user() not in admin_users:
         raise NotAuthorized()
 
     return callback()
