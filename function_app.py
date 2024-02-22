@@ -102,7 +102,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     def clean_up_old_records():
         """Cleans up, or deletes, old user records
         """
-        count = delete_old_user_details(lambda: os.environ.get("AzureWebJobsStorage"))
+        count = delete_old_user_details(get_functions_connection_string)
         return f"Cleaned up {count} records"
 
     def set_octopus_details_from_form(octopus_url, api_key):
