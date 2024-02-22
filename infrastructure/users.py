@@ -110,16 +110,18 @@ def delete_old_user_details(connection_string):
         table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
         table_client = table_service_client.get_table_client(table_name="users")
 
-        thirty_days_ago = (date.today() - timedelta(days=30)).strftime(
+        old_records = (date.today() - timedelta(hours=8)).strftime(
             "%Y-%m-%dT%H:%M:%S.%fZ")
 
-        rows = table_client.query_entities(f"Timestamp lt datetime'{thirty_days_ago}'")
+        rows = table_client.query_entities(f"Timestamp lt datetime'{old_records}'")
         counter = 0
         for row in rows:
             counter = counter + 1
             table_client.delete_entity("github.com", row['RowKey'])
 
         logger.info(f"Cleaned up {counter} entries.")
+
+        return counter
 
     except HttpResponseError as e:
         error_message = getattr(e, 'message', repr(e))

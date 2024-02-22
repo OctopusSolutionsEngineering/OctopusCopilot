@@ -99,6 +99,12 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     def get_github_user_from_form():
         return get_github_user(lambda: req.headers.get("X-GitHub-Token"))
 
+    def clean_up_old_records():
+        """Cleans up, or deletes, old user records
+        """
+        count = delete_old_user_details(lambda: os.environ.get("AzureWebJobsStorage"))
+        return f"Cleaned up {count} records"
+
     def set_octopus_details_from_form(octopus_url, api_key):
         """Sets or saves the Octopus instance of a user
 
@@ -175,6 +181,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         return FunctionDefinitions([
             FunctionDefinition(get_octopus_project_names_form),
             FunctionDefinition(set_octopus_details_from_form),
+            FunctionDefinition(clean_up_old_records),
         ])
 
     try:
