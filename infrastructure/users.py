@@ -6,8 +6,10 @@ from datetime import date, timedelta
 from azure.core.exceptions import HttpResponseError
 from azure.data.tables import TableServiceClient
 
+from domain.config.slack import get_slack_url
 from domain.exceptions.not_authorized import NotAuthorized
 from domain.logging.app_logging import configure_logging
+from infrastructure.slack import send_slack_message
 
 logger = configure_logging(__name__)
 
@@ -92,6 +94,7 @@ def save_users_octopus_url_from_login(state, url, api, connection_string):
             error_message = getattr(e, 'message', repr(e))
             logger.error(error_message)
             logger.error(traceback.format_exc())
+            send_slack_message(error_message, get_slack_url)
 
 
 def get_users_details(username, connection_string):
@@ -141,6 +144,7 @@ def delete_old_user_details(connection_string):
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
         logger.error(traceback.format_exc())
+        send_slack_message(error_message, get_slack_url)
 
 
 def delete_all_user_details(user, get_admin_users, connection_string):
@@ -171,3 +175,4 @@ def delete_all_user_details(user, get_admin_users, connection_string):
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
         logger.error(traceback.format_exc())
+        send_slack_message(error_message, get_slack_url)

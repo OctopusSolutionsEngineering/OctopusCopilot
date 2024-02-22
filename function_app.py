@@ -5,6 +5,7 @@ from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
+from domain.config.slack import get_slack_url
 from domain.config.users import get_admin_users
 from domain.exceptions.not_authorized import NotAuthorized
 from domain.exceptions.space_not_found import SpaceNotFound
@@ -16,6 +17,7 @@ from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.validation.octopus_validation import is_hosted_octopus
 from infrastructure.github import get_github_user
 from infrastructure.octopus_projects import get_octopus_project_names_base, get_octopus_project_names_response
+from infrastructure.slack import send_slack_message
 from infrastructure.users import get_users_details, save_users_octopus_url, delete_old_user_details, save_login_uuid, \
     save_users_octopus_url_from_login, delete_all_user_details
 
@@ -49,6 +51,7 @@ def query_form(req: func.HttpRequest) -> func.HttpResponse:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
         logger.error(traceback.format_exc())
+        send_slack_message(error_message, get_slack_url)
         return func.HttpResponse("Failed to read form HTML", status_code=500)
 
 
@@ -67,6 +70,7 @@ def login_form(req: func.HttpRequest) -> func.HttpResponse:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
         logger.error(traceback.format_exc())
+        send_slack_message(error_message, get_slack_url)
         return func.HttpResponse("Failed to read form HTML", status_code=500)
 
 
@@ -86,6 +90,7 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
         logger.error(traceback.format_exc())
+        send_slack_message(error_message, get_slack_url)
         return func.HttpResponse("Failed to read form HTML", status_code=500)
 
 
@@ -210,6 +215,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
         logger.error(traceback.format_exc())
+        send_slack_message(error_message, get_slack_url)
         return func.HttpResponse("data: An exception was raised. See the logs for more details.\n\n",
                                  status_code=500,
                                  headers=get_sse_headers())
@@ -234,6 +240,7 @@ def request_config_details(get_github_user_from_form):
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
         logger.error(traceback.format_exc())
+        send_slack_message(error_message, get_slack_url)
         return func.HttpResponse("data: An exception was raised. See the logs for more details.\n\n",
                                  status_code=500,
                                  headers=get_sse_headers())
