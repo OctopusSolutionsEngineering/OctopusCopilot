@@ -5,6 +5,8 @@ from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
+from domain.config.users import get_admin_users
+from domain.exceptions.not_authorized import NotAuthorized
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.handlers.copilot_handler import handle_copilot_chat
@@ -100,16 +102,10 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     def get_github_user_from_form():
         return get_github_user(lambda: req.headers.get("X-GitHub-Token"))
 
-    def clean_up_old_records():
-        """Cleans up, or deletes, old user records
-        """
-        count = delete_old_user_details(get_functions_connection_string)
-        return f"Cleaned up {count} records"
-
     def clean_up_all_records():
         """Cleans up, or deletes, all user records
         """
-        delete_all_user_details(get_functions_connection_string)
+        delete_all_user_details(get_github_user_from_form, get_admin_users, get_functions_connection_string)
         return f"Deleted all records"
 
     def set_octopus_details_from_form(octopus_url, api_key):
@@ -188,7 +184,6 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         return FunctionDefinitions([
             FunctionDefinition(get_octopus_project_names_form),
             FunctionDefinition(set_octopus_details_from_form),
-            FunctionDefinition(clean_up_old_records),
             FunctionDefinition(clean_up_all_records),
         ])
 
@@ -199,6 +194,9 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         return func.HttpResponse(convert_to_sse_response(result), headers=get_sse_headers())
 
+    except NotAuthorized as e:
+        return func.HttpResponse(convert_to_sse_response("You are not authorized."),
+                                 headers=get_sse_headers())
     except SpaceNotFound as e:
         return func.HttpResponse(convert_to_sse_response("The requested space was not found. "
                                                          + "Either the space does not exist or the API key does not "
