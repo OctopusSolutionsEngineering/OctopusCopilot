@@ -10,27 +10,78 @@
 <body class="m-3">
 <form>
     <div class="form-group row">
-        <div class="col-8 offset-2">
-            You have successfully logged in. To allow Copilot to interact with Octopus, you must configure a
-            <a href="https://octopus.com/docs/security/users-and-teams/service-accounts#openid-connect-oidc">Service
-                Account</a>
-            with an OIDC identity matching the details below. This Service Account is then used to generate
-            temporary API tokens that Copilot authenticates with to access the Octopus API.
+        <label for="url" class="col-2 offset-2 col-form-label">Octopus URL</label>
+        <div class="col-6">
+            <input id="url" name="token" type="text" class="form-control">
+            <small id="urlHelp" class="form-text text-muted">This is the URL to your cloud Octopus instance e.g.
+                https://myinstance.octopus.app</small>
         </div>
     </div>
     <div class="form-group row">
-        <label class="col-2 offset-2 col-form-label">Issuer</label>
+        <label for="api" class="col-2 offset-2 col-form-label">Octopus API Key</label>
         <div class="col-6">
-            #{Issuer}
+            <input id="api" name="query" type="password" class="form-control">
+            <small id="apiHelp" class="form-text text-muted">This is the <a
+                    href="https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key">API key</a> used to
+                interact with your Octopus
+                instance e.g. API-ABCDEFGHIJKLMNOPQRSTUVWXYZ</small>
         </div>
     </div>
     <div class="form-group row">
-        <label class="col-2 offset-2 col-form-label">Subject</label>
-        <div class="col-6">
-            #{Subject}
+        <div class="offset-4 col-8">
+            <button id="submit" name="submit" type="button" class="btn btn-primary">Submit</button>
         </div>
     </div>
-
+    <div class="form-group row">
+        <div class="offset-4 col-6">
+            <div id="response_error" class="alert alert-danger" role="alert" style="display: none">
+                There was an error logging in. Please try again later.
+            </div>
+            <div id="validation" class="alert alert-danger" role="alert" style="display: none">
+                The request to this page was not well-formed. You can not log in.
+            </div>
+        </div>
+    </div>
 </form>
 </body>
+<script>
+    function validate() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const state = urlParams.get('state');
+
+        if (!state) {
+            submit.disabled = true
+            url.disabled = true
+            api.disabled = true
+            validation.style.display = 'block'
+        }
+    }
+
+    async function processQuery() {
+        submit.disabled = true
+        url.disabled = true
+        api.disabled = true
+        response_error.style.display = 'none'
+
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const state = urlParams.get('state');
+
+            const response = await fetch("/api/login_submit?state=" + encodeURIComponent(state), {
+                method: "POST",
+                body: JSON.stringify({url: url.value, api: api.value})
+            });
+
+            if (!response.ok) {
+                response_error.style.display = 'block'
+            }
+        } catch {
+            response_error.style.display = 'block'
+        }
+    }
+
+    submit.onclick = processQuery
+
+    validate()
+</script>
 </html>

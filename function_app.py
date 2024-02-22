@@ -1,9 +1,10 @@
-import os
+import json
 import traceback
 
 from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
+from domain.config.database import get_functions_connection_string
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.handlers.copilot_handler import handle_copilot_chat
@@ -13,7 +14,8 @@ from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.validation.octopus_validation import is_hosted_octopus
 from infrastructure.github import get_github_user
 from infrastructure.octopus_projects import get_octopus_project_names_base, get_octopus_project_names_response
-from infrastructure.users import get_users_details, save_users_octopus_url, delete_old_user_details
+from infrastructure.users import get_users_details, save_users_octopus_url, delete_old_user_details, save_login_uuid, \
+    save_users_octopus_url_from_login
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
@@ -28,7 +30,7 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
     A function handler used to clean up old API keys
     :param mytimer: The Timer request
     """
-    delete_old_user_details(lambda: os.environ.get("AzureWebJobsStorage"))
+    delete_old_user_details(get_functions_connection_string)
 
 
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
@@ -41,6 +43,42 @@ def query_form(req: func.HttpRequest) -> func.HttpResponse:
     try:
         with open("html/query.html", "r") as file:
             return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
+    except Exception as e:
+        error_message = getattr(e, 'message', repr(e))
+        logger.error(error_message)
+        logger.error(traceback.format_exc())
+        return func.HttpResponse("Failed to read form HTML", status_code=500)
+
+
+@app.route(route="login", auth_level=func.AuthLevel.ANONYMOUS)
+def login_form(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    A function handler that returns an HTML form logging in
+    :param req: The HTTP request
+    :return: The HTML form
+    """
+    try:
+        with open("html/login.html", "r") as file:
+            return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
+    except Exception as e:
+        error_message = getattr(e, 'message', repr(e))
+        logger.error(error_message)
+        logger.error(traceback.format_exc())
+        return func.HttpResponse("Failed to read form HTML", status_code=500)
+
+
+@app.route(route="login_submit", auth_level=func.AuthLevel.ANONYMOUS)
+def login_submit(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    A function handler that responds to a login
+    :param req: The HTTP request
+    :return: The HTML form
+    """
+    try:
+        uuid = req.params.get('state')
+        body = json.loads(req.get_body())
+        save_users_octopus_url_from_login(uuid, body['url'], body['api'], get_functions_connection_string)
+        return func.HttpResponse(status_code=201)
     except Exception as e:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
@@ -90,7 +128,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         save_users_octopus_url(username,
                                octopus_url,
                                api_key,
-                               lambda: os.environ.get("AzureWebJobsStorage"))
+                               get_functions_connection_string)
 
         return "Successfully updated the Octopus instance and API key."
 
@@ -109,7 +147,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             return "You must be logged in to GitHub to chat"
 
         try:
-            github_user = get_users_details(github_username, lambda: os.environ.get("AzureWebJobsStorage"))
+            github_user = get_users_details(github_username, get_functions_connection_string)
 
             # We need to configure the Octopus details first because we need to know the service account id
             # before attempting to generate an ID token.
@@ -154,7 +192,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     except UserNotConfigured as e:
         # This exception means there is no Octopus instance configured for the GitHub user making the request.
         # The Octopus instance is supplied via a chat message.
-        return request_config_details()
+        return request_config_details(get_github_user_from_form)
     except Exception as e:
         error_message = getattr(e, 'message', repr(e))
         logger.error(error_message)
@@ -171,16 +209,12 @@ def get_sse_headers():
     }
 
 
-def request_config_details():
+def request_config_details(get_github_user_from_form):
     try:
         logger.info("User has not configured Octopus instance")
+        uuid = save_login_uuid(get_github_user_from_form(), get_functions_connection_string)
         return func.HttpResponse(convert_to_sse_response(
-            "You must first configure the Octopus cloud instance you wish to interact with.\n"
-            + "\n"
-            + "To configure your Octopus instance, say "
-            + "`Set my Octopus instance to https://myinstance.octopus.app and API key to "
-            + "API-ABCDEFGHIJKLMNOPQRSTUVWXYZ` (replacing `myinstance` with the hostname of your Octopus "
-            + "instance, and `API-ABCDEFGHIJKLMNOPQRSTUVWXYZ` with your Octopus API key)."),
+            f"To continue chatting please [log in](/api/login?state={uuid})."),
             status_code=200,
             headers=get_sse_headers())
     except Exception as e:

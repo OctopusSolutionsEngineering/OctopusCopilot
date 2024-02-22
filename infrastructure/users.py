@@ -1,4 +1,5 @@
 import traceback
+import uuid
 from datetime import date, timedelta
 
 from azure.core.exceptions import HttpResponseError
@@ -36,27 +37,53 @@ def save_users_octopus_url(username, octopus_url, api_key, connection_string):
     table_client.upsert_entity(user)
 
 
-def save_users_id_token(username, id_token, connection_string):
-    logger.info("save_users_id_token - Enter")
+def save_login_uuid(username, connection_string):
+    logger.info("save_login_uuid - Enter")
 
     if not username or not isinstance(username, str) or not username.strip():
         raise ValueError("username must be the GitHub user's ID (save_users_id_token).")
 
-    if not id_token or not isinstance(id_token, str) or not id_token.strip():
-        raise ValueError("id_token must be an OIDC token (save_users_id_token).")
-
     if connection_string is None:
         raise ValueError('connection_string must be function returning the connection string (save_users_id_token).')
 
+    login_uuid = str(uuid.uuid4())
+
     user = {
         'PartitionKey': "github.com",
-        'RowKey': username,
-        'IdToken': id_token
+        'RowKey': login_uuid,
+        'Username': username
     }
 
     table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
-    table_client = table_service_client.create_table_if_not_exists("users")
+    table_client = table_service_client.create_table_if_not_exists("userlogin")
     table_client.upsert_entity(user)
+
+    return login_uuid
+
+
+def save_users_octopus_url_from_login(uuid, url, api, connection_string):
+    logger.info("save_users_octopus_url_from_login - Enter")
+
+    if not uuid or not isinstance(uuid, str) or not uuid.strip():
+        raise ValueError("uuid must be the UUID used to link a login to a user (save_users_octopus_url_from_login).")
+
+    if connection_string is None:
+        raise ValueError(
+            'connection_string must be function returning the connection string (save_users_octopus_url_from_login).')
+
+    try:
+        table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
+        table_client = table_service_client.create_table_if_not_exists("userlogin")
+        login = table_client.get_entity("github.com", uuid)
+
+        username = login["Username"]
+
+        save_users_octopus_url(username, url, api, connection_string)
+    finally:
+        # Clean up the linking record
+        table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
+        table_client = table_service_client.create_table_if_not_exists("userlogin")
+        table_client.delete_entity(uuid)
 
 
 def get_users_details(username, connection_string):
