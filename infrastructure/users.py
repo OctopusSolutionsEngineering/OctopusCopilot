@@ -61,10 +61,10 @@ def save_login_uuid(username, connection_string):
     return login_uuid
 
 
-def save_users_octopus_url_from_login(uuid, url, api, connection_string):
+def save_users_octopus_url_from_login(state, url, api, connection_string):
     logger.info("save_users_octopus_url_from_login - Enter")
 
-    if not uuid or not isinstance(uuid, str) or not uuid.strip():
+    if not state or not isinstance(state, str) or not state.strip():
         raise ValueError("uuid must be the UUID used to link a login to a user (save_users_octopus_url_from_login).")
 
     if connection_string is None:
@@ -74,7 +74,7 @@ def save_users_octopus_url_from_login(uuid, url, api, connection_string):
     try:
         table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
         table_client = table_service_client.create_table_if_not_exists("userlogin")
-        login = table_client.get_entity("github.com", uuid)
+        login = table_client.get_entity("github.com", state)
 
         username = login["Username"]
 
@@ -83,7 +83,7 @@ def save_users_octopus_url_from_login(uuid, url, api, connection_string):
         # Clean up the linking record
         table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string())
         table_client = table_service_client.create_table_if_not_exists("userlogin")
-        table_client.delete_entity(uuid)
+        table_client.delete_entity(state)
 
 
 def get_users_details(username, connection_string):
