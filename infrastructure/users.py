@@ -1,13 +1,11 @@
-import traceback
 import uuid
 from datetime import date, timedelta
 
 from azure.core.exceptions import HttpResponseError
 from azure.data.tables import TableServiceClient
 
-from domain.config.slack import get_slack_url
+from domain.errors.error_handling import handle_error
 from domain.logging.app_logging import configure_logging
-from infrastructure.slack import send_slack_message
 
 logger = configure_logging(__name__)
 
@@ -89,10 +87,7 @@ def save_users_octopus_url_from_login(state, url, api, connection_string):
             table_client.delete_entity("github.com", state)
         except Exception as e:
             # This cleanup is a best effort operation, but it should not fail a login
-            error_message = getattr(e, 'message', repr(e))
-            logger.error(error_message)
-            logger.error(traceback.format_exc())
-            send_slack_message(error_message, get_slack_url)
+            handle_error(e)
 
 
 def get_users_details(username, connection_string):
@@ -139,10 +134,7 @@ def delete_old_user_details(connection_string):
         return counter
 
     except HttpResponseError as e:
-        error_message = getattr(e, 'message', repr(e))
-        logger.error(error_message)
-        logger.error(traceback.format_exc())
-        send_slack_message(error_message, get_slack_url)
+        handle_error(e)
 
 
 def delete_all_user_details(connection_string):
@@ -163,7 +155,4 @@ def delete_all_user_details(connection_string):
         table_service_client.delete_table("users")
 
     except HttpResponseError as e:
-        error_message = getattr(e, 'message', repr(e))
-        logger.error(error_message)
-        logger.error(traceback.format_exc())
-        send_slack_message(error_message, get_slack_url)
+        handle_error(e)
