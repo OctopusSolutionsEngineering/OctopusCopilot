@@ -14,12 +14,12 @@ def is_admin_user(user, get_admin_users, callback):
     :return: The value returned by the callback
     """
     try:
-        admin_users = map(lambda x: str(x), json.loads(get_admin_users()))
+        admin_users = list(map(lambda x: str(x), json.loads(get_admin_users())))
     except Exception as e:
         handle_error(e)
         raise NotAuthorized()
 
-    if user() not in admin_users:
+    if str(user()) not in admin_users:
         logging.error(f"User {user()} not found in {admin_users}")
         raise NotAuthorized()
 

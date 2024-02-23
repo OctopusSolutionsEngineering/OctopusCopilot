@@ -140,10 +140,7 @@ def delete_old_user_details(connection_string):
 def delete_all_user_details(connection_string):
     """
     Delete all user details.
-    :param user: The current user
-    :param get_admin_users: The list of admins
     :param connection_string: The database connection string
-    :return: The number of deleted records.
     """
     logger.info("delete_all_user_details - Enter")
 
