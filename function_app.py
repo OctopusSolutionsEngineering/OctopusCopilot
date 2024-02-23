@@ -7,6 +7,7 @@ from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
+from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequestFailed
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.handlers.copilot_handler import handle_copilot_chat
@@ -191,6 +192,16 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         return func.HttpResponse(convert_to_sse_response(result), headers=get_sse_headers())
 
+    except OctopusRequestFailed as e:
+        return func.HttpResponse(convert_to_sse_response(
+            "The request to the Octopus API failed. " +
+            "Either your API key is invalid, or there was an issue contacting the server."),
+            headers=get_sse_headers())
+    except GitHubRequestFailed as e:
+        return func.HttpResponse(
+            convert_to_sse_response("The request to the GitHub API failed. " +
+                                    "Your GitHub token is likely to be invalid."),
+            headers=get_sse_headers())
     except NotAuthorized as e:
         return func.HttpResponse(convert_to_sse_response("You are not authorized."),
                                  headers=get_sse_headers())

@@ -3,7 +3,7 @@ from urllib.parse import urlunsplit, urlparse, urlencode
 from retry import retry
 from urllib3.exceptions import HTTPError
 
-from domain.exceptions.request_failed import RequestFailed
+from domain.exceptions.request_failed import OctopusRequestFailed
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.logging.app_logging import configure_logging
 from infrastructure.http_pool import http, TAKE_ALL
@@ -68,7 +68,7 @@ def get_space_id_and_name_from_name(space_name, my_get_octopus_api, my_get_api_k
     resp = http.request("GET", api, headers=get_octopus_headers(my_get_api_key))
 
     if resp.status != 200:
-        raise RequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+        raise OctopusRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
 
     json = resp.json()
 
@@ -108,6 +108,10 @@ def get_octopus_project_names_base(space_name, my_get_api_key, my_get_octopus_ap
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, my_get_octopus_api, my_get_api_key)
     api = build_octopus_url(my_get_octopus_api, "api/" + space_id + "/Projects", dict(take=TAKE_ALL))
     resp = http.request("GET", api, headers=get_octopus_headers(my_get_api_key))
+
+    if resp.status != 200:
+        raise OctopusRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+
     json = resp.json()
     projects = list(map(lambda p: p["Name"], json["Items"]))
 

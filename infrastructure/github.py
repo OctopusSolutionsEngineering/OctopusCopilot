@@ -1,6 +1,6 @@
 from urllib.parse import urlparse, urlencode, urlunsplit
 
-from domain.exceptions.request_failed import RequestFailed
+from domain.exceptions.request_failed import GitHubRequestFailed
 from infrastructure.http_pool import http
 
 
@@ -49,7 +49,7 @@ def get_github_user(get_token):
     resp = http.request("GET", api, headers=get_github_headers(get_token))
 
     if resp.status != 200:
-        raise RequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+        raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
 
     json = resp.json()
 
