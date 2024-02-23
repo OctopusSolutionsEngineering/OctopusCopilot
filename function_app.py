@@ -194,13 +194,13 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
     except OctopusRequestFailed as e:
         return func.HttpResponse(convert_to_sse_response(
-            "The request to the Octopus API failed. " +
-            "Either your API key is invalid, or there was an issue contacting the server."),
+            "The request to the Octopus API failed. "
+            + "Either your API key is invalid, or there was an issue contacting the server."),
             headers=get_sse_headers())
     except GitHubRequestFailed as e:
         return func.HttpResponse(
-            convert_to_sse_response("The request to the GitHub API failed. " +
-                                    "Your GitHub token is likely to be invalid."),
+            convert_to_sse_response("The request to the GitHub API failed. "
+                                    + "Your GitHub token is likely to be invalid."),
             headers=get_sse_headers())
     except NotAuthorized as e:
         return func.HttpResponse(convert_to_sse_response("You are not authorized."),
