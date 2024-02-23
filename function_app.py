@@ -185,7 +185,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         ])
 
     try:
-        query = req.params.get("message")
+        query = extract_query(req)
         logger.info("Query: " + query)
         result = handle_copilot_chat(query, build_form_tools).call_function()
 
@@ -209,6 +209,23 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
                                  status_code=500,
                                  headers=get_sse_headers())
 
+
+def extract_query(req: func.HttpRequest):
+    query = req.params.get("message")
+
+    if query:
+        return query
+
+    body = json.dumps(req.get_body())
+
+    # This is the format supplied by copilot
+    query = ""
+    if 'messages' in body:
+        for message in body['messages']:
+            if 'content' in message:
+                query = query + "\n" + message['content']
+
+    return query
 
 def get_sse_headers():
     return {
