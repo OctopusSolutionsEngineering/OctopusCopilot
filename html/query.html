@@ -27,8 +27,8 @@
         <label for="query" class="col-2 offset-2 col-form-label">Query</label>
         <div class="col-6">
             <input id="query" name="query" type="text" class="form-control">
-            <small id="queryHelp" class="form-text text-muted">This is a plain text query. Ask something like "Show me
-                the projects in the Default space".</small>
+            <small id="queryHelp" class="form-text text-muted">This is a plain text query. Ask something like "<a id="sampleQuery" href="#">Show me
+                the projects in the Default space</a>".</small>
         </div>
     </div>
     <div class="form-group row">
@@ -86,5 +86,10 @@
             processQuery()
         }
     });
+
+    sampleQuery.onclick = function () {
+        query.value = "Show me the projects in the Default space"
+        return false
+    }
 </script>
 </html>
