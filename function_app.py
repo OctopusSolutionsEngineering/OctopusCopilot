@@ -227,6 +227,7 @@ def extract_query(req: func.HttpRequest):
 
     return query
 
+
 def get_sse_headers():
     return {
         'Content-Type': 'text/event-stream',
