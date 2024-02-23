@@ -40,6 +40,9 @@
             <div id="validation" class="alert alert-danger" role="alert" style="display: none">
                 The request to this page was not well-formed. You can not log in.
             </div>
+            <div id="success" class="alert alert-success" role="alert" style="display: none">
+                You have logged in successfully. This window will close in 5 seconds.
+            </div>
         </div>
     </div>
 </form>
@@ -74,6 +77,11 @@
 
             if (!response.ok) {
                 response_error.style.display = 'block'
+            } else {
+                success.style.display = 'block'
+                window.setTimeout(function () {
+                    window.close()
+                }, 5000)
             }
         } catch {
             response_error.style.display = 'block'
