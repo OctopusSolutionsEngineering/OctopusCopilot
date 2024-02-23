@@ -9,7 +9,7 @@
 </head>
 <body>
 <nav class="navbar mb-4 navbar-dark" style="background-color: #0D80D8;">
-  <span class="navbar-brand text-center col-12 h1">Octopus Copilot</span>
+    <span class="navbar-brand text-center col-12 h1">Octopus Copilot</span>
 </nav>
 <form>
     <div class="form-group row">
@@ -44,7 +44,8 @@
                 The request to this page was not well-formed. You can not log in.
             </div>
             <div id="success" class="alert alert-success" role="alert" style="display: none">
-                You have logged in successfully. This window will close in 5 seconds.
+                You have logged in successfully. This window will close in 5 seconds, or you can return to the <a
+                    href="https://octopuscopilotproduction.azurewebsites.net/api/form">query form</a>.
             </div>
         </div>
     </div>
@@ -83,7 +84,7 @@
             } else {
                 success.style.display = 'block'
                 window.setTimeout(function () {
-                    window.close()
+                    window.location.replace("https://octopuscopilotproduction.azurewebsites.net/api/form")
                 }, 5000)
             }
         } catch {
