@@ -47,6 +47,15 @@
 <script>
     async function processQuery() {
         markdown.innerHTML = "Processing..."
+        query.disabled = true
+        submit.disabled = true
+        token.disabled = true
+
+        function enableInput() {
+            query.disabled = false
+            submit.disabled = false
+            token.disabled = false
+        }
 
         // Use the polyfill to get the ability to send headers.
         var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(query.value), {
@@ -61,11 +70,13 @@
             evtSource.close()
             response += event.data + "\n"
             markdown.innerHTML = marked.parse(response);
+            enableInput()
         };
         evtSource.onerror = (event) => {
             console.log(event)
             evtSource.close()
             markdown.innerHTML = "The request resulted in an error."
+            enableInput()
         };
     }
 
