@@ -1,3 +1,4 @@
+import collections
 import json
 import logging
 
@@ -15,6 +16,10 @@ def is_admin_user(user, get_admin_users, callback):
     """
     try:
         admin_users = list(map(lambda x: str(x), json.loads(get_admin_users())))
+
+        if not isinstance(admin_users, collections.abc.Sequence):
+            raise Exception()
+
     except Exception as e:
         handle_error(e)
         raise NotAuthorized()

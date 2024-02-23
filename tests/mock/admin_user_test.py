@@ -23,3 +23,17 @@ class AdminUser(unittest.TestCase):
             self.fail()
         except NotAuthorized as e:
             pass
+
+    def test_is_admin_list_is_string(self):
+        try:
+            is_admin_user(lambda: '12', lambda: "\"123\"", lambda: print("success"))
+            self.fail()
+        except NotAuthorized as e:
+            pass
+
+    def test_is_admin_list_is_object(self):
+        try:
+            is_admin_user(lambda: '12', lambda: "{\"123\": true}", lambda: print("success"))
+            self.fail()
+        except NotAuthorized as e:
+            pass
