@@ -216,7 +216,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         return request_config_details(get_github_user_from_form)
     except Exception as e:
         handle_error(e)
-        return func.HttpResponse("data: An exception was raised. See the logs for more details.\n\n",
+        return func.HttpResponse(convert_to_sse_response("An exception was raised. See the logs for more details."),
                                  status_code=500,
                                  headers=get_sse_headers())
 
