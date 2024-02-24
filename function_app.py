@@ -80,7 +80,9 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         uuid = req.params.get('state')
         body = json.loads(req.get_body())
 
-        # using the supplied API key, create a time limited API key that we'll save
+        # Using the supplied API key, create a time limited API key that we'll save and reuse until
+        # the next cleanup cycle triggered by api_key_cleanup. Using temporary keys mens we never
+        # persist a long lived key.
         user = get_current_user(lambda: body['api'], lambda: body['url'])
         api_key = create_limited_api_key(user, lambda: body['api'], lambda: body['url'])
 
