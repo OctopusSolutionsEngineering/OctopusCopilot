@@ -7,7 +7,7 @@ from infrastructure.slack import send_slack_message
 
 logger = configure_logging(__name__)
 
-sensitive_vars = ["API-[A-Za-z0-9]+"]
+sensitive_vars = ["[Aa][Pp][Ii]-[A-Za-z0-9]+"]
 
 
 def handle_error(exception):
