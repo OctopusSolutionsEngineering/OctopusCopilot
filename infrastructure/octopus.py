@@ -107,7 +107,7 @@ def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
     if my_octopus_api is None:
         raise ValueError('my_octopus_api must be the Octopus Url.')
 
-    space_id, actual_space_name = get_space_id_and_name_from_name(space_name, my_octopus_api, my_api_key)
+    space_id, actual_space_name = get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api)
     api = build_octopus_url(my_octopus_api, "api/" + space_id + "/Projects", dict(take=TAKE_ALL))
     resp = http.request("GET", api, headers=get_octopus_headers(my_api_key))
 
