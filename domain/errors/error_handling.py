@@ -1,3 +1,4 @@
+import re
 import traceback
 
 from domain.config.slack import get_slack_url
@@ -6,6 +7,8 @@ from infrastructure.slack import send_slack_message
 
 logger = configure_logging(__name__)
 
+sensitive_vars = ["API-[A-Za-z0-9]+"]
+
 
 def handle_error(exception):
     """
@@ -13,6 +16,11 @@ def handle_error(exception):
     :param exception: The exception to log
     """
     error_message = getattr(exception, 'message', repr(exception))
+
+    # A defensive move to stop API keys from appearing in logs
+    for sensitive_var in sensitive_vars:
+        error_message = re.sub(sensitive_var, "*****", error_message)
+
     logger.error(error_message)
     logger.error(traceback.format_exc())
     send_slack_message(error_message, get_slack_url)
