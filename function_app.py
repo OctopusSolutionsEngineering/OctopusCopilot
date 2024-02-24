@@ -35,7 +35,7 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
     A function handler used to clean up old API keys
     :param mytimer: The Timer request
     """
-    delete_old_user_details(get_functions_connection_string)
+    delete_old_user_details(get_functions_connection_string())
 
 
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
@@ -83,10 +83,10 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         # Using the supplied API key, create a time limited API key that we'll save and reuse until
         # the next cleanup cycle triggered by api_key_cleanup. Using temporary keys mens we never
         # persist a long lived key.
-        user = get_current_user(lambda: body['api'], lambda: body['url'])
-        api_key = create_limited_api_key(user, lambda: body['api'], lambda: body['url'])
+        user = get_current_user(body['api'], body['url'])
+        api_key = create_limited_api_key(user, body['api'], body['url'])
 
-        save_users_octopus_url_from_login(uuid, body['url'], api_key, get_functions_connection_string)
+        save_users_octopus_url_from_login(uuid, body['url'], api_key, get_functions_connection_string())
         return func.HttpResponse(status_code=201)
     except Exception as e:
         handle_error(e)
@@ -104,14 +104,14 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     """
 
     def get_github_user_from_form():
-        return get_github_user(lambda: req.headers.get("X-GitHub-Token"))
+        return get_github_user(req.headers.get("X-GitHub-Token"))
 
     def clean_up_all_records():
         """Cleans up, or deletes, all user records
         """
-        is_admin_user(get_github_user_from_form,
-                      get_admin_users,
-                      lambda: delete_all_user_details(get_functions_connection_string))
+        is_admin_user(get_github_user_from_form(),
+                      get_admin_users(),
+                      lambda: delete_all_user_details(get_functions_connection_string()))
         return f"Deleted all records"
 
     def set_octopus_details_from_form(octopus_url, api_key):
@@ -143,7 +143,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         save_users_octopus_url(username,
                                octopus_url,
                                api_key,
-                               get_functions_connection_string)
+                               get_functions_connection_string())
 
         return "Successfully updated the Octopus instance and API key."
 
@@ -162,7 +162,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             return "You must be logged in to GitHub to chat"
 
         try:
-            github_user = get_users_details(github_username, get_functions_connection_string)
+            github_user = get_users_details(github_username, get_functions_connection_string())
 
             # We need to configure the Octopus details first because we need to know the service account id
             # before attempting to generate an ID token.
@@ -175,8 +175,8 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             raise UserNotConfigured()
 
         actual_space_name, projects = get_octopus_project_names_base(space_name,
-                                                                     lambda: github_user["OctopusApiKey"],
-                                                                     lambda: github_user["OctopusUrl"])
+                                                                     github_user["OctopusApiKey"],
+                                                                     github_user["OctopusUrl"])
         logger.info(f"Actual space name: {actual_space_name}")
         logger.info(f"Projects: " + str(projects))
         return get_octopus_project_names_response(actual_space_name, projects)
@@ -266,7 +266,7 @@ def get_sse_headers():
 def request_config_details(get_github_user_from_form):
     try:
         logger.info("User has not configured Octopus instance")
-        uuid = save_login_uuid(get_github_user_from_form(), get_functions_connection_string)
+        uuid = save_login_uuid(get_github_user_from_form(), get_functions_connection_string())
         return func.HttpResponse(convert_to_sse_response(
             f"To continue chatting please [log in](/api/login?state={uuid})."),
             status_code=200,

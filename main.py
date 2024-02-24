@@ -45,7 +45,7 @@ def get_octopus_project_names_cli(space_name):
             space_name: The name of the space containing the projects
     """
 
-    actual_space_name, projects = get_octopus_project_names_base(space_name, get_api_key, get_octopus_api)
+    actual_space_name, projects = get_octopus_project_names_base(space_name, get_api_key(), get_octopus_api())
     return get_octopus_project_names_response(actual_space_name, projects)
 
 

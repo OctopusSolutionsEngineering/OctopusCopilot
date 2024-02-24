@@ -7,15 +7,15 @@ from infrastructure.http_pool import http
 logger = configure_logging(__name__)
 
 
-def send_slack_message(message, get_slack_url):
+def send_slack_message(message, slack_url):
     """
     Sends a message to a slack channel
     :param message: The message to send
-    :param get_slack_url: A function to get the slack URL
+    :param slack_url: The slack URL
     """
     try:
         data = json.dumps({"text": message})
-        resp = http.request("POST", get_slack_url(), headers={'Content-Type': 'application/json'}, body=data)
+        resp = http.request("POST", slack_url, headers={'Content-Type': 'application/json'}, body=data)
 
         if resp.status != 200:
             logger.error(resp.data)

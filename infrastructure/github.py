@@ -12,12 +12,12 @@ def get_github_headers(get_token):
     """
 
     if get_token is None:
-        raise ValueError('get_token must be function returning the Github token.')
+        raise ValueError('get_token must be the Github token.')
 
     return {
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
-        "Authorization": "Bearer {}".format(get_token())
+        "Authorization": "Bearer {}".format(get_token)
     }
 
 
@@ -42,7 +42,7 @@ def get_github_user(get_token):
     """
 
     if get_token is None:
-        raise ValueError('get_token must be function returning the Github token.')
+        raise ValueError('get_token must be the Github token.')
 
     api = build_github_url("user", "")
 
