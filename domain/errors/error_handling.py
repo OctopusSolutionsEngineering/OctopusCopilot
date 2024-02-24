@@ -17,7 +17,7 @@ def handle_error(exception):
     """
     error_message = sanitize_message(getattr(exception, 'message', repr(exception)))
     logger.error(error_message)
-    logger.error(traceback.format_exc())
+    logger.error(sanitize_message(traceback.format_exc()))
     send_slack_message(error_message, get_slack_url)
 
 
