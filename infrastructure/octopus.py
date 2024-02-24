@@ -1,5 +1,7 @@
+import datetime
 from urllib.parse import urlunsplit, urlparse, urlencode
 
+import pytz
 from retry import retry
 from urllib3.exceptions import HTTPError
 
@@ -26,7 +28,7 @@ def get_octopus_headers(my_get_api_key):
     }
 
 
-def build_octopus_url(my_get_octopus_api, path, query):
+def build_octopus_url(my_get_octopus_api, path, query=None):
     """
     Create a URL from the Octopus URL, additional path, and query params
     :param my_get_octopus_api: The Octopus UR:
@@ -136,3 +138,37 @@ def get_octopus_project_names_response(space_name, projects):
         return f"I found {len(projects)} projects:\n* " + "\n * ".join(projects)
 
     return f"I found {len(projects)} projects in the space \"{space_name.strip()}\":\n* " + "\n* ".join(projects)
+
+
+def get_current_user(my_get_api_key, my_get_octopus_api):
+    api = build_octopus_url(my_get_octopus_api, "/api/users/me")
+    resp = http.request("GET", api, headers=get_octopus_headers(my_get_api_key))
+    if resp.status != 200:
+        raise OctopusRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+
+    json = resp.json()
+    return json["Id"]
+
+
+def create_limited_api_key(user, my_get_api_key, my_get_octopus_api):
+    """
+    This function creates an API key that expires tomorrow.
+    :param user: The current user
+    :param my_get_api_key: A function that returns the API key
+    :param my_get_octopus_api: A function that returns the Octopus URL
+    :return:
+    """
+    tomorrow = datetime.datetime.now(pytz.UTC) + datetime.timedelta(days=1)
+
+    api_key = {
+        'Purpose': "Octopus Copilot temporary API key",
+        'Expires': tomorrow.isoformat()
+    }
+
+    api = build_octopus_url(my_get_octopus_api, "/api/users/" + user + "/apikeys")
+    resp = http.request("POST", api, json=api_key, headers=get_octopus_headers(my_get_api_key))
+    if resp.status != 200:
+        raise OctopusRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+
+    json = resp.json()
+    return json["ApiKey"]
