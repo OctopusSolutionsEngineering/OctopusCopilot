@@ -7,6 +7,7 @@ from urllib3.exceptions import HTTPError
 
 from domain.exceptions.request_failed import OctopusRequestFailed
 from domain.exceptions.space_not_found import SpaceNotFound
+from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http, TAKE_ALL
@@ -138,7 +139,7 @@ def get_current_user(my_api_key, my_octopus_api):
     api = build_octopus_url(my_octopus_api, "/api/users/me")
     resp = http.request("GET", api, headers=get_octopus_headers(my_api_key))
     if resp.status != 200:
-        raise OctopusRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+        raise OctopusApiKeyInvalid(f"Request failed with " + resp.data.decode('utf-8'))
 
     json = resp.json()
     return json["Id"]
@@ -155,6 +156,7 @@ def create_limited_api_key(user, my_api_key, my_octopus_api):
 
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (create_limited_api_key).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (create_limited_api_key).')
+    ensure_string_not_empty(user, 'user must be the Octopus user ID (create_limited_api_key).')
 
     tomorrow = datetime.datetime.now(pytz.UTC) + datetime.timedelta(days=1)
 

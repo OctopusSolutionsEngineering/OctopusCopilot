@@ -10,6 +10,7 @@ from domain.exceptions.not_authorized import NotAuthorized
 from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequestFailed
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
+from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.logging.app_logging import configure_logging
 from domain.security.security import is_admin_user
@@ -83,12 +84,12 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
 
         # Using the supplied API key, create a time limited API key that we'll save and reuse until
         # the next cleanup cycle triggered by api_key_cleanup. Using temporary keys mens we never
-        # persist a long lived key.
+        # persist a long-lived key.
         user = get_current_user(body['api'], body['url'])
         api_key = create_limited_api_key(user, body['api'], body['url'])
         save_users_octopus_url_from_login(uuid, body['url'], api_key, get_functions_connection_string())
         return func.HttpResponse(status_code=201)
-    except OctopusRequestFailed as e:
+    except (OctopusRequestFailed, OctopusApiKeyInvalid) as e:
         handle_error(e)
         return func.HttpResponse("Failed to generate temporary key", status_code=400)
     except Exception as e:
@@ -174,6 +175,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             # assume any exception means the user must log in
             raise UserNotConfigured()
 
+        get_current_user(github_user["OctopusApiKey"], github_user["OctopusUrl"])
         actual_space_name, projects = get_octopus_project_names_base(space_name,
                                                                      github_user["OctopusApiKey"],
                                                                      github_user["OctopusUrl"])
@@ -218,7 +220,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
                                                          + "Either the space does not exist or the API key does not "
                                                          + "have permissions to access it."),
                                  headers=get_sse_headers())
-    except UserNotConfigured as e:
+    except (UserNotConfigured, OctopusApiKeyInvalid) as e:
         # This exception means there is no Octopus instance configured for the GitHub user making the request.
         # The Octopus instance is supplied via a chat message.
         return request_config_details(get_github_user_from_form)
