@@ -80,6 +80,7 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_ENDPOINT: ${{ secrets.OPENAI_ENDPOINT }}
+          LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
         shell: bash
       - name: Collect Dependencies
         if: always()
