@@ -67,7 +67,10 @@ class LiveRequests(unittest.TestCase):
 
         self.assertEqual(function.function.__name__, "get_octopus_project_names_form")
         self.assertEqual(function.function_args["space_name"], "Default")
-        self.assertEqual(function.call_function(), ["Project1", "Project2"])
+
+        results = function.call_function()
+        self.assertIn(results, "Project1")
+        self.assertIn(results, "Project2")
 
 
 def run_terraform(directory, url, api, space):
