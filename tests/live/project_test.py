@@ -66,7 +66,7 @@ class LiveRequests(unittest.TestCase):
 
         function = handle_copilot_chat("What are the projects associated with space Default?", build_live_test_tools)
 
-        self.assertEqual(function.function.__name__, "get_octopus_project_names_form")
+        self.assertEqual(function.function.__name__, "get_octopus_project_names")
         self.assertEqual(function.function_args["space_name"], "Default")
 
         results = function.call_function()
