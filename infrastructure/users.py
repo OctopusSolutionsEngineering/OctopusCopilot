@@ -22,7 +22,7 @@ def save_users_octopus_url(username, octopus_url, api_key, connection_string):
     if not api_key or not isinstance(api_key, str) or not api_key.strip():
         raise ValueError("service_account_id must be a the ID of a service account (save_users_octopus_url).")
 
-    if connection_string is None:
+    if not connection_string or not isinstance(connection_string, str) or not connection_string.strip():
         raise ValueError('connection_string must be the connection string (save_users_octopus_url).')
 
     user = {
@@ -43,7 +43,7 @@ def save_login_uuid(username, connection_string):
     if not username or not isinstance(username, str) or not username.strip():
         raise ValueError("username must be the GitHub user's ID (save_login_uuid).")
 
-    if connection_string is None:
+    if not connection_string or not isinstance(connection_string, str) or not connection_string.strip():
         raise ValueError('connection_string must be the connection string (save_login_uuid).')
 
     login_uuid = str(uuid.uuid4())
