@@ -25,8 +25,8 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.function_args["space_name"], "MySpace")
 
         results = function.call_function()
-        self.assertIn(results, "Project1")
-        self.assertIn(results, "Project2")
+        self.assertIn("Project1", results)
+        self.assertIn("Project2", results)
 
     def test_no_match(self):
         """

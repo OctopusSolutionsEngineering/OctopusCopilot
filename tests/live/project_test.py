@@ -69,8 +69,8 @@ class LiveRequests(unittest.TestCase):
         self.assertEqual(function.function_args["space_name"], "Default")
 
         results = function.call_function()
-        self.assertIn(results, "Project1")
-        self.assertIn(results, "Project2")
+        self.assertIn("Project1", results)
+        self.assertIn("Project2", results)
 
 
 def run_terraform(directory, url, api, space):
