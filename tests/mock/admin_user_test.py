@@ -8,6 +8,9 @@ class AdminUser(unittest.TestCase):
     def test_is_admin_user(self):
         is_admin_user('123', "[123]", lambda: print("success"))
 
+    def test_no_callabck(self):
+        is_admin_user('123', "[123]", None)
+
     def test_empty_is_not_admin_user(self):
         try:
             is_admin_user(None, "[123]", lambda: print("success"))
@@ -59,6 +62,13 @@ class AdminUser(unittest.TestCase):
     def test_is_admin_list_is_object(self):
         try:
             is_admin_user('12', "{\"123\": true}", lambda: print("success"))
+            self.fail()
+        except NotAuthorized as e:
+            pass
+
+    def test_invalid_json(self):
+        try:
+            is_admin_user("123", "{", lambda: print("success"))
             self.fail()
         except NotAuthorized as e:
             pass
