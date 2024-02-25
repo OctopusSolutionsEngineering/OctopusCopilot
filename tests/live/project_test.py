@@ -7,6 +7,7 @@ import unittest
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
+from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.logging.app_logging import configure_logging
 from tests.infrastructure.tools.build_test_tools import build_live_test_tools
@@ -60,7 +61,7 @@ class LiveRequests(unittest.TestCase):
 
     def test_get_projects(self):
         """
-        Tests that the llm can find the appropriate mock function and arguments
+        Tests that we can get a list of projects from Octopus
         """
 
         function = handle_copilot_chat("What are the projects associated with space Default?", build_live_test_tools)
@@ -71,6 +72,41 @@ class LiveRequests(unittest.TestCase):
         results = function.call_function()
         self.assertIn("Project1", results)
         self.assertIn("Project2", results)
+
+    def test_generate_temp_api_key(self):
+        """
+        Tests that we can create a temporary API key
+        """
+
+        function = handle_copilot_chat(
+            "Create a temporary API key from the API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
+            build_live_test_tools)
+
+        self.assertEqual(function.function.__name__, "set_octopus_details")
+        self.assertEqual(function.function_args["octopus_url"], "http://localhost:8080")
+        self.assertEqual(function.function_args["api_key"], Octopus_Api_Key)
+
+        results = function.call_function()
+        self.assertTrue(str(results).startswith("API-"))
+
+    def test_invalid_api_key(self):
+        """
+        Tests that we catch bad credentails
+        """
+
+        function = handle_copilot_chat(
+            "Get the details of the current user with API Key API-XXXXXXXXXXXXXXXXXXXXXX and URL http://localhost:8080",
+            build_live_test_tools)
+
+        self.assertEqual(function.function.__name__, "get_octopus_user")
+        self.assertEqual(function.function_args["octopus_url"], "http://localhost:8080")
+        self.assertEqual(function.function_args["api_key"], "API-XXXXXXXXXXXXXXXXXXXXXX")
+
+        try:
+            function.call_function()
+            self.fail("Should have thrown an exception")
+        except OctopusApiKeyInvalid as e:
+            pass
 
 
 def run_terraform(directory, url, api, space):
