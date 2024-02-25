@@ -67,7 +67,7 @@ def save_users_octopus_url_from_login(state, url, api, connection_string):
     if not state or not isinstance(state, str) or not state.strip():
         raise ValueError("uuid must be the UUID used to link a login to a user (save_users_octopus_url_from_login).")
 
-    if connection_string is None:
+    if not connection_string or not isinstance(connection_string, str) or not connection_string.strip():
         raise ValueError('connection_string must be the connection string (save_users_octopus_url_from_login).')
 
     try:
@@ -95,7 +95,7 @@ def get_users_details(username, connection_string):
     if not username or not isinstance(username, str) or not username.strip():
         raise ValueError("username must be the GitHub user's ID (get_users_details).")
 
-    if connection_string is None:
+    if not connection_string or not isinstance(connection_string, str) or not connection_string.strip():
         raise ValueError('connection_string must be the connection string (save_users_octopus_url).')
 
     table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
@@ -112,7 +112,7 @@ def delete_old_user_details(connection_string):
     """
     logger.info("delete_old_user_details - Enter")
 
-    if connection_string is None:
+    if not connection_string or not isinstance(connection_string, str) or not connection_string.strip():
         raise ValueError('connection_string must be the connection string (delete_old_user_details).')
 
     try:
@@ -143,7 +143,7 @@ def delete_all_user_details(connection_string):
     """
     logger.info("delete_all_user_details - Enter")
 
-    if connection_string is None:
+    if not connection_string or not isinstance(connection_string, str) or not connection_string.strip():
         raise ValueError('connection_string must be the connection string (delete_all_user_details).')
 
     try:
