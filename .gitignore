@@ -3,3 +3,4 @@ venv
 .venv
 *.xml
 bom.json
+.coverage

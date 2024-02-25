@@ -16,6 +16,16 @@ logger = configure_logging()
 
 
 class LiveRequests(unittest.TestCase):
+    """
+    This class creates a real Octopus instance with Docker, uses OpenAI to construct the queries,
+    and then calls the real Octopus API to get the results. The purpose of these tests is to validate
+    that the API interactions with Octopus work as expected.
+
+    The MockRequests class can be used to verify that OpenAI executes the correct function with the correct arguments.
+    MockRequests does not require an Octopus instance to be running, and so is a more efficient way to verify
+    queries.
+    """
+
     @classmethod
     def setUpClass(cls):
         cls.mssql = DockerContainer("mcr.microsoft.com/mssql/server:2022-latest").with_env(
