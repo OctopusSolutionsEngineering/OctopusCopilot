@@ -6,7 +6,7 @@ from domain.security.security import is_admin_user
 
 class AdminUser(unittest.TestCase):
     def test_is_admin_user(self):
-        is_admin_user(123, "[123]", lambda: print("success"))
+        is_admin_user('123', "[123]", lambda: print("success"))
 
     def test_empty_is_not_admin_user(self):
         try:
@@ -24,13 +24,17 @@ class AdminUser(unittest.TestCase):
 
     def test_empty_list_is_not_admin_user(self):
         try:
-            is_admin_user(123, " ", lambda: print("success"))
+            is_admin_user("123", " ", lambda: print("success"))
             self.fail()
         except NotAuthorized as e:
             pass
 
     def test_is_admin_user_array_string(self):
-        is_admin_user(123, "[\"123\"]", lambda: print("success"))
+        try:
+            is_admin_user(123, "[\"123\"]", lambda: print("success"))
+            self.fail()
+        except NotAuthorized as e:
+            pass
 
     def test_is_admin_user_string(self):
         is_admin_user('123', "[123]", lambda: print("success"))
