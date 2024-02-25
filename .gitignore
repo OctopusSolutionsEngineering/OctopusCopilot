@@ -4,3 +4,4 @@ venv
 *.xml
 bom.json
 .coverage
+htmlcov

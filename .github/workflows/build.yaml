@@ -75,10 +75,18 @@ jobs:
         run: |
           pip install pytest coverage
           PYTHONPATH=$(pwd) coverage run -m pytest --junitxml=results.xml
+          coverage html
+          zip -r htmlcov.zip htmlcov
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_ENDPOINT: ${{ secrets.OPENAI_ENDPOINT }}
         shell: bash
+      - name: Collect Dependencies
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: Coverage Report
+          path: htmlcov.zip
       - if: always()
         name: Report
         uses: dorny/test-reporter@v1
