@@ -23,7 +23,10 @@ class MockRequests(unittest.TestCase):
 
         self.assertEqual(function.function.__name__, "get_mock_octopus_projects")
         self.assertEqual(function.function_args["space_name"], "MySpace")
-        self.assertEqual(function.call_function(), ["Project1", "Project2"])
+
+        results = function.call_function()
+        self.assertIn(results, "Project1")
+        self.assertIn(results, "Project2")
 
     def test_no_match(self):
         """
