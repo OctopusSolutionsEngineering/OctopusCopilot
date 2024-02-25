@@ -5,6 +5,7 @@ from langchain.agents import OpenAIFunctionsAgent
 from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
 from domain.logging.app_logging import configure_logging
 from domain.tools.function_call import FunctionCall
+from domain.validation.argument_validation import ensure_string_not_empty, ensure_not_none
 
 NO_FUNCTION_RESPONSE = "Sorry, I did not understand that request."
 my_log = configure_logging()
@@ -18,11 +19,8 @@ def handle_copilot_chat(query, llm_tools):
     :return: The result of the function, defined by the set of tools, that was called in response to the query
     """
 
-    if not query:
-        raise ValueError('query must be a non-empty string.')
-
-    if llm_tools is None:
-        raise ValueError('llm_tools must be a non-empty string.')
+    ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_chat).')
+    ensure_not_none(query, 'llm_tools must not be None (handle_copilot_chat).')
 
     functions = llm_tools()
     tools = functions.get_tools()
