@@ -8,6 +8,27 @@ class AdminUser(unittest.TestCase):
     def test_is_admin_user(self):
         is_admin_user(123, "[123]", lambda: print("success"))
 
+    def test_empty_is_not_admin_user(self):
+        try:
+            is_admin_user(None, "[123]", lambda: print("success"))
+            self.fail()
+        except NotAuthorized as e:
+            pass
+
+    def test_no_list_is_not_admin_user(self):
+        try:
+            is_admin_user(123, None, lambda: print("success"))
+            self.fail()
+        except NotAuthorized as e:
+            pass
+
+    def test_empty_list_is_not_admin_user(self):
+        try:
+            is_admin_user(123, " ", lambda: print("success"))
+            self.fail()
+        except NotAuthorized as e:
+            pass
+
     def test_is_admin_user_array_string(self):
         is_admin_user(123, "[\"123\"]", lambda: print("success"))
 

@@ -14,6 +14,16 @@ def is_admin_user(user, get_admin_users, callback):
     :param callback: The function to call if the user is authorized
     :return: The value returned by the callback
     """
+
+    if not get_admin_users or not isinstance(get_admin_users, str) or not get_admin_users.strip():
+        raise NotAuthorized()
+
+    if not user or not isinstance(user, str) or not user.strip():
+        raise NotAuthorized()
+
+    if not callback:
+        return
+
     try:
         admin_users = list(map(lambda x: str(x), json.loads(get_admin_users)))
 

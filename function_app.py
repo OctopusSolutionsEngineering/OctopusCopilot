@@ -15,6 +15,7 @@ from domain.logging.app_logging import configure_logging
 from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.sse_transformers import convert_to_sse_response
+from domain.validation.argument_validation import ensure_string_not_empty
 from domain.validation.octopus_validation import is_hosted_octopus
 from infrastructure.github import get_github_user
 from infrastructure.octopus import get_octopus_project_names_base, get_octopus_project_names_response, get_current_user, \
@@ -126,11 +127,8 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         logger.info("Calling set_octopus_details_from_form")
 
-        if not octopus_url or not isinstance(octopus_url, str) or not octopus_url.strip():
-            raise ValueError('octopus_url must be an Octopus Url.')
-
-        if not api_key or not isinstance(api_key, str) or not api_key.strip():
-            raise ValueError('service_account_id must be the ID of a service account.')
+        ensure_string_not_empty(octopus_url, 'octopus_url must be an Octopus Url (set_octopus_details_from_form).')
+        ensure_string_not_empty(api_key, 'api_key must be the ID of a service account (set_octopus_details_from_form).')
 
         if not is_hosted_octopus(octopus_url):
             raise ValueError('octopus_url must be a Octopus cloud instance.')
