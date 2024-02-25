@@ -66,6 +66,8 @@ def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
     api = build_octopus_url(my_octopus_api, "api/spaces", dict(take=TAKE_ALL))
     resp = http.request("GET", api, headers=get_octopus_headers(my_api_key))
 
+    if resp.status == 401:
+        raise OctopusApiKeyInvalid()
     if resp.status != 200:
         raise OctopusRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
 
@@ -103,6 +105,8 @@ def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
     api = build_octopus_url(my_octopus_api, "api/" + space_id + "/Projects", dict(take=TAKE_ALL))
     resp = http.request("GET", api, headers=get_octopus_headers(my_api_key))
 
+    if resp.status == 401:
+        raise OctopusApiKeyInvalid()
     if resp.status != 200:
         raise OctopusRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
 
@@ -138,6 +142,9 @@ def get_current_user(my_api_key, my_octopus_api):
 
     api = build_octopus_url(my_octopus_api, "/api/users/me")
     resp = http.request("GET", api, headers=get_octopus_headers(my_api_key))
+
+    if resp.status == 401:
+        raise OctopusApiKeyInvalid()
     if resp.status != 200:
         raise OctopusApiKeyInvalid(f"Request failed with " + resp.data.decode('utf-8'))
 
@@ -167,6 +174,9 @@ def create_limited_api_key(user, my_api_key, my_octopus_api):
 
     api = build_octopus_url(my_octopus_api, "/api/users/" + user + "/apikeys")
     resp = http.request("POST", api, json=api_key, headers=get_octopus_headers(my_api_key))
+
+    if resp.status == 401:
+        raise OctopusApiKeyInvalid()
     if resp.status != 200:
         raise OctopusRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
 
