@@ -7,6 +7,13 @@ from tests.infrastructure.tools.build_test_tools import build_mock_test_tools
 
 
 class MockRequests(unittest.TestCase):
+    """
+    This class tests that OpenAI is correctly matching the functions to the queries. It does not need
+    an Octopus instance running, and so is the fastest way to verify that chat queries are matching
+    function descriptions correctly.
+
+    Use the LiveRequests class to verify the function calls work against a real Octopus instance.
+    """
 
     @parameterized.expand([
         "What are the projects associated with space MySpace?",
