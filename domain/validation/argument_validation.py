@@ -8,6 +8,6 @@ def ensure_string(value, error_message):
         raise ValueError(error_message)
 
 
-def ensure_not_none(value, error_message):
+def ensure_not_falsy(value, error_message):
     if not value:
         raise ValueError(error_message)

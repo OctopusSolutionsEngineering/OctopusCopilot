@@ -35,6 +35,22 @@ class MockRequests(unittest.TestCase):
         self.assertIn("Project1", results)
         self.assertIn("Project2", results)
 
+    def test_empty_argumets(self):
+        """
+        Tests that the llm can find the appropriate mock function and arguments
+        """
+
+        function = handle_copilot_chat("List the projects saved under the space called \"\".", build_mock_test_tools)
+
+        self.assertEqual(function.function.__name__, "get_mock_octopus_projects")
+        self.assertEqual(function.function_args["space_name"], "")
+
+        try:
+            function.call_function()
+            self.fail()
+        except Exception as e:
+            pass
+
     def test_no_match(self):
         """
         Tests that the llm responds appropriately when no function is a match
