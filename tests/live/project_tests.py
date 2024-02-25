@@ -18,14 +18,16 @@ logger = configure_logging()
 class LiveRequests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.mssql = DockerContainer("mcr.microsoft.com/mssql/server:2022-latest").with_bind_ports(1433, 11433).with_env(
+        cls.mssql = DockerContainer("mcr.microsoft.com/mssql/server:2022-latest").with_env(
             "ACCEPT_EULA", "True").with_env("SA_PASSWORD", "Password01!")
         cls.mssql.start()
         wait_for_logs(cls.mssql, "SQL Server is now ready for client connections")
 
+        mssql_ip = cls.mssql.get_docker_client().bridge_ip(cls.mssql.get_wrapped_container().id)
+
         cls.octopus = DockerContainer("octopusdeploy/octopusdeploy").with_bind_ports(8080, 8080).with_env(
             "ACCEPT_EULA", "Y").with_env("DB_CONNECTION_STRING",
-                                         "Server=172.17.0.1,11433;Database=OctopusDeploy;User=sa;Password=Password01!").with_env(
+                                         "Server=" + mssql_ip + ",1433;Database=OctopusDeploy;User=sa;Password=Password01!").with_env(
             "ADMIN_API_KEY", Octopus_Api_Key).with_env("DISABLE_DIND", "Y").with_env(
             "ADMIN_USERNAME", "admin").with_env("ADMIN_PASSWORD", "Password01!").with_env(
             "OCTOPUS_SERVER_BASE64_LICENSE", os.environ["LICENSE"])
