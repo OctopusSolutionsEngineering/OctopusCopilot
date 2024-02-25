@@ -29,7 +29,7 @@ logger = configure_logging(__name__)
 
 
 @app.function_name(name="api_key_cleanup")
-@app.timer_trigger(schedule="0 * * * *",
+@app.timer_trigger(schedule="0 0 * * * *",
                    arg_name="mytimer",
                    run_on_startup=True)
 def api_key_cleanup(mytimer: func.TimerRequest) -> None:
