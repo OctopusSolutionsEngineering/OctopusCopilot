@@ -8,6 +8,7 @@ from urllib3.exceptions import HTTPError
 from domain.exceptions.request_failed import OctopusRequestFailed
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.logging.app_logging import configure_logging
+from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http, TAKE_ALL
 
 logger = configure_logging()
@@ -57,14 +58,9 @@ def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
 
     logger.info("get_space_id_and_name_from_name - Enter")
 
-    if not space_name or not isinstance(space_name, str) or not space_name.strip():
-        raise ValueError('space_name must be a non-empty string.')
-
-    if my_octopus_api is None:
-        raise ValueError('my_api_key must be the Octopus Url.')
-
-    if my_api_key is None:
-        raise ValueError('my_octopus_api must the Octopus API key.')
+    ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_space_id_and_name_from_name).')
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_space_id_and_name_from_name).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_space_id_and_name_from_name).')
 
     api = build_octopus_url(my_octopus_api, "api/spaces", dict(take=TAKE_ALL))
     resp = http.request("GET", api, headers=get_octopus_headers(my_api_key))
@@ -98,14 +94,9 @@ def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
 
     logger.info("get_octopus_project_names_base - Enter")
 
-    if not space_name or not isinstance(space_name, str):
-        raise ValueError('space_name must be a non-empty string.')
-
-    if my_api_key is None:
-        raise ValueError('my_api_key must be the Octopus API key.')
-
-    if my_octopus_api is None:
-        raise ValueError('my_octopus_api must be the Octopus Url.')
+    ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_octopus_project_names_base).')
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_octopus_project_names_base).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_octopus_project_names_base).')
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api)
     api = build_octopus_url(my_octopus_api, "api/" + space_id + "/Projects", dict(take=TAKE_ALL))
@@ -141,11 +132,8 @@ def get_octopus_project_names_response(space_name, projects):
 
 
 def get_current_user(my_api_key, my_octopus_api):
-    if my_api_key is None:
-        raise ValueError('my_octopus_api must the Octopus API key.')
-
-    if my_octopus_api is None:
-        raise ValueError('my_api_key must be the Octopus Url.')
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_current_user).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_current_user).')
 
     api = build_octopus_url(my_octopus_api, "/api/users/me")
     resp = http.request("GET", api, headers=get_octopus_headers(my_api_key))
@@ -165,11 +153,8 @@ def create_limited_api_key(user, my_api_key, my_octopus_api):
     :return:
     """
 
-    if my_api_key is None:
-        raise ValueError('my_octopus_api must the Octopus API key.')
-
-    if my_octopus_api is None:
-        raise ValueError('my_api_key must be the Octopus Url.')
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (create_limited_api_key).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (create_limited_api_key).')
 
     tomorrow = datetime.datetime.now(pytz.UTC) + datetime.timedelta(days=1)
 
