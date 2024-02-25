@@ -86,9 +86,11 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         # persist a long lived key.
         user = get_current_user(body['api'], body['url'])
         api_key = create_limited_api_key(user, body['api'], body['url'])
-
         save_users_octopus_url_from_login(uuid, body['url'], api_key, get_functions_connection_string())
         return func.HttpResponse(status_code=201)
+    except OctopusRequestFailed as e:
+        handle_error(e)
+        return func.HttpResponse("Failed to generate temporary key", status_code=400)
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to read form HTML", status_code=500)

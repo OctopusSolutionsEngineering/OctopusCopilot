@@ -43,6 +43,9 @@
     </div>
     <div class="form-group row">
         <div class="offset-4 col-6">
+            <div id="invalid_api_key_or_url" class="alert alert-danger" role="alert" style="display: none">
+                The API key or URL you provided is invalid.
+            </div>
             <div id="response_error" class="alert alert-danger" role="alert" style="display: none">
                 There was an error logging in. Please try again later.
             </div>
@@ -71,6 +74,9 @@
     }
 
     async function processQuery() {
+        invalid_api_key_or_url.style.block = 'none'
+        response_error.style.block = 'none'
+
         form.classList.add('was-validated')
 
         if (!form.checkValidity()) {
@@ -92,7 +98,11 @@
             });
 
             if (!response.ok) {
-                response_error.style.display = 'block'
+                if (response.status == 400) {
+                    invalid_api_key_or_url.style.display = 'block'
+                } else {
+                    response_error.style.display = 'block'
+                }
             } else {
                 success.style.display = 'block'
                 window.setTimeout(function () {
