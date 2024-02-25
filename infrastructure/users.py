@@ -67,6 +67,12 @@ def save_users_octopus_url_from_login(state, url, api, connection_string):
     if not state or not isinstance(state, str) or not state.strip():
         raise ValueError("uuid must be the UUID used to link a login to a user (save_users_octopus_url_from_login).")
 
+    if not url or not isinstance(url, str) or not url.strip():
+        raise ValueError("url must be the Octopus URL (save_users_octopus_url_from_login).")
+
+    if not api or not isinstance(api, str) or not api.strip():
+        raise ValueError("api must be the Octopus API key (save_users_octopus_url_from_login).")
+
     if not connection_string or not isinstance(connection_string, str) or not connection_string.strip():
         raise ValueError('connection_string must be the connection string (save_users_octopus_url_from_login).')
 
