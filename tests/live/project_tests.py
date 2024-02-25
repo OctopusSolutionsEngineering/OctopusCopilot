@@ -34,7 +34,7 @@ class LiveRequests(unittest.TestCase):
         cls.octopus.start()
         wait_for_logs(cls.octopus, "Web server is ready to process requests")
 
-        run_terraform("tests/terraform/space_population", "http://localhost:8080", Octopus_Api_Key, "Spaces-1")
+        run_terraform("../terraform/space_population", "http://localhost:8080", Octopus_Api_Key, "Spaces-1")
 
     @classmethod
     def tearDownClass(cls):
@@ -53,17 +53,17 @@ class LiveRequests(unittest.TestCase):
         Tests that the llm can find the appropriate mock function and arguments
         """
 
-        functions = build_live_test_tools()
-        function = handle_copilot_chat("What are the projects associated with space Default?", functions.get_tools())
+        function = handle_copilot_chat("What are the projects associated with space Default?", build_live_test_tools)
 
-        self.assertEqual(function.function_name, "get_octopus_project_names_form")
-        self.assertEqual(function.function_args["space_name"], "MySpace")
-        self.assertEqual(functions.call_function(function), ["Project1", "Project2"])
+        self.assertEqual(function.function.__name__, "get_octopus_project_names_form")
+        self.assertEqual(function.function_args["space_name"], "Default")
+        self.assertEqual(function.call_function(), ["Project1", "Project2"])
 
 
 def run_terraform(directory, url, api, space):
     with tempfile.TemporaryDirectory() as temp_dir:
-        shutil.copytree(directory, temp_dir)
+        shutil.copytree(os.path.abspath(os.path.join(os.path.dirname(__file__), directory)), temp_dir,
+                        dirs_exist_ok=True)
         subprocess.run(["terraform", "init"], check=True, cwd=temp_dir)
         subprocess.run(
             ["terraform", "apply", "-auto-approve", "-var=octopus_server=" + url, "-var=octopus_apikey=" + api,
