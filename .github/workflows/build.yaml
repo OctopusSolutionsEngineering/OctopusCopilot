@@ -46,6 +46,11 @@ jobs:
         run: |
           sudo apt-get install -y pep8
           find . -path ./venv -prune -o -name "*.py" -print0 | xargs -0 -n1 pep8 --ignore=E501,W503
+      - name: Complexity
+        shell: bash
+        run: |
+          pip install radon
+          find . -path ./venv -prune -o -path ./.venv -prune -o -name "*.py" -print0 | xargs -0 -n1 radon cc -nc
       - name: Install Dependencies
         run: pip install -r requirements.txt
         shell: bash

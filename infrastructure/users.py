@@ -85,14 +85,24 @@ def save_users_octopus_url_from_login(state, url, api, connection_string):
 
         save_users_octopus_url(username, url, api, connection_string)
     finally:
-        try:
-            # Clean up the linking record
-            table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
-            table_client = table_service_client.get_table_client("userlogin")
-            table_client.delete_entity("github.com", state)
-        except Exception as e:
-            # This cleanup is a best effort operation, but it should not fail a login
-            handle_error(e)
+        delete_login_uuid(state, connection_string)
+
+
+def delete_login_uuid(state, connection_string):
+    if not state or not isinstance(state, str) or not state.strip():
+        raise ValueError("uuid must be the UUID used to link a login to a user (save_users_octopus_url_from_login).")
+
+    if not connection_string or not isinstance(connection_string, str) or not connection_string.strip():
+        raise ValueError('connection_string must be the connection string (save_users_octopus_url_from_login).')
+
+    try:
+        # Clean up the linking record
+        table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+        table_client = table_service_client.get_table_client("userlogin")
+        table_client.delete_entity("github.com", state)
+    except Exception as e:
+        # This cleanup is a best effort operation, but it should not fail a login
+        handle_error(e)
 
 
 def get_users_details(username, connection_string):
