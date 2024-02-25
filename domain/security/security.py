@@ -15,11 +15,8 @@ def is_admin_user(user, get_admin_users, callback):
     :return: The value returned by the callback
     """
 
-    if not get_admin_users or not isinstance(get_admin_users, str) or not get_admin_users.strip():
-        raise NotAuthorized()
-
-    if not user or not isinstance(user, str) or not user.strip():
-        raise NotAuthorized()
+    empty_string_is_authorized(get_admin_users)
+    empty_string_is_authorized(user)
 
     if not callback:
         return
@@ -39,3 +36,8 @@ def is_admin_user(user, get_admin_users, callback):
         raise NotAuthorized()
 
     return callback()
+
+
+def empty_string_is_authorized(value):
+    if not value or not isinstance(value, str) or not value.strip():
+        raise NotAuthorized()
