@@ -35,4 +35,4 @@ class EnsureTests(unittest.TestCase):
         ensure_not_falsy(True, "message")
 
         with self.assertRaises(ValueError):
-            ensure_string(None, "message")
+            ensure_not_falsy(None, "message")
