@@ -5,3 +5,4 @@ venv
 bom.json
 .coverage
 htmlcov
+**/__pycache__

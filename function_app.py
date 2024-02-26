@@ -41,7 +41,7 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
 
 
 @app.route(route="oauth_callback", auth_level=func.AuthLevel.ANONYMOUS)
-def query_form(req: func.HttpRequest) -> func.HttpResponse:
+def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
     """
     A function handler that returns an HTML form for testing
     :param req: The HTTP request
