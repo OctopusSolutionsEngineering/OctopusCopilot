@@ -1,1 +1,1 @@
- 
+![coverage badge](./coverage.svg)
