@@ -276,7 +276,7 @@ def extract_query(req: func.HttpRequest):
             if 'content' in message:
                 query = query + "\n" + message.get('content')
 
-    return query
+    return query.strip()
 
 
 def get_sse_headers():
