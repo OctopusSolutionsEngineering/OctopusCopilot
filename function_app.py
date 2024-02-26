@@ -265,18 +265,18 @@ def extract_query(req: func.HttpRequest):
     query = req.params.get("message")
 
     if query:
-        return query
+        return query.strip()
 
     body = json.loads(req.get_body())
 
     # This is the format supplied by copilot
-    query = ""
-    if 'messages' in body:
-        for message in body.get('messages'):
-            if 'content' in message:
-                query = query + "\n" + message.get('content')
+    if 'messages' in body and len(body.get('messages')) != 0:
+        # We don't care about the chat history, just the last message
+        message = body.get('messages')[-1]
+        if 'content' in message:
+            return message.get('content').strip()
 
-    return query.strip()
+    return ""
 
 
 def get_sse_headers():
