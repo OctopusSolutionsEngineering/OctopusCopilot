@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, timedelta
+from datetime import timedelta, datetime
 
 from azure.core.exceptions import HttpResponseError
 from azure.data.tables import TableServiceClient
@@ -120,8 +120,7 @@ def delete_old_user_details(connection_string):
         table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
         table_client = table_service_client.get_table_client(table_name="users")
 
-        old_records = (date.today() - timedelta(hours=8)).strftime(
-            "%Y-%m-%dT%H:%M:%S.%fZ")
+        old_records = (datetime.now() - timedelta(hours=8)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
         rows = table_client.query_entities(f"Timestamp lt datetime'{old_records}'")
         counter = 0
