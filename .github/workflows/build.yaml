@@ -73,7 +73,7 @@ jobs:
       # Requires OpenAI instance to allow GitHub runner's IP address
       - name: Test
         run: |
-          pip install pytest coverage
+          pip install pytest coverage setuptools
           PYTHONPATH=$(pwd) coverage run -m pytest --junitxml=results.xml
           coverage html
         env:
