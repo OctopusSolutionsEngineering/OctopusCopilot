@@ -40,6 +40,21 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
     delete_old_user_details(get_functions_connection_string())
 
 
+@app.route(route="oauth_callback", auth_level=func.AuthLevel.ANONYMOUS)
+def query_form(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    A function handler that returns an HTML form for testing
+    :param req: The HTTP request
+    :return: The HTML form
+    """
+    try:
+        with open("html/oauth_callback.html", "r") as file:
+            return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
+    except Exception as e:
+        handle_error(e)
+        return func.HttpResponse("Failed to read form HTML", status_code=500)
+
+
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
 def query_form(req: func.HttpRequest) -> func.HttpResponse:
     """
