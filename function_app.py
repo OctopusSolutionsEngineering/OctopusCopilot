@@ -267,7 +267,7 @@ def extract_query(req: func.HttpRequest):
     if query:
         return query
 
-    body = json.dumps(req.get_body().decode("utf-8"))
+    body = json.loads(req.get_body())
 
     # This is the format supplied by copilot
     query = ""
