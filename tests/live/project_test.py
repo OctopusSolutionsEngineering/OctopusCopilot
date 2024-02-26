@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import unittest
 
+from parameterized import parameterized
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
@@ -59,19 +60,25 @@ class LiveRequests(unittest.TestCase):
         except Exception as e:
             pass
 
-    def test_get_projects(self):
+    @parameterized.expand([
+        "Default",
+        "default",
+    ])
+    def test_get_projects(self, space):
         """
         Tests that we can get a list of projects from Octopus
         """
 
-        function = handle_copilot_chat("What are the projects associated with space Default?", build_live_test_tools)
+        function = handle_copilot_chat("What are the projects associated with space " + space + "?",
+                                       build_live_test_tools)
 
         self.assertEqual(function.function.__name__, "get_octopus_project_names")
-        self.assertEqual(function.function_args["space_name"], "Default")
+        self.assertEqual(function.function_args["space_name"], space)
 
-        results = function.call_function()
+        space_name, results = function.call_function()
         self.assertIn("Project1", results)
         self.assertIn("Project2", results)
+        self.assertEqual("Default", space_name)
 
     def test_generate_temp_api_key(self):
         """

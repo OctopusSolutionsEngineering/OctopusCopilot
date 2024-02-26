@@ -24,7 +24,7 @@ def get_octopus_project_names(space_name):
                                                                  Octopus_Api_Key,
                                                                  "http://localhost:8080")
 
-    return projects
+    return actual_space_name, projects
 
 
 def set_octopus_details(octopus_url, api_key):
