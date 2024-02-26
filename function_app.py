@@ -266,9 +266,9 @@ def extract_query(req: func.HttpRequest):
     # This is the format supplied by copilot
     query = ""
     if 'messages' in body:
-        for message in body['messages']:
+        for message in body.get('messages'):
             if 'content' in message:
-                query = query + "\n" + message['content']
+                query = query + "\n" + message.get('content')
 
     return query
 
