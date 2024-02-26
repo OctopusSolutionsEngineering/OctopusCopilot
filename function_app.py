@@ -213,6 +213,12 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     try:
         query = extract_query(req)
         logger.info("Query: " + query)
+
+        if not query.strip():
+            return func.HttpResponse(
+                convert_to_sse_response("Ask a question like \"Show me the projects in the space called Default\""),
+                headers=get_sse_headers())
+
         result = handle_copilot_chat(query, build_form_tools).call_function()
 
         return func.HttpResponse(convert_to_sse_response(result), headers=get_sse_headers())
