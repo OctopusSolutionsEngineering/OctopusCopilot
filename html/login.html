@@ -53,8 +53,7 @@
                 The request to this page was not well-formed. You can not log in.
             </div>
             <div id="success" class="alert alert-success" role="alert" style="display: none">
-                You have logged in successfully. This window will redirect to the <a
-                    href="https://octopuscopilotproduction.azurewebsites.net/api/form">query form</a> in 5 seconds.
+                You have logged in successfully. You may resume chatting with Copilot.
             </div>
         </div>
     </div>
@@ -114,9 +113,6 @@
                 }
             } else {
                 success.style.display = 'block'
-                window.setTimeout(function () {
-                    window.location.replace("https://octopuscopilotproduction.azurewebsites.net/api/form")
-                }, 5000)
             }
         } catch {
             response_error.style.display = 'block'
