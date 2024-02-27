@@ -135,41 +135,24 @@ jobs:
       #          tags: octopussamples/octopuscopilot:latest
       - name: Package
         run: |-
-          zip OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip \
-            *.py \
-            *.pyc \
-            *.html \
-            *.htm \
-            *.css \
-            *.js \
-            *.min \
-            *.map \
-            *.sql \
-            *.png \
-            *.jpg \
-            *.jpeg \
-            *.gif \
-            *.json \
-            *.env \
-            *.txt \
-            *.Procfile \
-            */*.py \
-            */*.pyc \
-            */*.html \
-            */*.htm \
-            */*.css \
-            */*.js \
-            */*.min \
-            */*.map \
-            */*.sql \
-            */*.png \
-            */*.jpg \
-            */*.jpeg \
-            */*.gif \
-            */*.json \
-            */*.env \
-            */*.txt \
-            */*.Procfile
+          zip -R OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip \
+            '*.py' \
+            '*.pyc' \
+            '*.html' \
+            '*.htm' \
+            '*.css' \
+            '*.js' \
+            '*.min' \
+            '*.map' \
+            '*.sql' \
+            '*.png' \
+            '*.jpg' \
+            '*.jpeg' \
+            '*.gif' \
+            '*.json' \
+            '*.env' \
+            '*.txt' \
+            '*.Procfile'
         shell: bash
       - name: Tag Release
         uses: mathieudutour/github-tag-action@v6.1
