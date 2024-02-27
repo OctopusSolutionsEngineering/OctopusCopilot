@@ -227,7 +227,10 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         logger.info("Calling get_octopus_project_names_form")
 
-        api_key, url = get_api_key_and_url()
+        try:
+            api_key, url = get_api_key_and_url()
+        except ValueError as e:
+            raise OctopusApiKeyInvalid()
 
         get_current_user(api_key, url)
         actual_space_name, projects = get_octopus_project_names_base(space_name, api_key, url)
@@ -281,7 +284,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
                                                          + "Either the space does not exist or the API key does not "
                                                          + "have permissions to access it."),
                                  headers=get_sse_headers())
-    except (UserNotConfigured, OctopusApiKeyInvalid) as e:
+    except (UserNotConfigured, OctopusApiKeyInvalid,) as e:
         # This exception means there is no Octopus instance configured for the GitHub user making the request.
         # The Octopus instance is supplied via a chat message.
         return request_config_details(get_github_user_from_form(), get_github_token())
