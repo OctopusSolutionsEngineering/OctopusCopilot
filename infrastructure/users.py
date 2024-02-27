@@ -32,8 +32,8 @@ def save_users_octopus_url(username, octopus_url, encrypted_api_key, tag, nonce,
         'RowKey': username,
         'OctopusUrl': octopus_url,
         'OctopusApiKey': encrypted_api_key,
-        'Tag': tag,
-        'Nonce': nonce,
+        'EncryptionTag': tag,
+        'EncryptionNonce': nonce,
     }
 
     table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
