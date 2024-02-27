@@ -199,7 +199,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         try:
             api_key, url = get_api_key_and_url()
         except ValueError as e:
-            logger.info("GitHub token must have changed because the api key could not be decrypted")
+            logger.info("Encryption password must have changed because the api key could not be decrypted")
             raise OctopusApiKeyInvalid()
 
         get_current_user(api_key, url)
@@ -253,10 +253,10 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
                                                          + "Either the space does not exist or the API key does not "
                                                          + "have permissions to access it."),
                                  headers=get_sse_headers())
-    except (UserNotConfigured, OctopusApiKeyInvalid,) as e:
+    except (UserNotConfigured, OctopusApiKeyInvalid) as e:
         # This exception means there is no Octopus instance configured for the GitHub user making the request.
         # The Octopus instance is supplied via a chat message.
-        return request_config_details(get_github_user_from_form(), get_github_token())
+        return request_config_details(get_github_user_from_form())
     except Exception as e:
         handle_error(e)
         return func.HttpResponse(convert_to_sse_response("An exception was raised. See the logs for more details."),
