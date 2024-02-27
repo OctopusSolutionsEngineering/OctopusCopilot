@@ -9,7 +9,7 @@ class ConvertToSseResponse(unittest.TestCase):
         self.assertEqual(
             json.loads(convert_to_sse_response("hi").split("\n")[0].replace("data:", "")).get('choices')[0].get(
                 'delta').get(
-                'content'), "hi")
+                'content'), "hi\n")
 
     def test_convert_to_sse_response_stop(self):
         self.assertEqual(
