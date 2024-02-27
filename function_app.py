@@ -18,12 +18,10 @@ from domain.logging.app_logging import configure_logging
 from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.sse_transformers import convert_to_sse_response
-from domain.validation.argument_validation import ensure_string_not_empty
-from domain.validation.octopus_validation import is_hosted_octopus
 from infrastructure.github import get_github_user
 from infrastructure.octopus import get_octopus_project_names_base, get_octopus_project_names_response, get_current_user, \
     create_limited_api_key
-from infrastructure.users import get_users_details, save_users_octopus_url, delete_old_user_details, save_login_uuid, \
+from infrastructure.users import get_users_details, delete_old_user_details, save_login_uuid, \
     save_users_octopus_url_from_login, delete_all_user_details, delete_old_user_login_records
 
 app = func.FunctionApp()
@@ -157,36 +155,6 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
                       lambda: delete_all_user_details(get_functions_connection_string()))
         return f"Deleted all records"
 
-    def set_octopus_details_from_form(octopus_url, api_key):
-        """Sets or saves the Octopus instance of a user
-
-            Args:
-                octopus_url: The URL of an octopus instance, for example https://myinstance.octopus.app,
-                where "myinstance" can be any name
-
-                api_key: The Octopus API key, e.g. API-xxxxxxxxxxxxxxxxxxxxxxx
-        """
-
-        logger.info("Calling set_octopus_details_from_form")
-
-        ensure_string_not_empty(octopus_url, 'octopus_url must be an Octopus Url (set_octopus_details_from_form).')
-        ensure_string_not_empty(api_key, 'api_key must be the ID of a service account (set_octopus_details_from_form).')
-
-        if not is_hosted_octopus(octopus_url):
-            raise ValueError('octopus_url must be a Octopus cloud instance.')
-
-        username = get_github_user_from_form()
-
-        if not username or not isinstance(username, str) or not username.strip():
-            raise UserNotLoggedIn()
-
-        save_users_octopus_url(username,
-                               octopus_url,
-                               api_key,
-                               get_functions_connection_string())
-
-        return "Successfully updated the Octopus instance and API key."
-
     def get_api_key_and_url():
         github_username = get_github_user_from_form()
 
@@ -230,6 +198,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         try:
             api_key, url = get_api_key_and_url()
         except ValueError as e:
+            logger.info("GitHub token must have changed because the api key could not be decrypted")
             raise OctopusApiKeyInvalid()
 
         get_current_user(api_key, url)
@@ -246,7 +215,6 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         """
         return FunctionDefinitions([
             FunctionDefinition(get_octopus_project_names_form),
-            FunctionDefinition(set_octopus_details_from_form),
             FunctionDefinition(clean_up_all_records),
         ])
 
