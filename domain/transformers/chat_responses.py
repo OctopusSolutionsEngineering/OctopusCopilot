@@ -19,4 +19,20 @@ def get_octopus_project_names_response(space_name, projects):
 
 
 def get_deployment_status_base_response(actual_space_name, actual_environment_name, actual_project_name, deployment):
-    return f"The latest deployment in `{actual_space_name}` to `{actual_environment_name}` for `{actual_project_name}` is version `{deployment['ReleaseVersion']}` with state `{deployment['State']}`."
+    icon = "⚪"
+    if deployment['State'] == "Executing":
+        icon = "🔵"
+    elif deployment['State'] == "Success":
+        icon = "🟢"
+    elif deployment['State'] == "Failed":
+        icon = "🔴"
+    elif deployment['State'] == "Canceled":
+        icon = "🔴"
+    elif deployment['State'] == "TimedOut":
+        icon = "🔴"
+    elif deployment['State'] == "Cancelling":
+        icon = "🔴"
+    elif deployment['State'] == "Queued":
+        icon = "⚪"
+
+    return f"{icon} The latest deployment in `{actual_space_name}` to `{actual_environment_name}` for `{actual_project_name}` is version `{deployment['ReleaseVersion']}` with state `{deployment['State']}`."
