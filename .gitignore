@@ -6,3 +6,4 @@ bom.json
 .coverage
 htmlcov
 **/__pycache__
+.python_packages
