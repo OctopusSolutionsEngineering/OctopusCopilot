@@ -17,6 +17,13 @@ def generate_password(token, salt):
 
 
 def encrypt_eax(api_key, password, salt):
+    """
+    https://nitratine.net/blog/post/python-encryption-and-decryption-with-pycryptodome/#eax-example_1
+    :param api_key: The api key to be encrypted
+    :param password: The password (a hashed GitHub token)
+    :param salt: The salt to apply to the encrypted value
+    :return: The encrypted value
+    """
     key = generate_key(password, salt)
     cipher = AES.new(key, AES.MODE_EAX)
     ciphered_data, tag = cipher.encrypt_and_digest(bytearray(api_key, encoding='utf-8'))
@@ -24,6 +31,15 @@ def encrypt_eax(api_key, password, salt):
 
 
 def decrypt_eax(password, ciphered_data, tag, nonce, salt):
+    """
+    https://nitratine.net/blog/post/python-encryption-and-decryption-with-pycryptodome/#eax-example_1
+    :param ciphered_data: The api key to be encrypted
+    :param password: The password (a hashed GitHub token)
+    :param salt: The salt to apply to the encrypted value
+    :param tag: The tag generated during encryption
+    :param nonce: The nonce generated during encryption
+    :return: The encrypted value
+    """
     key = generate_key(password, salt)
     cipher = AES.new(key, AES.MODE_EAX, b64decode(nonce))
     return cipher.decrypt_and_verify(b64decode(ciphered_data), b64decode(tag))
