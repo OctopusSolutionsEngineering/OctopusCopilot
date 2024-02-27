@@ -1,3 +1,4 @@
+import os
 import uuid
 from datetime import timedelta, datetime
 
@@ -81,7 +82,7 @@ def save_users_octopus_url_from_login(state, url, api, connection_string):
         username = login["Username"]
         encryption_password = login["EncryptionPassword"]
 
-        encrypted_api_key, tag, nonce = encrypt_eax(api, encryption_password)
+        encrypted_api_key, tag, nonce = encrypt_eax(api, encryption_password, os.environ.get("SALT"))
 
         save_users_octopus_url(username, url, encrypted_api_key, tag, nonce, connection_string)
     finally:

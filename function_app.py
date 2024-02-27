@@ -1,4 +1,5 @@
 import json
+import os
 
 from azure.core.exceptions import HttpResponseError
 
@@ -209,9 +210,13 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         nonce = github_user["EncryptionNonce"]
         api_key = github_user["OctopusApiKey"]
 
-        decrypted_api_key = decrypt_eax(generate_password(get_github_token()), api_key, tag, nonce)
+        decrypted_api_key = decrypt_eax(generate_password(get_github_token(), os.environ.get("SALT")),
+                                        api_key,
+                                        tag,
+                                        nonce,
+                                        os.environ.get("SALT"))
 
-        return decrypted_api_key, github_user["OctopusUrl"]
+        return decrypted_api_key.decode(), github_user["OctopusUrl"]
 
     def get_octopus_project_names_form(space_name):
         """Return a list of project names in an Octopus space
@@ -324,7 +329,7 @@ def get_sse_headers():
 def request_config_details(github_username, github_token):
     try:
         logger.info("User has not configured Octopus instance")
-        password = generate_password(github_token)
+        password = generate_password(github_token, os.environ.get("SALT"))
         uuid = save_login_uuid(github_username, password, get_functions_connection_string())
         return func.HttpResponse(convert_to_sse_response(
             f"To continue chatting please [log in](/api/login?state={uuid})."),
