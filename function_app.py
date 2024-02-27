@@ -335,7 +335,7 @@ def request_config_details(github_username, github_token):
         password = generate_password(github_token, os.environ.get("SALT"))
         uuid = save_login_uuid(github_username, password, get_functions_connection_string())
         return func.HttpResponse(convert_to_sse_response(
-            f"To continue chatting please [log in](/api/login?state={uuid})."),
+            f"To continue chatting please [log in](https://octopuscopilotproduction.azurewebsites.net/api/login?state={uuid})."),
             status_code=200,
             headers=get_sse_headers())
     except Exception as e:
