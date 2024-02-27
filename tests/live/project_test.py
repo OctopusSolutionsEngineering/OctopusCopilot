@@ -136,7 +136,7 @@ class LiveRequests(unittest.TestCase):
 
         actual_space_name, actual_environment_name, actual_project_name, deployment = function.call_function()
 
-        self.assertNotEquals("", deployment["State"])
+        self.assertTrue(deployment["State"] == "Executing" or deployment["State"] == "Success")
 
 
 def run_terraform(directory, url, api, space):
