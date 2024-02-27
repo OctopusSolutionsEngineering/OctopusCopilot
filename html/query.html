@@ -82,7 +82,7 @@
         evtSource.onmessage = (event) => {
             console.log(event)
             evtSource.close()
-            response += event.data + "\n"
+            response += JSON.parse(event.data).content + "\n"
             markdown.innerHTML = marked.parse(response);
             enableInput()
         };
