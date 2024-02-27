@@ -129,8 +129,8 @@ class LiveRequests(unittest.TestCase):
         create_and_deploy_release()
 
         function = handle_copilot_chat(
-            "Return the status of the latest deployment to the space Default, environment Development, " +
-            "and project Project1 with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
+            "Return the status of the latest deployment to the space Default, environment Development, "
+            + "and project Project1 with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
             build_live_test_tools)
 
         self.assertEqual(function.function.__name__, "get_deployment_status")
