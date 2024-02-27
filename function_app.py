@@ -233,7 +233,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         except (SpaceNotFound, ResourceNotFound) as e:
             return str(e)
 
-        return f"The latest deployment in {actual_space_name} to {actual_environment_name} for {actual_project_name} is version {deployment['Version']} with state {deployment['State']}."
+        return f"The latest deployment in {actual_space_name} to {actual_environment_name} for {actual_project_name} is version {deployment['ReleaseVersion']} with state {deployment['State']}."
 
     def build_form_tools():
         """
