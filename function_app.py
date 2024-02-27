@@ -5,12 +5,13 @@ from azure.core.exceptions import HttpResponseError
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
+from domain.encrption.encryption import decrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
 from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequestFailed
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
-from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
+from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
 from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.logging.app_logging import configure_logging
 from domain.security.security import is_admin_user
@@ -22,7 +23,7 @@ from infrastructure.github import get_github_user
 from infrastructure.octopus import get_octopus_project_names_base, get_octopus_project_names_response, get_current_user, \
     create_limited_api_key
 from infrastructure.users import get_users_details, save_users_octopus_url, delete_old_user_details, save_login_uuid, \
-    save_users_octopus_url_from_login, delete_all_user_details
+    save_users_octopus_url_from_login, delete_all_user_details, delete_old_user_login_records
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
@@ -37,7 +38,25 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
     A function handler used to clean up old API keys
     :param mytimer: The Timer request
     """
-    delete_old_user_details(get_functions_connection_string())
+    try:
+        delete_old_user_details(get_functions_connection_string())
+    except Exception as e:
+        handle_error(e)
+
+
+@app.function_name(name="login_record_cleanup")
+@app.timer_trigger(schedule="0 */5 * * * *",
+                   arg_name="mytimer",
+                   run_on_startup=True)
+def login_record_cleanup(mytimer: func.TimerRequest) -> None:
+    """
+    A function handler used to clean up old login joining records
+    :param mytimer: The Timer request
+    """
+    try:
+        delete_old_user_login_records(get_functions_connection_string())
+    except Exception as e:
+        handle_error(e)
 
 
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
@@ -87,6 +106,7 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         # persist a long-lived key.
         user = get_current_user(body['api'], body['url'])
         api_key = create_limited_api_key(user, body['api'], body['url'])
+
         save_users_octopus_url_from_login(uuid, body['url'], api_key, get_functions_connection_string())
         return func.HttpResponse(status_code=201)
     except (OctopusRequestFailed, OctopusApiKeyInvalid) as e:
@@ -106,6 +126,9 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     :param req: The HTTP request
     :return: A conversational string with the projects found in the space
     """
+
+    def get_github_token():
+        return req.headers.get("X-GitHub-Token")
 
     def get_github_user_from_form():
         return get_github_user(req.headers.get("X-GitHub-Token"))
@@ -139,7 +162,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         username = get_github_user_from_form()
 
         if not username or not isinstance(username, str) or not username.strip():
-            return "You are not logged into GitHub."
+            raise UserNotLoggedIn()
 
         save_users_octopus_url(username,
                                octopus_url,
@@ -147,6 +170,33 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
                                get_functions_connection_string())
 
         return "Successfully updated the Octopus instance and API key."
+
+    def get_api_key_and_url():
+        github_username = get_github_user_from_form()
+
+        if not github_username:
+            raise UserNotLoggedIn()
+
+        try:
+            github_user = get_users_details(github_username, get_functions_connection_string())
+
+            # We need to configure the Octopus details first because we need to know the service account id
+            # before attempting to generate an ID token.
+            if "OctopusUrl" not in github_user or "OctopusApiKey" not in github_user or "EncryptionTag" not in github_user or "EncryptionNonce" not in github_user:
+                logger.info("No OctopusUrl, OctopusApiKey, EncryptionTag, or EncryptionNonce")
+                raise UserNotConfigured()
+
+        except HttpResponseError as e:
+            # assume any exception means the user must log in
+            raise UserNotConfigured()
+
+        tag = github_user["EncryptionTag"]
+        nonce = github_user["EncryptionNonce"]
+        api_key = github_user["OctopusApiKey"]
+
+        decrypted_api_key = decrypt_eax(generate_password(get_github_token()), api_key, tag, nonce)
+
+        return decrypted_api_key, github_user["OctopusUrl"]
 
     def get_octopus_project_names_form(space_name):
         """Return a list of project names in an Octopus space
@@ -157,28 +207,10 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         logger.info("Calling get_octopus_project_names_form")
 
-        github_username = get_github_user_from_form()
+        api_key, url = get_api_key_and_url()
 
-        if not github_username:
-            return "You must be logged in to GitHub to chat"
-
-        try:
-            github_user = get_users_details(github_username, get_functions_connection_string())
-
-            # We need to configure the Octopus details first because we need to know the service account id
-            # before attempting to generate an ID token.
-            if "OctopusUrl" not in github_user or "OctopusApiKey" not in github_user:
-                logger.info("No OctopusUrl or OctopusApiKey")
-                raise UserNotConfigured()
-
-        except HttpResponseError as e:
-            # assume any exception means the user must log in
-            raise UserNotConfigured()
-
-        get_current_user(github_user["OctopusApiKey"], github_user["OctopusUrl"])
-        actual_space_name, projects = get_octopus_project_names_base(space_name,
-                                                                     github_user["OctopusApiKey"],
-                                                                     github_user["OctopusUrl"])
+        get_current_user(api_key, url)
+        actual_space_name, projects = get_octopus_project_names_base(space_name, api_key, url)
         logger.info(f"Actual space name: {actual_space_name}")
         logger.info(f"Projects: " + str(projects))
         return get_octopus_project_names_response(actual_space_name, projects)
@@ -202,6 +234,9 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         return func.HttpResponse(convert_to_sse_response(result), headers=get_sse_headers())
 
+    except UserNotLoggedIn as e:
+        return func.HttpResponse(convert_to_sse_response("Your GitHub token is invalid."),
+                                 headers=get_sse_headers())
     except OctopusRequestFailed as e:
         return func.HttpResponse(convert_to_sse_response(
             "The request to the Octopus API failed. "
@@ -223,7 +258,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     except (UserNotConfigured, OctopusApiKeyInvalid) as e:
         # This exception means there is no Octopus instance configured for the GitHub user making the request.
         # The Octopus instance is supplied via a chat message.
-        return request_config_details(get_github_user_from_form)
+        return request_config_details(get_github_user_from_form())
     except Exception as e:
         handle_error(e)
         return func.HttpResponse(convert_to_sse_response("An exception was raised. See the logs for more details."),
@@ -265,10 +300,11 @@ def get_sse_headers():
     }
 
 
-def request_config_details(get_github_user_from_form):
+def request_config_details(github_username, github_token):
     try:
         logger.info("User has not configured Octopus instance")
-        uuid = save_login_uuid(get_github_user_from_form(), get_functions_connection_string())
+        password = generate_password(github_token)
+        uuid = save_login_uuid(github_username, password, get_functions_connection_string())
         return func.HttpResponse(convert_to_sse_response(
             f"To continue chatting please [log in](/api/login?state={uuid})."),
             status_code=200,
