@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 import unittest
 
 from parameterized import parameterized
@@ -12,6 +13,7 @@ from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.logging.app_logging import configure_logging
 from tests.infrastructure.tools.build_test_tools import build_live_test_tools
+from tests.live.create_and_deploy_release import create_and_deploy_release
 from tests.live.octopus_config import Octopus_Api_Key
 
 logger = configure_logging()
@@ -114,6 +116,27 @@ class LiveRequests(unittest.TestCase):
             self.fail("Should have thrown an exception")
         except OctopusApiKeyInvalid as e:
             pass
+
+    def test_get_deployment(self):
+        """
+        Tests that we return the details of a deployment
+        """
+
+        function = handle_copilot_chat(
+            "Return the status of the latest deployment to the space Default, environment Development, and project Project1 with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
+            build_live_test_tools)
+
+        self.assertEqual(function.function.__name__, "get_deployment_status")
+        self.assertEqual(function.function_args["octopus_url"], "http://localhost:8080")
+        self.assertEqual(function.function_args["api_key"], Octopus_Api_Key)
+
+        create_and_deploy_release()
+
+        time.sleep(10)
+
+        actual_space_name, actual_environment_name, actual_project_name, deployment = function.call_function()
+
+        self.assertNotEquals("", deployment["State"])
 
 
 def run_terraform(directory, url, api, space):

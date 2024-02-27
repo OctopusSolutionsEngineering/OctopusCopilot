@@ -166,7 +166,7 @@ def create_limited_api_key(user, my_api_key, my_octopus_api):
 
 
 @retry(HTTPError, tries=3, delay=2)
-def get_deployment_status(space_name, environment_name, project_name, api_key, octopus_url):
+def get_deployment_status_base(space_name, environment_name, project_name, api_key, octopus_url):
     """
     The base function used to get a list of project names.
     :param space_name: The name of the Octopus space containing the projects
@@ -209,7 +209,7 @@ def get_deployment_status(space_name, environment_name, project_name, api_key, o
     if len(releases) == 0:
         raise ResourceNotFound(f"No deployments found for {project_name} in {environment_name}")
 
-    return actual_space_name, environment['Name'], project['Name'], releases[0]["Deployments"][environment_name][0]
+    return actual_space_name, environment['Name'], project['Name'], releases[0]["Deployments"][environment['Id']][0]
 
 
 def get_item_ignoring_case(items, name):

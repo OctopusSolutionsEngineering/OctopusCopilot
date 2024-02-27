@@ -21,7 +21,7 @@ from domain.tools.function_definition import FunctionDefinitions, FunctionDefini
 from domain.transformers.sse_transformers import convert_to_sse_response
 from infrastructure.github import get_github_user
 from infrastructure.octopus import get_octopus_project_names_base, get_octopus_project_names_response, get_current_user, \
-    create_limited_api_key, get_deployment_status
+    create_limited_api_key, get_deployment_status_base
 from infrastructure.users import get_users_details, delete_old_user_details, save_login_uuid, \
     save_users_octopus_url_from_login, delete_all_user_details, delete_old_user_login_records
 
@@ -212,7 +212,9 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
             Args:
                 space_name: The name of the space containing the projects
+
                 environment_name: The name of the environment
+
                 project_name: The name of the project
         """
 
@@ -222,7 +224,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         get_current_user(api_key, url)
 
         try:
-            actual_space_name, actual_environment_name, actual_project_name, deployment = get_deployment_status(
+            actual_space_name, actual_environment_name, actual_project_name, deployment = get_deployment_status_base(
                 space_name,
                 environment_name,
                 project_name,
@@ -231,7 +233,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         except (SpaceNotFound, ResourceNotFound) as e:
             return str(e)
 
-        return f"The latest deployment in {actual_space_name} to {actual_environment_name} for {actual_project_name} is {deployment['State']}."
+        return f"The latest deployment in {actual_space_name} to {actual_environment_name} for {actual_project_name} is version {deployment['Version']} with state {deployment['State']}."
 
     def build_form_tools():
         """
