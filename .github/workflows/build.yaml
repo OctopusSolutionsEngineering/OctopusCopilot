@@ -136,6 +136,23 @@ jobs:
       - name: Package
         run: |-
           zip OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip \
+            *.py \
+            *.pyc \
+            *.html \
+            *.htm \
+            *.css \
+            *.js \
+            *.min \
+            *.map \
+            *.sql \
+            *.png \
+            *.jpg \
+            *.jpeg \
+            *.gif \
+            *.json \
+            *.env \
+            *.txt \
+            *.Procfile \
             */*.py \
             */*.pyc \
             */*.html \
