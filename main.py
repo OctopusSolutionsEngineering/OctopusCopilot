@@ -3,7 +3,8 @@ import os
 
 from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
-from infrastructure.octopus import get_octopus_project_names_base, get_octopus_project_names_response
+from domain.transformers.chat_responses import get_octopus_project_names_response
+from infrastructure.octopus import get_octopus_project_names_base
 
 
 def init_argparse():

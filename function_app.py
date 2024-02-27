@@ -18,9 +18,10 @@ from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.logging.app_logging import configure_logging
 from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
+from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response
 from domain.transformers.sse_transformers import convert_to_sse_response
 from infrastructure.github import get_github_user
-from infrastructure.octopus import get_octopus_project_names_base, get_octopus_project_names_response, get_current_user, \
+from infrastructure.octopus import get_octopus_project_names_base, get_current_user, \
     create_limited_api_key, get_deployment_status_base
 from infrastructure.users import get_users_details, delete_old_user_details, save_login_uuid, \
     save_users_octopus_url_from_login, delete_all_user_details, delete_old_user_login_records
@@ -233,7 +234,8 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         except (SpaceNotFound, ResourceNotFound) as e:
             return str(e)
 
-        return f"The latest deployment in {actual_space_name} to {actual_environment_name} for {actual_project_name} is version {deployment['ReleaseVersion']} with state {deployment['State']}."
+        return get_deployment_status_base_response(actual_space_name, actual_environment_name, actual_project_name,
+                                                   deployment)
 
     def build_form_tools():
         """

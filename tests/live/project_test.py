@@ -12,6 +12,7 @@ from testcontainers.core.waiting_utils import wait_for_logs
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.logging.app_logging import configure_logging
+from domain.transformers.chat_responses import get_deployment_status_base_response, get_octopus_project_names_response
 from tests.infrastructure.tools.build_test_tools import build_live_test_tools
 from tests.live.create_and_deploy_release import create_and_deploy_release
 from tests.live.octopus_config import Octopus_Api_Key
@@ -82,6 +83,9 @@ class LiveRequests(unittest.TestCase):
         self.assertIn("Project2", results)
         self.assertEqual("Default", space_name)
 
+        # Make sure the chat response does not throw an exception with real data
+        get_octopus_project_names_response(space_name, results)
+
     def test_generate_temp_api_key(self):
         """
         Tests that we can create a temporary API key
@@ -122,21 +126,25 @@ class LiveRequests(unittest.TestCase):
         Tests that we return the details of a deployment
         """
 
+        create_and_deploy_release()
+
         function = handle_copilot_chat(
-            "Return the status of the latest deployment to the space Default, environment Development, and project Project1 with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
+            "Return the status of the latest deployment to the space Default, environment Development, " +
+            "and project Project1 with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
             build_live_test_tools)
 
         self.assertEqual(function.function.__name__, "get_deployment_status")
         self.assertEqual(function.function_args["octopus_url"], "http://localhost:8080")
         self.assertEqual(function.function_args["api_key"], Octopus_Api_Key)
 
-        create_and_deploy_release()
-
         time.sleep(10)
 
         actual_space_name, actual_environment_name, actual_project_name, deployment = function.call_function()
 
         self.assertTrue(deployment["State"] == "Executing" or deployment["State"] == "Success")
+
+        # A test that makes sure the response doesn't throw any exceptions with real data
+        get_deployment_status_base_response(actual_space_name, actual_environment_name, actual_project_name, deployment)
 
 
 def run_terraform(directory, url, api, space):

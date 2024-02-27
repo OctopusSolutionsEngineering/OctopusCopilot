@@ -107,26 +107,6 @@ def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
     return actual_space_name, projects
 
 
-def get_octopus_project_names_response(space_name, projects):
-    """
-    Provides a conversational response to the list of projects
-    :param space_name: The name of the space containing the projects
-    :param projects: The list of projects
-    :return: A conversational response
-    """
-
-    if not projects and (space_name is None or not space_name.strip()):
-        return "I found no projects."
-
-    if not projects:
-        return f"I found no projects in the space {space_name}."
-
-    if space_name is None or not space_name.strip():
-        return f"I found {len(projects)} projects:\n* " + "\n * ".join(projects)
-
-    return f"I found {len(projects)} projects in the space \"{space_name.strip()}\":\n* " + "\n* ".join(projects)
-
-
 def get_current_user(my_api_key, my_octopus_api):
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_current_user).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_current_user).')
