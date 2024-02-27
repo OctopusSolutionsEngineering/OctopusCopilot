@@ -6,6 +6,7 @@ from retry import retry
 from urllib3.exceptions import HTTPError
 
 from domain.exceptions.request_failed import OctopusRequestFailed
+from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
@@ -64,13 +65,7 @@ def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_space_id_and_name_from_name).')
 
     api = build_octopus_url(my_octopus_api, "api/spaces", dict(take=TAKE_ALL))
-    resp = http.request("GET", api, headers=get_octopus_headers(my_api_key))
-
-    if resp.status == 401:
-        raise OctopusApiKeyInvalid()
-    if resp.status != 200:
-        raise OctopusRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
-
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
     json = resp.json()
 
     filtered_spaces = list(filter(lambda s: s["Name"] == space_name, json["Items"]))
@@ -102,13 +97,9 @@ def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_octopus_project_names_base).')
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api)
-    api = build_octopus_url(my_octopus_api, "api/" + space_id + "/Projects", dict(take=TAKE_ALL))
-    resp = http.request("GET", api, headers=get_octopus_headers(my_api_key))
 
-    if resp.status == 401:
-        raise OctopusApiKeyInvalid()
-    if resp.status != 200:
-        raise OctopusRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+    api = build_octopus_url(my_octopus_api, "api/" + space_id + "/Projects", dict(take=TAKE_ALL))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
     projects = list(map(lambda p: p["Name"], json["Items"]))
@@ -141,12 +132,7 @@ def get_current_user(my_api_key, my_octopus_api):
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_current_user).')
 
     api = build_octopus_url(my_octopus_api, "/api/users/me")
-    resp = http.request("GET", api, headers=get_octopus_headers(my_api_key))
-
-    if resp.status == 401:
-        raise OctopusApiKeyInvalid()
-    if resp.status != 200:
-        raise OctopusApiKeyInvalid(f"Request failed with " + resp.data.decode('utf-8'))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
     return json["Id"]
@@ -173,12 +159,82 @@ def create_limited_api_key(user, my_api_key, my_octopus_api):
     }
 
     api = build_octopus_url(my_octopus_api, "/api/users/" + user + "/apikeys")
-    resp = http.request("POST", api, json=api_key, headers=get_octopus_headers(my_api_key))
-
-    if resp.status == 401:
-        raise OctopusApiKeyInvalid()
-    if resp.status != 200:
-        raise OctopusRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+    resp = handle_response(lambda: http.request("POST", api, json=api_key, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
     return json["ApiKey"]
+
+
+@retry(HTTPError, tries=3, delay=2)
+def get_deployment_status(space_name, environment_name, project_name, api_key, octopus_url):
+    """
+    The base function used to get a list of project names.
+    :param space_name: The name of the Octopus space containing the projects
+    :param project_name: The name of the Octopus project
+    :param environment_name: The name of the Octopus environment
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
+    :return: The list of projects in the space
+    """
+
+    logger.info("get_deployment_status - Enter")
+
+    ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_deployment_status).')
+    ensure_string_not_empty(project_name, 'project_name must be a non-empty string (get_deployment_status).')
+    ensure_string_not_empty(environment_name,
+                            'environment_name must be a non-empty string (get_deployment_status).')
+    ensure_string_not_empty(octopus_url, 'octopus_url must be the Octopus Url (get_deployment_status).')
+    ensure_string_not_empty(api_key, 'api_key must be the Octopus Api key (get_deployment_status).')
+
+    space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
+
+    api = build_octopus_url(octopus_url, "api/" + space_id + "/Projects", dict(partial_name=project_name))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    project = get_item_ignoring_case(resp.json()["Items"], project_name)
+
+    if project is None:
+        raise ResourceNotFound("No projects found matching the name " + project_name)
+
+    api = build_octopus_url(octopus_url, "api/" + space_id + "/Environments", dict(partial_name=environment_name))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    environment = get_item_ignoring_case(resp.json()["Items"], environment_name)
+
+    if environment is None:
+        raise ResourceNotFound("No environments found matching the name " + environment_name)
+
+    api = build_octopus_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    releases = list(filter(lambda r: environment["Id"] in r["Deployments"], resp.json()["Releases"]))
+
+    if len(releases) == 0:
+        raise ResourceNotFound(f"No deployments found for {project_name} in {environment_name}")
+
+    return actual_space_name, environment['Name'], project['Name'], releases[0]["Deployments"][environment_name][0]
+
+
+def get_item_ignoring_case(items, name):
+    case_insensitive_items = list(filter(lambda p: p["Name"].casefold() == name.casefold(), items))
+    case_sensitive_items = list(filter(lambda p: p["Name"] == name, case_insensitive_items))
+
+    if len(case_sensitive_items) != 0:
+        return case_sensitive_items[0]
+
+    if len(case_sensitive_items) != 0:
+        return case_sensitive_items[0]
+
+    return None
+
+
+def handle_response(callback):
+    """
+    This function maps common HTTP response codes to exceptions
+    :param callback: A function that returns a response object
+    :return: The response object
+    """
+    response = callback()
+    if response.status == 401:
+        raise OctopusApiKeyInvalid()
+    if response.status != 200:
+        raise OctopusRequestFailed(f"Request failed with " + response.data.decode('utf-8'))
+
+    return response
