@@ -59,6 +59,21 @@ def login_record_cleanup(mytimer: func.TimerRequest) -> None:
         handle_error(e)
 
 
+@app.route(route="oauth_callback", auth_level=func.AuthLevel.ANONYMOUS)
+def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    A function handler that returns an HTML form for testing
+    :param req: The HTTP request
+    :return: The HTML form
+    """
+    try:
+        with open("html/oauth_callback.html", "r") as file:
+            return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
+    except Exception as e:
+        handle_error(e)
+        return func.HttpResponse("Failed to read form HTML", status_code=500)
+
+
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
 def query_form(req: func.HttpRequest) -> func.HttpResponse:
     """
@@ -230,6 +245,12 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     try:
         query = extract_query(req)
         logger.info("Query: " + query)
+
+        if not query.strip():
+            return func.HttpResponse(
+                convert_to_sse_response("Ask a question like \"Show me the projects in the space called Default\""),
+                headers=get_sse_headers())
+
         result = handle_copilot_chat(query, build_form_tools).call_function()
 
         return func.HttpResponse(convert_to_sse_response(result), headers=get_sse_headers())
@@ -279,18 +300,18 @@ def extract_query(req: func.HttpRequest):
     query = req.params.get("message")
 
     if query:
-        return query
+        return query.strip()
 
-    body = json.dumps(req.get_body())
+    body = json.loads(req.get_body())
 
     # This is the format supplied by copilot
-    query = ""
-    if 'messages' in body:
-        for message in body['messages']:
-            if 'content' in message:
-                query = query + "\n" + message['content']
+    if 'messages' in body and len(body.get('messages')) != 0:
+        # We don't care about the chat history, just the last message
+        message = body.get('messages')[-1]
+        if 'content' in message:
+            return message.get('content').strip()
 
-    return query
+    return ""
 
 
 def get_sse_headers():
