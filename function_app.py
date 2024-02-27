@@ -284,7 +284,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     except (UserNotConfigured, OctopusApiKeyInvalid) as e:
         # This exception means there is no Octopus instance configured for the GitHub user making the request.
         # The Octopus instance is supplied via a chat message.
-        return request_config_details(get_github_user_from_form())
+        return request_config_details(get_github_user_from_form(), get_github_token())
     except Exception as e:
         handle_error(e)
         return func.HttpResponse(convert_to_sse_response("An exception was raised. See the logs for more details."),
