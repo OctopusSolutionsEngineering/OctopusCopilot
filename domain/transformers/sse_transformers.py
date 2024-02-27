@@ -13,6 +13,10 @@ def convert_to_sse_response(result):
 
     # https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#data-only_messages
     # "Each notification is sent as a block of text terminated by a pair of newlines."
-    return "\n".join(
+    content = "\n".join(
         map(lambda l: "data: " + json.dumps({"choices": [{"index": 0, "delta": {"content": l}}]}),
-            result.split("\n"))) + "\n\n"
+            result.split("\n")))
+
+    stop = "data: " + json.dumps({"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]})
+
+    return content + "\n" + stop + "\n\n"

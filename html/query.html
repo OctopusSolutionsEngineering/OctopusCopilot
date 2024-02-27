@@ -88,7 +88,12 @@
                 with data:, it concatenates them, inserting a newline character between each one.
              */
             event.data.split("\n").forEach((line) => {
-                response += JSON.parse(line).choices[0].delta.content + "\n"
+                line = JSON.parse(line)
+                if (line.choices[0].delta && line.choices[0].delta.content) {
+                    response += JSON.parse(line).choices[0].delta.content
+                } else {
+                    response += "\n"
+                }
             })
             markdown.innerHTML = marked.parse(response);
             enableInput()
