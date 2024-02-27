@@ -82,6 +82,11 @@
         evtSource.onmessage = (event) => {
             console.log(event)
             evtSource.close()
+            /*
+                https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#fields
+                The data field for the message. When the EventSource receives multiple consecutive lines that begin
+                with data:, it concatenates them, inserting a newline character between each one.
+             */
             event.data.split("\n").forEach((line) => {
                 response += JSON.parse(line).content + "\n"
             })
