@@ -5,7 +5,7 @@ from datetime import timedelta, datetime
 from azure.core.exceptions import HttpResponseError
 from azure.data.tables import TableServiceClient
 
-from domain.encrption.encryption import encrypt_eax
+from domain.encrption.encryption import encrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
 from domain.logging.app_logging import configure_logging
 from domain.validation.argument_validation import ensure_string_not_empty
@@ -41,7 +41,7 @@ def save_users_octopus_url(username, octopus_url, encrypted_api_key, tag, nonce,
     table_client.upsert_entity(user)
 
 
-def save_login_uuid(username, password, connection_string):
+def save_login_uuid(username, connection_string):
     logger.info("save_login_uuid - Enter")
 
     ensure_string_not_empty(username, "username must be the GitHub user's ID (save_login_uuid).")
@@ -53,8 +53,7 @@ def save_login_uuid(username, password, connection_string):
     user = {
         'PartitionKey': "github.com",
         'RowKey': login_uuid,
-        'Username': username,
-        'EncryptionPassword': password
+        'Username': username
     }
 
     table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
@@ -80,9 +79,10 @@ def save_users_octopus_url_from_login(state, url, api, connection_string):
         login = table_client.get_entity("github.com", state)
 
         username = login["Username"]
-        encryption_password = login["EncryptionPassword"]
+        encryption_password = generate_password(os.environ.get("ENCRYPTION_PASSWORD"),
+                                                os.environ.get("ENCRYPTION_SALT"))
 
-        encrypted_api_key, tag, nonce = encrypt_eax(api, encryption_password, os.environ.get("SALT"))
+        encrypted_api_key, tag, nonce = encrypt_eax(api, encryption_password, os.environ.get("ENCRYPTION_SALT"))
 
         save_users_octopus_url(username, url, encrypted_api_key, tag, nonce, connection_string)
     finally:

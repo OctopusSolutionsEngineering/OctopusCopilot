@@ -178,11 +178,12 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         nonce = github_user["EncryptionNonce"]
         api_key = github_user["OctopusApiKey"]
 
-        decrypted_api_key = decrypt_eax(generate_password(get_github_token(), os.environ.get("SALT")),
-                                        api_key,
-                                        tag,
-                                        nonce,
-                                        os.environ.get("SALT"))
+        decrypted_api_key = decrypt_eax(
+            generate_password(os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")),
+            api_key,
+            tag,
+            nonce,
+            os.environ.get("ENCRYPTION_SALT"))
 
         return decrypted_api_key.decode(), github_user["OctopusUrl"]
 
@@ -297,11 +298,10 @@ def get_sse_headers():
     }
 
 
-def request_config_details(github_username, github_token):
+def request_config_details(github_username):
     try:
         logger.info("User has not configured Octopus instance")
-        password = generate_password(github_token, os.environ.get("SALT"))
-        uuid = save_login_uuid(github_username, password, get_functions_connection_string())
+        uuid = save_login_uuid(github_username, get_functions_connection_string())
         return func.HttpResponse(convert_to_sse_response(
             f"To continue chatting please [log in](https://octopuscopilotproduction.azurewebsites.net/api/login?state={uuid})."),
             status_code=200,
