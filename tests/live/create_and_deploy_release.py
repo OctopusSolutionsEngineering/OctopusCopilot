@@ -70,7 +70,7 @@ def create_and_deploy_release(octopus_server_uri="http://localhost:8080", octopu
 
     # Get release version number
     releaseVersion = ""
-    if None == template['NextVersionIncrement']:
+    if template['NextVersionIncrement'] is None:
         uri = uri = '{0}/api/{1}/deploymentprocesses/{2}'.format(octopus_server_uri, space['Id'],
                                                                  project['DeploymentProcessId'])
         deploymentProcess = get_octopus_resource(uri, headers)
