@@ -1,4 +1,3 @@
-import os
 import uuid
 from datetime import timedelta, datetime
 
@@ -100,7 +99,7 @@ def save_login_uuid(username, connection_string):
     return login_uuid
 
 
-def save_users_octopus_url_from_login(state, url, api, connection_string):
+def save_users_octopus_url_from_login(state, url, api, encryption_password, encryption_salt, connection_string):
     logger.info("save_users_octopus_url_from_login - Enter")
 
     ensure_string_not_empty(state,
@@ -116,10 +115,9 @@ def save_users_octopus_url_from_login(state, url, api, connection_string):
         login = table_client.get_entity("github.com", state)
 
         username = login["Username"]
-        encryption_password = generate_password(os.environ.get("ENCRYPTION_PASSWORD"),
-                                                os.environ.get("ENCRYPTION_SALT"))
+        encryption_password = generate_password(encryption_password, encryption_salt)
 
-        encrypted_api_key, tag, nonce = encrypt_eax(api, encryption_password, os.environ.get("ENCRYPTION_SALT"))
+        encrypted_api_key, tag, nonce = encrypt_eax(api, encryption_password, encryption_salt)
 
         save_users_octopus_url(username, url, encrypted_api_key, tag, nonce, connection_string)
     finally:

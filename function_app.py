@@ -124,7 +124,12 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         user = get_current_user(body['api'], body['url'])
         api_key = create_limited_api_key(user, body['api'], body['url'])
 
-        save_users_octopus_url_from_login(uuid, body['url'], api_key, get_functions_connection_string())
+        save_users_octopus_url_from_login(uuid,
+                                          body['url'],
+                                          api_key,
+                                          os.environ.get("ENCRYPTION_PASSWORD"),
+                                          os.environ.get("ENCRYPTION_SALT"),
+                                          get_functions_connection_string())
         return func.HttpResponse(status_code=201)
     except (OctopusRequestFailed, OctopusApiKeyInvalid) as e:
         handle_error(e)
