@@ -24,8 +24,8 @@ def save_default_values(username, default_name, default_value, connection_string
 
     user = {
         'PartitionKey': "github.com",
-        'RowKey': default_name.casefold(),
-        'Value': default_value,
+        'RowKey': username,
+        default_name.casefold().strip(): default_value
     }
 
     table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
@@ -44,8 +44,8 @@ def get_default_values(username, default_name, connection_string):
     try:
         table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
         table_client = table_service_client.create_table_if_not_exists("userdefaults")
-        defaults = table_client.get_entity(default_name.casefold())
-        return defaults["Value"]
+        defaults = table_client.get_entity(username)
+        return defaults[default_name.casefold().strip()]
     except HttpResponseError as e:
         return None
 
