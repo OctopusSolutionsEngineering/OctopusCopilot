@@ -44,7 +44,7 @@ def get_default_values(username, default_name, connection_string):
     try:
         table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
         table_client = table_service_client.create_table_if_not_exists("userdefaults")
-        defaults = table_client.get_entity(username)
+        defaults = table_client.get_entity("github.com", username)
         return defaults[default_name.casefold().strip()]
     except HttpResponseError as e:
         return None
