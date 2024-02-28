@@ -13,6 +13,43 @@ from domain.validation.argument_validation import ensure_string_not_empty
 logger = configure_logging(__name__)
 
 
+def save_default_values(username, default_name, default_value, connection_string):
+    logger.info("save_default_values - Enter")
+
+    ensure_string_not_empty(username, "username must be the GitHub user's ID (save_default_values).")
+    ensure_string_not_empty(default_name, "default_name must be a non-empty string (save_default_values).")
+    ensure_string_not_empty(default_value, "default_value must be a non-empty string (save_default_values).")
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (save_default_values).')
+
+    user = {
+        'PartitionKey': "github.com",
+        'RowKey': default_name.casefold(),
+        'Value': default_value,
+    }
+
+    table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+    table_client = table_service_client.create_table_if_not_exists("userdefaults")
+    table_client.upsert_entity(user)
+
+
+def get_default_values(username, default_name, connection_string):
+    logger.info("get_default_values - Enter")
+
+    ensure_string_not_empty(username, "username must be the GitHub user's ID (get_default_values).")
+    ensure_string_not_empty(default_name, "default_name must be a non-empty string (get_default_values).")
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (get_default_values).')
+
+    try:
+        table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+        table_client = table_service_client.create_table_if_not_exists("userdefaults")
+        defaults = table_client.get_entity(default_name.casefold())
+        return defaults["Value"]
+    except HttpResponseError as e:
+        return None
+
+
 def save_users_octopus_url(username, octopus_url, encrypted_api_key, tag, nonce, connection_string):
     logger.info("save_users_octopus_url - Enter")
 

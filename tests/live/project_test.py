@@ -146,6 +146,33 @@ class LiveRequests(unittest.TestCase):
         # A test that makes sure the response doesn't throw any exceptions with real data
         get_deployment_status_base_response(actual_space_name, actual_environment_name, actual_project_name, deployment)
 
+    def test_get_deployment_with_defaults(self):
+        """
+        Tests that we return the details of a deployment
+        """
+
+        create_and_deploy_release()
+
+        function = handle_copilot_chat(
+            "Return the status of the latest deployment with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
+            build_live_test_tools)
+
+        self.assertEqual(function.function.__name__, "get_deployment_status")
+        self.assertEqual(function.function_args["octopus_url"], "http://localhost:8080")
+        self.assertEqual(function.function_args["api_key"], Octopus_Api_Key)
+        self.assertNotIn("space_name", function.function_args)
+        self.assertNotIn("project_name", function.function_args)
+        self.assertNotIn("environment_name", function.function_args)
+
+        time.sleep(10)
+
+        actual_space_name, actual_environment_name, actual_project_name, deployment = function.call_function()
+
+        self.assertTrue(deployment["State"] == "Executing" or deployment["State"] == "Success")
+
+        # A test that makes sure the response doesn't throw any exceptions with real data
+        get_deployment_status_base_response(actual_space_name, actual_environment_name, actual_project_name, deployment)
+
 
 def run_terraform(directory, url, api, space):
     with tempfile.TemporaryDirectory() as temp_dir:

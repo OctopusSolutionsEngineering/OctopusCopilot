@@ -57,7 +57,7 @@ def get_octopus_user(octopus_url, api_key):
     return get_current_user(api_key, octopus_url)
 
 
-def get_deployment_status(octopus_url, api_key, space_name, environment_name, project_name):
+def get_deployment_status(octopus_url, api_key, space_name=None, environment_name=None, project_name=None):
     """Return the status of the latest deployment to a space, environment, and project.
 
         Args:
@@ -66,11 +66,23 @@ def get_deployment_status(octopus_url, api_key, space_name, environment_name, pr
 
             api_key: The Octopus API key, e.g. API-xxxxxxxxxxxxxxxxxxxxxxx
 
-            space_name: The name of the space containing the projects
+            space_name: The name of the space containing the projects.
+            If this value is not defined, the default value will be used.
 
-            environment_name: The name of the environment
+            environment_name: The name of the environment.
+            If this value is not defined, the default value will be used.
 
-            project_name: The name of the project
+            project_name: The name of the project.
+            If this value is not defined, the default value will be used.
     """
+
+    if not space_name:
+        space_name = "Default"
+
+    if not environment_name:
+        environment_name = "Development"
+
+    if not project_name:
+        project_name = "Project1"
 
     return get_deployment_status_base(space_name, environment_name, project_name, api_key, octopus_url)

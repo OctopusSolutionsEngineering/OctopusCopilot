@@ -24,7 +24,8 @@ from infrastructure.github import get_github_user
 from infrastructure.octopus import get_octopus_project_names_base, get_current_user, \
     create_limited_api_key, get_deployment_status_base
 from infrastructure.users import get_users_details, delete_old_user_details, save_login_uuid, \
-    save_users_octopus_url_from_login, delete_all_user_details, delete_old_user_login_records
+    save_users_octopus_url_from_login, delete_all_user_details, delete_old_user_login_records, save_default_values, \
+    get_default_values
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
@@ -208,21 +209,34 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         actual_space_name, projects = get_octopus_project_names_base(space_name, api_key, url)
         return get_octopus_project_names_response(actual_space_name, projects)
 
-    def get_deployment_status_wrapper(space_name, environment_name, project_name):
+    def get_deployment_status_wrapper(space_name=None, environment_name=None, project_name=None):
         """Return the status of the latest deployment to a space, environment, and project.
 
             Args:
-                space_name: The name of the space containing the projects
+                space_name: The name of the space containing the projects.
+                If this value is not defined, the default value will be used.
 
-                environment_name: The name of the environment
+                environment_name: The name of the environment.
+                If this value is not defined, the default value will be used.
 
-                project_name: The name of the project
+                project_name: The name of the project.
+                If this value is not defined, the default value will be used.
         """
 
         logger.info("get_deployment_status_wrapper - Enter")
 
         api_key, url = get_api_key_and_url()
         get_current_user(api_key, url)
+
+        if not space_name or not space_name.strip():
+            space_name = get_default_values(get_github_user_from_form(), "Space", get_functions_connection_string())
+
+        if not environment_name or not environment_name.strip():
+            environment_name = get_default_values(get_github_user_from_form(), "Environment",
+                                                  get_functions_connection_string())
+
+        if not project_name or not project_name.strip():
+            project_name = get_default_values(get_github_user_from_form(), "Project", get_functions_connection_string())
 
         try:
             actual_space_name, actual_environment_name, actual_project_name, deployment = get_deployment_status_base(
@@ -237,6 +251,33 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         return get_deployment_status_base_response(actual_space_name, actual_environment_name, actual_project_name,
                                                    deployment)
 
+    def set_default_value(default_name, default_value):
+        """Save a default value for a space, project, environment, or channel
+
+            Args:
+                default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
+
+                default_value: The default value
+        """
+
+        name = str(default_name).casefold()
+
+        if not (name == "environment" or name == "project" or name == "space" or name == "channel"):
+            return f"Invalid default name \"{default_name}\". The default name must be one of \"Environment\", \"Project\", \"Space\", or \"Channel\""
+
+        save_default_values(get_github_user_from_form(), name, default_value, get_functions_connection_string())
+        return f"Saved default value \"{default_value}\" for \"{name}\""
+
+    def get_default_value(default_name):
+        """Save a default value for a space, project, environment, or channel
+
+            Args:
+                default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
+        """
+        name = str(default_name).casefold()
+        value = get_default_values(get_github_user_from_form(), name, get_functions_connection_string())
+        return f"The default value for \"{name}\" is \"{value}\""
+
     def build_form_tools():
         """
         Builds a set of tools configured for use with HTTP requests (i.e. API key
@@ -247,6 +288,8 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             FunctionDefinition(get_octopus_project_names_wrapper),
             FunctionDefinition(get_deployment_status_wrapper),
             FunctionDefinition(clean_up_all_records),
+            FunctionDefinition(set_default_value),
+            FunctionDefinition(get_default_value),
         ])
 
     try:
