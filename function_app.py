@@ -336,7 +336,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         handle_error(e)
         return func.HttpResponse(convert_to_sse_response(
             "An unexpected error was thrown. This error has been logged. I'm sorry for the inconvenience."),
-                                 headers=get_sse_headers())
+            headers=get_sse_headers())
 
 
 def extract_query(req: func.HttpRequest):
