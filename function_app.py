@@ -305,6 +305,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
+            FunctionDefinition(get_dashboard_wrapper),
         ])
 
     try:
