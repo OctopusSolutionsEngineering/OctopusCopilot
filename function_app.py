@@ -238,7 +238,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
         environment_name = get_default_argument(get_github_user_from_form(), environment_name, "Environment")
-        project_name = get_default_argument(get_github_user_from_form(), project_name, "project_name")
+        project_name = get_default_argument(get_github_user_from_form(), project_name, "Project")
 
         try:
             actual_space_name, actual_environment_name, actual_project_name, deployment = get_deployment_status_base(
