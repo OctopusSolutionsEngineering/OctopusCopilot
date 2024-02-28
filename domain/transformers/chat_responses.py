@@ -36,3 +36,58 @@ def get_deployment_status_base_response(actual_space_name, actual_environment_na
         icon = "⚪"
 
     return f"{icon} The latest deployment in `{actual_space_name}` to `{actual_environment_name}` for `{actual_project_name}` is version `{deployment['ReleaseVersion']}` with state `{deployment['State']}`."
+
+
+def get_dashboard_response(actual_space_name, dashboard):
+    table = ""
+    for project_group in dashboard["ProjectGroups"]:
+
+        table += f"| {project_group['Name']} "
+        for environment in project_group["EnvironmentIds"]:
+            environment_name = list(filter(lambda e: e["Id"] == environment, dashboard["Environments"]))
+            table += f"| {environment_name[0]['Name']} "
+
+        table += "|\n"
+
+        environments = len(project_group["EnvironmentIds"])
+        columns = ["|"] * (environments + 2)
+        table += "-".join(columns) + "\n"
+
+        projects = list(filter(lambda p: p["ProjectGroupId"] == project_group["Id"], dashboard["Projects"]))
+
+        for project in projects:
+            table += f"| {project['Name']} "
+
+            for environment in project_group["EnvironmentIds"]:
+                deployment = list(
+                    filter(lambda d: d["ProjectId"] == project["Id"] and d["EnvironmentId"] == environment,
+                           dashboard["Items"]))
+
+                if len(deployment) > 0:
+                    last_deployment = deployment[0]
+                    icon = "⚪"
+                    if last_deployment['State'] == "Executing":
+                        icon = "🔵"
+                    elif last_deployment['State'] == "Success":
+                        if last_deployment['HasWarningsOrErrors']:
+                            icon = "🟡"
+                        else:
+                            icon = "🟢"
+                    elif last_deployment['State'] == "Failed":
+                        icon = "🔴"
+                    elif last_deployment['State'] == "Canceled":
+                        icon = "🔴"
+                    elif last_deployment['State'] == "TimedOut":
+                        icon = "🔴"
+                    elif last_deployment['State'] == "Cancelling":
+                        icon = "🔴"
+                    elif last_deployment['State'] == "Queued":
+                        icon = "⚪"
+
+                    table += f"| {icon} {last_deployment['ReleaseVersion']}"
+                else:
+                    table += f"|  "
+
+            table += "|\n"
+        table += "|\n\n"
+    return table

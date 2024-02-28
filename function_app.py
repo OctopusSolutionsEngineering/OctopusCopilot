@@ -18,11 +18,12 @@ from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.logging.app_logging import configure_logging
 from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
-from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response
+from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response, \
+    get_dashboard_response
 from domain.transformers.sse_transformers import convert_to_sse_response
 from infrastructure.github import get_github_user
 from infrastructure.octopus import get_octopus_project_names_base, get_current_user, \
-    create_limited_api_key, get_deployment_status_base
+    create_limited_api_key, get_deployment_status_base, get_dashboard
 from infrastructure.users import get_users_details, delete_old_user_details, save_login_uuid, \
     save_users_octopus_url_from_login, delete_all_user_details, delete_old_user_login_records, save_default_values, \
     get_default_values
@@ -199,6 +200,18 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         except ValueError as e:
             logger.info("Encryption password must have changed because the api key could not be decrypted")
             raise OctopusApiKeyInvalid()
+
+    def get_dashboard_wrapper(space_name: None):
+        """Return a list of project names in an Octopus space
+
+            Args:
+                space_name: The name of the space containing the projects.
+                If this value is not defined, the default value will be used.
+        """
+        api_key, url = get_api_key_and_url()
+        space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
+        actual_space_name, dashboard = get_dashboard(space_name, api_key, url)
+        return get_dashboard_response(actual_space_name, dashboard)
 
     def get_octopus_project_names_wrapper(space_name: None):
         """Return a list of project names in an Octopus space

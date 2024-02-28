@@ -1,6 +1,7 @@
+from domain.transformers.chat_responses import get_dashboard_response
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.octopus import get_octopus_project_names_base, get_current_user, create_limited_api_key, \
-    get_deployment_status_base
+    get_deployment_status_base, get_dashboard
 from tests.live.octopus_config import Octopus_Api_Key
 
 
@@ -86,3 +87,19 @@ def get_deployment_status(octopus_url, api_key, space_name=None, environment_nam
         project_name = "Project1"
 
     return get_deployment_status_base(space_name, environment_name, project_name, api_key, octopus_url)
+
+
+def get_octopus_dashboard(space_name, octopus_url, api_key):
+    """Display the octopus overview dashboard
+
+        Args:
+            space_name: The name of the space containing the projects
+
+            octopus_url: The URL of an octopus instance, for example https://myinstance.octopus.app,
+            where "myinstance" can be any name
+
+            api_key: The Octopus API key, e.g. API-xxxxxxxxxxxxxxxxxxxxxxx
+    """
+
+    space_name, dashboard = get_dashboard(space_name, api_key, octopus_url)
+    return get_dashboard_response(space_name, dashboard)
