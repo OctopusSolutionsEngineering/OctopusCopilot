@@ -195,14 +195,17 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             logger.info("Encryption password must have changed because the api key could not be decrypted")
             raise OctopusApiKeyInvalid()
 
-    def get_octopus_project_names_wrapper(space_name):
+    def get_octopus_project_names_wrapper(space_name: None):
         """Return a list of project names in an Octopus space
 
             Args:
-                space_name: The name of the space containing the projects
+                space_name: The name of the space containing the projects.
+                If this value is not defined, the default value will be used.
         """
 
         logger.info("get_octopus_project_names_form - Enter")
+
+        space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
 
         api_key, url = get_api_key_and_url()
         get_current_user(api_key, url)
@@ -228,15 +231,9 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         api_key, url = get_api_key_and_url()
         get_current_user(api_key, url)
 
-        if not space_name or not space_name.strip():
-            space_name = get_default_values(get_github_user_from_form(), "Space", get_functions_connection_string())
-
-        if not environment_name or not environment_name.strip():
-            environment_name = get_default_values(get_github_user_from_form(), "Environment",
-                                                  get_functions_connection_string())
-
-        if not project_name or not project_name.strip():
-            project_name = get_default_values(get_github_user_from_form(), "Project", get_functions_connection_string())
+        space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
+        environment_name = get_default_argument(get_github_user_from_form(), environment_name, "Environment")
+        project_name = get_default_argument(get_github_user_from_form(), project_name, "project_name")
 
         try:
             actual_space_name, actual_environment_name, actual_project_name, deployment = get_deployment_status_base(
@@ -384,3 +381,10 @@ def request_config_details(github_username):
         return func.HttpResponse("data: An exception was raised. See the logs for more details.\n\n",
                                  status_code=500,
                                  headers=get_sse_headers())
+
+
+def get_default_argument(user, argument, default_name):
+    if not argument or not argument.strip():
+        return get_default_values(user, default_name, get_functions_connection_string())
+
+    return argument
