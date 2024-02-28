@@ -392,7 +392,8 @@ def request_config_details(github_username):
         logger.info("User has not configured Octopus instance")
         uuid = save_login_uuid(github_username, get_functions_connection_string())
         return func.HttpResponse(convert_to_sse_response(
-            f"To continue chatting please [log in](https://octopuscopilotproduction.azurewebsites.net/api/login?state={uuid})."),
+            f"To continue chatting please [log in](https://octopuscopilotproduction.azurewebsites.net/api/login).\n "
+            + f"The login token is {uuid}"),
             status_code=200,
             headers=get_sse_headers())
     except Exception as e:
