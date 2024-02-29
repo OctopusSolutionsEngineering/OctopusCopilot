@@ -1,9 +1,11 @@
 import json
 import os
+import urllib.parse
+from http.cookies import SimpleCookie
 
-import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
 from domain.encrption.encryption import decrypt_eax, generate_password, encrypt_eax
@@ -21,13 +23,14 @@ from domain.tools.function_definition import FunctionDefinitions, FunctionDefini
 from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response, \
     get_dashboard_response
 from domain.transformers.sse_transformers import convert_to_sse_response
+from domain.url.build_cookie import create_cookie
 from domain.url.build_url import build_url
 from infrastructure.github import get_github_user
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_octopus_project_names_base, get_current_user, \
     create_limited_api_key, get_deployment_status_base, get_dashboard
-from infrastructure.users import get_users_details, delete_old_user_details, save_login_uuid, \
-    save_users_octopus_url_from_login, delete_all_user_details, delete_old_user_login_records, save_default_values, \
+from infrastructure.users import get_users_details, delete_old_user_details, \
+    save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
     get_default_values
 
 app = func.FunctionApp()
@@ -49,21 +52,6 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
         handle_error(e)
 
 
-@app.function_name(name="login_record_cleanup")
-@app.timer_trigger(schedule="0 */5 * * * *",
-                   arg_name="mytimer",
-                   run_on_startup=True)
-def login_record_cleanup(mytimer: func.TimerRequest) -> None:
-    """
-    A function handler used to clean up old login joining records
-    :param mytimer: The Timer request
-    """
-    try:
-        delete_old_user_login_records(get_functions_connection_string())
-    except Exception as e:
-        handle_error(e)
-
-
 @app.route(route="oauth_callback", auth_level=func.AuthLevel.ANONYMOUS)
 def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
     """
@@ -72,20 +60,38 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
     :return: The HTML form
     """
 
+    # Exchange the code
     resp = http.request("POST",
                         build_url("https://github.com", "/login/oauth/access_token",
                                   dict(client_id=os.environ.get('GITHUB_CLIENT_ID'),
                                        client_secret=os.environ.get('GITHUB_CLIENT_SECRET'),
-                                       code=req.params.get('code'))),
-                        headers={'Content-Type': 'application/json'})
+                                       code=req.params.get('code'))))
+
+    resp.raise_for_status()
+
     access_token = resp.json()["access_token"]
+
+    # Get the user from the token
     user_id = get_github_user(access_token)
-    encrypted_id = encrypt_eax(user_id, os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT"))
+
+    # Encrypt the user id
+    encrypted_id, tag, nonce = encrypt_eax(user_id,
+                                           os.environ.get("ENCRYPTION_PASSWORD"),
+                                           os.environ.get("ENCRYPTION_SALT"))
+
+    # The session is persisted client side as an encrypted cookie that expires in 8 hours
+    session = {
+        "state": encrypted_id,
+        "tag": tag,
+        "nonce": nonce
+    }
+    session_cookie = create_cookie("session", json.dumps(session), 8)
 
     try:
         with open("html/login.html", "r") as file:
             return func.HttpResponse(file.read(),
-                                     headers={"Content-Type": "text/html", "Set-Cookie": "user_id=" + encrypted_id})
+                                     headers={"Content-Type": "text/html",
+                                              "Set-Cookie": session_cookie["session"].OutputString()})
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to read form HTML", status_code=500)
@@ -114,8 +120,18 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
     :return: The HTML form
     """
     try:
-        uuid = req.params.get('state')
         body = json.loads(req.get_body())
+
+        # Extract the GitHub user from the client side session
+        cookie = SimpleCookie()
+        cookie.load(req.headers['session'])
+        session = json.loads(cookie["session"].value)
+        user_id = decrypt_eax(generate_password(os.environ.get("ENCRYPTION_PASSWORD"),
+                                                os.environ.get("ENCRYPTION_SALT")),
+                              session["state"],
+                              session["tag"],
+                              session["nonce"],
+                              os.environ.get("ENCRYPTION_SALT"))
 
         # Using the supplied API key, create a time limited API key that we'll save and reuse until
         # the next cleanup cycle triggered by api_key_cleanup. Using temporary keys mens we never
@@ -123,7 +139,8 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         user = get_current_user(body['api'], body['url'])
         api_key = create_limited_api_key(user, body['api'], body['url'])
 
-        save_users_octopus_url_from_login(uuid,
+        # Persist the Octopus details against the GitHub user
+        save_users_octopus_url_from_login(user_id,
                                           body['url'],
                                           api_key,
                                           os.environ.get("ENCRYPTION_PASSWORD"),
@@ -343,7 +360,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     except (UserNotConfigured, OctopusApiKeyInvalid) as e:
         # This exception means there is no Octopus instance configured for the GitHub user making the request.
         # The Octopus instance is supplied via a chat message.
-        return request_config_details(get_github_user_from_form())
+        return request_config_details()
     except Exception as e:
         handle_error(e)
         return func.HttpResponse(convert_to_sse_response(
@@ -385,13 +402,14 @@ def get_sse_headers():
     }
 
 
-def request_config_details(github_username):
+def request_config_details():
     try:
         logger.info("User has not configured Octopus instance")
-        uuid = save_login_uuid(github_username, get_functions_connection_string())
         return func.HttpResponse(convert_to_sse_response(
-            f"To continue chatting please [log in](https://octopuscopilotproduction.azurewebsites.net/api/login).\n "
-            + f"The login token is `{uuid}`."),
+            f"To continue chatting please [log in](https://github.com/login/oauth/authorize?"
+            + f"client_id={os.environ.get('GITHUB_CLIENT_ID')}"
+            + f"&redirect_url={urllib.parse.quote('https://octopuscopilotproduction.azurewebsites.net/api/ouath_callback')}"
+            + "&scope=user&allow_signup=false)"),
             status_code=200,
             headers=get_sse_headers())
     except Exception as e:

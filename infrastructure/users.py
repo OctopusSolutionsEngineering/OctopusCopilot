@@ -1,4 +1,3 @@
-import uuid
 from datetime import timedelta, datetime
 
 from azure.core.exceptions import HttpResponseError
@@ -83,67 +82,19 @@ def save_users_octopus_url(username, octopus_url, encrypted_api_key, tag, nonce,
     table_client.upsert_entity(user)
 
 
-def save_login_uuid(username, connection_string):
-    logger.info("save_login_uuid - Enter")
-
-    ensure_string_not_empty(username, "username must be the GitHub user's ID (save_login_uuid).")
-    ensure_string_not_empty(connection_string,
-                            'connection_string must be the connection string (save_login_uuid).')
-
-    login_uuid = str(uuid.uuid4())
-
-    user = {
-        'PartitionKey': "github.com",
-        'RowKey': login_uuid,
-        'Username': username
-    }
-
-    table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
-    table_client = table_service_client.create_table_if_not_exists("userlogin")
-    table_client.upsert_entity(user)
-
-    return login_uuid
-
-
-def save_users_octopus_url_from_login(state, url, api, encryption_password, encryption_salt, connection_string):
+def save_users_octopus_url_from_login(username, url, api, encryption_password, encryption_salt, connection_string):
     logger.info("save_users_octopus_url_from_login - Enter")
 
-    ensure_string_not_empty(state,
-                            "uuid must be the UUID used to link a login to a user (save_users_octopus_url_from_login).")
+    ensure_string_not_empty(username,
+                            "username must be the GitHub user ID (save_users_octopus_url_from_login).")
     ensure_string_not_empty(url, "url must be the Octopus URL (save_users_octopus_url_from_login).")
     ensure_string_not_empty(api, "api must be the Octopus API key (save_users_octopus_url_from_login).")
     ensure_string_not_empty(connection_string,
                             'connection_string must be the connection string (save_users_octopus_url_from_login).')
 
-    try:
-        table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
-        table_client = table_service_client.create_table_if_not_exists("userlogin")
-        login = table_client.get_entity("github.com", state)
-
-        username = login["Username"]
-        encryption_password = generate_password(encryption_password, encryption_salt)
-
-        encrypted_api_key, tag, nonce = encrypt_eax(api, encryption_password, encryption_salt)
-
-        save_users_octopus_url(username, url, encrypted_api_key, tag, nonce, connection_string)
-    finally:
-        delete_login_uuid(state, connection_string)
-
-
-def delete_login_uuid(state, connection_string):
-    ensure_string_not_empty(state,
-                            "state must be the UUID used to link a login to a user (save_users_octopus_url_from_login).")
-    ensure_string_not_empty(connection_string,
-                            'connection_string must be the connection string (save_users_octopus_url_from_login).')
-
-    try:
-        # Clean up the linking record
-        table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
-        table_client = table_service_client.get_table_client("userlogin")
-        table_client.delete_entity("github.com", state)
-    except Exception as e:
-        # This cleanup is a best effort operation, but it should not fail a login
-        handle_error(e)
+    encryption_password = generate_password(encryption_password, encryption_salt)
+    encrypted_api_key, tag, nonce = encrypt_eax(api, encryption_password, encryption_salt)
+    save_users_octopus_url(username, url, encrypted_api_key, tag, nonce, connection_string)
 
 
 def get_users_details(username, connection_string):
@@ -175,39 +126,6 @@ def delete_old_user_details(connection_string):
         table_client = table_service_client.get_table_client(table_name="users")
 
         old_records = (datetime.now() - timedelta(hours=8)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-
-        rows = table_client.query_entities(f"Timestamp lt datetime'{old_records}'")
-        counter = 0
-        for row in rows:
-            counter = counter + 1
-            table_client.delete_entity("github.com", row['RowKey'])
-
-        logger.info(f"Cleaned up {counter} entries.")
-
-        return counter
-
-    except HttpResponseError as e:
-        handle_error(e)
-
-
-def delete_old_user_login_records(connection_string):
-    """
-    We don't want to hold onto keys for very long. Every hour or so keys older than 8 hours are purged from the database
-    and users need to log in again.
-    :param connection_string: The database connection string
-    :return: The number of deleted records.
-    """
-    logger.info("delete_old_user_login_records - Enter")
-
-    ensure_string_not_empty(connection_string,
-                            'connection_string must be the connection string (delete_old_user_login_records).')
-
-    try:
-        table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
-        table_client = table_service_client.get_table_client(table_name="userlogin")
-
-        # We wait for 5 minutes before deleting the login record
-        old_records = (datetime.now() - timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
         rows = table_client.query_entities(f"Timestamp lt datetime'{old_records}'")
         counter = 0
