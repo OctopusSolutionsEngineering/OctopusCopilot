@@ -56,6 +56,7 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
 def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
     """
     Responds to the Oauth login callback and responds with a form to submit the Octopus details.
+
     We have a challenge with a chat agent in that it is essentially two halves that are not aware of each other and
     share different authentication workflows. The chat agent receives a GitHub token from Copilot directly. The web
     half of the app, where uses enter their Octopus details, uses standard Oauth based login workflows.
@@ -77,7 +78,8 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
                                            code=req.params.get('code'))),
                             headers={"Accept": "application/json"})
 
-        resp.raise_for_status()
+        if resp.status != 200:
+            raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
 
         access_token = resp.json()["access_token"]
 
@@ -105,7 +107,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
                                               "Set-Cookie": session_cookie["session"].OutputString()})
     except Exception as e:
         handle_error(e)
-        return func.HttpResponse("Failed to read form HTML", status_code=500)
+        return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
 
 
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
