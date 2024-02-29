@@ -1,6 +1,7 @@
 import json
 import os
 import urllib.parse
+from base64 import b64encode
 from http.cookies import SimpleCookie
 
 from azure.core.exceptions import HttpResponseError
@@ -99,12 +100,14 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
             "tag": tag,
             "nonce": nonce
         }
-        session_cookie = create_cookie("session", json.dumps(session), 1)
+        session_cookie = create_cookie("session", b64encode(json.dumps(session).encode('utf-8')), 1)
+
+        logger.info(session_cookie["session"].OutputString())
 
         with open("html/login.html", "r") as file:
             return func.HttpResponse(file.read(),
                                      headers={"Content-Type": "text/html",
-                                              "Set-Cookie": json.dumps(session)})
+                                              "Set-Cookie": session_cookie["session"].OutputString()})
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
@@ -138,7 +141,7 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         # Extract the GitHub user from the client side session
         cookie = SimpleCookie()
         cookie.load(req.headers['session'])
-        session = json.loads(cookie["session"].value)
+        session = json.loads(bytearray(cookie["session"].value, encoding='ascii').decode("utf-8"))
         user_id = decrypt_eax(generate_password(os.environ.get("ENCRYPTION_PASSWORD"),
                                                 os.environ.get("ENCRYPTION_SALT")),
                               session["state"],
