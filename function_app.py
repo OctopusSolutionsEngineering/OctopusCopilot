@@ -91,7 +91,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
                                                os.environ.get("ENCRYPTION_PASSWORD"),
                                                os.environ.get("ENCRYPTION_SALT"))
 
-        # The session is persisted client side as an encrypted cookie that expires in 8 hours. This is inspired by
+        # The session is persisted client side as an encrypted cookie that expires in a few hours. This is inspired by
         # Quarkus which uses client side state to support serverless web apps:
         # https://quarkus.io/guides/security-authentication-mechanisms#form-auth
         session = {
@@ -99,12 +99,12 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
             "tag": tag,
             "nonce": nonce
         }
-        session_cookie = create_cookie("session", json.dumps(session), 8)
+        session_cookie = create_cookie("session", json.dumps(session), 1)
 
         with open("html/login.html", "r") as file:
             return func.HttpResponse(file.read(),
                                      headers={"Content-Type": "text/html",
-                                              "Set-Cookie": session_cookie["session"].OutputString()})
+                                              "Set-Cookie": json.dumps(session)})
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
