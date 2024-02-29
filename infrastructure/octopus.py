@@ -90,6 +90,33 @@ def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
     return actual_space_name, projects
 
 
+@retry(HTTPError, tries=3, delay=2)
+def get_dashboard(space_name, my_api_key, my_octopus_api):
+    """
+    The base function used to get the dashboard summary
+    :param space_name: The name of the Octopus space containing the projects
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus URL
+    :return: The actual space name and the dashboard summary
+    """
+
+    logger.info("get_octopus_project_names_base - Enter")
+
+    ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_octopus_project_names_base).')
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_octopus_project_names_base).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_octopus_project_names_base).')
+
+    space_id, actual_space_name = get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api)
+
+    api = build_octopus_url(my_octopus_api, "api/" + space_id + "/Dashboard",
+                            dict(highestLatestVersionPerProjectAndEnvironment="true"))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
+
+    json = resp.json()
+
+    return actual_space_name, json
+
+
 def get_current_user(my_api_key, my_octopus_api):
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_current_user).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_current_user).')

@@ -13,6 +13,17 @@
 </nav>
 <form id="form" class="needs-validation" novalidate>
     <div class="form-group row">
+        <label for="url" class="col-2 offset-2 col-form-label">Login Token</label>
+        <div class="col-6">
+            <input id="token" name="token" type="text" class="form-control" required>
+            <small id="tokenHelp" class="form-text text-muted">This is the token displayed by the chat client when it
+                asked you to log in. It is a GUID in the format 00000000-0000-0000-0000-000000000000.</small>
+            <div class="invalid-feedback">
+                Please provide a valid login token.
+            </div>
+        </div>
+    </div>
+    <div class="form-group row">
         <label for="url" class="col-2 offset-2 col-form-label">Octopus URL</label>
         <div class="col-6">
             <input id="url" name="token" type="text" class="form-control" required>
@@ -47,7 +58,7 @@
     <div class="form-group row">
         <div class="offset-4 col-6">
             <div id="invalid_api_key_or_url" class="alert alert-danger" role="alert" style="display: none">
-                The API key or URL you provided is invalid.
+                The Login Token, API key or URL you provided is invalid.
             </div>
             <div id="response_error" class="alert alert-danger" role="alert" style="display: none">
                 There was an error logging in. Please try again later.
@@ -63,26 +74,18 @@
 </form>
 </body>
 <script>
-    function validate() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const state = urlParams.get('state');
-
-        if (!state) {
-            disable_inputs()
-            validation.style.display = 'block'
-        }
-    }
-
     function enable_inputs() {
         submit.disabled = false
         url.disabled = false
         api.disabled = false
+        token.disabled = false
     }
 
     function disable_inputs() {
         submit.disabled = true
         url.disabled = true
         api.disabled = true
+        token.disabled = true
     }
 
     async function processQuery() {
@@ -99,8 +102,7 @@
         response_error.style.display = 'none'
 
         try {
-            const urlParams = new URLSearchParams(window.location.search);
-            const state = urlParams.get('state');
+            const state = token.value;
 
             const response = await fetch("/api/login_submit?state=" + encodeURIComponent(state), {
                 method: "POST",
@@ -123,7 +125,5 @@
     }
 
     submit.onclick = processQuery
-
-    validate()
 </script>
 </html>

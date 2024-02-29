@@ -173,6 +173,21 @@ class LiveRequests(unittest.TestCase):
         # A test that makes sure the response doesn't throw any exceptions with real data
         get_deployment_status_base_response(actual_space_name, actual_environment_name, actual_project_name, deployment)
 
+    def test_get_dashboard(self):
+        """
+        Tests that we return the details of a deployment
+        """
+
+        create_and_deploy_release()
+
+        function = handle_copilot_chat(
+            "Get the dashboard with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
+            build_live_test_tools)
+
+        dashboard = function.call_function()
+
+        self.assertTrue(dashboard)
+
 
 def run_terraform(directory, url, api, space):
     with tempfile.TemporaryDirectory() as temp_dir:

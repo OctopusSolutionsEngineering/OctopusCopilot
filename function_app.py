@@ -18,13 +18,14 @@ from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.logging.app_logging import configure_logging
 from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
-from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response
+from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response, \
+    get_dashboard_response
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.url.build_url import build_url
 from infrastructure.github import get_github_user
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_octopus_project_names_base, get_current_user, \
-    create_limited_api_key, get_deployment_status_base
+    create_limited_api_key, get_deployment_status_base, get_dashboard
 from infrastructure.users import get_users_details, delete_old_user_details, save_login_uuid, \
     save_users_octopus_url_from_login, delete_all_user_details, delete_old_user_login_records, save_default_values, \
     get_default_values
@@ -198,6 +199,18 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             logger.info("Encryption password must have changed because the api key could not be decrypted")
             raise OctopusApiKeyInvalid()
 
+    def get_dashboard_wrapper(space_name: None):
+        """Return a list of project names in an Octopus space
+
+            Args:
+                space_name: The name of the space containing the projects.
+                If this value is not defined, the default value will be used.
+        """
+        api_key, url = get_api_key_and_url()
+        space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
+        actual_space_name, dashboard = get_dashboard(space_name, api_key, url)
+        return get_dashboard_response(actual_space_name, dashboard)
+
     def get_octopus_project_names_wrapper(space_name: None):
         """Return a list of project names in an Octopus space
 
@@ -236,7 +249,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
         space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
         environment_name = get_default_argument(get_github_user_from_form(), environment_name, "Environment")
-        project_name = get_default_argument(get_github_user_from_form(), project_name, "project_name")
+        project_name = get_default_argument(get_github_user_from_form(), project_name, "Project")
 
         try:
             actual_space_name, actual_environment_name, actual_project_name, deployment = get_deployment_status_base(
@@ -290,6 +303,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
+            FunctionDefinition(get_dashboard_wrapper),
         ])
 
     try:
@@ -332,9 +346,9 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         return request_config_details(get_github_user_from_form())
     except Exception as e:
         handle_error(e)
-        return func.HttpResponse(convert_to_sse_response("An exception was raised. See the logs for more details."),
-                                 status_code=500,
-                                 headers=get_sse_headers())
+        return func.HttpResponse(convert_to_sse_response(
+            "An unexpected error was thrown. This error has been logged. I'm sorry for the inconvenience."),
+            headers=get_sse_headers())
 
 
 def extract_query(req: func.HttpRequest):
@@ -376,7 +390,8 @@ def request_config_details(github_username):
         logger.info("User has not configured Octopus instance")
         uuid = save_login_uuid(github_username, get_functions_connection_string())
         return func.HttpResponse(convert_to_sse_response(
-            f"To continue chatting please [log in](https://octopuscopilotproduction.azurewebsites.net/api/login?state={uuid})."),
+            f"To continue chatting please [log in](https://octopuscopilotproduction.azurewebsites.net/api/login).\n "
+            + f"The login token is `{uuid}`."),
             status_code=200,
             headers=get_sse_headers())
     except Exception as e:
