@@ -68,36 +68,37 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
     :param req: The HTTP request
     :return: The HTML form
     """
-
-    # Exchange the code
-    resp = http.request("POST",
-                        build_url("https://github.com", "/login/oauth/access_token",
-                                  dict(client_id=os.environ.get('GITHUB_CLIENT_ID'),
-                                       client_secret=os.environ.get('GITHUB_CLIENT_SECRET'),
-                                       code=req.params.get('code'))),
-                        headers={"Accept": "application/json"})
-
-    resp.raise_for_status()
-
-    access_token = resp.json()["access_token"]
-
-    # Get the user from the token
-    user_id = get_github_user(access_token)
-
-    # Encrypt the user id
-    encrypted_id, tag, nonce = encrypt_eax(user_id,
-                                           os.environ.get("ENCRYPTION_PASSWORD"),
-                                           os.environ.get("ENCRYPTION_SALT"))
-
-    # The session is persisted client side as an encrypted cookie that expires in 8 hours
-    session = {
-        "state": encrypted_id,
-        "tag": tag,
-        "nonce": nonce
-    }
-    session_cookie = create_cookie("session", json.dumps(session), 8)
-
     try:
+        # Exchange the code
+        resp = http.request("POST",
+                            build_url("https://github.com", "/login/oauth/access_token",
+                                      dict(client_id=os.environ.get('GITHUB_CLIENT_ID'),
+                                           client_secret=os.environ.get('GITHUB_CLIENT_SECRET'),
+                                           code=req.params.get('code'))),
+                            headers={"Accept": "application/json"})
+
+        resp.raise_for_status()
+
+        access_token = resp.json()["access_token"]
+
+        # Get the user from the token
+        user_id = get_github_user(access_token)
+
+        # Encrypt the user id
+        encrypted_id, tag, nonce = encrypt_eax(user_id,
+                                               os.environ.get("ENCRYPTION_PASSWORD"),
+                                               os.environ.get("ENCRYPTION_SALT"))
+
+        # The session is persisted client side as an encrypted cookie that expires in 8 hours. This is inspired by
+        # Quarkus which uses client side state to support serverless web apps:
+        # https://quarkus.io/guides/security-authentication-mechanisms#form-auth
+        session = {
+            "state": encrypted_id,
+            "tag": tag,
+            "nonce": nonce
+        }
+        session_cookie = create_cookie("session", json.dumps(session), 8)
+
         with open("html/login.html", "r") as file:
             return func.HttpResponse(file.read(),
                                      headers={"Content-Type": "text/html",
