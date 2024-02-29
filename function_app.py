@@ -55,7 +55,16 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
 @app.route(route="oauth_callback", auth_level=func.AuthLevel.ANONYMOUS)
 def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
     """
-    Responds to the Oauth login callback and responds with a form to submit the Octopus details
+    Responds to the Oauth login callback and responds with a form to submit the Octopus details.
+    We have a challenge with a chat agent in that it is essentially two halves that are not aware of each other and
+    share different authentication workflows. The chat agent receives a GitHub token from Copilot directly. The web
+    half of the app, where uses enter their Octopus details, uses standard Oauth based login workflows.
+
+    We use the GitHub user ID as the common context for these two halves. The web interface uses Oauth login to
+    identify the GitHub user and persist their details, while the chat half uses the supplied GitHub tokens to
+    identify the user. We trust that the user IDs are the same and so can exchange information between the two halves.
+
+    Note that we never ask the user for their ID - we always get the ID from a query to the GitHub API.
     :param req: The HTTP request
     :return: The HTML form
     """

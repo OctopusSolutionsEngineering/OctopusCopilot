@@ -108,8 +108,8 @@ def get_dashboard(space_name, my_api_key, my_octopus_api):
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api)
 
-    api = build_octopus_url(my_octopus_api, "api/" + space_id + "/Dashboard",
-                            dict(highestLatestVersionPerProjectAndEnvironment="true"))
+    api = build_url(my_octopus_api, "api/" + space_id + "/Dashboard",
+                    dict(highestLatestVersionPerProjectAndEnvironment="true"))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
