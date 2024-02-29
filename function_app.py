@@ -1,12 +1,12 @@
 import json
 import os
 
+import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
-import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
-from domain.encrption.encryption import decrypt_eax, generate_password
+from domain.encrption.encryption import decrypt_eax, generate_password, encrypt_eax
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
 from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequestFailed
@@ -20,7 +20,9 @@ from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response
 from domain.transformers.sse_transformers import convert_to_sse_response
+from domain.url.build_url import build_url
 from infrastructure.github import get_github_user
+from infrastructure.http_pool import http
 from infrastructure.octopus import get_octopus_project_names_base, get_current_user, \
     create_limited_api_key, get_deployment_status_base
 from infrastructure.users import get_users_details, delete_old_user_details, save_login_uuid, \
@@ -64,13 +66,25 @@ def login_record_cleanup(mytimer: func.TimerRequest) -> None:
 @app.route(route="oauth_callback", auth_level=func.AuthLevel.ANONYMOUS)
 def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
     """
-    A function handler that returns an HTML form for testing
+    Responds to the Oauth login callback and responds with a form to submit the Octopus details
     :param req: The HTTP request
     :return: The HTML form
     """
+
+    resp = http.request("POST",
+                        build_url("https://github.com", "/login/oauth/access_token",
+                                  dict(client_id=os.environ.get('GITHUB_CLIENT_ID'),
+                                       client_secret=os.environ.get('GITHUB_CLIENT_SECRET'),
+                                       code=req.params.get('code'))),
+                        headers={'Content-Type': 'application/json'})
+    access_token = resp.json()["access_token"]
+    user_id = get_github_user(access_token)
+    encrypted_id = encrypt_eax(user_id, os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT"))
+
     try:
-        with open("html/oauth_callback.html", "r") as file:
-            return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
+        with open("html/login.html", "r") as file:
+            return func.HttpResponse(file.read(),
+                                     headers={"Content-Type": "text/html", "Set-Cookie": "user_id=" + encrypted_id})
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to read form HTML", status_code=500)
@@ -85,22 +99,6 @@ def query_form(req: func.HttpRequest) -> func.HttpResponse:
     """
     try:
         with open("html/query.html", "r") as file:
-            return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
-    except Exception as e:
-        handle_error(e)
-        return func.HttpResponse("Failed to read form HTML", status_code=500)
-
-
-@app.route(route="login", auth_level=func.AuthLevel.ANONYMOUS)
-def login_form(req: func.HttpRequest) -> func.HttpResponse:
-    """
-    A function handler that returns an HTML form logging in. The idea here is that we don't hold onto keys for long,
-    and instead rely on the browser to save the credentials exposed by this form.
-    :param req: The HTTP request
-    :return: The HTML form
-    """
-    try:
-        with open("html/login.html", "r") as file:
             return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
     except Exception as e:
         handle_error(e)

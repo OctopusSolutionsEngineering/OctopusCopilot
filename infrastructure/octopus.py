@@ -1,5 +1,4 @@
 import datetime
-from urllib.parse import urlunsplit, urlparse, urlencode
 
 import pytz
 from retry import retry
@@ -10,6 +9,7 @@ from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
+from domain.url.build_url import build_url
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http, TAKE_ALL
 
@@ -31,23 +31,6 @@ def get_octopus_headers(my_api_key):
     }
 
 
-def build_octopus_url(my_octopus_api, path, query=None):
-    """
-    Create a URL from the Octopus URL, additional path, and query params
-    :param my_octopus_api: The Octopus URL
-    :param path: The additional path
-    :param query: Additional query params
-    :return: The URL combining all the inputs
-    """
-
-    if my_octopus_api is None:
-        raise ValueError('my_get_api_key must be the Octopus Url.')
-
-    parsed = urlparse(my_octopus_api)
-    query = urlencode(query) if query is not None else ""
-    return urlunsplit((parsed.scheme, parsed.netloc, path, query, ""))
-
-
 def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
     """
     Gets a space ID and actual space name from a name extracted from a query.
@@ -64,7 +47,7 @@ def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_space_id_and_name_from_name).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_space_id_and_name_from_name).')
 
-    api = build_octopus_url(my_octopus_api, "api/spaces", dict(take=TAKE_ALL))
+    api = build_url(my_octopus_api, "api/spaces", dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
     json = resp.json()
 
@@ -98,7 +81,7 @@ def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api)
 
-    api = build_octopus_url(my_octopus_api, "api/" + space_id + "/Projects", dict(take=TAKE_ALL))
+    api = build_url(my_octopus_api, "api/" + space_id + "/Projects", dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -111,7 +94,7 @@ def get_current_user(my_api_key, my_octopus_api):
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_current_user).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_current_user).')
 
-    api = build_octopus_url(my_octopus_api, "/api/users/me")
+    api = build_url(my_octopus_api, "/api/users/me")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -138,7 +121,7 @@ def create_limited_api_key(user, my_api_key, my_octopus_api):
         'Expires': tomorrow.isoformat()
     }
 
-    api = build_octopus_url(my_octopus_api, "/api/users/" + user + "/apikeys")
+    api = build_url(my_octopus_api, "/api/users/" + user + "/apikeys")
     resp = handle_response(lambda: http.request("POST", api, json=api_key, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -168,21 +151,21 @@ def get_deployment_status_base(space_name, environment_name, project_name, api_k
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
 
-    api = build_octopus_url(octopus_url, "api/" + space_id + "/Projects", dict(partial_name=project_name))
+    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partial_name=project_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     project = get_item_ignoring_case(resp.json()["Items"], project_name)
 
     if project is None:
         raise ResourceNotFound("No projects found matching the name " + project_name)
 
-    api = build_octopus_url(octopus_url, "api/" + space_id + "/Environments", dict(partial_name=environment_name))
+    api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partial_name=environment_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     environment = get_item_ignoring_case(resp.json()["Items"], environment_name)
 
     if environment is None:
         raise ResourceNotFound("No environments found matching the name " + environment_name)
 
-    api = build_octopus_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
+    api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     releases = list(filter(lambda r: environment["Id"] in r["Deployments"], resp.json()["Releases"]))
 
