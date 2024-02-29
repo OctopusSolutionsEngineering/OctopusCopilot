@@ -21,7 +21,7 @@ class UsersTest(unittest.TestCase):
 
     def test_login(self):
         save_users_octopus_url_from_login("12345", "https://test.com", "apikey", "password", "salt", connection_string)
-        user = get_users_details("test", connection_string)
+        user = get_users_details("12345", connection_string)
 
         self.assertTrue(user['OctopusUrl'])
         self.assertTrue(user['OctopusApiKey'])
