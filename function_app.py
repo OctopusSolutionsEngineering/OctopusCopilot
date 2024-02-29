@@ -65,7 +65,8 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
                         build_url("https://github.com", "/login/oauth/access_token",
                                   dict(client_id=os.environ.get('GITHUB_CLIENT_ID'),
                                        client_secret=os.environ.get('GITHUB_CLIENT_SECRET'),
-                                       code=req.params.get('code'))))
+                                       code=req.params.get('code'))),
+                        headers={"Accept": "application/json"})
 
     resp.raise_for_status()
 
