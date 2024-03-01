@@ -69,7 +69,7 @@ def octopus(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="oauth_callback", auth_level=func.AuthLevel.ANONYMOUS)
 def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
     """
-    Responds to the Oauth login callback and responds with a form to submit the Octopus details.
+    Responds to the Oauth login callback and redirects to a form to submit the Octopus details.
 
     We have a challenge with a chat agent in that it is essentially two halves that are not aware of each other and
     share different authentication workflows. The chat agent receives a GitHub token from Copilot directly. The web
@@ -129,7 +129,7 @@ def query_form(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="login_submit", auth_level=func.AuthLevel.ANONYMOUS)
 def login_submit(req: func.HttpRequest) -> func.HttpResponse:
     """
-    A function handler that responds to a login
+    A function handler that responds to the submission of the API key and URL
     :param req: The HTTP request
     :return: The HTML form
     """
