@@ -68,6 +68,12 @@ To run the command line you need to set the following environment variables:
 3. `OPENAI_API_KEY` - The key to access OpenAI
 4. `OPENAI_ENDPOINT` - The OpenAI endpoint
 
+You can then run the CLI with the following command:
+
+```shell
+python3 main.py --query "Show the projects from the Documentation space"
+```
+
 Octonaughts can see the `Octopus Copilot OpenAI` secure note in the password manager for the Open AI key and endpoint.
 
 # Test Coverage
