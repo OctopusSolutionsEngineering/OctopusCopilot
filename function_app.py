@@ -100,7 +100,9 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
             "tag": tag,
             "nonce": nonce
         }
-        session_cookie = create_cookie("session", b64encode(bytearray(json.dumps(session), 'utf-8')), 1)
+        session_json = json.dumps(session)
+        session_json_b64 = b64encode(session_json.encode('utf-8'))
+        session_cookie = create_cookie("session", session_json_b64.decode('utf-8'), 1)
 
         logger.info(session_cookie["session"].OutputString())
 
@@ -141,7 +143,7 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         # Extract the GitHub user from the client side session
         cookie = SimpleCookie()
         cookie.load(req.headers['session'])
-        session = json.loads(b64decode(cookie["session"].value).decode("utf-8"))
+        session = json.loads(b64decode(cookie["session"].value).decode("ascii"))
         user_id = decrypt_eax(generate_password(os.environ.get("ENCRYPTION_PASSWORD"),
                                                 os.environ.get("ENCRYPTION_SALT")),
                               session["state"],
