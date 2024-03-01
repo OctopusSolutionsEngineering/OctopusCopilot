@@ -21,22 +21,22 @@ def generate_password(token, salt):
     return m.hexdigest()
 
 
-def encrypt_eax(input, password, salt):
+def encrypt_eax(input_value, password, salt):
     """
     https://nitratine.net/blog/post/python-encryption-and-decryption-with-pycryptodome/#eax-example_1
-    :param input: The input to be encrypted
+    :param input_value: The input to be encrypted
     :param password: The password (a hashed GitHub token)
     :param salt: The salt to apply to the encrypted value
     :return: The encrypted value, tag, and nonce (all base 64 encoded)
     """
 
-    ensure_string_not_empty(input, 'input must be the value to encrypt (encrypt_eax).')
+    ensure_string_not_empty(input_value, 'input must be the value to encrypt (encrypt_eax).')
     ensure_string_not_empty(password, 'password must be the encryption password (encrypt_eax).')
     ensure_string_not_empty(salt, 'salt must be the salt value to use when encrypting (encrypt_eax).')
 
     key = generate_key(password, salt)
     cipher = AES.new(key, AES.MODE_EAX)
-    ciphered_data, tag = cipher.encrypt_and_digest(bytearray(input, encoding='utf-8'))
+    ciphered_data, tag = cipher.encrypt_and_digest(bytearray(input_value, encoding='utf-8'))
     return b64encode(ciphered_data).decode(), b64encode(tag).decode(), b64encode(cipher.nonce).decode()
 
 

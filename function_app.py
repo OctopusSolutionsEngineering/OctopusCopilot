@@ -151,8 +151,7 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         # Extract the GitHub user from the client side session
         state = req.params.get("state")
         session = json.loads(decode_string_b64(state))
-        user_id = decrypt_eax(generate_password(os.environ.get("ENCRYPTION_PASSWORD"),
-                                                os.environ.get("ENCRYPTION_SALT")),
+        user_id = decrypt_eax(os.environ.get("ENCRYPTION_PASSWORD"),
                               session["state"],
                               session["tag"],
                               session["nonce"],
