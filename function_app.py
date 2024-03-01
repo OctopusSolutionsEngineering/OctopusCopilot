@@ -108,7 +108,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
         with open("html/login.html", "r") as file:
             return func.HttpResponse(file.read(),
                                      headers={"Content-Type": "text/html",
-                                              "State": session_cookie["session"].OutputString()})
+                                              "Set-Cookie": session_cookie["session"].OutputString()})
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
