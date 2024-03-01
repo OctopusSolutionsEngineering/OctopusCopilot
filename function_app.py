@@ -323,17 +323,17 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         * `Show me the projects in the space called Default`
         * `Show the dashboard for space MySpace`
         * `Show me the status of the latest deployment for the Web App project in the Development environment in the Default space`
-        
+
         You can set the default space, environment, and project used by the queries above with statements like:
         * `Set the default space to Default`
         * `Set the default environment to Development`
         * `Set the default project to Web App`
-        
+
         You can view the default values with questions like:
         * `What is the default space?`
         * `What is the default environment?`
         * `What is the default project?`
-        
+
         Once default values are set, you can omit the space, environment, and project from your queries, or override them with a specific value. For example:
         * `Show me the dashboard`
         * `Show me the status of the latest deployment to the production environment`
