@@ -164,7 +164,7 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         api_key = create_limited_api_key(user, body['api'], body['url'])
 
         # Persist the Octopus details against the GitHub user
-        save_users_octopus_url_from_login(user_id,
+        save_users_octopus_url_from_login(user_id.decode(),
                                           body['url'],
                                           api_key,
                                           os.environ.get("ENCRYPTION_PASSWORD"),
