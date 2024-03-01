@@ -63,6 +63,9 @@
 </form>
 </body>
 <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const state = urlParams.get('state');
+
     function enable_inputs() {
         submit.disabled = false
         url.disabled = false
@@ -96,7 +99,7 @@
         response_error.style.display = 'none'
 
         try {
-            const response = await fetch("/api/login_submit",
+            const response = await fetch("/api/login_submit?state=" + state,
                 {
                     method: "POST",
                     body: JSON.stringify({url: url.value, api: api.value}),

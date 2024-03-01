@@ -1,7 +1,6 @@
 import json
 import os
 import urllib.parse
-from http.cookies import SimpleCookie
 
 from azure.core.exceptions import HttpResponseError
 
@@ -24,7 +23,6 @@ from domain.tools.function_definition import FunctionDefinitions, FunctionDefini
 from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response, \
     get_dashboard_response
 from domain.transformers.sse_transformers import convert_to_sse_response
-from domain.url.build_cookie import create_cookie
 from domain.url.build_url import build_url
 from infrastructure.github import get_github_user
 from infrastructure.http_pool import http
@@ -51,6 +49,21 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
         delete_old_user_details(get_functions_connection_string())
     except Exception as e:
         handle_error(e)
+
+
+@app.route(route="octopus", auth_level=func.AuthLevel.ANONYMOUS)
+def octopus(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    :param req: The HTTP request
+    :return: The HTML form
+    """
+    try:
+        with open("html/login.html", "r") as file:
+            return func.HttpResponse(file.read(),
+                                     headers={"Content-Type": "text/html"})
+    except Exception as e:
+        handle_error(e)
+        return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
 
 
 @app.route(route="oauth_callback", auth_level=func.AuthLevel.ANONYMOUS)
@@ -82,11 +95,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
         if resp.status != 200:
             raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
 
-        json = resp.json()
-
-        logger.info(json)
-
-        access_token = resp.json().get("access_token")
+        access_token = resp.json()["access_token"]
 
         # Get the user from the token
         user_id = get_github_user(access_token)
@@ -105,14 +114,10 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
             "nonce": nonce
         }
         session_json = encode_string_b64(json.dumps(session))
-        session_cookie = create_cookie("session", session_json, 1)
 
-        logger.info(session_cookie["session"].OutputString())
-
-        with open("html/login.html", "r") as file:
-            return func.HttpResponse(file.read(),
-                                     headers={"Content-Type": "text/html",
-                                              "Set-Cookie": session_cookie["session"].OutputString()})
+        return func.HttpResponse(status_code=301,
+                                 headers={
+                                     "Location": "https://octopuscopilotproduction.azurewebsites.net/api/octopus?state=" + session_json})
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
@@ -144,9 +149,8 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         body = json.loads(req.get_body())
 
         # Extract the GitHub user from the client side session
-        cookie = SimpleCookie()
-        cookie.load(req.headers['session'])
-        session = json.loads(decode_string_b64(cookie["session"].value))
+        state = req.params.get("state")
+        session = json.loads(decode_string_b64(state))
         user_id = decrypt_eax(generate_password(os.environ.get("ENCRYPTION_PASSWORD"),
                                                 os.environ.get("ENCRYPTION_SALT")),
                               session["state"],
