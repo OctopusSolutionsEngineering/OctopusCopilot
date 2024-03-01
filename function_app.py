@@ -1,7 +1,7 @@
 import json
 import os
 import urllib.parse
-from base64 import b64encode
+from base64 import b64encode, b64decode
 from http.cookies import SimpleCookie
 
 from azure.core.exceptions import HttpResponseError
@@ -100,7 +100,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
             "tag": tag,
             "nonce": nonce
         }
-        session_cookie = create_cookie("session", b64encode(json.dumps(session).encode('utf-8')), 1)
+        session_cookie = create_cookie("session", b64encode(bytearray(json.dumps(session), 'utf-8')), 1)
 
         logger.info(session_cookie["session"].OutputString())
 
@@ -141,7 +141,7 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         # Extract the GitHub user from the client side session
         cookie = SimpleCookie()
         cookie.load(req.headers['session'])
-        session = json.loads(bytearray(cookie["session"].value, encoding='ascii').decode("utf-8"))
+        session = json.loads(b64decode(cookie["session"].value).decode("utf-8"))
         user_id = decrypt_eax(generate_password(os.environ.get("ENCRYPTION_PASSWORD"),
                                                 os.environ.get("ENCRYPTION_SALT")),
                               session["state"],
