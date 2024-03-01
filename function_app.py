@@ -2,7 +2,6 @@ import json
 import os
 import urllib.parse
 from base64 import b64encode, b64decode
-from http.cookies import SimpleCookie
 
 from azure.core.exceptions import HttpResponseError
 
@@ -92,7 +91,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
                                                os.environ.get("ENCRYPTION_PASSWORD"),
                                                os.environ.get("ENCRYPTION_SALT"))
 
-        # The session is persisted client side as an encrypted cookie that expires in a few hours. This is inspired by
+        # The session is persisted client side as an encrypted blob. This is inspired by
         # Quarkus which uses client side state to support serverless web apps:
         # https://quarkus.io/guides/security-authentication-mechanisms#form-auth
         session = {
@@ -109,7 +108,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
         with open("html/login.html", "r") as file:
             return func.HttpResponse(file.read(),
                                      headers={"Content-Type": "text/html",
-                                              "Set-Cookie": session_cookie["session"].OutputString()})
+                                              "State": session_json_b64.decode('utf-8')})
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
@@ -141,9 +140,7 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         body = json.loads(req.get_body())
 
         # Extract the GitHub user from the client side session
-        cookie = SimpleCookie()
-        cookie.load(req.headers['session'])
-        session = json.loads(b64decode(cookie["session"].value).decode("ascii"))
+        session = json.loads(b64decode(req.headers.get("State")).decode("ascii"))
         user_id = decrypt_eax(generate_password(os.environ.get("ENCRYPTION_PASSWORD"),
                                                 os.environ.get("ENCRYPTION_SALT")),
                               session["state"],
