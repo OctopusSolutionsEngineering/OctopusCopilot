@@ -82,7 +82,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
         if resp.status != 200:
             raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
 
-        access_token = resp.json()["access_token"]
+        access_token = resp.json().get("access_token")
 
         # Get the user from the token
         user_id = get_github_user(access_token)
