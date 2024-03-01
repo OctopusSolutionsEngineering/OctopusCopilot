@@ -10,7 +10,7 @@ class EncryptionTests(unittest.TestCase):
         ciphered_data, tag, nonce = encrypt_eax(text, password, "salt")
         decrypted = decrypt_eax(password, ciphered_data, tag, nonce, "salt")
 
-        self.assertEqual(decrypted.decode(), text)
+        self.assertEqual(decrypted, text)
 
     def test_bad_key(self):
         with self.assertRaises(ValueError):

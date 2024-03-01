@@ -164,7 +164,7 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         api_key = create_limited_api_key(user, body['api'], body['url'])
 
         # Persist the Octopus details against the GitHub user
-        save_users_octopus_url_from_login(user_id.decode(),
+        save_users_octopus_url_from_login(user_id,
                                           body['url'],
                                           api_key,
                                           os.environ.get("ENCRYPTION_PASSWORD"),
@@ -234,7 +234,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
                 nonce,
                 os.environ.get("ENCRYPTION_SALT"))
 
-            return decrypted_api_key.decode(), github_user["OctopusUrl"]
+            return decrypted_api_key, github_user["OctopusUrl"]
 
         except ValueError as e:
             logger.info("Encryption password must have changed because the api key could not be decrypted")

@@ -59,4 +59,4 @@ def decrypt_eax(password, ciphered_data, tag, nonce, salt):
 
     key = generate_key(password, salt)
     cipher = AES.new(key, AES.MODE_EAX, b64decode(nonce))
-    return cipher.decrypt_and_verify(b64decode(ciphered_data), b64decode(tag))
+    return cipher.decrypt_and_verify(b64decode(ciphered_data), b64decode(tag)).decode()
