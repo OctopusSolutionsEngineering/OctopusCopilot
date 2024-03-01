@@ -1,11 +1,12 @@
 import json
 import os
 import urllib.parse
-from base64 import b64encode, b64decode
+from http.cookies import SimpleCookie
 
 from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
+from domain.b64.b64_encoder import encode_string_b64, decode_string_b64
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
 from domain.encrption.encryption import decrypt_eax, generate_password, encrypt_eax
@@ -91,7 +92,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
                                                os.environ.get("ENCRYPTION_PASSWORD"),
                                                os.environ.get("ENCRYPTION_SALT"))
 
-        # The session is persisted client side as an encrypted blob. This is inspired by
+        # The session is persisted client side as an encrypted cookie that expires in a few hours. This is inspired by
         # Quarkus which uses client side state to support serverless web apps:
         # https://quarkus.io/guides/security-authentication-mechanisms#form-auth
         session = {
@@ -99,16 +100,15 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
             "tag": tag,
             "nonce": nonce
         }
-        session_json = json.dumps(session)
-        session_json_b64 = b64encode(session_json.encode('utf-8'))
-        session_cookie = create_cookie("session", session_json_b64.decode('utf-8'), 1)
+        session_json = encode_string_b64(json.dumps(session))
+        session_cookie = create_cookie("session", session_json, 1)
 
         logger.info(session_cookie["session"].OutputString())
 
         with open("html/login.html", "r") as file:
             return func.HttpResponse(file.read(),
                                      headers={"Content-Type": "text/html",
-                                              "State": session_json_b64.decode('utf-8')})
+                                              "State": session_cookie["session"].OutputString()})
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
@@ -140,7 +140,9 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         body = json.loads(req.get_body())
 
         # Extract the GitHub user from the client side session
-        session = json.loads(b64decode(req.headers.get("State")).decode("ascii"))
+        cookie = SimpleCookie()
+        cookie.load(req.headers['session'])
+        session = json.loads(decode_string_b64(cookie["session"].value))
         user_id = decrypt_eax(generate_password(os.environ.get("ENCRYPTION_PASSWORD"),
                                                 os.environ.get("ENCRYPTION_SALT")),
                               session["state"],
