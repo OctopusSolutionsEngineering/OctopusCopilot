@@ -5,10 +5,9 @@ import urllib.parse
 from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
-from domain.b64.b64_encoder import encode_string_b64, decode_string_b64
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
-from domain.encrption.encryption import decrypt_eax, generate_password, encrypt_eax
+from domain.encrption.encryption import decrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
 from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequestFailed
@@ -24,6 +23,7 @@ from domain.transformers.chat_responses import get_octopus_project_names_respons
     get_dashboard_response
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.url.build_url import build_url
+from domain.url.session import create_session_blob, extract_session_blob
 from infrastructure.github import get_github_user
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_octopus_project_names_base, get_current_user, \
@@ -97,24 +97,12 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
 
         access_token = resp.json()["access_token"]
 
-        # Get the user from the token
-        user_id = get_github_user(access_token)
+        session_json = create_session_blob(get_github_user(access_token),
+                                           os.environ.get("ENCRYPTION_PASSWORD"),
+                                           os.environ.get("ENCRYPTION_SALT"))
 
-        # Encrypt the user id
-        encrypted_id, tag, nonce = encrypt_eax(user_id,
-                                               os.environ.get("ENCRYPTION_PASSWORD"),
-                                               os.environ.get("ENCRYPTION_SALT"))
-
-        # The session is persisted client side as an encrypted cookie that expires in a few hours. This is inspired by
-        # Quarkus which uses client side state to support serverless web apps:
-        # https://quarkus.io/guides/security-authentication-mechanisms#form-auth
-        session = {
-            "state": encrypted_id,
-            "tag": tag,
-            "nonce": nonce
-        }
-        session_json = encode_string_b64(json.dumps(session))
-
+        # Normally the session information would be persisted in a cookie. I could not get Azure functions to pass
+        # through a cookie. So we pass it as a query param.
         return func.HttpResponse(status_code=301,
                                  headers={
                                      "Location": "https://octopuscopilotproduction.azurewebsites.net/api/octopus?state=" + session_json})
@@ -149,13 +137,9 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         body = json.loads(req.get_body())
 
         # Extract the GitHub user from the client side session
-        state = req.params.get("state")
-        session = json.loads(decode_string_b64(state))
-        user_id = decrypt_eax(os.environ.get("ENCRYPTION_PASSWORD"),
-                              session["state"],
-                              session["tag"],
-                              session["nonce"],
-                              os.environ.get("ENCRYPTION_SALT"))
+        user_id = extract_session_blob(req.params.get("state"),
+                                       os.environ.get("ENCRYPTION_PASSWORD"),
+                                       os.environ.get("ENCRYPTION_SALT"))
 
         # Using the supplied API key, create a time limited API key that we'll save and reuse until
         # the next cleanup cycle triggered by api_key_cleanup. Using temporary keys mens we never

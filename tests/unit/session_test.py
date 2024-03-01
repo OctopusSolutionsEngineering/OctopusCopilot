@@ -1,0 +1,10 @@
+import unittest
+
+from domain.url.session import create_session_blob, extract_session_blob
+
+
+class EnsureTests(unittest.TestCase):
+    def test_session_blob(self):
+        session = create_session_blob("my state", "password", "salt")
+        state = extract_session_blob(session, "password", "salt")
+        self.assertEqual(state, "my state")
