@@ -23,6 +23,53 @@ terraform apply -var=octopus_server=https://yourinstance.octopus.app -var=octopu
 This creates a service account, team, and user role called `Copilot`. The role includes permissions to view Octopus
 resources, but not to modify them.
 
+# Code structure
+
+This project is organized using the structure described
+in [Design a DDD-oriented microservice](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/ddd-oriented-microservice).
+It is not a strict implementation of the patterns described in that post, but follows it as closely as possible.
+
+The application layer is found in the root of the project. These files expose the public surface area of the
+application,
+be it a CLI interface or a web API.
+
+The domain layer is found in the `domain` directory. This includes all the business logic.
+
+The interface layer is found in the `interface` directory. This includes all the external integrations with databases,
+logging platforms, and external APIs.
+
+Tests are found in the `tests` directory.
+
+# How to contribute
+
+The most public way to contribute to this project is to build new "tools" (a fancy way of saying functions) that
+OpenAI can use. To do this:
+
+1. Create a new nested function under the `copilot_handler()` function in `function_app.py`. Make sure the function
+   includes the appropriate comments that OpenAI can read to understand the purpose of the function and the arguments.
+2. Add the function to the set of tools in the `build_form_tools()` function in `function_app.py`.
+3. Typically, any new function requires calling the Octopus API. Functions for querying the Octopus API are defined in
+   the `infrastructure/octopus.py` file.
+4. Update the Terraform module in the `tests/terraform/space_population` folder to create a sample space which has the
+   data your new function will query. This Terraform module is used to populate a sample Octopus instance used as part
+   of the tests.
+5. Create a new test case un `tests/live/octopus_test.py`. This test class has been configured to create a fresh
+   instance of Octopus using TestContainers populated with the Terraform module created in step 4.
+
+# Local testing
+
+You can also optionally create a new tool and update the `build_tools()` function in the `main.py` file. The CLI
+interface is mostly used for quick testing and is not expected to maintain a complete selection of tools.
+
+To run the command line you need to set the following environment variables:
+
+1. `OCTOPUS_CLI_API_KEY` - An Octopus API key
+2. `OCTOPUS_CLI_SERVER` - The URL of the Octopus server
+3. `OPENAI_API_KEY` - The key to access OpenAI
+4. `OPENAI_ENDPOINT` - The OpenAI endpoint
+
+Octonaughts can see the `Octopus Copilot OpenAI` secure note in the password manager for the Open AI key and endpoint.
+
 # Test Coverage
 
 ![coverage badge](./coverage.svg)
