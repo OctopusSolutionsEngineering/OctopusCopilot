@@ -23,6 +23,15 @@ terraform apply -var=octopus_server=https://yourinstance.octopus.app -var=octopu
 This creates a service account, team, and user role called `Copilot`. The role includes permissions to view Octopus
 resources, but not to modify them.
 
+# Test web site
+
+The primary interface for this agent is via the GitHub Copilot chat. This requires individual users to be invited to
+the private beta.
+
+We have a [test web site](https://octopuscopilotproduction.azurewebsites.net/api/form) that responds to the same queries
+as the chat interface. The web based interface is functionally equivalent to the Copilot chat interface in terms of
+interacting with an Octopus server.
+
 # Code structure
 
 This project is organized using the structure described
