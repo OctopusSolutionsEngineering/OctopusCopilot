@@ -28,7 +28,7 @@ from domain.url.session import create_session_blob, extract_session_blob
 from infrastructure.github import get_github_user
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_octopus_project_names_base, get_current_user, \
-    create_limited_api_key, get_deployment_status_base, get_dashboard
+    create_limited_api_key, get_deployment_status_base, get_dashboard, get_raw_deployment_process
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
     get_default_values
@@ -234,6 +234,22 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         actual_space_name, dashboard = get_dashboard(space_name, api_key, url)
         return get_dashboard_response(actual_space_name, dashboard)
 
+    def get_deployment_process_raw_json(space_name: None, project_name: None):
+        """Returns the raw JSON for the deployment process of a project.
+
+            Args:
+                space_name: The name of the space containing the projects.
+                If this value is not defined, the default value will be used.
+
+                project_name: The name of the project.
+                If this value is not defined, the default value will be used.
+        """
+        api_key, url = get_api_key_and_url()
+        space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
+        project_name = get_default_argument(get_github_user_from_form(), project_name, "Project")
+        raw_json = get_raw_deployment_process(space_name, project_name, api_key, url)
+        return f"```\n{raw_json}\n```"
+
     def get_octopus_project_names_wrapper(space_name: None):
         """Return a list of project names in an Octopus space
 
@@ -343,13 +359,14 @@ Once default values are set, you can omit the space, environment, and project fr
         :return: The OpenAI tools
         """
         return FunctionDefinitions([
+            FunctionDefinition(provide_help),
             FunctionDefinition(get_octopus_project_names_wrapper),
             FunctionDefinition(get_deployment_status_wrapper),
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
             FunctionDefinition(get_dashboard_wrapper),
-            FunctionDefinition(provide_help),
+            FunctionDefinition(get_deployment_process_raw_json),
         ])
 
     try:
