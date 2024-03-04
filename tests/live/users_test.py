@@ -1,4 +1,3 @@
-import re
 import unittest
 
 from infrastructure.users import save_default_values, get_default_values, \
@@ -34,8 +33,3 @@ class UsersTest(unittest.TestCase):
             get_users_details("test", connection_string)
 
         self.assertEqual(0, delete_old_user_details(connection_string))
-
-    def valid_uuid(self, uuid):
-        regex = re.compile('^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}', re.I)
-        match = regex.match(uuid)
-        return bool(match)
