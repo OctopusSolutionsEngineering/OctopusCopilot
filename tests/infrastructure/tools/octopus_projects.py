@@ -78,7 +78,7 @@ def get_deployment_status(octopus_url, api_key, space_name=None, environment_nam
     """
 
     if not space_name:
-        space_name = "Default"
+        space_name = "Simple"
 
     if not environment_name:
         environment_name = "Development"
