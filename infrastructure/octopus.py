@@ -118,6 +118,13 @@ def get_dashboard(space_name, my_api_key, my_octopus_api):
 
 
 def get_current_user(my_api_key, my_octopus_api):
+    """
+    Returns the ID of the octopus user. This can be used to verify an API key, as even Octopus users with
+    no permissions can access this endpoint.
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus URL
+    :return: The Octopus user ID
+    """
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_current_user).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_current_user).')
 

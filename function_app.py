@@ -7,6 +7,7 @@ from azure.core.exceptions import HttpResponseError
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
+from domain.defaults.defaults import get_default_argument
 from domain.encrption.encryption import decrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
@@ -172,9 +173,6 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
     :param req: The HTTP request
     :return: A conversational string with the projects found in the space
     """
-
-    def get_github_token():
-        return req.headers.get("X-GitHub-Token")
 
     def get_github_user_from_form():
         return get_github_user(req.headers.get("X-GitHub-Token"))
@@ -448,10 +446,3 @@ def request_config_details():
         return func.HttpResponse("data: An exception was raised. See the logs for more details.\n\n",
                                  status_code=500,
                                  headers=get_sse_headers())
-
-
-def get_default_argument(user, argument, default_name):
-    if not argument or not argument.strip():
-        return get_default_values(user, default_name, get_functions_connection_string())
-
-    return argument
