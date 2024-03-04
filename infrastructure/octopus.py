@@ -179,7 +179,7 @@ def get_raw_deployment_process(space_name, project_name, api_key, octopus_url):
     api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partial_name=project_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
-    return resp.data
+    return resp.data.decode("utf-8")
 
 
 @retry(HTTPError, tries=3, delay=2)
