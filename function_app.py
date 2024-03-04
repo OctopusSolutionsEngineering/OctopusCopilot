@@ -248,7 +248,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
         project_name = get_default_argument(get_github_user_from_form(), project_name, "Project")
         raw_json = get_raw_deployment_process(space_name, project_name, api_key, url)
-        return f"```\n{raw_json}\n```"
+        return f"```json\n{raw_json}\n```"
 
     def get_octopus_project_names_wrapper(space_name: None):
         """Return a list of project names in an Octopus space
