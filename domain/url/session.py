@@ -40,9 +40,9 @@ def extract_session_blob(session, password, salt):
     :param salt: The salt used for decryption
     :return: The decrypted session state
     """
-    ensure_string_not_empty(session, 'state must be the session state to encrypt (create_session_blob).')
-    ensure_string_not_empty(password, 'password must be the password used for encryption (create_session_blob).')
-    ensure_string_not_empty(salt, 'salt must be the salt used for encryption (create_session_blob).')
+    ensure_string_not_empty(session, 'state must be the session state to encrypt (extract_session_blob).')
+    ensure_string_not_empty(password, 'password must be the password used for encryption (extract_session_blob).')
+    ensure_string_not_empty(salt, 'salt must be the salt used for encryption (extract_session_blob).')
 
     session = json.loads(decode_string_b64(session))
     return decrypt_eax(password,
