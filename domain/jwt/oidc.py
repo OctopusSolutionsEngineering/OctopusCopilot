@@ -1,5 +1,7 @@
 from jwt import JWT
 
+from domain.validation.argument_validation import ensure_string_not_empty
+
 instance = JWT()
 
 
@@ -11,4 +13,7 @@ def parse_jwt(token):
     :param token: The OIDC token
     :return: The parsed token
     """
+
+    ensure_string_not_empty(token, 'token must be the JWT to decode (parse_jwt).')
+
     return instance.decode(message=token, do_verify=False, do_time_check=True)
