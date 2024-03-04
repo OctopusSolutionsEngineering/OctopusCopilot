@@ -44,7 +44,7 @@ be it a CLI interface or a web API.
 
 The domain layer is found in the `domain` directory. This includes all the business logic.
 
-The interface layer is found in the `infrastructure` directory. This includes all the external integrations with databases,
+The infrastructure layer is found in the `infrastructure` directory. This includes all the external integrations with databases,
 logging platforms, and external APIs.
 
 Tests are found in the `tests` directory.
