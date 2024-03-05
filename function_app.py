@@ -255,13 +255,13 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         """Returns the terraform representation of the space.
 
             Args:
-                space_name: The name of the space to export as Terraform..
+                space_name: The name of the space to export as Terraform.
                 If this value is not defined, the default value will be used.
         """
         api_key, url = get_api_key_and_url()
         space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
         terraform = get_octoterra_space(space_name, api_key, url)
-        return terraform
+        return f"```hcl\n{terraform}\n```"
 
     def get_octopus_project_names_wrapper(space_name: None):
         """Return a list of project names in an Octopus space
