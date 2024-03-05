@@ -185,7 +185,7 @@ def get_raw_deployment_process(space_name, project_name, api_key, octopus_url):
     if project is None:
         raise ResourceNotFound("No projects found matching the name " + project_name)
 
-    api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/DeploymentProcess")
+    api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/DeploymentProcesses")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     return resp.data.decode("utf-8")

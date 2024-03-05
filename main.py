@@ -4,7 +4,7 @@ import os
 from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.chat_responses import get_octopus_project_names_response
-from infrastructure.octopus import get_octopus_project_names_base
+from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process
 
 
 def init_argparse():
@@ -50,6 +50,19 @@ def get_octopus_project_names_cli(space_name):
     return get_octopus_project_names_response(actual_space_name, projects)
 
 
+def get_deployment_process_raw_json_cli(space_name: None, project_name: None):
+    """Returns the raw JSON for the deployment process of a project.
+
+        Args:
+            space_name: The name of the space containing the projects.
+            If this value is not defined, the default value will be used.
+
+            project_name: The name of the project.
+            If this value is not defined, the default value will be used.
+    """
+    return get_raw_deployment_process(space_name, project_name, get_api_key(), get_octopus_api())
+
+
 def build_tools():
     """
     Builds the set of tools configured for use when called as a CLI application
@@ -57,6 +70,7 @@ def build_tools():
     """
     return FunctionDefinitions([
         FunctionDefinition(get_octopus_project_names_cli),
+        FunctionDefinition(get_deployment_process_raw_json_cli),
     ])
 
 
