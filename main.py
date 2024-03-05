@@ -69,7 +69,6 @@ def get_space_terraform(space_name: None):
 
         Args:
             space_name: The name of the space containing the projects.
-            If this value is not defined, the default value will be used.
     """
     return get_octoterra_space(space_name, get_api_key(), get_octopus_api())
 

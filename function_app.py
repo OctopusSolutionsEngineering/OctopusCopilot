@@ -255,7 +255,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         """Returns the terraform representation of the space.
 
             Args:
-                space_name: The name of the space containing the projects.
+                space_name: The name of the space to export as Terraform..
                 If this value is not defined, the default value will be used.
         """
         api_key, url = get_api_key_and_url()
