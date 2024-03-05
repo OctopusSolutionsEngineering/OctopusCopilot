@@ -261,7 +261,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         api_key, url = get_api_key_and_url()
         space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
         terraform = get_octoterra_space(space_name, api_key, url)
-        return f"```hcl\n{terraform}\n```"
+        return terraform
 
     def get_octopus_project_names_wrapper(space_name: None):
         """Return a list of project names in an Octopus space
