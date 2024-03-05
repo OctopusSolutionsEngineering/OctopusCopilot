@@ -29,6 +29,7 @@ from infrastructure.github import get_github_user
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_octopus_project_names_base, get_current_user, \
     create_limited_api_key, get_deployment_status_base, get_dashboard, get_raw_deployment_process
+from infrastructure.octoterra import get_octoterra_space
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
     get_default_values
@@ -250,6 +251,18 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         raw_json = get_raw_deployment_process(space_name, project_name, api_key, url)
         return f"```json\n{raw_json}\n```"
 
+    def get_space_terraform(space_name: None, ):
+        """Returns the terraform representation of the space.
+
+            Args:
+                space_name: The name of the space containing the projects.
+                If this value is not defined, the default value will be used.
+        """
+        api_key, url = get_api_key_and_url()
+        space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
+        terraform = get_octoterra_space(space_name, api_key, url)
+        return f"```hcl\n{terraform}\n```"
+
     def get_octopus_project_names_wrapper(space_name: None):
         """Return a list of project names in an Octopus space
 
@@ -367,6 +380,7 @@ Once default values are set, you can omit the space, environment, and project fr
             FunctionDefinition(get_default_value),
             FunctionDefinition(get_dashboard_wrapper),
             FunctionDefinition(get_deployment_process_raw_json),
+            FunctionDefinition(get_space_terraform),
         ])
 
     try:

@@ -5,6 +5,7 @@ from domain.handlers.copilot_handler import handle_copilot_chat
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process
+from infrastructure.octoterra import get_octoterra_space
 
 
 def init_argparse():
@@ -63,6 +64,16 @@ def get_deployment_process_raw_json_cli(space_name: None, project_name: None):
     return get_raw_deployment_process(space_name, project_name, get_api_key(), get_octopus_api())
 
 
+def get_space_terraform(space_name: None):
+    """Returns the terraform representation of the space.
+
+        Args:
+            space_name: The name of the space containing the projects.
+            If this value is not defined, the default value will be used.
+    """
+    return get_octoterra_space(space_name, get_api_key(), get_octopus_api())
+
+
 def build_tools():
     """
     Builds the set of tools configured for use when called as a CLI application
@@ -71,6 +82,7 @@ def build_tools():
     return FunctionDefinitions([
         FunctionDefinition(get_octopus_project_names_cli),
         FunctionDefinition(get_deployment_process_raw_json_cli),
+        FunctionDefinition(get_space_terraform),
     ])
 
 
