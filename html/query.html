@@ -15,9 +15,9 @@
             href="https://octopuscopilotproduction.azurewebsites.net/api/form" style="color: white">Octopus Copilot</a></span>
 </nav>
 <form id="form" class="needs-validation" novalidate>
-    <div class="form-group row">
-        <label for="token" class="col-2 offset-2 col-form-label">GitHub Token</label>
-        <div class="col-6">
+    <div class="form-group row m-md-1">
+        <label for="token" class="col-lg-2 offset-lg-2 col-form-label">GitHub Token</label>
+        <div class="col-lg-6">
             <input id="token" name="token" type="password" class="form-control" required>
             <small id="tokenHelp" class="form-text text-muted">This is a GitHub <a
                     href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens">Personal
@@ -27,9 +27,9 @@
             </div>
         </div>
     </div>
-    <div class="form-group row">
-        <label for="query" class="col-2 offset-2 col-form-label">Query</label>
-        <div class="col-6">
+    <div class="form-group row m-md-1">
+        <label for="query" class="col-lg-2 offset-lg-2 col-form-label">Query</label>
+        <div class="col-lg-6">
             <input id="query" name="query" type="text" class="form-control" required>
             <small id="queryHelp" class="form-text text-muted">This is a plain text query. Ask something like "<a
                     id="sampleQuery" href="#">Show me
@@ -40,20 +40,20 @@
             </div>
         </div>
     </div>
-    <div class="form-group row">
-        <label for="query" class="col-2 offset-2 col-form-label">History</label>
-        <div class="col-6">
+    <div class="form-group row m-md-1">
+        <label for="query" class="col-lg-2 offset-lg-2 col-form-label">History</label>
+        <div class="col-lg-6">
             <ul id="historyList"></ul>
         </div>
     </div>
-    <div class="form-group row">
-        <div class="offset-4 col-8">
+    <div class="form-group row m-md-1">
+        <div class="offset-lg-4 col-lg-8">
             <button id="submit" name="submit" type="button" class="btn btn-primary">Submit</button>
         </div>
     </div>
-    <div class="form-group row">
-        <label class="col-2 offset-2 col-form-label">Response</label>
-        <div class="col-6">
+    <div class="form-group row m-md-1">
+        <label class="col-lg-2 offset-lg-2 col-form-label">Response</label>
+        <div class="col-lg-6">
             <div id="markdown"></div>
         </div>
     </div>
