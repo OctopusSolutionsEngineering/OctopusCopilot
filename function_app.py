@@ -380,7 +380,8 @@ Once default values are set, you can omit the space, environment, and project fr
                                      api_key,
                                      url)
                 + "\n\nAs an AI model, I often make mistakes. "
-                + "Verify the information I provide before performing any destructive actions.")
+                + "Verify the information I provide before performing any destructive actions.\n\n"
+                + "Scripts and other step properties may be truncated and modified to only include useful information.")
 
     def build_form_tools():
         """
