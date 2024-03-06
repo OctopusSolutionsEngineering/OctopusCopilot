@@ -62,7 +62,36 @@
 <script>
 
     var queryHistory = []
+    const savedHistory = localStorage.getItem("queryHistory");
+    if (savedHistory) {
+        queryHistory = JSON.parse(savedHistory)
+        updateHistory()
+    }
+
     var processing = false
+
+    function updateHistory() {
+        if (queryHistory.length >= 5) {
+            queryHistory = queryHistory.slice(1, 5)
+        }
+
+        localStorage.setItem("queryHistory", JSON.stringify(queryHistory))
+
+        historyList.innerHTML = ''
+
+        queryHistory.forEach((h) => {
+            const li = document.createElement("li")
+            const link = document.createElement("a")
+            link.setAttribute("href", "#")
+            link.appendChild(document.createTextNode(h))
+            link.onclick = function () {
+                query.value = h
+                return false
+            }
+            li.appendChild(link)
+            historyList.appendChild(li)
+        })
+    }
 
     async function processQuery(event) {
         if (processing) {
@@ -80,24 +109,7 @@
 
             if (queryHistory.indexOf(query.value) === -1) {
                 queryHistory.push(query.value)
-                if (queryHistory.length >= 5) {
-                    queryHistory = queryHistory.slice(1, 5)
-                }
-
-                historyList.innerHTML = ''
-
-                queryHistory.forEach((h) => {
-                    const li = document.createElement("li")
-                    const link = document.createElement("a")
-                    link.setAttribute("href", "#")
-                    link.appendChild(document.createTextNode(h))
-                    link.onclick = function () {
-                        query.value = h
-                        return false
-                    }
-                    li.appendChild(link)
-                    historyList.appendChild(li)
-                })
+                updateHistory()
             }
 
             markdown.innerHTML = "Processing..."
