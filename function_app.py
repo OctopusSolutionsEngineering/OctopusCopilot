@@ -354,8 +354,8 @@ Once default values are set, you can omit the space, environment, and project fr
 
     def answer_general_query(space_name=None, project_names=None, runbook_names=None, target_names=None,
                              tenant_names=None, library_variable_sets=None):
-        """Answers a general query or question about an Octopus Deploy space, project, runbook, tenants etc. Run this function
-        when no other functions match.
+        """Answers a general query or question about the configuration or relationships of a space, projects,
+         runbooks, tenants, variables, feeds, accounts etc.
 
         Args:
             space_name: The name of the space relating to the query.
