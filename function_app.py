@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
+import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
-import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
 from domain.defaults.defaults import get_default_argument
@@ -16,7 +16,7 @@ from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
-from domain.handlers.copilot_handler import handle_copilot_chat
+from domain.handlers.copilot_handler import handle_copilot_tools_execution
 from domain.logging.app_logging import configure_logging
 from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
@@ -392,7 +392,7 @@ Once default values are set, you can omit the space, environment, and project fr
                 convert_to_sse_response("Ask a question like \"Show me the projects in the space called Default\""),
                 headers=get_sse_headers())
 
-        result = handle_copilot_chat(query, build_form_tools).call_function()
+        result = handle_copilot_tools_execution(query, build_form_tools).call_function()
 
         return func.HttpResponse(convert_to_sse_response(result), headers=get_sse_headers())
 

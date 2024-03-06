@@ -1,11 +1,10 @@
 import argparse
 import os
 
-from domain.handlers.copilot_handler import handle_copilot_chat
+from domain.handlers.copilot_handler import handle_copilot_tools_execution, handle_copilot_query
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process
-from infrastructure.octoterra import get_octoterra_space
 
 
 def init_argparse():
@@ -64,13 +63,28 @@ def get_deployment_process_raw_json_cli(space_name: None, project_name: None):
     return get_raw_deployment_process(space_name, project_name, get_api_key(), get_octopus_api())
 
 
-def get_space_terraform(space_name: None):
-    """Returns the terraform representation of the space.
+def answer_general_query(space_name=None, project_names=None, runbook_names=None, target_names=None,
+                         tenant_names=None, library_variable_sets=None):
+    """Answers a general query about Octopus Deploy.
 
         Args:
-            space_name: The name of the space containing the projects.
+            space_name: The name of the space relating to the query.
+
+            project_names: The optional names of one or more projects relating to the query.
+            runbook_names: The optional names of one or more runbooks relating to the query.
+            target_names: The optional names of one or more targets or machines relating to the query.
+            tenant_names: The optional names of one or more tenants relating to the query.
+            library_variable_sets: The optional names of one or more library variable sets relating to the query.
     """
-    return get_octoterra_space(space_name, get_api_key(), get_octopus_api())
+    return handle_copilot_query(parser.query,
+                                space_name,
+                                project_names,
+                                runbook_names,
+                                target_names,
+                                tenant_names,
+                                library_variable_sets,
+                                get_api_key(),
+                                get_octopus_api())
 
 
 def build_tools():
@@ -79,14 +93,12 @@ def build_tools():
     :return: The OpenAI tools
     """
     return FunctionDefinitions([
-        FunctionDefinition(get_octopus_project_names_cli),
-        FunctionDefinition(get_deployment_process_raw_json_cli),
-        FunctionDefinition(get_space_terraform),
+        FunctionDefinition(answer_general_query),
     ])
 
 
 try:
-    result = handle_copilot_chat(parser.query, build_tools).call_function()
+    result = handle_copilot_tools_execution(parser.query, build_tools).call_function()
     print(result)
 except Exception as e:
     print(e)

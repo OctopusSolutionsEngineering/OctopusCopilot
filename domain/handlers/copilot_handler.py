@@ -1,17 +1,54 @@
 import os
 
 from langchain.agents import OpenAIFunctionsAgent
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import AzureChatOpenAI
 
 from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
 from domain.logging.app_logging import configure_logging
 from domain.tools.function_call import FunctionCall
 from domain.validation.argument_validation import ensure_string_not_empty, ensure_not_falsy
+from infrastructure.octoterra import get_octoterra_space
 
 NO_FUNCTION_RESPONSE = "Sorry, I did not understand that request."
 my_log = configure_logging()
 
 
-def handle_copilot_chat(query, llm_tools):
+def handle_copilot_query(query, space_name, project_names, runbook_names, target_names, tenant_names,
+                         library_variable_sets, api_key,
+                         octopus_url):
+    ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_query).')
+
+    hcl = get_octoterra_space(space_name,
+                              project_names,
+                              runbook_names,
+                              target_names,
+                              tenant_names,
+                              library_variable_sets,
+                              api_key,
+                              octopus_url)
+
+    llm = AzureChatOpenAI(
+        temperature=0,
+        azure_deployment="OctopusCopilotFunctionCalling2",
+        openai_api_key=os.environ["OPENAI_API_KEY"],
+        azure_endpoint=os.environ["OPENAI_ENDPOINT"],
+        api_version="2023-12-01-preview",
+    )
+
+    prompt = ChatPromptTemplate.from_messages([
+        ("system",
+         "You are a professional and polite agent who understands Terraform modules defining Octopus Deploy spaces."),
+        ("user", "Given the following Terraform configuration:\n{hcl}"),
+        ("user", "{input}")
+    ])
+
+    chain = prompt | llm
+
+    return chain.invoke({"input": query, "hcl": hcl}).content
+
+
+def handle_copilot_tools_execution(query, llm_tools):
     """
     This is the handler that responds to a chat request.
     :param query: The pain text query
@@ -19,8 +56,8 @@ def handle_copilot_chat(query, llm_tools):
     :return: The result of the function, defined by the set of tools, that was called in response to the query
     """
 
-    ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_chat).')
-    ensure_not_falsy(query, 'llm_tools must not be None (handle_copilot_chat).')
+    ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_tools_execution).')
+    ensure_not_falsy(query, 'llm_tools must not be None (handle_copilot_tools_execution).')
 
     functions = llm_tools()
     tools = functions.get_tools()
