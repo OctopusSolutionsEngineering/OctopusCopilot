@@ -354,19 +354,18 @@ Once default values are set, you can omit the space, environment, and project fr
 
     def answer_general_query(space_name=None, project_names=None, runbook_names=None, target_names=None,
                              tenant_names=None, library_variable_sets=None):
-        """Answers a general query or question about an Octopus Deploy space, project, runbook, target, tenant, library variable set,
-        feed, account, machine or target, project group, variables, tags, certificates, or worker groups. Run this function
+        """Answers a general query or question about an Octopus Deploy space, project, runbook, tenants etc. Run this function
         when no other functions match.
 
 
             Args:
                 space_name: The name of the space relating to the query.
 
-                project_names: The optional names of one or more projects relating to the query.
-                runbook_names: The optional names of one or more runbooks relating to the query.
-                target_names: The optional names of one or more targets or machines relating to the query.
-                tenant_names: The optional names of one or more tenants relating to the query.
-                library_variable_sets: The optional names of one or more library variable sets relating to the query.
+                project_names: The names of one or more projects relating to the query.
+                runbook_names: The names of one or more runbooks relating to the query.
+                target_names: The names of one or more targets or machines relating to the query.
+                tenant_names: The names of one or more tenants relating to the query.
+                library_variable_sets: The names of one or more library variable sets relating to the query.
         """
 
         api_key, url = get_api_key_and_url()
