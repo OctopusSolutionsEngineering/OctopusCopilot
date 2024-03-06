@@ -6,6 +6,7 @@ from langchain_openai import AzureChatOpenAI
 
 from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
 from domain.logging.app_logging import configure_logging
+from domain.strings.minify_hcl import minify_hcl
 from domain.tools.function_call import FunctionCall
 from domain.validation.argument_validation import ensure_string_not_empty, ensure_not_falsy
 from infrastructure.octoterra import get_octoterra_space
@@ -49,7 +50,8 @@ def handle_copilot_query(query, space_name, project_names, runbook_names, target
 
     chain = prompt | llm
 
-    return chain.invoke({"input": query, "hcl": hcl[0:max_chars]}).content
+    # We'll minify and truncate the HCL to avoid hitting the token limit.
+    return chain.invoke({"input": query, "hcl": minify_hcl(hcl)[0:max_chars]}).content
 
 
 def handle_copilot_tools_execution(query, llm_tools):
