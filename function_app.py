@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
-import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
 from domain.defaults.defaults import get_default_argument
@@ -16,7 +16,7 @@ from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
-from domain.handlers.copilot_handler import handle_copilot_tools_execution
+from domain.handlers.copilot_handler import handle_copilot_tools_execution, handle_copilot_query
 from domain.logging.app_logging import configure_logging
 from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
@@ -29,7 +29,6 @@ from infrastructure.github import get_github_user
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_octopus_project_names_base, get_current_user, \
     create_limited_api_key, get_deployment_status_base, get_dashboard, get_raw_deployment_process
-from infrastructure.octoterra import get_octoterra_space
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
     get_default_values
@@ -251,18 +250,6 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         raw_json = get_raw_deployment_process(space_name, project_name, api_key, url)
         return f"```json\n{raw_json}\n```"
 
-    def get_space_terraform(space_name: None, ):
-        """Returns the terraform representation of the space.
-
-            Args:
-                space_name: The name of the space to export as Terraform.
-                If this value is not defined, the default value will be used.
-        """
-        api_key, url = get_api_key_and_url()
-        space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
-        terraform = get_octoterra_space(space_name, api_key, url)
-        return f"```hcl\n{terraform}\n```"
-
     def get_octopus_project_names_wrapper(space_name: None):
         """Return a list of project names in an Octopus space
 
@@ -344,7 +331,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         return f"The default value for \"{name}\" is \"{value}\""
 
     def provide_help():
-        """Provides help with example queries that people can ask. This is the default function to run if no other function is a match
+        """Provides help with example queries that people can ask.
         """
         return """Here are some sample queries you can ask:
 * `Show me the projects in the space called Default`
@@ -365,6 +352,32 @@ Once default values are set, you can omit the space, environment, and project fr
 * `Show me the dashboard`
 * `Show me the status of the latest deployment to the production environment`"""
 
+    def answer_general_query(space_name=None, project_names=None, runbook_names=None, target_names=None,
+                             tenant_names=None, library_variable_sets=None):
+        """Answers a general query about Octopus Deploy.
+
+            Args:
+                space_name: The name of the space relating to the query.
+
+                project_names: The optional names of one or more projects relating to the query.
+                runbook_names: The optional names of one or more runbooks relating to the query.
+                target_names: The optional names of one or more targets or machines relating to the query.
+                tenant_names: The optional names of one or more tenants relating to the query.
+                library_variable_sets: The optional names of one or more library variable sets relating to the query.
+        """
+
+        api_key, url = get_api_key_and_url()
+
+        return handle_copilot_query(extract_query(req),
+                                    space_name,
+                                    project_names,
+                                    runbook_names,
+                                    target_names,
+                                    tenant_names,
+                                    library_variable_sets,
+                                    api_key,
+                                    url)
+
     def build_form_tools():
         """
         Builds a set of tools configured for use with HTTP requests (i.e. API key
@@ -380,7 +393,7 @@ Once default values are set, you can omit the space, environment, and project fr
             FunctionDefinition(get_default_value),
             FunctionDefinition(get_dashboard_wrapper),
             FunctionDefinition(get_deployment_process_raw_json),
-            FunctionDefinition(get_space_terraform),
+            FunctionDefinition(answer_general_query),
         ])
 
     try:
