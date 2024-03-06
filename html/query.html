@@ -150,6 +150,7 @@
     query.addEventListener("keydown", function (e) {
         if (e.code === "Enter") {
             processQuery(e)
+            e.preventDefault();
         }
     });
 
