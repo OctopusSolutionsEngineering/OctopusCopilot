@@ -357,15 +357,13 @@ Once default values are set, you can omit the space, environment, and project fr
         """Answers a general query or question about an Octopus Deploy space, project, runbook, tenants etc. Run this function
         when no other functions match.
 
-
-            Args:
-                space_name: The name of the space relating to the query.
-
-                project_names: The names of one or more projects relating to the query.
-                runbook_names: The names of one or more runbooks relating to the query.
-                target_names: The names of one or more targets or machines relating to the query.
-                tenant_names: The names of one or more tenants relating to the query.
-                library_variable_sets: The names of one or more library variable sets relating to the query.
+        Args:
+            space_name: The name of the space relating to the query.
+            project_names: The optional names of one or more projects relating to the query.
+            runbook_names: The optional names of one or more runbooks relating to the query.
+            target_names: The optional names of one or more targets or machines relating to the query.
+            tenant_names: The optional names of one or more tenants relating to the query.
+            library_variable_sets: The optional names of one or more library variable sets relating to the query.
         """
 
         api_key, url = get_api_key_and_url()
@@ -390,13 +388,13 @@ Once default values are set, you can omit the space, environment, and project fr
         """
         return FunctionDefinitions([
             FunctionDefinition(provide_help),
+            FunctionDefinition(answer_general_query),
             FunctionDefinition(get_octopus_project_names_wrapper),
             FunctionDefinition(get_deployment_status_wrapper),
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
             FunctionDefinition(get_dashboard_wrapper),
-            FunctionDefinition(answer_general_query),
         ])
 
     try:
