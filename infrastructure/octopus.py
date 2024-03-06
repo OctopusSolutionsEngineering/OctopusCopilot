@@ -259,8 +259,10 @@ def handle_response(callback):
     """
     response = callback()
     if response.status == 401:
+        logger.info(response.data.decode('utf-8'))
         raise OctopusApiKeyInvalid()
     if response.status != 200:
+        logger.info(response.data.decode('utf-8'))
         raise OctopusRequestFailed(f"Request failed with " + response.data.decode('utf-8'))
 
     return response
