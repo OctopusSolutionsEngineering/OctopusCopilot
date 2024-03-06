@@ -354,19 +354,21 @@ Once default values are set, you can omit the space, environment, and project fr
 
     def answer_general_query(space_name=None, project_names=None, runbook_names=None, target_names=None,
                              tenant_names=None, library_variable_sets=None):
-        """Answers a general query about Octopus Deploy.
+        """Answers a general query or question about the configuration or relationships of a space, projects,
+         runbooks, tenants, variables, feeds, accounts etc.
 
-            Args:
-                space_name: The name of the space relating to the query.
-
-                project_names: The optional names of one or more projects relating to the query.
-                runbook_names: The optional names of one or more runbooks relating to the query.
-                target_names: The optional names of one or more targets or machines relating to the query.
-                tenant_names: The optional names of one or more tenants relating to the query.
-                library_variable_sets: The optional names of one or more library variable sets relating to the query.
+        Args:
+            space_name: The name of the space relating to the query.
+            project_names: The optional names of one or more projects relating to the query.
+            runbook_names: The optional names of one or more runbooks relating to the query.
+            target_names: The optional names of one or more targets or machines relating to the query.
+            tenant_names: The optional names of one or more tenants relating to the query.
+            library_variable_sets: The optional names of one or more library variable sets relating to the query.
         """
 
         api_key, url = get_api_key_and_url()
+
+        space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
 
         return handle_copilot_query(extract_query(req),
                                     space_name,
@@ -386,14 +388,13 @@ Once default values are set, you can omit the space, environment, and project fr
         """
         return FunctionDefinitions([
             FunctionDefinition(provide_help),
+            FunctionDefinition(answer_general_query),
             FunctionDefinition(get_octopus_project_names_wrapper),
             FunctionDefinition(get_deployment_status_wrapper),
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
             FunctionDefinition(get_dashboard_wrapper),
-            FunctionDefinition(get_deployment_process_raw_json),
-            FunctionDefinition(answer_general_query),
         ])
 
     try:
