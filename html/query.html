@@ -78,24 +78,27 @@
                 return
             }
 
-            if (queryHistory.length >= 5) {
-                queryHistory = queryHistory.slice(1, 5)
-            }
-            queryHistory.push(query.value)
-            historyList.innerHTML = ''
-
-            queryHistory.forEach((h) => {
-                const li = document.createElement("li")
-                const link = document.createElement("a")
-                link.setAttribute("href", "#")
-                link.appendChild(document.createTextNode(h))
-                link.onclick = function () {
-                    query.value = h
-                    return false
+            if (queryHistory.indexOf(query.value) === -1) {
+                queryHistory.push(query.value)
+                if (queryHistory.length >= 5) {
+                    queryHistory = queryHistory.slice(1, 5)
                 }
-                li.appendChild(link)
-                historyList.appendChild(li)
-            })
+
+                historyList.innerHTML = ''
+
+                queryHistory.forEach((h) => {
+                    const li = document.createElement("li")
+                    const link = document.createElement("a")
+                    link.setAttribute("href", "#")
+                    link.appendChild(document.createTextNode(h))
+                    link.onclick = function () {
+                        query.value = h
+                        return false
+                    }
+                    li.appendChild(link)
+                    historyList.appendChild(li)
+                })
+            }
 
             markdown.innerHTML = "Processing..."
             query.disabled = true
