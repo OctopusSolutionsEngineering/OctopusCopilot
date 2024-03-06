@@ -41,6 +41,12 @@
         </div>
     </div>
     <div class="form-group row">
+        <label for="query" class="col-2 offset-2 col-form-label">History</label>
+        <div class="col-6">
+            <ul id="historyList"></ul>
+        </div>
+    </div>
+    <div class="form-group row">
         <div class="offset-4 col-8">
             <button id="submit" name="submit" type="button" class="btn btn-primary">Submit</button>
         </div>
@@ -55,12 +61,33 @@
 </body>
 <script>
 
+    var queryHistory = []
+
     async function processQuery(event) {
         form.classList.add('was-validated')
 
         if (!form.checkValidity()) {
             return
         }
+
+        if (queryHistory.length => 5) {
+            queryHistory = queryHistory.slice(1, 5)
+        }
+        queryHistory.push(query.value)
+        historyList.innerHTML = ''
+
+        queryHistory.forEach((h) => {
+            const li = document.createElement("li")
+            const link = document.createElement("a")
+            link.setAttribute("href", "#")
+            link.appendChild(document.createTextNode(h))
+            link.onclick = function () {
+                query.value = h
+                return false
+            }
+            li.appendChild(link)
+            historyList.appendChild(li)
+        })
 
         markdown.innerHTML = "Processing..."
         query.disabled = true
