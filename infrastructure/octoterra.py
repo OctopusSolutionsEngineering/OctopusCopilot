@@ -57,6 +57,4 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
                                                 "https://octoterraproduction.azurewebsites.net/api/octoterra",
                                                 body=json.dumps(body)))
 
-    return (resp.data.decode("utf-8")
-            + "\nAs an AI model, I often make mistakes. "
-            + "Verify the information I provide before performing any destructive actions.")
+    return resp.data.decode("utf-8")
