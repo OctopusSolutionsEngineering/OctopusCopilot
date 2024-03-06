@@ -13,6 +13,10 @@ from infrastructure.octoterra import get_octoterra_space
 NO_FUNCTION_RESPONSE = "Sorry, I did not understand that request."
 my_log = configure_logging()
 
+# Each token is roughly four characters for typical English text. OpenAI accepts a max of 16384 tokens.
+# We'll allow 15000 tokens for the HCL to avoid an error.
+max_chars = 15000 * 4
+
 
 def handle_copilot_query(query, space_name, project_names, runbook_names, target_names, tenant_names,
                          library_variable_sets, api_key,
@@ -45,7 +49,7 @@ def handle_copilot_query(query, space_name, project_names, runbook_names, target
 
     chain = prompt | llm
 
-    return chain.invoke({"input": query, "hcl": hcl}).content
+    return chain.invoke({"input": query, "hcl": hcl[0:max_chars]}).content
 
 
 def handle_copilot_tools_execution(query, llm_tools):
