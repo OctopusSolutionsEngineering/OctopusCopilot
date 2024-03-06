@@ -392,7 +392,6 @@ Once default values are set, you can omit the space, environment, and project fr
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
             FunctionDefinition(get_dashboard_wrapper),
-            FunctionDefinition(get_deployment_process_raw_json),
             FunctionDefinition(answer_general_query),
         ])
 
