@@ -70,7 +70,7 @@
             return
         }
 
-        if (queryHistory.length => 5) {
+        if (queryHistory.length >= 5) {
             queryHistory = queryHistory.slice(1, 5)
         }
         queryHistory.push(query.value)
