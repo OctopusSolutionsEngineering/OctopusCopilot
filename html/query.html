@@ -98,66 +98,62 @@
             return
         }
 
+        form.classList.add('was-validated')
+
+        if (!form.checkValidity()) {
+            return
+        }
+
+        if (queryHistory.indexOf(query.value) === -1) {
+            queryHistory.push(query.value)
+            updateHistory()
+        }
+
+        markdown.innerHTML = "Processing..."
+        query.disabled = true
+        submit.disabled = true
+        token.disabled = true
         processing = true
 
-        try {
-            form.classList.add('was-validated')
-
-            if (!form.checkValidity()) {
-                return
-            }
-
-            if (queryHistory.indexOf(query.value) === -1) {
-                queryHistory.push(query.value)
-                updateHistory()
-            }
-
-            markdown.innerHTML = "Processing..."
-            query.disabled = true
-            submit.disabled = true
-            token.disabled = true
-
-            function enableInput() {
-                query.disabled = false
-                submit.disabled = false
-                token.disabled = false
-            }
-
-            // Use the polyfill to get the ability to send headers.
-            var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(query.value), {
-                headers: {
-                    'X-GitHub-Token': token.value
-                }
-            });
-
-            let response = ""
-            evtSource.onmessage = (event) => {
-                console.log(event)
-                evtSource.close()
-                /*
-                    https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#fields
-                    The data field for the message. When the EventSource receives multiple consecutive lines that begin
-                    with data:, it concatenates them, inserting a newline character between each one.
-                 */
-                event.data.split("\n").forEach((line) => {
-                    parsedLine = JSON.parse(line)
-                    if (parsedLine.choices[0].delta && parsedLine.choices[0].delta.content) {
-                        response += parsedLine.choices[0].delta.content
-                    } else {
-                        response += "\n"
-                    }
-                })
-                markdown.innerHTML = marked.parse(response);
-                enableInput()
-            };
-            evtSource.onerror = (event) => {
-                console.log(event)
-                evtSource.close()
-                markdown.innerHTML = "The request resulted in an error."
-                enableInput()
-            }
-        } finally {
+        function enableInput() {
+            query.disabled = false
+            submit.disabled = false
+            token.disabled = false
             processing = false
+        }
+
+        // Use the polyfill to get the ability to send headers.
+        var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(query.value), {
+            headers: {
+                'X-GitHub-Token': token.value
+            }
+        });
+
+        let response = ""
+        evtSource.onmessage = (event) => {
+            console.log(event)
+            evtSource.close()
+            /*
+                https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#fields
+                The data field for the message. When the EventSource receives multiple consecutive lines that begin
+                with data:, it concatenates them, inserting a newline character between each one.
+             */
+            event.data.split("\n").forEach((line) => {
+                parsedLine = JSON.parse(line)
+                if (parsedLine.choices[0].delta && parsedLine.choices[0].delta.content) {
+                    response += parsedLine.choices[0].delta.content
+                } else {
+                    response += "\n"
+                }
+            })
+            markdown.innerHTML = marked.parse(response);
+            enableInput()
+        };
+        evtSource.onerror = (event) => {
+            console.log(event)
+            evtSource.close()
+            markdown.innerHTML = "The request resulted in an error."
+            enableInput()
         }
     }
 
