@@ -24,7 +24,8 @@ def handle_copilot_query(query, space_name, project_names, runbook_names, target
                          octopus_url):
     ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_query).')
 
-    hcl = get_octoterra_space(space_name,
+    hcl = get_octoterra_space(query,
+                              space_name,
                               project_names,
                               runbook_names,
                               target_names,

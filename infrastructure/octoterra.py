@@ -12,7 +12,8 @@ logger = configure_logging(__name__)
 
 
 @retry(HTTPError, tries=3, delay=2)
-def get_octoterra_space(space_name, project_names, runbook_names, target_names, tenant_names, library_variable_sets,
+def get_octoterra_space(query, space_name, project_names, runbook_names, target_names, tenant_names,
+                        library_variable_sets,
                         api_key, octopus_url):
     """
     Returns the terraform representation of a space
@@ -30,6 +31,12 @@ def get_octoterra_space(space_name, project_names, runbook_names, target_names, 
 
     # We want to restrict the size of the exported Terraform configuration as much as possible,
     # so we make heavy use of the options to exclude resources unless they were mentioned in the query.
+    exclude_targets = True if not target_names and "target" not in query.lower() and "machine" not in query.lower() else False
+    exclude_runbooks = True if not runbook_names and "runbook" not in query.lower() else False
+    exclude_tenants = True if not tenant_names and "tenant" not in query.lower() else False
+    exclude_projects = True if not project_names and "project" not in query.lower() else False
+    exclude_library_variable_sets = True if not library_variable_sets and "library" not in query.lower() else False
+
     body = {
         "space": space_id,
         "url": octopus_url,
@@ -38,11 +45,11 @@ def get_octoterra_space(space_name, project_names, runbook_names, target_names, 
         "excludeCaCProjectSettings": True,
         "excludeProjectsExcept": ",".join(project_names) if project_names else "",
         "excludeTenantsExcept": ",".join(tenant_names) if tenant_names else "",
-        "excludeAllProjects": True if not project_names else False,
-        "excludeAllTenant": True if not tenant_names else False,
-        "excludeAllTargets": True if not target_names else False,
-        "excludeAllRunbooks": True if not runbook_names else False,
-        "excludeAllLibraryVariableSets": True if not library_variable_sets else False,
+        "excludeAllProjects": exclude_projects,
+        "excludeAllTenant": exclude_tenants,
+        "excludeAllTargets": exclude_targets,
+        "excludeAllRunbooks": exclude_runbooks,
+        "excludeAllLibraryVariableSets": exclude_library_variable_sets,
         "limitAttributeLength": 100
     }
 
