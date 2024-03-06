@@ -354,7 +354,10 @@ Once default values are set, you can omit the space, environment, and project fr
 
     def answer_general_query(space_name=None, project_names=None, runbook_names=None, target_names=None,
                              tenant_names=None, library_variable_sets=None):
-        """Answers a general query about Octopus Deploy.
+        """Answers a general query or question about an Octopus Deploy space, project, runbook, target, tenant, library variable set,
+        feed, account, machine or target, project group, variables, tags, certificates, or worker groups. Run this function
+        when no other functions match.
+
 
             Args:
                 space_name: The name of the space relating to the query.
@@ -367,6 +370,8 @@ Once default values are set, you can omit the space, environment, and project fr
         """
 
         api_key, url = get_api_key_and_url()
+
+        space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
 
         return handle_copilot_query(extract_query(req),
                                     space_name,
