@@ -379,7 +379,7 @@ Once default values are set, you can omit the space, environment, and project fr
                                      library_variable_sets,
                                      api_key,
                                      url)
-                + "\nAs an AI model, I often make mistakes. "
+                + "\n\nAs an AI model, I often make mistakes. "
                 + "Verify the information I provide before performing any destructive actions.")
 
     def build_form_tools():
