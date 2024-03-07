@@ -41,6 +41,7 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
     sanitized_runbook_names = sanitize_list(runbook_names, "Runbook [A-Z]")
     sanitized_library_variable_sets = sanitize_list(library_variable_sets, "Library Variable Set [A-Z]")
 
+    logger.info("Query: " + query)
     logger.info("Projects: " + sanitized_project_names)
     logger.info("Tenants: " + sanitized_tenant_names)
     logger.info("Runbooks: " + sanitized_runbook_names)
