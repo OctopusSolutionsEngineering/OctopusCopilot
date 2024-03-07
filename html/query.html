@@ -71,8 +71,8 @@
     var processing = false
 
     function updateHistory() {
-        if (queryHistory.length >= 5) {
-            queryHistory = queryHistory.slice(1, 5)
+        if (queryHistory.length > 5) {
+            queryHistory = queryHistory.slice(1, 6)
         }
 
         localStorage.setItem("queryHistory", JSON.stringify(queryHistory))
