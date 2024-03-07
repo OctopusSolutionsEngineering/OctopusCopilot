@@ -77,7 +77,7 @@ def answer_general_query(space_name=None, project_names=None, runbook_names=None
             library_variable_sets: The optional names of one or more library variable sets relating to the query.
     """
     return handle_copilot_query(parser.query,
-                                space_name,
+                                'Octopus Copilot',
                                 project_names,
                                 runbook_names,
                                 target_names,
