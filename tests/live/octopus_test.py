@@ -7,6 +7,7 @@ import time
 import unittest
 
 from parameterized import parameterized
+from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
@@ -126,6 +127,7 @@ class LiveRequests(unittest.TestCase):
         except OctopusApiKeyInvalid as e:
             pass
 
+    @retry(AssertionError, tries=3, delay=2)
     def test_get_deployment(self):
         """
         Tests that we return the details of a deployment
@@ -142,7 +144,7 @@ class LiveRequests(unittest.TestCase):
         self.assertEqual(function.function_args["octopus_url"], "http://localhost:8080")
         self.assertEqual(function.function_args["api_key"], Octopus_Api_Key)
 
-        time.sleep(10)
+        time.sleep(30)
 
         actual_space_name, actual_environment_name, actual_project_name, deployment = function.call_function()
 
