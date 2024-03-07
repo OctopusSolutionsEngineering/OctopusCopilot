@@ -4,6 +4,7 @@ from retry import retry
 from urllib3.exceptions import HTTPError
 
 from domain.logging.app_logging import configure_logging
+from domain.strings.sanitized_list import sanitize_list
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http
 from infrastructure.octopus import handle_response, get_space_id_and_name_from_name
@@ -31,16 +32,17 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
 
     # We want to restrict the size of the exported Terraform configuration as much as possible,
     # so we make heavy use of the options to exclude resources unless they were mentioned in the query.
-    exclude_targets = True if not target_names and "target" not in query.lower() and "machine" not in query.lower() else False
-    exclude_runbooks = True if not runbook_names and "runbook" not in query.lower() else False
-    exclude_tenants = True if not tenant_names and "tenant" not in query.lower() else False
-    exclude_projects = True if not project_names and "project" not in query.lower() else False
-    exclude_library_variable_sets = True if not library_variable_sets and "library" not in query.lower() else False
+    sanitized_project_names = sanitize_list(project_names)
+    sanitized_tenant_names = sanitize_list(tenant_names)
+    sanitized_target_names = sanitize_list(target_names)
+    sanitized_runbook_names = sanitize_list(runbook_names)
+    sanitized_library_variable_sets = sanitize_list(library_variable_sets)
 
-    sanitized_project_names = [project_name.strip() for project_name in project_names if
-                               project_name.strip()] if project_names else []
-    sanitized_tenant_names = [tenant_name.strip() for tenant_name in tenant_names if
-                              tenant_name.strip()] if tenant_names else []
+    exclude_targets = True if not sanitized_target_names and "target" not in query.lower() and "machine" not in query.lower() else False
+    exclude_runbooks = True if not sanitized_runbook_names and "runbook" not in query.lower() else False
+    exclude_tenants = True if not sanitized_tenant_names and "tenant" not in query.lower() else False
+    exclude_projects = True if not sanitized_project_names and "project" not in query.lower() else False
+    exclude_library_variable_sets = True if not sanitized_library_variable_sets and "library" not in query.lower() else False
 
     body = {
         "space": space_id,
