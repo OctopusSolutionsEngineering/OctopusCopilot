@@ -84,7 +84,8 @@ def answer_general_query(space_name=None, project_names=None, runbook_names=None
                                                             tenant_names,
                                                             library_variable_sets,
                                                             get_api_key(),
-                                                            get_octopus_api())
+                                                            get_octopus_api(),
+                                                            lambda x: print(x))
 
     return chat_response + "\n\n" + f"Percent Truncated: {percent_truncated}"
 
@@ -100,7 +101,7 @@ def build_tools():
 
 
 try:
-    result = handle_copilot_tools_execution(parser.query, build_tools).call_function()
+    result = handle_copilot_tools_execution(parser.query, build_tools, lambda x: print(x)).call_function()
     print(result)
 except Exception as e:
     print(e)
