@@ -4,6 +4,7 @@ from retry import retry
 from urllib3.exceptions import HTTPError
 
 from domain.logging.app_logging import configure_logging
+from domain.strings.sanitized_list import sanitize_list
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http
 from infrastructure.octopus import handle_response, get_space_id_and_name_from_name
@@ -26,21 +27,26 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
     logger.info("get_octoterra_space - Enter")
 
     ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_octoterra_space).')
+    ensure_string_not_empty(query, 'query must be a non-empty string (get_octoterra_space).')
+    ensure_string_not_empty(api_key, 'api_key must be a non-empty string (get_octoterra_space).')
+    ensure_string_not_empty(octopus_url, 'octopus_url must be a non-empty string (get_octoterra_space).')
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
 
     # We want to restrict the size of the exported Terraform configuration as much as possible,
     # so we make heavy use of the options to exclude resources unless they were mentioned in the query.
-    exclude_targets = True if not target_names and "target" not in query.lower() and "machine" not in query.lower() else False
-    exclude_runbooks = True if not runbook_names and "runbook" not in query.lower() else False
-    exclude_tenants = True if not tenant_names and "tenant" not in query.lower() else False
-    exclude_projects = True if not project_names and "project" not in query.lower() else False
-    exclude_library_variable_sets = True if not library_variable_sets and "library" not in query.lower() else False
+    sanitized_project_names = sanitize_list(project_names, "\\*|Project [0-9A-Z]|MyProject")
+    sanitized_tenant_names = sanitize_list(tenant_names, "\\*|Tenant [0-9A-Z]|MyTenant")
+    sanitized_target_names = sanitize_list(target_names, "\\*|Machine [0-9A-Z]|Target [0-9A-Z]|MyMachine|MyTarget")
+    sanitized_runbook_names = sanitize_list(runbook_names, "\\*|Runbook [0-9A-Z]|MyRunbook")
+    sanitized_library_variable_sets = sanitize_list(library_variable_sets,
+                                                    "\\*|(Library )?Variable Set [0-9A-Z]|MyVariableSet|Variables")
 
-    sanitized_project_names = [project_name.strip() for project_name in project_names if
-                               project_name.strip()] if project_names else []
-    sanitized_tenant_names = [tenant_name.strip() for tenant_name in tenant_names if
-                              tenant_name.strip()] if tenant_names else []
+    exclude_targets = True if not sanitized_target_names and "target" not in query.lower() and "machine" not in query.lower() else False
+    exclude_runbooks = True if not sanitized_runbook_names and "runbook" not in query.lower() else False
+    exclude_tenants = True if not sanitized_tenant_names and "tenant" not in query.lower() else False
+    exclude_projects = True if not sanitized_project_names and "project" not in query.lower() else False
+    exclude_library_variable_sets = True if not sanitized_library_variable_sets and "library" not in query.lower() else False
 
     body = {
         "space": space_id,
@@ -48,14 +54,18 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
         "apiKey": api_key,
         "ignoreCacManagedValues": False,
         "excludeCaCProjectSettings": True,
-        "excludeProjectsExcept": ",".join(sanitized_project_names) if sanitized_project_names else None,
-        "excludeTenantsExcept": ",".join(sanitized_tenant_names) if sanitized_tenant_names else None,
+        "excludeProjectsExcept": sanitized_project_names if sanitized_project_names else None,
+        "excludeTenantsExcept": sanitized_tenant_names if sanitized_tenant_names else None,
         "excludeAllProjects": exclude_projects,
         "excludeAllTenant": exclude_tenants,
         "excludeAllTargets": exclude_targets,
         "excludeAllRunbooks": exclude_runbooks,
         "excludeAllLibraryVariableSets": exclude_library_variable_sets,
-        "limitAttributeLength": 100
+        "limitAttributeLength": 100,
+        # This setting ensures that any project, tenant, runbook, or target names are valid.
+        # If not, the assumption is made that the LLM incorrectly identified the resource in the query,
+        # and the results must not be limited by that incorrect assumption.
+        "ignoreInvalidExcludeExcept": True
     }
 
     resp = handle_response(lambda: http.request("POST",

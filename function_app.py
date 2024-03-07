@@ -18,6 +18,7 @@ from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
 from domain.handlers.copilot_handler import handle_copilot_tools_execution, handle_copilot_query
 from domain.logging.app_logging import configure_logging
+from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response, \
@@ -370,15 +371,18 @@ Once default values are set, you can omit the space, environment, and project fr
 
         space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
 
-        return (handle_copilot_query(extract_query(req),
-                                     space_name,
-                                     project_names,
-                                     runbook_names,
-                                     target_names,
-                                     tenant_names,
-                                     library_variable_sets,
-                                     api_key,
-                                     url)
+        percent_truncated, chat_result = handle_copilot_query(extract_query(req),
+                                                              space_name,
+                                                              project_names,
+                                                              runbook_names,
+                                                              target_names,
+                                                              tenant_names,
+                                                              library_variable_sets,
+                                                              api_key,
+                                                              url,
+                                                              log_query)
+
+        return (chat_result
                 + "\n\nAs an AI model, I often make mistakes. "
                 + "Verify the information I provide before performing any destructive actions.\n\n"
                 + "Scripts and other step properties may be truncated and modified to only include useful information.")
@@ -409,7 +413,7 @@ Once default values are set, you can omit the space, environment, and project fr
                 convert_to_sse_response("Ask a question like \"Show me the projects in the space called Default\""),
                 headers=get_sse_headers())
 
-        result = handle_copilot_tools_execution(query, build_form_tools).call_function()
+        result = handle_copilot_tools_execution(query, build_form_tools, log_query).call_function()
 
         return func.HttpResponse(convert_to_sse_response(result), headers=get_sse_headers())
 

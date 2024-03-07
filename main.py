@@ -65,26 +65,29 @@ def get_deployment_process_raw_json_cli(space_name: None, project_name: None):
 
 def answer_general_query(space_name=None, project_names=None, runbook_names=None, target_names=None,
                          tenant_names=None, library_variable_sets=None):
-    """Answers a general query about Octopus Deploy.
+    """Answers a general query or question about the configuration or relationships of a space, projects,
+             runbooks, tenants, variables, feeds, accounts etc.
 
-        Args:
-            space_name: The name of the space relating to the query.
-
-            project_names: The optional names of one or more projects relating to the query.
-            runbook_names: The optional names of one or more runbooks relating to the query.
-            target_names: The optional names of one or more targets or machines relating to the query.
-            tenant_names: The optional names of one or more tenants relating to the query.
-            library_variable_sets: The optional names of one or more library variable sets relating to the query.
+            Args:
+                space_name: The name of the space relating to the query.
+                project_names: The optional names of one or more projects relating to the query.
+                runbook_names: The optional names of one or more runbooks relating to the query.
+                target_names: The optional names of one or more targets or machines relating to the query.
+                tenant_names: The optional names of one or more tenants relating to the query.
+                library_variable_sets: The optional names of one or more library variable sets relating to the query.
     """
-    return handle_copilot_query(parser.query,
-                                space_name,
-                                project_names,
-                                runbook_names,
-                                target_names,
-                                tenant_names,
-                                library_variable_sets,
-                                get_api_key(),
-                                get_octopus_api())
+    percent_truncated, chat_response = handle_copilot_query(parser.query,
+                                                            'Octopus Copilot',
+                                                            project_names,
+                                                            runbook_names,
+                                                            target_names,
+                                                            tenant_names,
+                                                            library_variable_sets,
+                                                            get_api_key(),
+                                                            get_octopus_api(),
+                                                            lambda x: print(x))
+
+    return chat_response + "\n\n" + f"Percent Truncated: {percent_truncated}"
 
 
 def build_tools():
@@ -93,13 +96,12 @@ def build_tools():
     :return: The OpenAI tools
     """
     return FunctionDefinitions([
-        FunctionDefinition(answer_general_query),
-        FunctionDefinition(get_octopus_project_names_cli),
+        FunctionDefinition(answer_general_query)
     ])
 
 
 try:
-    result = handle_copilot_tools_execution(parser.query, build_tools).call_function()
+    result = handle_copilot_tools_execution(parser.query, build_tools, lambda x: print(x)).call_function()
     print(result)
 except Exception as e:
     print(e)

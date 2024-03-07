@@ -1,11 +1,21 @@
 import json
 import traceback
+from threading import Thread
 
 from domain.logging.app_logging import configure_logging
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http
 
 logger = configure_logging(__name__)
+
+
+def send_slack_message_async(message, slack_url):
+    """
+    Send a message to a slack channel asynchronously
+    :param message: The message to send
+    :param slack_url: The slack URL
+    """
+    Thread(target=send_slack_message, args=(message, slack_url)).start()
 
 
 def send_slack_message(message, slack_url):

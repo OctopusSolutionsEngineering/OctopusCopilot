@@ -21,9 +21,17 @@ max_chars = 15000 * 4
 
 def handle_copilot_query(query, space_name, project_names, runbook_names, target_names, tenant_names,
                          library_variable_sets, api_key,
-                         octopus_url):
+                         octopus_url, log_query):
     ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_query).')
     ensure_string_not_empty(space_name, 'space_name must be a non-empty string (handle_copilot_query).')
+
+    if log_query:
+        log_query("Query:", query)
+        log_query("Project Names:", project_names)
+        log_query("Runbook Names:", runbook_names)
+        log_query("Target Names:", target_names)
+        log_query("Tenant Names:", tenant_names)
+        log_query("Library Variable Set Names:", library_variable_sets)
 
     hcl = get_octoterra_space(query,
                               space_name,
@@ -48,7 +56,7 @@ def handle_copilot_query(query, space_name, project_names, runbook_names, target
          "You are a professional and polite agent who understands Terraform modules defining Octopus Deploy resources. "
          + "You must assume the Terraform is an accurate representation of the live project. "
          + "Do not mention Terraform in the response. Do not show any Terraform snippets in the response. "
-         + "You should assume questions about variables refer to Octopus variables. "
+         + "You must assume questions about variables refer to Octopus variables. "
          + "Variables are referenced using the syntax #{{Variable Name}}, $OctopusParameters[\"Variable Name\"], "
          + "Octopus.Parameters[\"Variable Name\"], get_octopusvariable \"Variable Name\", "
          + "or get_octopusvariable(\"Variable Name\"). "
@@ -60,12 +68,18 @@ def handle_copilot_query(query, space_name, project_names, runbook_names, target
     chain = prompt | llm
 
     # We'll minify and truncate the HCL to avoid hitting the token limit.
-    return chain.invoke({"input": query, "hcl": minify_hcl(hcl)[0:max_chars]}).content
+    truncated_hcl = minify_hcl(hcl)[0:max_chars]
+    percent_truncated = round((len(hcl) - len(truncated_hcl)) / len(hcl) * 100, 2)
+
+    my_log.info("Result was truncated by " + str(percent_truncated) + "%")
+
+    return percent_truncated, chain.invoke({"input": query, "hcl": truncated_hcl}).content
 
 
-def handle_copilot_tools_execution(query, llm_tools):
+def handle_copilot_tools_execution(query, llm_tools, log_query=None):
     """
     This is the handler that responds to a chat request.
+    :param log_query: The function used to log the query
     :param query: The pain text query
     :param llm_tools: A function that returns the set of tools used by OpenAI
     :return: The result of the function, defined by the set of tools, that was called in response to the query
@@ -73,6 +87,9 @@ def handle_copilot_tools_execution(query, llm_tools):
 
     ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_tools_execution).')
     ensure_not_falsy(query, 'llm_tools must not be None (handle_copilot_tools_execution).')
+
+    if log_query:
+        log_query("Query:", query)
 
     functions = llm_tools()
     tools = functions.get_tools()
