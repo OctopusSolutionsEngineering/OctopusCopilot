@@ -35,12 +35,12 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
 
     # We want to restrict the size of the exported Terraform configuration as much as possible,
     # so we make heavy use of the options to exclude resources unless they were mentioned in the query.
-    sanitized_project_names = sanitize_list(project_names, "Project [A-Z]|MyProject")
-    sanitized_tenant_names = sanitize_list(tenant_names, "Tenant [A-Z]|MyTenant")
-    sanitized_target_names = sanitize_list(target_names, "Machine [A-Z]|MyTarget")
-    sanitized_runbook_names = sanitize_list(runbook_names, "Runbook [A-Z]|MyRunbook")
+    sanitized_project_names = sanitize_list(project_names, "Project [0-9A-Z]|MyProject")
+    sanitized_tenant_names = sanitize_list(tenant_names, "Tenant [0-9A-Z]|MyTenant")
+    sanitized_target_names = sanitize_list(target_names, "Machine [0-9A-Z]|Target [0-9A-Z]|MyMachine|MyTarget")
+    sanitized_runbook_names = sanitize_list(runbook_names, "Runbook [0-9A-Z]|MyRunbook")
     sanitized_library_variable_sets = sanitize_list(library_variable_sets,
-                                                    "(Library )?Variable Set [A-Z]|MyVariableSet")
+                                                    "(Library )?Variable Set [0-9A-Z]|MyVariableSet|Variables")
 
     logger.info("Query: " + query)
     logger.info("Projects: " + ",".join(sanitized_project_names))
