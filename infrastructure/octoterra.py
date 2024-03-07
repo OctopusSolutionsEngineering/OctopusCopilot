@@ -61,7 +61,11 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
         "excludeAllTargets": exclude_targets,
         "excludeAllRunbooks": exclude_runbooks,
         "excludeAllLibraryVariableSets": exclude_library_variable_sets,
-        "limitAttributeLength": 100
+        "limitAttributeLength": 100,
+        # This setting ensures that any project, tenant, runbook, or target names are valid.
+        # If not, the assumption is made that the LLM incorrectly identified the resource in the query,
+        # and the results must not be limited by that incorrect assumption.
+        "ignoreInvalidExcludeExcept": True
     }
 
     resp = handle_response(lambda: http.request("POST",
