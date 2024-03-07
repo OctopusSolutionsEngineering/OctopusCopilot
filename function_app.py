@@ -370,15 +370,17 @@ Once default values are set, you can omit the space, environment, and project fr
 
         space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
 
-        return (handle_copilot_query(extract_query(req),
-                                     space_name,
-                                     project_names,
-                                     runbook_names,
-                                     target_names,
-                                     tenant_names,
-                                     library_variable_sets,
-                                     api_key,
-                                     url)
+        percent_truncated, chat_result = handle_copilot_query(extract_query(req),
+                                                              space_name,
+                                                              project_names,
+                                                              runbook_names,
+                                                              target_names,
+                                                              tenant_names,
+                                                              library_variable_sets,
+                                                              api_key,
+                                                              url)
+
+        return (chat_result
                 + "\n\nAs an AI model, I often make mistakes. "
                 + "Verify the information I provide before performing any destructive actions.\n\n"
                 + "Scripts and other step properties may be truncated and modified to only include useful information.")

@@ -61,7 +61,12 @@ def handle_copilot_query(query, space_name, project_names, runbook_names, target
     chain = prompt | llm
 
     # We'll minify and truncate the HCL to avoid hitting the token limit.
-    return chain.invoke({"input": query, "hcl": minify_hcl(hcl)[0:max_chars]}).content
+    truncated_hcl = minify_hcl(hcl)[0:max_chars]
+    percent_truncated = round((len(hcl) - len(truncated_hcl)) / len(hcl) * 100, 2)
+
+    my_log.info("Result was truncated by " + str(percent_truncated) + "%")
+
+    return percent_truncated, chain.invoke({"input": query, "hcl": truncated_hcl}).content
 
 
 def handle_copilot_tools_execution(query, llm_tools):

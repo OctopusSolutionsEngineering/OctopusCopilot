@@ -76,15 +76,17 @@ def answer_general_query(space_name=None, project_names=None, runbook_names=None
                 tenant_names: The optional names of one or more tenants relating to the query.
                 library_variable_sets: The optional names of one or more library variable sets relating to the query.
     """
-    return handle_copilot_query(parser.query,
-                                'Octopus Copilot',
-                                project_names,
-                                runbook_names,
-                                target_names,
-                                tenant_names,
-                                library_variable_sets,
-                                get_api_key(),
-                                get_octopus_api())
+    percent_truncated, chat_response = handle_copilot_query(parser.query,
+                                                            'Octopus Copilot',
+                                                            project_names,
+                                                            runbook_names,
+                                                            target_names,
+                                                            tenant_names,
+                                                            library_variable_sets,
+                                                            get_api_key(),
+                                                            get_octopus_api())
+
+    return chat_response + "\n\n" + f"Percent Truncated: {percent_truncated}"
 
 
 def build_tools():
