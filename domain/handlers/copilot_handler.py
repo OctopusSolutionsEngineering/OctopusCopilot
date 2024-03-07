@@ -56,6 +56,7 @@ def handle_copilot_query(query, space_name, project_names, runbook_names, target
          "You are a professional and polite agent who understands Terraform modules defining Octopus Deploy resources. "
          + "You must assume the Terraform is an accurate representation of the live project. "
          + "Do not mention Terraform in the response. Do not show any Terraform snippets in the response. "
+         + "Do not mention that you referenced the Terraform to provide your answer. "
          + "You must assume questions about variables refer to Octopus variables. "
          + "Variables are referenced using the syntax #{{Variable Name}}, $OctopusParameters[\"Variable Name\"], "
          + "Octopus.Parameters[\"Variable Name\"], get_octopusvariable \"Variable Name\", "
