@@ -37,14 +37,19 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
     exclude_projects = True if not project_names and "project" not in query.lower() else False
     exclude_library_variable_sets = True if not library_variable_sets and "library" not in query.lower() else False
 
+    sanitized_project_names = [project_name.strip() for project_name in project_names if
+                               project_name.strip()] if project_names else []
+    sanitized_tenant_names = [tenant_name.strip() for tenant_name in tenant_names if
+                              tenant_name.strip()] if tenant_names else []
+
     body = {
         "space": space_id,
         "url": octopus_url,
         "apiKey": api_key,
         "ignoreCacManagedValues": False,
         "excludeCaCProjectSettings": True,
-        "excludeProjectsExcept": ",".join(project_names) if project_names else "",
-        "excludeTenantsExcept": ",".join(tenant_names) if tenant_names else "",
+        "excludeProjectsExcept": ",".join(sanitized_project_names) if sanitized_project_names else None,
+        "excludeTenantsExcept": ",".join(sanitized_tenant_names) if sanitized_tenant_names else None,
         "excludeAllProjects": exclude_projects,
         "excludeAllTenant": exclude_tenants,
         "excludeAllTargets": exclude_targets,
