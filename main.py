@@ -65,16 +65,16 @@ def get_deployment_process_raw_json_cli(space_name: None, project_name: None):
 
 def answer_general_query(space_name=None, project_names=None, runbook_names=None, target_names=None,
                          tenant_names=None, library_variable_sets=None):
-    """Answers a general query about Octopus Deploy.
+    """Answers a general query or question about the configuration or relationships of a space, projects,
+             runbooks, tenants, variables, feeds, accounts etc.
 
-        Args:
-            space_name: The name of the space relating to the query.
-
-            project_names: The optional names of one or more projects relating to the query.
-            runbook_names: The optional names of one or more runbooks relating to the query.
-            target_names: The optional names of one or more targets or machines relating to the query.
-            tenant_names: The optional names of one or more tenants relating to the query.
-            library_variable_sets: The optional names of one or more library variable sets relating to the query.
+            Args:
+                space_name: The name of the space relating to the query.
+                project_names: The optional names of one or more projects relating to the query.
+                runbook_names: The optional names of one or more runbooks relating to the query.
+                target_names: The optional names of one or more targets or machines relating to the query.
+                tenant_names: The optional names of one or more tenants relating to the query.
+                library_variable_sets: The optional names of one or more library variable sets relating to the query.
     """
     return handle_copilot_query(parser.query,
                                 'Octopus Copilot',
