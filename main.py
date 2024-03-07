@@ -93,8 +93,7 @@ def build_tools():
     :return: The OpenAI tools
     """
     return FunctionDefinitions([
-        FunctionDefinition(answer_general_query),
-        FunctionDefinition(get_octopus_project_names_cli),
+        FunctionDefinition(answer_general_query)
     ])
 
 

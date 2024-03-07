@@ -5,4 +5,5 @@ def sanitize_list(input_list):
         else:
             return []
 
-    return [entry.strip() for entry in input_list if entry.strip()] if input_list else []
+    # Open AI will give you a list with a single asterisk if the list is empty
+    return [entry.strip() for entry in input_list if entry.strip() and not entry == "*"] if input_list else []
