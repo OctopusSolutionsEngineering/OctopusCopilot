@@ -27,6 +27,9 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
     logger.info("get_octoterra_space - Enter")
 
     ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_octoterra_space).')
+    ensure_string_not_empty(query, 'query must be a non-empty string (get_octoterra_space).')
+    ensure_string_not_empty(api_key, 'api_key must be a non-empty string (get_octoterra_space).')
+    ensure_string_not_empty(octopus_url, 'octopus_url must be a non-empty string (get_octoterra_space).')
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
 
