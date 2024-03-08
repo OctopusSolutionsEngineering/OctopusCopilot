@@ -53,7 +53,7 @@ def handle_copilot_query(query, space_name, project_names, runbook_names, target
 
     prompt = ChatPromptTemplate.from_messages([
         ("system",
-         "You are a professional and polite agent who understands Terraform modules defining Octopus Deploy resources. "
+         "You are a concise, professional agent who understands Terraform modules defining Octopus Deploy resources. "
          + "You must assume the Terraform is an accurate representation of the live project. "
          + "Do not mention Terraform in the response. Do not show any Terraform snippets in the response. "
          + "Do not mention that you referenced the Terraform to provide your answer. "
