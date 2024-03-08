@@ -72,7 +72,8 @@ def handle_copilot_query(query, space_name, project_names, runbook_names, target
     truncated_hcl = minify_hcl(hcl)[0:max_chars]
     percent_truncated = round((len(hcl) - len(truncated_hcl)) / len(hcl) * 100, 2)
 
-    my_log.info("Result was truncated by " + str(percent_truncated) + "%")
+    if log_query:
+        log_query("Context truncation:", str(percent_truncated) + "%")
 
     return percent_truncated, chain.invoke({"input": query, "hcl": truncated_hcl}).content
 
