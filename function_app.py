@@ -383,7 +383,8 @@ Once default values are set, you can omit the space, environment, and project fr
                                                               log_query)
 
         result = (chat_result
-                  + "\n\nAs an AI model, I often make mistakes. "
+                  + "\n\n**WARNING**\n\n"
+                  + "As an AI model, I often make mistakes. "
                   + "Verify the information I provide before performing any destructive actions.\n\n"
                   + "Scripts and other step properties are truncated and modified to only include useful information.")
 
