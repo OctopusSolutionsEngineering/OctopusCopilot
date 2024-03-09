@@ -40,7 +40,7 @@ def sanitize_list(input_list, ignored_re=None):
 
     # Open AI will give you a list with a single asterisk if the list is empty
     return [entry.strip() for entry in input_list if
-            entry.strip() and not has_prefix(entry, ignored_re)] if input_list else []
+            isinstance(entry, str) and entry.strip() and not has_prefix(entry, ignored_re)] if input_list else []
 
 
 def has_prefix(entry, ignored_re):
