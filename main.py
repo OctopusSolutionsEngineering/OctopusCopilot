@@ -2,6 +2,7 @@ import argparse
 import os
 
 from domain.handlers.copilot_handler import handle_copilot_tools_execution, handle_copilot_query
+from domain.strings.sanitized_list import sanitize_list
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process
@@ -85,7 +86,7 @@ def answer_general_query(space_name=None, project_names=None, runbook_names=None
                                                             library_variable_sets,
                                                             get_api_key(),
                                                             get_octopus_api(),
-                                                            lambda x: print(x))
+                                                            lambda x, y: print(x + " " + ",".join(sanitize_list(y))))
 
     return chat_response + "\n\n" + f"Percent Truncated: {percent_truncated}"
 
@@ -101,7 +102,8 @@ def build_tools():
 
 
 try:
-    result = handle_copilot_tools_execution(parser.query, build_tools, lambda x: print(x)).call_function()
+    result = handle_copilot_tools_execution(parser.query, build_tools,
+                                            lambda x, y: print(x + " " + ",".join(sanitize_list(y)))).call_function()
     print(result)
 except Exception as e:
     print(e)

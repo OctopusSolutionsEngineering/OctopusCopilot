@@ -1,7 +1,6 @@
 import json
 import os
 import urllib.parse
-
 from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
@@ -174,7 +173,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
     """
     try:
         def answer_general_query(project_names=None, runbook_names=None, target_names=None,
-                                 tenant_names=None, library_variable_sets=None):
+                                 tenant_names=None, library_variable_sets=None, environment_names=None):
             """Answers a general query or question about the configuration or relationships of a space, projects,
              runbooks, tenants, variables, feeds, accounts etc.
 
@@ -185,13 +184,15 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
                 target_names: The optional names of one or more targets or machines relating to the query.
                 tenant_names: The optional names of one or more tenants relating to the query.
                 library_variable_sets: The optional names of one or more library variable sets relating to the query.
+                environment_names: The optional names of one or more environments relating to the query.
             """
             body = {
                 "project_names": project_names,
                 "runbook_names": runbook_names,
                 "target_names": target_names,
                 "tenant_names": tenant_names,
-                "library_variable_sets": library_variable_sets
+                "library_variable_sets": library_variable_sets,
+                "environment_names": environment_names
             }
 
             return body
