@@ -174,17 +174,16 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
     try:
         def answer_general_query(project_names=None, runbook_names=None, target_names=None,
                                  tenant_names=None, library_variable_sets=None, environment_names=None):
-            """Answers a general query or question about the configuration or relationships of a space, projects,
-             runbooks, tenants, variables, feeds, accounts etc.
+            """Answers a general query or question about an Octopus space.
 
             Args:
                 space_name: The name of the space relating to the query.
-                project_names: The optional names of one or more projects relating to the query.
-                runbook_names: The optional names of one or more runbooks relating to the query.
-                target_names: The optional names of one or more targets or machines relating to the query.
-                tenant_names: The optional names of one or more tenants relating to the query.
-                library_variable_sets: The optional names of one or more library variable sets relating to the query.
-                environment_names: The optional names of one or more environments relating to the query.
+                project_names: The optional names of projects relating to the query.
+                runbook_names: The optional names of runbooks relating to the query.
+                target_names: The optional names of targets or machines relating to the query.
+                tenant_names: The optional names of tenants relating to the query.
+                library_variable_sets: The optional names of library variable sets relating to the query.
+                environment_names: The optional names of environments relating to the query.
             """
             body = {
                 "project_names": project_names,
