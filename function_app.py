@@ -185,13 +185,19 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
             library_variable_sets: The names of library variable sets relating to the query.
             environment_names: The names of environments relating to the query.
             """
+
+            # OpenAI will inject values for some of these lists despite the fact that there was no mention
+            # of these resources anywhere in the question. We clean up the results before sending them back
+            # to the client.
             body = {
-                "project_names": project_names,
-                "runbook_names": runbook_names,
-                "target_names": target_names,
-                "tenant_names": tenant_names,
-                "library_variable_sets": library_variable_sets,
-                "environment_names": environment_names
+                "project_names": sanitize_list(project_names, "\\*|Project [0-9A-Z]|MyProject"),
+                "runbook_names": sanitize_list(runbook_names, "\\*|Runbook [0-9A-Z]|MyRunbook"),
+                "target_names": sanitize_list(target_names,
+                                              "\\*|Machine [0-9A-Z]|Target [0-9A-Z]|MyMachine|MyTarget"),
+                "tenant_names": sanitize_list(tenant_names, "\\*|Tenant [0-9A-Z]|MyTenant"),
+                "library_variable_sets": sanitize_list(library_variable_sets,
+                                                       "\\*|(Library )?Variable Set [0-9A-Z]|MyVariableSet|Variables"),
+                "environment_names": sanitize_list(environment_names, "\\*|Environment [0-9A-Z]|MyEnvironment"),
             }
 
             return body
