@@ -180,7 +180,6 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
             """Answers a general query or question about an Octopus space.
 
             Args:
-            space_name: The name of the space relating to the query.
             project_names: The names of projects relating to the query.
             runbook_names: The names of runbooks relating to the query.
             target_names: The names of targets or machines relating to the query.
