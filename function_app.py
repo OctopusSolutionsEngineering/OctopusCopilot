@@ -1,6 +1,7 @@
 import json
 import os
 import urllib.parse
+
 from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
@@ -19,6 +20,8 @@ from domain.handlers.copilot_handler import handle_copilot_tools_execution, hand
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
+from domain.strings.sanitized_list import sanitize_projects, sanitize_runbooks, sanitize_targets, sanitize_tenants, \
+    sanitize_library_variable_sets, sanitize_environments
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response, \
     get_dashboard_response
@@ -190,14 +193,12 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
             # of these resources anywhere in the question. We clean up the results before sending them back
             # to the client.
             body = {
-                "project_names": sanitize_list(project_names, "\\*|Project [0-9A-Z]|MyProject"),
-                "runbook_names": sanitize_list(runbook_names, "\\*|Runbook [0-9A-Z]|MyRunbook"),
-                "target_names": sanitize_list(target_names,
-                                              "\\*|Machine [0-9A-Z]|Target [0-9A-Z]|MyMachine|MyTarget"),
-                "tenant_names": sanitize_list(tenant_names, "\\*|Tenant [0-9A-Z]|MyTenant"),
-                "library_variable_sets": sanitize_list(library_variable_sets,
-                                                       "\\*|(Library )?Variable Set [0-9A-Z]|MyVariableSet|Variables"),
-                "environment_names": sanitize_list(environment_names, "\\*|Environment [0-9A-Z]|MyEnvironment"),
+                "project_names": sanitize_projects(project_names),
+                "runbook_names": sanitize_runbooks(runbook_names),
+                "target_names": sanitize_targets(target_names),
+                "tenant_names": sanitize_tenants(tenant_names),
+                "library_variable_sets": sanitize_library_variable_sets(library_variable_sets),
+                "environment_names": sanitize_environments(environment_names),
             }
 
             return body

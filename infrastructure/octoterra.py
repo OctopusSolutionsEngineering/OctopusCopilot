@@ -4,7 +4,8 @@ from retry import retry
 from urllib3.exceptions import HTTPError
 
 from domain.logging.app_logging import configure_logging
-from domain.strings.sanitized_list import sanitize_list
+from domain.strings.sanitized_list import sanitize_projects, sanitize_tenants, sanitize_targets, \
+    sanitize_runbooks, sanitize_library_variable_sets
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http
 from infrastructure.octopus import handle_response, get_space_id_and_name_from_name
@@ -35,12 +36,11 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
 
     # We want to restrict the size of the exported Terraform configuration as much as possible,
     # so we make heavy use of the options to exclude resources unless they were mentioned in the query.
-    sanitized_project_names = sanitize_list(project_names, "\\*|Project [0-9A-Z]|MyProject")
-    sanitized_tenant_names = sanitize_list(tenant_names, "\\*|Tenant [0-9A-Z]|MyTenant")
-    sanitized_target_names = sanitize_list(target_names, "\\*|Machine [0-9A-Z]|Target [0-9A-Z]|MyMachine|MyTarget")
-    sanitized_runbook_names = sanitize_list(runbook_names, "\\*|Runbook [0-9A-Z]|MyRunbook")
-    sanitized_library_variable_sets = sanitize_list(library_variable_sets,
-                                                    "\\*|(Library )?Variable Set [0-9A-Z]|MyVariableSet|Variables")
+    sanitized_project_names = sanitize_projects(project_names)
+    sanitized_tenant_names = sanitize_tenants(tenant_names)
+    sanitized_target_names = sanitize_targets(target_names)
+    sanitized_runbook_names = sanitize_runbooks(runbook_names)
+    sanitized_library_variable_sets = sanitize_library_variable_sets(library_variable_sets)
 
     exclude_targets = True if not sanitized_target_names and "target" not in query.lower() and "machine" not in query.lower() else False
     exclude_runbooks = True if not sanitized_runbook_names and "runbook" not in query.lower() else False
