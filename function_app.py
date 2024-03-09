@@ -178,12 +178,12 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
 
             Args:
                 space_name: The name of the space relating to the query.
-                project_names: The optional names of projects relating to the query.
-                runbook_names: The optional names of runbooks relating to the query.
-                target_names: The optional names of targets or machines relating to the query.
-                tenant_names: The optional names of tenants relating to the query.
-                library_variable_sets: The optional names of library variable sets relating to the query.
-                environment_names: The optional names of environments relating to the query.
+                project_names: The names of projects relating to the query.
+                runbook_names: The names of runbooks relating to the query.
+                target_names: The names of targets or machines relating to the query.
+                tenant_names: The names of tenants relating to the query.
+                library_variable_sets: The names of library variable sets relating to the query.
+                environment_names: The names of environments relating to the query.
             """
             body = {
                 "project_names": project_names,
