@@ -2,28 +2,28 @@ import re
 
 
 def sanitize_projects(input_list):
-    return sanitize_list(input_list, "\\*|Project [0-9A-Z]|MyProject")
+    return sanitize_list(input_list, "\\*|Project [0-9A-Z]|MyProject|My Project")
 
 
 def sanitize_tenants(input_list):
-    return sanitize_list(input_list, "\\*|Tenant [0-9A-Z]|MyTenant")
+    return sanitize_list(input_list, "\\*|Tenant [0-9A-Z]|MyTenant|My Tenant")
 
 
 def sanitize_environments(input_list):
-    return sanitize_list(input_list, "\\*|Environment [0-9A-Z]|MyEnvironment"),
+    return sanitize_list(input_list, "\\*|Environment [0-9A-Z]|MyEnvironment|My Environment"),
 
 
 def sanitize_targets(input_list):
-    return sanitize_list(input_list, "\\*|Machine [0-9A-Z]|Target [0-9A-Z]|MyMachine|MyTarget")
+    return sanitize_list(input_list, "\\*|Machine [0-9A-Z]|Target [0-9A-Z]|MyMachine|MyTarget|My Machine|My Target")
 
 
 def sanitize_runbooks(input_list):
-    return sanitize_list(input_list, "\\*|Runbook [0-9A-Z]|MyRunbook")
+    return sanitize_list(input_list, "\\*|Runbook [0-9A-Z]|MyRunbook|My Runbook")
 
 
 def sanitize_library_variable_sets(input_list):
     return sanitize_list(input_list,
-                         "\\*|(Library )?Variable Set [0-9A-Z]|MyVariableSet|Variables")
+                         "\\*|(Library )?Variable Set [0-9A-Z]|MyVariableSet|Variables|My VariableSet")
 
 
 def sanitize_list(input_list, ignored_re=None):
