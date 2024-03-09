@@ -14,3 +14,5 @@ class SanitizeList(unittest.TestCase):
         self.assertFalse(sanitize_list(" "))
         self.assertFalse(sanitize_list("Machine A", "Machine"))
         self.assertTrue(sanitize_list("hi"))
+        self.assertTrue(sanitize_list(["hi"]))
+        self.assertFalse(sanitize_list([["hi"]]))

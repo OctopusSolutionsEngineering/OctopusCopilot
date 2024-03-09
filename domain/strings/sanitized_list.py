@@ -33,8 +33,8 @@ def sanitize_library_variable_sets(input_list):
 def sanitize_list(input_list, ignored_re=None):
     """
     OpenAI can provide some unexpected inputs. This function cleans them up.
-    :param input_list:
-    :return:
+    :param input_list: The list to sanitize
+    :return: The sanitized list of strings
     """
     if isinstance(input_list, str):
         if input_list.strip() and not has_prefix(ignored_re, ignored_re):
