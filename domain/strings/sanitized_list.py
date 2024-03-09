@@ -23,7 +23,7 @@ def sanitize_runbooks(input_list):
 
 def sanitize_library_variable_sets(input_list):
     return sanitize_list(input_list,
-                         "\\*|(Library )?Variable Set [0-9A-Z]|MyVariableSet|Variables|My VariableSet")
+                         "\\*|(Library )?Variable Set [0-9A-Z]|MyVariableSet|Variables|My Variable Set")
 
 
 def sanitize_list(input_list, ignored_re=None):
