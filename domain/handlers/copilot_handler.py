@@ -1,5 +1,4 @@
 import os
-
 from langchain.agents import OpenAIFunctionsAgent
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
@@ -73,8 +72,9 @@ def query_llm(hcl, query, log_query=None):
     chain = prompt | llm
 
     # We'll minify and truncate the HCL to avoid hitting the token limit.
-    truncated_hcl = minify_hcl(hcl)[0:max_chars]
-    percent_truncated = round((len(hcl) - len(truncated_hcl)) / len(hcl) * 100, 2)
+    minified_hcl = minify_hcl(hcl)
+    truncated_hcl = minified_hcl[0:max_chars]
+    percent_truncated = round((len(minified_hcl) - len(truncated_hcl)) / len(minified_hcl) * 100, 2)
 
     if log_query:
         log_query("Context truncation:", str(percent_truncated) + "%")
