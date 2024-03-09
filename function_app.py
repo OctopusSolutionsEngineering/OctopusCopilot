@@ -16,7 +16,7 @@ from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
-from domain.handlers.copilot_handler import handle_copilot_tools_execution, handle_copilot_query
+from domain.handlers.copilot_handler import handle_copilot_tools_execution, handle_copilot_query, query_llm
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
@@ -163,6 +163,73 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to read form HTML", status_code=500)
+
+
+@app.route(route="query_parse", auth_level=func.AuthLevel.ANONYMOUS)
+def query_parse(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    A function handler that parses a query for Octopus entities
+    :param req: The HTTP request
+    :return: The HTML form
+    """
+    try:
+        def answer_general_query(project_names=None, runbook_names=None, target_names=None,
+                                 tenant_names=None, library_variable_sets=None):
+            """Answers a general query or question about the configuration or relationships of a space, projects,
+             runbooks, tenants, variables, feeds, accounts etc.
+
+            Args:
+                space_name: The name of the space relating to the query.
+                project_names: The optional names of one or more projects relating to the query.
+                runbook_names: The optional names of one or more runbooks relating to the query.
+                target_names: The optional names of one or more targets or machines relating to the query.
+                tenant_names: The optional names of one or more tenants relating to the query.
+                library_variable_sets: The optional names of one or more library variable sets relating to the query.
+            """
+            body = {
+                "project_names": project_names,
+                "runbook_names": runbook_names,
+                "target_names": target_names,
+                "tenant_names": tenant_names,
+                "library_variable_sets": library_variable_sets
+            }
+
+            return body
+
+        tools = FunctionDefinitions([
+            FunctionDefinition(answer_general_query),
+        ])
+
+        query = extract_query(req)
+
+        result = handle_copilot_tools_execution(query, lambda: tools, log_query).call_function()
+
+        return func.HttpResponse(json.dumps(result), mimetype="application/json")
+    except Exception as e:
+        handle_error(e)
+        return func.HttpResponse("An exception was raised. See the logs for more details.",
+                                 status_code=500)
+
+
+@app.route(route="submit_query", auth_level=func.AuthLevel.ANONYMOUS)
+def submit_query(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    A function handler that queries the LLM with the supplied context
+    :param req: The HTTP request
+    :return: The HTML form
+    """
+    try:
+        query = extract_query(req)
+        percent_truncated, result = query_llm(req.get_body().decode("utf-8"), query)
+
+        if percent_truncated > 0:
+            result += f"\n\nThe context was truncated by {percent_truncated}% and so may not be accurate"
+
+        return func.HttpResponse(result)
+    except Exception as e:
+        handle_error(e)
+        return func.HttpResponse("An exception was raised. See the logs for more details.",
+                                 status_code=500)
 
 
 @app.route(route="form_handler", auth_level=func.AuthLevel.ANONYMOUS)

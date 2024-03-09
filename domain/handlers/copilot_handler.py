@@ -43,6 +43,10 @@ def handle_copilot_query(query, space_name, project_names, runbook_names, target
                               api_key,
                               octopus_url)
 
+    return query_llm(hcl, query, log_query)
+
+
+def query_llm(hcl, query, log_query=None):
     llm = AzureChatOpenAI(
         temperature=0,
         azure_deployment="OctopusCopilotFunctionCalling2",
