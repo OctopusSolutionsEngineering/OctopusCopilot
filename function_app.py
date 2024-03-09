@@ -190,6 +190,9 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
             feed_names: The names of feeds
             """
 
+            print(environment_names)
+            print(sanitize_environments(environment_names))
+
             # OpenAI will inject values for some of these lists despite the fact that there was no mention
             # of these resources anywhere in the question. We clean up the results before sending them back
             # to the client.

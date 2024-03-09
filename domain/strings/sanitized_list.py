@@ -14,7 +14,7 @@ def sanitize_feeds(input_list):
 
 
 def sanitize_environments(input_list):
-    return sanitize_list(input_list, "\\*|Environment [0-9A-Z]|MyEnvironment|My Environment"),
+    return sanitize_list(input_list, "\\*|Environment [0-9A-Z]|MyEnvironment|My Environment")
 
 
 def sanitize_targets(input_list):
@@ -42,9 +42,12 @@ def sanitize_list(input_list, ignored_re=None):
         else:
             return []
 
+    if not input_list:
+        return []
+
     # Open AI will give you a list with a single asterisk if the list is empty
     return [entry.strip() for entry in input_list if
-            isinstance(entry, str) and entry.strip() and not has_prefix(entry, ignored_re)] if input_list else []
+            isinstance(entry, str) and entry.strip() and not has_prefix(entry, ignored_re)]
 
 
 def has_prefix(entry, ignored_re):

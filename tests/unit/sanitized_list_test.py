@@ -1,6 +1,6 @@
 import unittest
 
-from domain.strings.sanitized_list import sanitize_list
+from domain.strings.sanitized_list import sanitize_list, sanitize_environments
 
 
 class SanitizeList(unittest.TestCase):
@@ -10,9 +10,11 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_list([" ", "  ", "  i "]))
         self.assertFalse(sanitize_list([]))
         self.assertFalse(sanitize_list(None))
+        self.assertEqual(0, len(sanitize_list(None)))
         self.assertFalse(sanitize_list(""))
         self.assertFalse(sanitize_list(" "))
         self.assertFalse(sanitize_list("Machine A", "Machine"))
         self.assertTrue(sanitize_list("hi"))
         self.assertTrue(sanitize_list(["hi"]))
         self.assertFalse(sanitize_list([["hi"]]))
+        self.assertFalse(sanitize_environments(None))
