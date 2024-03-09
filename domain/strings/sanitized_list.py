@@ -9,6 +9,10 @@ def sanitize_tenants(input_list):
     return sanitize_list(input_list, "\\*|Tenant [0-9A-Z]|MyTenant|My Tenant")
 
 
+def sanitize_feeds(input_list):
+    return sanitize_list(input_list, "\\*|Feed [0-9A-Z]|MyFeed|My Feed")
+
+
 def sanitize_environments(input_list):
     return sanitize_list(input_list, "\\*|Environment [0-9A-Z]|MyEnvironment|My Environment"),
 

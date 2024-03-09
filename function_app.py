@@ -21,7 +21,7 @@ from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
 from domain.strings.sanitized_list import sanitize_projects, sanitize_runbooks, sanitize_targets, sanitize_tenants, \
-    sanitize_library_variable_sets, sanitize_environments
+    sanitize_library_variable_sets, sanitize_environments, sanitize_feeds
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response, \
     get_dashboard_response
@@ -176,16 +176,18 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
     """
     try:
         def answer_general_query(project_names=None, runbook_names=None, target_names=None,
-                                 tenant_names=None, library_variable_sets=None, environment_names=None):
+                                 tenant_names=None, library_variable_sets=None, environment_names=None,
+                                 feed_names=None):
             """Answers a general query or question about an Octopus space.
 
             Args:
-            project_names: The names of projects relating to the query.
-            runbook_names: The names of runbooks relating to the query.
-            target_names: The names of targets or machines relating to the query.
-            tenant_names: The names of tenants relating to the query.
-            library_variable_sets: The names of library variable sets relating to the query.
-            environment_names: The names of environments relating to the query.
+            project_names: The names of projects
+            runbook_names: The names of runbooks
+            target_names: The names of targets or machine
+            tenant_names: The names of tenants
+            library_variable_sets: The names of library variable sets
+            environment_names: The names of environments
+            feed_names: The names of feeds
             """
 
             # OpenAI will inject values for some of these lists despite the fact that there was no mention
@@ -198,6 +200,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
                 "tenant_names": sanitize_tenants(tenant_names),
                 "library_variable_sets": sanitize_library_variable_sets(library_variable_sets),
                 "environment_names": sanitize_environments(environment_names),
+                "feed_names": sanitize_feeds(feed_names),
             }
 
             return body
