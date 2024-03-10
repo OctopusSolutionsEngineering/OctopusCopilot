@@ -15,8 +15,8 @@ NO_FUNCTION_RESPONSE = "Sorry, I did not understand that request."
 my_log = configure_logging()
 
 # Each token is roughly four characters for typical English text. OpenAI accepts a max of 16384 tokens.
-# We'll allow 15000 tokens for the HCL to avoid an error.
-max_chars = 15000 * 4
+# We'll allow 13500 tokens for the HCL to avoid an error.
+max_chars = 13500 * 4
 
 
 def handle_copilot_query(query, space_name, project_names, runbook_names, target_names, tenant_names,
