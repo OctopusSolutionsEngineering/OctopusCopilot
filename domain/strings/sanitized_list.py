@@ -18,7 +18,7 @@ def sanitize_accounts(input_list):
 
 
 def sanitize_workerpools(input_list):
-    return sanitize_list(input_list, "\\*|WorkerPool [0-9A-Z]|MyWorkerPool|My WorkerPool")
+    return sanitize_list(input_list, "\\*|Worker\\s*Pool [0-9A-Z]|MyWorkerPool|My Worker\\s*Pool")
 
 
 def sanitize_machinepolicies(input_list):
