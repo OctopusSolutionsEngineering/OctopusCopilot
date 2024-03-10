@@ -22,7 +22,7 @@ from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
 from domain.strings.sanitized_list import sanitize_projects, sanitize_runbooks, sanitize_targets, sanitize_tenants, \
     sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, sanitize_certificates, \
-    sanitize_lifecycles, sanitize_workerpools
+    sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response, \
     get_dashboard_response
@@ -179,7 +179,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
         def answer_general_query(project_names=None, runbook_names=None, target_names=None,
                                  tenant_names=None, library_variable_sets=None, environment_names=None,
                                  feed_names=None, account_names=None, certificate_names=None, lifecycle_names=None,
-                                 workerpool_names=None, machinepolicy_names=None):
+                                 workerpool_names=None, machinepolicy_names=None, tagset_names=None):
             """Answers a general query or question about an Octopus space.
 
             Args:
@@ -195,6 +195,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
             lifecycle_names: The names of lifecycles
             workerpool_names: The names of worker pools
             machinepolicy_names: The names of machine policies
+            tagset_names: The names of tenant tag sets
             """
 
             # OpenAI will inject values for some of these lists despite the fact that there was no mention
@@ -213,6 +214,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
                 "lifecycle_names": sanitize_lifecycles(lifecycle_names),
                 "workerpool_names": sanitize_workerpools(workerpool_names),
                 "machinepolicy_names": sanitize_machinepolicies(machinepolicy_names),
+                "tagset_names": sanitize_tenanttagsets(tagset_names),
             }
 
             return body
