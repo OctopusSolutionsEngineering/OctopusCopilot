@@ -17,6 +17,18 @@ def sanitize_accounts(input_list):
     return sanitize_list(input_list, "\\*|Account [0-9A-Z]|MyAccount|My Account")
 
 
+def sanitize_workerpools(input_list):
+    return sanitize_list(input_list, "\\*|WorkerPool [0-9A-Z]|MyWorkerPool|My WorkerPool")
+
+
+def sanitize_lifecycles(input_list):
+    return sanitize_list(input_list, "\\*|Lifecycle [0-9A-Z]|MyLifecycle|My Lifecycle")
+
+
+def sanitize_certificates(input_list):
+    return sanitize_list(input_list, "\\*|Certificate [0-9A-Z]|MyCertificate|My Certificate")
+
+
 def sanitize_environments(input_list):
     return sanitize_list(input_list, "\\*|Environment [0-9A-Z]|MyEnvironment|My Environment")
 

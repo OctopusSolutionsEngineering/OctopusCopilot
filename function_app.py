@@ -21,7 +21,8 @@ from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
 from domain.strings.sanitized_list import sanitize_projects, sanitize_runbooks, sanitize_targets, sanitize_tenants, \
-    sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts
+    sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, sanitize_certificates, \
+    sanitize_lifecycles, sanitize_workerpools
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response, \
     get_dashboard_response
@@ -177,7 +178,8 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
     try:
         def answer_general_query(project_names=None, runbook_names=None, target_names=None,
                                  tenant_names=None, library_variable_sets=None, environment_names=None,
-                                 feed_names=None, account_names=None, certificate_names=None, lifecycle_names=None):
+                                 feed_names=None, account_names=None, certificate_names=None, lifecycle_names=None,
+                                 workerpool_names=None):
             """Answers a general query or question about an Octopus space.
 
             Args:
@@ -191,10 +193,8 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
             account_names: The names of accounts
             certificate_names: The names of certificates
             lifecycle_names: The names of lifecycles
+            workerpool_names: The names of worker pools
             """
-
-            print(environment_names)
-            print(sanitize_environments(environment_names))
 
             # OpenAI will inject values for some of these lists despite the fact that there was no mention
             # of these resources anywhere in the question. We clean up the results before sending them back
@@ -208,8 +208,9 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
                 "environment_names": sanitize_environments(environment_names),
                 "feed_names": sanitize_feeds(feed_names),
                 "account_names": sanitize_accounts(account_names),
-                "certificate_names": sanitize_accounts(certificate_names),
-                "lifecycle_names": sanitize_accounts(lifecycle_names),
+                "certificate_names": sanitize_certificates(certificate_names),
+                "lifecycle_names": sanitize_lifecycles(lifecycle_names),
+                "workerpool_names": sanitize_workerpools(workerpool_names),
             }
 
             return body
