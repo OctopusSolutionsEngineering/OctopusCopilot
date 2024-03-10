@@ -78,6 +78,9 @@ def query_llm(hcl, query, log_query=None):
     truncated_hcl = minified_hcl[0:max_chars]
     percent_truncated = round((len(minified_hcl) - len(truncated_hcl)) / len(minified_hcl) * 100, 2)
 
+    if percent_truncated > 0:
+        return 0, "Your query was too broad. Please ask a more specific question."
+
     if log_query:
         log_query("Context truncation:", str(percent_truncated) + "%")
 
