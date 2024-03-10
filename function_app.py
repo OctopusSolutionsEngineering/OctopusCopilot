@@ -180,7 +180,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
                                  tenant_names=None, library_variable_sets=None, environment_names=None,
                                  feed_names=None, account_names=None, certificate_names=None, lifecycle_names=None,
                                  workerpool_names=None, machinepolicy_names=None, tagset_names=None):
-            """Answers a general query or question about an Octopus space.
+            """Answers a general query about an Octopus space.
 
             Args:
             project_names: The project names
