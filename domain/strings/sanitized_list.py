@@ -13,6 +13,10 @@ def sanitize_feeds(input_list):
     return sanitize_list(input_list, "\\*|Feed [0-9A-Z]|MyFeed|My Feed")
 
 
+def sanitize_accounts(input_list):
+    return sanitize_list(input_list, "\\*|Account [0-9A-Z]|MyAccount|My Account")
+
+
 def sanitize_environments(input_list):
     return sanitize_list(input_list, "\\*|Environment [0-9A-Z]|MyEnvironment|My Environment")
 
