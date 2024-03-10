@@ -21,6 +21,10 @@ def sanitize_workerpools(input_list):
     return sanitize_list(input_list, "\\*|WorkerPool [0-9A-Z]|MyWorkerPool|My WorkerPool")
 
 
+def sanitize_machinepolicies(input_list):
+    return sanitize_list(input_list, "\\*|Machine\s*Policy [0-9A-Z]|MyMachinePolicy|My Machine\s*Policy")
+
+
 def sanitize_lifecycles(input_list):
     return sanitize_list(input_list, "\\*|Lifecycle [0-9A-Z]|MyLifecycle|My Lifecycle")
 

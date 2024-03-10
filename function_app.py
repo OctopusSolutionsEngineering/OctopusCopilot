@@ -179,7 +179,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
         def answer_general_query(project_names=None, runbook_names=None, target_names=None,
                                  tenant_names=None, library_variable_sets=None, environment_names=None,
                                  feed_names=None, account_names=None, certificate_names=None, lifecycle_names=None,
-                                 workerpool_names=None):
+                                 workerpool_names=None, machinepolicy_names=None):
             """Answers a general query or question about an Octopus space.
 
             Args:
@@ -194,6 +194,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
             certificate_names: The names of certificates
             lifecycle_names: The names of lifecycles
             workerpool_names: The names of worker pools
+            machinepolicy_names: The names of machine policies
             """
 
             # OpenAI will inject values for some of these lists despite the fact that there was no mention
@@ -211,6 +212,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
                 "certificate_names": sanitize_certificates(certificate_names),
                 "lifecycle_names": sanitize_lifecycles(lifecycle_names),
                 "workerpool_names": sanitize_workerpools(workerpool_names),
+                "machinepolicy_names": sanitize_machinepolicies(machinepolicy_names),
             }
 
             return body
