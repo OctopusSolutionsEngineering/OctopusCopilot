@@ -176,45 +176,45 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
     :return: The HTML form
     """
     try:
-        def answer_general_query(project_names=None, runbook_names=None, target_names=None,
-                                 tenant_names=None, library_variable_sets=None, environment_names=None,
-                                 feed_names=None, account_names=None, certificate_names=None, lifecycle_names=None,
-                                 workerpool_names=None, machinepolicy_names=None, tagset_names=None):
+        def answer_general_query(projects=None, runbooks=None, targets=None,
+                                 tenants=None, library_variable_sets=None, environments=None,
+                                 feeds=None, accounts=None, certificates=None, lifecycles=None,
+                                 workerpools=None, machinepolicies=None, tagsets=None):
             """Answers a general query about an Octopus space.
 
             Args:
-            project_names: project names
-            runbook_names: runbook names
-            target_names: target/machine names
-            tenant_names: tenant names
+            projects: project names
+            runbooks: runbook names
+            targets: target/machine names
+            tenants: tenant names
             library_variable_sets: library variable set names
-            environment_names: environment names
-            feed_names: feed names
-            account_names: account names
-            certificate_names: certificate names
-            lifecycle_names: lifecycle names
-            workerpool_names: worker pool names
-            machinepolicy_names: machine policy names
-            tagset_names: tenant tag set names
+            environments: environment names
+            feeds: feed names
+            accounts: account names
+            certificates: certificate names
+            lifecycles: lifecycle names
+            workerpools: worker pool names
+            machinepolicies: machine policy names
+            tagsets: tenant tag set names
             """
 
             # OpenAI will inject values for some of these lists despite the fact that there was no mention
             # of these resources anywhere in the question. We clean up the results before sending them back
             # to the client.
             body = {
-                "project_names": sanitize_projects(project_names),
-                "runbook_names": sanitize_runbooks(runbook_names),
-                "target_names": sanitize_targets(target_names),
-                "tenant_names": sanitize_tenants(tenant_names),
+                "project_names": sanitize_projects(projects),
+                "runbook_names": sanitize_runbooks(runbooks),
+                "target_names": sanitize_targets(targets),
+                "tenant_names": sanitize_tenants(tenants),
                 "library_variable_sets": sanitize_library_variable_sets(library_variable_sets),
-                "environment_names": sanitize_environments(environment_names),
-                "feed_names": sanitize_feeds(feed_names),
-                "account_names": sanitize_accounts(account_names),
-                "certificate_names": sanitize_certificates(certificate_names),
-                "lifecycle_names": sanitize_lifecycles(lifecycle_names),
-                "workerpool_names": sanitize_workerpools(workerpool_names),
-                "machinepolicy_names": sanitize_machinepolicies(machinepolicy_names),
-                "tagset_names": sanitize_tenanttagsets(tagset_names),
+                "environment_names": sanitize_environments(environments),
+                "feed_names": sanitize_feeds(feeds),
+                "account_names": sanitize_accounts(accounts),
+                "certificate_names": sanitize_certificates(certificates),
+                "lifecycle_names": sanitize_lifecycles(lifecycles),
+                "workerpool_names": sanitize_workerpools(workerpools),
+                "machinepolicy_names": sanitize_machinepolicies(machinepolicies),
+                "tagset_names": sanitize_tenanttagsets(tagsets),
             }
 
             return body
