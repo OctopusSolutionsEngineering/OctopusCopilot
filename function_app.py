@@ -177,7 +177,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
     try:
         def answer_general_query(project_names=None, runbook_names=None, target_names=None,
                                  tenant_names=None, library_variable_sets=None, environment_names=None,
-                                 feed_names=None, account_names=None):
+                                 feed_names=None, account_names=None, certificate_names=None):
             """Answers a general query or question about an Octopus space.
 
             Args:
@@ -189,6 +189,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
             environment_names: The names of environments
             feed_names: The names of feeds
             account_names: The names of accounts
+            certificate_names: The names of certificates
             """
 
             print(environment_names)
@@ -206,6 +207,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
                 "environment_names": sanitize_environments(environment_names),
                 "feed_names": sanitize_feeds(feed_names),
                 "account_names": sanitize_accounts(account_names),
+                "certificate_names": sanitize_accounts(certificate_names),
             }
 
             return body
