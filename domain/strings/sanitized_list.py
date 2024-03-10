@@ -22,11 +22,11 @@ def sanitize_workerpools(input_list):
 
 
 def sanitize_machinepolicies(input_list):
-    return sanitize_list(input_list, "\\*|Machine\s*Policy [0-9A-Z]|MyMachinePolicy|My Machine\s*Policy")
+    return sanitize_list(input_list, "\\*|Machine\\s*Policy [0-9A-Z]|MyMachinePolicy|My Machine\\s*Policy")
 
 
 def sanitize_tenanttagsets(input_list):
-    return sanitize_list(input_list, "\\*|Tag\s*Set [0-9A-Z]|MyTagSet|My Tag\s*Set")
+    return sanitize_list(input_list, "\\*|Tag\\s*Set [0-9A-Z]|MyTagSet|My Tag\\s*Set")
 
 
 def sanitize_lifecycles(input_list):
