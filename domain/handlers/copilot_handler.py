@@ -1,4 +1,5 @@
 import os
+
 from langchain.agents import OpenAIFunctionsAgent
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
@@ -64,7 +65,8 @@ def query_llm(hcl, query, log_query=None):
          + "Variables are referenced using the syntax #{{Variable Name}}, $OctopusParameters[\"Variable Name\"], "
          + "Octopus.Parameters[\"Variable Name\"], get_octopusvariable \"Variable Name\", "
          + "or get_octopusvariable(\"Variable Name\"). "
-         + "The values of secret variables are not included in the Terraform configuration."),
+         + "The values of secret variables are not defined in the Terraform configuration. "
+         + "Do not mention the fact that the values of secret variables are not defined."),
         ("user", "Given the following Terraform configuration:\n{hcl}"),
         ("user", "{input}")
     ])
