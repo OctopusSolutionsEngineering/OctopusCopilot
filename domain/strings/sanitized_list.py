@@ -29,6 +29,10 @@ def sanitize_tenanttagsets(input_list):
     return sanitize_list(input_list, "\\*|Tag\\s*Set [0-9A-Z]|MyTagSet|My Tag\\s*Set")
 
 
+def sanitize_projectgroups(input_list):
+    return sanitize_list(input_list, "\\*|Project\\s*Group [0-9A-Z]|MyProjectGroup|My Project\\s*Group")
+
+
 def sanitize_lifecycles(input_list):
     return sanitize_list(input_list, "\\*|Lifecycle [0-9A-Z]|MyLifecycle|My Lifecycle")
 

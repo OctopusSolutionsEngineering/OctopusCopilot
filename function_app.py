@@ -22,7 +22,7 @@ from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
 from domain.strings.sanitized_list import sanitize_projects, sanitize_runbooks, sanitize_targets, sanitize_tenants, \
     sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, sanitize_certificates, \
-    sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets
+    sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, sanitize_projectgroups
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response, \
     get_dashboard_response
@@ -179,7 +179,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
         def answer_general_query(projects=None, runbooks=None, targets=None,
                                  tenants=None, library_variable_sets=None, environments=None,
                                  feeds=None, accounts=None, certificates=None, lifecycles=None,
-                                 workerpools=None, machinepolicies=None, tagsets=None):
+                                 workerpools=None, machinepolicies=None, tagsets=None, projectgroups=None):
             """Answers a general query about an Octopus space.
 
             Args:
@@ -196,6 +196,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
             workerpools: worker pool names
             machinepolicies: machine policy names
             tagsets: tenant tag set names
+            projectgroups: project group names
             """
 
             # OpenAI will inject values for some of these lists despite the fact that there was no mention
@@ -215,6 +216,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
                 "workerpool_names": sanitize_workerpools(workerpools),
                 "machinepolicy_names": sanitize_machinepolicies(machinepolicies),
                 "tagset_names": sanitize_tenanttagsets(tagsets),
+                "projectgroup_names": sanitize_projectgroups(projectgroups),
             }
 
             return body
