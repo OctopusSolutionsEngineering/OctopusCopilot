@@ -184,12 +184,12 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
 
             Args:
             project_names: The project names
-            runbook_names: The runbooks names
-            target_names: The target or machine names
+            runbook_names: The runbook names
+            target_names: The target/machine names
             tenant_names: The tenant names
             library_variable_sets: The library variable set names
             environment_names: The environment names
-            feed_names: The feeds names
+            feed_names: The feed names
             account_names: The account names
             certificate_names: The certificate names
             lifecycle_names: The lifecycle names
