@@ -46,7 +46,7 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
     exclude_runbooks = True if not sanitized_runbook_names and "runbook" not in query.lower() else False
     exclude_tenants = True if not sanitized_tenant_names and "tenant" not in query.lower() else False
     exclude_projects = True if not sanitized_project_names and "project" not in query.lower() else False
-    exclude_library_variable_sets = True if not sanitized_library_variable_sets and "library" not in query.lower() else False
+    exclude_library_variable_sets = True if not sanitized_library_variable_sets and "library variable set" not in query.lower() else False
 
     body = {
         "space": space_id,
@@ -65,7 +65,9 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
         # This setting ensures that any project, tenant, runbook, or target names are valid.
         # If not, the assumption is made that the LLM incorrectly identified the resource in the query,
         # and the results must not be limited by that incorrect assumption.
-        "ignoreInvalidExcludeExcept": True
+        "ignoreInvalidExcludeExcept": True,
+        "excludeTerraformVariables": True,
+        "excludeSpaceCreation": True,
     }
 
     resp = handle_response(lambda: http.request("POST",
