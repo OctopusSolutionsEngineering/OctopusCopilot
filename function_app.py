@@ -183,19 +183,19 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
             """Answers a general query or question about an Octopus space.
 
             Args:
-            project_names: The names of projects
-            runbook_names: The names of runbooks
-            target_names: The names of targets or machine
-            tenant_names: The names of tenants
-            library_variable_sets: The names of library variable sets
-            environment_names: The names of environments
-            feed_names: The names of feeds
-            account_names: The names of accounts
-            certificate_names: The names of certificates
-            lifecycle_names: The names of lifecycles
-            workerpool_names: The names of worker pools
-            machinepolicy_names: The names of machine policies
-            tagset_names: The names of tenant tag sets
+            project_names: The project names
+            runbook_names: The runbooks names
+            target_names: The target or machine names
+            tenant_names: The tenant names
+            library_variable_sets: The library variable set names
+            environment_names: The environment names
+            feed_names: The feeds names
+            account_names: The account names
+            certificate_names: The certificate names
+            lifecycle_names: The lifecycle names
+            workerpool_names: The worker pool names
+            machinepolicy_names: The machine policy names
+            tagset_names: The tenant tag set names
             """
 
             # OpenAI will inject values for some of these lists despite the fact that there was no mention
