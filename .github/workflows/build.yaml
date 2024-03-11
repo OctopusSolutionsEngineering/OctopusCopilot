@@ -76,6 +76,7 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_ENDPOINT: ${{ secrets.OPENAI_ENDPOINT }}
+          OPENAI_API_DEPLOYMENT: ${{ secrets.OPENAI_API_DEPLOYMENT }}
           LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         shell: bash
