@@ -76,7 +76,8 @@ def query_llm(hcl, query, log_query=None):
     # We'll minify and truncate the HCL to avoid hitting the token limit.
     minified_hcl = minify_hcl(hcl)
     truncated_hcl = minified_hcl[0:max_chars]
-    percent_truncated = round((len(minified_hcl) - len(truncated_hcl)) / len(minified_hcl) * 100, 2)
+    percent_truncated = round((len(minified_hcl) - len(truncated_hcl)) / len(minified_hcl) * 100, 2) if len(
+        minified_hcl) != 0 else 0
 
     if percent_truncated > 0:
         return 0, "Your query was too broad. Please ask a more specific question."
