@@ -49,10 +49,10 @@ def handle_copilot_query(query, space_name, project_names, runbook_names, target
 def query_llm(hcl, query, log_query=None):
     llm = AzureChatOpenAI(
         temperature=0,
-        azure_deployment="OctopusCopilotFunctionCalling2",
+        azure_deployment=os.environ["OPENAI_API_DEPLOYMENT"],
         openai_api_key=os.environ["OPENAI_API_KEY"],
         azure_endpoint=os.environ["OPENAI_ENDPOINT"],
-        api_version="2023-12-01-preview",
+        api_version="2024-03-01-preview",
     )
 
     prompt = ChatPromptTemplate.from_messages([
