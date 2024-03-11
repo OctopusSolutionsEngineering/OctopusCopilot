@@ -114,7 +114,7 @@ def handle_copilot_tools_execution(query, llm_tools, log_query=None):
                                        azure_deployment=os.environ["OPENAI_API_DEPLOYMENT"],
                                        openai_api_key=os.environ["OPENAI_API_KEY"],
                                        azure_endpoint=os.environ["OPENAI_ENDPOINT"],
-                                       api_version="2023-12-01-preview"),
+                                       api_version="2024-03-01-preview"),
         tools=tools,
     )
 
