@@ -26,6 +26,7 @@ def handle_copilot_query(query, space_name, project_names, runbook_names, target
     ensure_string_not_empty(space_name, 'space_name must be a non-empty string (handle_copilot_query).')
 
     if log_query:
+        log_query("handle_copilot_query", "-----------------------------")
         log_query("Query:", query)
         log_query("Space Name:", space_name)
         log_query("Project Names:", project_names)
@@ -43,8 +44,6 @@ def handle_copilot_query(query, space_name, project_names, runbook_names, target
                               library_variable_sets,
                               api_key,
                               octopus_url)
-    if log_query:
-        log_query("HCL:", hcl)
 
     return query_llm(hcl, query, log_query, step_by_step)
 
@@ -99,10 +98,16 @@ def query_llm(hcl, query, log_query=None, step_by_step=False):
     if percent_truncated > 0:
         return 0, "Your query was too broad. Please ask a more specific question."
 
-    if log_query:
-        log_query("Context truncation:", str(percent_truncated) + "%")
+    response = chain.invoke({"input": query, "hcl": truncated_hcl}).content
 
-    return percent_truncated, chain.invoke({"input": query, "hcl": truncated_hcl}).content
+    if log_query:
+        log_query("query_llm", "----------------------------------------")
+        log_query("HCL:", hcl)
+        log_query("Query:", query)
+        log_query("Context truncation:", str(percent_truncated) + "%")
+        log_query("Response:", response)
+
+    return percent_truncated, response
 
 
 def handle_copilot_tools_execution(query, llm_tools, log_query=None):
