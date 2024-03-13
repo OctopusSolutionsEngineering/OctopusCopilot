@@ -11,7 +11,7 @@ def answer_general_query_callback(callback):
                              feeds=None, accounts=None, certificates=None, lifecycles=None,
                              workerpools=None, machinepolicies=None, tagsets=None, projectgroups=None):
         """Answers a general query about an Octopus space.
-    
+
         Args:
         space: Space name
         projects: project names
