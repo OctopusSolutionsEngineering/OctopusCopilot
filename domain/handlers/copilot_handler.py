@@ -97,7 +97,9 @@ def build_hcl_and_json_prompt(step_by_step=False):
 
 
 def collect_llm_context(query, space_name, project_names, runbook_names, target_names, tenant_names,
-                        library_variable_sets, api_key,
+                        library_variable_sets, environment_names, feed_names, account_names, certificate_names,
+                        lifecycle_names, workerpool_names, machinepolicy_names, tagset_names, projectgroup_names,
+                        api_key,
                         octopus_url, log_query, step_by_step=False):
     """
     We need to source context for the LLM from multiple locations. "Static" resources are defined using Terraform,
@@ -132,6 +134,14 @@ def collect_llm_context(query, space_name, project_names, runbook_names, target_
         log_query("Target Names:", target_names)
         log_query("Tenant Names:", tenant_names)
         log_query("Library Variable Set Names:", library_variable_sets)
+        log_query("Environment Names:", environment_names)
+        log_query("Feed Names:", feed_names)
+        log_query("Account Names:", account_names)
+        log_query("Certificate Names:", certificate_names)
+        log_query("Worker Pool Names:", workerpool_names)
+        log_query("Machine Policy Names:", machinepolicy_names)
+        log_query("Tag Set Names:", tagset_names)
+        log_query("Project Group Names:", projectgroup_names)
 
     # This context provides details about resources like projects, environments, feeds, accounts, certificates, etc.
     hcl = get_octoterra_space(query,
@@ -141,6 +151,15 @@ def collect_llm_context(query, space_name, project_names, runbook_names, target_
                               target_names,
                               tenant_names,
                               library_variable_sets,
+                              environment_names,
+                              feed_names,
+                              account_names,
+                              certificate_names,
+                              lifecycle_names,
+                              workerpool_names,
+                              machinepolicy_names,
+                              tagset_names,
+                              projectgroup_names,
                               api_key,
                               octopus_url)
 
