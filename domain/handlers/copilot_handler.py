@@ -204,9 +204,9 @@ def query_llm(message_prompt, context, log_query=None):
 
     if percent_truncated > 0:
         log_query("query_llm", "----------------------------------------")
-        log_query("HCL:", context["hcl"])
-        log_query("JSON:", context["json"])
-        log_query("Query:", context["input"])
+        log_query("HCL:", context.get("hcl"))
+        log_query("JSON:", context.get("json"))
+        log_query("Query:", context.get("input"))
         log_query("Context truncation:", str(percent_truncated) + "%")
         return "Your query was too broad. Please ask a more specific question."
 
@@ -216,9 +216,9 @@ def query_llm(message_prompt, context, log_query=None):
 
     if log_query:
         log_query("query_llm", "----------------------------------------")
-        log_query("HCL:", context["hcl"])
-        log_query("JSON:", context["json"])
-        log_query("Query:", context["input"])
+        log_query("HCL:", context.get("hcl"))
+        log_query("JSON:", context.get("json"))
+        log_query("Query:", context.get("input"))
         log_query("Response:", response)
 
     return response
