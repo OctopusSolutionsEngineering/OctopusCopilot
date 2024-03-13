@@ -16,7 +16,7 @@ def answer_project_variables_usage_callback(query, callback):
     example. We then embed the original query, passed into this function, into the enhanced query.
     """
 
-    def answer_project_variables_usage(space=None, projects=None, variables=None):
+    def answer_project_variables_usage(space=None, projects=None, **kwargs):
         """Answers a question where variables are used in a project or if they are unused.
 
         Args:
