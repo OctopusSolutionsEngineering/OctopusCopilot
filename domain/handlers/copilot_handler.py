@@ -7,8 +7,10 @@ from langchain_openai import AzureChatOpenAI
 from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
 from domain.logging.app_logging import configure_logging
 from domain.strings.minify_hcl import minify_hcl
+from domain.tools.detect_data_source import get_data_source, DataSource
 from domain.tools.function_call import FunctionCall
 from domain.validation.argument_validation import ensure_string_not_empty, ensure_not_falsy
+from infrastructure.octopus import get_project_progression, get_dashboard
 from infrastructure.octoterra import get_octoterra_space
 
 NO_FUNCTION_RESPONSE = "Sorry, I did not understand that request."
@@ -56,6 +58,43 @@ def build_hcl_prompt(step_by_step=False):
     return messages
 
 
+def build_hcl_and_json_prompt(step_by_step=False):
+    """
+    Build a message prompt for the LLM that instructs it to parse the Octopus HCL context.
+    :param step_by_step: True if the LLM should display its reasoning step by step before the answer. False for concise answers.
+    :return: The messages to pass to the llm.
+    """
+    messages = [
+        ("system",
+         "You understand Terraform modules and JSON blobs defining Octopus Deploy resources."
+         + "You must assume the Terraform is an accurate representation of the live project. "
+         + "Do not mention Terraform in the response. Do not show any Terraform snippets in the response. "
+         + "Do not mention that you referenced the Terraform to provide your answer. "
+         + "You must assume questions about variables refer to Octopus variables. "
+         + "Variables are referenced using the syntax #{{Variable Name}}, $OctopusParameters[\"Variable Name\"], "
+         + "Octopus.Parameters[\"Variable Name\"], get_octopusvariable \"Variable Name\", "
+         + "or get_octopusvariable(\"Variable Name\"). "
+         + "The values of secret variables are not defined in the Terraform configuration. "
+         + "Do not mention the fact that the values of secret variables are not defined."),
+        ("user", "{input}"),
+        ("user", "Answer the question using the HCL and JSON below."),
+        # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
+        # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
+        ("user", "HCL and JSON: ###\n{context}\n###")]
+
+    # This message instructs the LLM to display its reasoning step by step before the answer. It can be a useful
+    # debugging tool. It doesn't always work though, but you can rerun the query and try again.
+    if step_by_step:
+        messages.insert(0, ("system", "You are a verbose and helpful agent."))
+        messages.append(("user", "Let's think step by step."))
+    else:
+        messages.insert(0, (
+            "system",
+            "You are a concise and helpful agent. Respond only with the answer to the question."))
+
+    return messages
+
+
 def handle_configuration_query(query, space_name, project_names, runbook_names, target_names, tenant_names,
                                library_variable_sets, api_key,
                                octopus_url, log_query, step_by_step=False):
@@ -72,6 +111,7 @@ def handle_configuration_query(query, space_name, project_names, runbook_names, 
         log_query("Tenant Names:", tenant_names)
         log_query("Library Variable Set Names:", library_variable_sets)
 
+    # This context provides details about resources like projects, environments, feeds, accounts, certificates, etc.
     hcl = get_octoterra_space(query,
                               space_name,
                               project_names,
@@ -82,7 +122,22 @@ def handle_configuration_query(query, space_name, project_names, runbook_names, 
                               api_key,
                               octopus_url)
 
-    return query_llm(build_hcl_prompt(step_by_step), hcl, query, log_query)
+    # The HCL does not have any representation for deployments and releases. So we add JSON returned from the
+    # server to expose this information.
+    data_source = get_data_source(query, project_names)
+
+    json = ""
+    if data_source == DataSource.PROJECT_PROGRESSION:
+        messages = build_hcl_and_json_prompt(step_by_step)
+        for project in project_names:
+            json += get_project_progression(space_name, project, api_key, octopus_url) + "\n"
+    elif data_source == DataSource.DASHBOARD_PROGRESSION:
+        messages = build_hcl_and_json_prompt(step_by_step)
+        json = get_dashboard(space_name, api_key, octopus_url)
+    else:
+        messages = build_hcl_prompt(step_by_step)
+
+    return query_llm(messages, hcl + "\n" + json, query, log_query)
 
 
 def query_llm(message_prompt, context, query, log_query=None):

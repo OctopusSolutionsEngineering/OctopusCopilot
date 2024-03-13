@@ -69,19 +69,17 @@ def get_deployment_process_raw_json_cli(space_name: None, project_name: None):
 def general_query_handler(body):
     space = get_default_argument(body['space_name'], 'Space')
 
-    chat_response = handle_configuration_query(parser.query,
-                                               space,
-                                               body['project_names'],
-                                               body['runbook_names'],
-                                               body['target_names'],
-                                               body['tenant_names'],
-                                               body['library_variable_sets'],
-                                               get_api_key(),
-                                               get_octopus_api(),
-                                               logging,
-                                               False)
-
-    return chat_response
+    return handle_configuration_query(parser.query,
+                                      space,
+                                      body['project_names'],
+                                      body['runbook_names'],
+                                      body['target_names'],
+                                      body['tenant_names'],
+                                      body['library_variable_sets'],
+                                      get_api_key(),
+                                      get_octopus_api(),
+                                      logging,
+                                      False)
 
 
 def variable_query_handler(space, projects, body):
