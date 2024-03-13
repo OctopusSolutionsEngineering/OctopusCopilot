@@ -60,7 +60,7 @@ def query_llm(hcl, query, log_query=None, step_by_step=False):
 
     messages = [
         ("system",
-         "You are a concise, professional agent who understands Terraform modules defining Octopus Deploy resources. "
+         "You understand Terraform modules defining Octopus Deploy resources."
          + "You must assume the Terraform is an accurate representation of the live project. "
          + "Do not mention Terraform in the response. Do not show any Terraform snippets in the response. "
          + "Do not mention that you referenced the Terraform to provide your answer. "
@@ -79,7 +79,12 @@ def query_llm(hcl, query, log_query=None, step_by_step=False):
     # This message instructs the LLM to display its reasoning step by step before the answer. It can be a useful
     # debugging tool. It doesn't always work though, but you can rerun the query and try again.
     if step_by_step:
+        messages.insert(0, ("system", "You are a verbose and helpful agent."))
         messages.append(("user", "Let's think step by step."))
+    else:
+        messages.insert(0, (
+            "system",
+            "You are a concise and helpful agent. Respond only with the answer to the question."))
 
     prompt = ChatPromptTemplate.from_messages(messages)
 
