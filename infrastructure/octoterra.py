@@ -87,7 +87,7 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
         "excludeTagSetsExcept": sanitized_tagsets if sanitized_tagsets else None,
         "excludeProjectGroupsExcept": exclude_projectgroups if sanitized_tagsets else None,
         "excludeAllProjects": exclude_projects,
-        "excludeAllTenant": exclude_tenants,
+        "excludeAllTenants": exclude_tenants,
         "excludeAllTargets": exclude_targets,
         "excludeAllRunbooks": exclude_runbooks,
         "excludeAllFeeds": exclude_feeds,
