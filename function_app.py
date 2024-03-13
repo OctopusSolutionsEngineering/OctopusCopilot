@@ -215,7 +215,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             """
             return llm_message_query(build_hcl_prompt(), {"context": req.get_body().decode("utf-8"), "input": query})
 
-        def generic_callback(space, projects, new_query):
+        def generic_callback(space, projects, original_query, new_query):
             """
             A function that passes the updated query through to the LLM
             """
