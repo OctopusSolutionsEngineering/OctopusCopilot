@@ -125,9 +125,6 @@ def handle_copilot_tools_execution(query, llm_tools, log_query=None):
     ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_tools_execution).')
     ensure_not_falsy(query, 'llm_tools must not be None (handle_copilot_tools_execution).')
 
-    if log_query:
-        log_query("Query:", query)
-
     functions = llm_tools()
     tools = functions.get_tools()
 
