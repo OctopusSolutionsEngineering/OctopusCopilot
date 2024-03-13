@@ -96,6 +96,10 @@ def query_llm(hcl, query, log_query=None, step_by_step=False):
         minified_hcl) != 0 else 0
 
     if percent_truncated > 0:
+        log_query("query_llm", "----------------------------------------")
+        log_query("HCL:", hcl)
+        log_query("Query:", query)
+        log_query("Context truncation:", str(percent_truncated) + "%")
         return 0, "Your query was too broad. Please ask a more specific question."
 
     response = chain.invoke({"input": query, "hcl": truncated_hcl}).content
@@ -104,7 +108,6 @@ def query_llm(hcl, query, log_query=None, step_by_step=False):
         log_query("query_llm", "----------------------------------------")
         log_query("HCL:", hcl)
         log_query("Query:", query)
-        log_query("Context truncation:", str(percent_truncated) + "%")
         log_query("Response:", response)
 
     return percent_truncated, response
