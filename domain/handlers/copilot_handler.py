@@ -53,8 +53,7 @@ def build_hcl_prompt(step_by_step=False):
         messages.append(("user", "Let's think step by step."))
     else:
         messages.insert(0, (
-            "system",
-            "You are a concise and helpful agent."))
+            "system", "You are a concise and helpful agent."))
 
     return messages
 
@@ -87,7 +86,7 @@ def build_hcl_and_json_prompt(step_by_step=False):
     # debugging tool. It doesn't always work though, but you can rerun the query and try again.
     if step_by_step:
         messages.insert(0, ("system", "You are a verbose and helpful agent."))
-        messages.append(("user", "Let's think step by step."))
+        # messages.append(("user", "Let's think step by step."))
     else:
         messages.insert(0, (
             "system",

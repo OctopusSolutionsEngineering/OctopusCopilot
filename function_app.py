@@ -24,6 +24,7 @@ from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
 from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_callback
+from domain.tools.releases_and_deployments import answer_releases_and_deployments_callback
 from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response, \
     get_dashboard_response
 from domain.transformers.sse_transformers import convert_to_sse_response
@@ -214,7 +215,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             """
             return llm_message_query(build_hcl_prompt(), {"context": req.get_body().decode("utf-8"), "input": query})
 
-        def variable_query_handler(space, projects, new_query):
+        def generic_callback(space, projects, new_query):
             """
             A function that passes the updated query through to the LLM
             """
@@ -224,8 +225,9 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
         def get_tools():
             return FunctionDefinitions([
                 FunctionDefinition(general_query_handler),
-                FunctionDefinition(answer_project_variables_callback(query, variable_query_handler)),
-                FunctionDefinition(answer_project_variables_usage_callback(query, variable_query_handler))
+                FunctionDefinition(answer_project_variables_callback(query, generic_callback)),
+                FunctionDefinition(answer_project_variables_usage_callback(query, generic_callback)),
+                FunctionDefinition(answer_releases_and_deployments_callback(query, generic_callback))
             ])
 
         # Call the appropriate tool. This may be a straight pass through of the query and context,

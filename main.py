@@ -6,6 +6,7 @@ from domain.strings.sanitized_list import sanitize_list
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
 from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_callback
+from domain.tools.releases_and_deployments import answer_releases_and_deployments_callback
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process
 
@@ -120,6 +121,34 @@ def variable_query_handler(space, projects, original_query, enriched_query):
     return chat_response
 
 
+def releases_query_handler(space, projects, environments, original_query, enriched_query):
+    space = get_default_argument(space, 'Space')
+
+    chat_response = collect_llm_context(original_query,
+                                        enriched_query,
+                                        space,
+                                        projects,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        environments,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        get_api_key(),
+                                        get_octopus_api(),
+                                        logging,
+                                        False)
+
+    return chat_response
+
+
 def get_default_argument(argument, default_name):
     if argument:
         return argument
@@ -142,7 +171,8 @@ def build_tools():
     return FunctionDefinitions([
         FunctionDefinition(answer_general_query_callback(general_query_handler), AnswerGeneralQuery),
         FunctionDefinition(answer_project_variables_callback(parser.query, variable_query_handler)),
-        FunctionDefinition(answer_project_variables_usage_callback(parser.query, variable_query_handler))
+        FunctionDefinition(answer_project_variables_usage_callback(parser.query, variable_query_handler)),
+        FunctionDefinition(answer_releases_and_deployments_callback(parser.query, releases_query_handler))
     ])
 
 
