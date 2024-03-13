@@ -40,8 +40,8 @@ jobs:
       - name: Linting
         shell: bash
         run: |
-          sudo apt-get install -y pep8
-          find . -path ./venv -prune -o -name "*.py" -print0 | xargs -0 -n1 pep8 --ignore=E501,W503
+          sudo apt-get install -y pycodestyle
+          find . -path ./venv -prune -o -name "*.py" -print0 | xargs -0 -n1 pycodestyle --ignore=E501,W503
       - name: Complexity
         shell: bash
         run: |

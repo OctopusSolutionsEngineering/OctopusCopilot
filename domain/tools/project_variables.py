@@ -97,7 +97,7 @@ resource "octopusdeploy_variable" "secret_variable" {{
   type = "Sensitive"
   sensitive_value = "I am a secret"
   is_sensitive = true
-}}      
+}}
 resource "octopusdeploy_variable" "secondprojectvariable" {{
   owner_id     = "${{octopusdeploy_project.another_project.id}}"
   value        = "hi there"
