@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from domain.handlers.copilot_handler import handle_copilot_tools_execution, collect_llm_context
+from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context
 from domain.strings.sanitized_list import sanitize_list
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
@@ -145,8 +145,8 @@ def build_tools():
 
 
 try:
-    result = handle_copilot_tools_execution(parser.query, build_tools,
-                                            lambda x, y: print(x + " " + ",".join(sanitize_list(y)))).call_function()
+    result = llm_tool_query(parser.query, build_tools,
+                            lambda x, y: print(x + " " + ",".join(sanitize_list(y)))).call_function()
     print(result)
 except Exception as e:
     print(e)

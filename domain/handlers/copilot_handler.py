@@ -179,10 +179,10 @@ def collect_llm_context(query, space_name, project_names, runbook_names, target_
     else:
         messages = build_hcl_prompt(step_by_step)
 
-    return query_llm(messages, context, log_query)
+    return llm_message_query(messages, context, log_query)
 
 
-def query_llm(message_prompt, context, log_query=None):
+def llm_message_query(message_prompt, context, log_query=None):
     llm = AzureChatOpenAI(
         temperature=0,
         azure_deployment=os.environ["OPENAI_API_DEPLOYMENT"],
@@ -221,7 +221,7 @@ def query_llm(message_prompt, context, log_query=None):
     return response
 
 
-def handle_copilot_tools_execution(query, llm_tools, log_query=None):
+def llm_tool_query(query, llm_tools, log_query=None):
     """
     This is the handler that responds to a chat request.
     :param log_query: The function used to log the query

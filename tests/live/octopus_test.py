@@ -13,7 +13,7 @@ from testcontainers.core.waiting_utils import wait_for_logs
 
 from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
-from domain.handlers.copilot_handler import handle_copilot_tools_execution
+from domain.handlers.copilot_handler import llm_tool_query
 from domain.logging.app_logging import configure_logging
 from domain.transformers.chat_responses import get_deployment_status_base_response, get_octopus_project_names_response
 from tests.infrastructure.tools.build_test_tools import build_live_test_tools
@@ -78,8 +78,8 @@ class LiveRequests(unittest.TestCase):
         Tests that we can get a list of projects from Octopus
         """
 
-        function = handle_copilot_tools_execution("What are the projects associated with space " + space + "?",
-                                                  build_live_test_tools)
+        function = llm_tool_query("What are the projects associated with space " + space + "?",
+                                  build_live_test_tools)
 
         self.assertEqual(function.function.__name__, "get_octopus_project_names")
         self.assertEqual(function.function_args["space_name"], space)
@@ -97,7 +97,7 @@ class LiveRequests(unittest.TestCase):
         Tests that we can create a temporary API key
         """
 
-        function = handle_copilot_tools_execution(
+        function = llm_tool_query(
             "Create a temporary API key from the API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
             build_live_test_tools)
 
@@ -113,7 +113,7 @@ class LiveRequests(unittest.TestCase):
         Tests that we catch bad credentails
         """
 
-        function = handle_copilot_tools_execution(
+        function = llm_tool_query(
             "Get the details of the current user with API Key API-XXXXXXXXXXXXXXXXXXXXXX and URL http://localhost:8080",
             build_live_test_tools)
 
@@ -135,7 +135,7 @@ class LiveRequests(unittest.TestCase):
 
         create_and_deploy_release(space_name="Simple")
 
-        function = handle_copilot_tools_execution(
+        function = llm_tool_query(
             "Return the status of the latest deployment to the space Simple, environment Development, "
             + "and project Project1 with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
             build_live_test_tools)
@@ -158,7 +158,7 @@ class LiveRequests(unittest.TestCase):
         Tests that we fail appropriately when the environment does not exist
         """
 
-        function = handle_copilot_tools_execution(
+        function = llm_tool_query(
             "Return the status of the latest deployment to the space called 'Simple', environment UAT2, "
             + "and project Project1 with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
             build_live_test_tools)
@@ -176,7 +176,7 @@ class LiveRequests(unittest.TestCase):
         Tests that we fail appropriately in an empty space
         """
 
-        function = handle_copilot_tools_execution(
+        function = llm_tool_query(
             "Return the status of the latest deployment to the space called 'Empty Space', environment Development, "
             + "and project Project1 with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
             build_live_test_tools)
@@ -195,7 +195,7 @@ class LiveRequests(unittest.TestCase):
 
         create_and_deploy_release(space_name="Simple")
 
-        function = handle_copilot_tools_execution(
+        function = llm_tool_query(
             "Return the status of the latest deployment with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
             build_live_test_tools)
 
@@ -222,7 +222,7 @@ class LiveRequests(unittest.TestCase):
 
         create_and_deploy_release(space_name="Simple")
 
-        function = handle_copilot_tools_execution(
+        function = llm_tool_query(
             "Get the dashboard from space Simple with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
             build_live_test_tools)
 

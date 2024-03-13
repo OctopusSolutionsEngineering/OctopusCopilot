@@ -2,7 +2,7 @@ import unittest
 
 from parameterized import parameterized
 
-from domain.handlers.copilot_handler import handle_copilot_tools_execution
+from domain.handlers.copilot_handler import llm_tool_query
 from tests.infrastructure.tools.build_test_tools import build_mock_test_tools
 
 
@@ -26,7 +26,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm can find the appropriate mock function and arguments
         """
 
-        function = handle_copilot_tools_execution(query, build_mock_test_tools)
+        function = llm_tool_query(query, build_mock_test_tools)
 
         self.assertEqual(function.function.__name__, "get_mock_octopus_projects")
         self.assertEqual(function.function_args["space_name"], "MySpace")
@@ -40,8 +40,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm can find the appropriate mock function and arguments
         """
 
-        function = handle_copilot_tools_execution("List the projects saved under the space called \"\".",
-                                                  build_mock_test_tools)
+        function = llm_tool_query("List the projects saved under the space called \"\".",
+                                  build_mock_test_tools)
 
         self.assertEqual(function.function.__name__, "get_mock_octopus_projects")
         self.assertEqual(function.function_args["space_name"], "")
@@ -57,7 +57,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm responds appropriately when no function is a match
         """
 
-        function = handle_copilot_tools_execution("What is the size of the earth?", build_mock_test_tools)
+        function = llm_tool_query("What is the size of the earth?", build_mock_test_tools)
 
         self.assertTrue(function.call_function().index("Sorry, I did not understand that request.") != -1)
 

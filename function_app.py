@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
+import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
-import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
 from domain.defaults.defaults import get_default_argument
@@ -16,7 +16,7 @@ from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
-from domain.handlers.copilot_handler import handle_copilot_tools_execution, collect_llm_context, query_llm, \
+from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context, llm_message_query, \
     build_hcl_prompt
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
@@ -182,7 +182,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
 
         query = extract_query(req)
 
-        result = handle_copilot_tools_execution(query, lambda: tools, log_query).call_function()
+        result = llm_tool_query(query, lambda: tools, log_query).call_function()
 
         return func.HttpResponse(json.dumps(result), mimetype="application/json")
     except Exception as e:
@@ -212,13 +212,14 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             """
             Answers a general query about an Octopus space
             """
-            return query_llm(build_hcl_prompt(), {"context": req.get_body().decode("utf-8"), "input": query})
+            return llm_message_query(build_hcl_prompt(), {"context": req.get_body().decode("utf-8"), "input": query})
 
         def variable_query_handler(space, projects, new_query):
             """
             A function that passes the updated query through to the LLM
             """
-            return query_llm(build_hcl_prompt(), {"context": req.get_body().decode("utf-8"), "input": new_query})
+            return llm_message_query(build_hcl_prompt(),
+                                     {"context": req.get_body().decode("utf-8"), "input": new_query})
 
         def get_tools():
             return FunctionDefinitions([
@@ -229,7 +230,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
         # Call the appropriate tool. This may be a straight pass through of the query and context,
         # or may update the query with additional examples.
-        result = handle_copilot_tools_execution(query, get_tools, log_query).call_function()
+        result = llm_tool_query(query, get_tools, log_query).call_function()
 
         return func.HttpResponse(result)
     except Exception as e:
@@ -489,7 +490,7 @@ Once default values are set, you can omit the space, environment, and project fr
                 convert_to_sse_response("Ask a question like \"Show me the projects in the space called Default\""),
                 headers=get_sse_headers())
 
-        result = handle_copilot_tools_execution(query, build_form_tools, log_query).call_function()
+        result = llm_tool_query(query, build_form_tools, log_query).call_function()
 
         return func.HttpResponse(convert_to_sse_response(result), headers=get_sse_headers())
 
