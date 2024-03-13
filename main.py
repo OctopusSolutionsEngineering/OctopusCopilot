@@ -70,6 +70,7 @@ def general_query_handler(body):
     space = get_default_argument(body['space_name'], 'Space')
 
     return collect_llm_context(parser.query,
+                               parser.query,
                                space,
                                body['project_names'],
                                body['runbook_names'],
@@ -91,10 +92,11 @@ def general_query_handler(body):
                                False)
 
 
-def variable_query_handler(space, projects, body):
+def variable_query_handler(space, projects, original_query, enriched_query):
     space = get_default_argument(space, 'Space')
 
-    chat_response = collect_llm_context(body,
+    chat_response = collect_llm_context(original_query,
+                                        enriched_query,
                                         space,
                                         projects,
                                         None,
@@ -113,7 +115,7 @@ def variable_query_handler(space, projects, body):
                                         get_api_key(),
                                         get_octopus_api(),
                                         logging,
-                                        False)
+                                        True)
 
     return chat_response
 

@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
-import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
 from domain.defaults.defaults import get_default_argument
@@ -427,31 +427,51 @@ Once default values are set, you can omit the space, environment, and project fr
 * `Show me the dashboard`
 * `Show me the status of the latest deployment to the production environment`"""
 
-    def answer_general_query(space_name=None, project_names=None, runbook_names=None, target_names=None,
-                             tenant_names=None, library_variable_sets=None):
-        """Answers a general query or question about the configuration or relationships of a space, projects,
-         runbooks, tenants, variables, feeds, accounts etc.
+    def answer_general_query(space=None, projects=None, runbooks=None, targets=None,
+                             tenants=None, library_variable_sets=None, environments=None,
+                             feeds=None, accounts=None, certificates=None, lifecycles=None,
+                             workerpools=None, machinepolicies=None, tagsets=None, projectgroups=None):
+        """Answers a general query about an Octopus space.
 
         Args:
-            space_name: The name of the space relating to the query.
-            project_names: The optional names of one or more projects relating to the query.
-            runbook_names: The optional names of one or more runbooks relating to the query.
-            target_names: The optional names of one or more targets or machines relating to the query.
-            tenant_names: The optional names of one or more tenants relating to the query.
-            library_variable_sets: The optional names of one or more library variable sets relating to the query.
+        space: Space name
+        projects: project names
+        runbooks: runbook names
+        targets: target/machine names
+        tenants: tenant names
+        library_variable_sets: library variable set names
+        environments: environment names
+        feeds: feed names
+        accounts: account names
+        certificates: certificate names
+        lifecycles: lifecycle names
+        workerpools: worker pool names
+        machinepolicies: machine policy names
+        tagsets: tenant tag set names
+        projectgroups: project group names
         """
 
         api_key, url = get_api_key_and_url()
 
-        space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
+        space = get_default_argument(get_github_user_from_form(), space, "Space")
 
         chat_result = collect_llm_context(extract_query(req),
-                                          space_name,
-                                          project_names,
-                                          runbook_names,
-                                          target_names,
-                                          tenant_names,
+                                          extract_query(req),
+                                          space,
+                                          projects,
+                                          runbooks,
+                                          targets,
+                                          tenants,
                                           library_variable_sets,
+                                          environments,
+                                          feeds,
+                                          accounts,
+                                          certificates,
+                                          lifecycles,
+                                          workerpools,
+                                          machinepolicies,
+                                          tagsets,
+                                          projectgroups,
                                           api_key,
                                           url,
                                           log_query)

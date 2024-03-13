@@ -71,6 +71,7 @@ resource "octopusdeploy_deployment_process" "test_project_deployment_process" {{
         "Octopus.Action.Script.ScriptBody" = "echo #{{AnotherVariable}}\\necho #{{SecretVariable}}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Azure.AccountId" = "Azure.Account"
       }}
     }}
   }}
@@ -103,6 +104,13 @@ resource "octopusdeploy_variable" "secondprojectvariable" {{
   value        = "hi there"
   name         = "SecondProjectVariable"
 }}
+resource "octopusdeploy_variable" "azure_account" {{
+  owner_id = "${{octopusdeploy_project.test_project.id}}"
+  value        = "Accounts-1"
+  name         = "Azure.Account"
+  type         = "AzureAccount"
+  is_sensitive = false
+}}
 ###
 Output:
 The resource with the labels "octopusdeploy_project" and "test_project" has an attribute called "name" with the value "My Project". This name matches the project name in the query. Therefore, this is the project we base the answer on.
@@ -111,10 +119,11 @@ The resource with the labels "octopusdeploy_deployment_process" "test_project_de
 The resource with the labels "octopusdeploy_variable" "project_variable" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "Variable.Test". The deployment process belonging to the "My Project" project has a "step" block with an "action" block with the attribute "name" set to "My Sample Step" and another attribute including the string "Variable.Test". Therefore, the variable "Variable.Test" is used by the step "My Sample Step".
 The resource with the labels "octopusdeploy_variable" "another_variable" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "AnotherVariable". The deployment process belonging to the "My Project" project has a "step" block with an "action" block with the attribute "name" set to "Step 2" and another attribute including the string "AnotherVariable". Therefore, the variable "AnotherVariable" is used by the step "Step 2".
 The resource with the labels "octopusdeploy_variable" "secret_variable" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "SecretVariable". The deployment process belonging to the "My Project" project has a "step" block with an "action" block with the attribute "name" set to "Step 2" and another attribute including the string "SecretVariable". Therefore, the variable "AnotherVariable" is used by the step "Step 2".
+The resource with the labels "octopusdeploy_variable" "azure_account" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "Azure.Account". The deployment process belonging to the "My Project" project has a "step" block with an "action" block with the attribute "name" set to "Step 2" and another attribute including the string "Azure.Account". Therefore, the variable "Azure.Account" is used by the step "Step 2".
 The resource with the labels "octopusdeploy_variable" "variable3" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "TestVariable3". None of the attributes assigned to the deployment process belonging to the "My Project" project uses the string "TestVariable3". Therefore, the variable "TestVariable3" is unused.
 The resource with the labels "octopusdeploy_variable" "secondprojectvariable" has an attribute called "owner_id" that does not match match the labels of the project called "My Project". Therefore, the variable "SecondProjectVariable" is not included in the answer.
 
-The answer is:
+Answer 1:
 - The variable "Variable.Test" is used by the step "My Sample Step".
 - The variable "AnotherVariable" is used by the step "Step 2".
 - The variable "SecretVariable" is used by the step "Step 2".
@@ -123,12 +132,12 @@ The answer is:
 Question: {query}
 """
 
-        return callback(space, projects, few_shot)
+        return callback(space, projects, query, few_shot)
 
     return answer_project_variables_usage
 
 
-def answer_project_variables_callback(query, callback):
+def answer_project_variables_callback(original_query, callback):
     def answer_project_variables(space=None, projects=None):
         """Answers a question about the variables defined for a project
 
@@ -158,9 +167,17 @@ resource "octopusdeploy_deployment_process" "test_project_deployment_process" {{
         "Octopus.Action.Script.ScriptBody" = "echo #{{Variable.Test}}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Azure.AccountId" = "Azure.Account"
       }}
     }}
   }}
+}}
+resource "octopusdeploy_variable" "azure_account" {{
+  owner_id = "${{octopusdeploy_project.test_project.id}}"
+  value        = "Accounts-1"
+  name         = "Azure.Account"
+  type         = "AzureAccount"
+  is_sensitive = false
 }}
 resource "octopusdeploy_variable" "project_variable" {{
   owner_id = "${{octopusdeploy_project.test_project.id}}"
@@ -188,15 +205,17 @@ The resource with the labels "octopusdeploy_project" and "test_project" has an a
 
 The resource with the labels "octopusdeploy_variable" "project_variable" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "Variable.Test". Therefore, the variable "Variable.Test" is defined in the project "My Project".
 The resource with the labels "octopusdeploy_variable" "secret_variable" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "SecretVariable". Therefore, the variable "SecretVariable" is defined in the project "My Project".
+The resource with the labels "octopusdeploy_variable" "azure_account" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "Azure.Account". Therefore, the variable "Azure.Account" is defined in the project "My Project".
 The resource with the labels "octopusdeploy_variable" "secondprojectvariable" has an attribute called "owner_id" that does not match match the labels of the project called "My Project". Therefore, the variable "SecondProjectVariable" is not included in the answer.
 
-The answer is:
+Answer 1:
 - "Variable.Test"
 - "SecretVariable"
+- "Azure.Account"
 
-Question: {query}
+Question: {original_query}
 """
 
-        return callback(space, projects, few_shot)
+        return callback(space, projects, original_query, few_shot)
 
     return answer_project_variables
