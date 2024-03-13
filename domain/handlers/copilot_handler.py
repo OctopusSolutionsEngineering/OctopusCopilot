@@ -151,14 +151,14 @@ def collect_llm_context(query, space_name, project_names, runbook_names, target_
     if data_source == DataSource.PROJECT_PROGRESSION:
         messages = build_hcl_and_json_prompt(step_by_step)
         for project in project_names:
-            json += get_project_progression(space_name, project, api_key, octopus_url) + "\n"
+            json += get_project_progression(space_name, project, api_key, octopus_url) + "\n\n"
     elif data_source == DataSource.DASHBOARD_PROGRESSION:
         messages = build_hcl_and_json_prompt(step_by_step)
-        json = get_dashboard(space_name, api_key, octopus_url)
+        json = get_dashboard(space_name, api_key, octopus_url) + "\n\n"
     else:
         messages = build_hcl_prompt(step_by_step)
 
-    return query_llm(messages, hcl + "\n" + json, query, log_query)
+    return query_llm(messages, json + hcl, query, log_query)
 
 
 def query_llm(message_prompt, context, query, log_query=None):
