@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
+import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
-import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
 from domain.defaults.defaults import get_default_argument
@@ -16,7 +16,7 @@ from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
-from domain.handlers.copilot_handler import handle_copilot_tools_execution, handle_configuration_query, query_llm, \
+from domain.handlers.copilot_handler import handle_copilot_tools_execution, collect_llm_context, query_llm, \
     build_hcl_prompt
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
@@ -444,16 +444,16 @@ Once default values are set, you can omit the space, environment, and project fr
 
         space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
 
-        chat_result = handle_configuration_query(extract_query(req),
-                                                 space_name,
-                                                 project_names,
-                                                 runbook_names,
-                                                 target_names,
-                                                 tenant_names,
-                                                 library_variable_sets,
-                                                 api_key,
-                                                 url,
-                                                 log_query)
+        chat_result = collect_llm_context(extract_query(req),
+                                          space_name,
+                                          project_names,
+                                          runbook_names,
+                                          target_names,
+                                          tenant_names,
+                                          library_variable_sets,
+                                          api_key,
+                                          url,
+                                          log_query)
 
         result = (chat_result
                   + "\n\n**WARNING**\n\n"

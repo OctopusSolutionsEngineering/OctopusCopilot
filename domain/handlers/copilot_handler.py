@@ -95,9 +95,9 @@ def build_hcl_and_json_prompt(step_by_step=False):
     return messages
 
 
-def handle_configuration_query(query, space_name, project_names, runbook_names, target_names, tenant_names,
-                               library_variable_sets, api_key,
-                               octopus_url, log_query, step_by_step=False):
+def collect_llm_context(query, space_name, project_names, runbook_names, target_names, tenant_names,
+                        library_variable_sets, api_key,
+                        octopus_url, log_query, step_by_step=False):
     ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_query).')
     ensure_string_not_empty(space_name, 'space_name must be a non-empty string (handle_copilot_query).')
 
