@@ -1,4 +1,21 @@
 def answer_project_variables_usage_callback(query, callback):
+    """
+    The challenge with having functions passed as tools for the LLM to call is that the function must have only
+    those parameters that the LLM will populate. However, we often want to have these tool functions reference
+    additional data.
+
+    The callback functions allow us to return a tool function with the required parameters while also exposing
+    additional context that the tool function can consume.
+
+    Often the tool function is little more than a placeholder for the function comment, and defers most of the
+    work to the callback function. This is because we have multiple interfaces calling the LLM which impacts things
+    like how the Octopus context is obtained e.g. does this service call Octopus as is the case with the CLI and GitHub
+    Copilot chat interface, or is the context passed to this service as is the case with the Chrome extension.
+
+    In this example, we want the tool function to return an enhanced query that includes a few-shot and chain-of-thought
+    example. We then embed the original query, passed into this function, into the enhanced query.
+    """
+
     def answer_project_variables_usage(space=None, projects=None, variables=None):
         """Answers a question where variables are used in a project or if they are unused.
 
