@@ -66,44 +66,40 @@ def get_deployment_process_raw_json_cli(space_name: None, project_name: None):
     return get_raw_deployment_process(space_name, project_name, get_api_key(), get_octopus_api())
 
 
-def query_handler(percent_truncated, chat_response):
-    return chat_response + "\n\n" + f"Percent Truncated: {percent_truncated}"
-
-
 def general_query_handler(body):
     space = get_default_argument(body['space_name'], 'Space')
 
-    percent_truncated, chat_response = handle_copilot_query(parser.query,
-                                                            space,
-                                                            body['project_names'],
-                                                            body['runbook_names'],
-                                                            body['target_names'],
-                                                            body['tenant_names'],
-                                                            body['library_variable_sets'],
-                                                            get_api_key(),
-                                                            get_octopus_api(),
-                                                            logging,
-                                                            False)
+    chat_response = handle_copilot_query(parser.query,
+                                         space,
+                                         body['project_names'],
+                                         body['runbook_names'],
+                                         body['target_names'],
+                                         body['tenant_names'],
+                                         body['library_variable_sets'],
+                                         get_api_key(),
+                                         get_octopus_api(),
+                                         logging,
+                                         False)
 
-    return query_handler(percent_truncated, chat_response)
+    return chat_response
 
 
 def variable_query_handler(space, projects, body):
     space = get_default_argument(space, 'Space')
 
-    percent_truncated, chat_response = handle_copilot_query(body,
-                                                            space,
-                                                            projects,
-                                                            None,
-                                                            None,
-                                                            None,
-                                                            None,
-                                                            get_api_key(),
-                                                            get_octopus_api(),
-                                                            logging,
-                                                            False)
+    chat_response = handle_copilot_query(body,
+                                         space,
+                                         projects,
+                                         None,
+                                         None,
+                                         None,
+                                         None,
+                                         get_api_key(),
+                                         get_octopus_api(),
+                                         logging,
+                                         False)
 
-    return query_handler(percent_truncated, chat_response)
+    return chat_response
 
 
 def get_default_argument(argument, default_name):

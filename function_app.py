@@ -228,10 +228,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
         # Call the appropriate tool. This may be a straight pass through of the query and context,
         # or may update the query with additional examples.
-        percent_truncated, result = handle_copilot_tools_execution(query, get_tools, log_query).call_function()
-
-        if percent_truncated > 0:
-            result += f"\n\nThe context was truncated by {percent_truncated}% and so may not be accurate"
+        result = handle_copilot_tools_execution(query, get_tools, log_query).call_function()
 
         return func.HttpResponse(result)
     except Exception as e:
@@ -446,26 +443,22 @@ Once default values are set, you can omit the space, environment, and project fr
 
         space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
 
-        percent_truncated, chat_result = handle_copilot_query(extract_query(req),
-                                                              space_name,
-                                                              project_names,
-                                                              runbook_names,
-                                                              target_names,
-                                                              tenant_names,
-                                                              library_variable_sets,
-                                                              api_key,
-                                                              url,
-                                                              log_query)
+        chat_result = handle_copilot_query(extract_query(req),
+                                           space_name,
+                                           project_names,
+                                           runbook_names,
+                                           target_names,
+                                           tenant_names,
+                                           library_variable_sets,
+                                           api_key,
+                                           url,
+                                           log_query)
 
         result = (chat_result
                   + "\n\n**WARNING**\n\n"
                   + "As an AI model, I often make mistakes. "
                   + "Verify the information I provide before performing any destructive actions.\n\n"
                   + "Scripts and other step properties are truncated and modified to only include useful information.")
-
-        if percent_truncated > 0:
-            result += "\n\nThe context was truncated by " + str(
-                percent_truncated) + "%, meaning the answer may be incomplete."
 
         return result
 

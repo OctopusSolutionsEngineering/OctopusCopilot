@@ -100,7 +100,7 @@ def query_llm(hcl, query, log_query=None, step_by_step=False):
         log_query("HCL:", hcl)
         log_query("Query:", query)
         log_query("Context truncation:", str(percent_truncated) + "%")
-        return 0, "Your query was too broad. Please ask a more specific question."
+        return "Your query was too broad. Please ask a more specific question."
 
     response = chain.invoke({"input": query, "hcl": truncated_hcl}).content
 
@@ -110,7 +110,7 @@ def query_llm(hcl, query, log_query=None, step_by_step=False):
         log_query("Query:", query)
         log_query("Response:", response)
 
-    return percent_truncated, response
+    return response
 
 
 def handle_copilot_tools_execution(query, llm_tools, log_query=None):
