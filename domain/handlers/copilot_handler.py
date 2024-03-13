@@ -89,8 +89,7 @@ def build_hcl_and_json_prompt(step_by_step=False):
         # messages.append(("user", "Let's think step by step."))
     else:
         messages.insert(0, (
-            "system",
-            "You are a concise and helpful agent."))
+            "system", "You are a concise and helpful agent."))
 
     return messages
 
