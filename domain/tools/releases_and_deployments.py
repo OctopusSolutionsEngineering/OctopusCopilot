@@ -95,7 +95,7 @@ JSON: ###
         ],
         "SelectedGitResources": [],
         "ProjectVariableSetSnapshotId": "variableset-Projects-1234-s-2-WD1XC",
-        "VersionControlReference": null,        
+        "VersionControlReference": null,
       }},
       "Channel": {{
         "Id": "Channels-7001",
@@ -521,7 +521,7 @@ The HCL resource with the labels "octopusdeploy_project" and "test_project" has 
 The JSON blob has a property called "Releases" which is an array of release objects. Each release object has a property called "Release" with an attribute called "ProjectId" with the value "Projects-1234" that matches the "id" of the project called "My Project". Therefore, this is a release we can consider for the answer.
 The release object has a property called "Deployments" which is an object mapping environment ids to deployments called an "environment deployment". The "Deployments" object includes an "environment deployment" with the id of "Environments-6789" that matches the "id" of environment "Production". Therefore, this "environment deployment" is one we can consider for the answer.
 The "environment deployment" object has a "ProjectId" attribute with the value of "Projects-1234" that matches the "id" of the project "My Project". Therefore, this "environment deployment" is one we can consider for the answer.
-The "environment deployment" object with the highest "StartTime" attribute is the latest deployment. The release version is found in the "ReleaseVersion" attribute. 
+The "environment deployment" object with the highest "StartTime" attribute is the latest deployment. The release version is found in the "ReleaseVersion" attribute.
 Therefore, the release version of the latest deployment of the "My Project" project to the "Production" environment is "1.2.3-mybranch".
 
 The answer:
