@@ -43,7 +43,7 @@ def build_hcl_prompt(step_by_step=False):
         ("user", "Answer the question using the HCL below."),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-        ("user", "HCL: ###\n{hcl}\n###")]
+        ("user", "HCL: ###\n{context}\n###")]
 
     # This message instructs the LLM to display its reasoning step by step before the answer. It can be a useful
     # debugging tool. It doesn't always work though, but you can rerun the query and try again.
@@ -80,8 +80,7 @@ def build_hcl_and_json_prompt(step_by_step=False):
         ("user", "Answer the question using the HCL and JSON below."),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-        ("user", "JSON: ###\n{json}\n###"),
-        ("user", "HCL: ###\n{hcl}\n###")]
+        ("user", "Context: ###\n{context}\n###")]
 
     # This message instructs the LLM to display its reasoning step by step before the answer. It can be a useful
     # debugging tool. It doesn't always work though, but you can rerun the query and try again.
@@ -167,16 +166,16 @@ def collect_llm_context(query, space_name, project_names, runbook_names, target_
     # server to expose this information.
     data_source = get_data_source(query, project_names)
 
-    context = {"hcl": hcl, "input": query}
+    context = {"context": hcl, "input": query}
     if data_source == DataSource.PROJECT_PROGRESSION:
         messages = build_hcl_and_json_prompt(step_by_step)
         json = ""
         for project in project_names:
             json += get_project_progression(space_name, project, api_key, octopus_url) + "\n\n"
-        context["json"] = json
+        context["context"] = json + context["context"]
     elif data_source == DataSource.DASHBOARD_PROGRESSION:
         messages = build_hcl_and_json_prompt(step_by_step)
-        context["json"] = get_dashboard(space_name, api_key, octopus_url) + "\n\n"
+        context["context"] = get_dashboard(space_name, api_key, octopus_url) + "\n\n" + context["context"]
     else:
         messages = build_hcl_prompt(step_by_step)
 
@@ -197,27 +196,25 @@ def query_llm(message_prompt, context, log_query=None):
     chain = prompt | llm
 
     # We'll minify and truncate the HCL to avoid hitting the token limit.
-    minified_context = minify_hcl(context["hcl"])
+    minified_context = minify_hcl(context["context"])
     truncated_context = minified_context[0:max_chars]
     percent_truncated = round((len(minified_context) - len(truncated_context)) / len(minified_context) * 100, 2) if len(
         minified_context) != 0 else 0
 
     if percent_truncated > 0:
         log_query("query_llm", "----------------------------------------")
-        log_query("HCL:", context.get("hcl"))
-        log_query("JSON:", context.get("json"))
+        log_query("Context:", context.get("context"))
         log_query("Query:", context.get("input"))
         log_query("Context truncation:", str(percent_truncated) + "%")
         return "Your query was too broad. Please ask a more specific question."
 
-    context["hcl"] = truncated_context
+    context["context"] = truncated_context
 
     response = chain.invoke(context).content
 
     if log_query:
         log_query("query_llm", "----------------------------------------")
-        log_query("HCL:", context.get("hcl"))
-        log_query("JSON:", context.get("json"))
+        log_query("Context:", context.get("context"))
         log_query("Query:", context.get("input"))
         log_query("Response:", response)
 
