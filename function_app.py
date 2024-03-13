@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
-import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
 from domain.defaults.defaults import get_default_argument
@@ -212,13 +212,13 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             """
             Answers a general query about an Octopus space
             """
-            return query_llm(build_hcl_prompt(), req.get_body().decode("utf-8"), query)
+            return query_llm(build_hcl_prompt(), {"hcl": req.get_body().decode("utf-8"), "input": query})
 
         def variable_query_handler(space, projects, new_query):
             """
             A function that passes the updated query through to the LLM
             """
-            return query_llm(build_hcl_prompt(), req.get_body().decode("utf-8"), new_query)
+            return query_llm(build_hcl_prompt(), {"hcl": req.get_body().decode("utf-8"), "input": new_query})
 
         def get_tools():
             return FunctionDefinitions([

@@ -43,7 +43,7 @@ def build_hcl_prompt(step_by_step=False):
         ("user", "Answer the question using the HCL below."),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-        ("user", "HCL: ###\n{context}\n###")]
+        ("user", "HCL: ###\n{hcl}\n###")]
 
     # This message instructs the LLM to display its reasoning step by step before the answer. It can be a useful
     # debugging tool. It doesn't always work though, but you can rerun the query and try again.
@@ -80,7 +80,8 @@ def build_hcl_and_json_prompt(step_by_step=False):
         ("user", "Answer the question using the HCL and JSON below."),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-        ("user", "HCL and JSON: ###\n{context}\n###")]
+        ("user", "JSON: ###\n{json}\n###"),
+        ("user", "HCL: ###\n{hcl}\n###")]
 
     # This message instructs the LLM to display its reasoning step by step before the answer. It can be a useful
     # debugging tool. It doesn't always work though, but you can rerun the query and try again.
@@ -147,21 +148,23 @@ def collect_llm_context(query, space_name, project_names, runbook_names, target_
     # server to expose this information.
     data_source = get_data_source(query, project_names)
 
-    json = ""
+    context = {"hcl": hcl, "input": query}
     if data_source == DataSource.PROJECT_PROGRESSION:
         messages = build_hcl_and_json_prompt(step_by_step)
+        json = ""
         for project in project_names:
             json += get_project_progression(space_name, project, api_key, octopus_url) + "\n\n"
+        context["json"] = json
     elif data_source == DataSource.DASHBOARD_PROGRESSION:
         messages = build_hcl_and_json_prompt(step_by_step)
-        json = get_dashboard(space_name, api_key, octopus_url) + "\n\n"
+        context["json"] = get_dashboard(space_name, api_key, octopus_url) + "\n\n"
     else:
         messages = build_hcl_prompt(step_by_step)
 
-    return query_llm(messages, json + hcl, query, log_query)
+    return query_llm(messages, context, log_query)
 
 
-def query_llm(message_prompt, context, query, log_query=None):
+def query_llm(message_prompt, context, log_query=None):
     llm = AzureChatOpenAI(
         temperature=0,
         azure_deployment=os.environ["OPENAI_API_DEPLOYMENT"],
@@ -175,24 +178,28 @@ def query_llm(message_prompt, context, query, log_query=None):
     chain = prompt | llm
 
     # We'll minify and truncate the HCL to avoid hitting the token limit.
-    minified_context = minify_hcl(context)
+    minified_context = minify_hcl(context["hcl"])
     truncated_context = minified_context[0:max_chars]
     percent_truncated = round((len(minified_context) - len(truncated_context)) / len(minified_context) * 100, 2) if len(
         minified_context) != 0 else 0
 
     if percent_truncated > 0:
         log_query("query_llm", "----------------------------------------")
-        log_query("Context:", context)
-        log_query("Query:", query)
+        log_query("HCL:", context["hcl"])
+        log_query("JSON:", context["json"])
+        log_query("Query:", context["input"])
         log_query("Context truncation:", str(percent_truncated) + "%")
         return "Your query was too broad. Please ask a more specific question."
 
-    response = chain.invoke({"input": query, "context": truncated_context}).content
+    context["hcl"] = truncated_context
+
+    response = chain.invoke(context).content
 
     if log_query:
         log_query("query_llm", "----------------------------------------")
-        log_query("Context:", context)
-        log_query("Query:", query)
+        log_query("HCL:", context["hcl"])
+        log_query("JSON:", context["json"])
+        log_query("Query:", context["input"])
         log_query("Response:", response)
 
     return response
