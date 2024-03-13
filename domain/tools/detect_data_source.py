@@ -4,7 +4,7 @@ from enum import Enum
 class DataSource(Enum):
     HCL_CONFIGURATION = 1
     PROJECT_PROGRESSION = 2
-    DASHBOARD_PROGRESSION = 3
+    DASHBOARD_PROGRESSION = 4
 
 
 def get_data_source(query, project_names):
