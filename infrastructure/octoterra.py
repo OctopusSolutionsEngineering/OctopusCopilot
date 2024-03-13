@@ -98,7 +98,7 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
         "excludeAllWorkerPools": exclude_workerpools,
         "excludeAllMachinePolicies": exclude_machinepolicies,
         "excludeAllTagSets": exclude_tagsets,
-        "excludeAllprojectGroups": exclude_projectgroups,
+        "excludeAllProjectGroups": exclude_projectgroups,
         "excludeAllLibraryVariableSets": exclude_library_variable_sets,
         "limitAttributeLength": 100,
         # This setting ensures that any project, tenant, runbook, or target names are valid.
