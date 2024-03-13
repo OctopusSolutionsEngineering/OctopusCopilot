@@ -4,6 +4,8 @@ import os
 from domain.handlers.copilot_handler import handle_copilot_tools_execution, handle_copilot_query
 from domain.strings.sanitized_list import sanitize_list
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
+from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
+from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_callback
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process
 
@@ -64,31 +66,58 @@ def get_deployment_process_raw_json_cli(space_name: None, project_name: None):
     return get_raw_deployment_process(space_name, project_name, get_api_key(), get_octopus_api())
 
 
-def answer_general_query(space_name=None, project_names=None, runbook_names=None, target_names=None,
-                         tenant_names=None, library_variable_sets=None):
-    """Answers a general query or question about the configuration or relationships of a space, projects,
-             runbooks, tenants, variables, feeds, accounts etc.
+def query_handler(percent_truncated, chat_response):
+    return chat_response + "\n\n" + f"Percent Truncated: {percent_truncated}"
 
-            Args:
-                space_name: The name of the space relating to the query.
-                project_names: The optional names of one or more projects relating to the query.
-                runbook_names: The optional names of one or more runbooks relating to the query.
-                target_names: The optional names of one or more targets or machines relating to the query.
-                tenant_names: The optional names of one or more tenants relating to the query.
-                library_variable_sets: The optional names of one or more library variable sets relating to the query.
-    """
+
+def general_query_handler(body):
+    space = get_default_argument(body['space_name'], 'Space')
+
     percent_truncated, chat_response = handle_copilot_query(parser.query,
-                                                            'Octopus Copilot',
-                                                            project_names,
-                                                            runbook_names,
-                                                            target_names,
-                                                            tenant_names,
-                                                            library_variable_sets,
+                                                            space,
+                                                            body['project_names'],
+                                                            body['runbook_names'],
+                                                            body['target_names'],
+                                                            body['tenant_names'],
+                                                            body['library_variable_sets'],
                                                             get_api_key(),
                                                             get_octopus_api(),
-                                                            lambda x, y: print(x + " " + ",".join(sanitize_list(y))))
+                                                            logging,
+                                                            False)
 
-    return chat_response + "\n\n" + f"Percent Truncated: {percent_truncated}"
+    return query_handler(percent_truncated, chat_response)
+
+
+def variable_query_handler(space, projects, body):
+    space = get_default_argument(space, 'Space')
+
+    percent_truncated, chat_response = handle_copilot_query(body,
+                                                            space,
+                                                            projects,
+                                                            None,
+                                                            None,
+                                                            None,
+                                                            None,
+                                                            get_api_key(),
+                                                            get_octopus_api(),
+                                                            logging,
+                                                            False)
+
+    return query_handler(percent_truncated, chat_response)
+
+
+def get_default_argument(argument, default_name):
+    if argument:
+        return argument
+
+    if default_name == "Space":
+        return 'Octopus Copilot'
+
+    return ""
+
+
+def logging(prefix, message):
+    print(prefix + " " + ",".join(sanitize_list(message)))
 
 
 def build_tools():
@@ -97,7 +126,9 @@ def build_tools():
     :return: The OpenAI tools
     """
     return FunctionDefinitions([
-        FunctionDefinition(answer_general_query)
+        FunctionDefinition(answer_general_query_callback(general_query_handler), AnswerGeneralQuery),
+        FunctionDefinition(answer_project_variables_callback(parser.query, variable_query_handler)),
+        FunctionDefinition(answer_project_variables_usage_callback(parser.query, variable_query_handler))
     ])
 
 

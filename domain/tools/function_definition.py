@@ -7,11 +7,12 @@ class FunctionDefinition:
     by OpenAI.
     """
 
-    def __init__(self, function):
+    def __init__(self, function, schema=None):
         """
         Given a function, store the function, the name of the function, and
         the OpenAI tool representation of the function.
-        :param function:
+        :param function: The function that the LLM can call
+        :param schema: The pydantic schema of the function
         """
 
         if function is None:
@@ -19,7 +20,7 @@ class FunctionDefinition:
 
         self.name = function.__name__
         self.function = function
-        self.tool = StructuredTool.from_function(function)
+        self.tool = StructuredTool.from_function(function, schema)
 
 
 class FunctionDefinitions:

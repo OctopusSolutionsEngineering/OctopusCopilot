@@ -20,10 +20,9 @@ from domain.handlers.copilot_handler import handle_copilot_tools_execution, hand
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
-from domain.strings.sanitized_list import sanitize_projects, sanitize_runbooks, sanitize_targets, sanitize_tenants, \
-    sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, sanitize_certificates, \
-    sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, sanitize_projectgroups
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
+from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
+from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_callback
 from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response, \
     get_dashboard_response
 from domain.transformers.sse_transformers import convert_to_sse_response
@@ -176,53 +175,8 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
     :return: The HTML form
     """
     try:
-        def answer_general_query(projects=None, runbooks=None, targets=None,
-                                 tenants=None, library_variable_sets=None, environments=None,
-                                 feeds=None, accounts=None, certificates=None, lifecycles=None,
-                                 workerpools=None, machinepolicies=None, tagsets=None, projectgroups=None):
-            """Answers a general query about an Octopus space.
-
-            Args:
-            projects: project names
-            runbooks: runbook names
-            targets: target/machine names
-            tenants: tenant names
-            library_variable_sets: library variable set names
-            environments: environment names
-            feeds: feed names
-            accounts: account names
-            certificates: certificate names
-            lifecycles: lifecycle names
-            workerpools: worker pool names
-            machinepolicies: machine policy names
-            tagsets: tenant tag set names
-            projectgroups: project group names
-            """
-
-            # OpenAI will inject values for some of these lists despite the fact that there was no mention
-            # of these resources anywhere in the question. We clean up the results before sending them back
-            # to the client.
-            body = {
-                "project_names": sanitize_projects(projects),
-                "runbook_names": sanitize_runbooks(runbooks),
-                "target_names": sanitize_targets(targets),
-                "tenant_names": sanitize_tenants(tenants),
-                "library_variable_sets": sanitize_library_variable_sets(library_variable_sets),
-                "environment_names": sanitize_environments(environments),
-                "feed_names": sanitize_feeds(feeds),
-                "account_names": sanitize_accounts(accounts),
-                "certificate_names": sanitize_certificates(certificates),
-                "lifecycle_names": sanitize_lifecycles(lifecycles),
-                "workerpool_names": sanitize_workerpools(workerpools),
-                "machinepolicy_names": sanitize_machinepolicies(machinepolicies),
-                "tagset_names": sanitize_tenanttagsets(tagsets),
-                "projectgroup_names": sanitize_projectgroups(projectgroups),
-            }
-
-            return body
-
         tools = FunctionDefinitions([
-            FunctionDefinition(answer_general_query),
+            FunctionDefinition(answer_general_query_callback(lambda x: x), AnswerGeneralQuery),
         ])
 
         query = extract_query(req)
@@ -243,8 +197,30 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
     :param req: The HTTP request
     :return: The HTML form
     """
+
+    # This function is called after the query has already been processed for the relevant entites and the HCL context
+    # has been generated. The query is then sent back to this function where we determine which function the LLM will
+    # call. The function may alter the query to provide few-shot examples, or may just pass the query through as is.
+
+    def general_query_handler():
+        """
+        Answers a general query about an Octopus space
+        """
+        return query_llm(req.get_body().decode("utf-8"), extract_query(req))
+
+    def variable_query_handler(space, projects, body):
+        # Pass the enhanced query to the LLM
+        return query_llm(body, query)
+
     try:
         query = extract_query(req)
+
+        tools = FunctionDefinitions([
+            FunctionDefinition(general_query_handler),
+            FunctionDefinition(answer_project_variables_callback(query, variable_query_handler)),
+            FunctionDefinition(answer_project_variables_usage_callback(query, variable_query_handler))
+        ])
+
         percent_truncated, result = query_llm(req.get_body().decode("utf-8"), query)
 
         if percent_truncated > 0:

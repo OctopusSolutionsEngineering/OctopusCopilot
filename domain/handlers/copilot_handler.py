@@ -21,12 +21,13 @@ max_chars = 13500 * 4
 
 def handle_copilot_query(query, space_name, project_names, runbook_names, target_names, tenant_names,
                          library_variable_sets, api_key,
-                         octopus_url, log_query):
+                         octopus_url, log_query, step_by_step=False):
     ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_query).')
     ensure_string_not_empty(space_name, 'space_name must be a non-empty string (handle_copilot_query).')
 
     if log_query:
         log_query("Query:", query)
+        log_query("Space Name:", space_name)
         log_query("Project Names:", project_names)
         log_query("Runbook Names:", runbook_names)
         log_query("Target Names:", target_names)
@@ -42,11 +43,13 @@ def handle_copilot_query(query, space_name, project_names, runbook_names, target
                               library_variable_sets,
                               api_key,
                               octopus_url)
+    if log_query:
+        log_query("HCL:", hcl)
 
-    return query_llm(hcl, query, log_query)
+    return query_llm(hcl, query, log_query, step_by_step)
 
 
-def query_llm(hcl, query, log_query=None):
+def query_llm(hcl, query, log_query=None, step_by_step=False):
     llm = AzureChatOpenAI(
         temperature=0,
         azure_deployment=os.environ["OPENAI_API_DEPLOYMENT"],
@@ -55,7 +58,7 @@ def query_llm(hcl, query, log_query=None):
         api_version="2024-03-01-preview",
     )
 
-    prompt = ChatPromptTemplate.from_messages([
+    messages = [
         ("system",
          "You are a concise, professional agent who understands Terraform modules defining Octopus Deploy resources. "
          + "You must assume the Terraform is an accurate representation of the live project. "
@@ -67,9 +70,18 @@ def query_llm(hcl, query, log_query=None):
          + "or get_octopusvariable(\"Variable Name\"). "
          + "The values of secret variables are not defined in the Terraform configuration. "
          + "Do not mention the fact that the values of secret variables are not defined."),
-        ("user", "Given the following Terraform configuration:\n{hcl}"),
-        ("user", "{input}")
-    ])
+        ("user", "{input}"),
+        ("user", "Answer the question using the HCL below."),
+        # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
+        # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
+        ("user", "HCL: ###\n{hcl}\n###")]
+
+    # This message instructs the LLM to display its reasoning step by step before the answer. It can be a useful
+    # debugging tool. It doesn't always work though, but you can rerun the query and try again.
+    if step_by_step:
+        messages.append(("user", "Let's think step by step."))
+
+    prompt = ChatPromptTemplate.from_messages(messages)
 
     chain = prompt | llm
 
