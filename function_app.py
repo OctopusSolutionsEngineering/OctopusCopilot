@@ -212,13 +212,13 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             """
             Answers a general query about an Octopus space
             """
-            return query_llm(build_hcl_prompt(), {"hcl": req.get_body().decode("utf-8"), "input": query})
+            return query_llm(build_hcl_prompt(), {"context": req.get_body().decode("utf-8"), "input": query})
 
         def variable_query_handler(space, projects, new_query):
             """
             A function that passes the updated query through to the LLM
             """
-            return query_llm(build_hcl_prompt(), {"hcl": req.get_body().decode("utf-8"), "input": new_query})
+            return query_llm(build_hcl_prompt(), {"context": req.get_body().decode("utf-8"), "input": new_query})
 
         def get_tools():
             return FunctionDefinitions([
