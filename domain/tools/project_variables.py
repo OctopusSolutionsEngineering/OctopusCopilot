@@ -22,7 +22,6 @@ def answer_project_variables_usage_callback(query, callback):
         Args:
         space: Space name
         projects: project names
-        variables: variable names
         """
 
         # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
