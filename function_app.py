@@ -202,26 +202,33 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
     # has been generated. The query is then sent back to this function where we determine which function the LLM will
     # call. The function may alter the query to provide few-shot examples, or may just pass the query through as is.
 
-    def general_query_handler():
-        """
-        Answers a general query about an Octopus space
-        """
-        return query_llm(req.get_body().decode("utf-8"), extract_query(req))
-
-    def variable_query_handler(space, projects, body):
-        # Pass the enhanced query to the LLM
-        return query_llm(body, query)
-
     try:
+        # Extract the query from the question
         query = extract_query(req)
 
-        tools = FunctionDefinitions([
-            FunctionDefinition(general_query_handler),
-            FunctionDefinition(answer_project_variables_callback(query, variable_query_handler)),
-            FunctionDefinition(answer_project_variables_usage_callback(query, variable_query_handler))
-        ])
+        # Define some tools that the LLM can call
+        def general_query_handler():
+            """
+            Answers a general query about an Octopus space
+            """
+            return query_llm(req.get_body().decode("utf-8"), query)
 
-        percent_truncated, result = query_llm(req.get_body().decode("utf-8"), query)
+        def variable_query_handler(space, projects, new_query):
+            """
+            A function that passes the updated query through to the LLM
+            """
+            return query_llm(req.get_body().decode("utf-8"), new_query)
+
+        def get_tools():
+            return FunctionDefinitions([
+                FunctionDefinition(general_query_handler),
+                FunctionDefinition(answer_project_variables_callback(query, variable_query_handler)),
+                FunctionDefinition(answer_project_variables_usage_callback(query, variable_query_handler))
+            ])
+
+        # Call the appropriate tool. This may be a straight pass through of the query and context,
+        # or may update the query with additional examples.
+        percent_truncated, result = handle_copilot_tools_execution(query, get_tools, log_query).call_function()
 
         if percent_truncated > 0:
             result += f"\n\nThe context was truncated by {percent_truncated}% and so may not be accurate"
