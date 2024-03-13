@@ -2,6 +2,7 @@ import argparse
 import os
 
 from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context
+from domain.logging.query_loggin import log_query
 from domain.strings.sanitized_list import sanitize_list
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
@@ -170,9 +171,9 @@ def build_tools():
     """
     return FunctionDefinitions([
         FunctionDefinition(answer_general_query_callback(general_query_handler), AnswerGeneralQuery),
-        FunctionDefinition(answer_project_variables_callback(parser.query, variable_query_handler)),
-        FunctionDefinition(answer_project_variables_usage_callback(parser.query, variable_query_handler)),
-        FunctionDefinition(answer_releases_and_deployments_callback(parser.query, releases_query_handler))
+        FunctionDefinition(answer_project_variables_callback(parser.query, variable_query_handler, log_query)),
+        FunctionDefinition(answer_project_variables_usage_callback(parser.query, variable_query_handler, log_query)),
+        FunctionDefinition(answer_releases_and_deployments_callback(parser.query, releases_query_handler, log_query))
     ])
 
 

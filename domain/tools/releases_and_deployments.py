@@ -1,5 +1,5 @@
-def answer_releases_and_deployments_callback(query, callback):
-    def answer_releases_and_deployments_usage(space=None, projects=None, environments=None):
+def answer_releases_and_deployments_callback(query, callback, logging):
+    def answer_releases_and_deployments_usage(space=None, projects=None, environments=None, **kwargs):
         """Answers a question about deployments and releases.
 
         Args:
@@ -529,6 +529,10 @@ The release version of the latest deployment of the "My Project" project to the 
 
 Question: {query}
 """
+
+        for key, value in kwargs.items():
+            if logging:
+                logging(f"Unexpected Key: {key}", "Value: {value}")
 
         return callback(space, projects, environments, query, few_shot)
 

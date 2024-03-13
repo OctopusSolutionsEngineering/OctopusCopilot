@@ -1,4 +1,4 @@
-def answer_project_variables_usage_callback(query, callback):
+def answer_project_variables_usage_callback(query, callback, logging):
     """
     The challenge with having functions passed as tools for the LLM to call is that the function must have only
     those parameters that the LLM will populate. However, we often want to have these tool functions reference
@@ -131,13 +131,17 @@ Answer 1:
 Question: {query}
 """
 
+        for key, value in kwargs.items():
+            if logging:
+                logging(f"Unexpected Key: {key}", "Value: {value}")
+
         return callback(space, projects, query, few_shot)
 
     return answer_project_variables_usage
 
 
-def answer_project_variables_callback(original_query, callback):
-    def answer_project_variables(space=None, projects=None):
+def answer_project_variables_callback(original_query, callback, logging):
+    def answer_project_variables(space=None, projects=None, **kwargs):
         """Answers a question about the variables defined for a project
 
         Args:
@@ -214,6 +218,10 @@ Answer 1:
 
 Question: {original_query}
 """
+
+        for key, value in kwargs.items():
+            if logging:
+                logging(f"Unexpected Key: {key}", "Value: {value}")
 
         return callback(space, projects, original_query, few_shot)
 

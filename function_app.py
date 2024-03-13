@@ -225,9 +225,9 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
         def get_tools():
             return FunctionDefinitions([
                 FunctionDefinition(general_query_handler),
-                FunctionDefinition(answer_project_variables_callback(query, generic_callback)),
-                FunctionDefinition(answer_project_variables_usage_callback(query, generic_callback)),
-                FunctionDefinition(answer_releases_and_deployments_callback(query, generic_callback))
+                FunctionDefinition(answer_project_variables_callback(query, generic_callback, log_query)),
+                FunctionDefinition(answer_project_variables_usage_callback(query, generic_callback, log_query)),
+                FunctionDefinition(answer_releases_and_deployments_callback(query, generic_callback, log_query))
             ])
 
         # Call the appropriate tool. This may be a straight pass through of the query and context,
