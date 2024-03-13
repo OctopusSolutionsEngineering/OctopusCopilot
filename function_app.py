@@ -16,7 +16,8 @@ from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
-from domain.handlers.copilot_handler import handle_copilot_tools_execution, handle_copilot_query, query_llm
+from domain.handlers.copilot_handler import handle_copilot_tools_execution, handle_configuration_query, query_llm, \
+    build_hcl_prompt
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
@@ -211,13 +212,13 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             """
             Answers a general query about an Octopus space
             """
-            return query_llm(req.get_body().decode("utf-8"), query)
+            return query_llm(build_hcl_prompt(), req.get_body().decode("utf-8"), query)
 
         def variable_query_handler(space, projects, new_query):
             """
             A function that passes the updated query through to the LLM
             """
-            return query_llm(req.get_body().decode("utf-8"), new_query)
+            return query_llm(build_hcl_prompt(), req.get_body().decode("utf-8"), new_query)
 
         def get_tools():
             return FunctionDefinitions([
@@ -443,16 +444,16 @@ Once default values are set, you can omit the space, environment, and project fr
 
         space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
 
-        chat_result = handle_copilot_query(extract_query(req),
-                                           space_name,
-                                           project_names,
-                                           runbook_names,
-                                           target_names,
-                                           tenant_names,
-                                           library_variable_sets,
-                                           api_key,
-                                           url,
-                                           log_query)
+        chat_result = handle_configuration_query(extract_query(req),
+                                                 space_name,
+                                                 project_names,
+                                                 runbook_names,
+                                                 target_names,
+                                                 tenant_names,
+                                                 library_variable_sets,
+                                                 api_key,
+                                                 url,
+                                                 log_query)
 
         result = (chat_result
                   + "\n\n**WARNING**\n\n"

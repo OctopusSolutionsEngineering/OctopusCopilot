@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from domain.handlers.copilot_handler import handle_copilot_tools_execution, handle_copilot_query
+from domain.handlers.copilot_handler import handle_copilot_tools_execution, handle_configuration_query
 from domain.strings.sanitized_list import sanitize_list
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
@@ -69,17 +69,17 @@ def get_deployment_process_raw_json_cli(space_name: None, project_name: None):
 def general_query_handler(body):
     space = get_default_argument(body['space_name'], 'Space')
 
-    chat_response = handle_copilot_query(parser.query,
-                                         space,
-                                         body['project_names'],
-                                         body['runbook_names'],
-                                         body['target_names'],
-                                         body['tenant_names'],
-                                         body['library_variable_sets'],
-                                         get_api_key(),
-                                         get_octopus_api(),
-                                         logging,
-                                         False)
+    chat_response = handle_configuration_query(parser.query,
+                                               space,
+                                               body['project_names'],
+                                               body['runbook_names'],
+                                               body['target_names'],
+                                               body['tenant_names'],
+                                               body['library_variable_sets'],
+                                               get_api_key(),
+                                               get_octopus_api(),
+                                               logging,
+                                               False)
 
     return chat_response
 
@@ -87,17 +87,17 @@ def general_query_handler(body):
 def variable_query_handler(space, projects, body):
     space = get_default_argument(space, 'Space')
 
-    chat_response = handle_copilot_query(body,
-                                         space,
-                                         projects,
-                                         None,
-                                         None,
-                                         None,
-                                         None,
-                                         get_api_key(),
-                                         get_octopus_api(),
-                                         logging,
-                                         False)
+    chat_response = handle_configuration_query(body,
+                                               space,
+                                               projects,
+                                               None,
+                                               None,
+                                               None,
+                                               None,
+                                               get_api_key(),
+                                               get_octopus_api(),
+                                               logging,
+                                               False)
 
     return chat_response
 

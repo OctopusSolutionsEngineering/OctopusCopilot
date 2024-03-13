@@ -192,6 +192,35 @@ def get_raw_deployment_process(space_name, project_name, api_key, octopus_url):
 
 
 @retry(HTTPError, tries=3, delay=2)
+def get_project_progression(space_name, project_name, api_key, octopus_url):
+    """
+    Returns a deployment progression for a project.
+    :param space_name: The name of the space.
+    :param project_name: The name of the project
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
+    :return: The deployment progression raw JSON
+    """
+    ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_raw_deployment_process).')
+    ensure_string_not_empty(project_name, 'project_name must be a non-empty string (get_raw_deployment_process).')
+
+    space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
+
+    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partial_name=project_name))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+
+    project = get_item_ignoring_case(resp.json()["Items"], project_name)
+
+    if project is None:
+        raise ResourceNotFound("No projects found matching the name " + project_name)
+
+    api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+
+    return resp.data.decode("utf-8")
+
+
+@retry(HTTPError, tries=3, delay=2)
 def get_deployment_status_base(space_name, environment_name, project_name, api_key, octopus_url):
     """
     The base function used to get a list of project names.
