@@ -23,6 +23,7 @@ def handle_error(exception):
     logger.error(error_message)
     logger.error(sanitize_message(traceback.format_exc()))
     send_slack_message(error_message, get_slack_url())
+    send_slack_message(sanitize_message(traceback.format_exc()), get_slack_url())
 
 
 def sanitize_message(message):
