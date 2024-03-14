@@ -233,7 +233,8 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             return llm_message_query(build_hcl_prompt(),
                                      {"context": req.get_body().decode("utf-8"), "input": new_query}, log_query)
 
-        def releases_and_deployments_callback(original_query, new_query, space, projects, environments):
+        def releases_and_deployments_callback(original_query, new_query, space, projects, environments, channels,
+                                              releases):
             """
             A function that passes the updated query through to the LLM
             """
