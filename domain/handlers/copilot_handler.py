@@ -65,9 +65,9 @@ def build_plain_text_prompt():
     """
     messages = [
         ("system", "You understand Terraform modules defining Octopus Deploy log files. "
-         + "You are a concise and helpful agent."),
+         + "You are a concise and helpful agent. "
+         + "Answer the question given the supplied text. You must assume that the supplied text relates to the project and environment in the question."),
         ("user", "{input}"),
-        ("user", "Answer the question using the text below."),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
         ("user", "Text: ###\n{context}\n###")]
