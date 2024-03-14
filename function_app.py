@@ -218,7 +218,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             """
             return llm_message_query(build_hcl_prompt(), {"context": req.get_body().decode("utf-8"), "input": query})
 
-        def logs_query_handler(original_query, new_query, space, projects, environments):
+        def logs_query_handler(original_query, new_query, space, projects, environments, channel, tenant):
             """
             Answers a general query about a logs
             """
@@ -453,26 +453,27 @@ Once default values are set, you can omit the space, environment, and project fr
     def answer_general_query(space=None, projects=None, runbooks=None, targets=None,
                              tenants=None, library_variable_sets=None, environments=None,
                              feeds=None, accounts=None, certificates=None, lifecycles=None,
-                             workerpools=None, machinepolicies=None, tagsets=None, projectgroups=None):
+                             workerpools=None, machinepolicies=None, tagsets=None, projectgroups=None, channels=None,
+                             releases=None):
         """Answers a general query about an Octopus space.
-
-        Args:
-        space: Space name
-        projects: project names
-        runbooks: runbook names
-        targets: target/machine names
-        tenants: tenant names
-        library_variable_sets: library variable set names
-        environments: environment names
-        feeds: feed names
-        accounts: account names
-        certificates: certificate names
-        lifecycles: lifecycle names
-        workerpools: worker pool names
-        machinepolicies: machine policy names
-        tagsets: tenant tag set names
-        projectgroups: project group names
-        """
+Args:
+space: Space name
+projects: project names
+runbooks: runbook names
+targets: target/machine names
+tenants: tenant names
+library_variable_sets: library variable set names
+environments: environment names
+feeds: feed names
+accounts: account names
+certificates: certificate names
+lifecycles: lifecycle names
+workerpools: worker pool names
+machinepolicies: machine policy names
+tagsets: tenant tag set names
+projectgroups: project group names
+channels: channel names
+releases: release versions"""
 
         api_key, url = get_api_key_and_url()
 
@@ -495,6 +496,8 @@ Once default values are set, you can omit the space, environment, and project fr
                                           machinepolicies,
                                           tagsets,
                                           projectgroups,
+                                          channels,
+                                          releases,
                                           api_key,
                                           url,
                                           log_query)

@@ -88,19 +88,23 @@ def general_query_handler(body):
                                body['machinepolicy_names'],
                                body['tagset_names'],
                                body['projectgroup_names'],
+                               body['channel_names'],
+                               body['release_versions'],
                                get_api_key(),
                                get_octopus_api(),
                                logging,
                                False)
 
 
-def variable_query_handler(space, projects, original_query, enriched_query):
+def variable_query_handler(original_query, enriched_query, space, projects):
     space = get_default_argument(space, 'Space')
 
     chat_response = collect_llm_context(original_query,
                                         enriched_query,
                                         space,
                                         projects,
+                                        None,
+                                        None,
                                         None,
                                         None,
                                         None,
@@ -122,7 +126,7 @@ def variable_query_handler(space, projects, original_query, enriched_query):
     return chat_response
 
 
-def releases_query_handler(space, projects, environments, original_query, enriched_query):
+def releases_query_handler(original_query, enriched_query, space, projects, environments, channels, releases):
     space = get_default_argument(space, 'Space')
 
     chat_response = collect_llm_context(original_query,
@@ -134,6 +138,8 @@ def releases_query_handler(space, projects, environments, original_query, enrich
                                         None,
                                         None,
                                         environments,
+                                        None,
+                                        None,
                                         None,
                                         None,
                                         None,

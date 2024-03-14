@@ -1,11 +1,14 @@
 def answer_releases_and_deployments_callback(original_query, callback, logging):
-    def answer_releases_and_deployments_usage(space=None, projects=None, environments=None, **kwargs):
+    def answer_releases_and_deployments_usage(space=None, projects=None, environments=None, channels=None,
+                                              releases=None, **kwargs):
         """Answers a question about deployments and releases.
 
         Args:
         space: Space name
         projects: project names
         environments: variable names
+        channels: chanel names
+        releases: release versions
         """
 
         # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
@@ -305,6 +308,6 @@ Question: {original_query}
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
-        return callback(original_query, few_shot, space, projects, environments)
+        return callback(original_query, few_shot, space, projects, environments, channels, releases)
 
     return answer_releases_and_deployments_usage

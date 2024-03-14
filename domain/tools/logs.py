@@ -1,5 +1,5 @@
 def answer_logs_callback(query, callback, logging):
-    def answer_logs_usage(space=None, projects=None, environments=None, **kwargs):
+    def answer_logs_usage(space=None, projects=None, environments=None, channel=None, tenant=None, **kwargs):
         """Answers a question about deployment logs.
 
         Args:
@@ -13,6 +13,6 @@ def answer_logs_callback(query, callback, logging):
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
         # This is just a passthrough to the original callback
-        return callback(query, query, space, projects, environments)
+        return callback(query, query, space, projects, environments, channel, tenant)
 
     return answer_logs_usage
