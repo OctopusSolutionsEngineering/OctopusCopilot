@@ -33,6 +33,14 @@ def sanitize_projectgroups(input_list):
     return sanitize_list(input_list, "\\*|Project\\s*Group\\s*[0-9A-Z]|My\\s*Project\\s*Group")
 
 
+def sanitize_channels(input_list):
+    return sanitize_list(input_list, "\\*|Channel\\s*[0-9A-Z]|My\\s*Channel")
+
+
+def sanitize_releases(input_list):
+    return sanitize_list(input_list, "\\*|Release\\s*[0-9A-Z]|My\\s*Release")
+
+
 def sanitize_lifecycles(input_list):
     return sanitize_list(input_list, "\\*|Lifecycle\\s*[0-9A-Z]|My\\s*Lifecycle")
 

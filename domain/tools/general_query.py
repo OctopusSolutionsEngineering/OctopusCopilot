@@ -2,14 +2,16 @@ from pydantic import BaseModel
 
 from domain.strings.sanitized_list import sanitize_projects, sanitize_runbooks, sanitize_targets, sanitize_tenants, \
     sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, sanitize_certificates, \
-    sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, sanitize_projectgroups
+    sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, sanitize_projectgroups, \
+    sanitize_channels, sanitize_releases
 
 
 def answer_general_query_callback(callback):
     def answer_general_query(space=None, projects=None, runbooks=None, targets=None,
                              tenants=None, library_variable_sets=None, environments=None,
                              feeds=None, accounts=None, certificates=None, lifecycles=None,
-                             workerpools=None, machinepolicies=None, tagsets=None, projectgroups=None):
+                             workerpools=None, machinepolicies=None, tagsets=None, projectgroups=None, channels=None,
+                             releases=None):
         """Answers a general query about an Octopus space.
 
         Args:
@@ -28,7 +30,14 @@ def answer_general_query_callback(callback):
         machinepolicies: machine policy names
         tagsets: tenant tag set names
         projectgroups: project group names
+        channels: channel names
+        releases: release versions
         """
+
+        # This function acts as a way to extract the names of resources that are important to an Octopus query. The
+        # resource names map to resources into the API that need to be queried and exposed for context to answer
+        # a general question. So the only thing this function does is make another request to the LLM after
+        # extracting the relevant entities from the Octopus API.
 
         # OpenAI will inject values for some of these lists despite the fact that there was no mention
         # of these resources anywhere in the question. We clean up the results before sending them back
@@ -49,6 +58,8 @@ def answer_general_query_callback(callback):
             "machinepolicy_names": sanitize_machinepolicies(machinepolicies),
             "tagset_names": sanitize_tenanttagsets(tagsets),
             "projectgroup_names": sanitize_projectgroups(projectgroups),
+            "channel_names": sanitize_channels(channels),
+            "release_versions": sanitize_releases(releases)
         }
 
         return callback(body)
