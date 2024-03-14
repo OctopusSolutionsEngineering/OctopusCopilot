@@ -210,20 +210,20 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
         query = extract_query(req)
 
         # Define some tools that the LLM can call
-        def general_query_handler():
+        def general_query_handler(**kwargs):
             """
             Answers a general query about an Octopus space
             """
             return llm_message_query(build_hcl_prompt(), {"context": req.get_body().decode("utf-8"), "input": query})
 
-        def logs_query_handler():
+        def logs_query_handler(**kwargs):
             """
             Answers a general query about a logs
             """
             return llm_message_query(build_plain_text_prompt(),
                                      {"context": req.get_body().decode("utf-8"), "input": query})
 
-        def generic_callback(space, projects, original_query, new_query):
+        def generic_callback(original_query, new_query, **kwargs):
             """
             A function that passes the updated query through to the LLM
             """
@@ -236,7 +236,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                 FunctionDefinition(answer_project_variables_callback(query, generic_callback, log_query)),
                 FunctionDefinition(answer_project_variables_usage_callback(query, generic_callback, log_query)),
                 FunctionDefinition(answer_releases_and_deployments_callback(query, generic_callback, log_query)),
-                FunctionDefinition(answer_logs_callback(query, generic_callback, log_query))
+                FunctionDefinition(answer_logs_callback(query, logs_query_handler, log_query))
             ])
 
         # Call the appropriate tool. This may be a straight pass through of the query and context,

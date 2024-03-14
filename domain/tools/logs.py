@@ -13,6 +13,6 @@ def answer_logs_callback(query, callback, logging):
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
         # This is just a passthrough to the original callback
-        return callback(space, projects, environments, query, query)
+        return callback(query, query, space, projects, environments)
 
     return answer_logs_usage

@@ -1,4 +1,4 @@
-def answer_project_variables_usage_callback(query, callback, logging):
+def answer_project_variables_usage_callback(original_query, callback, logging):
     """
     The challenge with having functions passed as tools for the LLM to call is that the function must have only
     those parameters that the LLM will populate. However, we often want to have these tool functions reference
@@ -16,12 +16,13 @@ def answer_project_variables_usage_callback(query, callback, logging):
     example. We then embed the original query, passed into this function, into the enhanced query.
     """
 
-    def answer_project_variables_usage(space=None, projects=None, **kwargs):
+    def answer_project_variables_usage(space=None, projects=None, environments=None, **kwargs):
         """Answers a question where variables are used in a project or if they are unused.
 
         Args:
         space: Space name
         projects: project names
+        environments: Environment names
         """
 
         # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
@@ -128,14 +129,14 @@ Answer 1:
 - The variable "SecretVariable" is used by the step "Step 2".
 - The variable "TestVariable3" is unused.
 
-Question: {query}
+Question: {original_query}
 """
 
         for key, value in kwargs.items():
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
-        return callback(space, projects, query, few_shot)
+        return callback(original_query, few_shot, space, projects, environments)
 
     return answer_project_variables_usage
 
@@ -223,6 +224,6 @@ Question: {original_query}
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
-        return callback(space, projects, original_query, few_shot)
+        return callback(original_query, few_shot, space, projects)
 
     return answer_project_variables

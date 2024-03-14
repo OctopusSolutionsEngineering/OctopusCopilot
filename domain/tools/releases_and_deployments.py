@@ -1,4 +1,4 @@
-def answer_releases_and_deployments_callback(query, callback, logging):
+def answer_releases_and_deployments_callback(original_query, callback, logging):
     def answer_releases_and_deployments_usage(space=None, projects=None, environments=None, **kwargs):
         """Answers a question about deployments and releases.
 
@@ -527,13 +527,13 @@ Therefore, the release version of the latest deployment of the "My Project" proj
 The answer:
 The release version of the latest deployment of the "My Project" project to the "Production" environment is "1.2.3-mybranch"
 
-Question: {query}
+Question: {original_query}
 """
 
         for key, value in kwargs.items():
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
-        return callback(space, projects, environments, query, few_shot)
+        return callback(original_query, few_shot, space, projects, environments)
 
     return answer_releases_and_deployments_usage
