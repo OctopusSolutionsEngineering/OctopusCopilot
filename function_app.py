@@ -17,10 +17,11 @@ from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
 from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context, llm_message_query, \
-    build_hcl_prompt, build_plain_text_prompt
+    build_hcl_prompt, build_plain_text_prompt, max_chars
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
+from domain.strings.minify_hcl import minify_hcl
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
 from domain.tools.logs import answer_logs_callback
@@ -211,27 +212,32 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
         # Extract the query from the question
         query = extract_query(req)
 
+        def get_context():
+            minified_context = minify_hcl(req.get_body().decode("utf-8"))
+            return minified_context[0:max_chars]
+
         # Define some tools that the LLM can call
         def general_query_handler(**kwargs):
             """
             Answers a general query about an Octopus space
             """
-            return llm_message_query(build_hcl_prompt(), {"context": req.get_body().decode("utf-8"), "input": query},
+            return llm_message_query(build_hcl_prompt(), {"context": get_context(), "input": query},
                                      log_query)
 
         def logs_query_handler(original_query, new_query, space, projects, environments, channel, tenant):
             """
             Answers a general query about a logs
             """
+
             return llm_message_query(build_plain_text_prompt(),
-                                     {"context": req.get_body().decode("utf-8"), "input": new_query}, log_query)
+                                     {"context": get_context(), "input": new_query}, log_query)
 
         def project_variables_usage_callback(original_query, new_query, space, projects):
             """
             A function that passes the updated query through to the LLM
             """
             return llm_message_query(build_hcl_prompt(),
-                                     {"context": req.get_body().decode("utf-8"), "input": new_query}, log_query)
+                                     {"context": get_context(), "input": new_query}, log_query)
 
         def releases_and_deployments_callback(original_query, new_query, space, projects, environments, channels,
                                               releases):
@@ -239,7 +245,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             A function that passes the updated query through to the LLM
             """
             return llm_message_query(build_hcl_prompt(),
-                                     {"context": req.get_body().decode("utf-8"), "input": new_query}, log_query)
+                                     {"context": get_context(), "input": new_query}, log_query)
 
         def get_tools():
             return FunctionDefinitions([
