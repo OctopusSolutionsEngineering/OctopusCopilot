@@ -196,14 +196,16 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="submit_query", auth_level=func.AuthLevel.ANONYMOUS)
 def submit_query(req: func.HttpRequest) -> func.HttpResponse:
     """
-    A function handler that queries the LLM with the supplied context
+    A function handler that queries the LLM with the supplied context. This is mostly used by the Chrome
+    extension which will build its own context calling the Octopus API directly.
     :param req: The HTTP request
     :return: The HTML form
     """
 
-    # This function is called after the query has already been processed for the relevant entites and the HCL context
-    # has been generated. The query is then sent back to this function where we determine which function the LLM will
-    # call. The function may alter the query to provide few-shot examples, or may just pass the query through as is.
+    # This function is called after the query has already been processed for the relevant entities and the HCL, JSON,
+    # or logs context has been generated. The query is then sent back to this function where we determine which
+    # function the LLM will call. The function may alter the query to provide few-shot examples, or may just pass the
+    # query through as is.
 
     try:
         # Extract the query from the question
@@ -216,12 +218,12 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             """
             return llm_message_query(build_hcl_prompt(), {"context": req.get_body().decode("utf-8"), "input": query})
 
-        def logs_query_handler(**kwargs):
+        def logs_query_handler(original_query, new_query, **kwargs):
             """
             Answers a general query about a logs
             """
             return llm_message_query(build_plain_text_prompt(),
-                                     {"context": req.get_body().decode("utf-8"), "input": query})
+                                     {"context": req.get_body().decode("utf-8"), "input": new_query})
 
         def generic_callback(original_query, new_query, **kwargs):
             """
