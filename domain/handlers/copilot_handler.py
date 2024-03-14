@@ -58,6 +58,23 @@ def build_hcl_prompt(step_by_step=False):
     return messages
 
 
+def build_plain_text_prompt():
+    """
+    Build a message prompt for the LLM that instructs it to parse plain text
+    :return: The messages to pass to the llm.
+    """
+    messages = [
+        ("system", "You understand Terraform modules defining Octopus Deploy log files. "
+         + "You are a concise and helpful agent."),
+        ("user", "{input}"),
+        ("user", "Answer the question using the text below."),
+        # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
+        # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
+        ("user", "Text: ###\n{context}\n###")]
+
+    return messages
+
+
 def build_hcl_and_json_prompt(step_by_step=False):
     """
     Build a message prompt for the LLM that instructs it to parse the Octopus HCL context.

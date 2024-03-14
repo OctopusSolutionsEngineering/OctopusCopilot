@@ -17,12 +17,13 @@ from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
 from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context, llm_message_query, \
-    build_hcl_prompt
+    build_hcl_prompt, build_plain_text_prompt
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
+from domain.tools.logs import answer_logs_callback
 from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_callback
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_callback
 from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response, \
@@ -215,6 +216,13 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             """
             return llm_message_query(build_hcl_prompt(), {"context": req.get_body().decode("utf-8"), "input": query})
 
+        def logs_query_handler():
+            """
+            Answers a general query about a logs
+            """
+            return llm_message_query(build_plain_text_prompt(),
+                                     {"context": req.get_body().decode("utf-8"), "input": query})
+
         def generic_callback(space, projects, original_query, new_query):
             """
             A function that passes the updated query through to the LLM
@@ -227,7 +235,8 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                 FunctionDefinition(general_query_handler),
                 FunctionDefinition(answer_project_variables_callback(query, generic_callback, log_query)),
                 FunctionDefinition(answer_project_variables_usage_callback(query, generic_callback, log_query)),
-                FunctionDefinition(answer_releases_and_deployments_callback(query, generic_callback, log_query))
+                FunctionDefinition(answer_releases_and_deployments_callback(query, generic_callback, log_query)),
+                FunctionDefinition(answer_logs_callback(query, generic_callback, log_query))
             ])
 
         # Call the appropriate tool. This may be a straight pass through of the query and context,
