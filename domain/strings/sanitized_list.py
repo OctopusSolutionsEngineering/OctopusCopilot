@@ -79,6 +79,10 @@ def sanitize_list(input_list, ignored_re=None):
         else:
             return []
 
+    # Sometimes you get a bool rather than a list
+    if isinstance(input_list, bool):
+        return []
+
     if not input_list:
         return []
 
