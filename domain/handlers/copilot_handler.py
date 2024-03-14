@@ -221,10 +221,11 @@ def llm_message_query(message_prompt, context, log_query=None):
         minified_context) != 0 else 0
 
     if percent_truncated > 0:
-        log_query("query_llm", "----------------------------------------")
-        log_query("Context:", context.get("context"))
-        log_query("Query:", context.get("input"))
-        log_query("Context truncation:", str(percent_truncated) + "%")
+        if log_query:
+            log_query("query_llm", "----------------------------------------")
+            log_query("Context:", context.get("context"))
+            log_query("Query:", context.get("input"))
+            log_query("Context truncation:", str(percent_truncated) + "%")
         return "Your query was too broad. Please ask a more specific question."
 
     context["context"] = truncated_context
