@@ -15,7 +15,9 @@ def answer_releases_and_deployments_callback(original_query, callback, logging=N
             logging("Enter:", "answer_releases_and_deployments_usage")
 
         # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
-        # between projects, releases, deployments, and environments
+        # between projects, releases, deployments, and environments.
+        # Then ask a tree-of-though question to have multiple "experts" consider the question and answer
+        # https://github.com/dave1010/tree-of-thought-prompting/blob/main/tree-of-thought-prompts.txt
 
         few_shot = f"""
 Task: Given the HCL representation of a project and environment; and a JSON representation of deployments and release, what is the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment for the "MyChannel" channel and the "My Tenant" tenant?
@@ -301,7 +303,14 @@ Therefore, the release version of the latest deployment of the "My Project" proj
 The answer:
 The release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "1.2.3-mybranch"
 
-Question: {original_query}
+Question: 
+Identify and behave as three different experts that are appropriate to answering this question.
+All experts will write down the step and their thinking about the step, then share it with the group.
+Then, all experts will go on to the next step, etc.
+At each step all experts will score their peers response between 1 and 5, 1 meaning it is highly unlikely, and 5 meaning it is highly likely.
+If any expert is judged to be wrong at any point then they leave.
+After all experts have provided their analysis, you then analyze all 3 analyses and provide either the consensus solution or your best guess solution.
+The question is {original_query}
 """
 
         for key, value in kwargs.items():
