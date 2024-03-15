@@ -176,7 +176,7 @@ def collect_llm_context(original_query, messages, context, space_name, project_n
                               api_key,
                               octopus_url)
 
-    context["hcl"] = hcl
+    context["hcl"] = minify_hcl(hcl)
 
     return llm_message_query(messages, context, log_query)
 
@@ -193,24 +193,6 @@ def llm_message_query(message_prompt, context, log_query=None):
     prompt = ChatPromptTemplate.from_messages(message_prompt)
 
     chain = prompt | llm
-
-    # We'll minify and truncate the HCL to avoid hitting the token limit.
-    minified_context = minify_hcl(context["hcl"])
-    truncated_context = minified_context[0:max_chars]
-    percent_truncated = round((len(minified_context) - len(truncated_context)) / len(minified_context) * 100, 2) if len(
-        minified_context) != 0 else 0
-
-    if percent_truncated > 0:
-        if log_query:
-            log_query("query_llm", "----------------------------------------")
-            log_query("HCL:", context.get("hcl"))
-            log_query("JSON:", context.get("json"))
-            log_query("Text:", context.get("context"))
-            log_query("Query:", context.get("input"))
-            log_query("Context truncation:", str(percent_truncated) + "%")
-        return "Your query was too broad. Please ask a more specific question."
-
-    context["hcl"] = truncated_context
 
     response = chain.invoke(context).content
 
