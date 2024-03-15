@@ -17,7 +17,7 @@ from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
 from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context, llm_message_query, \
-    build_hcl_prompt, build_plain_text_prompt, max_chars
+    build_hcl_prompt, build_plain_text_prompt
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
@@ -213,8 +213,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
         query = extract_query(req)
 
         def get_context():
-            minified_context = minify_hcl(req.get_body().decode("utf-8"))
-            return minified_context[0:max_chars]
+            return minify_hcl(req.get_body().decode("utf-8"))
 
         # Define some tools that the LLM can call
         def general_query_handler(**kwargs):
