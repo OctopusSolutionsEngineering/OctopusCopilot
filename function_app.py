@@ -17,9 +17,10 @@ from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
 from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context, llm_message_query, \
-    build_hcl_prompt, build_plain_text_prompt, build_deployments_and_releases_prompt
+    build_hcl_prompt, build_plain_text_prompt
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
+from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.security.security import is_admin_user
 from domain.strings.minify_hcl import minify_hcl
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
