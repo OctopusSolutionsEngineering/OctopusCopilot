@@ -3,6 +3,8 @@ import os
 from langchain.agents import OpenAIFunctionsAgent
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
+from openai import RateLimitError
+from retry import retry
 
 from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
 from domain.logging.app_logging import configure_logging
@@ -181,6 +183,7 @@ def collect_llm_context(original_query, messages, context, space_name, project_n
     return llm_message_query(messages, context, log_query)
 
 
+@retry(RateLimitError, tries=3, delay=5)
 def llm_message_query(message_prompt, context, log_query=None):
     llm = AzureChatOpenAI(
         temperature=0,
