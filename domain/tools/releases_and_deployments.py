@@ -303,7 +303,7 @@ Therefore, the release version of the latest deployment of the "My Project" proj
 The answer:
 The release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "1.2.3-mybranch"
 
-Question: 
+Question:
 Identify and behave as three different experts that are appropriate to answering this question.
 All experts will write down the step and their thinking about the step, then share it with the group.
 Then, all experts will go on to the next step, etc.
