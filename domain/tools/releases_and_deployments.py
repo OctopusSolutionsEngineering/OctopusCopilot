@@ -107,13 +107,31 @@ JSON: ###
         "ChannelId": "Channels-97001",
       }},
       "Deployments": {{
-        "Environments-96789": [
+        "Environments-76534": [
           {{
             "Id": "Deployments-16406",
             "ProjectId": "Projects-91234",
-            "EnvironmentId": "Environments-96789",
+            "EnvironmentId": "Environments-76534",
             "ReleaseId": "Releases-13546",
             "DeploymentId": "Deployments-16406",
+            "TaskId": "ServerTasks-700878",
+            "TenantId": null,
+            "ChannelId": "Channels-97001",
+            "ReleaseVersion": "0.1.1049+run970-attempt1",
+            "Created": "2024-03-11T23:41:10.241+00:00",
+            "QueueTime": "2024-03-11T23:41:10.241+00:00",
+            "StartTime": "2024-03-11T23:41:11.125+00:00",
+            "CompletedTime": "2024-03-11T23:42:04.328+00:00",
+            "State": "Success"
+          }}
+        ],
+        "Environments-96789": [
+          {{
+            "Id": "Deployments-26435",
+            "ProjectId": "Projects-91234",
+            "EnvironmentId": "Environments-96789",
+            "ReleaseId": "Releases-13546",
+            "DeploymentId": "Deployments-26435",
             "TaskId": "ServerTasks-700878",
             "TenantId": null,
             "ChannelId": "Channels-97001",
