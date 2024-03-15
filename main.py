@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context
+from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context, build_hcl_prompt
 from domain.logging.query_loggin import log_query
 from domain.strings.sanitized_list import sanitize_list
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
@@ -9,7 +9,8 @@ from domain.tools.general_query import answer_general_query_callback, AnswerGene
 from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_callback
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_callback
 from domain.transformers.chat_responses import get_octopus_project_names_response
-from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process
+from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_project_progression, \
+    get_dashboard
 
 
 def init_argparse():
@@ -71,8 +72,12 @@ def get_deployment_process_raw_json_cli(space_name: None, project_name: None):
 def general_query_handler(body):
     space = get_default_argument(body['space_name'], 'Space')
 
+    messages = build_hcl_prompt()
+    context = {"input": parser.query}
+
     return collect_llm_context(parser.query,
-                               parser.query,
+                               messages,
+                               context,
                                space,
                                body['project_names'],
                                body['runbook_names'],
@@ -92,15 +97,18 @@ def general_query_handler(body):
                                body['release_versions'],
                                get_api_key(),
                                get_octopus_api(),
-                               logging,
-                               False)
+                               logging)
 
 
 def variable_query_handler(original_query, enriched_query, space, projects):
     space = get_default_argument(space, 'Space')
 
-    chat_response = collect_llm_context(original_query,
-                                        enriched_query,
+    messages = build_hcl_prompt()
+    context = {"input": enriched_query}
+
+    chat_response = collect_llm_context(parser.query,
+                                        messages,
+                                        context,
                                         space,
                                         projects,
                                         None,
@@ -120,8 +128,7 @@ def variable_query_handler(original_query, enriched_query, space, projects):
                                         None,
                                         get_api_key(),
                                         get_octopus_api(),
-                                        logging,
-                                        True)
+                                        logging)
 
     return chat_response
 
@@ -129,8 +136,18 @@ def variable_query_handler(original_query, enriched_query, space, projects):
 def releases_query_handler(original_query, enriched_query, space, projects, environments, channels, releases):
     space = get_default_argument(space, 'Space')
 
-    chat_response = collect_llm_context(original_query,
-                                        enriched_query,
+    messages = build_hcl_prompt()
+    context = {"input": enriched_query}
+
+    # We need some additional JSON data to answer this question
+    if projects:
+        context["json"] = get_project_progression(space, projects, get_api_key(), get_octopus_api())
+    else:
+        context["json"] = get_dashboard(space, get_api_key(), get_octopus_api())
+
+    chat_response = collect_llm_context(parser.query,
+                                        messages,
+                                        context,
                                         space,
                                         projects,
                                         None,
@@ -150,8 +167,7 @@ def releases_query_handler(original_query, enriched_query, space, projects, envi
                                         None,
                                         get_api_key(),
                                         get_octopus_api(),
-                                        logging,
-                                        False)
+                                        logging)
 
     return chat_response
 

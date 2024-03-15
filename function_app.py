@@ -487,8 +487,12 @@ releases: release versions"""
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
 
+        messages = build_hcl_prompt()
+        context = {"input": extract_query(req)}
+
         chat_result = collect_llm_context(extract_query(req),
-                                          extract_query(req),
+                                          messages,
+                                          context,
                                           space,
                                           projects,
                                           runbooks,

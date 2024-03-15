@@ -7,11 +7,8 @@ from langchain_openai import AzureChatOpenAI
 from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
 from domain.logging.app_logging import configure_logging
 from domain.strings.minify_hcl import minify_hcl
-from domain.strings.sanitized_list import sanitize_list
-from domain.tools.detect_data_source import get_data_source, DataSource
 from domain.tools.function_call import FunctionCall
 from domain.validation.argument_validation import ensure_string_not_empty, ensure_not_falsy
-from infrastructure.octopus import get_project_progression, get_dashboard
 from infrastructure.octoterra import get_octoterra_space
 
 NO_FUNCTION_RESPONSE = "Sorry, I did not understand that request."
@@ -112,12 +109,12 @@ def build_hcl_and_json_prompt(step_by_step=False):
     return messages
 
 
-def collect_llm_context(original_query, enriched_query, space_name, project_names, runbook_names, target_names,
+def collect_llm_context(original_query, messages, context, space_name, project_names, runbook_names, target_names,
                         tenant_names,
                         library_variable_sets, environment_names, feed_names, account_names, certificate_names,
                         lifecycle_names, workerpool_names, machinepolicy_names, tagset_names, projectgroup_names,
                         channel_names, release_versions, api_key,
-                        octopus_url, log_query, step_by_step=False):
+                        octopus_url, log_query):
     """
     We need to source context for the LLM from multiple locations. "Static" resources are defined using Terraform,
     as this is a publicly documented format the LLM may have had an opportunity to scrape that also has the benefit of
@@ -126,7 +123,6 @@ def collect_llm_context(original_query, enriched_query, space_name, project_name
 
     The LLM messages are also tailored here to guide the LLM in how it processes the context.
 
-    :param enriched_query: The LLM query
     :param space_name: The Octopus space name
     :param project_names: The project names found in the query
     :param runbook_names: The runbook names found in the query
@@ -136,15 +132,13 @@ def collect_llm_context(original_query, enriched_query, space_name, project_name
     :param api_key: The Octopus API key
     :param octopus_url: The Octopus URL
     :param log_query: A function used to log debug and error messages
-    :param step_by_step: True if the LLM should be instructed to explain its reasoning
     :return: The query result
     """
-    ensure_string_not_empty(enriched_query, 'query must be a non-empty string (handle_copilot_query).')
+
     ensure_string_not_empty(space_name, 'space_name must be a non-empty string (handle_copilot_query).')
 
     if log_query:
         log_query("handle_configuration_query", "-----------------------------")
-        log_query("Query:", enriched_query)
         log_query("Space Name:", space_name)
         log_query("Project Names:", project_names)
         log_query("Runbook Names:", runbook_names)
@@ -163,7 +157,7 @@ def collect_llm_context(original_query, enriched_query, space_name, project_name
         log_query("Release Versions:", release_versions)
 
     # This context provides details about resources like projects, environments, feeds, accounts, certificates, etc.
-    hcl = get_octoterra_space(enriched_query,
+    hcl = get_octoterra_space(original_query,
                               space_name,
                               project_names,
                               runbook_names,
@@ -182,25 +176,7 @@ def collect_llm_context(original_query, enriched_query, space_name, project_name
                               api_key,
                               octopus_url)
 
-    # The HCL does not have any representation for deployments and releases. So we add JSON returned from the
-    # server to expose this information.
-    data_source = get_data_source(original_query, project_names)
-
-    context = {"input": enriched_query}
-    if data_source == DataSource.PROJECT_PROGRESSION:
-        messages = build_hcl_and_json_prompt(step_by_step)
-        json = ""
-        for project in sanitize_list(project_names):
-            json += get_project_progression(space_name, project, api_key, octopus_url) + "\n\n"
-        context["json"] = json
-        context["hcl"] = hcl
-    elif data_source == DataSource.DASHBOARD_PROGRESSION:
-        messages = build_hcl_and_json_prompt(step_by_step)
-        context["json"] = get_dashboard(space_name, api_key, octopus_url)
-        context["hcl"] = hcl
-    else:
-        messages = build_hcl_prompt(step_by_step)
-        context["hcl"] = hcl
+    context["hcl"] = hcl
 
     return llm_message_query(messages, context, log_query)
 
