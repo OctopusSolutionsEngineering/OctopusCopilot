@@ -15,37 +15,37 @@ def answer_releases_and_deployments_callback(original_query, callback, logging):
         # between projects, releases, deployments, and environments
 
         few_shot = f"""
-Task: Given the HCL representation of a project and environment; and a JSON representation of deployments and release, what is the release version of the latest deployment of the "My Project" project to the "Production" environment for the "Default" channel and the "My Tenant" tenant?
+Task: Given the HCL representation of a project and environment; and a JSON representation of deployments and release, what is the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment for the "MyChannel" channel and the "My Tenant" tenant?
 
 Example 1:
 HCL: ###
-resource "octopusdeploy_environment" "environment_production" {{
-  id                           = "Environments-6789"
-  name                         = "Production"
+resource "octopusdeploy_environment" "theenvironmentresource" {{
+  id                           = "Environments-96789"
+  name                         = "MyEnvironment"
 }}
-resource "octopusdeploy_project" "test_project" {{
-    id = "Projects-1234"
+resource "octopusdeploy_project" "theprojectresource" {{
+    id = "Projects-91234"
     name = "My Project"
 }}
-resource "octopusdeploy_tenant" "my_tenant" {{
-  id = "Tenants-234"
+resource "octopusdeploy_tenant" "thetennatresource" {{
+  id = "Tenants-9234"
   name = "My Tenant"
 }}
-resource "octopusdeploy_channel" "default" {{
-  id = "Channels-7001"
-  name = "Default"
+resource "octopusdeploy_channel" "thechannelresource" {{
+  id = "Channels-97001"
+  name = "MyChannel"
 }}
 ###
 JSON: ###
 {{
   "Environments": [
     {{
-      "Id": "Environments-6789",
-      "Name": "Production"
+      "Id": "Environments-96789",
+      "Name": "MyEnvironment"
     }},
     {{
-      "Id": "Environments-3023",
-      "Name": "Security"
+      "Id": "Environments-93023",
+      "Name": "MyOtherEnvironment"
     }}
   ],
   "Releases": [
@@ -53,21 +53,21 @@ JSON: ###
       "Release": {{
         "Id": "Releases-13568",
         "SpaceId": "Spaces-2328",
-        "ProjectId": "Projects-1234",
+        "ProjectId": "Projects-91234",
         "Version": "1.2.3-mybranch",
-        "ChannelId": "Channels-7001",
+        "ChannelId": "Channels-97001",
       }},
       "Deployments": {{
-        "Environments-6789": [
+        "Environments-96789": [
           {{
             "Id": "Deployments-16435",
-            "ProjectId": "Projects-1234",
-            "EnvironmentId": "Environments-6789",
+            "ProjectId": "Projects-91234",
+            "EnvironmentId": "Environments-96789",
             "ReleaseId": "Releases-13568",
             "DeploymentId": "Deployments-16435",
             "TaskId": "ServerTasks-701983",
-            "TenantId": "Tenants-234",
-            "ChannelId": "Channels-7001",
+            "TenantId": "Tenants-9234",
+            "ChannelId": "Channels-97001",
             "ReleaseVersion": "1.2.3-mybranch",
             "Created": "2024-03-13T04:07:59.537+00:00",
             "QueueTime": "2024-03-13T04:07:59.537+00:00",
@@ -82,21 +82,21 @@ JSON: ###
       "Release": {{
         "Id": "Releases-13546",
         "SpaceId": "Spaces-2328",
-        "ProjectId": "Projects-1234",
+        "ProjectId": "Projects-91234",
         "Version": "0.1.1049+run970-attempt1",
-        "ChannelId": "Channels-7001",
+        "ChannelId": "Channels-97001",
       }},
       "Deployments": {{
-        "Environments-6789": [
+        "Environments-96789": [
           {{
             "Id": "Deployments-16406",
-            "ProjectId": "Projects-1234",
-            "EnvironmentId": "Environments-6789",
+            "ProjectId": "Projects-91234",
+            "EnvironmentId": "Environments-96789",
             "ReleaseId": "Releases-13546",
             "DeploymentId": "Deployments-16406",
             "TaskId": "ServerTasks-700878",
             "TenantId": null,
-            "ChannelId": "Channels-7001",
+            "ChannelId": "Channels-97001",
             "ReleaseVersion": "0.1.1049+run970-attempt1",
             "Created": "2024-03-11T23:41:10.241+00:00",
             "QueueTime": "2024-03-11T23:41:10.241+00:00",
@@ -111,21 +111,21 @@ JSON: ###
       "Release": {{
         "Id": "Releases-13382",
         "SpaceId": "Spaces-2328",
-        "ProjectId": "Projects-1234",
+        "ProjectId": "Projects-91234",
         "Version": "0.1.981+run900-attempt1",
-        "ChannelId": "Channels-7001",
+        "ChannelId": "Channels-97001",
       }},
       "Deployments": {{
-        "Environments-6789": [
+        "Environments-96789": [
           {{
             "Id": "Deployments-16139",
-            "ProjectId": "Projects-1234",
-            "EnvironmentId": "Environments-6789",
+            "ProjectId": "Projects-91234",
+            "EnvironmentId": "Environments-96789",
             "ReleaseId": "Releases-13382",
             "DeploymentId": "Deployments-16139",
             "TaskId": "ServerTasks-694793",
             "TenantId": null,
-            "ChannelId": "Channels-7001",
+            "ChannelId": "Channels-97001",
             "ReleaseVersion": "0.1.981+run900-attempt1",
             "Created": "2024-03-05T13:01:12.534+00:00",
             "QueueTime": "2024-03-05T13:01:12.534+00:00",
@@ -134,16 +134,16 @@ JSON: ###
             "State": "Success"
           }}
         ],
-        "Environments-3023": [
+        "Environments-93023": [
           {{
             "Id": "Deployments-16457",
-            "ProjectId": "Projects-1234",
-            "EnvironmentId": "Environments-3023",
+            "ProjectId": "Projects-91234",
+            "EnvironmentId": "Environments-93023",
             "ReleaseId": "Releases-13382",
             "DeploymentId": "Deployments-16457",
             "TaskId": "ServerTasks-702237",
             "TenantId": null,
-            "ChannelId": "Channels-7001",
+            "ChannelId": "Channels-97001",
             "ReleaseVersion": "0.1.981+run900-attempt1",
             "Created": "2024-03-13T09:00:24.957+00:00",
             "QueueTime": "2024-03-13T09:00:24.957+00:00",
@@ -153,13 +153,13 @@ JSON: ###
           }},
           {{
             "Id": "Deployments-16418",
-            "ProjectId": "Projects-1234",
-            "EnvironmentId": "Environments-3023",
+            "ProjectId": "Projects-91234",
+            "EnvironmentId": "Environments-93023",
             "ReleaseId": "Releases-13382",
             "DeploymentId": "Deployments-16418",
             "TaskId": "ServerTasks-701289",
             "TenantId": null,
-            "ChannelId": "Channels-7001",
+            "ChannelId": "Channels-97001",
             "ReleaseVersion": "0.1.981+run900-attempt1",
             "Created": "2024-03-12T09:00:11.711+00:00",
             "QueueTime": "2024-03-12T09:00:11.711+00:00",
@@ -169,13 +169,13 @@ JSON: ###
           }},
           {{
             "Id": "Deployments-16384",
-            "ProjectId": "Projects-1234",
-            "EnvironmentId": "Environments-3023",
+            "ProjectId": "Projects-91234",
+            "EnvironmentId": "Environments-93023",
             "ReleaseId": "Releases-13382",
             "DeploymentId": "Deployments-16384",
             "TaskId": "ServerTasks-700271",
             "TenantId": null,
-            "ChannelId": "Channels-7001",
+            "ChannelId": "Channels-97001",
             "ReleaseVersion": "0.1.981+run900-attempt1",
             "Created": "2024-03-11T09:00:21.952+00:00",
             "QueueTime": "2024-03-11T09:00:21.952+00:00",
@@ -185,13 +185,13 @@ JSON: ###
           }},
           {{
             "Id": "Deployments-16334",
-            "ProjectId": "Projects-1234",
-            "EnvironmentId": "Environments-3023",
+            "ProjectId": "Projects-91234",
+            "EnvironmentId": "Environments-93023",
             "ReleaseId": "Releases-13382",
             "DeploymentId": "Deployments-16334",
             "TaskId": "ServerTasks-699290",
             "TenantId": null,
-            "ChannelId": "Channels-7001",
+            "ChannelId": "Channels-97001",
             "ReleaseVersion": "0.1.981+run900-attempt1",
             "Created": "2024-03-10T09:00:27.185+00:00",
             "QueueTime": "2024-03-10T09:00:27.185+00:00",
@@ -201,13 +201,13 @@ JSON: ###
           }},
           {{
             "Id": "Deployments-16302",
-            "ProjectId": "Projects-1234",
-            "EnvironmentId": "Environments-3023",
+            "ProjectId": "Projects-91234",
+            "EnvironmentId": "Environments-93023",
             "ReleaseId": "Releases-13382",
             "DeploymentId": "Deployments-16302",
             "TaskId": "ServerTasks-698372",
             "TenantId": null,
-            "ChannelId": "Channels-7001",
+            "ChannelId": "Channels-97001",
             "ReleaseVersion": "0.1.981+run900-attempt1",
             "Created": "2024-03-09T09:00:24.699+00:00",
             "QueueTime": "2024-03-09T09:00:24.699+00:00",
@@ -217,13 +217,13 @@ JSON: ###
           }},
           {{
             "Id": "Deployments-16290",
-            "ProjectId": "Projects-1234",
-            "EnvironmentId": "Environments-3023",
+            "ProjectId": "Projects-91234",
+            "EnvironmentId": "Environments-93023",
             "ReleaseId": "Releases-13382",
             "DeploymentId": "Deployments-16290",
             "TaskId": "ServerTasks-697471",
             "TenantId": null,
-            "ChannelId": "Channels-7001",
+            "ChannelId": "Channels-97001",
             "ReleaseVersion": "0.1.981+run900-attempt1",
             "Created": "2024-03-08T09:00:09.494+00:00",
             "QueueTime": "2024-03-08T09:00:09.494+00:00",
@@ -233,13 +233,13 @@ JSON: ###
           }},
           {{
             "Id": "Deployments-16253",
-            "ProjectId": "Projects-1234",
-            "EnvironmentId": "Environments-3023",
+            "ProjectId": "Projects-91234",
+            "EnvironmentId": "Environments-93023",
             "ReleaseId": "Releases-13382",
             "DeploymentId": "Deployments-16253",
             "TaskId": "ServerTasks-696535",
             "TenantId": null,
-            "ChannelId": "Channels-7001",
+            "ChannelId": "Channels-97001",
             "ReleaseVersion": "0.1.981+run900-attempt1",
             "Created": "2024-03-07T09:00:15.120+00:00",
             "QueueTime": "2024-03-07T09:00:15.120+00:00",
@@ -249,13 +249,13 @@ JSON: ###
           }},
           {{
             "Id": "Deployments-16189",
-            "ProjectId": "Projects-1234",
-            "EnvironmentId": "Environments-3023",
+            "ProjectId": "Projects-91234",
+            "EnvironmentId": "Environments-93023",
             "ReleaseId": "Releases-13382",
             "DeploymentId": "Deployments-16189",
             "TaskId": "ServerTasks-695588",
             "TenantId": null,
-            "ChannelId": "Channels-7001",
+            "ChannelId": "Channels-97001",
             "ReleaseVersion": "0.1.981+run900-attempt1",
             "Created": "2024-03-06T09:00:20.152+00:00",
             "QueueTime": "2024-03-06T09:00:20.152+00:00",
@@ -265,13 +265,13 @@ JSON: ###
           }},
           {{
             "Id": "Deployments-16140",
-            "ProjectId": "Projects-1234",
-            "EnvironmentId": "Environments-3023",
+            "ProjectId": "Projects-91234",
+            "EnvironmentId": "Environments-93023",
             "ReleaseId": "Releases-13382",
             "DeploymentId": "Deployments-16140",
             "TaskId": "ServerTasks-694794",
             "TenantId": null,
-            "ChannelId": "Channels-7001",
+            "ChannelId": "Channels-97001",
             "ReleaseVersion": "0.1.981+run900-attempt1",
             "Created": "2024-03-05T13:02:21.381+00:00",
             "QueueTime": "2024-03-05T13:02:21.381+00:00",
@@ -286,20 +286,20 @@ JSON: ###
 }}
 ###
 Output:
-The HCL resource with the labels "octopusdeploy_environment" and "environment_production" has an attribute called "name" with the value "Production" and an "id" with the value "Environments-6789". This name matches the environment name in the query. Therefore, this is the environment we base the answer on.
-The HCL resource with the labels "octopusdeploy_project" and "test_project" has an attribute called "name" with the value "My Project" and an "id" with the value "Projects-1234". This name matches the project name in the query. Therefore, this is the project we base the answer on.
-The HCL resource with the labels "octopusdeploy_tenant" and "my_tenant" has an attribute called "name" with the value "My Tenant" and an "id" of "Tenants-234". This name matches the tenant name in the query. Therefore, this is the tenant we base the answer on.
-The HCL resource with the labels "octopusdeploy_channel" and "default" has an attribute called "name" with the value "Default" and an "id" of "Channels-7001". This name matches the channel name in the query. Therefore, this is the channel we base the answer on.
-The JSON blob has a property called "Releases" which is an array of release objects. Each release object has a property called "Release" with an attribute called "ProjectId" with the value "Projects-1234" that matches the "id" of the project called "My Project". Therefore, this is a release we can consider for the answer.
-The release object has a property called "Deployments" which is an object mapping environment ids to deployments called an "environment deployment". The "Deployments" object includes an "environment deployment" with the id of "Environments-6789" that matches the "id" of environment "Production". Therefore, this "environment deployment" is one we can consider for the answer.
-The "environment deployment" object has a "ProjectId" attribute with the value of "Projects-1234" that matches the "id" of the project "My Project". Therefore, this "environment deployment" is one we can consider for the answer.
-The "environment deployment" object has a "TenantId" attribute with the value of "Tenants-234" that matches the "id" of the tenant "My Tenant". Therefore, this "environment deployment" is one we can consider for the answer.
-The "environment deployment" object has a "ChannelId" attribute with the value of "Channels-7001" that matches the "id" of the channel "Default". Therefore, this "environment deployment" is one we can consider for the answer.
+The HCL resource with the labels "octopusdeploy_environment" and "theenvironmentresource" has an attribute called "name" with the value "MyEnvironment". This name matches the environment name in the query. Therefore, this is the environment we base the answer on.
+The HCL resource with the labels "octopusdeploy_project" and "theprojectresource" has an attribute called "name" with the value "My Project". This name matches the project name in the query. Therefore, this is the project we base the answer on.
+The HCL resource with the labels "octopusdeploy_tenant" and "thetennatresource" has an attribute called "name" with the value "My Tenant". This name matches the tenant name in the query. Therefore, this is the tenant we base the answer on.
+The HCL resource with the labels "octopusdeploy_channel" and "thechannelresource" has an attribute called "name" with the value "MyChannel". This name matches the channel name in the query. Therefore, this is the channel we base the answer on.
+The JSON blob has a property called "Releases" which is an array of release objects. Each release object has a property called "Release" with an attribute called "ProjectId" with the value "Projects-91234" that matches the "id" of the project called "My Project". Therefore, this is a release we can consider for the answer.
+The release object has a property called "Deployments" which is an object mapping environment ids to deployments called an "environment deployment". The "Deployments" object includes an "environment deployment" with the id of "Environments-96789" that matches the "id" of environment "MyEnvironment". Therefore, this "environment deployment" is one we can consider for the answer.
+The "environment deployment" object has a "ProjectId" attribute with the value of "Projects-91234" that matches the "id" of the project "My Project". Therefore, this "environment deployment" is one we can consider for the answer.
+The "environment deployment" object has a "TenantId" attribute with the value of "Tenants-9234" that matches the "id" of the tenant "My Tenant". Therefore, this "environment deployment" is one we can consider for the answer.
+The "environment deployment" object has a "ChannelId" attribute with the value of "Channels-97001" that matches the "id" of the channel "MyChannel". Therefore, this "environment deployment" is one we can consider for the answer.
 The "environment deployment" object with the highest "StartTime" attribute is the latest deployment. The release version is found in the "ReleaseVersion" attribute.
-Therefore, the release version of the latest deployment of the "My Project" project to the "Production" environment is "1.2.3-mybranch".
+Therefore, the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "1.2.3-mybranch".
 
 The answer:
-The release version of the latest deployment of the "My Project" project to the "Production" environment is "1.2.3-mybranch"
+The release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "1.2.3-mybranch"
 
 Question: {original_query}
 """

@@ -1,7 +1,8 @@
 import argparse
 import os
 
-from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context, build_hcl_prompt
+from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context, build_hcl_prompt, \
+    build_hcl_and_json_prompt
 from domain.logging.query_loggin import log_query
 from domain.strings.sanitized_list import sanitize_list
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
@@ -136,7 +137,7 @@ def variable_query_handler(original_query, enriched_query, space, projects):
 def releases_query_handler(original_query, enriched_query, space, projects, environments, channels, releases):
     space = get_default_argument(space, 'Space')
 
-    messages = build_hcl_prompt()
+    messages = build_hcl_and_json_prompt()
     context = {"input": enriched_query}
 
     # We need some additional JSON data to answer this question
