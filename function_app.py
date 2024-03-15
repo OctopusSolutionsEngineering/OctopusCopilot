@@ -220,22 +220,25 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             """
             Answers a general query about an Octopus space
             """
-            return llm_message_query(build_hcl_prompt(), {"hcl": get_context(), "input": query},
+            body = json.loads(get_context())
+            return llm_message_query(build_hcl_prompt(), {"hcl": body["hcl"], "input": query},
                                      log_query)
 
         def logs_query_handler(original_query, new_query, space, projects, environments, channel, tenant):
             """
             Answers a general query about a logs
             """
+            body = json.loads(get_context())
             return llm_message_query(build_plain_text_prompt(),
-                                     {"context": get_context(), "input": new_query}, log_query)
+                                     {"context": body["context"], "input": new_query}, log_query)
 
         def project_variables_usage_callback(original_query, new_query, space, projects):
             """
             A function that passes the updated query through to the LLM
             """
+            body = json.loads(get_context())
             return llm_message_query(build_hcl_prompt(),
-                                     {"hcl": get_context(), "input": new_query}, log_query)
+                                     {"hcl": body["hcl"], "input": new_query}, log_query)
 
         def releases_and_deployments_callback(original_query, new_query, space, projects, environments, channels,
                                               releases):
