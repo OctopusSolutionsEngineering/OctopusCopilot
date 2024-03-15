@@ -74,7 +74,7 @@ def build_plain_text_prompt():
     return messages
 
 
-def build_hcl_and_json_prompt(step_by_step=False):
+def build_deployments_and_releases_prompt(step_by_step=False):
     """
     Build a message prompt for the LLM that instructs it to parse the Octopus HCL context.
     :param step_by_step: True if the LLM should display its reasoning step by step before the answer. False for concise answers.
@@ -82,18 +82,11 @@ def build_hcl_and_json_prompt(step_by_step=False):
     """
     messages = [
         ("system",
-         "You understand Terraform modules and JSON blobs defining Octopus Deploy resources."
-         + "You must assume the Terraform is an accurate representation of the live project. "
-         + "Do not mention Terraform in the response. Do not show any Terraform snippets in the response. "
-         + "Do not mention that you referenced the Terraform to provide your answer. "
-         + "You must assume questions about variables refer to Octopus variables. "
-         + "Variables are referenced using the syntax #{{Variable Name}}, $OctopusParameters[\"Variable Name\"], "
-         + "Octopus.Parameters[\"Variable Name\"], get_octopusvariable \"Variable Name\", "
-         + "or get_octopusvariable(\"Variable Name\"). "
-         + "The values of secret variables are not defined in the Terraform configuration. "
-         + "Do not mention the fact that the values of secret variables are not defined."),
+         "You understand Terraform modules and JSON blobs defining Octopus Deploy resources. "
+         + "The HCL provides details on projects, environments, channels, and tenants. "
+         + "The JSON provides details on deployments and releases. "
+         + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL."),
         ("user", "{input}"),
-        ("user", "Answer the question using the HCL and JSON below."),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
         ("user", "JSON: ###\n{json}\n###"),
