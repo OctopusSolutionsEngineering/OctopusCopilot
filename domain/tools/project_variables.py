@@ -1,4 +1,4 @@
-def answer_project_variables_usage_callback(original_query, callback, logging):
+def answer_project_variables_usage_callback(original_query, callback, logging=None):
     """
     The challenge with having functions passed as tools for the LLM to call is that the function must have only
     those parameters that the LLM will populate. However, we often want to have these tool functions reference
@@ -24,6 +24,9 @@ def answer_project_variables_usage_callback(original_query, callback, logging):
         projects: project names
         environments: Environment names
         """
+
+        if logging:
+            logging("Enter:", "answer_project_variables_usage")
 
         # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
         # between projects, deployment processes, and variables.
@@ -141,7 +144,7 @@ Question: {original_query}
     return answer_project_variables_usage
 
 
-def answer_project_variables_callback(original_query, callback, logging):
+def answer_project_variables_callback(original_query, callback, logging=None):
     def answer_project_variables(space=None, projects=None, **kwargs):
         """Answers a question about the variables defined for a project
 
@@ -149,6 +152,9 @@ def answer_project_variables_callback(original_query, callback, logging):
         space: Space name
         projects: project names
         """
+
+        if logging:
+            logging("Enter:", "answer_project_variables")
 
         # Few shot example with chain-of-thought example to help the LLM understand the relationships between projects
         # and variables.

@@ -6,7 +6,7 @@ from domain.strings.sanitized_list import sanitize_projects, sanitize_runbooks, 
     sanitize_channels, sanitize_releases
 
 
-def answer_general_query_callback(callback):
+def answer_general_query_callback(callback, logging=None):
     def answer_general_query(space=None, projects=None, runbooks=None, targets=None,
                              tenants=None, library_variable_sets=None, environments=None,
                              feeds=None, accounts=None, certificates=None, lifecycles=None,
@@ -31,6 +31,9 @@ tagsets: tenant tag set names
 projectgroups: project group names
 channels: channel names
 releases: release versions"""
+
+        if logging:
+            logging("Enter:", "answer_general_query")
 
         # This function acts as a way to extract the names of resources that are important to an Octopus query. The
         # resource names map to resources into the API that need to be queried and exposed for context to answer

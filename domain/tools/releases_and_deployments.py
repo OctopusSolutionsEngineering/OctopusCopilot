@@ -1,4 +1,4 @@
-def answer_releases_and_deployments_callback(original_query, callback, logging):
+def answer_releases_and_deployments_callback(original_query, callback, logging=None):
     def answer_releases_and_deployments_usage(space=None, projects=None, environments=None, channels=None,
                                               releases=None, **kwargs):
         """Answers a question about deployments and releases.
@@ -10,6 +10,9 @@ def answer_releases_and_deployments_callback(original_query, callback, logging):
         channels: chanel names
         releases: release versions
         """
+
+        if logging:
+            logging("Enter:", "answer_releases_and_deployments_usage")
 
         # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
         # between projects, releases, deployments, and environments
