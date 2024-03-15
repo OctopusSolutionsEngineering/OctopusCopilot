@@ -294,7 +294,7 @@ The HCL resource with the labels "octopusdeploy_project" and "theprojectresource
 The HCL resource with the labels "octopusdeploy_tenant" and "thetennatresource" has an attribute called "name" with the value "My Tenant". This name matches the tenant name in the query. Therefore, this is the tenant we base the answer on.
 The HCL resource with the labels "octopusdeploy_channel" and "thechannelresource" has an attribute called "name" with the value "MyChannel". This name matches the channel name in the query. Therefore, this is the channel we base the answer on.
 We filter the array of deployments in the "Deployments" property of the JSON blob for deployments with a "ProjectId" attribute with the value of "Projects-91234", a "TenantId" attribute with the value of "Tenants-9234", and a "ChannelId" attribute with the value of "Channels-97001".
-The deployment with the highest "StartTime" attribute is the latest deployment. 
+The deployment with the highest "StartTime" attribute is the latest deployment.
 The release version is found in the deployment "ReleaseVersion" attribute.
 Therefore, the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "1.2.3-mybranch".
 
