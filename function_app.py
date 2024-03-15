@@ -221,7 +221,9 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             Answers a general query about an Octopus space
             """
             body = json.loads(get_context())
-            return llm_message_query(build_hcl_prompt(), {"hcl": body["hcl"], "input": query},
+            return llm_message_query(build_hcl_prompt(),
+                                     {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
+                                      "input": query},
                                      log_query)
 
         def logs_query_handler(original_query, new_query, space, projects, environments, channel, tenant):
@@ -230,7 +232,8 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             """
             body = json.loads(get_context())
             return llm_message_query(build_plain_text_prompt(),
-                                     {"context": body["context"], "input": new_query}, log_query)
+                                     {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
+                                      "input": new_query}, log_query)
 
         def project_variables_usage_callback(original_query, new_query, space, projects):
             """
@@ -238,7 +241,8 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             """
             body = json.loads(get_context())
             return llm_message_query(build_hcl_prompt(),
-                                     {"hcl": body["hcl"], "input": new_query}, log_query)
+                                     {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
+                                      "input": new_query}, log_query)
 
         def releases_and_deployments_callback(original_query, new_query, space, projects, environments, channels,
                                               releases):
@@ -247,7 +251,8 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             """
             body = json.loads(get_context())
             return llm_message_query(build_hcl_prompt(),
-                                     {"json": body["json"], "hcl": body["hcl"], "input": new_query}, log_query)
+                                     {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
+                                      "input": new_query}, log_query)
 
         def get_tools():
             return FunctionDefinitions([
