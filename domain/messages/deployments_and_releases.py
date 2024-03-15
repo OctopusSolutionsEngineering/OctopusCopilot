@@ -6,8 +6,7 @@ def build_deployments_and_releases_prompt(step_by_step=False):
     """
     messages = [
         ("system",
-         "You understand Terraform modules and JSON blobs defining Octopus Deploy resources. "
-         + "The HCL provides details on projects, environments, channels, and tenants. "
+         "The HCL provides details on projects, environments, channels, and tenants. "
          + "The JSON provides details on deployments and releases. "
          + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL."),
         ("user", "{input}"),
