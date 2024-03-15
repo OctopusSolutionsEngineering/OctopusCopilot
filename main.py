@@ -1,9 +1,9 @@
 import argparse
 import os
 
-from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context, build_hcl_prompt, \
-    build_deployments_and_releases_prompt
+from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context, build_hcl_prompt
 from domain.logging.query_loggin import log_query
+from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.strings.sanitized_list import sanitize_list
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery

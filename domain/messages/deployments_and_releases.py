@@ -1,6 +1,6 @@
 def build_deployments_and_releases_prompt(step_by_step=False):
     """
-    Build a message prompt for the LLM that instructs it to parse the Octopus HCL context.
+    Build a message prompt for the LLM that instructs it to parse the Octopus HCL context and the JSON blob with releases..
     :param step_by_step: True if the LLM should display its reasoning step by step before the answer. False for concise answers.
     :return: The messages to pass to the llm.
     """

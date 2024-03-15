@@ -293,12 +293,9 @@ The HCL resource with the labels "octopusdeploy_environment" and "theenvironment
 The HCL resource with the labels "octopusdeploy_project" and "theprojectresource" has an attribute called "name" with the value "My Project". This name matches the project name in the query. Therefore, this is the project we base the answer on.
 The HCL resource with the labels "octopusdeploy_tenant" and "thetennatresource" has an attribute called "name" with the value "My Tenant". This name matches the tenant name in the query. Therefore, this is the tenant we base the answer on.
 The HCL resource with the labels "octopusdeploy_channel" and "thechannelresource" has an attribute called "name" with the value "MyChannel". This name matches the channel name in the query. Therefore, this is the channel we base the answer on.
-The JSON blob has a property called "Releases" which is an array of release objects. Each release object has a property called "Release" with an attribute called "ProjectId" with the value "Projects-91234" that matches the "id" of the project called "My Project". Therefore, this is a release we can consider for the answer.
-The release object has a property called "Deployments" which is an object mapping environment ids to an array of deployments called "environment deployments". The "Deployments" object includes an array of "environment deployments" with the id of "Environments-96789" that matches the "id" of environment "MyEnvironment". Therefore, these we can consider these "environment deployments" for the answer.
-The "environment deployment" objects with a "ProjectId" attribute with the value of "Projects-91234" match the "id" of the project "My Project". Therefore, we can consider these "environment deployments" for the answer.
-We consider only those "environment deployment" objects with a "TenantId" attribute with the value of "Tenants-9234" that matches the "id" of the tenant "My Tenant".
-We consider only those "environment deployment" objects with a "ChannelId" attribute with the value of "Channels-97001" that matches the "id" of the channel "MyChannel".
-The "environment deployment" object matching the project with the highest "StartTime" attribute is the latest deployment. The release version is found in the "ReleaseVersion" attribute.
+We filter the array of deployments in the "Deployments" property of the JSON blob for deployments with a "ProjectId" attribute with the value of "Projects-91234", a "TenantId" attribute with the value of "Tenants-9234", and a "ChannelId" attribute with the value of "Channels-97001".
+The deployment with the highest "StartTime" attribute is the latest deployment. 
+The release version is found in the deployment "ReleaseVersion" attribute.
 Therefore, the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "1.2.3-mybranch".
 
 The answer:
