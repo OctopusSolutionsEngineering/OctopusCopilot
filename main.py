@@ -193,7 +193,7 @@ def build_tools():
     :return: The OpenAI tools
     """
     return FunctionDefinitions([
-        FunctionDefinition(answer_general_query_callback(general_query_handler, log_query()), AnswerGeneralQuery),
+        FunctionDefinition(answer_general_query_callback(general_query_handler, log_query), AnswerGeneralQuery),
         FunctionDefinition(answer_project_variables_callback(parser.query, variable_query_handler, log_query)),
         FunctionDefinition(answer_project_variables_usage_callback(parser.query, variable_query_handler, log_query)),
         FunctionDefinition(answer_releases_and_deployments_callback(parser.query, releases_query_handler, log_query))
