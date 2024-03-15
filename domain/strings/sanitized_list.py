@@ -67,6 +67,12 @@ def sanitize_library_variable_sets(input_list):
                          "\\*|(Library\\s*)?Variable\\s*Set\\s*[0-9A-Z]|Variables|My\\s*Variable\\s*Set")
 
 
+def sanitize_bool(input_bool):
+    if isinstance(input_bool, bool):
+        return input_bool
+    return False
+
+
 def sanitize_list(input_list, ignored_re=None):
     """
     OpenAI can provide some unexpected inputs. This function cleans them up.
@@ -78,6 +84,10 @@ def sanitize_list(input_list, ignored_re=None):
             return [input_list.strip()]
         else:
             return []
+
+    # Sometimes you get a bool rather than a list
+    if isinstance(input_list, bool):
+        return []
 
     if not input_list:
         return []
