@@ -8,6 +8,9 @@ from domain.strings.sanitized_list import sanitize_list, sanitize_environments, 
 
 class SanitizeList(unittest.TestCase):
     def test_sanitize_projects(self):
+        self.assertFalse(sanitize_projects(None))
+        self.assertFalse(sanitize_projects(1))
+        self.assertFalse(sanitize_projects(True))
         self.assertFalse(sanitize_projects("Project A"))
         self.assertFalse(sanitize_projects("ProjectA"))
         self.assertFalse(sanitize_projects("Project1"))
@@ -16,6 +19,9 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_projects("Valid project"))
 
     def test_sanitize_tenants(self):
+        self.assertFalse(sanitize_tenants(None))
+        self.assertFalse(sanitize_tenants(1))
+        self.assertFalse(sanitize_tenants(True))
         self.assertFalse(sanitize_tenants("TenantA"))
         self.assertFalse(sanitize_tenants("Tenant A"))
         self.assertFalse(sanitize_tenants("Tenant 1"))
@@ -24,6 +30,9 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_tenants("Valid tenant"))
 
     def test_sanitize_feeds(self):
+        self.assertFalse(sanitize_feeds(None))
+        self.assertFalse(sanitize_feeds(1))
+        self.assertFalse(sanitize_feeds(True))
         self.assertFalse(sanitize_feeds("FeedA"))
         self.assertFalse(sanitize_feeds("Feed A"))
         self.assertFalse(sanitize_feeds("Feed 1"))
@@ -32,6 +41,9 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_feeds("Valid Feed"))
 
     def test_sanitize_accounts(self):
+        self.assertFalse(sanitize_accounts(None))
+        self.assertFalse(sanitize_accounts(1))
+        self.assertFalse(sanitize_accounts(True))
         self.assertFalse(sanitize_accounts("AccountA"))
         self.assertFalse(sanitize_accounts("Account A"))
         self.assertFalse(sanitize_accounts("Account 1"))
@@ -40,6 +52,9 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_accounts("Valid Account"))
 
     def test_sanitize_channels(self):
+        self.assertFalse(sanitize_channels(None))
+        self.assertFalse(sanitize_channels(1))
+        self.assertFalse(sanitize_channels(True))
         self.assertFalse(sanitize_channels("ChannelA"))
         self.assertFalse(sanitize_channels("Channel A"))
         self.assertFalse(sanitize_channels("Channel 1"))
@@ -48,6 +63,9 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_channels("Valid Channel"))
 
     def test_sanitize_releases(self):
+        self.assertFalse(sanitize_releases(None))
+        self.assertFalse(sanitize_releases(1))
+        self.assertFalse(sanitize_releases(True))
         self.assertFalse(sanitize_releases("ReleaseA"))
         self.assertFalse(sanitize_releases("Release A"))
         self.assertFalse(sanitize_releases("Release 1"))
@@ -56,6 +74,9 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_releases("Valid Release"))
 
     def test_sanitize_lifecycles(self):
+        self.assertFalse(sanitize_lifecycles(None))
+        self.assertFalse(sanitize_lifecycles(1))
+        self.assertFalse(sanitize_lifecycles(True))
         self.assertFalse(sanitize_lifecycles("LifecycleA"))
         self.assertFalse(sanitize_lifecycles("Lifecycle A"))
         self.assertFalse(sanitize_lifecycles("Lifecycle 1"))
@@ -64,6 +85,9 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_lifecycles("Valid Lifecycle"))
 
     def test_sanitize_certificates(self):
+        self.assertFalse(sanitize_certificates(None))
+        self.assertFalse(sanitize_certificates(1))
+        self.assertFalse(sanitize_certificates(True))
         self.assertFalse(sanitize_certificates("CertificateA"))
         self.assertFalse(sanitize_certificates("Certificate A"))
         self.assertFalse(sanitize_certificates("Certificate 1"))
@@ -72,6 +96,9 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_certificates("Valid Certificate"))
 
     def test_sanitize_runbooks(self):
+        self.assertFalse(sanitize_runbooks(None))
+        self.assertFalse(sanitize_runbooks(1))
+        self.assertFalse(sanitize_runbooks(True))
         self.assertFalse(sanitize_runbooks("RunbookA"))
         self.assertFalse(sanitize_runbooks("Runbook A"))
         self.assertFalse(sanitize_runbooks("Runbook 1"))
@@ -80,6 +107,9 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_runbooks("Valid Runbook"))
 
     def test_sanitize_targets(self):
+        self.assertFalse(sanitize_targets(None))
+        self.assertFalse(sanitize_targets(1))
+        self.assertFalse(sanitize_targets(True))
         self.assertFalse(sanitize_targets("TargetA"))
         self.assertFalse(sanitize_targets("Target A"))
         self.assertFalse(sanitize_targets("Target 1"))
@@ -93,6 +123,9 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_targets("Valid Target"))
 
     def test_sanitize_workerpools(self):
+        self.assertFalse(sanitize_workerpools(None))
+        self.assertFalse(sanitize_workerpools(1))
+        self.assertFalse(sanitize_workerpools(True))
         self.assertFalse(sanitize_workerpools("WorkerPoolA"))
         self.assertFalse(sanitize_workerpools("WorkerPool A"))
         self.assertFalse(sanitize_workerpools("Worker Pool A"))
@@ -104,6 +137,9 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_workerpools("Valid Worker Pool"))
 
     def test_sanitize_machinepolicies(self):
+        self.assertFalse(sanitize_machinepolicies(None))
+        self.assertFalse(sanitize_machinepolicies(1))
+        self.assertFalse(sanitize_machinepolicies(True))
         self.assertFalse(sanitize_machinepolicies("MachinePolicyA"))
         self.assertFalse(sanitize_machinepolicies("MachinePolicy A"))
         self.assertFalse(sanitize_machinepolicies("Machine Policy A"))
@@ -115,6 +151,9 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_machinepolicies("Valid MachinePolicy"))
 
     def test_sanitize_tenanttagsets(self):
+        self.assertFalse(sanitize_tenanttagsets(None))
+        self.assertFalse(sanitize_tenanttagsets(1))
+        self.assertFalse(sanitize_tenanttagsets(True))
         self.assertFalse(sanitize_tenanttagsets("TagSetA"))
         self.assertFalse(sanitize_tenanttagsets("TagSet A"))
         self.assertFalse(sanitize_tenanttagsets("Tag Set A"))
@@ -126,6 +165,9 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_tenanttagsets("Valid Tag Set"))
 
     def test_sanitize_projectgroups(self):
+        self.assertFalse(sanitize_projectgroups(None))
+        self.assertFalse(sanitize_projectgroups(1))
+        self.assertFalse(sanitize_projectgroups(True))
         self.assertFalse(sanitize_projectgroups("ProjectGroupA"))
         self.assertFalse(sanitize_projectgroups("ProjectGroup A"))
         self.assertFalse(sanitize_projectgroups("Project Group A"))
