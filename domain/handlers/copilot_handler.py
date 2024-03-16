@@ -143,7 +143,13 @@ def collect_llm_context(original_query, messages, context, space_name, project_n
                               api_key,
                               octopus_url)
 
-    context["hcl"] = minify_hcl(hcl)
+    minified_hcl = minify_hcl(hcl)
+
+    available_chars = max_chars - len(context["json"]) - len(context["context"])
+
+    # Trim the HCL to fit within the token limit
+    context["hcl"] = minified_hcl[:available_chars]
+    context["percent_trimmed"] = round((len(minified_hcl) - len(context["hcl"])) / len(minified_hcl) * 100, 2)
 
     return llm_message_query(messages, context, log_query)
 
@@ -177,7 +183,12 @@ def llm_message_query(message_prompt, context, log_query=None):
         log_query("Query:", context.get("input"))
         log_query("Response:", response)
 
-    return response
+    client_response = response
+
+    if context["percent_trimmed"] != 0:
+        client_response += f"\n\nThe space context was trimmed by {context['percent_trimmed']}% to fit within the token limit. The answer may be based on incomplete information."
+
+    return client_response
 
 
 def llm_tool_query(query, llm_tools, log_query=None):
