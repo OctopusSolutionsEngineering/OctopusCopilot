@@ -30,6 +30,7 @@ def build_hcl_prompt(step_by_step=False):
     messages = [
         ("system",
          "You understand Terraform modules defining Octopus Deploy resources."
+         + "The supplied HCL context provides details on Octopus resources like projects, environments, channels, tenants, project groups, lifecycles etc. "
          + "You must assume the Terraform is an accurate representation of the live project. "
          + "Do not mention Terraform in the response. Do not show any Terraform snippets in the response. "
          + "Do not mention that you referenced the Terraform to provide your answer. "
