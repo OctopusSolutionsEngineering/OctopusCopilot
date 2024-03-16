@@ -220,7 +220,15 @@ def llm_tool_query(query, llm_tools, log_query=None):
         tools=tools,
     )
 
-    action = agent.plan([], input=query)
+    try:
+        action = agent.plan([], input=query)
+    except openai.BadRequestError as e:
+        # This will be something like:
+        # {'error': {'message': "This model's maximum context length is 16384 tokens. However, your messages resulted in 17570 tokens. Please reduce the length of the messages.", 'type': 'invalid_request_error', 'param': 'messages', 'code': 'context_length_exceeded'}}
+        # {'error': {'message': "The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766", 'type': None, 'param': 'prompt', 'code': 'content_filter', 'status': 400, 'innererror': {'code': 'ResponsibleAIPolicyViolation', 'content_filter_result': {'hate': {'filtered': True, 'severity': 'high'}, 'self_harm': {'filtered': False, 'severity': 'safe'}, 'sexual': {'filtered': False, 'severity': 'safe'}, 'violence': {'filtered': True, 'severity': 'medium'}}}}}
+        if e.body and 'error' in e.body and 'message' in e.body['error']:
+            return e.body['error']['message']
+        return e.message
 
     # In the event that there was no matched function, return a canned response
     if not hasattr(action, "tool"):
