@@ -18,7 +18,7 @@ def answer_releases_and_deployments_callback(original_query, callback, logging=N
         # between projects, releases, deployments, and environments.
 
         few_shot = f"""
-Task: Given the HCL representation of a project and environment; and a JSON representation of deployments and release, what is the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment for the "MyChannel" channel and the "My Tenant" tenant?
+Task: What is the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment for the "MyChannel" channel and the "My Tenant" tenant?
 
 Example 1:
 HCL: ###
