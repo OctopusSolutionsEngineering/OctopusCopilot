@@ -28,7 +28,7 @@
           <stringProp name="HTTPSampler.domain">octopuscopilotproduction.azurewebsites.net</stringProp>
           <stringProp name="HTTPSampler.port">443</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
-          <stringProp name="HTTPSampler.path">/api/form_handler?message=List%20anything%20interesting%20in%20the%20deployment%20logs%20for%20the%20%22${__urlencode(${OctopusProject})}%22%20project%20in%20the%20%22${__urlencode(${OctopusEnvironment})}%22%20environment.</stringProp>
+          <stringProp name="HTTPSampler.path">/api/form_handler?message=${__urlencode(List the release version and state for the latest deployment of the &quot;${OctopusProject}&quot; project in the &quot;${OctopusEnvironment}&quot; environment in the &quot;${OctopusSpace}&quot; space.)}</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -37,7 +37,18 @@
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
         </HTTPSamplerProxy>
-        <hashTree/>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Assertion">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="1911924869">${OctopusProjectEnvironmentDeploymentReleaseVersion}</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message"></stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <intProp name="Assertion.test_type">2</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="List URLs">
           <stringProp name="HTTPSampler.domain">octopuscopilotproduction.azurewebsites.net</stringProp>
           <stringProp name="HTTPSampler.port">443</stringProp>
@@ -80,7 +91,7 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Describe Project" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Describe Project">
           <stringProp name="HTTPSampler.domain">octopuscopilotproduction.azurewebsites.net</stringProp>
           <stringProp name="HTTPSampler.port">443</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
@@ -101,14 +112,25 @@
               <stringProp name="Argument.value">${__BeanShell( System.getenv(&quot;GIT_CREDENTIAL&quot;) )}</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
+            <elementProp name="OctopusSpace" elementType="Argument">
+              <stringProp name="Argument.name">OctopusSpace</stringProp>
+              <stringProp name="Argument.value">K8s At Scale</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
             <elementProp name="OctopusProject" elementType="Argument">
               <stringProp name="Argument.name">OctopusProject</stringProp>
-              <stringProp name="Argument.value">Octopus Octoterra Function</stringProp>
+              <stringProp name="Argument.value">EKS Octopub Audits</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
             <elementProp name="OctopusEnvironment" elementType="Argument">
               <stringProp name="Argument.name">OctopusEnvironment</stringProp>
               <stringProp name="Argument.value">Production</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="OctopusProjectEnvironmentDeploymentReleaseVersion" elementType="Argument">
+              <stringProp name="Argument.name">OctopusProjectEnvironmentDeploymentReleaseVersion</stringProp>
+              <stringProp name="Argument.value">0.0.2</stringProp>
+              <stringProp name="Argument.desc">The expected release version for the deployment of the project to the environment</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
           </collectionProp>
