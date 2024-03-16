@@ -142,7 +142,12 @@ def releases_query_handler(original_query, enriched_query, space, projects, envi
 
     # We need some additional JSON data to answer this question
     if projects:
-        context["json"] = get_project_progression(space, projects, get_api_key(), get_octopus_api())
+        # We only need the deployments, so strip out the rest of the JSON
+        deployments = get_project_progression(space, projects, get_api_key(), get_octopus_api())
+        deployments_context = {
+            "Releases": list(map(lambda x: {"Deployments": x["Deployments"]}, deployments["Releases"]))
+        }
+        context["json"] = deployments_context
     else:
         context["json"] = get_dashboard(space, get_api_key(), get_octopus_api())
 
