@@ -79,17 +79,18 @@ def sanitize_list(input_list, ignored_re=None):
     :param input_list: The list to sanitize
     :return: The sanitized list of strings
     """
+    if not input_list:
+        return []
+
+    # Treat a string as a list with a single string
     if isinstance(input_list, str):
         if input_list.strip() and not has_prefix(ignored_re, ignored_re):
             return [input_list.strip()]
         else:
             return []
 
-    # Sometimes you get a bool rather than a list
-    if isinstance(input_list, bool):
-        return []
-
-    if not input_list:
+    # Sometimes you get a bool or int rather than a list, which we treat as an empty llist
+    if not isinstance(input_list, list):
         return []
 
     # Open AI will give you a list with a single asterisk if the list is empty
