@@ -6,8 +6,8 @@ def build_deployments_and_releases_prompt(step_by_step=False):
     """
     messages = [
         ("system",
-         "The HCL provides details on projects, environments, channels, and tenants. "
-         + "The JSON provides details on deployments and releases. "
+         "The supplied HCL context provides details on projects, environments, channels, and tenants. "
+         + "The supplied JSON context provides details on deployments and releases. "
          + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL."),
         ("user", "{input}"),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
