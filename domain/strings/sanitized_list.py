@@ -84,7 +84,7 @@ def sanitize_list(input_list, ignored_re=None):
 
     # Treat a string as a list with a single string
     if isinstance(input_list, str):
-        if input_list.strip() and not has_prefix(ignored_re, ignored_re):
+        if input_list.strip() and not has_prefix(input_list.strip(), ignored_re):
             return [input_list.strip()]
         else:
             return []
