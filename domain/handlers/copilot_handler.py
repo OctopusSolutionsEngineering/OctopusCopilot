@@ -1,5 +1,6 @@
 import os
 
+import openai
 from langchain.agents import OpenAIFunctionsAgent
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
@@ -161,7 +162,12 @@ def llm_message_query(message_prompt, context, log_query=None):
 
     chain = prompt | llm
 
-    response = chain.invoke(context).content
+    try:
+        response = chain.invoke(context).content
+    except openai.BadRequestError as e:
+        # This will be something like:
+        # {'error': {'message': "This model's maximum context length is 16384 tokens. However, your messages resulted in 17570 tokens. Please reduce the length of the messages.", 'type': 'invalid_request_error', 'param': 'messages', 'code': 'context_length_exceeded'}}
+        return e.message
 
     if log_query:
         log_query("query_llm", "----------------------------------------")
