@@ -5,7 +5,7 @@ import os
 from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context, build_hcl_prompt
 from domain.logging.query_loggin import log_query
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
-from domain.strings.sanitized_list import sanitize_list
+from domain.strings.sanitized_list import sanitize_list, sanitize_environments
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
 from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_callback
@@ -146,7 +146,9 @@ def releases_query_handler(original_query, enriched_query, space, projects, envi
     if projects:
         # We only need the deployments, so strip out the rest of the JSON
         deployments = get_deployment_array_from_progression(
-            json.loads(get_project_progression(space, projects, get_api_key(), get_octopus_api())))
+            json.loads(get_project_progression(space, projects, get_api_key(), get_octopus_api())),
+            sanitize_environments(environments),
+            3)
         context["json"] = json.dumps(deployments, indent=2)
     else:
         context["json"] = get_dashboard(space, get_api_key(), get_octopus_api())
