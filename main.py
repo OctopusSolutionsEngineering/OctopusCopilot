@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 
 from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context, build_hcl_prompt
@@ -143,11 +144,11 @@ def releases_query_handler(original_query, enriched_query, space, projects, envi
     # We need some additional JSON data to answer this question
     if projects:
         # We only need the deployments, so strip out the rest of the JSON
-        deployments = get_project_progression(space, projects, get_api_key(), get_octopus_api())
+        deployments = json.loads(get_project_progression(space, projects, get_api_key(), get_octopus_api()))
         deployments_context = {
             "Releases": list(map(lambda x: {"Deployments": x["Deployments"]}, deployments["Releases"]))
         }
-        context["json"] = deployments_context
+        context["json"] = json.dumps(deployments_context, indent=2)
     else:
         context["json"] = get_dashboard(space, get_api_key(), get_octopus_api())
 
