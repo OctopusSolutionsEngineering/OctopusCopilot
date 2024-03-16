@@ -144,8 +144,13 @@ def collect_llm_context(original_query, messages, context, space_name, project_n
                               octopus_url)
 
     minified_hcl = minify_hcl(hcl)
+    available_chars = max_chars
 
-    available_chars = max_chars - len(context["json"]) - len(context["context"])
+    if context.get("json"):
+        available_chars -= len(context["json"])
+
+    if context.get("context"):
+        available_chars -= len(context["context"])
 
     # Trim the HCL to fit within the token limit
     context["hcl"] = minified_hcl[:available_chars]

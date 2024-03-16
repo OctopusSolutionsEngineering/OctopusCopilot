@@ -53,7 +53,7 @@
           <stringProp name="HTTPSampler.domain">octopuscopilotproduction.azurewebsites.net</stringProp>
           <stringProp name="HTTPSampler.port">443</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
-          <stringProp name="HTTPSampler.path">/api/form_handler?message=${__urlencode(List any URLs in the deployment logs for the &quot;${OctopusProject}&quot; project in the &quot;${OctopusEnvironment}&quot; environment.)}</stringProp>
+          <stringProp name="HTTPSampler.path">/api/form_handler?message=${__urlencode(List any URLs in the deployment logs for the &quot;${OctopusProject}&quot; project in the &quot;${OctopusEnvironment}&quot; environment in the &quot;${OctopusSpace}&quot; space.)}</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -62,12 +62,23 @@
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
         </HTTPSamplerProxy>
-        <hashTree/>
+        <hashTree>
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Assertion">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="1996271329">http://a6bda0682ecec4daa8f8aa071ad40494-fa46abd5e81109b9.elb.ap-southeast-2.amazonaws.com/production/api/audits</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.custom_message"></stringProp>
+            <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <intProp name="Assertion.test_type">2</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Describe Variables">
           <stringProp name="HTTPSampler.domain">octopuscopilotproduction.azurewebsites.net</stringProp>
           <stringProp name="HTTPSampler.port">443</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
-          <stringProp name="HTTPSampler.path">/api/form_handler?message=${__urlencode(What project variables are defined in the &quot;${OctopusProject}&quot; project?)}</stringProp>
+          <stringProp name="HTTPSampler.path">/api/form_handler?message=${__urlencode(What project variables are defined in the &quot;${OctopusProject}&quot; project in the &quot;${OctopusSpace}&quot; space?)}</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -81,7 +92,7 @@
           <stringProp name="HTTPSampler.domain">octopuscopilotproduction.azurewebsites.net</stringProp>
           <stringProp name="HTTPSampler.port">443</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
-          <stringProp name="HTTPSampler.path">/api/form_handler?message=${__urlencode(List the project variables and the steps \(including disabled steps\) they are used in for the &quot;${OctopusProject}&quot; project.)}</stringProp>
+          <stringProp name="HTTPSampler.path">/api/form_handler?message=${__urlencode(List the project variables and the steps \(including disabled steps\) they are used in for the &quot;${OctopusProject}&quot; project in the &quot;${OctopusSpace}&quot; space.)}</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -95,7 +106,7 @@
           <stringProp name="HTTPSampler.domain">octopuscopilotproduction.azurewebsites.net</stringProp>
           <stringProp name="HTTPSampler.port">443</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
-          <stringProp name="HTTPSampler.path">/api/form_handler?message=${__urlencode(What does the &quot;${OctopusProject}&quot; project do?)}</stringProp>
+          <stringProp name="HTTPSampler.path">/api/form_handler?message=${__urlencode(What does the &quot;${OctopusProject}&quot; project in the &quot;${OctopusSpace}&quot; space do?)}</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
