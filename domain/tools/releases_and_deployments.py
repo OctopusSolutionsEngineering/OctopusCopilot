@@ -50,7 +50,7 @@ JSON: ###
         "TaskId": "ServerTasks-701983",
         "TenantId": "Tenants-9234",
         "ChannelId": "Channels-97001",
-        "ReleaseVersion": "1.2.3-mybranch",
+        "ReleaseVersion": "2.0.1",
         "Created": "2024-03-13T04:07:59.537+00:00",
         "QueueTime": "2024-03-13T04:07:59.537+00:00",
         "StartTime": "2024-03-13T04:08:00.196+00:00",
@@ -80,7 +80,7 @@ The HCL resource with the labels "octopusdeploy_environment" and "theenvironment
 The HCL resource with the labels "octopusdeploy_project" and "theprojectresource" has an attribute called "name" with the value "My Project". This name matches the project name in the query. Therefore, this is the project we base the answer on.
 The HCL resource with the labels "octopusdeploy_tenant" and "thetennatresource" has an attribute called "name" with the value "My Tenant". This name matches the tenant name in the query. Therefore, this is the tenant we base the answer on.
 The HCL resource with the labels "octopusdeploy_channel" and "thechannelresource" has an attribute called "name" with the value "MyChannel". This name matches the channel name in the query. Therefore, this is the channel we base the answer on.
-We filter the JSON array of deployments for those with a "ProjectId" attribute with the value of "Projects-91234", a "TenantId" attribute with the value of "Tenants-9234", and a "ChannelId" attribute with the value of "Channels-97001".
+We filter the JSON array of deployments for a items with a "ProjectId" attribute with the value of "Projects-91234", a "TenantId" attribute with the value of "Tenants-9234", and a "ChannelId" attribute with the value of "Channels-97001".
 The deployment with the highest "StartTime" attribute is the latest deployment.
 The release version is found in the deployment "ReleaseVersion" attribute.
 Therefore, the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "1.2.3-mybranch".
