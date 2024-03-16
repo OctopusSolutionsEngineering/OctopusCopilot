@@ -41,28 +41,9 @@ resource "octopusdeploy_channel" "thechannelresource" {{
 ###
 JSON: ###
 {{
-  "Environments": [
-    {{
-      "Id": "Environments-96789",
-      "Name": "MyEnvironment"
-    }},
-    {{
-      "Id": "Environments-93023",
-      "Name": "MyOtherEnvironment"
-    }}
-  ],
-  "Releases": [
-    {{
-      "Release": {{
-        "Id": "Releases-13568",
-        "SpaceId": "Spaces-2328",
-        "ProjectId": "Projects-91234",
-        "Version": "1.2.3-mybranch",
-        "ChannelId": "Channels-97001",
-      }},
+  "Releases": [{{
       "Deployments": {{
-        "Environments-76534": [
-          {{
+        "Environments-76534": [{{
             "Id": "Deployments-16435",
             "ProjectId": "Projects-91234",
             "EnvironmentId": "Environments-76534",
@@ -76,10 +57,9 @@ JSON: ###
             "QueueTime": "2024-03-13T04:07:59.537+00:00",
             "StartTime": "2024-03-13T04:08:00.196+00:00",
             "CompletedTime": "2024-03-13T04:08:47.885+00:00",
-            "State": "Success",
-          }},
-          "Environments-96789": [
-          {{
+            "State": "Success"
+          }}],
+          "Environments-96789": [{{
             "Id": "Deployments-26435",
             "ProjectId": "Projects-91234",
             "EnvironmentId": "Environments-96789",
@@ -93,19 +73,11 @@ JSON: ###
             "QueueTime": "2024-03-13T04:07:59.537+00:00",
             "StartTime": "2024-03-13T04:08:00.196+00:00",
             "CompletedTime": "2024-03-13T04:08:47.885+00:00",
-            "State": "Success",
-          }}
-        ]
-      }}
+            "State": "Success"
+          }}]
+        }}
     }},
     {{
-      "Release": {{
-        "Id": "Releases-13546",
-        "SpaceId": "Spaces-2328",
-        "ProjectId": "Projects-91234",
-        "Version": "0.1.1049+run970-attempt1",
-        "ChannelId": "Channels-97001",
-      }},
       "Deployments": {{
         "Environments-76534": [
           {{
@@ -146,13 +118,6 @@ JSON: ###
       }}
     }},
     {{
-      "Release": {{
-        "Id": "Releases-13382",
-        "SpaceId": "Spaces-2328",
-        "ProjectId": "Projects-91234",
-        "Version": "0.1.981+run900-attempt1",
-        "ChannelId": "Channels-97001",
-      }},
       "Deployments": {{
         "Environments-96789": [
           {{
@@ -203,7 +168,7 @@ JSON: ###
             "QueueTime": "2024-03-12T09:00:11.711+00:00",
             "StartTime": "2024-03-12T09:00:12.800+00:00",
             "CompletedTime": "2024-03-12T09:01:38.999+00:00",
-            "State": "Success",
+            "State": "Success"
           }},
           {{
             "Id": "Deployments-16384",
@@ -219,7 +184,7 @@ JSON: ###
             "QueueTime": "2024-03-11T09:00:21.952+00:00",
             "StartTime": "2024-03-11T09:00:22.879+00:00",
             "CompletedTime": "2024-03-11T09:01:39.194+00:00",
-            "State": "Success",
+            "State": "Success"
           }},
           {{
             "Id": "Deployments-16334",
@@ -235,7 +200,7 @@ JSON: ###
             "QueueTime": "2024-03-10T09:00:27.185+00:00",
             "StartTime": "2024-03-10T09:00:28.171+00:00",
             "CompletedTime": "2024-03-10T09:01:31.152+00:00",
-            "State": "Success",
+            "State": "Success"
           }},
           {{
             "Id": "Deployments-16302",
@@ -251,7 +216,7 @@ JSON: ###
             "QueueTime": "2024-03-09T09:00:24.699+00:00",
             "StartTime": "2024-03-09T09:00:25.475+00:00",
             "CompletedTime": "2024-03-09T09:01:24.656+00:00",
-            "State": "Success",
+            "State": "Success"
           }},
           {{
             "Id": "Deployments-16290",
@@ -267,7 +232,7 @@ JSON: ###
             "QueueTime": "2024-03-08T09:00:09.494+00:00",
             "StartTime": "2024-03-08T09:00:10.264+00:00",
             "CompletedTime": "2024-03-08T09:01:30.781+00:00",
-            "State": "Success",
+            "State": "Success"
           }},
           {{
             "Id": "Deployments-16253",
@@ -283,7 +248,7 @@ JSON: ###
             "QueueTime": "2024-03-07T09:00:15.120+00:00",
             "StartTime": "2024-03-07T09:00:16.056+00:00",
             "CompletedTime": "2024-03-07T09:01:36.054+00:00",
-            "State": "Success",
+            "State": "Success"
           }},
           {{
             "Id": "Deployments-16189",
@@ -299,7 +264,7 @@ JSON: ###
             "QueueTime": "2024-03-06T09:00:20.152+00:00",
             "StartTime": "2024-03-06T09:00:21.011+00:00",
             "CompletedTime": "2024-03-06T09:02:47.565+00:00",
-            "State": "Success",
+            "State": "Success"
           }},
           {{
             "Id": "Deployments-16140",
@@ -315,7 +280,7 @@ JSON: ###
             "QueueTime": "2024-03-05T13:02:21.381+00:00",
             "StartTime": "2024-03-05T13:02:21.920+00:00",
             "CompletedTime": "2024-03-05T13:03:15.097+00:00",
-            "State": "Success",
+            "State": "Success"
           }}
         ]
       }}
