@@ -12,6 +12,10 @@ class AdminUser(unittest.TestCase):
         stripped = delete_links({"Blah": "hi", "Nested": {"Blah": "hi", "Links": "test"}, "Links": "test"})
         self.assertFalse('Links' in stripped["Nested"])
 
+    def test_delete_links_array(self):
+        stripped = delete_links({"Blah": "hi", "Nested": [{"Blah": "hi", "Links": "test"}], "Links": "test"})
+        self.assertFalse('Links' in stripped["Nested"][0])
+
     def test_delete_links_none(self):
         stripped = delete_links(None)
         self.assertIsNone(stripped)
