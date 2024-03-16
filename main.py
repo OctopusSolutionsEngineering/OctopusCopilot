@@ -11,7 +11,7 @@ from domain.tools.general_query import answer_general_query_callback, AnswerGene
 from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_callback
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_callback
 from domain.transformers.chat_responses import get_octopus_project_names_response
-from domain.transformers.delete_links import delete_links
+from domain.transformers.deployments_from_progression import get_deployment_array_from_progression
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_project_progression, \
     get_dashboard
 
@@ -145,12 +145,9 @@ def releases_query_handler(original_query, enriched_query, space, projects, envi
     # We need some additional JSON data to answer this question
     if projects:
         # We only need the deployments, so strip out the rest of the JSON
-        deployments = json.loads(get_project_progression(space, projects, get_api_key(), get_octopus_api()))
-        deployments = delete_links(deployments)
-        deployments_context = {
-            "Releases": list(map(lambda x: {"Deployments": x["Deployments"]}, deployments["Releases"]))
-        }
-        context["json"] = json.dumps(deployments_context, indent=2)
+        deployments = get_deployment_array_from_progression(
+            json.loads(get_project_progression(space, projects, get_api_key(), get_octopus_api())))
+        context["json"] = json.dumps(deployments, indent=2)
     else:
         context["json"] = get_dashboard(space, get_api_key(), get_octopus_api())
 
