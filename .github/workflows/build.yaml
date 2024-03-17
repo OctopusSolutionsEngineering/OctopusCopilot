@@ -77,6 +77,9 @@ jobs:
       - name: Start Octoterra
         run: |
           # Start the octoterra microservice
+          mkdir octoterra
+          mv octoterra_linux_amd64_azure.zip octoterra
+          cd octoterra
           unzip octoterra_linux_amd64_azure.zip
           chmod +x octoterra_linux_amd64_azure
           ./octoterra_linux_amd64_azure &
