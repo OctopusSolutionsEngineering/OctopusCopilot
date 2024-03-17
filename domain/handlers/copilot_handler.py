@@ -4,7 +4,6 @@ from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.octoterra import get_octoterra_space
 from infrastructure.openai import llm_message_query
 
-NO_FUNCTION_RESPONSE = "Sorry, I did not understand that request."
 my_log = configure_logging()
 
 # Each token is roughly four characters for typical English text. OpenAI accepts a max of 16384 tokens.
