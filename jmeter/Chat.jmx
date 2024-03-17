@@ -121,6 +121,15 @@
           <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Assertion">
             <collectionProp name="Asserion.test_strings">
               <stringProp name="-687710663">${OctopusProjectVariable1}</stringProp>
+              <stringProp name="-687710632">${OctopusProjectVariable2}</stringProp>
+              <stringProp name="-687710601">${OctopusProjectVariable3}</stringProp>
+              <stringProp name="-687710570">${OctopusProjectVariable4}</stringProp>
+              <stringProp name="-687710539">${OctopusProjectVariable5}</stringProp>
+              <stringProp name="-687710508">${OctopusProjectVariable6}</stringProp>
+              <stringProp name="-687710477">${OctopusProjectVariable7}</stringProp>
+              <stringProp name="-687710446">${OctopusProjectVariable8}</stringProp>
+              <stringProp name="-687710415">${OctopusProjectVariable9}</stringProp>
+              <stringProp name="155803665">${OctopusProjectVariable10}</stringProp>
             </collectionProp>
             <stringProp name="Assertion.custom_message"></stringProp>
             <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
@@ -220,6 +229,51 @@
             <elementProp name="OctopusProjectVariable1" elementType="Argument">
               <stringProp name="Argument.name">OctopusProjectVariable1</stringProp>
               <stringProp name="Argument.value">Microservice.Name</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="OctopusProjectVariable2" elementType="Argument">
+              <stringProp name="Argument.name">OctopusProjectVariable2</stringProp>
+              <stringProp name="Argument.value">Kubernetes.Deployment.Name</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="OctopusProjectVariable3" elementType="Argument">
+              <stringProp name="Argument.name">OctopusProjectVariable3</stringProp>
+              <stringProp name="Argument.value">Kubernetes.Deployment.Feed</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="OctopusProjectVariable4" elementType="Argument">
+              <stringProp name="Argument.name">OctopusProjectVariable4</stringProp>
+              <stringProp name="Argument.value">Kubernetes.Namespace</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="OctopusProjectVariable5" elementType="Argument">
+              <stringProp name="Argument.name">OctopusProjectVariable5</stringProp>
+              <stringProp name="Argument.value">Kubernetes.Service.Name</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="OctopusProjectVariable6" elementType="Argument">
+              <stringProp name="Argument.name">OctopusProjectVariable6</stringProp>
+              <stringProp name="Argument.value">Kubernetes.Deployment.Port</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="OctopusProjectVariable7" elementType="Argument">
+              <stringProp name="Argument.name">OctopusProjectVariable7</stringProp>
+              <stringProp name="Argument.value">Kubernetes.Ingress.Path</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="OctopusProjectVariable8" elementType="Argument">
+              <stringProp name="Argument.name">OctopusProjectVariable8</stringProp>
+              <stringProp name="Argument.value">Kubernetes.Deployment.Image</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="OctopusProjectVariable9" elementType="Argument">
+              <stringProp name="Argument.name">OctopusProjectVariable9</stringProp>
+              <stringProp name="Argument.value">Kubernetes.Ingress.Name</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="OctopusProjectVariable10" elementType="Argument">
+              <stringProp name="Argument.name">OctopusProjectVariable10</stringProp>
+              <stringProp name="Argument.value">Kubernetes.App.HealthCheck</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
           </collectionProp>
