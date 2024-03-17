@@ -2,7 +2,7 @@ import unittest
 
 from parameterized import parameterized
 
-from infrastructure.openai import llm_tool_query
+from infrastructure.openai import llm_tool_query, llm_message_query
 from tests.infrastructure.tools.build_test_tools import build_mock_test_tools
 
 
@@ -60,6 +60,38 @@ class MockRequests(unittest.TestCase):
         function = llm_tool_query("What is the size of the earth?", build_mock_test_tools)
 
         self.assertTrue(function.call_function().index("Sorry, I did not understand that request.") != -1)
+
+    def test_general_prompt(self):
+        """
+        Tests that the llm responds some response to a general prompt
+        """
+
+        response = llm_message_query([
+            ('system', 'You are a helpful agent.'),
+            ('user', '{input}')
+        ],
+            {"input": 'What is the size of the earth?'})
+
+        # Make sure we get some kind of response
+        self.assertTrue(response)
+
+    def test_long_prompt(self):
+        """
+        Tests that the llm fails with the expected message when passed too much context
+        """
+
+        with open('large_example.tf', 'r') as file:
+            data = file.read()
+
+        response = llm_message_query([
+            ('system', 'You are a helpful agent.'),
+            ('user', '{input}'),
+            ('user', '###\n{hcl}\n###')
+        ],
+            {"input": 'What does this project do?', "hcl": data})
+
+        # Make sure we get some kind of response
+        self.assertTrue(response.index("reduce the length of the messages") != -1)
 
 
 if __name__ == '__main__':
