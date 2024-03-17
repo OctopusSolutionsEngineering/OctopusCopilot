@@ -12,7 +12,6 @@ from domain.encrption.encryption import decrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
 from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequestFailed
-from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
@@ -23,20 +22,21 @@ from domain.logging.query_loggin import log_query
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.security.security import is_admin_user
 from domain.strings.minify_hcl import minify_hcl
+from domain.strings.sanitized_list import sanitize_environments
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
 from domain.tools.logs import answer_logs_callback
 from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_callback
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_callback
-from domain.transformers.chat_responses import get_octopus_project_names_response, get_deployment_status_base_response, \
-    get_dashboard_response
+from domain.transformers.chat_responses import get_dashboard_response
+from domain.transformers.deployments_from_progression import get_deployment_array_from_progression
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
 from infrastructure.github import get_github_user
 from infrastructure.http_pool import http
-from infrastructure.octopus import get_octopus_project_names_base, get_current_user, \
-    create_limited_api_key, get_deployment_status_base, get_dashboard, get_raw_deployment_process
+from infrastructure.octopus import get_current_user, \
+    create_limited_api_key, get_dashboard, get_project_progression
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
     get_default_values
@@ -348,75 +348,6 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
         actual_space_name, dashboard = get_dashboard(space_name, api_key, url)
         return get_dashboard_response(actual_space_name, dashboard)
 
-    def get_deployment_process_raw_json(space_name: None, project_name: None):
-        """Returns the raw JSON for the deployment process of a project.
-
-            Args:
-                space_name: The name of the space containing the projects.
-                If this value is not defined, the default value will be used.
-
-                project_name: The name of the project.
-                If this value is not defined, the default value will be used.
-        """
-        api_key, url = get_api_key_and_url()
-        space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
-        project_name = get_default_argument(get_github_user_from_form(), project_name, "Project")
-        raw_json = get_raw_deployment_process(space_name, project_name, api_key, url)
-        return f"```json\n{raw_json}\n```"
-
-    def get_octopus_project_names_wrapper(space_name: None):
-        """Return a list of project names in an Octopus space
-
-            Args:
-                space_name: The name of the space containing the projects.
-                If this value is not defined, the default value will be used.
-        """
-
-        logger.info("get_octopus_project_names_form - Enter")
-
-        space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
-
-        api_key, url = get_api_key_and_url()
-        get_current_user(api_key, url)
-        actual_space_name, projects = get_octopus_project_names_base(space_name, api_key, url)
-        return get_octopus_project_names_response(actual_space_name, projects)
-
-    def get_deployment_status_wrapper(space_name=None, environment_name=None, project_name=None):
-        """Return the status of the latest deployment to a space, environment, and project.
-
-            Args:
-                space_name: The name of the space containing the projects.
-                If this value is not defined, the default value will be used.
-
-                environment_name: The name of the environment.
-                If this value is not defined, the default value will be used.
-
-                project_name: The name of the project.
-                If this value is not defined, the default value will be used.
-        """
-
-        logger.info("get_deployment_status_wrapper - Enter")
-
-        api_key, url = get_api_key_and_url()
-        get_current_user(api_key, url)
-
-        space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
-        environment_name = get_default_argument(get_github_user_from_form(), environment_name, "Environment")
-        project_name = get_default_argument(get_github_user_from_form(), project_name, "Project")
-
-        try:
-            actual_space_name, actual_environment_name, actual_project_name, deployment = get_deployment_status_base(
-                space_name,
-                environment_name,
-                project_name,
-                api_key,
-                url)
-        except (SpaceNotFound, ResourceNotFound) as e:
-            return str(e)
-
-        return get_deployment_status_base_response(actual_space_name, actual_environment_name, actual_project_name,
-                                                   deployment)
-
     def set_default_value(default_name, default_value):
         """Save a default value for a space, project, environment, or channel
 
@@ -466,69 +397,115 @@ Once default values are set, you can omit the space, environment, and project fr
 * `Show me the dashboard`
 * `Show me the status of the latest deployment to the production environment`"""
 
-    def answer_general_query(space=None, projects=None, runbooks=None, targets=None,
-                             tenants=None, library_variable_sets=None, environments=None,
-                             feeds=None, accounts=None, certificates=None, lifecycles=None,
-                             workerpools=None, machinepolicies=None, tagsets=None, projectgroups=None, channels=None,
-                             releases=None):
-        """Answers a general query about an Octopus space.
-Args:
-space: Space name
-projects: project names
-runbooks: runbook names
-targets: target/machine names
-tenants: tenant names
-library_variable_sets: library variable set names
-environments: environment names
-feeds: feed names
-accounts: account names
-certificates: certificate names
-lifecycles: lifecycle names
-workerpools: worker pool names
-machinepolicies: machine policy names
-tagsets: tenant tag set names
-projectgroups: project group names
-channels: channel names
-releases: release versions"""
+    def general_query_handler(body):
+        api_key, url = get_api_key_and_url()
 
+        space = get_default_argument(get_github_user_from_form(), body["space_name"], "Space")
+
+        messages = build_hcl_prompt()
+        context = {"input": extract_query(req)}
+
+        return collect_llm_context(extract_query(req),
+                                   messages,
+                                   context,
+                                   space,
+                                   body['project_names'],
+                                   body['runbook_names'],
+                                   body['target_names'],
+                                   body['tenant_names'],
+                                   body['library_variable_sets'],
+                                   body['environment_names'],
+                                   body['feed_names'],
+                                   body['account_names'],
+                                   body['certificate_names'],
+                                   body['lifecycle_names'],
+                                   body['workerpool_names'],
+                                   body['machinepolicy_names'],
+                                   body['tagset_names'],
+                                   body['projectgroup_names'],
+                                   body['channel_names'],
+                                   body['release_versions'],
+                                   api_key,
+                                   url,
+                                   log_query)
+
+    def variable_query_handler(original_query, enriched_query, space, projects):
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
 
         messages = build_hcl_prompt()
-        context = {"input": extract_query(req)}
+        context = {"input": enriched_query}
 
-        chat_result = collect_llm_context(extract_query(req),
-                                          messages,
-                                          context,
-                                          space,
-                                          projects,
-                                          runbooks,
-                                          targets,
-                                          tenants,
-                                          library_variable_sets,
-                                          environments,
-                                          feeds,
-                                          accounts,
-                                          certificates,
-                                          lifecycles,
-                                          workerpools,
-                                          machinepolicies,
-                                          tagsets,
-                                          projectgroups,
-                                          channels,
-                                          releases,
-                                          api_key,
-                                          url,
-                                          log_query)
+        chat_response = collect_llm_context(original_query,
+                                            messages,
+                                            context,
+                                            space,
+                                            projects,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            api_key,
+                                            url,
+                                            log_query)
+        return chat_response
 
-        result = (chat_result
-                  + "\n\n**WARNING**\n\n"
-                  + "As an AI model, I often make mistakes. "
-                  + "Verify the information I provide before performing any destructive actions.\n\n"
-                  + "Scripts and other step properties are truncated and modified to only include useful information.")
+    def releases_query_handler(original_query, enriched_query, space, projects, environments, channels, releases):
+        api_key, url = get_api_key_and_url()
 
-        return result
+        space = get_default_argument(get_github_user_from_form(), space, "Space")
+
+        messages = build_deployments_and_releases_prompt()
+        context = {"input": enriched_query}
+
+        # We need some additional JSON data to answer this question
+        if projects:
+            # We only need the deployments, so strip out the rest of the JSON
+            deployments = get_deployment_array_from_progression(
+                json.loads(get_project_progression(space, projects, api_key, url)),
+                sanitize_environments(environments),
+                3)
+            context["json"] = json.dumps(deployments, indent=2)
+        else:
+            context["json"] = get_dashboard(space, api_key, url)
+
+        chat_response = collect_llm_context(original_query,
+                                            messages,
+                                            context,
+                                            space,
+                                            projects,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            environments,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            None,
+                                            api_key,
+                                            url,
+                                            log_query)
+
+        return chat_response
 
     def build_form_tools():
         """
@@ -537,10 +514,14 @@ releases: release versions"""
         :return: The OpenAI tools
         """
         return FunctionDefinitions([
+            FunctionDefinition(answer_general_query_callback(general_query_handler, log_query), AnswerGeneralQuery),
+            FunctionDefinition(
+                answer_project_variables_callback(extract_query(req), variable_query_handler, log_query)),
+            FunctionDefinition(
+                answer_project_variables_usage_callback(extract_query(req), variable_query_handler, log_query)),
+            FunctionDefinition(
+                answer_releases_and_deployments_callback(extract_query(req), releases_query_handler, log_query)),
             FunctionDefinition(provide_help),
-            FunctionDefinition(answer_general_query),
-            FunctionDefinition(get_octopus_project_names_wrapper),
-            FunctionDefinition(get_deployment_status_wrapper),
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
