@@ -79,7 +79,7 @@ jobs:
           # Start the octoterra microservice
           unzip octoterra_linux_amd64_azure.zip
           chmod +x octoterra_linux_amd64_azure
-          ./ octoterra_linux_amd64_azure &
+          ./octoterra_linux_amd64_azure &
         env:
           # The port used when running the octoterra microservice
           FUNCTIONS_CUSTOMHANDLER_PORT: 8081
