@@ -73,6 +73,12 @@ def sanitize_bool(input_bool):
     return False
 
 
+def none_if_falesy(input_list):
+    if not input_list:
+        return None
+    return input_list
+
+
 def sanitize_list(input_list, ignored_re=None):
     """
     OpenAI can provide some unexpected inputs. This function cleans them up.

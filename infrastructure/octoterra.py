@@ -12,7 +12,7 @@ from domain.query.query_inspector import exclude_all_targets, exclude_all_runboo
 from domain.strings.sanitized_list import sanitize_projects, sanitize_tenants, sanitize_targets, \
     sanitize_runbooks, sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, \
     sanitize_certificates, sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, \
-    sanitize_projectgroups
+    sanitize_projectgroups, none_if_falesy
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http
 from infrastructure.octopus import handle_response, get_space_id_and_name_from_name
@@ -65,17 +65,17 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
         "apiKey": api_key,
         "ignoreCacManagedValues": False,
         "excludeCaCProjectSettings": True,
-        "excludeProjectsExcept": sanitized_project_names if sanitized_project_names else None,
-        "excludeTenantsExcept": sanitized_tenant_names if sanitized_tenant_names else None,
-        "excludeEnvironmentsExcept": sanitized_environments if sanitized_environments else None,
-        "excludeFeedsExcept": sanitized_feeds if sanitized_feeds else None,
-        "excludeAccountsExcept": sanitized_accounts if sanitized_accounts else None,
-        "excludeCertificatesExcept": sanitized_certificates if sanitized_certificates else None,
-        "excludeLifecyclesExcept": sanitized_lifecycles if sanitized_lifecycles else None,
-        "excludeWorkerPoolsExcept": sanitized_workerpools if sanitized_workerpools else None,
-        "excludeMachinePoliciesExcept": sanitized_machinepolicies if sanitized_machinepolicies else None,
-        "excludeTagSetsExcept": sanitized_tagsets if sanitized_tagsets else None,
-        "excludeProjectGroupsExcept": sanitized_projectgroups if sanitized_projectgroups else None,
+        "excludeProjectsExcept": none_if_falesy(sanitized_project_names),
+        "excludeTenantsExcept": none_if_falesy(sanitized_tenant_names),
+        "excludeEnvironmentsExcept": none_if_falesy(sanitized_environments),
+        "excludeFeedsExcept": none_if_falesy(sanitized_feeds),
+        "excludeAccountsExcept": none_if_falesy(sanitized_accounts),
+        "excludeCertificatesExcept": none_if_falesy(sanitized_certificates),
+        "excludeLifecyclesExcept": none_if_falesy(sanitized_lifecycles),
+        "excludeWorkerPoolsExcept": none_if_falesy(sanitized_workerpools),
+        "excludeMachinePoliciesExcept": none_if_falesy(sanitized_machinepolicies),
+        "excludeTagSetsExcept": none_if_falesy(sanitized_tagsets),
+        "excludeProjectGroupsExcept": none_if_falesy(sanitized_projectgroups),
         "excludeAllProjects": exclude_all_projects(query, sanitized_project_names),
         "excludeAllTenants": exclude_all_tenants(query, sanitized_tenant_names),
         "excludeAllTargets": exclude_all_targets(query, sanitized_target_names),
