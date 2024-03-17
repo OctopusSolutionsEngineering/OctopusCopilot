@@ -2,7 +2,7 @@ import json
 
 import requests
 
-from tests.live.octopus_config import Octopus_Api_Key
+from tests.infrastructure.octopus_config import Octopus_Api_Key
 
 
 def get_octopus_resource(uri, headers, skip_count=0):

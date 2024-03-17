@@ -79,6 +79,9 @@ jobs:
           OPENAI_API_DEPLOYMENT: ${{ secrets.OPENAI_API_DEPLOYMENT }}
           LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          AzureWebJobsStorage: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;
+          APPLICATION_USERS_ADMIN: "[160104]"
+          GH_TEST_TOKEN: ${{ secrets.GH_TEST_TOKEN }}
         shell: bash
       - name: Coverage Badge
         uses: tj-actions/coverage-badge-py@v2

@@ -1,3 +1,4 @@
+import os
 import unittest
 
 from parameterized import parameterized
@@ -80,7 +81,10 @@ class MockRequests(unittest.TestCase):
         Tests that the llm fails with the expected message when passed too much context
         """
 
-        with open('large_example.tf', 'r') as file:
+        current_file_path = os.path.abspath(__file__)
+        path_without_filename = os.path.dirname(current_file_path)
+
+        with open(os.path.join(path_without_filename, 'large_example.tf'), 'r') as file:
             data = file.read()
 
         response = llm_message_query([

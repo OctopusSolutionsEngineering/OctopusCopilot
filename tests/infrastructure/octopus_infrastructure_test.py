@@ -17,8 +17,8 @@ from domain.logging.app_logging import configure_logging
 from domain.transformers.chat_responses import get_dashboard_response
 from infrastructure.octopus import get_project_progression, get_raw_deployment_process, get_octopus_project_names_base, \
     get_current_user, create_limited_api_key, get_deployment_status_base, get_dashboard
-from tests.live.create_and_deploy_release import create_and_deploy_release
-from tests.live.octopus_config import Octopus_Api_Key, Octopus_Url
+from tests.infrastructure.create_and_deploy_release import create_and_deploy_release
+from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 
 logger = configure_logging(__name__)
 
