@@ -1,6 +1,6 @@
 import unittest
 
-from domain.strings.minify_hcl import minify_hcl
+from domain.transformers.minify_hcl import minify_hcl
 
 
 class MinifyTest(unittest.TestCase):

@@ -3,7 +3,7 @@ from datetime import timedelta, datetime
 from azure.core.exceptions import HttpResponseError
 from azure.data.tables import TableServiceClient
 
-from domain.encrption.encryption import encrypt_eax, generate_password
+from domain.encryption.encryption import encrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
 from domain.logging.app_logging import configure_logging
 from domain.validation.argument_validation import ensure_string_not_empty

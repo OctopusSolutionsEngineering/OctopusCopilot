@@ -1,6 +1,6 @@
 from domain.config.slack import get_slack_url
 from domain.logging.app_logging import configure_logging
-from domain.strings.sanitized_list import sanitize_list
+from domain.sanitizers.sanitized_list import sanitize_list
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.slack import send_slack_message_async
 

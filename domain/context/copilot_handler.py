@@ -1,5 +1,5 @@
 from domain.logging.app_logging import configure_logging
-from domain.strings.minify_hcl import minify_hcl
+from domain.transformers.minify_hcl import minify_hcl
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.octoterra import get_octoterra_space
 from infrastructure.openai import llm_message_query

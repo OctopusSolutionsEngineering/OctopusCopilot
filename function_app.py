@@ -7,23 +7,22 @@ from azure.core.exceptions import HttpResponseError
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
+from domain.context.copilot_handler import collect_llm_context, llm_message_query
 from domain.defaults.defaults import get_default_argument
-from domain.encrption.encryption import decrypt_eax, generate_password
+from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
 from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequestFailed
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
-from domain.handlers.copilot_handler import collect_llm_context, llm_message_query
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.messages.deployment_logs import build_plain_text_prompt
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.messages.general import build_hcl_prompt
+from domain.sanitizers.sanitized_list import sanitize_environments
 from domain.security.security import is_admin_user
-from domain.strings.minify_hcl import minify_hcl
-from domain.strings.sanitized_list import sanitize_environments
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
 from domain.tools.logs import answer_logs_callback
@@ -31,6 +30,7 @@ from domain.tools.project_variables import answer_project_variables_callback, an
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_callback
 from domain.transformers.chat_responses import get_dashboard_response
 from domain.transformers.deployments_from_progression import get_deployment_array_from_progression
+from domain.transformers.minify_hcl import minify_hcl
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob

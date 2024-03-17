@@ -9,7 +9,7 @@ from domain.query.query_inspector import exclude_all_targets, exclude_all_runboo
     exclude_all_projects, exclude_all_library_variable_sets, exclude_all_environments, exclude_all_feeds, \
     exclude_all_accounts, exclude_all_certificates, exclude_all_lifecycles, exclude_all_worker_pools, \
     exclude_all_machine_policies, exclude_all_tagsets, exclude_all_project_groups
-from domain.strings.sanitized_list import sanitize_projects, sanitize_tenants, sanitize_targets, \
+from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_tenants, sanitize_targets, \
     sanitize_runbooks, sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, \
     sanitize_certificates, sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, \
     sanitize_projectgroups, none_if_falesy

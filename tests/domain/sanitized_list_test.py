@@ -1,6 +1,6 @@
 import unittest
 
-from domain.strings.sanitized_list import sanitize_list, sanitize_environments, sanitize_projects, sanitize_tenants, \
+from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, sanitize_projects, sanitize_tenants, \
     sanitize_feeds, sanitize_accounts, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, \
     sanitize_projectgroups, sanitize_channels, sanitize_releases, sanitize_lifecycles, sanitize_certificates, \
     sanitize_targets, sanitize_runbooks

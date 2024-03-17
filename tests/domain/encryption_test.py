@@ -1,6 +1,6 @@
 import unittest
 
-from domain.encrption.encryption import generate_password, encrypt_eax, decrypt_eax
+from domain.encryption.encryption import generate_password, encrypt_eax, decrypt_eax
 
 
 class EncryptionTests(unittest.TestCase):

@@ -1,7 +1,7 @@
 import json
 
 from domain.b64.b64_encoder import encode_string_b64, decode_string_b64
-from domain.encrption.encryption import encrypt_eax, decrypt_eax
+from domain.encryption.encryption import encrypt_eax, decrypt_eax
 from domain.validation.argument_validation import ensure_string_not_empty
 
 
