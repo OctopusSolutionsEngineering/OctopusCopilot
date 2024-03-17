@@ -1,4 +1,5 @@
 import json
+import os
 
 from retry import retry
 from urllib3.exceptions import HTTPError
@@ -111,7 +112,7 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
     }
 
     resp = handle_response(lambda: http.request("POST",
-                                                "https://octoterraproduction.azurewebsites.net/api/octoterra",
+                                                os.environ["APPLICATION_OCTOTERRA_URL"] + "/api/octoterra",
                                                 body=json.dumps(body)))
 
     return resp.data.decode("utf-8")

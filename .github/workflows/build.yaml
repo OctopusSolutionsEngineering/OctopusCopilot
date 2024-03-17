@@ -66,22 +66,53 @@ jobs:
         with:
           name: Dependencies Updates
           path: dependencyUpdates.txt
+      - uses: robinraju/release-downloader@v1.9
+        with:
+          repository: "OctopusSolutionsEngineering/OctopusTerraformExport"
+          latest: true
+          fileName: "octoterra_linux_amd64_azure.zip"
+      - name: Start Azurite
+        run: docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite
+        shell: bash
+      - name: Start Octoterra
+        run: |
+          # Start the octoterra microservice
+          unzip octoterra_linux_amd64_azure.zip
+          chmod +x octoterra_linux_amd64_azure
+          ./ octoterra_linux_amd64_azure &
+        env:
+          # The port used when running the octoterra microservice
+          FUNCTIONS_CUSTOMHANDLER_PORT: 8081
+        shell: bash
       # Requires OpenAI instance to allow GitHub runner's IP address
       - name: Test
         run: |
-          docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite
           pip install pytest coverage setuptools
           PYTHONPATH=$(pwd) coverage run -m pytest --junitxml=results.xml
           coverage html
         env:
+          # These are the connection details to Azure OpenAI
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_ENDPOINT: ${{ secrets.OPENAI_ENDPOINT }}
           OPENAI_API_DEPLOYMENT: ${{ secrets.OPENAI_API_DEPLOYMENT }}
+          # This is a base 64 encoded version of the Octopus license
           LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
+          # This is the slack webhook used to send messages
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          # This is the connection string to Azurite, the test Aure Storage emulator
           AzureWebJobsStorage: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;
+          # This is the list of admin users
           APPLICATION_USERS_ADMIN: "[160104]"
+          # This is the test user that is used to simulate a login
+          TEST_GH_USER: "160104"
+          # This is the GitHub token passed to the chat tests
           GH_TEST_TOKEN: ${{ secrets.GH_TEST_TOKEN }}
+          # This is the encryption salt used when saving encrypted values to Azure Storage
+          ENCRYPTION_PASSWORD: password
+          # This is the encryption salt used when saving encrypted values to Azure Storage
+          ENCRYPTION_SALT: salt
+          # The location of the octoterra microservice
+          APPLICATION_OCTOTERRA_URL: http://localhost:8081
         shell: bash
       - name: Coverage Badge
         uses: tj-actions/coverage-badge-py@v2

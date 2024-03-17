@@ -282,6 +282,12 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
 @app.route(route="form_handler", auth_level=func.AuthLevel.ANONYMOUS)
 def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
+    # Splitting the logic out makes testing easier, as the decorator attached to this function
+    # makes it difficult to test.
+    return copilot_handler_internal(req)
+
+
+def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
     """
     A function handler that processes a query from the test form. This function accommodates the limitations
     of browser based SSE requests, namely that the request is a GET (so no request body). The Copilot

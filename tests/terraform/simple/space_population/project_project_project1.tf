@@ -57,3 +57,11 @@ resource "octopusdeploy_project" "project_project1" {
   }
   description = "${var.project_project1_description_prefix}${var.project_project1_description}${var.project_project1_description_suffix}"
 }
+
+resource "octopusdeploy_variable" "variable_1" {
+  owner_id     = "${octopusdeploy_project.project_project1.id}"
+  value        = "TestVariable"
+  name         = "Test.Variable"
+  type         = "String"
+  is_sensitive = false
+}
