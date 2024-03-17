@@ -5,6 +5,10 @@ from retry import retry
 from urllib3.exceptions import HTTPError
 
 from domain.logging.app_logging import configure_logging
+from domain.query.query_inspector import exclude_all_targets, exclude_all_runbooks, exclude_all_tenants, \
+    exclude_all_projects, exclude_all_library_variable_sets, exclude_all_environments, exclude_all_feeds, \
+    exclude_all_accounts, exclude_all_certificates, exclude_all_lifecycles, exclude_all_worker_pools, \
+    exclude_all_machine_policies, exclude_all_tagsets, exclude_all_project_groups
 from domain.strings.sanitized_list import sanitize_projects, sanitize_tenants, sanitize_targets, \
     sanitize_runbooks, sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, \
     sanitize_certificates, sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, \
@@ -55,21 +59,6 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
     sanitized_tagsets = sanitize_tenanttagsets(tagset_names)
     sanitized_projectgroups = sanitize_projectgroups(projectgroup_names)
 
-    exclude_targets = True if not sanitized_target_names and "target" not in query.lower() and "machine" not in query.lower() else False
-    exclude_runbooks = True if not sanitized_runbook_names and "runbook" not in query.lower() else False
-    exclude_tenants = True if not sanitized_tenant_names and "tenant" not in query.lower() else False
-    exclude_projects = True if not sanitized_project_names and "project" not in query.lower() else False
-    exclude_library_variable_sets = True if not sanitized_library_variable_sets and "library variable set" not in query.lower() else False
-    exclude_environments = True if not sanitized_environments and "environment" not in query.lower() else False
-    exclude_feeds = True if not sanitized_feeds and "feed" not in query.lower() else False
-    exclude_accounts = True if not sanitized_accounts and "account" not in query.lower() else False
-    exclude_certificates = True if not sanitized_certificates and "certificate" not in query.lower() else False
-    exclude_lifecycles = True if not sanitized_lifecycles and "lifecycle" not in query.lower() else False
-    exclude_workerpools = True if not sanitized_workerpools and "workerpool" not in query.lower() else False
-    exclude_machinepolicies = True if not sanitized_machinepolicies and "policy" not in query.lower() else False
-    exclude_tagsets = True if not sanitized_tagsets and "tag" not in query.lower() else False
-    exclude_projectgroups = True if not sanitized_projectgroups and "group" not in query.lower() else False
-
     body = {
         "space": space_id,
         "url": octopus_url,
@@ -84,23 +73,23 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
         "excludeCertificatesExcept": sanitized_certificates if sanitized_certificates else None,
         "excludeLifecyclesExcept": sanitized_lifecycles if sanitized_lifecycles else None,
         "excludeWorkerPoolsExcept": sanitized_workerpools if sanitized_workerpools else None,
-        "excludeMachinePoliciesExcept": exclude_machinepolicies if exclude_machinepolicies else None,
+        "excludeMachinePoliciesExcept": sanitized_machinepolicies if sanitized_machinepolicies else None,
         "excludeTagSetsExcept": sanitized_tagsets if sanitized_tagsets else None,
-        "excludeProjectGroupsExcept": exclude_projectgroups if sanitized_tagsets else None,
-        "excludeAllProjects": exclude_projects,
-        "excludeAllTenants": exclude_tenants,
-        "excludeAllTargets": exclude_targets,
-        "excludeAllRunbooks": exclude_runbooks,
-        "excludeAllFeeds": exclude_feeds,
-        "excludeAllAccounts": exclude_accounts,
-        "excludeAllEnvironments": exclude_environments,
-        "excludeAllCertificates": exclude_certificates,
-        "excludeAllLifecycles": exclude_lifecycles,
-        "excludeAllWorkerPools": exclude_workerpools,
-        "excludeAllMachinePolicies": exclude_machinepolicies,
-        "excludeAllTagSets": exclude_tagsets,
-        "excludeAllProjectGroups": exclude_projectgroups,
-        "excludeAllLibraryVariableSets": exclude_library_variable_sets,
+        "excludeProjectGroupsExcept": sanitized_projectgroups if sanitized_projectgroups else None,
+        "excludeAllProjects": exclude_all_projects(query, sanitized_project_names),
+        "excludeAllTenants": exclude_all_tenants(query, sanitized_tenant_names),
+        "excludeAllTargets": exclude_all_targets(query, sanitized_target_names),
+        "excludeAllRunbooks": exclude_all_runbooks(query, sanitized_runbook_names),
+        "excludeAllFeeds": exclude_all_feeds(query, sanitized_feeds),
+        "excludeAllAccounts": exclude_all_accounts(query, sanitized_accounts),
+        "excludeAllEnvironments": exclude_all_environments(query, sanitized_environments),
+        "excludeAllCertificates": exclude_all_certificates(query, sanitized_certificates),
+        "excludeAllLifecycles": exclude_all_lifecycles(query, sanitized_lifecycles),
+        "excludeAllWorkerPools": exclude_all_worker_pools(query, sanitized_workerpools),
+        "excludeAllMachinePolicies": exclude_all_machine_policies(query, sanitized_machinepolicies),
+        "excludeAllTagSets": exclude_all_tagsets(query, sanitized_tagsets),
+        "excludeAllProjectGroups": exclude_all_project_groups(query, sanitized_projectgroups),
+        "excludeAllLibraryVariableSets": exclude_all_library_variable_sets(query, sanitized_library_variable_sets),
         "limitAttributeLength": 100,
         # This setting ensures that any project, tenant, runbook, or target names are valid.
         # If not, the assumption is made that the LLM incorrectly identified the resource in the query,
