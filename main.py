@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 
-from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context, build_hcl_prompt
+from domain.handlers.copilot_handler import collect_llm_context, build_hcl_prompt
 from domain.logging.query_loggin import log_query
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.strings.sanitized_list import sanitize_list, sanitize_environments
@@ -14,6 +14,7 @@ from domain.transformers.chat_responses import get_octopus_project_names_respons
 from domain.transformers.deployments_from_progression import get_deployment_array_from_progression
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_project_progression, \
     get_dashboard
+from infrastructure.openai import llm_tool_query
 
 
 def init_argparse():

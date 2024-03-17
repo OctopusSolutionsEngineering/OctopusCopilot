@@ -15,7 +15,7 @@ from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequest
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
-from domain.handlers.copilot_handler import llm_tool_query, collect_llm_context, llm_message_query, \
+from domain.handlers.copilot_handler import collect_llm_context, llm_message_query, \
     build_hcl_prompt, build_plain_text_prompt
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
@@ -37,6 +37,7 @@ from infrastructure.github import get_github_user
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
     create_limited_api_key, get_dashboard, get_project_progression
+from infrastructure.openai import llm_tool_query
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
     get_default_values

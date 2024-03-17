@@ -13,9 +13,9 @@ from testcontainers.core.waiting_utils import wait_for_logs
 
 from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
-from domain.handlers.copilot_handler import llm_tool_query
 from domain.logging.app_logging import configure_logging
 from domain.transformers.chat_responses import get_deployment_status_base_response, get_octopus_project_names_response
+from infrastructure.openai import llm_tool_query
 from tests.infrastructure.tools.build_test_tools import build_live_test_tools
 from tests.live.create_and_deploy_release import create_and_deploy_release
 from tests.live.octopus_config import Octopus_Api_Key

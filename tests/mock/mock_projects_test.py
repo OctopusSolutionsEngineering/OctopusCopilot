@@ -2,7 +2,7 @@ import unittest
 
 from parameterized import parameterized
 
-from domain.handlers.copilot_handler import llm_tool_query
+from infrastructure.openai import llm_tool_query
 from tests.infrastructure.tools.build_test_tools import build_mock_test_tools
 
 
