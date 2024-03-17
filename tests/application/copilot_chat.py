@@ -7,7 +7,7 @@ from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
 from function_app import copilot_handler_internal
-from infrastructure.users import save_users_octopus_url_from_login
+from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.octopus_infrastructure_test import run_terraform
 
@@ -27,9 +27,18 @@ class CopilotChatTest(unittest.TestCase):
                                               os.environ["ENCRYPTION_PASSWORD"],
                                               os.environ["ENCRYPTION_SALT"],
                                               os.environ["AzureWebJobsStorage"])
+            save_default_values(os.environ["TEST_GH_USER"],
+                                "space",
+                                "Simple",
+                                os.environ["AzureWebJobsStorage"])
+            save_default_values(os.environ["TEST_GH_USER"],
+                                "project",
+                                "Project1",
+                                os.environ["AzureWebJobsStorage"])
         except Exception as e:
             print(
-                "Run Azureite with: docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite")
+                "Run Azureite with: "
+                + "docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite")
             return
 
         cls.mssql = DockerContainer("mcr.microsoft.com/mssql/server:2022-latest").with_env(
