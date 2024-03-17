@@ -14,21 +14,20 @@ from testcontainers.core.waiting_utils import wait_for_logs
 from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
-from domain.transformers.chat_responses import get_deployment_status_base_response, get_octopus_project_names_response
-from infrastructure.octopus import get_project_progression, get_raw_deployment_process
-from infrastructure.openai import llm_tool_query
-from tests.infrastructure.tools.build_test_tools import build_live_test_tools
+from domain.transformers.chat_responses import get_deployment_status_base_response, get_dashboard_response
+from infrastructure.octopus import get_project_progression, get_raw_deployment_process, get_octopus_project_names_base, \
+    get_current_user, create_limited_api_key, get_deployment_status_base, get_dashboard
 from tests.live.create_and_deploy_release import create_and_deploy_release
-from tests.live.octopus_config import Octopus_Api_Key
+from tests.live.octopus_config import Octopus_Api_Key, Octopus_Url
 
 logger = configure_logging()
 
 
 class LiveRequests(unittest.TestCase):
     """
-    This class creates a real Octopus instance with Docker, uses OpenAI to construct the queries,
-    and then calls the real Octopus API to get the results. The purpose of these tests is to validate
-    that the API interactions with Octopus work as expected.
+    This class creates a real Octopus instance with the latest Docker image and then calls the real Octopus API to
+    get the results. The purpose of these tests is to validate that the API interactions with Octopus work as expected,
+    especially with the ongoing releases of Octopus.
 
     The MockRequests class can be used to verify that OpenAI executes the correct function with the correct arguments.
     MockRequests does not require an Octopus instance to be running, and so is a more efficient way to verify
@@ -79,54 +78,29 @@ class LiveRequests(unittest.TestCase):
         Tests that we can get a list of projects from Octopus
         """
 
-        function = llm_tool_query("What are the projects associated with space " + space + "?",
-                                  build_live_test_tools)
+        actual_space_name, projects = get_octopus_project_names_base(space,
+                                                                     Octopus_Api_Key,
+                                                                     Octopus_Url)
 
-        self.assertEqual(function.function.__name__, "get_octopus_project_names")
-        self.assertEqual(function.function_args["space_name"], space)
-
-        space_name, results = function.call_function()
-        self.assertIn("Project1", results)
-        self.assertIn("Project2", results)
-        self.assertEqual("Simple", space_name)
-
-        # Make sure the chat response does not throw an exception with real data
-        get_octopus_project_names_response(space_name, results)
+        self.assertEqual("Simple", actual_space_name)
+        self.assertTrue(len(projects) != 0)
 
     def test_generate_temp_api_key(self):
         """
         Tests that we can create a temporary API key
         """
 
-        function = llm_tool_query(
-            "Create a temporary API key from the API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
-            build_live_test_tools)
-
-        self.assertEqual(function.function.__name__, "set_octopus_details")
-        self.assertEqual(function.function_args["octopus_url"], "http://localhost:8080")
-        self.assertEqual(function.function_args["api_key"], Octopus_Api_Key)
-
-        results = function.call_function()
-        self.assertTrue(str(results).startswith("API-"))
+        user = get_current_user(Octopus_Api_Key, Octopus_Url)
+        api_key = create_limited_api_key(user, Octopus_Api_Key, Octopus_Url)
+        self.assertTrue(str(api_key).startswith("API-"))
 
     def test_invalid_api_key(self):
         """
-        Tests that we catch bad credentails
+        Tests that we catch bad credentials
         """
 
-        function = llm_tool_query(
-            "Get the details of the current user with API Key API-XXXXXXXXXXXXXXXXXXXXXX and URL http://localhost:8080",
-            build_live_test_tools)
-
-        self.assertEqual(function.function.__name__, "get_octopus_user")
-        self.assertEqual(function.function_args["octopus_url"], "http://localhost:8080")
-        self.assertEqual(function.function_args["api_key"], "API-XXXXXXXXXXXXXXXXXXXXXX")
-
-        try:
-            function.call_function()
-            self.fail("Should have thrown an exception")
-        except OctopusApiKeyInvalid as e:
-            pass
+        with self.assertRaises(OctopusApiKeyInvalid):
+            get_current_user("API-XXXXXXXXXXXXXXXXXXXXXX", Octopus_Url)
 
     @retry(AssertionError, tries=3, delay=2)
     def test_get_deployment(self):
@@ -136,58 +110,42 @@ class LiveRequests(unittest.TestCase):
 
         create_and_deploy_release(space_name="Simple")
 
-        function = llm_tool_query(
-            "Return the status of the latest deployment to the space Simple, environment Development, "
-            + "and project Project1 with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
-            build_live_test_tools)
-
-        self.assertEqual(function.function.__name__, "get_deployment_status")
-        self.assertEqual(function.function_args["octopus_url"], "http://localhost:8080")
-        self.assertEqual(function.function_args["api_key"], Octopus_Api_Key)
-
         time.sleep(30)
 
-        actual_space_name, actual_environment_name, actual_project_name, deployment = function.call_function()
+        actual_space_name, actual_environment_name, actual_project_name, deployment = (
+            get_deployment_status_base("Simple", "Development", "Project1", Octopus_Api_Key, Octopus_Url))
 
-        self.assertTrue(deployment["State"] == "Executing" or deployment["State"] == "Success")
-
-        # A test that makes sure the response doesn't throw any exceptions with real data
-        get_deployment_status_base_response(actual_space_name, actual_environment_name, actual_project_name, deployment)
+        self.assertEqual("Simple", actual_space_name)
+        self.assertEqual("Development", actual_environment_name)
+        self.assertEqual("Project1", actual_project_name)
 
     def test_get_no_environment(self):
         """
         Tests that we fail appropriately when the environment does not exist
         """
 
-        function = llm_tool_query(
-            "Return the status of the latest deployment to the space called 'Simple', environment UAT2, "
-            + "and project Project1 with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
-            build_live_test_tools)
-
-        self.assertEqual(function.function.__name__, "get_deployment_status")
-        self.assertEqual(function.function_args["octopus_url"], "http://localhost:8080")
-        self.assertEqual(function.function_args["api_key"], Octopus_Api_Key)
-        self.assertEqual(function.function_args["environment_name"], "UAT2")
-
         with self.assertRaises(ResourceNotFound):
-            function.call_function()
+            get_deployment_status_base("Simple", "UAT2", "Project1", Octopus_Api_Key, Octopus_Url)
 
     def test_get_no_deployment(self):
         """
-        Tests that we fail appropriately in an empty space
+        Tests preconditions
         """
 
-        function = llm_tool_query(
-            "Return the status of the latest deployment to the space called 'Empty Space', environment Development, "
-            + "and project Project1 with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
-            build_live_test_tools)
+        with self.assertRaises(ValueError):
+            get_deployment_status_base("Simple", "", "Project1", Octopus_Api_Key, Octopus_Url)
 
-        self.assertEqual(function.function.__name__, "get_deployment_status")
-        self.assertEqual(function.function_args["octopus_url"], "http://localhost:8080")
-        self.assertEqual(function.function_args["api_key"], Octopus_Api_Key)
+        with self.assertRaises(ValueError):
+            get_deployment_status_base("", "UAT", "Project1", Octopus_Api_Key, Octopus_Url)
 
-        with self.assertRaises(ResourceNotFound):
-            function.call_function()
+        with self.assertRaises(ValueError):
+            get_deployment_status_base("Simple", "UAT", "", Octopus_Api_Key, Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            get_deployment_status_base("Simple", "UAT", "Project1", "", Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            get_deployment_status_base("Simple", "UAT", "Project1", Octopus_Api_Key, "")
 
     def test_get_deployment_with_defaults(self):
         """
@@ -196,20 +154,10 @@ class LiveRequests(unittest.TestCase):
 
         create_and_deploy_release(space_name="Simple")
 
-        function = llm_tool_query(
-            "Return the status of the latest deployment with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
-            build_live_test_tools)
-
-        self.assertEqual(function.function.__name__, "get_deployment_status")
-        self.assertEqual(function.function_args["octopus_url"], "http://localhost:8080")
-        self.assertEqual(function.function_args["api_key"], Octopus_Api_Key)
-        self.assertNotIn("space_name", function.function_args)
-        self.assertNotIn("project_name", function.function_args)
-        self.assertNotIn("environment_name", function.function_args)
-
         time.sleep(10)
 
-        actual_space_name, actual_environment_name, actual_project_name, deployment = function.call_function()
+        actual_space_name, actual_environment_name, actual_project_name, deployment = (
+            get_deployment_status_base("Simple", "Development", "Project1", Octopus_Api_Key, Octopus_Url))
 
         self.assertTrue(deployment["State"] == "Executing" or deployment["State"] == "Success")
 
@@ -223,11 +171,8 @@ class LiveRequests(unittest.TestCase):
 
         create_and_deploy_release(space_name="Simple")
 
-        function = llm_tool_query(
-            "Get the dashboard from space Simple with API Key " + Octopus_Api_Key + " and URL http://localhost:8080",
-            build_live_test_tools)
-
-        dashboard = function.call_function()
+        space_name, dashboard_json = get_dashboard("Simple", Octopus_Api_Key, Octopus_Url)
+        dashboard = get_dashboard_response(space_name, dashboard_json)
 
         # Make sure something was returned. We aren't trying to validate the Markdown tables here though.
         self.assertTrue(dashboard)
