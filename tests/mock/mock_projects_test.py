@@ -35,7 +35,7 @@ class MockRequests(unittest.TestCase):
         self.assertIn("Project1", results)
         self.assertIn("Project2", results)
 
-    def test_empty_argumets(self):
+    def test_empty_arguments(self):
         """
         Tests that the llm can find the appropriate mock function and arguments
         """

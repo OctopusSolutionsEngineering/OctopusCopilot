@@ -14,13 +14,13 @@ from testcontainers.core.waiting_utils import wait_for_logs
 from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
-from domain.transformers.chat_responses import get_deployment_status_base_response, get_dashboard_response
+from domain.transformers.chat_responses import get_dashboard_response
 from infrastructure.octopus import get_project_progression, get_raw_deployment_process, get_octopus_project_names_base, \
     get_current_user, create_limited_api_key, get_deployment_status_base, get_dashboard
 from tests.live.create_and_deploy_release import create_and_deploy_release
 from tests.live.octopus_config import Octopus_Api_Key, Octopus_Url
 
-logger = configure_logging()
+logger = configure_logging(__name__)
 
 
 class LiveRequests(unittest.TestCase):
@@ -52,10 +52,10 @@ class LiveRequests(unittest.TestCase):
         cls.octopus.start()
         wait_for_logs(cls.octopus, "Web server is ready to process requests")
 
-        output = run_terraform("../terraform/simple/space_creation", "http://localhost:8080", Octopus_Api_Key)
-        run_terraform("../terraform/simple/space_population", "http://localhost:8080", Octopus_Api_Key,
+        output = run_terraform("../terraform/simple/space_creation", Octopus_Url, Octopus_Api_Key)
+        run_terraform("../terraform/simple/space_population", Octopus_Url, Octopus_Api_Key,
                       json.loads(output)["octopus_space_id"]["value"])
-        run_terraform("../terraform/empty/space_creation", "http://localhost:8080", Octopus_Api_Key)
+        run_terraform("../terraform/empty/space_creation", Octopus_Url, Octopus_Api_Key)
 
     @classmethod
     def tearDownClass(cls):
@@ -85,6 +85,20 @@ class LiveRequests(unittest.TestCase):
         self.assertEqual("Simple", actual_space_name)
         self.assertTrue(len(projects) != 0)
 
+    def test_get_projects_preconditions(self):
+        """
+        Tests the preconditions work
+        """
+
+        with self.assertRaises(ValueError):
+            get_octopus_project_names_base("", Octopus_Api_Key, Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            get_octopus_project_names_base("Simple", "", Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            get_octopus_project_names_base("Simple", Octopus_Api_Key, "")
+
     def test_generate_temp_api_key(self):
         """
         Tests that we can create a temporary API key
@@ -93,6 +107,26 @@ class LiveRequests(unittest.TestCase):
         user = get_current_user(Octopus_Api_Key, Octopus_Url)
         api_key = create_limited_api_key(user, Octopus_Api_Key, Octopus_Url)
         self.assertTrue(str(api_key).startswith("API-"))
+
+    def test_generate_temp_api_key_preconditions(self):
+        """
+        Tests that the preconditions work
+        """
+
+        with self.assertRaises(ValueError):
+            get_current_user("", Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            get_current_user(Octopus_Api_Key, "")
+
+        with self.assertRaises(ValueError):
+            create_limited_api_key("", Octopus_Api_Key, Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            create_limited_api_key("MyId", "", Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            create_limited_api_key("MyId", Octopus_Api_Key, "")
 
     def test_invalid_api_key(self):
         """
@@ -118,6 +152,7 @@ class LiveRequests(unittest.TestCase):
         self.assertEqual("Simple", actual_space_name)
         self.assertEqual("Development", actual_environment_name)
         self.assertEqual("Project1", actual_project_name)
+        self.assertTrue(deployment["State"] == "Executing" or deployment["State"] == "Success")
 
     def test_get_no_environment(self):
         """
@@ -127,7 +162,7 @@ class LiveRequests(unittest.TestCase):
         with self.assertRaises(ResourceNotFound):
             get_deployment_status_base("Simple", "UAT2", "Project1", Octopus_Api_Key, Octopus_Url)
 
-    def test_get_no_deployment(self):
+    def test_et_deployment_status_preconditions(self):
         """
         Tests preconditions
         """
@@ -147,23 +182,6 @@ class LiveRequests(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_deployment_status_base("Simple", "UAT", "Project1", Octopus_Api_Key, "")
 
-    def test_get_deployment_with_defaults(self):
-        """
-        Tests that we return the details of a deployment
-        """
-
-        create_and_deploy_release(space_name="Simple")
-
-        time.sleep(10)
-
-        actual_space_name, actual_environment_name, actual_project_name, deployment = (
-            get_deployment_status_base("Simple", "Development", "Project1", Octopus_Api_Key, Octopus_Url))
-
-        self.assertTrue(deployment["State"] == "Executing" or deployment["State"] == "Success")
-
-        # A test that makes sure the response doesn't throw any exceptions with real data
-        get_deployment_status_base_response(actual_space_name, actual_environment_name, actual_project_name, deployment)
-
     def test_get_dashboard(self):
         """
         Tests that we return the details of a deployment
@@ -177,6 +195,20 @@ class LiveRequests(unittest.TestCase):
         # Make sure something was returned. We aren't trying to validate the Markdown tables here though.
         self.assertTrue(dashboard)
 
+    def test_get_dashboard_preconditions(self):
+        """
+        Tests the preconditions
+        """
+
+        with self.assertRaises(ValueError):
+            get_dashboard("", Octopus_Api_Key, Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            get_dashboard("Simple", "", Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            get_dashboard("Simple", Octopus_Api_Key, "")
+
     def test_get_project_progression(self):
         """
         Tests that we return the details of a deployments and releases
@@ -184,24 +216,58 @@ class LiveRequests(unittest.TestCase):
 
         create_and_deploy_release(space_name="Simple")
 
-        json_response = get_project_progression("Simple", "Project1", Octopus_Api_Key, "http://localhost:8080")
+        json_response = get_project_progression("Simple", "Project1", Octopus_Api_Key, Octopus_Url)
 
         deployment_json = json.loads(json_response)
 
         # Test the response by verifying the expected resources exist
         self.assertTrue(deployment_json.get("Releases")[0].get("Deployments"))
 
+    def test_get_project_progression_preconditions(self):
+        """
+        Tests the preconditions
+        """
+
+        with self.assertRaises(ValueError):
+            get_project_progression("", "Project1", Octopus_Api_Key, Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            get_project_progression("Simple", "", Octopus_Api_Key, Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            get_project_progression("Simple", "Project1", "", Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            get_project_progression("Simple", "Project1", Octopus_Api_Key, "")
+
     def test_get_raw_deployment_process(self):
         """
         Tests that we return the details of a deployments and releases
         """
 
-        json_response = get_raw_deployment_process("Simple", "Project1", Octopus_Api_Key, "http://localhost:8080")
+        json_response = get_raw_deployment_process("Simple", "Project1", Octopus_Api_Key, Octopus_Url)
 
         deployment_json = json.loads(json_response)
 
         # Test the response by verifying the expected resources exist
         self.assertTrue(deployment_json.get("Steps"))
+
+    def test_get_raw_deployment_process_preconditions(self):
+        """
+        Tests the preconditions
+        """
+
+        with self.assertRaises(ValueError):
+            get_raw_deployment_process("", "Project1", Octopus_Api_Key, Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            get_raw_deployment_process("Simple", "", Octopus_Api_Key, Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            get_raw_deployment_process("Simple", "Project1", "", Octopus_Url)
+
+        with self.assertRaises(ValueError):
+            get_raw_deployment_process("Simple", "Project1", Octopus_Api_Key, "")
 
 
 def run_terraform(directory, url, api, space=None):
