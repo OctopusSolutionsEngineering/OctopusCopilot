@@ -15,7 +15,7 @@ from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.transformers.chat_responses import get_deployment_status_base_response, get_octopus_project_names_response
-from infrastructure.octopus import get_project_progression
+from infrastructure.octopus import get_project_progression, get_raw_deployment_process
 from infrastructure.openai import llm_tool_query
 from tests.infrastructure.tools.build_test_tools import build_live_test_tools
 from tests.live.create_and_deploy_release import create_and_deploy_release
@@ -245,6 +245,18 @@ class LiveRequests(unittest.TestCase):
 
         # Test the response by verifying the expected resources exist
         self.assertTrue(deployment_json.get("Releases")[0].get("Deployments"))
+
+    def test_get_raw_deployment_process(self):
+        """
+        Tests that we return the details of a deployments and releases
+        """
+
+        json_response = get_raw_deployment_process("Simple", "Project1", Octopus_Api_Key, "http://localhost:8080")
+
+        deployment_json = json.loads(json_response)
+
+        # Test the response by verifying the expected resources exist
+        self.assertTrue(deployment_json.get("Steps"))
 
 
 def run_terraform(directory, url, api, space=None):
