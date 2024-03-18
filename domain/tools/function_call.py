@@ -3,11 +3,12 @@ class FunctionCall:
     This class represents a function and its arguments.
     """
 
-    def __init__(self, function, args):
+    def __init__(self, function, name, args):
         if function is None:
             raise ValueError('function must reference a valid function.')
 
         self.function = function
+        self.name = name
         self.function_args = args
 
     def call_function(self):

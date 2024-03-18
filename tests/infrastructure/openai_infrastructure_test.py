@@ -62,6 +62,15 @@ class MockRequests(unittest.TestCase):
 
         self.assertTrue(function.call_function().index("Sorry, I did not understand that request.") != -1)
 
+    def test_general_project_question(self):
+        """
+        Tests that the llm responds appropriately when no function is a match
+        """
+
+        function = llm_tool_query("What does the project \"Project1\" do?", build_mock_test_tools)
+
+        self.assertEquals(function.name, "answer_general_query")
+
     def test_general_prompt(self):
         """
         Tests that the llm responds some response to a general prompt

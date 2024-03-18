@@ -92,6 +92,6 @@ def llm_tool_query(query, llm_tools, log_query=None):
 
     # In the event that there was no matched function, return a canned response
     if not hasattr(action, "tool"):
-        return FunctionCall(lambda: NO_FUNCTION_RESPONSE, {})
+        return FunctionCall(lambda: NO_FUNCTION_RESPONSE, "none", {})
 
-    return FunctionCall(functions.get_function(action.tool), action.tool_input)
+    return FunctionCall(functions.get_function(action.tool), action.tool, action.tool_input)
