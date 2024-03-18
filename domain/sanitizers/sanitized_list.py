@@ -83,6 +83,7 @@ def sanitize_list(input_list, ignored_re=None):
     """
     OpenAI can provide some unexpected inputs. This function cleans them up.
     :param input_list: The list to sanitize
+    :param ignored_re: A regular expression to match strings that should be ignored
     :return: The sanitized list of strings
     """
     if not input_list:
@@ -90,21 +91,21 @@ def sanitize_list(input_list, ignored_re=None):
 
     # Treat a string as a list with a single string
     if isinstance(input_list, str):
-        if input_list.strip() and not has_prefix(input_list.strip(), ignored_re):
+        if input_list.strip() and not is_re_match(input_list.strip(), ignored_re):
             return [input_list.strip()]
         else:
             return []
 
-    # Sometimes you get a bool or int rather than a list, which we treat as an empty llist
+    # Sometimes you get a bool or int rather than a list, which we treat as an empty list
     if not isinstance(input_list, list):
         return []
 
     # Open AI will give you a list with a single asterisk if the list is empty
     return [entry.strip() for entry in input_list if
-            isinstance(entry, str) and entry.strip() and not has_prefix(entry, ignored_re)]
+            isinstance(entry, str) and entry.strip() and not is_re_match(entry, ignored_re)]
 
 
-def has_prefix(entry, ignored_re):
+def is_re_match(entry, ignored_re):
     if not ignored_re:
         return False
 

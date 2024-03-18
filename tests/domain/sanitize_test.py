@@ -1,6 +1,7 @@
 import unittest
 
 from domain.errors.error_handling import sanitize_message
+from domain.sanitizers.sanitized_list import get_item_or_none, is_re_match
 
 
 class SanitizeTests(unittest.TestCase):
@@ -12,3 +13,12 @@ class SanitizeTests(unittest.TestCase):
 
     def test_message_not_changed(self):
         self.assertEqual("Api key is ABCDEFG", sanitize_message("Api key is ABCDEFG"))
+
+    def test_get_item_or_none(self):
+        self.assertEqual('item1', get_item_or_none(['item1'], 0))
+        self.assertEqual(None, get_item_or_none(['item1'], 1))
+
+    def test_is_re_match(self):
+        self.assertTrue(is_re_match('item1', 'item[0-9]'))
+        self.assertFalse(is_re_match('item1', 'item[a-z]'))
+        self.assertFalse(is_re_match('item1', None))
