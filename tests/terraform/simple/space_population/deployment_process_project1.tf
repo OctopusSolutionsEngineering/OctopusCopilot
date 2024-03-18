@@ -17,16 +17,16 @@ resource "octopusdeploy_deployment_process" "deployment_process_project1" {
       is_required                        = false
       worker_pool_id                     = ""
       properties                         = {
-        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.RunOnServer"         = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "Bash"
-        "Octopus.Action.Script.ScriptBody" = "echo \"hi\""
+        "Octopus.Action.Script.Syntax"       = "Bash"
+        "Octopus.Action.Script.ScriptBody"   = "echo \"Hi there\""
       }
-      environments                       = []
-      excluded_environments              = []
-      channels                           = []
-      tenant_tags                        = []
-      features                           = []
+      environments          = []
+      excluded_environments = []
+      channels              = []
+      tenant_tags           = []
+      features              = []
     }
 
     properties   = {}

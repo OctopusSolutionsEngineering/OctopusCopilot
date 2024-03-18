@@ -104,7 +104,15 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("hi" in response_text)
+        self.assertTrue("Hi there" in response_text, "The context must include details of the named step")
+
+    def test_describe_missing_step(self):
+        prompt = "What does the project \"First Test Project\" in space \"Simple\"."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertFalse("Hi there" in response_text,
+                         "The context should not include details of steps, because none were mentioned in the query")
 
     @retry(AssertionError, tries=3, delay=2)
     def test_get_latest_deployment(self):
