@@ -12,12 +12,14 @@ def get_deployment_array_from_progression(progression, environment_names, max_re
     """
     deployments = delete_links(progression)
     environment_ids = [environment["Id"] for environment in deployments["Environments"] if
-                       environment["Name"] in environment_names]
+                       environment["Name"] in environment_names] if environment_names else []
 
     deployments_context = list(map(lambda x: flatten_list(list(x["Deployments"].values())), deployments["Releases"]))
+    flattened_deployments = flatten_list(deployments_context)
 
-    environment_deployments = [deployment for deployment in flatten_list(deployments_context) if
-                               deployment["EnvironmentId"] in environment_ids]
+    environment_deployments = [deployment for deployment in flattened_deployments if
+                               deployment[
+                                   "EnvironmentId"] in environment_ids] if environment_ids else flattened_deployments
 
     if max_results:
         environment_deployments = environment_deployments[:max_results]

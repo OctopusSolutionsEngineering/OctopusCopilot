@@ -488,7 +488,7 @@ Once default values are set, you can omit the space, environment, and project fr
         context = {"input": enriched_query}
 
         # We need some additional JSON data to answer this question
-        if projects:
+        if project:
             # We only need the deployments, so strip out the rest of the JSON
             deployments = get_deployment_array_from_progression(
                 json.loads(get_project_progression(space, project, api_key, url)),
