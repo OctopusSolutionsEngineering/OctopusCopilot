@@ -35,6 +35,10 @@ class CopilotChatTest(unittest.TestCase):
                                 "project",
                                 "Project1",
                                 os.environ["AzureWebJobsStorage"])
+            save_default_values(os.environ["TEST_GH_USER"],
+                                "environment",
+                                "Development",
+                                os.environ["AzureWebJobsStorage"])
         except Exception as e:
             print(
                 "Run Azureite with: "
@@ -74,24 +78,16 @@ class CopilotChatTest(unittest.TestCase):
         except Exception as e:
             pass
 
-    def test_chat_request(self):
+    def test_get_variables(self):
         prompt = "List the variables defined in the project \"Project1\" in space \"Simple\"."
-        req = func.HttpRequest(
-            method='POST',
-            body=json.dumps({
-                "messages": [
-                    {
-                        "content": prompt
-                    }
-                ]
-            }).encode('utf8'),
-            url='/api/form_handler',
-            params=None,
-            headers={
-                "X-GitHub-Token": os.environ["GH_TEST_TOKEN"]
-            })
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
 
-        response = copilot_handler_internal(req)
+        self.assertTrue("Test.Variable" in response_text)
+
+    def test_get_variables_with_defaults(self):
+        prompt = "List the variables defined in the project."
+        response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
         self.assertTrue("Test.Variable" in response_text)
@@ -99,3 +95,20 @@ class CopilotChatTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+def build_request(message):
+    return func.HttpRequest(
+        method='POST',
+        body=json.dumps({
+            "messages": [
+                {
+                    "content": message
+                }
+            ]
+        }).encode('utf8'),
+        url='/api/form_handler',
+        params=None,
+        headers={
+            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"]
+        })

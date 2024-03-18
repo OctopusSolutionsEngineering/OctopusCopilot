@@ -441,6 +441,7 @@ Once default values are set, you can omit the space, environment, and project fr
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
+        projects = get_default_argument(get_github_user_from_form(), projects, "Project")
 
         messages = build_hcl_prompt()
         context = {"input": enriched_query}
