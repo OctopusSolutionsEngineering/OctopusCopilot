@@ -59,7 +59,7 @@
           </ResponseAssertion>
           <hashTree/>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="List URLs">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="List URLs" enabled="true">
           <stringProp name="HTTPSampler.domain">octopuscopilotproduction.azurewebsites.net</stringProp>
           <stringProp name="HTTPSampler.port">443</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
@@ -94,7 +94,7 @@
           </ResponseAssertion>
           <hashTree/>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Describe Variables">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Describe Variables" enabled="true">
           <stringProp name="HTTPSampler.domain">octopuscopilotproduction.azurewebsites.net</stringProp>
           <stringProp name="HTTPSampler.port">443</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
@@ -138,7 +138,7 @@
           </ResponseAssertion>
           <hashTree/>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Describe Variable Usage">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Describe Variable Usage" enabled="true">
           <stringProp name="HTTPSampler.domain">octopuscopilotproduction.azurewebsites.net</stringProp>
           <stringProp name="HTTPSampler.port">443</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
@@ -222,7 +222,7 @@
             </elementProp>
             <elementProp name="OctopusProjectEnvironmentDeploymentReleaseVersion" elementType="Argument">
               <stringProp name="Argument.name">OctopusProjectEnvironmentDeploymentReleaseVersion</stringProp>
-              <stringProp name="Argument.value">0.0.2</stringProp>
+              <stringProp name="Argument.value">0.0.3</stringProp>
               <stringProp name="Argument.desc">The expected release version for the deployment of the project to the environment</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
