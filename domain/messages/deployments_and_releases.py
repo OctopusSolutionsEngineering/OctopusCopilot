@@ -8,7 +8,8 @@ def build_deployments_and_releases_prompt(step_by_step=False):
         ("system",
          "The supplied HCL context provides details on projects, environments, channels, and tenants. "
          + "The supplied JSON context provides details on deployments and releases. "
-         + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL."),
+         + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
+         + "You must assume the resources in the HCL and JSON belong to the same space as each other."),
         ("user", "{input}"),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
