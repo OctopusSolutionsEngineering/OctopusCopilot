@@ -43,7 +43,7 @@ class CopilotChatTest(unittest.TestCase):
                                 os.environ["AzureWebJobsStorage"])
         except Exception as e:
             print(
-                "Run Azureite with: "
+                "The tests will fail because Azurite is not running. Run Azureite with: "
                 + "docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite")
             return
 
@@ -95,7 +95,7 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue("Test.Variable" in response_text)
 
     def test_general_question(self):
-        prompt = "What does the project do?"
+        prompt = "What does the project \"Project1\" do?"
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
@@ -107,7 +107,7 @@ class CopilotChatTest(unittest.TestCase):
 
         time.sleep(30)
 
-        prompt = "List anything interesting in the logs for the latest deployment."
+        prompt = "List anything interesting in the deployment logs for the latest deployment."
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 

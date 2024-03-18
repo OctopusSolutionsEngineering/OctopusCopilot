@@ -409,6 +409,10 @@ Once default values are set, you can omit the space, environment, and project fr
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), body["space_name"], "Space")
+        project_names = get_default_argument(get_github_user_from_form(), sanitize_list(body["project_names"]),
+                                             "Project")
+        environment_names = get_default_argument(get_github_user_from_form(), sanitize_list(body["environment_names"]),
+                                                 "Environment")
 
         messages = build_hcl_prompt()
         context = {"input": extract_query(req)}
@@ -417,12 +421,12 @@ Once default values are set, you can omit the space, environment, and project fr
                                    messages,
                                    context,
                                    space,
-                                   body['project_names'],
+                                   project_names,
                                    body['runbook_names'],
                                    body['target_names'],
                                    body['tenant_names'],
                                    body['library_variable_sets'],
-                                   body['environment_names'],
+                                   environment_names,
                                    body['feed_names'],
                                    body['account_names'],
                                    body['certificate_names'],
