@@ -93,11 +93,13 @@ The testing is broken down into 3 categories:
 * Unit tests, mostly under `tests/domain`
 * Infrastructure integration tests that:
     * Validate the ability to call an octopus server initialized with Test Containers in
-      the `octopus_infrastructure_test.py` file
-    * Validate the ability to call the Azure Open AI service in the `openai_infrastructure_test.py` file
-    * Validate the ability to call the Azure Storage Service in the `azure_storage_infrastructure_test.py` file
+      the `tests/infrastructure/octopus_infrastructure_test.py` file
+    * Validate the ability to call the Azure Open AI service in the `tests/infrastructure/openai_infrastructure_test.py`
+      file
+    * Validate the ability to call the Azure Storage Service in
+      the `tests/infrastructure/azure_storage_infrastructure_test.py` file
 * End-to-end tests that validate the ability to call web endpoints exposed by the Azure Functions app in the
-  `copilot_chat.py` file
+  `tests/application/copilot_chat.py` file
 
 ## Test Coverage
 
