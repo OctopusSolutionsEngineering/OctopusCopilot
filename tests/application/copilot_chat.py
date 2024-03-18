@@ -103,7 +103,8 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue(response_text)
+        # This response could be anything, but make sure the LLM isn't saying sorry for something.
+        self.assertTrue("sorry" not in response_text.casefold())
 
 
 if __name__ == '__main__':
