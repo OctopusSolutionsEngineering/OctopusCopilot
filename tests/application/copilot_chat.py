@@ -94,6 +94,14 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Test.Variable" in response_text)
 
+    def test_general_question(self):
+        prompt = "What does the project do?"
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        # This response could be anything, but make sure the LLM isn't saying sorry for something.
+        self.assertTrue("sorry" not in response_text.casefold())
+
     def test_get_logs(self):
         create_and_deploy_release(space_name="Simple")
 
