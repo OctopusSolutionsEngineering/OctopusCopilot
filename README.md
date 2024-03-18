@@ -44,7 +44,8 @@ be it a CLI interface or a web API.
 
 The domain layer is found in the `domain` directory. This includes all the business logic.
 
-The infrastructure layer is found in the `infrastructure` directory. This includes all the external integrations with databases,
+The infrastructure layer is found in the `infrastructure` directory. This includes all the external integrations with
+databases,
 logging platforms, and external APIs.
 
 Tests are found in the `tests` directory.
@@ -85,6 +86,19 @@ python3 main.py --query "Show the projects from the Documentation space"
 
 Octonaughts can see the `Octopus Copilot OpenAI` secure note in the password manager for the Open AI key and endpoint.
 
-# Test Coverage
+# Testing
+
+The testing is broken down into 3 categories:
+
+* Unit tests, mostly under `tests/domain`
+* Infrastructure integration tests that:
+    * Validate the ability to call an octopus server initialized with Test Containers in
+      the `octopus_infrastructure_test.py` file
+    * Validate the ability to call the Azure Open AI service in the `openai_infrastructure_test.py` file
+    * Validate the ability to call the Azure Storage Service in the `azure_storage_infrastructure_test.py` file
+* End-to-end tests that validate the ability to call web endpoints exposed by the Azure Functions app in the
+  `copilot_chat.py` file
+
+## Test Coverage
 
 ![coverage badge](./coverage.svg)
