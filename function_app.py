@@ -502,7 +502,7 @@ Once default values are set, you can omit the space, environment, and project fr
                                             messages,
                                             context,
                                             space,
-                                            projects,
+                                            project,
                                             None,
                                             None,
                                             None,
