@@ -17,6 +17,9 @@ def answer_releases_and_deployments_callback(original_query, callback, logging=N
         # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
         # between projects, releases, deployments, and environments.
 
+        # Then use a tree-of-thought prompt to get a consensus answer:
+        # https://github.com/dave1010/tree-of-thought-prompting/blob/main/tree-of-thought-prompts.txt
+
         few_shot = f"""
 Task: What is the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment for the "MyChannel" channel and the "My Tenant" tenant?
 
