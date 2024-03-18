@@ -1,7 +1,7 @@
 import unittest
 
 from domain.errors.error_handling import sanitize_message
-from domain.sanitizers.sanitized_list import get_item_or_none, is_re_match
+from domain.sanitizers.sanitized_list import get_item_or_none, is_re_match, none_if_falesy
 
 
 class SanitizeTests(unittest.TestCase):
@@ -22,3 +22,13 @@ class SanitizeTests(unittest.TestCase):
         self.assertTrue(is_re_match('item1', 'item[0-9]'))
         self.assertFalse(is_re_match('item1', 'item[a-z]'))
         self.assertFalse(is_re_match('item1', None))
+
+    def test_none_if_falesy(self):
+        self.assertEqual(None, none_if_falesy(''))
+        self.assertEqual(None, none_if_falesy([]))
+        self.assertEqual(None, none_if_falesy(0))
+        self.assertEqual(None, none_if_falesy(False))
+        self.assertEqual('test', none_if_falesy('test'))
+        self.assertEqual(['test'], none_if_falesy(['test']))
+        self.assertEqual(True, none_if_falesy(True))
+        self.assertEqual(1, none_if_falesy(1))
