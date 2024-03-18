@@ -100,6 +100,7 @@ def general_query_handler(body):
                                body['projectgroup_names'],
                                body['channel_names'],
                                body['release_versions'],
+                               body['step_names'],
                                get_api_key(),
                                get_octopus_api(),
                                logging)
@@ -116,6 +117,7 @@ def variable_query_handler(original_query, enriched_query, space, projects):
                                         context,
                                         space,
                                         projects,
+                                        None,
                                         None,
                                         None,
                                         None,
@@ -165,6 +167,7 @@ def releases_query_handler(original_query, enriched_query, space, projects, envi
                                         None,
                                         None,
                                         environments,
+                                        None,
                                         None,
                                         None,
                                         None,

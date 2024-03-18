@@ -437,6 +437,7 @@ Once default values are set, you can omit the space, environment, and project fr
                                    body['projectgroup_names'],
                                    body['channel_names'],
                                    body['release_versions'],
+                                   body['step_names'],
                                    api_key,
                                    url,
                                    log_query)
@@ -455,6 +456,7 @@ Once default values are set, you can omit the space, environment, and project fr
                                             context,
                                             space,
                                             projects,
+                                            None,
                                             None,
                                             None,
                                             None,
@@ -508,6 +510,7 @@ Once default values are set, you can omit the space, environment, and project fr
                                             None,
                                             None,
                                             environments,
+                                            None,
                                             None,
                                             None,
                                             None,

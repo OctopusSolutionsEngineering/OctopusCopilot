@@ -99,6 +99,13 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Test.Variable" in response_text)
 
+    def test_describe_step(self):
+        prompt = "What does the step \"Run a Script\" do in the project \"First Test Project\" in space \"Simple\"."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("hi" in response_text)
+
     @retry(AssertionError, tries=3, delay=2)
     def test_get_latest_deployment(self):
         create_and_deploy_release(space_name="Simple")

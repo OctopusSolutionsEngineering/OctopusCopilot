@@ -41,6 +41,10 @@ def sanitize_releases(input_list):
     return sanitize_list(input_list, "\\*|Release\\s*[0-9A-Z]|My\\s*Release")
 
 
+def sanitize_steps(input_list):
+    return sanitize_list(input_list, "\\*|Step\\s*[0-9A-Z]|My\\s*Step")
+
+
 def sanitize_lifecycles(input_list):
     return sanitize_list(input_list, "\\*|Lifecycle\\s*[0-9A-Z]|My\\s*Lifecycle")
 
