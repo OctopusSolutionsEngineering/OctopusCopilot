@@ -322,7 +322,7 @@
               <connectTime>true</connectTime>
             </value>
           </objProp>
-          <stringProp name="filename"></stringProp>
+          <stringProp name="filename">/home/matthew/Desktop/copilot.csv</stringProp>
         </ResultCollector>
         <hashTree/>
       </hashTree>
