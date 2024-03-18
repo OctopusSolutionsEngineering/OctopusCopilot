@@ -79,10 +79,10 @@ JSON: ###
 ]
 ###
 Output:
-The HCL resource with the labels "octopusdeploy_environment" and "theenvironmentresource" has an attribute called "name" with the value "MyEnvironment". This name matches the environment name in the query. Therefore, this is the environment we base the answer on.
-The HCL resource with the labels "octopusdeploy_project" and "theprojectresource" has an attribute called "name" with the value "My Project". This name matches the project name in the query. Therefore, this is the project we base the answer on.
-The HCL resource with the labels "octopusdeploy_tenant" and "thetennatresource" has an attribute called "name" with the value "My Tenant". This name matches the tenant name in the query. Therefore, this is the tenant we base the answer on.
-The HCL resource with the labels "octopusdeploy_channel" and "thechannelresource" has an attribute called "name" with the value "MyChannel". This name matches the channel name in the query. Therefore, this is the channel we base the answer on.
+The HCL resource with the labels "octopusdeploy_environment" and "theenvironmentresource" has an attribute called "name" with the value "MyEnvironment" an an "id" attribute of "Environments-96789". This name matches the environment name in the query. Therefore, we must find deployments with the "EnvironmentId" of "Environments-96789".
+The HCL resource with the labels "octopusdeploy_project" and "theprojectresource" has an attribute called "name" with the value "My Project" and "id" attribute of "Projects-91234". This name matches the project name in the query. Therefore, we must find deployments with the "ProjectId" of "Projects-91234".
+The HCL resource with the labels "octopusdeploy_tenant" and "thetennatresource" has an attribute called "name" with the value "My Tenant" and an "id" attribute of "Tenants-9234". This name matches the tenant name in the query. Therefore, we must find deployments with the "TenantId" of "Tenants-9234".
+The HCL resource with the labels "octopusdeploy_channel" and "thechannelresource" has an attribute called "name" with the value "MyChannel" and an "id" attribute of "Channels-97001". This name matches the channel name in the query. Therefore, we must find deployments with the "ChannelId" of "Channels-97001"
 We filter the JSON array of deployments for a items with a "ProjectId" attribute with the value of "Projects-91234", an "EnvironmentId" attribute with the value of "Environments-96789", a "TenantId" attribute with the value of "Tenants-9234", and a "ChannelId" attribute with the value of "Channels-97001".
 The deployment with the highest "StartTime" attribute is the latest deployment.
 The release version is found in the deployment "ReleaseVersion" attribute.
