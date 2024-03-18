@@ -66,11 +66,26 @@ jobs:
         with:
           name: Dependencies Updates
           path: dependencyUpdates.txt
-      - name: Start Octoterra
-        run: docker run -d -e FUNCTIONS_CUSTOMHANDLER_PORT=8081 -p 8081:8081 octopussamples/octoterra-azure
-        shell: bash
+      - uses: robinraju/release-downloader@v1.9
+        with:
+          repository: "OctopusSolutionsEngineering/OctopusTerraformExport"
+          latest: true
+          fileName: "octoterra_linux_amd64_azure.zip"
       - name: Start Azurite
         run: docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite
+        shell: bash
+      - name: Start Octoterra
+        run: |
+          # Start the octoterra microservice
+          mkdir octoterra
+          mv octoterra_linux_amd64_azure.zip octoterra
+          cd octoterra
+          unzip octoterra_linux_amd64_azure.zip
+          chmod +x octoterra_linux_amd64_azure
+          ./octoterra_linux_amd64_azure &
+        env:
+          # The port used when running the octoterra microservice
+          FUNCTIONS_CUSTOMHANDLER_PORT: 8081
         shell: bash
       # Requires OpenAI instance to allow GitHub runner's IP address
       - name: Test
