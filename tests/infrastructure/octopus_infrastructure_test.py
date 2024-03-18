@@ -16,7 +16,8 @@ from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.transformers.chat_responses import get_dashboard_response
 from infrastructure.octopus import get_project_progression, get_raw_deployment_process, get_octopus_project_names_base, \
-    get_current_user, create_limited_api_key, get_deployment_status_base, get_dashboard
+    get_current_user, create_limited_api_key, get_deployment_status_base, get_dashboard, get_deployment_logs, \
+    get_item_ignoring_case
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 
@@ -154,6 +155,25 @@ class LiveRequests(unittest.TestCase):
         self.assertEqual("Project1", actual_project_name)
         self.assertTrue(deployment["State"] == "Executing" or deployment["State"] == "Success")
 
+    @retry(AssertionError, tries=3, delay=2)
+    def test_get_deployment_logs(self):
+        """
+        Tests that we return the details of a deployment
+        """
+
+        create_and_deploy_release(space_name="Simple")
+
+        time.sleep(30)
+
+        logs = get_deployment_logs("Simple",
+                                   "Project1",
+                                   "Development",
+                                   "latest",
+                                   Octopus_Api_Key,
+                                   Octopus_Url)
+
+        self.assertTrue("The deployment completed successfully" in logs)
+
     def test_get_no_environment(self):
         """
         Tests that we fail appropriately when the environment does not exist
@@ -268,6 +288,14 @@ class LiveRequests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             get_raw_deployment_process("Simple", "Project1", Octopus_Api_Key, "")
+
+
+class UnitTests(unittest.TestCase):
+    def test_get_item_ignoring_case(self):
+        self.assertEqual("Test", get_item_ignoring_case([{"Name": "Test"}], "test")["Name"])
+        self.assertEqual("Test", get_item_ignoring_case([{"Name": "Test"}], "Test")["Name"])
+        self.assertEqual("Test", get_item_ignoring_case([{"Name": "test"}, {"Name": "Test"}], "Test")["Name"])
+        self.assertEqual("test", get_item_ignoring_case([{"Name": "test"}, {"Name": "Test"}], "test")["Name"])
 
 
 def run_terraform(directory, url, api, space=None):

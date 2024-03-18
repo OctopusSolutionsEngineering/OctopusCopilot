@@ -1,4 +1,5 @@
 import datetime
+import json
 
 import pytz
 from retry import retry
@@ -9,6 +10,8 @@ from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
+from domain.query.query_inspector import release_is_latest
+from domain.sanitizers.sanitized_list import flatten_list
 from domain.url.build_url import build_url
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http, TAKE_ALL
@@ -274,10 +277,84 @@ def get_item_ignoring_case(items, name):
     if len(case_sensitive_items) != 0:
         return case_sensitive_items[0]
 
-    if len(case_sensitive_items) != 0:
-        return case_sensitive_items[0]
+    if len(case_insensitive_items) != 0:
+        return case_insensitive_items[0]
 
     return None
+
+
+@retry(HTTPError, tries=3, delay=2)
+def get_deployment_logs(space_name, project_name, environment_name, release_version, api_key, octopus_url):
+    """
+    Returns a logs for a deployment to an environment.
+    :param space_name: The name of the space.
+    :param project_name: The name of the project
+    :param environment_name: The name of the environment
+    :param release_version: The name of the release
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
+    :return: The deployment progression raw JSON
+    """
+    ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_deployment_logs).')
+    ensure_string_not_empty(project_name, 'project_name must be a non-empty string (get_deployment_logs).')
+    ensure_string_not_empty(octopus_url, 'octopus_url must be the Octopus Url (get_deployment_logs).')
+    ensure_string_not_empty(api_key, 'api_key must be the Octopus Api key (get_deployment_logs).')
+
+    space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
+
+    project = get_project(space_id, project_name, octopus_url, api_key)
+
+    environment = None
+    if environment_name:
+        environment = get_environment(space_id, environment_name, octopus_url, api_key)
+
+    api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+
+    releases = json.loads(resp.data.decode("utf-8"))
+
+    if "Releases" not in releases:
+        return ""
+
+    if environment:
+        # Only releases to the environment are a candidate
+        filtered_releases = list(filter(lambda r: environment["Id"] in r["Deployments"].keys(), releases["Releases"]))
+        deployments = flatten_list(map(lambda r: r["Deployments"][environment['Id']], filtered_releases))
+    else:
+        # Every deployment is a candidate
+        deployments = flatten_list(map(lambda r: r["Deployments"][environment['Id']], releases))
+
+    task_id = None
+    if release_is_latest(release_version):
+        if deployments:
+            task_id = deployments[0]["TaskId"]
+    else:
+        specific_deployment = list(filter(lambda d: d["ReleaseVersion"] == release_version, deployments))
+        if specific_deployment:
+            task_id = specific_deployment[0]["TaskId"]
+
+    if not task_id:
+        return ""
+
+    api = build_url(octopus_url, f"api/{space_id}/Tasks/{task_id}/details")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    task = json.loads(resp.data.decode("utf-8"))
+
+    logs = "\n".join(list(map(lambda i: get_logs(i, 0), task["ActivityLogs"])))
+
+    return logs
+
+
+def get_logs(log_item, depth):
+    if depth == 0 and len(log_item["LogElements"]) == 0 and len(log_item["Children"]) == 0:
+        return f"No logs found (status: {log_item['Status']})."
+
+    logs = "\n".join(list(map(lambda e: e["MessageText"], log_item["LogElements"])))
+    if log_item["Children"]:
+        for child in log_item["Children"]:
+            logs += get_logs(child, depth + 1)
+
+    return logs
 
 
 def handle_response(callback):
@@ -295,3 +372,25 @@ def handle_response(callback):
         raise OctopusRequestFailed(f"Request failed with " + response.data.decode('utf-8'))
 
     return response
+
+
+def get_project(space_id, project_name, octopus_url, api_key):
+    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partial_name=project_name))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    project = get_item_ignoring_case(resp.json()["Items"], project_name)
+
+    if project is None:
+        raise ResourceNotFound("No projects found matching the name " + project_name)
+
+    return project
+
+
+def get_environment(space_id, environment_name, octopus_url, api_key):
+    api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partial_name=environment_name))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    environment = get_item_ignoring_case(resp.json()["Items"], environment_name)
+
+    if environment is None:
+        raise ResourceNotFound("No environment found matching the name " + environment_name)
+
+    return environment

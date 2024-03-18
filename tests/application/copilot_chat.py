@@ -1,5 +1,6 @@
 import json
 import os
+import time
 import unittest
 
 import azure.functions as func
@@ -8,6 +9,7 @@ from testcontainers.core.waiting_utils import wait_for_logs
 
 from function_app import copilot_handler_internal
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
+from tests.infrastructure.create_and_deploy_release import create_and_deploy_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.octopus_infrastructure_test import run_terraform
 
@@ -91,6 +93,17 @@ class CopilotChatTest(unittest.TestCase):
         response_text = response.get_body().decode('utf8')
 
         self.assertTrue("Test.Variable" in response_text)
+
+    def test_get_logs(self):
+        create_and_deploy_release(space_name="Simple")
+
+        time.sleep(30)
+
+        prompt = "List anything interesting in the logs for the latest deployment."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue(response_text)
 
 
 if __name__ == '__main__':

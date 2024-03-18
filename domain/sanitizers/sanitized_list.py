@@ -117,3 +117,7 @@ def get_item_or_none(array, index):
         return array[index]
     except IndexError:
         return None
+
+
+def flatten_list(deployments):
+    return [item for sublist in deployments for item in sublist]

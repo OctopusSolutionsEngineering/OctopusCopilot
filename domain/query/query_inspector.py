@@ -52,3 +52,8 @@ def exclude_all_tagsets(query, entity_list):
 
 def exclude_all_project_groups(query, entity_list):
     return True if not entity_list and "group" not in query.lower() else False
+
+
+def release_is_latest(release_version):
+    phrases = ["latest", "last", "most recent"]
+    return not release_version or release_version.casefold() in phrases

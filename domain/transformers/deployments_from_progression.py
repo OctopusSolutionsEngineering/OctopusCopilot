@@ -1,3 +1,4 @@
+from domain.sanitizers.sanitized_list import flatten_list
 from domain.transformers.delete_links import delete_links
 
 
@@ -22,7 +23,3 @@ def get_deployment_array_from_progression(progression, environment_names, max_re
         environment_deployments = environment_deployments[:max_results]
 
     return environment_deployments
-
-
-def flatten_list(deployments):
-    return [item for sublist in deployments for item in sublist]

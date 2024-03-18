@@ -37,7 +37,7 @@ from domain.url.session import create_session_blob, extract_session_blob
 from infrastructure.github import get_github_user
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
-    create_limited_api_key, get_dashboard, get_project_progression
+    create_limited_api_key, get_dashboard, get_project_progression, get_deployment_logs
 from infrastructure.openai import llm_tool_query
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
@@ -520,6 +520,22 @@ Once default values are set, you can omit the space, environment, and project fr
 
         return chat_response
 
+    def logs_handler(original_query, enriched_query, space, projects, environments, channel, tenant):
+        api_key, url = get_api_key_and_url()
+
+        space = get_default_argument(get_github_user_from_form(), space, "Space")
+        project = get_default_argument(get_github_user_from_form(), get_item_or_none(sanitize_list(projects), 0),
+                                       "Project")
+        environment = get_default_argument(get_github_user_from_form(),
+                                           get_item_or_none(sanitize_list(environments), 0), "Environment")
+
+        logs = get_deployment_logs(space, project, environment, "latest", api_key, url)
+
+        messages = build_plain_text_prompt()
+        context = {"input": enriched_query, "context": logs}
+
+        return llm_message_query(messages, context, log_query)
+
     def build_form_tools():
         """
         Builds a set of tools configured for use with HTTP requests (i.e. API key
@@ -536,6 +552,8 @@ Once default values are set, you can omit the space, environment, and project fr
                 answer_project_variables_usage_callback(query, variable_query_handler, log_query)),
             FunctionDefinition(
                 answer_releases_and_deployments_callback(query, releases_query_handler, log_query)),
+            FunctionDefinition(
+                answer_logs_callback(query, logs_handler, log_query)),
             FunctionDefinition(provide_help),
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(set_default_value),
