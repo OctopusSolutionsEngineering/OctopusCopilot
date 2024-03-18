@@ -66,9 +66,9 @@ jobs:
         with:
           name: Dependencies Updates
           path: dependencyUpdates.txt
-      - - name: Start Octoterra
-          run: docker run -d -e FUNCTIONS_CUSTOMHANDLER_PORT=8081 -p 8081:8081 octopussamples/octoterra-azure
-          shell: bash
+      - name: Start Octoterra
+        run: docker run -d -e FUNCTIONS_CUSTOMHANDLER_PORT=8081 -p 8081:8081 octopussamples/octoterra-azure
+        shell: bash
       - name: Start Azurite
         run: docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite
         shell: bash
