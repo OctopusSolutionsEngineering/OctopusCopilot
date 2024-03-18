@@ -91,11 +91,7 @@ Therefore, the release version of the latest deployment of the "My Project" proj
 The answer:
 The release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "1.2.3-mybranch"
 
-Now simulate three brilliant, logical experts collaboratively answering a question.
-Each one verbosely explains their thought process in real-time, considering the prior explanations of others and openly acknowledging mistakes.
-At each step, whenever possible, each expert refines and builds upon the thoughts of others, acknowledging their contributions.
-They continue until there is a definitive answer to the question. For clarity, your entire response should be in a markdown table.
-The question is... {original_query}
+Question: {original_query}
 """
 
         for key, value in kwargs.items():
