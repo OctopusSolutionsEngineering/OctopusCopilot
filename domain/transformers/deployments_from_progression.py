@@ -6,6 +6,7 @@ def get_deployment_array_from_progression(progression, environment_names, max_re
     Gets the list of deployments for a specific environment from the progression of a project
     :param progression: The raw progression result
     :param environment_names: The environments to limit the results to
+    :param max_results: The maximum number of results to return
     :return: The list of deployments
     """
     deployments = delete_links(progression)

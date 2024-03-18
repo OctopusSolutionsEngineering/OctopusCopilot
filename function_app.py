@@ -21,7 +21,7 @@ from domain.logging.query_loggin import log_query
 from domain.messages.deployment_logs import build_plain_text_prompt
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.messages.general import build_hcl_prompt
-from domain.sanitizers.sanitized_list import sanitize_environments
+from domain.sanitizers.sanitized_list import sanitize_environments, sanitize_list, get_item_or_none
 from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
@@ -474,6 +474,10 @@ Once default values are set, you can omit the space, environment, and project fr
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
+        project = get_default_argument(get_github_user_from_form(), get_item_or_none(sanitize_list(projects), 0),
+                                       "Project")
+        environments = get_default_argument(get_github_user_from_form(),
+                                            get_item_or_none(sanitize_list(environments), 0), "Environment")
 
         messages = build_deployments_and_releases_prompt()
         context = {"input": enriched_query}
@@ -482,7 +486,7 @@ Once default values are set, you can omit the space, environment, and project fr
         if projects:
             # We only need the deployments, so strip out the rest of the JSON
             deployments = get_deployment_array_from_progression(
-                json.loads(get_project_progression(space, projects, api_key, url)),
+                json.loads(get_project_progression(space, project, api_key, url)),
                 sanitize_environments(environments),
                 3)
             context["json"] = json.dumps(deployments, indent=2)
@@ -521,14 +525,16 @@ Once default values are set, you can omit the space, environment, and project fr
         and URL extracted from an HTTP request body).
         :return: The OpenAI tools
         """
+        query = extract_query(req)
+
         return FunctionDefinitions([
             FunctionDefinition(answer_general_query_callback(general_query_handler, log_query), AnswerGeneralQuery),
             FunctionDefinition(
-                answer_project_variables_callback(extract_query(req), variable_query_handler, log_query)),
+                answer_project_variables_callback(query, variable_query_handler, log_query)),
             FunctionDefinition(
-                answer_project_variables_usage_callback(extract_query(req), variable_query_handler, log_query)),
+                answer_project_variables_usage_callback(query, variable_query_handler, log_query)),
             FunctionDefinition(
-                answer_releases_and_deployments_callback(extract_query(req), releases_query_handler, log_query)),
+                answer_releases_and_deployments_callback(query, releases_query_handler, log_query)),
             FunctionDefinition(provide_help),
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(set_default_value),

@@ -109,3 +109,10 @@ def has_prefix(entry, ignored_re):
         return False
 
     return re.match(ignored_re, entry)
+
+
+def get_item_or_none(array, index):
+    try:
+        return array[index]
+    except IndexError:
+        return None
