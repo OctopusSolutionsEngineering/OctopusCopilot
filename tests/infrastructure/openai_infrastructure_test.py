@@ -37,8 +37,8 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.function_args["space_name"], "MySpace")
 
         results = function.call_function()
-        self.assertIn("Project1", results)
-        self.assertIn("Project2", results)
+        self.assertIn("First Test Project", results)
+        self.assertIn("Second Test Project", results)
 
     def test_empty_arguments(self):
         """
