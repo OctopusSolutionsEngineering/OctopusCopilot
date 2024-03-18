@@ -37,7 +37,7 @@ class CopilotChatTest(unittest.TestCase):
                                 os.environ["AzureWebJobsStorage"])
             save_default_values(os.environ["TEST_GH_USER"],
                                 "project",
-                                "Project1",
+                                "First Test Project",
                                 os.environ["AzureWebJobsStorage"])
             save_default_values(os.environ["TEST_GH_USER"],
                                 "environment",
@@ -83,7 +83,7 @@ class CopilotChatTest(unittest.TestCase):
             pass
 
     def test_get_variables(self):
-        prompt = "List the variables defined in the project \"Project1\" in space \"Simple\"."
+        prompt = "List the variables defined in the project \"First Test Project\" in space \"Simple\"."
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
@@ -99,14 +99,23 @@ class CopilotChatTest(unittest.TestCase):
     @retry(AssertionError, tries=3, delay=2)
     def test_get_latest_deployment(self):
         create_and_deploy_release(space_name="Simple")
-        prompt = "Get the release version of the latest deployment to the \"Development\" environment for the \"Project1\" project."
+        prompt = "Get the release version of the latest deployment to the \"Development\" environment for the \"First Test Project\" project."
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue(re.search("0\\.0\\.[1-9]", response_text))
+        self.assertTrue(re.search("0\\.0\\.[1-9][0-9]*", response_text))
+
+    @retry(AssertionError, tries=3, delay=2)
+    def test_get_latest_deployment_defaults(self):
+        create_and_deploy_release(space_name="Simple")
+        prompt = "Get the release version of the latest deployment."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue(re.search("0\\.0\\.[1-9][0-9]*", response_text))
 
     def test_general_question(self):
-        prompt = "What does the project \"Project1\" do?"
+        prompt = "What does the project \"First Test Project\" do?"
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 

@@ -148,11 +148,11 @@ class LiveRequests(unittest.TestCase):
         time.sleep(30)
 
         actual_space_name, actual_environment_name, actual_project_name, deployment = (
-            get_deployment_status_base("Simple", "Development", "Project1", Octopus_Api_Key, Octopus_Url))
+            get_deployment_status_base("Simple", "Development", "First Test Project", Octopus_Api_Key, Octopus_Url))
 
         self.assertEqual("Simple", actual_space_name)
         self.assertEqual("Development", actual_environment_name)
-        self.assertEqual("Project1", actual_project_name)
+        self.assertEqual("First Test Project", actual_project_name)
         self.assertTrue(deployment["State"] == "Executing" or deployment["State"] == "Success")
 
     @retry(AssertionError, tries=3, delay=2)
@@ -180,7 +180,7 @@ class LiveRequests(unittest.TestCase):
         """
 
         with self.assertRaises(ResourceNotFound):
-            get_deployment_status_base("Simple", "UAT2", "Project1", Octopus_Api_Key, Octopus_Url)
+            get_deployment_status_base("Simple", "UAT2", "First Test Project", Octopus_Api_Key, Octopus_Url)
 
     def test_et_deployment_status_preconditions(self):
         """
@@ -188,19 +188,19 @@ class LiveRequests(unittest.TestCase):
         """
 
         with self.assertRaises(ValueError):
-            get_deployment_status_base("Simple", "", "Project1", Octopus_Api_Key, Octopus_Url)
+            get_deployment_status_base("Simple", "", "First Test Project", Octopus_Api_Key, Octopus_Url)
 
         with self.assertRaises(ValueError):
-            get_deployment_status_base("", "UAT", "Project1", Octopus_Api_Key, Octopus_Url)
+            get_deployment_status_base("", "UAT", "First Test Project", Octopus_Api_Key, Octopus_Url)
 
         with self.assertRaises(ValueError):
             get_deployment_status_base("Simple", "UAT", "", Octopus_Api_Key, Octopus_Url)
 
         with self.assertRaises(ValueError):
-            get_deployment_status_base("Simple", "UAT", "Project1", "", Octopus_Url)
+            get_deployment_status_base("Simple", "UAT", "First Test Project", "", Octopus_Url)
 
         with self.assertRaises(ValueError):
-            get_deployment_status_base("Simple", "UAT", "Project1", Octopus_Api_Key, "")
+            get_deployment_status_base("Simple", "UAT", "First Test Project", Octopus_Api_Key, "")
 
     def test_get_dashboard(self):
         """
@@ -236,7 +236,7 @@ class LiveRequests(unittest.TestCase):
 
         create_and_deploy_release(space_name="Simple")
 
-        json_response = get_project_progression("Simple", "Project1", Octopus_Api_Key, Octopus_Url)
+        json_response = get_project_progression("Simple", "First Test Project", Octopus_Api_Key, Octopus_Url)
 
         deployment_json = json.loads(json_response)
 
@@ -249,23 +249,23 @@ class LiveRequests(unittest.TestCase):
         """
 
         with self.assertRaises(ValueError):
-            get_project_progression("", "Project1", Octopus_Api_Key, Octopus_Url)
+            get_project_progression("", "First Test Project", Octopus_Api_Key, Octopus_Url)
 
         with self.assertRaises(ValueError):
             get_project_progression("Simple", "", Octopus_Api_Key, Octopus_Url)
 
         with self.assertRaises(ValueError):
-            get_project_progression("Simple", "Project1", "", Octopus_Url)
+            get_project_progression("Simple", "First Test Project", "", Octopus_Url)
 
         with self.assertRaises(ValueError):
-            get_project_progression("Simple", "Project1", Octopus_Api_Key, "")
+            get_project_progression("Simple", "First Test Project", Octopus_Api_Key, "")
 
     def test_get_raw_deployment_process(self):
         """
         Tests that we return the details of a deployments and releases
         """
 
-        json_response = get_raw_deployment_process("Simple", "Project1", Octopus_Api_Key, Octopus_Url)
+        json_response = get_raw_deployment_process("Simple", "First Test Project", Octopus_Api_Key, Octopus_Url)
 
         deployment_json = json.loads(json_response)
 
@@ -278,16 +278,16 @@ class LiveRequests(unittest.TestCase):
         """
 
         with self.assertRaises(ValueError):
-            get_raw_deployment_process("", "Project1", Octopus_Api_Key, Octopus_Url)
+            get_raw_deployment_process("", "First Test Project", Octopus_Api_Key, Octopus_Url)
 
         with self.assertRaises(ValueError):
             get_raw_deployment_process("Simple", "", Octopus_Api_Key, Octopus_Url)
 
         with self.assertRaises(ValueError):
-            get_raw_deployment_process("Simple", "Project1", "", Octopus_Url)
+            get_raw_deployment_process("Simple", "First Test Project", "", Octopus_Url)
 
         with self.assertRaises(ValueError):
-            get_raw_deployment_process("Simple", "Project1", Octopus_Api_Key, "")
+            get_raw_deployment_process("Simple", "First Test Project", Octopus_Api_Key, "")
 
 
 class UnitTests(unittest.TestCase):

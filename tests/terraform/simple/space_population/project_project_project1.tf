@@ -2,8 +2,8 @@ variable "project_project1_name" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The name of the project exported from Project1"
-  default     = "Project1"
+  description = "The name of the project exported from First Test Project"
+  default     = "First Test Project"
 }
 variable "project_project1_description_prefix" {
   type        = string

@@ -5,10 +5,10 @@ from domain.transformers.chat_responses import get_octopus_project_names_respons
 
 class EnsureTests(unittest.TestCase):
     def test_get_octopus_project_names_response(self):
-        self.assertEqual(get_octopus_project_names_response("Default", ["Project1"]),
-                         "I found 1 projects in the space \"Default\":\n* Project1")
-        self.assertEqual(get_octopus_project_names_response("", ["Project1"]),
-                         "I found 1 projects:\n* Project1")
+        self.assertEqual(get_octopus_project_names_response("Default", ["First Test Project"]),
+                         "I found 1 projects in the space \"Default\":\n* First Test Project")
+        self.assertEqual(get_octopus_project_names_response("", ["First Test Project"]),
+                         "I found 1 projects:\n* First Test Project")
         self.assertEqual(get_octopus_project_names_response("", []),
                          "I found no projects.")
         self.assertEqual(get_octopus_project_names_response(None, None),

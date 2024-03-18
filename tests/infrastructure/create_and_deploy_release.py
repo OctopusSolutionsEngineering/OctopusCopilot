@@ -37,7 +37,7 @@ def get_octopus_resource(uri, headers, skip_count=0):
 
 
 def create_and_deploy_release(octopus_server_uri="http://localhost:8080", octopus_api_key=Octopus_Api_Key,
-                              space_name="Default", project_name="Project1",
+                              space_name="Default", project_name="First Test Project",
                               environment_name="Development", channel_name="Default"):
     headers = {'X-Octopus-ApiKey': octopus_api_key}
 
