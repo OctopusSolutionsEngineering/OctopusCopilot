@@ -69,7 +69,7 @@ class MockRequests(unittest.TestCase):
 
         function = llm_tool_query("What does the project \"Project1\" do?", build_mock_test_tools)
 
-        self.assertEquals(function.name, "answer_general_query")
+        self.assertEqual(function.name, "answer_general_query")
 
     def test_general_prompt(self):
         """
