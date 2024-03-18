@@ -161,7 +161,7 @@ class LiveRequests(unittest.TestCase):
         time.sleep(30)
 
         logs = get_deployment_logs("Simple",
-                                   "Project1",
+                                   "First Test Project",
                                    "Development",
                                    "latest",
                                    Octopus_Api_Key,
