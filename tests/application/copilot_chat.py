@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import time
 import unittest
 
@@ -93,6 +94,17 @@ class CopilotChatTest(unittest.TestCase):
         response_text = response.get_body().decode('utf8')
 
         self.assertTrue("Test.Variable" in response_text)
+
+    def test_get_latest_deployment(self):
+        create_and_deploy_release(space_name="Simple")
+
+        time.sleep(30)
+
+        prompt = "Get the release version of the latest deployment to the \"Development\" environment for the \"Project1\" project."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue(re.match("0\\.0\\.[1-9]", response_text))
 
     def test_general_question(self):
         prompt = "What does the project \"Project1\" do?"
