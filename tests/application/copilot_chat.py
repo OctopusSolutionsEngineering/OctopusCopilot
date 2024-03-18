@@ -18,7 +18,10 @@ from tests.infrastructure.octopus_infrastructure_test import run_terraform
 
 class CopilotChatTest(unittest.TestCase):
     """
-    This test simulates the complete copilot workflow, excluding an Oauth login.
+    End-to-end tests that verify the complete query workflow including:
+    * Persisting user details such as Octopus URL and API key
+    * Querying the Octopus API to build context
+    * Passing the context and query to OpenAI to generate a response
     """
 
     @classmethod

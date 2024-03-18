@@ -9,11 +9,15 @@ from tests.infrastructure.tools.build_test_tools import build_mock_test_tools
 
 class MockRequests(unittest.TestCase):
     """
-    This class tests that OpenAI is correctly matching the functions to the queries. It does not need
-    an Octopus instance running, and so is the fastest way to verify that chat queries are matching
-    function descriptions correctly.
+    Integration tests verifying calls to the OpenAI service.
 
-    Use the LiveRequests class to verify the function calls work against a real Octopus instance.
+    These tests should mostly be focused on ensuring tools are correctly matched to queries by having the correct
+    function comments, and that the correct entities are extracted from the query.
+
+    Tests can also submit mock data to verify the response. Be aware that LLMs are non-deterministic, so it can be hard
+    to verify the response.
+
+    Use the CopilotChatTest class to verify the function calls work against a real Octopus instance.
     """
 
     @parameterized.expand([
