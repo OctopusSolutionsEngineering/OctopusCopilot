@@ -87,6 +87,18 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Manual Intervention" in body["step_names"], "body")
 
+    def test_general_machine_question(self):
+        """
+        Tests that the llm responds appropriately when no function is a match
+        """
+
+        function = llm_tool_query("Show the details of the machine \"Cloud Region target\"?",
+                                  build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Cloud Region target" in body["target_names"], "body")
+
     def test_general_prompt(self):
         """
         Tests that the llm responds some response to a general prompt
