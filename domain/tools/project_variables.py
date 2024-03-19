@@ -16,13 +16,13 @@ def answer_project_variables_usage_callback(original_query, callback, logging=No
     example. We then embed the original query, passed into this function, into the enhanced query.
     """
 
-    def answer_project_variables_usage(space=None, projects=None, **kwargs):
+    def answer_project_variables_usage(space=None, projects=None, variables=None, **kwargs):
         """Answers a question where variables are used in a project or if they are unused.
 
         Args:
         space: Space name
         projects: project names
-        environments: Environment names
+        variables: variable names
         """
 
         if logging:
@@ -139,7 +139,7 @@ Question: {original_query}
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
-        return callback(original_query, few_shot, space, projects)
+        return callback(original_query, few_shot, space, projects, variables)
 
     return answer_project_variables_usage
 
