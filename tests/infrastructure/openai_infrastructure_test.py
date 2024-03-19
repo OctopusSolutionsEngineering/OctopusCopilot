@@ -77,6 +77,19 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Deploy WebApp" in body["project_names"], "body")
 
+    def test_unknown_arguments(self):
+        """
+        Tests that unknown entities are captured and returned.
+        """
+
+        function = llm_tool_query(
+            "Find steps in the \"Commercial Billing\" project with a type of \"Octopus.Manual\". Double check the type of each step to ensure it is \"Octopus.Manual\". Show the step name and type in a markdown table.",
+            build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Octopus.Manual" in body["type"])
+
     def test_general_project_step_question(self):
         """
         Tests that the llm identifies the step name in the query
@@ -87,7 +100,7 @@ class MockRequests(unittest.TestCase):
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
-        self.assertTrue("Manual Intervention" in body["step_names"], "body")
+        self.assertTrue("Manual Intervention" in body["step_names"])
 
     def test_general_machine_question(self):
         """

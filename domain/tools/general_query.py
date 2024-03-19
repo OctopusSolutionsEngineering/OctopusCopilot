@@ -65,6 +65,12 @@ steps: step names"""
             "step_names": sanitize_steps(steps)
         }
 
+        for key, value in kwargs.items():
+            if key not in body:
+                body[key] = value
+            else:
+                logging(f"Conflicting Key: {key}", "Value: {value}")
+
         return callback(body)
 
     return answer_general_query
