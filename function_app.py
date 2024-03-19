@@ -21,7 +21,8 @@ from domain.logging.query_loggin import log_query
 from domain.messages.deployment_logs import build_plain_text_prompt
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.messages.general import build_hcl_prompt
-from domain.sanitizers.sanitized_list import sanitize_environments, sanitize_list, get_item_or_none
+from domain.sanitizers.sanitized_list import sanitize_environments, sanitize_list, get_item_or_none, \
+    none_if_falesy_or_all
 from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
@@ -443,7 +444,7 @@ Once default values are set, you can omit the space, environment, and project fr
                                    url,
                                    log_query)
 
-    def variable_query_handler(original_query, enriched_query, space, projects):
+    def variable_query_handler(original_query, enriched_query, space, projects, variables):
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
@@ -473,7 +474,7 @@ Once default values are set, you can omit the space, environment, and project fr
                                             None,
                                             None,
                                             None,
-                                            ["<all>"],
+                                            ["<all>"] if none_if_falesy_or_all(variables) else variables,
                                             api_key,
                                             url,
                                             log_query)

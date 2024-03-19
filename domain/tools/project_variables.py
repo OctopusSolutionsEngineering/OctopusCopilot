@@ -145,12 +145,13 @@ Question: {original_query}
 
 
 def answer_project_variables_callback(original_query, callback, logging=None):
-    def answer_project_variables(space=None, projects=None, **kwargs):
+    def answer_project_variables(space=None, projects=None, variables=None, **kwargs):
         """Answers a question about the variables defined for a project
 
         Args:
         space: Space name
         projects: project names
+        variables: variable names
         """
 
         if logging:
@@ -230,6 +231,6 @@ Question: {original_query}
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
-        return callback(original_query, few_shot, space, projects)
+        return callback(original_query, few_shot, space, projects, variables)
 
     return answer_project_variables
