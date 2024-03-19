@@ -115,6 +115,14 @@ class CopilotChatTest(unittest.TestCase):
                          "The context should not include details of steps, because none were mentioned in the query")
 
     @retry(AssertionError, tries=3, delay=2)
+    def test_describe_machines(self):
+        prompt = "What machines are in the space \"Simple\"."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("Cloud Region Target" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
     def test_get_latest_deployment(self):
         create_and_deploy_release(space_name="Simple")
         prompt = "Get the release version of the latest deployment to the \"Development\" environment for the \"First Test Project\" project."

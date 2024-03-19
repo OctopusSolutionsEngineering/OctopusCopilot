@@ -11,7 +11,7 @@ def answer_general_query_callback(callback, logging=None):
                              tenants=None, library_variable_sets=None, environments=None,
                              feeds=None, accounts=None, certificates=None, lifecycles=None,
                              workerpools=None, machinepolicies=None, tagsets=None, projectgroups=None, channels=None,
-                             releases=None, steps=None, variables=None):
+                             releases=None, steps=None, variables=None, **kwargs):
         """Answers a general query about an Octopus space.
 Args:
 space: Space name
@@ -66,6 +66,12 @@ variables: variable names"""
             "step_names": sanitize_steps(steps),
             "variable_names": sanitize_steps(variables),
         }
+
+        for key, value in kwargs.items():
+            if key not in body:
+                body[key] = value
+            else:
+                logging(f"Conflicting Key: {key}", "Value: {value}")
 
         return callback(body)
 
