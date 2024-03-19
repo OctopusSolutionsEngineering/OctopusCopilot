@@ -77,7 +77,7 @@ class MockRequests(unittest.TestCase):
 
     def test_general_project_step_question(self):
         """
-        Tests that the llm responds appropriately when no function is a match
+        Tests that the llm identifies the step name in the query
         """
 
         function = llm_tool_query("What do does the step \"Manual Intervention\" in the \"Project1\" do?",
@@ -89,7 +89,7 @@ class MockRequests(unittest.TestCase):
 
     def test_general_machine_question(self):
         """
-        Tests that the llm responds appropriately when no function is a match
+        Tests that the llm identifies the machine name in the query
         """
 
         function = llm_tool_query("Show the details of the machine \"Cloud Region target\"?",
