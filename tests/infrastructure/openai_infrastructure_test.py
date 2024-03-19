@@ -68,12 +68,14 @@ class MockRequests(unittest.TestCase):
 
     def test_general_project_question(self):
         """
-        Tests that the llm responds appropriately when no function is a match
+        Tests that the llm correctly identifies the project name in the query
         """
 
-        function = llm_tool_query("What does the project \"Project1\" do?", build_mock_test_tools)
+        function = llm_tool_query("What does the project \"Deploy WebApp\" do?", build_mock_test_tools)
+        body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Deploy WebApp" in body["project_names"], "body")
 
     def test_general_project_step_question(self):
         """
