@@ -15,7 +15,7 @@ def collect_llm_context(original_query, messages, context, space_name, project_n
                         tenant_names,
                         library_variable_sets, environment_names, feed_names, account_names, certificate_names,
                         lifecycle_names, workerpool_names, machinepolicy_names, tagset_names, projectgroup_names,
-                        channel_names, release_versions, step_names, api_key,
+                        channel_names, release_versions, step_names, variable_names, api_key,
                         octopus_url, log_query):
     """
     We need to source context for the LLM from multiple locations. "Static" resources are defined using Terraform,
@@ -58,6 +58,7 @@ def collect_llm_context(original_query, messages, context, space_name, project_n
         log_query("Channel Names:", channel_names)
         log_query("Release Versions:", release_versions)
         log_query("Steps:", release_versions)
+        log_query("Variables:", variable_names)
 
     # This context provides details about resources like projects, environments, feeds, accounts, certificates, etc.
     hcl = get_octoterra_space(original_query,
@@ -77,6 +78,7 @@ def collect_llm_context(original_query, messages, context, space_name, project_n
                               tagset_names,
                               projectgroup_names,
                               step_names,
+                              variable_names,
                               api_key,
                               octopus_url)
 

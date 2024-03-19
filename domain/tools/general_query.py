@@ -11,7 +11,7 @@ def answer_general_query_callback(callback, logging=None):
                              tenants=None, library_variable_sets=None, environments=None,
                              feeds=None, accounts=None, certificates=None, lifecycles=None,
                              workerpools=None, machinepolicies=None, tagsets=None, projectgroups=None, channels=None,
-                             releases=None, steps=None):
+                             releases=None, steps=None, variables=None):
         """Answers a general query about an Octopus space.
 Args:
 space: Space name
@@ -31,7 +31,8 @@ tagsets: tenant tag set names
 projectgroups: project group names
 channels: channel names
 releases: release versions
-steps: step names"""
+steps: step names
+variables: variable names"""
 
         if logging:
             logging("Enter:", "answer_general_query")
@@ -62,7 +63,8 @@ steps: step names"""
             "projectgroup_names": sanitize_projectgroups(projectgroups),
             "channel_names": sanitize_channels(channels),
             "release_versions": sanitize_releases(releases),
-            "step_names": sanitize_steps(steps)
+            "step_names": sanitize_steps(steps),
+            "variable_names": sanitize_steps(variables),
         }
 
         return callback(body)
