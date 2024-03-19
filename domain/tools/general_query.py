@@ -11,7 +11,7 @@ def answer_general_query_callback(callback, logging=None):
                              tenants=None, library_variable_sets=None, environments=None,
                              feeds=None, accounts=None, certificates=None, lifecycles=None,
                              workerpools=None, machinepolicies=None, tagsets=None, projectgroups=None, channels=None,
-                             releases=None, steps=None):
+                             releases=None, steps=None, **kwargs):
         """Answers a general query about an Octopus space.
 Args:
 space: Space name
