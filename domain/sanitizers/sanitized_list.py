@@ -29,6 +29,10 @@ def sanitize_tenanttagsets(input_list):
     return sanitize_list(input_list, "\\*|Tag\\s*Set\\s*[0-9A-Z]|My\\s*Tag\\s*Set")
 
 
+def sanitize_gitcredentials(input_list):
+    return sanitize_list(input_list, "\\*|Git\\s*Credential\\s*[0-9A-Z]|My\\s*Git\\s*Credential")
+
+
 def sanitize_projectgroups(input_list):
     return sanitize_list(input_list, "\\*|Project\\s*Group\\s*[0-9A-Z]|My\\s*Project\\s*Group")
 

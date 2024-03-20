@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_runbooks, sanitize_targets, sanitize_tenants, \
     sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, sanitize_certificates, \
     sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, sanitize_projectgroups, \
-    sanitize_channels, sanitize_releases, sanitize_steps
+    sanitize_channels, sanitize_releases, sanitize_steps, sanitize_gitcredentials
 
 
 def answer_general_query_callback(callback, logging=None):
@@ -11,7 +11,7 @@ def answer_general_query_callback(callback, logging=None):
                              tenants=None, library_variable_sets=None, environments=None,
                              feeds=None, accounts=None, certificates=None, lifecycles=None,
                              workerpools=None, machinepolicies=None, tagsets=None, projectgroups=None, channels=None,
-                             releases=None, steps=None, variables=None, **kwargs):
+                             releases=None, steps=None, variables=None, gitcredentials=None, **kwargs):
         """Answers a general query about an Octopus space.
 Args:
 space: Space name
@@ -32,7 +32,8 @@ projectgroups: project group names
 channels: channel names
 releases: release versions
 steps: step names
-variables: variable names"""
+variables: variable names
+gitcredentials: git credential names"""
 
         if logging:
             logging("Enter:", "answer_general_query")
@@ -65,6 +66,7 @@ variables: variable names"""
             "release_versions": sanitize_releases(releases),
             "step_names": sanitize_steps(steps),
             "variable_names": sanitize_steps(variables),
+            "gitcredential_names": sanitize_gitcredentials(gitcredentials),
         }
 
         for key, value in kwargs.items():

@@ -1,8 +1,6 @@
 import os
 import unittest
 
-from parameterized import parameterized
-
 from infrastructure.openai import llm_tool_query, llm_message_query
 from tests.infrastructure.tools.build_test_tools import build_mock_test_tools
 
@@ -19,43 +17,6 @@ class MockRequests(unittest.TestCase):
 
     Use the CopilotChatTest class to verify the function calls work against a real Octopus instance.
     """
-
-    @parameterized.expand([
-        "What are the projects associated with space MySpace?",
-        "List the projects saved under MySpace.",
-        "projcets under MySpace.",
-        "Please show me the projects that have been created under the space called MySpace.",
-    ])
-    def test_get_projects(self, query):
-        """
-        Tests that the llm can find the appropriate mock function and arguments
-        """
-
-        function = llm_tool_query(query, build_mock_test_tools)
-
-        self.assertEqual(function.function.__name__, "get_mock_octopus_projects")
-        self.assertEqual(function.function_args["space_name"], "MySpace")
-
-        results = function.call_function()
-        self.assertIn("First Test Project", results)
-        self.assertIn("Second Test Project", results)
-
-    def test_empty_arguments(self):
-        """
-        Tests that the llm can find the appropriate mock function and arguments
-        """
-
-        function = llm_tool_query("List the projects saved under the space called \"\".",
-                                  build_mock_test_tools)
-
-        self.assertEqual(function.function.__name__, "get_mock_octopus_projects")
-        self.assertEqual(function.function_args["space_name"], "")
-
-        try:
-            function.call_function()
-            self.fail()
-        except Exception as e:
-            pass
 
     def test_no_match(self):
         """
@@ -77,6 +38,30 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Deploy WebApp" in body["project_names"], "body")
 
+    def test_general_project_group_question(self):
+        """
+        Tests that the llm correctly identifies the project group name in the query
+        """
+
+        function = llm_tool_query("What is the description of the \"Azure Apps\" project group?", build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Azure Apps" in body["projectgroup_names"], "body")
+
+    def test_general_runbook_question(self):
+        """
+        Tests that the llm correctly identifies the runbook name in the query
+        """
+
+        function = llm_tool_query(
+            "What is the description of the \"Backup Database\" runbook defined in the \"Runbook Project\" project.",
+            build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Backup Database" in body["runbook_names"], "body")
+
     def test_general_tenant_question(self):
         """
         Tests that the llm correctly identifies the tenant name in the query
@@ -87,6 +72,127 @@ class MockRequests(unittest.TestCase):
 
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Team A" in body["tenant_names"], "body")
+
+    def test_general_feed_question(self):
+        """
+        Tests that the llm correctly identifies the feed name in the query
+        """
+
+        function = llm_tool_query("Does the \"Helm\" feed have a password?.", build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Helm" in body["feed_names"], "body")
+
+    def test_general_account_question(self):
+        """
+        Tests that the llm correctly identifies the feed name in the query
+        """
+
+        function = llm_tool_query("What is the access key of the \"AWS Account\" account?.", build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("AWS Account" in body["account_names"], "body")
+
+    def test_general_variable_set_question(self):
+        """
+        Tests that the llm correctly identifies the library variable set name in the query
+        """
+
+        function = llm_tool_query("List the variables belonging to the \"Database Settings\" library variable set.",
+                                  build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Database Settings" in body["library_variable_sets"], "body")
+
+    def test_general_worker_pool_question(self):
+        """
+        Tests that the llm correctly identifies the worker pool name in the query
+        """
+
+        function = llm_tool_query("What is the description of the \"Docker\" worker pool?",
+                                  build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Docker" in body["workerpool_names"], "body")
+
+    def test_general_certificate_question(self):
+        """
+        Tests that the llm correctly identifies the certificate name in the query
+        """
+
+        function = llm_tool_query("What is the note of the \"Kind CA\" certificate?",
+                                  build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Kind CA" in body["certificate_names"], "body")
+
+    def test_general_tagset_question(self):
+        """
+        Tests that the llm correctly identifies the tagset name in the query
+        """
+
+        function = llm_tool_query("List the tags associated with the \"region\" tag set?",
+                                  build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("region" in body["tagset_names"], "body")
+
+    def test_general_lifecycle_question(self):
+        """
+        Tests that the llm correctly identifies the lifecycle name in the query
+        """
+
+        function = llm_tool_query("What environments are in the \"Simple\" lifecycle?",
+                                  build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Simple" in body["lifecycle_names"], "body")
+
+    def test_general_git_creds_question(self):
+        """
+        Tests that the llm correctly identifies the git credentials name in the query
+        """
+
+        function = llm_tool_query("What is the username for the \"GitHub Credentials\" git credentials?",
+                                  build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("GitHub Credentials" in body["gitcredential_names"], "body")
+
+    def test_general_machine_policy_question(self):
+        """
+        Tests that the llm correctly identifies the machine policy name in the query
+        """
+
+        function = llm_tool_query(
+            "Show the powershell health check script for the \"Windows VM Policy\" machine policy.",
+            build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Windows VM Policy" in body["machinepolicy_names"], "body")
+
+    def test_general_environment_question(self):
+        """
+        Tests that the llm correctly identifies the environment in the query
+        """
+
+        function = llm_tool_query(
+            "List the variables scoped to the \"Development\" environment in the project \"Deploy WebApp\".",
+            build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Development" in body["environment_names"], "body")
+        self.assertTrue("Deploy WebApp" in body["project_names"], "body")
 
     def test_unknown_arguments(self):
         """

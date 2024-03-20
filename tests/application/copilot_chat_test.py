@@ -52,26 +52,29 @@ class CopilotChatTest(unittest.TestCase):
                 + "docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite")
             return
 
-        cls.mssql = DockerContainer("mcr.microsoft.com/mssql/server:2022-latest").with_env(
-            "ACCEPT_EULA", "True").with_env("SA_PASSWORD", "Password01!")
-        cls.mssql.start()
-        wait_for_logs(cls.mssql, "SQL Server is now ready for client connections")
+        try:
+            cls.mssql = DockerContainer("mcr.microsoft.com/mssql/server:2022-latest").with_env(
+                "ACCEPT_EULA", "True").with_env("SA_PASSWORD", "Password01!")
+            cls.mssql.start()
+            wait_for_logs(cls.mssql, "SQL Server is now ready for client connections")
 
-        mssql_ip = cls.mssql.get_docker_client().bridge_ip(cls.mssql.get_wrapped_container().id)
+            mssql_ip = cls.mssql.get_docker_client().bridge_ip(cls.mssql.get_wrapped_container().id)
 
-        cls.octopus = DockerContainer("octopusdeploy/octopusdeploy").with_bind_ports(8080, 8080).with_env(
-            "ACCEPT_EULA", "Y").with_env("DB_CONNECTION_STRING",
-                                         "Server=" + mssql_ip + ",1433;Database=OctopusDeploy;User=sa;Password=Password01!").with_env(
-            "ADMIN_API_KEY", Octopus_Api_Key).with_env("DISABLE_DIND", "Y").with_env(
-            "ADMIN_USERNAME", "admin").with_env("ADMIN_PASSWORD", "Password01!").with_env(
-            "OCTOPUS_SERVER_BASE64_LICENSE", os.environ["LICENSE"])
-        cls.octopus.start()
-        wait_for_logs(cls.octopus, "Web server is ready to process requests")
+            cls.octopus = DockerContainer("octopusdeploy/octopusdeploy").with_bind_ports(8080, 8080).with_env(
+                "ACCEPT_EULA", "Y").with_env("DB_CONNECTION_STRING",
+                                             "Server=" + mssql_ip + ",1433;Database=OctopusDeploy;User=sa;Password=Password01!").with_env(
+                "ADMIN_API_KEY", Octopus_Api_Key).with_env("DISABLE_DIND", "Y").with_env(
+                "ADMIN_USERNAME", "admin").with_env("ADMIN_PASSWORD", "Password01!").with_env(
+                "OCTOPUS_SERVER_BASE64_LICENSE", os.environ["LICENSE"])
+            cls.octopus.start()
+            wait_for_logs(cls.octopus, "Web server is ready to process requests")
 
-        output = run_terraform("../terraform/simple/space_creation", Octopus_Url, Octopus_Api_Key)
-        run_terraform("../terraform/simple/space_population", Octopus_Url, Octopus_Api_Key,
-                      json.loads(output)["octopus_space_id"]["value"])
-        run_terraform("../terraform/empty/space_creation", Octopus_Url, Octopus_Api_Key)
+            output = run_terraform("../terraform/simple/space_creation", Octopus_Url, Octopus_Api_Key)
+            run_terraform("../terraform/simple/space_population", Octopus_Url, Octopus_Api_Key,
+                          json.loads(output)["octopus_space_id"]["value"])
+            run_terraform("../terraform/empty/space_creation", Octopus_Url, Octopus_Api_Key)
+        except Exception as e:
+            cls.tearDownClass()
 
     @classmethod
     def tearDownClass(cls):
@@ -79,11 +82,15 @@ class CopilotChatTest(unittest.TestCase):
             cls.octopus.stop()
         except Exception as e:
             pass
+        finally:
+            cls.octopus = None
 
         try:
             cls.mssql.stop()
         except Exception as e:
             pass
+        finally:
+            cls.mssql = None
 
     def test_get_variables(self):
         prompt = "List the variables defined in the project \"First Test Project\" in space \"Simple\"."
@@ -123,12 +130,117 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue("Cloud Region Target" in response_text)
 
     @retry(AssertionError, tries=3, delay=2)
+    def test_describe_all_projects(self):
+        prompt = "What projects are in the space \"Simple\"."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("Runbook Project" in response_text)
+        self.assertTrue("First Test Project" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
+    def test_describe_runbook(self):
+        prompt = "What is the description of the \"Backup Database\" runbook in the \"Runbook Project\" project."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("Test Runbook" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
+    def test_describe_machine_policies(self):
+        prompt = "Show the powershell health check script for the \"Windows VM Policy\" machine policy."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("win32_LogicalDisk" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
+    def test_describe_project_groups(self):
+        prompt = "What is the description of the \"Azure Apps\" project group?"
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("Test Description" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
     def test_describe_tenants(self):
         prompt = "Describe the tenant \"Marketing\"."
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
         self.assertTrue("Marketing" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
+    def test_describe_environment(self):
+        prompt = "Does the \"Development\" environment allow dynamic infrastructure?."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("Development" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
+    def test_describe_feed(self):
+        prompt = "What is the URI of the \"Helm\" feed?."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("https://charts.helm.sh/stable/" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
+    def test_describe_account(self):
+        prompt = "What is the access key in the \"AWS Account\" account."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("ABCDEFGHIJKLMNOPQRST" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
+    def test_describe_variable_set(self):
+        prompt = "List the variables belonging to the \"Database Settings\" library variable set."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("Test.Variable" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
+    def test_describe_worker_pool(self):
+        prompt = "What is the description of the \"Docker\" worker pool?"
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("Workers running Docker containers" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
+    def test_describe_certificate(self):
+        prompt = "What is the note of the \"Kind CA\" certificate?"
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("A test certificate" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
+    def test_describe_tagsets(self):
+        prompt = "List the tags associated with the \"region\" tag set?"
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("us-east-1" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
+    def test_describe_lifecycle(self):
+        prompt = "What environments are in the \"Simple\" lifecycle?"
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("Production" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
+    def test_describe_git_creds(self):
+        prompt = "What is the username for the \"GitHub Credentials\" git credentials?"
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("admin" in response_text)
 
     @retry(AssertionError, tries=3, delay=2)
     def test_get_latest_deployment(self):
