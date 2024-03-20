@@ -77,6 +77,17 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Deploy WebApp" in body["project_names"], "body")
 
+    def test_general_tenant_question(self):
+        """
+        Tests that the llm correctly identifies the tenant name in the query
+        """
+
+        function = llm_tool_query("Describe the \"Team A\" tenant.", build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Team A" in body["tenant_names"], "body")
+
     def test_unknown_arguments(self):
         """
         Tests that unknown entities are captured and returned.
