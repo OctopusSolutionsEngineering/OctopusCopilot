@@ -101,6 +101,18 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Octopus.Manual" in body["type"])
 
+    def test_general_variable_question(self):
+        """
+        Tests that the llm responds appropriately when no function is a match
+        """
+
+        function = llm_tool_query("Where is the variable \"Database\" used in the project \"Project1\"?",
+                                  build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Database" in body["variable_names"], "body")
+
     def test_general_project_step_question(self):
         """
         Tests that the llm identifies the step name in the query

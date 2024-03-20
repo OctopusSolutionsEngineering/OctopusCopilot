@@ -6,7 +6,7 @@ from domain.context.copilot_handler import collect_llm_context
 from domain.logging.query_loggin import log_query
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.messages.general import build_hcl_prompt
-from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments
+from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
 from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_callback
@@ -101,12 +101,13 @@ def general_query_handler(body):
                                body['channel_names'],
                                body['release_versions'],
                                body['step_names'],
+                               body['variable_names'],
                                get_api_key(),
                                get_octopus_api(),
                                logging)
 
 
-def variable_query_handler(original_query, enriched_query, space, projects):
+def variable_query_handler(original_query, enriched_query, space, projects, variables):
     space = get_default_argument(space, 'Space')
 
     messages = build_hcl_prompt()
@@ -133,6 +134,7 @@ def variable_query_handler(original_query, enriched_query, space, projects):
                                         None,
                                         None,
                                         None,
+                                        ["<all>"] if none_if_falesy_or_all(variables) else variables,
                                         get_api_key(),
                                         get_octopus_api(),
                                         logging)
@@ -167,6 +169,7 @@ def releases_query_handler(original_query, enriched_query, space, projects, envi
                                         None,
                                         None,
                                         environments,
+                                        None,
                                         None,
                                         None,
                                         None,

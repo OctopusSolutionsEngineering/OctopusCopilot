@@ -45,6 +45,10 @@ def sanitize_steps(input_list):
     return sanitize_list(input_list, "\\*|Step\\s*[0-9A-Z]|My\\s*Step")
 
 
+def sanitize_variables(input_list):
+    return sanitize_list(input_list, "\\*|Variable\\s*[0-9A-Z]|My\\s*Variable")
+
+
 def sanitize_lifecycles(input_list):
     return sanitize_list(input_list, "\\*|Lifecycle\\s*[0-9A-Z]|My\\s*Lifecycle")
 
@@ -79,6 +83,19 @@ def sanitize_bool(input_bool):
 
 def none_if_falesy(input_list):
     if not input_list:
+        return None
+    return input_list
+
+
+def none_if_falesy_or_all(input_list):
+    """
+    return None if the list is empty or includes a single item of "<all>"
+    :param input_list: The list to inspect
+    :return: None if the list is empty or includes a single item of "<all>", or the original list otherwise
+    """
+    if not input_list:
+        return None
+    if len(input_list) == 1 and input_list[0] == "<all>":
         return None
     return input_list
 

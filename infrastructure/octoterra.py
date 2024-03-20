@@ -8,11 +8,12 @@ from domain.logging.app_logging import configure_logging
 from domain.query.query_inspector import exclude_all_targets, exclude_all_runbooks, exclude_all_tenants, \
     exclude_all_projects, exclude_all_library_variable_sets, exclude_all_environments, exclude_all_feeds, \
     exclude_all_accounts, exclude_all_certificates, exclude_all_lifecycles, exclude_all_worker_pools, \
-    exclude_all_machine_policies, exclude_all_tagsets, exclude_all_project_groups, exclude_all_steps
+    exclude_all_machine_policies, exclude_all_tagsets, exclude_all_project_groups, exclude_all_steps, \
+    exclude_all_variables
 from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_tenants, sanitize_targets, \
     sanitize_runbooks, sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, \
     sanitize_certificates, sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, \
-    sanitize_projectgroups, none_if_falesy, sanitize_steps
+    sanitize_projectgroups, none_if_falesy, sanitize_steps, none_if_falesy_or_all, sanitize_variables
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http
 from infrastructure.octopus import handle_response, get_space_id_and_name_from_name
@@ -24,7 +25,7 @@ logger = configure_logging(__name__)
 def get_octoterra_space(query, space_name, project_names, runbook_names, target_names, tenant_names,
                         library_variable_sets, environment_names, feed_names, account_names, certificate_names,
                         lifecycle_names, workerpool_names, machinepolicy_names, tagset_names, projectgroup_names,
-                        step_names, api_key, octopus_url):
+                        step_names, variable_names, api_key, octopus_url):
     """
     Returns the terraform representation of a space
     :param space_name: The name of the space.
@@ -59,6 +60,7 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
     sanitized_tagsets = sanitize_tenanttagsets(tagset_names)
     sanitized_projectgroups = sanitize_projectgroups(projectgroup_names)
     sanitized_step_names = sanitize_steps(step_names)
+    sanitized_variable_names = sanitize_variables(variable_names)
 
     body = {
         "space": space_id,
@@ -92,6 +94,8 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
         "excludeAllProjectGroups": exclude_all_project_groups(query, sanitized_projectgroups),
         "excludeAllLibraryVariableSets": exclude_all_library_variable_sets(query, sanitized_library_variable_sets),
         "excludeAllSteps": exclude_all_steps(query, sanitized_step_names),
+        "excludeAllProjectVariables": exclude_all_variables(query, sanitized_variable_names),
+        "excludeProjectVariablesExcept": none_if_falesy_or_all(sanitized_variable_names),
         "limitAttributeLength": 100,
         # This setting ensures that any project, tenant, runbook, or target names are valid.
         # If not, the assumption is made that the LLM incorrectly identified the resource in the query,
