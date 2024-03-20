@@ -90,16 +90,20 @@ class MockRequests(unittest.TestCase):
 
     def test_unknown_arguments(self):
         """
-        Tests that unknown entities are captured and returned.
+        Sometimes unknown arguments are passed to functions. The query below has, in the past, passed an argument called
+        "type" to the answer_general_query function. This behaviour is not consistent, but happens enough that any function
+        should have an **kwargs argument to handle these cases. This test ensures that a query that has been shown to
+        pass unknown arguments in the past does not break the function.
         """
 
         function = llm_tool_query(
             "Find steps in the \"Commercial Billing\" project with a type of \"Octopus.Manual\". Double check the type of each step to ensure it is \"Octopus.Manual\". Show the step name and type in a markdown table.",
             build_mock_test_tools)
-        body = function.call_function()
+
+        # Not raising an exception here is the test
+        function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
-        self.assertTrue("Octopus.Manual" in body["type"])
 
     def test_general_variable_question(self):
         """
