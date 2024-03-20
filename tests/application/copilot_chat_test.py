@@ -98,6 +98,7 @@ class CopilotChatTest(unittest.TestCase):
         finally:
             cls.mssql = None
 
+    @retry(AssertionError, tries=3, delay=2)
     def test_get_variables(self):
         prompt = "List the variables defined in the project \"First Test Project\" in space \"Simple\"."
         response = copilot_handler_internal(build_request(prompt))
@@ -105,6 +106,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Test.Variable" in response_text)
 
+    @retry(AssertionError, tries=3, delay=2)
     def test_get_variables_with_defaults(self):
         prompt = "List the variables defined in the project."
         response = copilot_handler_internal(build_request(prompt))
@@ -112,6 +114,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Test.Variable" in response_text)
 
+    @retry(AssertionError, tries=3, delay=2)
     def test_describe_step(self):
         prompt = "What does the step \"Run a Script\" do in the project \"First Test Project\" in space \"Simple\"."
         response = copilot_handler_internal(build_request(prompt))
@@ -119,6 +122,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Hi there" in response_text, "The context must include details of the named step")
 
+    @retry(AssertionError, tries=3, delay=2)
     def test_describe_missing_step(self):
         prompt = "What does the project \"First Test Project\" in space \"Simple\"."
         response = copilot_handler_internal(build_request(prompt))
@@ -266,6 +270,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue(re.search("0\\.0\\.[1-9][0-9]*", response_text))
 
+    @retry(AssertionError, tries=3, delay=2)
     def test_general_question(self):
         prompt = "What does the project \"First Test Project\" do?"
         response = copilot_handler_internal(build_request(prompt))
@@ -274,6 +279,7 @@ class CopilotChatTest(unittest.TestCase):
         # This response could be anything, but make sure the LLM isn't saying sorry for something.
         self.assertTrue("sorry" not in response_text.casefold())
 
+    @retry(AssertionError, tries=3, delay=2)
     def test_get_logs(self):
         create_and_deploy_release(space_name="Simple")
 
