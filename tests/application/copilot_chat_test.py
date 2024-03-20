@@ -22,6 +22,12 @@ class CopilotChatTest(unittest.TestCase):
     * Persisting user details such as Octopus URL and API key
     * Querying the Octopus API to build context
     * Passing the context and query to OpenAI to generate a response
+
+    These tests are against a space with a small number of resources. They verify that basic context is successfully
+    passed to the LLM and that the responses are valid.
+
+    The answers provided by LLMs degrade with more complex contexts, so these tests are not exhaustive. But they do
+    serve to validate the query workflow at a low level.
     """
 
     @classmethod
