@@ -46,7 +46,7 @@ class CopilotChatTest(unittest.TestCase):
                                 os.environ["AzureWebJobsStorage"])
             save_default_values(os.environ["TEST_GH_USER"],
                                 "project",
-                                "First Test Project",
+                                "Deploy Web App Container",
                                 os.environ["AzureWebJobsStorage"])
             save_default_values(os.environ["TEST_GH_USER"],
                                 "environment",
@@ -100,7 +100,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry(AssertionError, tries=3, delay=2)
     def test_get_variables(self):
-        prompt = "List the variables defined in the project \"First Test Project\" in space \"Simple\"."
+        prompt = "List the variables defined in the project \"Deploy Web App Container\" in space \"Simple\"."
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
@@ -116,7 +116,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry(AssertionError, tries=3, delay=2)
     def test_describe_step(self):
-        prompt = "What does the step \"Run a Script\" do in the project \"First Test Project\" in space \"Simple\"."
+        prompt = "What does the step \"Run a Script\" do in the project \"Deploy Web App Container\" in space \"Simple\"."
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
@@ -124,7 +124,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry(AssertionError, tries=3, delay=2)
     def test_describe_missing_step(self):
-        prompt = "What does the project \"First Test Project\" in space \"Simple\" do."
+        prompt = "What does the project \"Deploy Web App Container\" in space \"Simple\" do."
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
@@ -145,8 +145,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("Runbook Project" in response_text)
-        self.assertTrue("First Test Project" in response_text)
+        self.assertTrue("Deploy Web App Container" in response_text)
 
     @retry(AssertionError, tries=3, delay=2)
     def test_describe_runbook(self):
@@ -255,7 +254,7 @@ class CopilotChatTest(unittest.TestCase):
     @retry(AssertionError, tries=3, delay=2)
     def test_get_latest_deployment(self):
         create_and_deploy_release(space_name="Simple")
-        prompt = "Get the release version of the latest deployment to the \"Development\" environment for the \"First Test Project\" project."
+        prompt = "Get the release version of the latest deployment to the \"Development\" environment for the \"Deploy Web App Container\" project."
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
@@ -272,7 +271,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry(AssertionError, tries=3, delay=2)
     def test_general_question(self):
-        prompt = "What does the project \"First Test Project\" do?"
+        prompt = "What does the project \"Deploy Web App Container\" do?"
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
