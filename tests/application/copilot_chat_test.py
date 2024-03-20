@@ -124,7 +124,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry(AssertionError, tries=3, delay=2)
     def test_describe_missing_step(self):
-        prompt = "What does the project \"First Test Project\" in space \"Simple\"."
+        prompt = "What does the project \"First Test Project\" in space \"Simple\" do."
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
@@ -133,7 +133,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry(AssertionError, tries=3, delay=2)
     def test_describe_machines(self):
-        prompt = "What machines are in the space \"Simple\"."
+        prompt = "What machines are in the space \"Simple\"?"
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
