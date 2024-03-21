@@ -182,6 +182,11 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_list_tenants(self):
+        """
+        This query was an example where the name of the space was being set to "Space", and where the
+        query was being answered by answer_project_variables_callback. The comment in
+        answer_project_variables_callback was updated to reflect the fact that it has nothing to do with tenants.
+        """
         prompt = "List the unique tenant names in the space, sorted in alphabetical order. Display the answer in a markdown table."
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
