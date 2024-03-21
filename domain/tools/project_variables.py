@@ -146,7 +146,7 @@ Question: {original_query}
 
 def answer_project_variables_callback(original_query, callback, logging=None):
     def answer_project_variables(space=None, projects=None, variables=None, **kwargs):
-        """Answers a question about the variables defined for a project
+        """Answers a question about the variables defined for a project. This does not provide details about tenants.
 
         Args:
         space: Space name

@@ -1,6 +1,13 @@
 import re
 
 
+def sanitize_space(input_string):
+    input_list = sanitize_list(input_string, "\\*|Space|Space\\s*[0-9A-Z]|My\\s*Space")
+    if len(input_list) > 0:
+        return input_list[0]
+    return None
+
+
 def sanitize_projects(input_list):
     return sanitize_list(input_list, "\\*|Project\\s*[0-9A-Z]|My\\s*Project")
 

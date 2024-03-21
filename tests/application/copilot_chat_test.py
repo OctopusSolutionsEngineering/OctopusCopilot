@@ -181,6 +181,14 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue("Marketing" in response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_list_tenants(self):
+        prompt = "List the unique tenant names in the space, sorted in alphabetical order. Display the answer in a markdown table."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("Marketing" in response_text)
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_environment(self):
         prompt = "Does the \"Development\" environment allow dynamic infrastructure?."
         response = copilot_handler_internal(build_request(prompt))

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_runbooks, sanitize_targets, sanitize_tenants, \
     sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, sanitize_certificates, \
     sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, sanitize_projectgroups, \
-    sanitize_channels, sanitize_releases, sanitize_steps, sanitize_gitcredentials
+    sanitize_channels, sanitize_releases, sanitize_steps, sanitize_gitcredentials, sanitize_space
 
 
 def answer_general_query_callback(callback, logging=None):
@@ -47,7 +47,7 @@ gitcredentials: git credential names"""
         # of these resources anywhere in the question. We clean up the results before sending them back
         # to the client.
         body = {
-            "space_name": space,
+            "space_name": sanitize_space(space),
             "project_names": sanitize_projects(projects),
             "runbook_names": sanitize_runbooks(runbooks),
             "target_names": sanitize_targets(targets),
