@@ -26,6 +26,14 @@ body:
     validations:
       required: true
   - type: textarea
+    id: query
+    attributes:
+      label: Chat query
+      description: Copy the chat query here
+      placeholder: Chat query
+    validations:
+      required: true
+  - type: textarea
     id: output
     attributes:
       label: Chat output
