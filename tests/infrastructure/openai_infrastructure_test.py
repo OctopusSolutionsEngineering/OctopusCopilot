@@ -1,6 +1,9 @@
 import os
 import unittest
 
+from openai import RateLimitError
+from retry import retry
+
 from infrastructure.openai import llm_tool_query, llm_message_query
 from tests.infrastructure.tools.build_test_tools import build_mock_test_tools
 
@@ -18,6 +21,7 @@ class MockRequests(unittest.TestCase):
     Use the CopilotChatTest class to verify the function calls work against a real Octopus instance.
     """
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_no_match(self):
         """
         Tests that the llm responds appropriately when no function is a match
@@ -27,6 +31,7 @@ class MockRequests(unittest.TestCase):
 
         self.assertTrue(function.call_function().index("Sorry, I did not understand that request.") != -1)
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_project_question(self):
         """
         Tests that the llm correctly identifies the project name in the query
@@ -38,6 +43,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Deploy WebApp" in body["project_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_project_group_question(self):
         """
         Tests that the llm correctly identifies the project group name in the query
@@ -49,6 +55,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Azure Apps" in body["projectgroup_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_runbook_question(self):
         """
         Tests that the llm correctly identifies the runbook name in the query
@@ -62,6 +69,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Backup Database" in body["runbook_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_tenant_question(self):
         """
         Tests that the llm correctly identifies the tenant name in the query
@@ -73,6 +81,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Team A" in body["tenant_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_feed_question(self):
         """
         Tests that the llm correctly identifies the feed name in the query
@@ -84,6 +93,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Helm" in body["feed_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_account_question(self):
         """
         Tests that the llm correctly identifies the feed name in the query
@@ -95,6 +105,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("AWS Account" in body["account_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_variable_set_question(self):
         """
         Tests that the llm correctly identifies the library variable set name in the query
@@ -107,6 +118,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Database Settings" in body["library_variable_sets"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_worker_pool_question(self):
         """
         Tests that the llm correctly identifies the worker pool name in the query
@@ -119,6 +131,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Docker" in body["workerpool_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_certificate_question(self):
         """
         Tests that the llm correctly identifies the certificate name in the query
@@ -131,6 +144,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Kind CA" in body["certificate_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_tagset_question(self):
         """
         Tests that the llm correctly identifies the tagset name in the query
@@ -143,6 +157,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("region" in body["tagset_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_lifecycle_question(self):
         """
         Tests that the llm correctly identifies the lifecycle name in the query
@@ -155,6 +170,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Simple" in body["lifecycle_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_git_creds_question(self):
         """
         Tests that the llm correctly identifies the git credentials name in the query
@@ -167,6 +183,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("GitHub Credentials" in body["gitcredential_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_machine_policy_question(self):
         """
         Tests that the llm correctly identifies the machine policy name in the query
@@ -180,6 +197,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Windows VM Policy" in body["machinepolicy_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_environment_question(self):
         """
         Tests that the llm correctly identifies the environment in the query
@@ -194,6 +212,7 @@ class MockRequests(unittest.TestCase):
         self.assertTrue("Development" in body["environment_names"], "body")
         self.assertTrue("Deploy WebApp" in body["project_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_unknown_arguments(self):
         """
         Sometimes unknown arguments are passed to functions. The query below has, in the past, passed an argument called
@@ -211,6 +230,7 @@ class MockRequests(unittest.TestCase):
 
         self.assertEqual(function.name, "answer_general_query")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_variable_question(self):
         """
         Tests that the llm responds appropriately when no function is a match
@@ -223,6 +243,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Database" in body["variable_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_project_step_question(self):
         """
         Tests that the llm identifies the step name in the query
@@ -235,6 +256,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Manual Intervention" in body["step_names"])
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_machine_question(self):
         """
         Tests that the llm identifies the machine name in the query
@@ -247,6 +269,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Cloud Region target" in body["target_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_prompt(self):
         """
         Tests that the llm responds some response to a general prompt
@@ -261,6 +284,7 @@ class MockRequests(unittest.TestCase):
         # Make sure we get some kind of response
         self.assertTrue(response)
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_long_prompt(self):
         """
         Tests that the llm fails with the expected message when passed too much context

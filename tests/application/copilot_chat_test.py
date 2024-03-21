@@ -5,6 +5,7 @@ import time
 import unittest
 
 import azure.functions as func
+from openai import RateLimitError
 from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
@@ -98,7 +99,7 @@ class CopilotChatTest(unittest.TestCase):
         finally:
             cls.mssql = None
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_variables(self):
         prompt = "List the variables defined in the project \"Deploy Web App Container\" in space \"Simple\"."
         response = copilot_handler_internal(build_request(prompt))
@@ -106,7 +107,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Test.Variable" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_variables_with_defaults(self):
         prompt = "List the variables defined in the project."
         response = copilot_handler_internal(build_request(prompt))
@@ -114,7 +115,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Test.Variable" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_step(self):
         prompt = "What does the step \"Run a Script\" do in the project \"Deploy Web App Container\" in space \"Simple\"."
         response = copilot_handler_internal(build_request(prompt))
@@ -122,7 +123,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Hi there" in response_text, "The context must include details of the named step")
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_missing_step(self):
         prompt = "What does the project \"Deploy Web App Container\" in space \"Simple\" do."
         response = copilot_handler_internal(build_request(prompt))
@@ -131,7 +132,7 @@ class CopilotChatTest(unittest.TestCase):
         self.assertFalse("Hi there" in response_text,
                          "The context should not include details of steps, because none were mentioned in the query")
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_machines(self):
         prompt = "What machines are in the space \"Simple\"?"
         response = copilot_handler_internal(build_request(prompt))
@@ -139,7 +140,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Cloud Region Target" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_all_projects(self):
         prompt = "What projects are in the space \"Simple\"."
         response = copilot_handler_internal(build_request(prompt))
@@ -147,7 +148,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Deploy Web App Container" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_runbook(self):
         prompt = "What is the description of the \"Backup Database\" runbook in the \"Runbook Project\" project."
         response = copilot_handler_internal(build_request(prompt))
@@ -155,7 +156,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Test Runbook" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_machine_policies(self):
         prompt = "Show the powershell health check script for the \"Windows VM Policy\" machine policy."
         response = copilot_handler_internal(build_request(prompt))
@@ -163,7 +164,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("win32_LogicalDisk" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_project_groups(self):
         prompt = "What is the description of the \"Azure Apps\" project group?"
         response = copilot_handler_internal(build_request(prompt))
@@ -171,7 +172,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Test Description" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_tenants(self):
         prompt = "Describe the tenant \"Marketing\"."
         response = copilot_handler_internal(build_request(prompt))
@@ -179,7 +180,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Marketing" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_environment(self):
         prompt = "Does the \"Development\" environment allow dynamic infrastructure?."
         response = copilot_handler_internal(build_request(prompt))
@@ -187,7 +188,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Development" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_feed(self):
         prompt = "What is the URI of the \"Helm\" feed?."
         response = copilot_handler_internal(build_request(prompt))
@@ -195,7 +196,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("https://charts.helm.sh/stable/" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_account(self):
         prompt = "What is the access key in the \"AWS Account\" account."
         response = copilot_handler_internal(build_request(prompt))
@@ -203,7 +204,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("ABCDEFGHIJKLMNOPQRST" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_variable_set(self):
         prompt = "List the variables belonging to the \"Database Settings\" library variable set."
         response = copilot_handler_internal(build_request(prompt))
@@ -211,7 +212,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Test.Variable" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_worker_pool(self):
         prompt = "What is the description of the \"Docker\" worker pool?"
         response = copilot_handler_internal(build_request(prompt))
@@ -219,7 +220,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Workers running Docker containers" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_certificate(self):
         prompt = "What is the note of the \"Kind CA\" certificate?"
         response = copilot_handler_internal(build_request(prompt))
@@ -227,7 +228,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("A test certificate" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_tagsets(self):
         prompt = "List the tags associated with the \"region\" tag set?"
         response = copilot_handler_internal(build_request(prompt))
@@ -235,7 +236,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("us-east-1" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_lifecycle(self):
         prompt = "What environments are in the \"Simple\" lifecycle?"
         response = copilot_handler_internal(build_request(prompt))
@@ -243,7 +244,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("Production" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_git_creds(self):
         prompt = "What is the username for the \"GitHub Credentials\" git credentials?"
         response = copilot_handler_internal(build_request(prompt))
@@ -251,7 +252,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("admin" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_latest_deployment(self):
         create_and_deploy_release(space_name="Simple")
         prompt = "Get the release version of the latest deployment to the \"Development\" environment for the \"Deploy Web App Container\" project."
@@ -260,7 +261,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue(re.search("0\\.0\\.[1-9][0-9]*", response_text))
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_latest_deployment_defaults(self):
         create_and_deploy_release(space_name="Simple")
         prompt = "Get the release version of the latest deployment."
@@ -269,7 +270,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue(re.search("0\\.0\\.[1-9][0-9]*", response_text))
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_question(self):
         prompt = "What does the project \"Deploy Web App Container\" do?"
         response = copilot_handler_internal(build_request(prompt))
@@ -278,7 +279,7 @@ class CopilotChatTest(unittest.TestCase):
         # This response could be anything, but make sure the LLM isn't saying sorry for something.
         self.assertTrue("sorry" not in response_text.casefold())
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_dashboard(self):
         create_and_deploy_release(space_name="Simple")
         time.sleep(5)
@@ -291,7 +292,7 @@ class CopilotChatTest(unittest.TestCase):
             "\\u26aa" in response_text or "\\ud83d\\udfe2" in response_text or "\\ud83d\\udd34" in response_text or
             "\\ud83d\\udfe1" in response_text or "\\ud83d\\udd35" in response_text)
 
-    @retry(AssertionError, tries=3, delay=2)
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_logs(self):
         create_and_deploy_release(space_name="Simple")
 
