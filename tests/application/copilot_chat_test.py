@@ -279,6 +279,19 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue("sorry" not in response_text.casefold())
 
     @retry(AssertionError, tries=3, delay=2)
+    def test_dashboard(self):
+        create_and_deploy_release(space_name="Simple")
+        time.sleep(5)
+        prompt = "Show the dashboard."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
+        self.assertTrue(
+            "\\u26aa" in response_text or "\\ud83d\\udfe2" in response_text or "\\ud83d\\udd34" in response_text or
+            "\\ud83d\\udfe1" in response_text or "\\ud83d\\udd35" in response_text)
+
+    @retry(AssertionError, tries=3, delay=2)
     def test_get_logs(self):
         create_and_deploy_release(space_name="Simple")
 
