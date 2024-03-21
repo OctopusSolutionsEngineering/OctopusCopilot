@@ -11,6 +11,7 @@ def build_hcl_prompt(step_by_step=False):
          + "You must assume the Terraform is an accurate representation of the live project. "
          + "Do not mention Terraform in the response. Do not show any Terraform snippets in the response. "
          + "Do not mention that you referenced the Terraform to provide your answer. "
+         + "Tenants are defined in \"octopusdeploy_tenant\" resources. Tenant names are defined in the \"octopusdeploy_tenant\" \"name\" attribute. "
          + "You must assume questions about variables refer to Octopus variables. "
          + "Variables are referenced using the syntax #{{Variable Name}}, $OctopusParameters[\"Variable Name\"], "
          + "Octopus.Parameters[\"Variable Name\"], get_octopusvariable \"Variable Name\", "
