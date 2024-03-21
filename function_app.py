@@ -239,7 +239,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                      {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
                                       "input": new_query}, log_query)
 
-        def project_variables_usage_callback(original_query, new_query, space, projects):
+        def project_variables_usage_callback(original_query, new_query, space, projects, variables):
             """
             A function that passes the updated query through to the LLM
             """
