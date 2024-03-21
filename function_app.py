@@ -531,7 +531,7 @@ Once default values are set, you can omit the space, environment, and project fr
 
         return chat_response
 
-    def logs_handler(original_query, enriched_query, space, projects, environments, channel, tenant):
+    def logs_handler(original_query, enriched_query, space, projects, environments, channel, tenants):
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
@@ -539,8 +539,10 @@ Once default values are set, you can omit the space, environment, and project fr
                                        "Project")
         environment = get_default_argument(get_github_user_from_form(),
                                            get_item_or_none(sanitize_list(environments), 0), "Environment")
+        tenant = get_default_argument(get_github_user_from_form(),
+                                      get_item_or_none(sanitize_list(tenants), 0), "Tenant")
 
-        logs = get_deployment_logs(space, project, environment, "latest", api_key, url)
+        logs = get_deployment_logs(space, project, environment, tenant, "latest", api_key, url)
 
         messages = build_plain_text_prompt()
         context = {"input": enriched_query, "context": logs}

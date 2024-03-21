@@ -284,12 +284,13 @@ def get_item_ignoring_case(items, name):
 
 
 @retry(HTTPError, tries=3, delay=2)
-def get_deployment_logs(space_name, project_name, environment_name, release_version, api_key, octopus_url):
+def get_deployment_logs(space_name, project_name, environment_name, tenant_name, release_version, api_key, octopus_url):
     """
     Returns a logs for a deployment to an environment.
     :param space_name: The name of the space.
     :param project_name: The name of the project
     :param environment_name: The name of the environment
+    :param tenant_name: The name of the tenant
     :param release_version: The name of the release
     :param api_key: The Octopus API key
     :param octopus_url: The Octopus URL
@@ -308,6 +309,10 @@ def get_deployment_logs(space_name, project_name, environment_name, release_vers
     if environment_name:
         environment = get_environment(space_id, environment_name, octopus_url, api_key)
 
+    tenant = None
+    if tenant_name:
+        tenant = get_tenant(space_id, tenant_name, octopus_url, api_key)
+
     api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
@@ -323,6 +328,9 @@ def get_deployment_logs(space_name, project_name, environment_name, release_vers
     else:
         # Every deployment is a candidate
         deployments = flatten_list(map(lambda r: r["Deployments"][environment['Id']], releases))
+
+    if tenant:
+        deployments = list(filter(lambda d: d["TenantId"] == tenant["Id"], deployments))
 
     task_id = None
     if release_is_latest(release_version):
@@ -394,3 +402,14 @@ def get_environment(space_id, environment_name, octopus_url, api_key):
         raise ResourceNotFound("No environment found matching the name " + environment_name)
 
     return environment
+
+
+def get_tenant(space_id, tenant_name, octopus_url, api_key):
+    api = build_url(octopus_url, "api/" + space_id + "/Tenants", dict(partial_name=tenant_name))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    tenant = get_item_ignoring_case(resp.json()["Items"], tenant_name)
+
+    if tenant is None:
+        raise ResourceNotFound("No tenant found matching the name " + tenant_name)
+
+    return tenant

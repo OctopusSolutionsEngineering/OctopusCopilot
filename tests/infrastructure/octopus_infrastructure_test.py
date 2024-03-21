@@ -164,6 +164,7 @@ class LiveRequests(unittest.TestCase):
         logs = get_deployment_logs("Simple",
                                    "Deploy Web App Container",
                                    "Development",
+                                   None,
                                    "latest",
                                    Octopus_Api_Key,
                                    Octopus_Url)
