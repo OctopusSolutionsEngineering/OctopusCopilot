@@ -15,6 +15,7 @@ def build_hcl_prompt(step_by_step=False):
          + "Variables are referenced using the syntax #{{Variable Name}}, $OctopusParameters[\"Variable Name\"], "
          + "Octopus.Parameters[\"Variable Name\"], get_octopusvariable \"Variable Name\", "
          + "or get_octopusvariable(\"Variable Name\"). "
+         + "You must treat the phrases \"machines\", \"targets\", and \"agents\" as interchangeable. "
          + "The values of secret variables are not defined in the Terraform configuration. "
          + "Do not mention the fact that the values of secret variables are not defined."),
         ("user", "{input}"),

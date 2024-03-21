@@ -1,6 +1,3 @@
-# Import existing resources with the following commands:
-# RESOURCE_ID=$(curl -H "X-Octopus-ApiKey: ${OCTOPUS_CLI_API_KEY}" https://mattc.octopus.app/api/Spaces-2348/Environments | jq -r '.Items[] | select(.Name=="octopusdeploy_environment") | .Id')
-# terraform import Production.environment_production ${RESOURCE_ID}
 resource "octopusdeploy_environment" "environment_production" {
   name                         = "Production"
   description                  = ""

@@ -2,6 +2,17 @@ This project provides an agent for GitHub's Copilot that can query an Octopus
 Server. It is deployed as an Azure functions app, and integrates with the
 Azure OpenAI service.
 
+# Status
+
+| Task                                                                             | Status | Notes                                                                                                                                                               |
+|----------------------------------------------------------------------------------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| OpenAI integration tests identifying common resource names in query              | 🟢     | Done in [openai_infrastructure_test.py](https://github.com/OctopusSolutionsEngineering/OctopusCopilot/blob/main/tests/infrastructure/openai_infrastructure_test.py) |
+| End-to-end tests querying common resources in simple, ephemeral Octopus instance | 🟢     | Done in [copilot_chat_test.py](https://github.com/OctopusSolutionsEngineering/OctopusCopilot/blob/main/tests/application/copilot_chat_test.py)                      | 
+| Security review of sensitive information handling                                | 🟠     | Reached out to secops team                                                                                                                                          |
+| Load test verifying queries of common resources in a live Octopus instance       | 🟠     | [Initial tests](https://github.com/OctopusSolutionsEngineering/OctopusCopilot/blob/main/jmeter/Chat.jmx) done, have to be updated to test all common resources      |
+| Prompt engineering documentation                                                 | 🔴     | Not started yet                                                                                                                                                     |
+| CI/CD pipeline                                                                   | 🟠     | Done in personal space, needs to be moved to deploy.octopus.app                                                                                                     |
+
 # Creating a service account
 
 This agent requires an account to interact with Octopus. This is best done with a

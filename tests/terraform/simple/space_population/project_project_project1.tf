@@ -2,8 +2,8 @@ variable "project_project1_name" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The name of the project exported from First Test Project"
-  default     = "First Test Project"
+  description = "The name of the project exported from Deploy Web App Container"
+  default     = "Deploy Web App Container"
 }
 variable "project_project1_description_prefix" {
   type        = string
@@ -38,7 +38,7 @@ resource "octopusdeploy_project" "project_project1" {
   is_disabled                          = false
   is_version_controlled                = false
   lifecycle_id                         = "${octopusdeploy_lifecycle.lifecycle_application.id}"
-  project_group_id                     = "${data.octopusdeploy_project_groups.project_group_default_project_group.project_groups[0].id}"
+  project_group_id                     = "${octopusdeploy_project_group.project_group_test.id}"
   included_library_variable_sets       = []
   tenanted_deployment_participation    = "Untenanted"
 

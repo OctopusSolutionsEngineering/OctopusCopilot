@@ -2,33 +2,33 @@ variable "project_project2_name" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The name of the project exported from Project2"
-  default     = "Project2"
+  description = "The name of the project exported from Deploy AWS Lambda"
+  default     = "Deploy AWS Lambda"
 }
 variable "project_project2_description_prefix" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "An optional prefix to add to the project description for the project Project2"
+  description = "An optional prefix to add to the project description for the project Deploy AWS Lambda"
   default     = ""
 }
 variable "project_project2_description_suffix" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "An optional suffix to add to the project description for the project Project2"
+  description = "An optional suffix to add to the project description for the project Deploy AWS Lambda"
   default     = ""
 }
 variable "project_project2_description" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The description of the project exported from Project2"
+  description = "The description of the project exported from Deploy AWS Lambda"
   default     = ""
 }
 # Import existing resources with the following commands:
 # RESOURCE_ID=$(curl -H "X-Octopus-ApiKey: ${OCTOPUS_CLI_API_KEY}" https://mattc.octopus.app/api/Spaces-2348/Projects | jq -r '.Items[] | select(.Name=="octopusdeploy_project") | .Id')
-# terraform import Project2.project_project2 ${RESOURCE_ID}
+# terraform import Deploy AWS Lambda.project_project2 ${RESOURCE_ID}
 resource "octopusdeploy_project" "project_project2" {
   name                                 = "${var.project_project2_name}"
   auto_create_release                  = false
