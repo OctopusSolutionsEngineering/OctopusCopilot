@@ -43,7 +43,7 @@ from infrastructure.octopus import get_current_user, \
 from infrastructure.openai import llm_tool_query
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
-    get_default_values, test_database
+    get_default_values, database_connection_test
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
@@ -71,8 +71,12 @@ def health(req: func.HttpRequest) -> func.HttpResponse:
     :param req: The HTTP request
     :return: The HTML form
     """
+    return health_internal()
+
+
+def health_internal():
     try:
-        test_database(get_functions_connection_string())
+        database_connection_test(get_functions_connection_string())
         llm_message_query(build_test_prompt(), {"input": "Tell me a joke"}, log_query)
         return func.HttpResponse("Healthy", status_code=200)
     except Exception as e:

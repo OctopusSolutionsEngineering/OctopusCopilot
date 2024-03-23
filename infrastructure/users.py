@@ -11,7 +11,7 @@ from domain.validation.argument_validation import ensure_string_not_empty
 logger = configure_logging(__name__)
 
 
-def test_database(connection_string):
+def database_connection_test(connection_string):
     ensure_string_not_empty(connection_string,
                             'connection_string must be the connection string (test_database).')
 

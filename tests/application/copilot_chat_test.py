@@ -11,7 +11,7 @@ from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
-from function_app import copilot_handler_internal
+from function_app import copilot_handler_internal, health_internal
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
@@ -99,6 +99,9 @@ class CopilotChatTest(unittest.TestCase):
             pass
         finally:
             cls.mssql = None
+
+    def test_health(self):
+        health_internal()
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_variables(self):
