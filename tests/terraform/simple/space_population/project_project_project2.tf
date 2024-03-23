@@ -40,7 +40,7 @@ resource "octopusdeploy_project" "project_project2" {
   lifecycle_id                         = "${octopusdeploy_lifecycle.lifecycle_application.id}"
   project_group_id                     = "${data.octopusdeploy_project_groups.project_group_default_project_group.project_groups[0].id}"
   included_library_variable_sets       = []
-  tenanted_deployment_participation    = "Untenanted"
+  tenanted_deployment_participation    = "TenantedOrUntenanted"
 
   connectivity_policy {
     allow_deployments_to_no_targets = true

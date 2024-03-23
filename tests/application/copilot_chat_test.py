@@ -3,6 +3,7 @@ import os
 import re
 import time
 import unittest
+import uuid
 
 import azure.functions as func
 from openai import RateLimitError
@@ -267,21 +268,34 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_latest_deployment(self):
-        create_and_deploy_release(space_name="Simple")
+        version = str(uuid.uuid4())
+        create_and_deploy_release(space_name="Simple", release_version=version)
         prompt = "Get the release version of the latest deployment to the \"Development\" environment for the \"Deploy Web App Container\" project."
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue(re.search("0\\.0\\.[1-9][0-9]*", response_text))
+        self.assertTrue(re.search(version, response_text))
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_get_latest_deployment_channel(self):
+        version = str(uuid.uuid4())
+        create_and_deploy_release(space_name="Simple", channel_name="Mainline", project_name="Deploy AWS Lambda",
+                                  tenant_name="Marketing", release_version=version)
+        prompt = "Get the release version of the latest deployment to the \"Development\" environment for the \"Deploy AWS Lambda\" project in the \"Mainline\" channel for the \"Marketing\" tenant."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue(re.search(version, response_text))
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_latest_deployment_defaults(self):
-        create_and_deploy_release(space_name="Simple")
+        version = str(uuid.uuid4())
+        create_and_deploy_release(space_name="Simple", release_version=version)
         prompt = "Get the release version of the latest deployment."
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue(re.search("0\\.0\\.[1-9][0-9]*", response_text))
+        self.assertTrue(re.search(version, response_text))
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_question(self):

@@ -38,7 +38,8 @@ def get_octopus_resource(uri, headers, skip_count=0):
 
 def create_and_deploy_release(octopus_server_uri="http://localhost:8080", octopus_api_key=Octopus_Api_Key,
                               space_name="Default", project_name="Deploy Web App Container",
-                              environment_name="Development", channel_name="Default"):
+                              environment_name="Development", channel_name="Default", tenant_name=None,
+                              release_version=None):
     """
     Create and deploy a release in Octopus Deploy. Taken from
     octopus.com/docs/octopus-rest-api/examples/deployments/create-and-deploy-a-release
@@ -66,6 +67,13 @@ def create_and_deploy_release(octopus_server_uri="http://localhost:8080", octopu
     environments = get_octopus_resource(uri, headers)
     environment = next((x for x in environments if x['Name'] == environment_name), None)
 
+    # Get tenant
+    tenant = None
+    if tenant_name:
+        uri = '{0}/api/{1}/tenants'.format(octopus_server_uri, space['Id'])
+        tenants = get_octopus_resource(uri, headers)
+        tenant = next((x for x in tenants if x['Name'] == tenant_name), None)
+
     # Get project template
     uri = '{0}/api/{1}/deploymentprocesses/deploymentprocess-{2}/template?channel={3}'.format(octopus_server_uri,
                                                                                               space['Id'],
@@ -75,7 +83,9 @@ def create_and_deploy_release(octopus_server_uri="http://localhost:8080", octopu
 
     # Get release version number
     releaseVersion = ""
-    if template['NextVersionIncrement'] is None:
+    if release_version:
+        releaseVersion = release_version
+    elif template['NextVersionIncrement'] is None:
         uri = uri = '{0}/api/{1}/deploymentprocesses/{2}'.format(octopus_server_uri, space['Id'],
                                                                  project['DeploymentProcessId'])
         deploymentProcess = get_octopus_resource(uri, headers)
@@ -130,7 +140,8 @@ def create_and_deploy_release(octopus_server_uri="http://localhost:8080", octopu
     # Create deploymentJson
     deploymentJson = {
         'ReleaseId': release['Id'],
-        'EnvironmentId': environment['Id']
+        'EnvironmentId': environment['Id'],
+        'TenantId': tenant['Id'] if tenant else None
     }
 
     # Deploy
