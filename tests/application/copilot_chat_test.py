@@ -277,6 +277,14 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue(re.search(version, response_text))
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_get_channels(self):
+        prompt = "Get the channels defined in the \"Deploy AWS Lambda\" project."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue(re.search("Mainline", response_text))
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_latest_deployment_channel(self):
         # Create a release in the Mainline channel against a tenant
         version = str(uuid.uuid4())
