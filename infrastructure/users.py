@@ -11,6 +11,21 @@ from domain.validation.argument_validation import ensure_string_not_empty
 logger = configure_logging(__name__)
 
 
+def test_database(connection_string):
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (test_database).')
+
+    table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+    table_client = table_service_client.create_table_if_not_exists("healthcheck")
+
+    test = {
+        'PartitionKey': "github.com",
+        'RowKey': "test"
+    }
+
+    table_client.upsert_entity(test)
+
+
 def save_default_values(username, default_name, default_value, connection_string):
     logger.info("save_default_values - Enter")
 

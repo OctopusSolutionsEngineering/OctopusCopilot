@@ -21,6 +21,7 @@ from domain.logging.query_loggin import log_query
 from domain.messages.deployment_logs import build_plain_text_prompt
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.messages.general import build_hcl_prompt
+from domain.messages.test_message import build_test_prompt
 from domain.sanitizers.sanitized_list import sanitize_environments, sanitize_list, get_item_or_none, \
     none_if_falesy_or_all
 from domain.security.security import is_admin_user
@@ -42,7 +43,7 @@ from infrastructure.octopus import get_current_user, \
 from infrastructure.openai import llm_tool_query
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
-    get_default_values
+    get_default_values, test_database
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
@@ -61,6 +62,22 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
         delete_old_user_details(get_functions_connection_string())
     except Exception as e:
         handle_error(e)
+
+
+@app.route(route="health", auth_level=func.AuthLevel.ANONYMOUS)
+def health(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    A health check endpoint to test that the underlying systems work as expected
+    :param req: The HTTP request
+    :return: The HTML form
+    """
+    try:
+        test_database(get_functions_connection_string())
+        llm_message_query(build_test_prompt(), {"input": "Tell me a joke"}, log_query)
+        return func.HttpResponse("Healthy", status_code=200)
+    except Exception as e:
+        handle_error(e)
+        return func.HttpResponse("Failed to process health check", status_code=500)
 
 
 @app.route(route="octopus", auth_level=func.AuthLevel.ANONYMOUS)

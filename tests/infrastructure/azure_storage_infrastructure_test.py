@@ -1,7 +1,8 @@
 import unittest
 
 from infrastructure.users import save_default_values, get_default_values, \
-    save_users_octopus_url_from_login, get_users_details, delete_all_user_details, delete_old_user_details
+    save_users_octopus_url_from_login, get_users_details, delete_all_user_details, delete_old_user_details, \
+    test_database
 
 connection_string = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
 
@@ -13,6 +14,9 @@ class UsersTest(unittest.TestCase):
 
     docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite
     """
+
+    def test_health(self):
+        test_database(connection_string)
 
     def test_default_values(self):
         save_default_values("test", "Space", "Default", connection_string)
