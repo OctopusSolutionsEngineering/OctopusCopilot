@@ -299,7 +299,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue(re.search(version, response_text))
+        self.assertTrue(version in response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_latest_deployment_defaults(self):
@@ -309,7 +309,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue(re.search(version, response_text))
+        self.assertTrue(version in response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_question(self):
