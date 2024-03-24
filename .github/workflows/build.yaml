@@ -178,13 +178,7 @@ jobs:
       #          tags: octopussamples/octopuscopilot:latest
       - name: Package
         run: |-
-          zip -r OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip . \
-            -x "venv/*" \
-            -x ".git/*" \
-            -x ".pytest_cache/*" \
-            -x ".idea/*" \
-            -x ".github/*" \
-            -x ".vscode/*" \
+          zip -R OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip \
             '*.py' \
             '*.pyc' \
             '*.html' \
