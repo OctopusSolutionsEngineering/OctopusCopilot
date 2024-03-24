@@ -17,11 +17,14 @@ def handle_error(exception):
 
     ensure_not_falsy(exception, "exception can not be None (handle_error).")
 
-    error_message = anonymize_message(sanitize_message(getattr(exception, 'message', repr(exception))))
-    stack_trace = anonymize_message(sanitize_message(traceback.format_exc()))
+    try:
+        error_message = anonymize_message(sanitize_message(getattr(exception, 'message', repr(exception))))
+        stack_trace = anonymize_message(sanitize_message(traceback.format_exc()))
 
-    logger.error(error_message)
-    logger.error(stack_trace)
+        logger.error(error_message)
+        logger.error(stack_trace)
 
-    send_slack_message(error_message, get_slack_url())
-    send_slack_message(stack_trace, get_slack_url())
+        send_slack_message(error_message, get_slack_url())
+        send_slack_message(stack_trace, get_slack_url())
+    except Exception as e:
+        logger.error("Failed to log exception")
