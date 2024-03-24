@@ -1,8 +1,8 @@
-from jwt import JWT
+from jwt import PyJWT
 
 from domain.validation.argument_validation import ensure_string_not_empty
 
-instance = JWT()
+instance = PyJWT()
 
 
 def parse_jwt(token):
@@ -16,4 +16,4 @@ def parse_jwt(token):
 
     ensure_string_not_empty(token, 'token must be the JWT to decode (parse_jwt).')
 
-    return instance.decode(message=token, do_verify=False, do_time_check=True)
+    return instance.decode(jwt=token, options={"verify_signature": False}, algorithms=["HS256"])
