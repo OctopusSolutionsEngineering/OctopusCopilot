@@ -7,6 +7,7 @@ import uuid
 
 import azure.functions as func
 from openai import RateLimitError
+from requests.exceptions import HTTPError
 from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
@@ -269,7 +270,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue("admin" in response_text)
 
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment(self):
         version = str(uuid.uuid4())
         create_and_deploy_release(space_name="Simple", release_version=version)
@@ -287,7 +288,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue(re.search("Mainline", response_text))
 
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment_channel(self):
         # Create a release in the Mainline channel against a tenant
         version = str(uuid.uuid4())
@@ -304,7 +305,7 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue(version in response_text)
 
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment_defaults(self):
         version = str(uuid.uuid4())
         create_and_deploy_release(space_name="Simple", release_version=version)
@@ -323,7 +324,7 @@ class CopilotChatTest(unittest.TestCase):
         # This response could be anything, but make sure the LLM isn't saying sorry for something.
         self.assertTrue("sorry" not in response_text.casefold())
 
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):
         create_and_deploy_release(space_name="Simple")
         time.sleep(5)
@@ -336,7 +337,7 @@ class CopilotChatTest(unittest.TestCase):
             "\\u26aa" in response_text or "\\ud83d\\udfe2" in response_text or "\\ud83d\\udd34" in response_text
             or "\\ud83d\\udfe1" in response_text or "\\ud83d\\udd35" in response_text)
 
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_logs(self):
         create_and_deploy_release(space_name="Simple")
 
