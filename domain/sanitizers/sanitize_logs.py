@@ -22,4 +22,6 @@ def sanitize_message(message):
     for sensitive_var in sensitive_vars:
         message = re.sub(sensitive_var, "*****", message)
 
-    return scrubber.scrub(stringlifier(message))
+    removed_cred = stringlifier(message)
+    removed_pii = scrubber.scrub(removed_cred[0])
+    return removed_pii
