@@ -14,6 +14,9 @@ class SanitizeTests(unittest.TestCase):
     def test_message_creds_removed(self):
         self.assertEqual("Api key is <RANDOM_STRING>", sanitize_message("Api key is ABCDEFG"))
 
+    def test_message_email_removed(self):
+        self.assertEqual("Email is [REDACTED-EMAIL]", sanitize_message("Email is example@example.org"))
+
     def test_get_item_or_none(self):
         self.assertEqual('item1', get_item_or_none(['item1'], 0))
         self.assertEqual(None, get_item_or_none(['item1'], 1))
