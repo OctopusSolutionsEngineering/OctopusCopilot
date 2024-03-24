@@ -7,10 +7,9 @@ def build_hcl_prompt(step_by_step=False):
     messages = [
         ("system",
          "You understand Terraform modules defining Octopus Deploy resources."
-         + "The supplied HCL context provides details on Octopus resources like projects, environments, channels, tenants, project groups, lifecycles etc. "
-         + "You must assume the Terraform is an accurate representation of the live project. "
-         + "Do not mention Terraform in the response. Do not show any Terraform snippets in the response. "
-         + "Do not mention that you referenced the Terraform to provide your answer. "
+         + "The supplied HCL context provides details on Octopus resources like projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, library variable sets etc. "
+         + "You must assume the supplied HCL is an accurate representation of the Octopus space. "
+         + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
          + "Tenants are defined in \"octopusdeploy_tenant\" resources. Tenant names are defined in the \"octopusdeploy_tenant\" \"name\" attribute. "
          + "You must assume questions about variables refer to Octopus variables. "
          + "Variables are referenced using the syntax #{{Variable Name}}, $OctopusParameters[\"Variable Name\"], "
@@ -18,7 +17,7 @@ def build_hcl_prompt(step_by_step=False):
          + "or get_octopusvariable(\"Variable Name\"). "
          + "You must treat the phrases \"machines\", \"targets\", and \"agents\" as interchangeable. "
          + "The values of secret variables are not defined in the Terraform configuration. "
-         + "Do not mention the fact that the values of secret variables are not defined."),
+         + "You will be penalized if you mention the fact that the values of secret variables are not defined."),
         ("user", "{input}"),
         ("user", "Answer the question using the HCL below."),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api

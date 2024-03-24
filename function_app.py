@@ -2,12 +2,12 @@ import json
 import os
 import urllib.parse
 
+import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
-import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
-from domain.context.copilot_handler import collect_llm_context, llm_message_query
+from domain.context.octopus_context import collect_llm_context, llm_message_query
 from domain.defaults.defaults import get_default_argument
 from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.errors.error_handling import handle_error

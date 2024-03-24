@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 
-from domain.context.copilot_handler import collect_llm_context
+from domain.context.octopus_context import collect_llm_context
 from domain.logging.query_loggin import log_query
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.messages.general import build_hcl_prompt
