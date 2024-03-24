@@ -22,6 +22,6 @@ def handle_error(exception):
 
     logger.error(error_message)
     logger.error(stack_trace)
-    
+
     send_slack_message(error_message, get_slack_url())
     send_slack_message(stack_trace, get_slack_url())
