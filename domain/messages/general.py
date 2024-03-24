@@ -4,6 +4,8 @@ def build_hcl_prompt(step_by_step=False):
     :param step_by_step: True if the LLM should display its reasoning step by step before the answer. False for concise answers.
     :return: The messages to pass to the llm.
     """
+
+    # Some of the prompts come from https://arxiv.org/pdf/2312.16171.pdf
     messages = [
         ("system",
          "You understand Terraform modules defining Octopus Deploy resources."
@@ -17,7 +19,8 @@ def build_hcl_prompt(step_by_step=False):
          + "or get_octopusvariable(\"Variable Name\"). "
          + "You must treat the phrases \"machines\", \"targets\", and \"agents\" as interchangeable. "
          + "The values of secret variables are not defined in the Terraform configuration. "
-         + "You will be penalized if you mention the fact that the values of secret variables are not defined."),
+         + "You will be penalized if you mention the fact that the values of secret variables are not defined. "
+         + "I’m going to tip $500 for a better solution!"),
         ("user", "{input}"),
         ("user", "Answer the question using the HCL below."),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
