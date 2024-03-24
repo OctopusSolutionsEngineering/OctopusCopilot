@@ -42,7 +42,7 @@ jobs:
           additionalArguments: /overrideconfig mode=Mainline
       - name: Install tools
         run: |
-          pip install pytest coverage setuptools radon numpy
+          pip install pytest coverage setuptools radon
           sudo apt-get install -y pycodestyle
       - name: Linting
         shell: bash
