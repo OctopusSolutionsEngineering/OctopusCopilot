@@ -196,6 +196,9 @@ jobs:
             '*.env' \
             '*.txt' \
             '*.Procfile' \
+            '*.bestType' \
+            '*.conf' \
+            '*.encodings' \
             -x "octoterra/*" \
             -x "**/__pycache__/*" \
             -x ".vscode/*" \

@@ -16,6 +16,9 @@ zip -R OctopusCopilot.0.0.1.zip \
   '*.env' \
   '*.txt' \
   '*.Procfile' \
+  '*.bestType' \
+  '*.conf' \
+  '*.encodings' \
   -x "venv/*" \
   -x "htmlcov/*" \
   -x "**/__pycache__/*" \
