@@ -195,7 +195,11 @@ jobs:
             '*.json' \
             '*.env' \
             '*.txt' \
-            '*.Procfile'
+            '*.Procfile' \
+            -x "octoterra/*" \
+            -x "**/__pycache__/*" \
+            -x ".vscode/*" \
+            -x "tests/*" \
         shell: bash
       - name: Tag Release
         uses: mathieudutour/github-tag-action@v6.1
