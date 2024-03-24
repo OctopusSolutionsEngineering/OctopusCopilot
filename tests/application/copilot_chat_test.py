@@ -326,7 +326,8 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):
-        create_and_deploy_release(space_name="Simple")
+        version = str(uuid.uuid4())
+        create_and_deploy_release(space_name="Simple", release_version=version)
         time.sleep(5)
         prompt = "Show the dashboard."
         response = copilot_handler_internal(build_request(prompt))
@@ -339,7 +340,8 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_logs(self):
-        create_and_deploy_release(space_name="Simple")
+        version = str(uuid.uuid4())
+        create_and_deploy_release(space_name="Simple", release_version=version)
 
         time.sleep(30)
 
