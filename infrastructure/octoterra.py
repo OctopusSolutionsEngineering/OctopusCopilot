@@ -104,6 +104,7 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
         "excludeTerraformVariables": True,
         "excludeSpaceCreation": True,
         "excludeProvider": True,
+        "includeIds": True
     }
 
     resp = handle_response(lambda: http.request("POST",

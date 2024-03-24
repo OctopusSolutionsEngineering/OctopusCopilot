@@ -2,20 +2,23 @@ import argparse
 import json
 import os
 
-from domain.context.octopus_context import collect_llm_context
+from domain.context.octopus_context import collect_llm_context, max_chars
 from domain.logging.query_loggin import log_query
+from domain.messages.deployment_logs import build_plain_text_prompt
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.messages.general import build_hcl_prompt
-from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all
+from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all, \
+    get_item_or_none
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
+from domain.tools.logs import answer_logs_callback
 from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_callback
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_callback
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from domain.transformers.deployments_from_progression import get_deployment_array_from_progression
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_project_progression, \
-    get_dashboard
-from infrastructure.openai import llm_tool_query
+    get_dashboard, get_deployment_logs
+from infrastructure.openai import llm_tool_query, llm_message_query
 
 
 def init_argparse():
@@ -107,6 +110,21 @@ def general_query_handler(body):
                                logging)
 
 
+def logs_handler(original_query, enriched_query, space, projects, environments, channel, tenants):
+    space = get_default_argument(space, 'Space')
+
+    logs = get_deployment_logs(space, get_item_or_none(sanitize_list(projects), 0),
+                               get_item_or_none(sanitize_list(environments), 0),
+                               get_item_or_none(sanitize_list(tenants), 0), "latest", get_api_key(), get_octopus_api())
+    # Get the end of the logs if we have exceeded our context limit
+    logs = logs[-max_chars:]
+
+    messages = build_plain_text_prompt()
+    context = {"input": enriched_query, "context": logs}
+
+    return llm_message_query(messages, context, log_query)
+
+
 def variable_query_handler(original_query, enriched_query, space, projects, variables):
     space = get_default_argument(space, 'Space')
 
@@ -152,7 +170,8 @@ def releases_query_handler(original_query, enriched_query, space, projects, envi
     if projects:
         # We only need the deployments, so strip out the rest of the JSON
         deployments = get_deployment_array_from_progression(
-            json.loads(get_project_progression(space, projects, get_api_key(), get_octopus_api())),
+            json.loads(get_project_progression(space, get_item_or_none(sanitize_list(projects), 0), get_api_key(),
+                                               get_octopus_api())),
             sanitize_environments(environments),
             3)
         context["json"] = json.dumps(deployments, indent=2)
@@ -211,7 +230,8 @@ def build_tools():
         FunctionDefinition(answer_general_query_callback(general_query_handler, log_query), AnswerGeneralQuery),
         FunctionDefinition(answer_project_variables_callback(parser.query, variable_query_handler, log_query)),
         FunctionDefinition(answer_project_variables_usage_callback(parser.query, variable_query_handler, log_query)),
-        FunctionDefinition(answer_releases_and_deployments_callback(parser.query, releases_query_handler, log_query))
+        FunctionDefinition(answer_releases_and_deployments_callback(parser.query, releases_query_handler, log_query)),
+        FunctionDefinition(answer_logs_callback(parser.query, logs_handler, log_query))
     ])
 
 

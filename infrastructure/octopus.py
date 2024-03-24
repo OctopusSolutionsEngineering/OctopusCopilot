@@ -204,8 +204,8 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
     :param octopus_url: The Octopus URL
     :return: The deployment progression raw JSON
     """
-    ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_raw_deployment_process).')
-    ensure_string_not_empty(project_name, 'project_name must be a non-empty string (get_raw_deployment_process).')
+    ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_project_progression).')
+    ensure_string_not_empty(project_name, 'project_name must be a non-empty string (get_project_progression).')
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
 
