@@ -8,6 +8,8 @@ from domain.sanitizers.stringlifier.api import Stringlifier
 from domain.validation.argument_validation import ensure_string
 
 sensitive_vars = ["[Aa][Pp][Ii]-[A-Za-z0-9]+"]
+# From https://github.com/adobe/stringlifier with some minor modifications to work with the latest
+# versions of numpy.
 stringlifier = Stringlifier()
 
 
