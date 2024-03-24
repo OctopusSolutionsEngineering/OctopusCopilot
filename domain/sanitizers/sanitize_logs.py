@@ -4,9 +4,11 @@ from presidio_analyzer import AnalyzerEngine
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 
+from domain.sanitizers.stringlifier.api import Stringlifier
 from domain.validation.argument_validation import ensure_string
 
 sensitive_vars = ["[Aa][Pp][Ii]-[A-Za-z0-9]+"]
+stringlifier = Stringlifier()
 
 
 def sanitize_message(message):
@@ -51,5 +53,6 @@ def anonymize_message(message):
 
     results = analyse(message)
     anonymized_text = redact_message(results, message)
+    stringlifier_text = stringlifier(anonymized_text)
 
-    return anonymized_text
+    return stringlifier_text[0]
