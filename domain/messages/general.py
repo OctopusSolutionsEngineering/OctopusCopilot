@@ -10,6 +10,7 @@ def build_hcl_prompt(step_by_step=False):
         ("system",
          "You understand Terraform modules defining Octopus Deploy resources."
          + "The supplied HCL context provides details on Octopus resources like projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, library variable sets etc. "
+         + "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space. "
          + "You must assume the supplied HCL is an accurate representation of the Octopus space. "
          + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
          + "Tenants are defined in \"octopusdeploy_tenant\" resources. Tenant names are defined in the \"octopusdeploy_tenant\" \"name\" attribute. "
