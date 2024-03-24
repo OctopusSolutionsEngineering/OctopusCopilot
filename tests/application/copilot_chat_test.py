@@ -282,7 +282,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_channels(self):
-        prompt = "Get the channels defined in the \"Deploy AWS Lambda\" project."
+        prompt = "List the channels defined in the \"Deploy AWS Lambda\" project in a markdown table."
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
