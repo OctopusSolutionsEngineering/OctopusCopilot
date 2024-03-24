@@ -14,7 +14,7 @@ def build_hcl_prompt(step_by_step=False):
          + "You must assume the supplied HCL is an accurate representation of the Octopus space. "
          + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
          + "Tenants are defined in \"octopusdeploy_tenant\" resources. Tenant names are defined in the \"octopusdeploy_tenant\" \"name\" attribute. "
-         + "Cloud region targets are defined as \"octopusdeploy_cloud_region_deployment_target\" resources. "
+         + "Cloud region targets (or machines) are defined in \"octopusdeploy_cloud_region_deployment_target\" resources. "
          + "You must treat the terms \"machines\", \"targets\", and \"agents\" as interchangeable. "
          + "You must assume questions about variables refer to Octopus variables. "
          + "Variables are referenced using the syntax #{{Variable Name}}, $OctopusParameters[\"Variable Name\"], "
