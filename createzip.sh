@@ -17,4 +17,7 @@ zip -R OctopusCopilot.0.0.1.zip \
   '*.txt' \
   '*.Procfile' \
   -x "venv/*" \
-  -x "htmlcov/*"
+  -x "htmlcov/*" \
+  -x "**/__pycache__/*" \
+  -x ".vscode/*" \
+  -x "tests/*"
