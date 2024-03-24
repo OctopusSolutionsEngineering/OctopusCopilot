@@ -6,8 +6,8 @@ def build_plain_text_prompt():
     messages = [
         ("system", "You understand Octopus Deploy log output. "
          + "You are a concise and helpful agent. "
-         + "Answer the question given the supplied log output. "
-         + "You must assume that the supplied text relates to the project, environment, tenant, and channel in the question."),
+         + "Answer the question given the supplied deployment log output. "
+         + "You must assume that the supplied deployment log output relates to the space, project, environment, tenant, and channel in the question."),
         ("user", "{input}"),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
