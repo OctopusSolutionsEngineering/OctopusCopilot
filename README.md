@@ -2,6 +2,11 @@ This project provides an agent for GitHub's Copilot that can query an Octopus
 Server. It is deployed as an Azure functions app, and integrates with the
 Azure OpenAI service.
 
+# Prompt Engineering Guide
+
+View the [Wiki](https://github.com/OctopusSolutionsEngineering/OctopusCopilot/wiki/Prompt-Engineering-with-Octopus) for
+a guide on prompt engineering with this agent.
+
 # Status
 
 | Task                                                                             | Status | Notes                                                                                                                                                               |
