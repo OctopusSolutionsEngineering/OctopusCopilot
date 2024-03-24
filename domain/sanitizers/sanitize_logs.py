@@ -1,11 +1,12 @@
 import re
 
-from scrubadubdub import Scrub
+from presidio_analyzer import AnalyzerEngine
+from presidio_analyzer.nlp_engine import NlpEngineProvider
+from presidio_anonymizer import AnonymizerEngine
 
 from domain.validation.argument_validation import ensure_string
 
 sensitive_vars = ["[Aa][Pp][Ii]-[A-Za-z0-9]+"]
-scrubber = Scrub()
 
 
 def sanitize_message(message):
@@ -23,6 +24,23 @@ def sanitize_message(message):
     return message
 
 
+def analyse(message):
+    # Create configuration containing engine name and models
+    configuration = {
+        "nlp_engine_name": "spacy",
+        "models": [{"lang_code": "en", "model_name": "en_core_web_md"}],
+    }
+    provider = NlpEngineProvider(nlp_configuration=configuration)
+    nlp_engine = provider.create_engine()
+    analyzer = AnalyzerEngine(nlp_engine=nlp_engine, supported_languages=["en"])
+    return analyzer.analyze(text=message, language='en')
+
+
+def redact_message(results, message):
+    anonymizer = AnonymizerEngine()
+    return anonymizer.anonymize(text=message, analyzer_results=results).text
+
+
 def anonymize_message(message):
     """
     Anonymize the message
@@ -31,6 +49,7 @@ def anonymize_message(message):
     """
     ensure_string(message, "message must be a string (anonymize_message)")
 
-    removed_pii = scrubber.scrub(message)
+    results = analyse(message)
+    anonymized_text = redact_message(results, message)
 
-    return removed_pii
+    return anonymized_text

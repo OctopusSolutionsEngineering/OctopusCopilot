@@ -1,6 +1,7 @@
 import unittest
 
 from domain.errors.error_handling import sanitize_message
+from domain.sanitizers.sanitize_logs import anonymize_message
 from domain.sanitizers.sanitized_list import get_item_or_none, is_re_match, none_if_falesy
 
 
@@ -11,11 +12,8 @@ class SanitizeTests(unittest.TestCase):
         self.assertNotIn("aPi-AbCD123", sanitize_message("Api key is aPi-AbCD123"))
         self.assertEqual("Api key is *****", sanitize_message("Api key is API-ABCDEFG"))
 
-    def test_message_creds_removed(self):
-        self.assertEqual("Api key is <RANDOM_STRING>", sanitize_message("Api key is ABCDEFG"))
-
     def test_message_email_removed(self):
-        self.assertEqual("Email is [REDACTED-EMAIL]", sanitize_message("Email is example@example.org"))
+        self.assertEqual("Email is <EMAIL_ADDRESS>", anonymize_message("Email is example@example.org"))
 
     def test_get_item_or_none(self):
         self.assertEqual('item1', get_item_or_none(['item1'], 0))

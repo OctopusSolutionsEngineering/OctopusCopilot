@@ -19,5 +19,5 @@ pytz==2024.1
 types-pytz==2024.1.0.20240203
 pycryptodome==3.20.0
 pydantic==2.6.4
-scrubadubdub==0.2.1
-spacy-transformers==1.3.4
+presidio-anonymizer==2.2.353
+presidio-analyzer==2.2.353
