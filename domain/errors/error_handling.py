@@ -1,14 +1,12 @@
-import re
 import traceback
 
 from domain.config.slack import get_slack_url
 from domain.logging.app_logging import configure_logging
-from domain.validation.argument_validation import ensure_not_falsy, ensure_string
+from domain.sanitizers.sanitize_logs import sanitize_message
+from domain.validation.argument_validation import ensure_not_falsy
 from infrastructure.slack import send_slack_message
 
 logger = configure_logging(__name__)
-
-sensitive_vars = ["[Aa][Pp][Ii]-[A-Za-z0-9]+"]
 
 
 def handle_error(exception):
@@ -20,17 +18,10 @@ def handle_error(exception):
     ensure_not_falsy(exception, "exception can not be None (handle_error).")
 
     error_message = sanitize_message(getattr(exception, 'message', repr(exception)))
+    stack_trace = sanitize_message(traceback.format_exc())
+
     logger.error(error_message)
-    logger.error(sanitize_message(traceback.format_exc()))
+    logger.error(stack_trace)
+    
     send_slack_message(error_message, get_slack_url())
-    send_slack_message(sanitize_message(traceback.format_exc()), get_slack_url())
-
-
-def sanitize_message(message):
-    ensure_string(message, "message must be a string (sanitize_message)")
-
-    # A defensive move to stop API keys from appearing in logs
-    for sensitive_var in sensitive_vars:
-        message = re.sub(sensitive_var, "*****", message)
-
-    return message
+    send_slack_message(stack_trace, get_slack_url())
