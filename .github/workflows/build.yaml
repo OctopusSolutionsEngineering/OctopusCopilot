@@ -39,16 +39,16 @@ jobs:
         uses: gittools/actions/gitversion/execute@v0.9.15
         with:
           additionalArguments: /overrideconfig mode=Mainline
+      - name: Install tools
+        run: |
+          pip install pytest coverage setuptools radon
+          sudo apt-get install -y pycodestyle
       - name: Linting
         shell: bash
-        run: |
-          sudo apt-get install -y pycodestyle
-          find . -path ./venv -prune -o -name "*.py" -print0 | xargs -0 -n1 pycodestyle --ignore=E501,W503
+        run: find . -path ./venv -prune -o -name "*.py" -print0 | xargs -0 -n1 pycodestyle --ignore=E501,W503
       - name: Complexity
         shell: bash
-        run: |
-          pip install radon
-          find . -path ./venv -prune -o -path ./.venv -prune -o -name "*.py" -print0 | xargs -0 -n1 radon cc -nc
+        run: find . -path ./venv -prune -o -path ./.venv -prune -o -name "*.py" -print0 | xargs -0 -n1 radon cc -nc
       - name: Install Dependencies
         run: pip install -r requirements.txt
         shell: bash
