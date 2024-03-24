@@ -1,12 +1,10 @@
 import re
 
 from scrubadubdub import Scrub
-from stringlifier.api import Stringlifier
 
 from domain.validation.argument_validation import ensure_string
 
 sensitive_vars = ["[Aa][Pp][Ii]-[A-Za-z0-9]+"]
-stringlifier = Stringlifier()
 scrubber = Scrub()
 
 
@@ -33,7 +31,6 @@ def anonymize_message(message):
     """
     ensure_string(message, "message must be a string (anonymize_message)")
 
-    removed_cred = stringlifier(message)
-    removed_pii = scrubber.scrub(removed_cred[0])
+    removed_pii = scrubber.scrub(message)
 
     return removed_pii
