@@ -16,4 +16,4 @@ def parse_jwt(token):
 
     ensure_string_not_empty(token, 'token must be the JWT to decode (parse_jwt).')
 
-    return instance.decode(jwt=token, options={"verify_signature": False}, algorithms=["HS256"])
+    return instance.decode(jwt=token, options={"verify_signature": False, "verify_exp": True}, algorithms=["HS256"])
