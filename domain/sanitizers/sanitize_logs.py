@@ -22,6 +22,18 @@ def sanitize_message(message):
     for sensitive_var in sensitive_vars:
         message = re.sub(sensitive_var, "*****", message)
 
+    return message
+
+
+def anonymize_message(message):
+    """
+    Anonymize the message
+    :param message: The message to be anonymized
+    :return: The anonymized message
+    """
+    ensure_string(message, "message must be a string (anonymize_message)")
+
     removed_cred = stringlifier(message)
     removed_pii = scrubber.scrub(removed_cred[0])
+
     return removed_pii

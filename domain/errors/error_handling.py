@@ -2,7 +2,7 @@ import traceback
 
 from domain.config.slack import get_slack_url
 from domain.logging.app_logging import configure_logging
-from domain.sanitizers.sanitize_logs import sanitize_message
+from domain.sanitizers.sanitize_logs import sanitize_message, anonymize_message
 from domain.validation.argument_validation import ensure_not_falsy
 from infrastructure.slack import send_slack_message
 
@@ -17,8 +17,8 @@ def handle_error(exception):
 
     ensure_not_falsy(exception, "exception can not be None (handle_error).")
 
-    error_message = sanitize_message(getattr(exception, 'message', repr(exception)))
-    stack_trace = sanitize_message(traceback.format_exc())
+    error_message = anonymize_message(sanitize_message(getattr(exception, 'message', repr(exception))))
+    stack_trace = anonymize_message(sanitize_message(traceback.format_exc()))
 
     logger.error(error_message)
     logger.error(stack_trace)
