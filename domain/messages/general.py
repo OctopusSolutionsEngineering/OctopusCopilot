@@ -15,11 +15,11 @@ def build_hcl_prompt(step_by_step=False):
          + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
          + "Tenants are defined in \"octopusdeploy_tenant\" resources. Tenant names are defined in the \"octopusdeploy_tenant\" \"name\" attribute. "
          + "Cloud region targets are defined as \"octopusdeploy_cloud_region_deployment_target\" resources. "
+         + "You must treat the terms \"machines\", \"targets\", and \"agents\" as interchangeable. "
          + "You must assume questions about variables refer to Octopus variables. "
          + "Variables are referenced using the syntax #{{Variable Name}}, $OctopusParameters[\"Variable Name\"], "
          + "Octopus.Parameters[\"Variable Name\"], get_octopusvariable \"Variable Name\", "
          + "or get_octopusvariable(\"Variable Name\"). "
-         + "You must treat the terms \"machines\", \"targets\", and \"agents\" as interchangeable. "
          + "The values of secret variables are not defined in the Terraform configuration. "
          + "You will be penalized if you mention the fact that the values of secret variables are not defined. "
          + "I’m going to tip $500 for a better solution!"),
