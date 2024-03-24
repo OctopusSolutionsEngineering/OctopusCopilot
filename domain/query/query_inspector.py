@@ -1,5 +1,5 @@
 def exclude_all_targets(query, entity_list):
-    return True if not entity_list and "target" not in query.lower() and "machine" not in query.lower() else False
+    return True if not entity_list and "target" not in query.lower() and "machine" not in query.lower() and "agent" not in query.lower() else False
 
 
 def exclude_all_runbooks(query, entity_list):
@@ -39,7 +39,7 @@ def exclude_all_lifecycles(query, entity_list):
 
 
 def exclude_all_worker_pools(query, entity_list):
-    return True if not entity_list and "workerpool" not in query.lower() else False
+    return True if not entity_list and "worker pool" not in query.lower() else False
 
 
 def exclude_all_machine_policies(query, entity_list):
