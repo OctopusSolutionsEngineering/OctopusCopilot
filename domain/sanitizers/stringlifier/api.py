@@ -18,6 +18,7 @@ from typing import List, Optional, Tuple, Union
 
 import pkg_resources
 import torch
+from nptyping import NDArray
 
 from domain.sanitizers.stringlifier.modules.stringc2 import CTagger, CTaggerConfig
 from domain.sanitizers.stringlifier.modules.stringc2 import Encodings as CEncodings
@@ -75,7 +76,7 @@ class Stringlifier:
             return new_strings
 
     # def _extract_tokens_2class(self, string: str, pred: NDArray[Int64]) -> Tuple[str, List[Tuple[str, int, int]]]:
-    def _extract_tokens_2class(self, string: str, pred) -> Tuple[str, List[Tuple[str, int, int]]]:
+    def _extract_tokens_2class(self, string: str, pred: NDArray) -> Tuple[str, List[Tuple[str, int, int]]]:
         CUTOFF = 5
         mask = ''
         for p in pred:
@@ -117,7 +118,7 @@ class Stringlifier:
         return new_str, final_toks
 
     # def _extract_tokens(self, string: str, pred: NDArray[Int64], cutoff: int = 5) -> Tuple[
-    def _extract_tokens(self, string: str, pred, cutoff: int = 5) -> Tuple[
+    def _extract_tokens(self, string: str, pred: NDArray, cutoff: int = 5) -> Tuple[
         str, List[Tuple[str, int, int, str]]]:
         mask = ''
         numbers = {str(ii): 1 for ii in range(10)}
