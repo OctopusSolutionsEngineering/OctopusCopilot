@@ -29,7 +29,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.x
+          # Need 3.11 because of https://stackoverflow.com/questions/77364550/attributeerror-module-pkgutil-has-no-attribute-impimporter-did-you-mean
+          python-version: 3.11
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v0.9.15
         with:
