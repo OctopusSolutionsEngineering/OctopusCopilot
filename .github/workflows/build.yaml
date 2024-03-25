@@ -62,7 +62,7 @@ jobs:
           name: Dependencies
           path: dependencies.txt
       - name: List Dependency Updates
-        run: pip list --outdated --format=freeze > dependencyUpdates.txt || true
+        run: python3 -m pip list --outdated --format=json | jq -r '.[] | .name+"="+.latest_version' > dependencyUpdates.txt || true
         shell: bash
       - name: Collect Dependency Updates
         uses: actions/upload-artifact@v2
