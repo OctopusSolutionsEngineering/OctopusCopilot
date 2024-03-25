@@ -110,7 +110,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("Test.Variable" in response_text)
+        self.assertTrue("Test.Variable" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_variables_with_defaults(self):
@@ -118,7 +118,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("Test.Variable" in response_text)
+        self.assertTrue("Test.Variable" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_step(self):
@@ -126,7 +126,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("Hi there" in response_text, "The context must include details of the named step")
+        self.assertTrue("Hi there" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_missing_step(self):
@@ -135,7 +135,7 @@ class CopilotChatTest(unittest.TestCase):
         response_text = response.get_body().decode('utf8')
 
         self.assertFalse("Hi there" in response_text,
-                         "The context should not include details of steps, because none were mentioned in the query")
+                         "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_machines(self):
@@ -143,7 +143,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("Cloud Region Target" in response_text)
+        self.assertTrue("Cloud Region Target" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_all_projects(self):
@@ -151,7 +151,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("Deploy Web App Container" in response_text)
+        self.assertTrue("Deploy Web App Container" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_runbook(self):
@@ -159,7 +159,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("Test Runbook" in response_text)
+        self.assertTrue("Test Runbook" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_machine_policies(self):
@@ -167,7 +167,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("win32_LogicalDisk" in response_text)
+        self.assertTrue("win32_LogicalDisk" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_project_groups(self):
@@ -175,7 +175,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("Test Description" in response_text)
+        self.assertTrue("Test Description" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_tenants(self):
@@ -183,7 +183,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("Marketing" in response_text)
+        self.assertTrue("Marketing" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_list_tenants(self):
@@ -196,7 +196,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("Marketing" in response_text)
+        self.assertTrue("Marketing" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_environment(self):
@@ -204,7 +204,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("Development" in response_text)
+        self.assertTrue("Development" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_feed(self):
@@ -212,7 +212,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("https://charts.helm.sh/stable/" in response_text)
+        self.assertTrue("https://charts.helm.sh/stable/" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_account(self):
@@ -220,7 +220,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("ABCDEFGHIJKLMNOPQRST" in response_text)
+        self.assertTrue("ABCDEFGHIJKLMNOPQRST" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_variable_set(self):
@@ -228,7 +228,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("Test.Variable" in response_text)
+        self.assertTrue("Test.Variable" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_worker_pool(self):
@@ -236,7 +236,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("Workers running Docker containers" in response_text)
+        self.assertTrue("Workers running Docker containers" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_certificate(self):
@@ -244,7 +244,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("A test certificate" in response_text)
+        self.assertTrue("A test certificate" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_tagsets(self):
@@ -252,7 +252,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("us-east-1" in response_text)
+        self.assertTrue("us-east-1" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_lifecycle(self):
@@ -260,7 +260,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("Production" in response_text)
+        self.assertTrue("Production" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_git_creds(self):
@@ -268,7 +268,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue("admin" in response_text)
+        self.assertTrue("admin" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment(self):
@@ -278,7 +278,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue(version in response_text)
+        self.assertTrue(version in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_channels(self):
@@ -286,7 +286,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue(re.search("Mainline", response_text))
+        self.assertTrue(re.search("Mainline", response_text), "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment_channel(self):
@@ -303,7 +303,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue(version in response_text)
+        self.assertTrue(version in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment_defaults(self):
@@ -313,7 +313,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        self.assertTrue(version in response_text)
+        self.assertTrue(version in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_question(self):
@@ -322,7 +322,7 @@ class CopilotChatTest(unittest.TestCase):
         response_text = response.get_body().decode('utf8')
 
         # This response could be anything, but make sure the LLM isn't saying sorry for something.
-        self.assertTrue("sorry" not in response_text.casefold())
+        self.assertTrue("sorry" not in response_text.casefold(), "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):
@@ -336,7 +336,7 @@ class CopilotChatTest(unittest.TestCase):
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
             "\\u26aa" in response_text or "\\ud83d\\udfe2" in response_text or "\\ud83d\\udd34" in response_text
-            or "\\ud83d\\udfe1" in response_text or "\\ud83d\\udd35" in response_text)
+            or "\\ud83d\\udfe1" in response_text or "\\ud83d\\udd35" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_logs(self):
@@ -350,7 +350,7 @@ class CopilotChatTest(unittest.TestCase):
         response_text = response.get_body().decode('utf8')
 
         # This response could be anything, but make sure the LLM isn't saying sorry for something.
-        self.assertTrue("sorry" not in response_text.casefold())
+        self.assertTrue("sorry" not in response_text.casefold(), "Response was " + response_text)
 
 
 if __name__ == '__main__':
