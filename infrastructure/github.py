@@ -42,7 +42,7 @@ def get_github_user(get_token):
     """
 
     if get_token is None:
-        raise ValueError('get_token must be the Github token.')
+        return None
 
     api = build_github_url("user", "")
 

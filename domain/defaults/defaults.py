@@ -12,10 +12,12 @@ def get_default_argument(user, argument, default_name):
     :return: The argument is if it is not blank, or the default value
     """
 
-    ensure_string_not_empty(user, 'user must be the current user (get_default_argument).')
     ensure_string_not_empty(default_name, 'default_name must be the argument type (get_default_argument).')
 
-    if not argument or (isinstance(argument, str) and not argument.strip()):
-        return get_default_values(user, default_name, get_functions_connection_string())
+    # Allow the user to be empty, as it will not be set when performing tests that supply the Octopus details
+    # directly in the headers.
+    if user and isinstance(user, str) and user.strip():
+        if not argument or (isinstance(argument, str) and not argument.strip()):
+            return get_default_values(user, default_name, get_functions_connection_string())
 
     return argument

@@ -318,6 +318,17 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
     :return: A conversational string with the projects found in the space
     """
 
+    def get_apikey_and_server():
+        """
+        When testing we supply the octopus details directly. This removes the need to use a GitHub token, as GitHub
+        tokens have radiatively small rate limits. Load tests will pass these headers in to simulate a chat without
+        triggering GitHub API rate limits
+        :return:
+        """
+        api_key = req.headers.get("X-Octopus-ApiKey")
+        server = req.headers.get("X-Octopus-Server")
+        return api_key, server
+
     def get_github_user_from_form():
         return get_github_user(req.headers.get("X-GitHub-Token"))
 
@@ -331,6 +342,13 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
     def get_api_key_and_url():
         try:
+            # First try to get the details from the headers
+            api_key, server = get_apikey_and_server()
+
+            if api_key and server:
+                return api_key, server
+
+            # Then get the details saved for a user
             github_username = get_github_user_from_form()
 
             if not github_username:

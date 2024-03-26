@@ -113,6 +113,14 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue("Test.Variable" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_get_variables_no_github_user(self):
+        prompt = "List the variables defined in the project \"Deploy Web App Container\" in space \"Simple\"."
+        response = copilot_handler_internal(build_test_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue("Test.Variable" in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_variables_with_defaults(self):
         prompt = "List the variables defined in the project."
         response = copilot_handler_internal(build_request(prompt))
@@ -371,4 +379,27 @@ def build_request(message):
         params=None,
         headers={
             "X-GitHub-Token": os.environ["GH_TEST_TOKEN"]
+        })
+
+
+def build_test_request(message):
+    """
+    Builds a request that directly embeds the API key and server, removing the need to query the GitHub API.
+    :param message:
+    :return:
+    """
+    return func.HttpRequest(
+        method='POST',
+        body=json.dumps({
+            "messages": [
+                {
+                    "content": message
+                }
+            ]
+        }).encode('utf8'),
+        url='/api/form_handler',
+        params=None,
+        headers={
+            "X-Octopus-ApiKey": Octopus_Api_Key,
+            "X-Octopus-Server": Octopus_Url,
         })

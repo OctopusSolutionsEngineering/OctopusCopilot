@@ -340,7 +340,7 @@
           </ResponseAssertion>
           <hashTree/>
         </hashTree>
-        <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <Arguments guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
           <collectionProp name="Arguments.arguments">
             <elementProp name="GitHubToken" elementType="Argument">
               <stringProp name="Argument.name">GitHubToken</stringProp>
@@ -418,14 +418,28 @@
               <stringProp name="Argument.value">Kubernetes.App.HealthCheck</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
+            <elementProp name="OctopusApiKey" elementType="Argument">
+              <stringProp name="Argument.name">OctopusApiKey</stringProp>
+              <stringProp name="Argument.value">${__BeanShell( System.getenv(&quot;OCTOPUS_CLI_API_KEY&quot;) )}</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="OctopusServer" elementType="Argument">
+              <stringProp name="Argument.name">OctopusServer</stringProp>
+              <stringProp name="Argument.value">${__BeanShell( System.getenv(&quot;OCTOPUS_CLI_SERVER&quot;) )}</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
           </collectionProp>
         </Arguments>
         <hashTree/>
-        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager">
           <collectionProp name="HeaderManager.headers">
             <elementProp name="" elementType="Header">
-              <stringProp name="Header.name">X-GitHub-Token</stringProp>
-              <stringProp name="Header.value">${GitHubToken}</stringProp>
+              <stringProp name="Header.name">X-Octopus-ApiKey</stringProp>
+              <stringProp name="Header.value">${OctopusApiKey}</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">X-Octopus-Server</stringProp>
+              <stringProp name="Header.value">${OctopusServer}</stringProp>
             </elementProp>
           </collectionProp>
         </HeaderManager>
