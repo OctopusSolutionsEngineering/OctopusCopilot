@@ -147,4 +147,5 @@ class DynamicDeploymentExperiments(unittest.TestCase):
 
                 result = llm_tool_query(query, get_tools, log_query).call_function()
 
-                self.assertTrue(deployment in result, f"Expected {deployment} in {result}")
+                self.assertTrue(deployment in result,
+                                f"Expected {deployment} for Project {project} Environment {environment} and Channel {channel} in result:\n{result}")
