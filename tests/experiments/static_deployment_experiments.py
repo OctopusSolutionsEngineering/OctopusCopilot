@@ -46,7 +46,7 @@ def retry_func(retry_state):
     return retry_state.attempt_number <= test_count
 
 
-class DeploymentExperiments(unittest.TestCase):
+class StaticDeploymentExperiments(unittest.TestCase):
     """
     This test case is used to run experiments against the LLM.
 

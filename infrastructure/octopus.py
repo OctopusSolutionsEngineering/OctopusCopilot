@@ -138,6 +138,78 @@ def get_current_user(my_api_key, my_octopus_api):
     return json["Id"]
 
 
+def get_projects(my_api_key, my_octopus_api, space_id):
+    """
+    Returns the projects in a space
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus URL
+    :return: The list of projects
+    """
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_projects).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_projects).')
+    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_projects).')
+
+    api = build_url(my_octopus_api, f"/api/{space_id}/Projects?take=10000")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
+
+    json = resp.json()
+    return json["Items"]
+
+
+def get_environments(my_api_key, my_octopus_api, space_id):
+    """
+    Returns the environments in a space
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus URL
+    :return: The list of environments
+    """
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_environments).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_environments).')
+    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_environments).')
+
+    api = build_url(my_octopus_api, f"/api/{space_id}/Environments?take=10000")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
+
+    json = resp.json()
+    return json["Items"]
+
+
+def get_project_channel(my_api_key, my_octopus_api, space_id, project_id):
+    """
+    Returns the channels associated with a project
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus URL
+    :return: The channels associated with the project
+    """
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_project_channel).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_project_channel).')
+    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_project_channel).')
+
+    api = build_url(my_octopus_api, f"/api/{space_id}/Projects/{project_id}/Channels")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
+
+    json = resp.json()
+    return json["Items"]
+
+
+def get_lifecycle(my_api_key, my_octopus_api, space_id, lifecycle_id):
+    """
+    Return the lifecycle with the given ID
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus URL
+    :return: The list of projects
+    """
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_lifecycle).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_lifecycle).')
+    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_lifecycle).')
+
+    api = build_url(my_octopus_api, f"/api/{space_id}/Lifecycles/{lifecycle_id}")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
+
+    json = resp.json()
+    return json
+
+
 def create_limited_api_key(user, my_api_key, my_octopus_api):
     """
     This function creates an API key that expires tomorrow.
@@ -221,6 +293,25 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     return resp.data.decode("utf-8")
+
+
+@retry(HTTPError, tries=3, delay=2)
+def get_project_progression_from_ids(space_id, project_id, api_key, octopus_url):
+    """
+    Returns a deployment progression for a project.
+    :param space_name: The name of the space.
+    :param project_name: The name of the project
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
+    :return: The deployment progression raw JSON
+    """
+    ensure_string_not_empty(space_id, 'space_name must be a non-empty string (get_project_progression).')
+    ensure_string_not_empty(project_id, 'project_name must be a non-empty string (get_project_progression).')
+
+    api = build_url(octopus_url, f"api/{space_id}/Projects/{project_id}/Progression")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+
+    return resp.json()
 
 
 @retry(HTTPError, tries=3, delay=2)
