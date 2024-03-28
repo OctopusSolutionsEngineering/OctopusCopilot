@@ -17,6 +17,7 @@ from infrastructure.openai import llm_tool_query
 
 def get_test_cases():
     """
+    Generates a set of test cases based on the status of a real Octopus instance.
     :return: a list of tuples matching a project, environment, and channel to a deployment
     """
     projects = get_projects(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
@@ -120,11 +121,20 @@ def releases_query_handler(original_query, enriched_query, space, projects, envi
 
 
 class DynamicDeploymentExperiments(unittest.TestCase):
+    """
+    DynamicDeploymentExperiments works by building a set of test cases against a real Octopus instance, then running
+    those tests cases via the LLM. This compares results we have determined by handcrafted API calls and data matching
+    to what the LLM has extracted from a general context. It allows us to effectively run LLM queries across an entire
+    space in an automated fashion to find edge cases that the LLM didn't handle correctly.
+    """
 
     def test_get_cases(self):
+        # Get the test cases generated from the space
         test_cases = get_test_cases()
+        # Loop through each case
         for project, channel, environment, deployment in test_cases:
             with self.subTest(f"{project} - {environment} - {channel}"):
+                # Create a query that should generate the same result as the test case
                 query = (f"Get the release version of the latest deployment of the \"{project}\" project "
                          + f"to the \"{environment}\" environment "
                          + f"in the \"{channel}\" channel "
