@@ -149,3 +149,5 @@ def create_and_deploy_release(octopus_server_uri="http://localhost:8080", octopu
     response = requests.post(uri, headers=headers, json=deploymentJson)
     print(response.json())
     response.raise_for_status()
+
+    return releaseVersion
