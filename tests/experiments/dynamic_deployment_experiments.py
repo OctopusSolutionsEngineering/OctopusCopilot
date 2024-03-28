@@ -1,18 +1,35 @@
+import json
 import os
 import unittest
 
-from domain.transformers.deployments_from_progression import get_deployment_progression
+from domain.context.octopus_context import collect_llm_context
+from domain.logging.query_loggin import log_query
+from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
+from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list, sanitize_environments
+from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
+from domain.tools.releases_and_deployments import answer_releases_and_deployments_callback
+from domain.transformers.deployments_from_progression import get_deployment_progression, \
+    get_deployment_array_from_progression
 from infrastructure.octopus import get_projects, get_environments, get_project_channel, get_lifecycle, \
-    get_project_progression_from_ids
+    get_project_progression_from_ids, get_project_progression, get_dashboard
+from infrastructure.openai import llm_tool_query
 
 
 def get_test_cases():
+    """
+    :return: a list of tuples matching a project, environment, and channel to a deployment
+    """
     projects = get_projects(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
                             os.environ.get("TEST_OCTOPUS_SPACE_ID"))
     environments = get_environments(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
                                     os.environ.get("TEST_OCTOPUS_SPACE_ID"))
 
+    test_cases = []
+
     for project in projects:
+        if not project["TenantedDeploymentMode"] == "Untenanted":
+            continue
+
         progression = get_project_progression_from_ids(os.environ.get("TEST_OCTOPUS_SPACE_ID"),
                                                        project["Id"],
                                                        os.environ.get("TEST_OCTOPUS_API_KEY"),
@@ -39,23 +56,85 @@ def get_test_cases():
             for environment in channel["Lifecycle"]["Environments"]:
                 environment["Deployments"] = get_deployment_progression(progression, environment["Id"], channel["Id"])
 
-    test_cases = []
-
-    for project in projects:
         for channel in project["Channels"]:
             for environment in channel["Lifecycle"]["Environments"]:
                 if environment["Deployments"]:
-                    test_cases.append({
-                        "project": project,
-                        "channel": channel,
-                        "environment": environment,
-                        "deployment": environment["Deployments"][0],
-                    })
+                    test_cases.append((
+                        project["Name"],
+                        channel["Name"],
+                        environment["Name"],
+                        list(map(lambda x: x["ReleaseVersion"], environment["Deployments"]))[0],
+                    ))
 
     return test_cases
 
 
+def releases_query_handler(original_query, enriched_query, space, projects, environments, channels, releases):
+    api_key = os.environ.get("TEST_OCTOPUS_API_KEY")
+    url = os.environ.get("TEST_OCTOPUS_URL")
+
+    project = get_item_or_none(sanitize_list(projects), 0)
+    environments = get_item_or_none(sanitize_list(environments), 0)
+
+    messages = build_deployments_and_releases_prompt()
+    context = {"input": enriched_query}
+
+    # We need some additional JSON data to answer this question
+    if project:
+        # We only need the deployments, so strip out the rest of the JSON
+        deployments = get_deployment_array_from_progression(
+            json.loads(get_project_progression(space, project, api_key, url)),
+            sanitize_environments(environments),
+            3)
+        context["json"] = json.dumps(deployments, indent=2)
+    else:
+        context["json"] = get_dashboard(space, api_key, url)
+
+    chat_response = collect_llm_context(original_query,
+                                        messages,
+                                        context,
+                                        space,
+                                        project,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        environments,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        api_key,
+                                        url,
+                                        log_query)
+
+    return chat_response
+
+
 class DynamicDeploymentExperiments(unittest.TestCase):
+
     def test_get_cases(self):
         test_cases = get_test_cases()
-        self.assertTrue(test_cases)
+        for project, channel, environment, deployment in test_cases:
+            with self.subTest(f"{project} - {environment} - {channel}"):
+                query = (f"Get the release version of the latest deployment of the \"{project}\" project "
+                         + f"to the \"{environment}\" environment "
+                         + f"in the \"{channel}\" channel "
+                         + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space.")
+
+                def get_tools():
+                    return FunctionDefinitions([
+                        FunctionDefinition(
+                            answer_releases_and_deployments_callback(query, releases_query_handler, log_query))])
+
+                result = llm_tool_query(query, get_tools, log_query).call_function()
+
+                self.assertTrue(deployment in result, f"Expected {deployment} in {result}")
