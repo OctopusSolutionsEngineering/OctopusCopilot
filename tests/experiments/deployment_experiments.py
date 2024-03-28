@@ -4,7 +4,10 @@ from tenacity import retry
 
 from infrastructure.openai import llm_message_query
 
+# How many times to rerun the experiment. LLMs are non-deterministic, so you do need to rerun them multiple times.
 test_count = 5
+# The percent of successful experiments to consider the test a success. 100% is unreasonable with non-deterministic
+# systems like LLMs. 80% is a good starting point.
 threshold = 80
 
 
