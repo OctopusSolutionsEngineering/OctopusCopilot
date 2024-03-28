@@ -115,7 +115,7 @@ def releases_query_handler(original_query, enriched_query, space, projects, envi
                                         None,
                                         api_key,
                                         url,
-                                        log_query)
+                                        None)
 
     return chat_response
 
