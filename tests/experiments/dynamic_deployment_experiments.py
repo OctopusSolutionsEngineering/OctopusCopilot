@@ -126,6 +126,8 @@ class DynamicDeploymentExperiments(unittest.TestCase):
     those tests cases via the LLM. This compares results we have determined by handcrafted API calls and data matching
     to what the LLM has extracted from a general context. It allows us to effectively run LLM queries across an entire
     space in an automated fashion to find edge cases that the LLM didn't handle correctly.
+
+    Disable warnings using the instructions at https://stackoverflow.com/a/60853866/157605
     """
 
     def test_get_cases(self):
