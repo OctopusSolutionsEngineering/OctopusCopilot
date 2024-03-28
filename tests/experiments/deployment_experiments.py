@@ -256,12 +256,60 @@ class DeploymentExperiments(unittest.TestCase):
         self.assertTrue("2.10.921" in result)
 
     @retry(retry=retry_func)
+    def test_get_latest_release_cot_prompt_development_2(self):
+        """
+        Tests how the LLM extracts the release version of a deployment to an environment with a simple prompt and
+        a chain-of-thought instruction. This test does not reference a "release version" or "version", just the
+        deployment. The JSON context includes 3 previous deployments.
+
+        Features
+        -----------------------
+        ToT:                No
+        CoT Prompt:         Yes
+        CoT Example:        No
+        Few-Shot Example:   No
+        Tipping:            Yes
+
+        This test generally passes. Note that "test_get_latest_release_cot_prompt_development_corrupted_2" generally
+        fails despite having the same prompt.
+        """
+
+        messages = [
+            ("system",
+             "The supplied HCL context provides details on projects, environments, channels, and tenants. "
+             + "The supplied JSON context provides details on deployments and releases. "
+             + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
+             + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
+             + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
+             + "I’m going to tip $500 for a better solution! "
+             + "Let's think about this step by step."),
+            ("user", "{input}"),
+            # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
+            # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
+            ("user", "JSON: ###\n{json}\n###"),
+            ("user", "HCL: ###\n{hcl}\n###")]
+
+        with open('octofx_development_deployments.tf', 'r') as file:
+            hcl = file.read()
+
+        with open('octofx_development_deployments.json', 'r') as file:
+            json = file.read()
+
+        query = "What is the latest deployment to the \"Development\" environment for the project \"OctoFX\"?"
+
+        result = llm_message_query(messages, {"json": json, "hcl": hcl, "context": None, "input": query})
+
+        print("")
+        print(result)
+
+        self.assertTrue("2.10.921" in result)
+
+    @retry(retry=retry_func)
     def test_get_latest_release_cot_prompt_development_corrupted(self):
         """
         Tests how the LLM extracts the release version of a deployment to an environment with a simple prompt and
-        a chain-of-thought instruction. This test does not reference a "release version", just a version. The
-        JSON context includes 3 previous deployments. The HCL context is syntactically invalid with a string that
-        is spanning multiple lines.
+        a chain-of-thought instruction. The JSON context includes 3 previous deployments. The HCL context is
+        syntactically invalid with a string that is spanning multiple lines.
 
         Features
         -----------------------
@@ -274,7 +322,8 @@ class DeploymentExperiments(unittest.TestCase):
         This test generally passes.
 
         This shows that a COT prompt like "Let's think about this step by step" has a measurable impact on the ability
-        of the LLM to extract the correct information from the context.
+        of the LLM to extract the correct information from the context. It also shows that the LLM does not need strictly
+        valid HCL to extract the correct information.
         """
 
         messages = [
@@ -299,6 +348,62 @@ class DeploymentExperiments(unittest.TestCase):
             json = file.read()
 
         query = "What is the version of the latest deployment to the \"Development\" environment for the project \"OctoFX\"?"
+
+        result = llm_message_query(messages, {"json": json, "hcl": hcl, "context": None, "input": query})
+
+        print("")
+        print(result)
+
+        self.assertTrue("2.10.921" in result)
+
+    @retry(retry=retry_func)
+    def test_get_latest_release_cot_prompt_development_corrupted_2(self):
+        """
+        Tests how the LLM extracts the release version of a deployment to an environment with a simple prompt and
+        a chain-of-thought instruction. This test does not reference a "release version", just a version. The
+        JSON context includes 3 previous deployments. The HCL context is syntactically invalid with a string that
+        is spanning multiple lines.
+
+        Features
+        -----------------------
+        ToT:                No
+        CoT Prompt:         Yes
+        CoT Example:        No
+        Few-Shot Example:   No
+        Tipping:            Yes
+
+        This test generally fails.
+
+        The difference between this test and "test_get_latest_release_cot_prompt_development_corrupted" is only the
+        that the prompt does not reference a "release version", just the latest deployment. This test returns the
+        deployment ID instead. This is perhaps expected, although "test_get_latest_release_cot_prompt_development_2"
+        generally passes and has the same prompt.
+
+        This shows that corrupted HCL can impact the reliability of the answer.
+        """
+
+        messages = [
+            ("system",
+             "The supplied HCL context provides details on projects, environments, channels, and tenants. "
+             + "The supplied JSON context provides details on deployments and releases. "
+             + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
+             + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
+             + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
+             + "I’m going to tip $500 for a better solution! "
+             + "Let's think about this step by step."),
+            ("user", "{input}"),
+            # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
+            # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
+            ("user", "JSON: ###\n{json}\n###"),
+            ("user", "HCL: ###\n{hcl}\n###")]
+
+        with open('octofx_development_deployments_corrupted.tf', 'r') as file:
+            hcl = file.read()
+
+        with open('octofx_development_deployments.json', 'r') as file:
+            json = file.read()
+
+        query = "What is the latest deployment to the \"Development\" environment for the project \"OctoFX\"?"
 
         result = llm_message_query(messages, {"json": json, "hcl": hcl, "context": None, "input": query})
 
