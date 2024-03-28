@@ -48,7 +48,8 @@ class LLMExperiments(unittest.TestCase):
     This test case is used to run experiments against the LLM.
 
     Unlike other tests, the "test cases" in this class are not expected to be run to validate the correctness of the
-    application. Instead, they are used to validate hypotheses and run experiments.
+    application. Instead, they are used to validate hypotheses and run experiments. Importantly, failed experiments
+    are kept here as a reference.
 
     For this reason, the tests are disabled by not having a suffix of "_test", which prevents them being run by the
     CI/CD process. They can be run manually in the IDE.
@@ -57,8 +58,70 @@ class LLMExperiments(unittest.TestCase):
     @retry(retry=retry_func)
     def test_get_latest_release(self):
         """
-        Tests how the LLM extracts the release version of a deployment to an environment with a chain of thought
-        prompt.
+        Tests how the LLM extracts the release version of a deployment to an environment with a simple prompt.
+
+        Features
+        -----------------------
+        ToT:                No
+        CoT Prompt:         No
+        CoT Example:        No
+        Few-Shot Example:   No
+        Tipping:            Yes
+
+        This test generally fails.
+
+        This shows that the LLM is not able to traverse the relationships between the resources in the HCL and the
+        deployments in the JSON to find the correct release version without additional instructions. "Tipping" the LLM
+        doesn't help either.
+        """
+
+        messages = [
+            ("system",
+             "The supplied HCL context provides details on projects, environments, channels, and tenants. "
+             + "The supplied JSON context provides details on deployments and releases. "
+             + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
+             + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
+             + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
+             + "I’m going to tip $500 for a better solution!"),
+            ("user", "{input}"),
+            # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
+            # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
+            ("user", "JSON: ###\n{json}\n###"),
+            ("user", "HCL: ###\n{hcl}\n###")]
+
+        with open('octofx.tf', 'r') as file:
+            hcl = file.read()
+
+        with open('octofx_production_deployments.json', 'r') as file:
+            json = file.read()
+
+        query = "What is the release version of the latest deployment to the \"Production\" environment for the project \"Deploy WebApp\"?"
+
+        result = llm_message_query(messages, {"json": json, "hcl": hcl, "context": None, "input": query})
+
+        print("")
+        print(result)
+
+        self.assertTrue("2.10.517" in result)
+
+    @retry(retry=retry_func)
+    def test_get_latest_release_cot_prompt(self):
+        """
+        Tests how the LLM extracts the release version of a deployment to an environment with a simple prompt and
+        a chain-of-thought instruction.
+
+        Features
+        -----------------------
+        ToT:                No
+        CoT Prompt:         Yes
+        CoT Example:        No
+        Few-Shot Example:   No
+        Tipping:            Yes
+
+        This test generally passes.
+
+        This shows that a COT prompt like "Let's think about this step by step" has a measurable impact on the ability
+        of the LLM to extract the correct information from the context.
         """
 
         messages = [
@@ -70,6 +133,53 @@ class LLMExperiments(unittest.TestCase):
              + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
              + "I’m going to tip $500 for a better solution! "
              + "Let's think about this step by step."),
+            ("user", "{input}"),
+            # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
+            # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
+            ("user", "JSON: ###\n{json}\n###"),
+            ("user", "HCL: ###\n{hcl}\n###")]
+
+        with open('octofx.tf', 'r') as file:
+            hcl = file.read()
+
+        with open('octofx_production_deployments.json', 'r') as file:
+            json = file.read()
+
+        query = "What is the release version of the latest deployment to the \"Production\" environment for the project \"Deploy WebApp\"?"
+
+        result = llm_message_query(messages, {"json": json, "hcl": hcl, "context": None, "input": query})
+
+        print("")
+        print(result)
+
+        self.assertTrue("2.10.517" in result)
+
+    @retry(retry=retry_func)
+    def test_get_latest_release_few_shot_cot(self):
+        """
+        Tests how the LLM extracts the release version of a deployment to an environment with a chain of thought
+        prompt.
+
+        Features
+        -----------------------
+        ToT:                No
+        CoT Prompt:         No
+        CoT Example:        Yes
+        Few-Shot Example:   Yes
+        Tipping:            Yes
+
+        This test generally passes.
+
+        """
+
+        messages = [
+            ("system",
+             "The supplied HCL context provides details on projects, environments, channels, and tenants. "
+             + "The supplied JSON context provides details on deployments and releases. "
+             + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
+             + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
+             + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
+             + "I’m going to tip $500 for a better solution!"),
             ("user", "{input}"),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
