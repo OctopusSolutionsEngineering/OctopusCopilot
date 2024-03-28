@@ -50,7 +50,7 @@ resource "octopusdeploy_project" "project_octofx" {
   lifecycle {
     ignore_changes = ["connectivity_policy"]
   }
-  description = "Repository: [Azure DevOps](https://dev.azure.com/octopussamples/OctoFX/_git/Demo)"
+  description = "Repository: [Azure DevOps](https://dev.azure.com/octopussamples/OctoFX/_git/Demo)\n\nStable Build: [Azure DevOps](https://dev.azure.com/octopussamples/OctoFX/_build?definitionId=50)\n\nPreview Build: [Azure DevOps](https://dev.azure.com/octopussamples/OctoFX/_build?definitionId=56)\n\nHotfix Build: [Azure DevOps](https://dev.azure.com/octopussamples/OctoFX/_build?definitionId=51)\n\nIncludes:\n* Manual Intervention\n* .NET, Windows Service, IIS\n* SQL Server,  DbUp\n* Rolling Deployment with Load Balancer\n* Runbooks\n* Email notifications\n\n[Refresh deployments](https://demo.octopus.app/app#/Spaces-42/projects/octofx-template/operations/runbooks/Runbooks-1649/runNow)\n"
 }
 
 resource "octopusdeploy_space" "octopus_space_matthew_casperson" {
