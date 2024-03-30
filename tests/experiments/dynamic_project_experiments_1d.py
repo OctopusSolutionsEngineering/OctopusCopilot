@@ -104,11 +104,11 @@ class DynamicProjectExperiments(unittest.TestCase):
                 result = llm_tool_query(query, get_tools).call_function()
 
                 self.assertTrue(id in result, f"Expected \"{id}\" for Project {name} in result:\n{result}")
+                if template:
+                    self.assertTrue(template in result,
+                                    f"Expected \"{template}\" for Project {name} in result:\n{result}")
                 if description and description.strip():
                     # The LLM removes empty lines despite being told not to modify the description
                     sanitized_description = remove_empty_lines(description).strip()
                     self.assertTrue(sanitized_description in result,
                                     f"Expected \"{sanitized_description}\" for Project {name} in result:\n{result}")
-                if template:
-                    self.assertTrue(template in result,
-                                    f"Expected \"{template}\" for Project {name} in result:\n{result}")
