@@ -37,6 +37,10 @@ def remove_empty_lines(s):
     return "\n".join([line for line in s.splitlines() if line.strip()])
 
 
+def remove_double_whitespace(s):
+    return re.sub(r'\s+', ' ', s)
+
+
 def general_query_handler(original_query, body):
     api_key = os.environ.get("TEST_OCTOPUS_API_KEY")
     url = os.environ.get("TEST_OCTOPUS_URL")
@@ -109,6 +113,6 @@ class DynamicProjectExperiments(unittest.TestCase):
                                     f"Expected \"{template}\" for Project {name} in result:\n{result}")
                 if description and description.strip():
                     # The LLM removes empty lines despite being told not to modify the description
-                    sanitized_description = remove_empty_lines(description).strip()
+                    sanitized_description = remove_double_whitespace(remove_empty_lines(description)).strip()
                     self.assertTrue(sanitized_description in result,
                                     f"Expected \"{sanitized_description}\" for Project {name} in result:\n{result}")
