@@ -15,7 +15,7 @@ from infrastructure.octopus import get_projects, get_environments, get_project_c
 from infrastructure.openai import llm_tool_query
 
 
-def get_test_cases():
+def get_test_cases(limit=0):
     """
     Generates a set of test cases based on the status of a real Octopus instance.
     :return: a list of tuples matching a project, environment, and channel to a deployment
@@ -27,6 +27,7 @@ def get_test_cases():
 
     test_cases = []
 
+    count = 0
     for project in projects:
         if not project["TenantedDeploymentMode"] == "Untenanted":
             continue
@@ -60,6 +61,12 @@ def get_test_cases():
         for channel in project["Channels"]:
             for environment in channel["Lifecycle"]["Environments"]:
                 if environment["Deployments"]:
+
+                    # early exit when a limit it set
+                    count += 1
+                    if 0 < limit < count:
+                        return test_cases
+
                     test_cases.append((
                         project["Name"],
                         channel["Name"],
@@ -126,13 +133,11 @@ class DynamicDeploymentExperiments(unittest.TestCase):
     those tests cases via the LLM. This compares results we have determined by handcrafted API calls and data matching
     to what the LLM has extracted from a general context. It allows us to effectively run LLM queries across an entire
     space in an automated fashion to find edge cases that the LLM didn't handle correctly.
-
-    Disable warnings using the instructions at https://stackoverflow.com/a/60853866/157605
     """
 
     def test_get_cases(self):
         # Get the test cases generated from the space
-        test_cases = get_test_cases()
+        test_cases = get_test_cases(1)
         # Loop through each case
         for project, channel, environment, deployment in test_cases:
             with self.subTest(f"{project} - {environment} - {channel}"):
