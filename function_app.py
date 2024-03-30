@@ -445,7 +445,7 @@ Once default values are set, you can omit the space, environment, and project fr
 * `Show me the dashboard`
 * `Show me the status of the latest deployment to the production environment`"""
 
-    def general_query_handler(body):
+    def general_query_handler(original_query, body):
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), body["space_name"], "Space")
@@ -455,9 +455,9 @@ Once default values are set, you can omit the space, environment, and project fr
                                                  "Environment")
 
         messages = build_hcl_prompt()
-        context = {"input": extract_query(req)}
+        context = {"input": original_query}
 
-        return collect_llm_context(extract_query(req),
+        return collect_llm_context(original_query,
                                    messages,
                                    context,
                                    space,
@@ -599,7 +599,8 @@ Once default values are set, you can omit the space, environment, and project fr
         query = extract_query(req)
 
         return FunctionDefinitions([
-            FunctionDefinition(answer_general_query_callback(general_query_handler, log_query), AnswerGeneralQuery),
+            FunctionDefinition(answer_general_query_callback(query, general_query_handler, log_query),
+                               AnswerGeneralQuery),
             FunctionDefinition(
                 answer_project_variables_callback(query, variable_query_handler, log_query)),
             FunctionDefinition(

@@ -57,7 +57,7 @@ def collect_llm_context(original_query, messages, context, space_name, project_n
         log_query("Project Group Names:", projectgroup_names)
         log_query("Channel Names:", channel_names)
         log_query("Release Versions:", release_versions)
-        log_query("Steps:", release_versions)
+        log_query("Steps:", step_names)
         log_query("Variables:", variable_names)
 
     # This context provides details about resources like projects, environments, feeds, accounts, certificates, etc.

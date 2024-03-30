@@ -92,10 +92,10 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "JSON: ###\n{json}\n###"),
             ("user", "HCL: ###\n{hcl}\n###")]
 
-        with open('octofx_production_deployments.tf', 'r') as file:
+        with open('context/octofx_production_deployments.tf', 'r') as file:
             hcl = file.read()
 
-        with open('octofx_production_deployments.json', 'r') as file:
+        with open('context/octofx_production_deployments.json', 'r') as file:
             json = file.read()
 
         query = "What is the release version of the latest deployment to the \"Production\" environment for the project \"OctoFX\"?"
@@ -142,10 +142,10 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "JSON: ###\n{json}\n###"),
             ("user", "HCL: ###\n{hcl}\n###")]
 
-        with open('octofx_production_deployments.tf', 'r') as file:
+        with open('context/octofx_production_deployments.tf', 'r') as file:
             hcl = file.read()
 
-        with open('octofx_production_deployments.json', 'r') as file:
+        with open('context/octofx_production_deployments.json', 'r') as file:
             json = file.read()
 
         query = "What is the release version of the latest deployment to the \"Production\" environment for the project \"OctoFX\"?"
@@ -192,10 +192,10 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "JSON: ###\n{json}\n###"),
             ("user", "HCL: ###\n{hcl}\n###")]
 
-        with open('octofx_production_deployments.tf', 'r') as file:
+        with open('context/octofx_production_deployments.tf', 'r') as file:
             hcl = file.read()
 
-        with open('octofx_production_deployments.json', 'r') as file:
+        with open('context/octofx_production_deployments.json', 'r') as file:
             json = file.read()
 
         query = "What is the version of the latest deployment to the \"Production\" environment for the project \"OctoFX\"?"
@@ -243,10 +243,10 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "JSON: ###\n{json}\n###"),
             ("user", "HCL: ###\n{hcl}\n###")]
 
-        with open('octofx_development_deployments.tf', 'r') as file:
+        with open('context/octofx_development_deployments.tf', 'r') as file:
             hcl = file.read()
 
-        with open('octofx_development_deployments.json', 'r') as file:
+        with open('context/octofx_development_deployments.json', 'r') as file:
             json = file.read()
 
         query = "What is the version of the latest deployment to the \"Development\" environment for the project \"OctoFX\"?"
@@ -292,10 +292,10 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "JSON: ###\n{json}\n###"),
             ("user", "HCL: ###\n{hcl}\n###")]
 
-        with open('octofx_development_deployments.tf', 'r') as file:
+        with open('context/octofx_development_deployments.tf', 'r') as file:
             hcl = file.read()
 
-        with open('octofx_development_deployments.json', 'r') as file:
+        with open('context/octofx_development_deployments.json', 'r') as file:
             json = file.read()
 
         query = "What is the latest deployment to the \"Development\" environment for the project \"OctoFX\"?"
@@ -344,10 +344,10 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "JSON: ###\n{json}\n###"),
             ("user", "HCL: ###\n{hcl}\n###")]
 
-        with open('octofx_development_deployments_corrupted.tf', 'r') as file:
+        with open('context/octofx_development_deployments_corrupted.tf', 'r') as file:
             hcl = file.read()
 
-        with open('octofx_development_deployments.json', 'r') as file:
+        with open('context/octofx_development_deployments.json', 'r') as file:
             json = file.read()
 
         query = "What is the version of the latest deployment to the \"Development\" environment for the project \"OctoFX\"?"
@@ -400,10 +400,10 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "JSON: ###\n{json}\n###"),
             ("user", "HCL: ###\n{hcl}\n###")]
 
-        with open('octofx_development_deployments_corrupted.tf', 'r') as file:
+        with open('context/octofx_development_deployments_corrupted.tf', 'r') as file:
             hcl = file.read()
 
-        with open('octofx_development_deployments.json', 'r') as file:
+        with open('context/octofx_development_deployments.json', 'r') as file:
             json = file.read()
 
         query = "What is the latest deployment to the \"Development\" environment for the project \"OctoFX\"?"
@@ -447,10 +447,10 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "JSON: ###\n{json}\n###"),
             ("user", "HCL: ###\n{hcl}\n###")]
 
-        with open('octofx_production_deployments.tf', 'r') as file:
+        with open('context/octofx_production_deployments.tf', 'r') as file:
             hcl = file.read()
 
-        with open('octofx_production_deployments.json', 'r') as file:
+        with open('context/octofx_production_deployments.json', 'r') as file:
             json = file.read()
 
         query = "What is the release version of the latest deployment to the \"Production\" environment for the project \"OctoFX\"?"

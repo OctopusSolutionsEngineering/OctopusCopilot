@@ -1,0 +1,1 @@
+This directory holds JSON and Terraform files used as example context in the experiments.

@@ -1,0 +1,1 @@
+This directory holds a JMeter test used for load testing the deployed application.

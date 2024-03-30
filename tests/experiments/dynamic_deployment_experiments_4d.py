@@ -3,7 +3,6 @@ import os
 import unittest
 
 from domain.context.octopus_context import collect_llm_context
-from domain.logging.query_loggin import log_query
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list, sanitize_environments
 from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
@@ -116,8 +115,8 @@ def releases_query_handler(original_query, enriched_query, space, projects, envi
                                         None,
                                         None,
                                         None,
-                                        None,
-                                        None,
+                                        channels,
+                                        releases,
                                         None,
                                         None,
                                         api_key,
@@ -133,6 +132,12 @@ class DynamicDeploymentExperiments(unittest.TestCase):
     those tests cases via the LLM. This compares results we have determined by handcrafted API calls and data matching
     to what the LLM has extracted from a general context. It allows us to effectively run LLM queries across an entire
     space in an automated fashion to find edge cases that the LLM didn't handle correctly.
+
+    This test verifies the LLMs ability to match data across 4 dimensions:
+    * project
+    * environment
+    * channel
+    * deployments
 
     The issue at https://intellij-support.jetbrains.com/hc/en-us/community/posts/360000024199-Python-SubTest?utm_source=pocket_saves
     describes how to configure PyCharm to display the output of subtests individually.
@@ -153,9 +158,9 @@ class DynamicDeploymentExperiments(unittest.TestCase):
                 def get_tools():
                     return FunctionDefinitions([
                         FunctionDefinition(
-                            answer_releases_and_deployments_callback(query, releases_query_handler, log_query))])
+                            answer_releases_and_deployments_callback(query, releases_query_handler))])
 
-                result = llm_tool_query(query, get_tools, log_query).call_function()
+                result = llm_tool_query(query, get_tools).call_function()
 
                 self.assertTrue(deployment in result,
                                 f"Expected {deployment} for Project {project} Environment {environment} and Channel {channel} in result:\n{result}")

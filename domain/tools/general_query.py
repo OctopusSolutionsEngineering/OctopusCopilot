@@ -6,7 +6,7 @@ from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_runbook
     sanitize_channels, sanitize_releases, sanitize_steps, sanitize_gitcredentials, sanitize_space
 
 
-def answer_general_query_callback(callback, logging=None):
+def answer_general_query_callback(query, callback, logging=None):
     def answer_general_query(space=None, projects=None, runbooks=None, targets=None,
                              tenants=None, library_variable_sets=None, environments=None,
                              feeds=None, accounts=None, certificates=None, lifecycles=None,
@@ -75,7 +75,7 @@ gitcredentials: git credential names"""
             else:
                 logging(f"Conflicting Key: {key}", "Value: {value}")
 
-        return callback(body)
+        return callback(query, body)
 
     return answer_general_query
 
