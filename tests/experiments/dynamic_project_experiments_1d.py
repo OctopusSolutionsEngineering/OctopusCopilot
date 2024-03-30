@@ -38,7 +38,7 @@ def remove_empty_lines(s):
 
 
 def remove_double_whitespace(s):
-    return re.sub(r'\s+', ' ', s)
+    return re.sub(r'[ ]+', ' ', s)
 
 
 def general_query_handler(original_query, body):
