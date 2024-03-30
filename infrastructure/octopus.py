@@ -252,7 +252,7 @@ def get_raw_deployment_process(space_name, project_name, api_key, octopus_url):
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
 
-    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partial_name=project_name))
+    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     project = get_item_ignoring_case(resp.json()["Items"], project_name)
@@ -281,7 +281,7 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
 
-    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partial_name=project_name))
+    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     project = get_item_ignoring_case(resp.json()["Items"], project_name)
@@ -337,14 +337,14 @@ def get_deployment_status_base(space_name, environment_name, project_name, api_k
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
 
-    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partial_name=project_name))
+    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     project = get_item_ignoring_case(resp.json()["Items"], project_name)
 
     if project is None:
         raise ResourceNotFound("No projects found matching the name " + project_name)
 
-    api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partial_name=environment_name))
+    api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partialname=environment_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     environment = get_item_ignoring_case(resp.json()["Items"], environment_name)
 
@@ -474,7 +474,7 @@ def handle_response(callback):
 
 
 def get_project(space_id, project_name, octopus_url, api_key):
-    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partial_name=project_name))
+    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     project = get_item_ignoring_case(resp.json()["Items"], project_name)
 
@@ -485,7 +485,7 @@ def get_project(space_id, project_name, octopus_url, api_key):
 
 
 def get_environment(space_id, environment_name, octopus_url, api_key):
-    api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partial_name=environment_name))
+    api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partialname=environment_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     environment = get_item_ignoring_case(resp.json()["Items"], environment_name)
 
@@ -496,7 +496,7 @@ def get_environment(space_id, environment_name, octopus_url, api_key):
 
 
 def get_tenant(space_id, tenant_name, octopus_url, api_key):
-    api = build_url(octopus_url, "api/" + space_id + "/Tenants", dict(partial_name=tenant_name))
+    api = build_url(octopus_url, "api/" + space_id + "/Tenants", dict(partialname=tenant_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     tenant = get_item_ignoring_case(resp.json()["Items"], tenant_name)
 
