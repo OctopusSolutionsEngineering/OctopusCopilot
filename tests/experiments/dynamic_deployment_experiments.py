@@ -133,6 +133,9 @@ class DynamicDeploymentExperiments(unittest.TestCase):
     those tests cases via the LLM. This compares results we have determined by handcrafted API calls and data matching
     to what the LLM has extracted from a general context. It allows us to effectively run LLM queries across an entire
     space in an automated fashion to find edge cases that the LLM didn't handle correctly.
+
+    The issue at https://intellij-support.jetbrains.com/hc/en-us/community/posts/360000024199-Python-SubTest?utm_source=pocket_saves
+    describes how to configure PyCharm to display the output of subtests individually.
     """
 
     def test_get_cases(self):
