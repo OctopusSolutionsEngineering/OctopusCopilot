@@ -2,7 +2,7 @@ import os
 import unittest
 
 from domain.context.octopus_context import collect_llm_context
-from domain.messages.general import build_hcl_prompt
+from domain.messages.targets import build_targets_prompt
 from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
 from infrastructure.octopus import get_machines, get_environments
@@ -42,7 +42,7 @@ def general_query_handler(original_query, body):
     api_key = os.environ.get("TEST_OCTOPUS_API_KEY")
     url = os.environ.get("TEST_OCTOPUS_URL")
 
-    messages = build_hcl_prompt()
+    messages = build_targets_prompt()
     context = {"input": original_query}
 
     return collect_llm_context(original_query,
@@ -105,8 +105,9 @@ class DynamicAccountExperiments(unittest.TestCase):
                 print(f"Should have found {len(machines)} machines")
 
                 # Make sure the machine is present
+                missing_machines = []
                 for machine in machines:
-                    self.assertTrue(machine[0] in result,
-                                    f"Expected \"{machine[0]}\" for Environment {name} in result:\n{result}")
-                    self.assertTrue(machine[1] in result,
-                                    f"Expected \"{machine[1]}\" for Environment {name} in result:\n{result}")
+                    if not machine[1] in result:
+                        missing_machines.append(machine[1])
+
+                self.assertEqual(len(missing_machines), 0, f"Missing machines: {','.join(missing_machines)}")

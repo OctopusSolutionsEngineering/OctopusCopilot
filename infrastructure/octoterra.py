@@ -62,6 +62,8 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
     sanitized_step_names = sanitize_steps(step_names)
     sanitized_variable_names = sanitize_variables(variable_names)
 
+    exclude_targets_with_no_environments = len(sanitized_environments) != 0
+
     body = {
         "space": space_id,
         "url": octopus_url,
@@ -106,6 +108,8 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
         "excludeProvider": True,
         "includeIds": True,
         "includeSpaceInPopulation": True,
+        # If any environments were mentioned, exclude targets that are not linked to the named environments.
+        "excludeTargetsWithNoEnvironments": exclude_targets_with_no_environments,
     }
 
     resp = handle_response(lambda: http.request("POST",
