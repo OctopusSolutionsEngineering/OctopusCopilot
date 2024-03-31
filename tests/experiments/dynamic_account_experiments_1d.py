@@ -64,7 +64,7 @@ def general_query_handler(original_query, body):
 class DynamicAccountExperiments(unittest.TestCase):
     """
     This test verifies the LLMs ability to match data across 1 dimension:
-    * tenant
+    * account
     """
 
     def test_feeds(self):

@@ -3,28 +3,39 @@ import unittest
 
 from domain.context.octopus_context import collect_llm_context
 from domain.messages.general import build_hcl_prompt
-from domain.sanitizers.sanitize_strings import add_spaces_before_capitals
 from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
-from infrastructure.octopus import get_feeds
+from infrastructure.octopus import get_machines, get_environments
 from infrastructure.openai import llm_tool_query
 
 
 def get_test_cases(limit=0):
     """
     Generates a set of test cases based on the status of a real Octopus instance.
-    :return: a list of tuples matching a project name, id, description and versioning strategy template
+    :return: a list of tuples matching a project name, id, status, scoped environments
     """
-    tenants = get_feeds(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
-                        os.environ.get("TEST_OCTOPUS_SPACE_ID"))
+    machines = get_machines(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
+                            os.environ.get("TEST_OCTOPUS_SPACE_ID"))
+    environments = get_environments(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
+                                    os.environ.get("TEST_OCTOPUS_SPACE_ID"))
 
-    tenants = list(
-        map(lambda x: (x.get("Name"), x.get("Id"), x.get("FeedUri"), x.get("FeedType")), tenants))
+    # Get a list of tuples with environment names and a list of tuples with the machine name and ID
+    environment_machines = list(map(lambda e: (
+        # environment name
+        e.get("Name"),
+        # machines in environment
+        list(map(lambda m: (
+            # machine name
+            m.get("Name"),
+            # machine id
+            m.get("Id")),
+                 filter(lambda m: e.get("Id") in m.get("EnvironmentIds"), machines)))),
+                                    environments))
 
     if limit > 0:
-        return tenants[:limit]
+        return environment_machines[:limit]
 
-    return tenants
+    return environment_machines
 
 
 def general_query_handler(original_query, body):
@@ -61,23 +72,27 @@ def general_query_handler(original_query, body):
                                None)
 
 
-class DynamicTenantExperiments(unittest.TestCase):
+class DynamicAccountExperiments(unittest.TestCase):
     """
     This test verifies the LLMs ability to match data across 1 dimension:
-    * feed
+    * machine
+    * environment
     """
 
     def test_feeds(self):
         # Get the test cases generated from the space
         test_cases = get_test_cases()
         # Loop through each case
-        for name, id, uri, type in test_cases:
+        for name, machines in test_cases:
+            if len(machines) == 0:
+                continue
 
-            with self.subTest(f"{name} - {id} - {uri}"):
+            with self.subTest(f"{name} - {','.join(map(lambda m: m[0], machines))}"):
                 # Create a query that should generate the same result as the test case
                 query = (
-                        f"List the ID, feed type, and URI of the feed \"{name}\" "
-                        + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space.")
+                        f"List the unique names and IDs of all machines "
+                        + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space "
+                        + f"belonging to the \"{name}\" environment")
 
                 def get_tools():
                     return FunctionDefinitions([
@@ -88,13 +103,9 @@ class DynamicTenantExperiments(unittest.TestCase):
 
                 print(result)
 
-                self.assertTrue(id in result, f"Expected \"{id}\" for Feed {name} in result:\n{result}")
-
-                # The LLM will helpfully expand strings like "AwsElasticContainerRegistry"
-                # to "Aws Elastic Container Registry"
-                feed_type = add_spaces_before_capitals(type).strip()
-                self.assertTrue(feed_type in result or type in result,
-                                f"Expected \"{feed_type}\" for Feed {name} in result:\n{result}")
-
-                if uri and uri.strip():
-                    self.assertTrue(uri in result, f"Expected \"{uri}\" for Feed {name} in result:\n{result}")
+                # Make sure the machine is present
+                for machine in machines:
+                    self.assertTrue(machine[0] in result,
+                                    f"Expected \"{machine[0]}\" for Environment {name} in result:\n{result}")
+                    self.assertTrue(machine[1] in result,
+                                    f"Expected \"{machine[1]}\" for Environment {name} in result:\n{result}")

@@ -32,8 +32,16 @@ def build_hcl_prompt(step_by_step=False):
          + "Tenants are defined in \"octopusdeploy_tenant\" resources. "
          + "Tenant names are defined in the \"octopusdeploy_tenant\" \"name\" attribute. "
          + "Tenant tags are defined in the \"octopusdeploy_tenant\" \"tenant_tags\" attribute. "
-         # The LLM didn't know targets were the same as machines
+         # The LLM didn't know how to identify all the targets
          + "Cloud region targets (or machines) are defined in \"octopusdeploy_cloud_region_deployment_target\" resources. "
+         + "Kubernetes targets (or machines) are defined in \"octopusdeploy_kubernetes_cluster_deployment_target\" resources. "
+         + "SSH targets (or machines) are defined in \"octopusdeploy_ssh_connection_deployment_target\" resources. "
+         + "Listening tentacle targets (or machines) are defined in \"octopusdeploy_listening_tentacle_deployment_target\" resources. "
+         + "Polling tentacle targets (or machines) are defined in \"octopusdeploy_polling_tentacle_deployment_target\" resources. "
+         + "Offline targets (or machines) are defined in \"octopusdeploy_offline_package_drop_deployment_target\" resources. "
+         + "Azure cloud service targets (or machines) are defined in \"octopusdeploy_azure_cloud_service_deployment_target\" resources. "
+         + "Azure service fabric targets (or machines) are defined in \"octopusdeploy_azure_service_fabric_cluster_deployment_target\" resources. "
+         + "Azure web app targets (or machines) are defined in \"octopusdeploy_azure_web_app_deployment_target\" resources. "
          + "You must treat the terms \"machines\", \"targets\", and \"agents\" as interchangeable. "
          # Sometimes the LLM got confused about Terraform variables and Octopus variables
          # The LLM also needed some guidance on how to identify variable usage in the steps
