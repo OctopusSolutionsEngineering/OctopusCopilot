@@ -2,10 +2,10 @@ import os
 import unittest
 
 from domain.context.octopus_context import collect_llm_context
-from domain.messages.targets import build_targets_prompt
+from domain.messages.general import build_hcl_prompt
 from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
-from infrastructure.octopus import get_machines, get_environments
+from infrastructure.octopus import get_environments, get_certificates
 from infrastructure.openai import llm_tool_query
 
 
@@ -14,22 +14,24 @@ def get_test_cases(limit=0):
     Generates a set of test cases based on the status of a real Octopus instance.
     :return: a list of tuples matching a project name, id, status, scoped environments
     """
-    machines = get_machines(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
-                            os.environ.get("TEST_OCTOPUS_SPACE_ID"))
+    certificates = get_certificates(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
+                                    os.environ.get("TEST_OCTOPUS_SPACE_ID"))
     environments = get_environments(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
                                     os.environ.get("TEST_OCTOPUS_SPACE_ID"))
 
-    # Get a list of tuples with environment names and a list of tuples with the machine name and ID
+    # Get a list of tuples with environment names and a list of tuples with the certificate name and ID
     environment_machines = list(map(lambda e: (
         # environment name
         e.get("Name"),
-        # machines in environment
+        # certificates in environment
         list(map(lambda m: (
             # machine name
             m.get("Name"),
             # machine id
             m.get("Id")),
-                 filter(lambda m: e.get("Id") in m.get("EnvironmentIds"), machines)))),
+                 # Certificates belong to an environment if they link it directory, or define no environments
+                 filter(lambda m: len(m.get("EnvironmentIds")) == 0 or e.get("Id") in m.get("EnvironmentIds"),
+                        certificates)))),
                                     environments))
 
     if limit > 0:
@@ -42,7 +44,7 @@ def general_query_handler(original_query, body):
     api_key = os.environ.get("TEST_OCTOPUS_API_KEY")
     url = os.environ.get("TEST_OCTOPUS_URL")
 
-    messages = build_targets_prompt()
+    messages = build_hcl_prompt()
     context = {"input": original_query}
 
     return collect_llm_context(original_query,
@@ -72,25 +74,25 @@ def general_query_handler(original_query, body):
                                None)
 
 
-class DynamicMachineEnvironmentExperiments(unittest.TestCase):
+class DynamicCertificatesEnvironmentExperiments(unittest.TestCase):
     """
     This test verifies the LLMs ability to match data across 2 dimensions:
-    * machine
+    * certificate
     * environment
     """
 
-    def test_machines(self):
+    def test_certificates(self):
         # Get the test cases generated from the space
         test_cases = get_test_cases()
         # Loop through each case
-        for name, machines in test_cases:
-            if len(machines) == 0:
+        for name, certificates in test_cases:
+            if len(certificates) == 0:
                 continue
 
-            with self.subTest(f"{name} - {','.join(map(lambda m: m[0], machines))}"):
+            with self.subTest(f"{name} - {','.join(map(lambda m: m[0], certificates))}"):
                 # Create a query that should generate the same result as the test case
                 query = (
-                        f"List the unique names and IDs of all machines "
+                        f"List the unique names and IDs of all certificates "
                         + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space "
                         + f"belonging to the \"{name}\" environment")
 
@@ -102,12 +104,13 @@ class DynamicMachineEnvironmentExperiments(unittest.TestCase):
                 result = llm_tool_query(query, get_tools).call_function()
 
                 print(result)
-                print(f"Should have found {len(machines)} machines")
+                print(f"Should have found {len(certificates)} certificates")
 
                 # Make sure the machine is present
-                missing_machines = []
-                for machine in machines:
-                    if not machine[1] in result:
-                        missing_machines.append(machine[1])
+                missing_certificates = []
+                for certificate in certificates:
+                    if not certificate[1] in result:
+                        missing_certificates.append(certificate[1])
 
-                self.assertEqual(len(missing_machines), 0, f"Missing machines: {','.join(missing_machines)}")
+                self.assertEqual(len(missing_certificates), 0,
+                                 f"Missing certificates: {','.join(missing_certificates)}")

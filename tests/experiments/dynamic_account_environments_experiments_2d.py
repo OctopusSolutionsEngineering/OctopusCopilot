@@ -2,10 +2,10 @@ import os
 import unittest
 
 from domain.context.octopus_context import collect_llm_context
-from domain.messages.targets import build_targets_prompt
+from domain.messages.general import build_hcl_prompt
 from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
-from infrastructure.octopus import get_machines, get_environments
+from infrastructure.octopus import get_environments, get_accounts
 from infrastructure.openai import llm_tool_query
 
 
@@ -14,35 +14,37 @@ def get_test_cases(limit=0):
     Generates a set of test cases based on the status of a real Octopus instance.
     :return: a list of tuples matching a project name, id, status, scoped environments
     """
-    machines = get_machines(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
+    accounts = get_accounts(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
                             os.environ.get("TEST_OCTOPUS_SPACE_ID"))
     environments = get_environments(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
                                     os.environ.get("TEST_OCTOPUS_SPACE_ID"))
 
-    # Get a list of tuples with environment names and a list of tuples with the machine name and ID
-    environment_machines = list(map(lambda e: (
+    # Get a list of tuples with environment names and a list of tuples with the certificate name and ID
+    environment_accounts = list(map(lambda e: (
         # environment name
         e.get("Name"),
-        # machines in environment
+        # accounts in environment
         list(map(lambda m: (
             # machine name
             m.get("Name"),
             # machine id
             m.get("Id")),
-                 filter(lambda m: e.get("Id") in m.get("EnvironmentIds"), machines)))),
+                 # Accounts belong to an environment if they link it directory, or define no environments
+                 filter(lambda m: len(m.get("EnvironmentIds")) == 0 or e.get("Id") in m.get("EnvironmentIds"),
+                        accounts)))),
                                     environments))
 
     if limit > 0:
-        return environment_machines[:limit]
+        return environment_accounts[:limit]
 
-    return environment_machines
+    return environment_accounts
 
 
 def general_query_handler(original_query, body):
     api_key = os.environ.get("TEST_OCTOPUS_API_KEY")
     url = os.environ.get("TEST_OCTOPUS_URL")
 
-    messages = build_targets_prompt()
+    messages = build_hcl_prompt()
     context = {"input": original_query}
 
     return collect_llm_context(original_query,
@@ -72,25 +74,25 @@ def general_query_handler(original_query, body):
                                None)
 
 
-class DynamicMachineEnvironmentExperiments(unittest.TestCase):
+class DynamicAccountsEnvironmentExperiments(unittest.TestCase):
     """
     This test verifies the LLMs ability to match data across 2 dimensions:
-    * machine
+    * accounts
     * environment
     """
 
-    def test_machines(self):
+    def test_accounts(self):
         # Get the test cases generated from the space
         test_cases = get_test_cases()
         # Loop through each case
-        for name, machines in test_cases:
-            if len(machines) == 0:
+        for name, accounts in test_cases:
+            if len(accounts) == 0:
                 continue
 
-            with self.subTest(f"{name} - {','.join(map(lambda m: m[0], machines))}"):
+            with self.subTest(f"{name} - {','.join(map(lambda m: m[0], accounts))}"):
                 # Create a query that should generate the same result as the test case
                 query = (
-                        f"List the unique names and IDs of all machines "
+                        f"List the unique names and IDs of all account "
                         + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space "
                         + f"belonging to the \"{name}\" environment")
 
@@ -102,12 +104,13 @@ class DynamicMachineEnvironmentExperiments(unittest.TestCase):
                 result = llm_tool_query(query, get_tools).call_function()
 
                 print(result)
-                print(f"Should have found {len(machines)} machines")
+                print(f"Should have found {len(accounts)} accounts")
 
                 # Make sure the machine is present
-                missing_machines = []
-                for machine in machines:
-                    if not machine[1] in result:
-                        missing_machines.append(machine[1])
+                missing_accounts = []
+                for account in accounts:
+                    if not account[1] in result:
+                        missing_accounts.append(account[1])
 
-                self.assertEqual(len(missing_machines), 0, f"Missing machines: {','.join(missing_machines)}")
+                self.assertEqual(len(missing_accounts), 0,
+                                 f"Missing account: {','.join(missing_accounts)}")
