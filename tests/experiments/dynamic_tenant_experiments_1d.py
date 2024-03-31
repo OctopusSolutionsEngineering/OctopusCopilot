@@ -4,9 +4,10 @@ import unittest
 from domain.context.octopus_context import collect_llm_context
 from domain.messages.general import build_hcl_prompt
 from domain.sanitizers.sanitize_strings import remove_double_whitespace, remove_empty_lines
+from domain.sanitizers.sanitized_list import sanitize_list
 from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
-from infrastructure.octopus import get_projects
+from infrastructure.octopus import get_tenants
 from infrastructure.openai import llm_tool_query
 
 
@@ -15,18 +16,16 @@ def get_test_cases(limit=0):
     Generates a set of test cases based on the status of a real Octopus instance.
     :return: a list of tuples matching a project name, id, description and versioning strategy template
     """
-    projects = get_projects(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
-                            os.environ.get("TEST_OCTOPUS_SPACE_ID"))
+    tenants = get_tenants(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
+                          os.environ.get("TEST_OCTOPUS_SPACE_ID"))
 
-    projects = list(
-        map(lambda x: (x["Name"], x["Id"], x["Description"],
-                       (x.get("VersioningStrategy") if x.get("VersioningStrategy") else {}).get("Template")),
-            projects))
+    tenants = list(
+        map(lambda x: (x["Name"], x["Id"], x["Description"], x["TenantTags"]), tenants))
 
     if limit > 0:
-        return projects[:limit]
+        return tenants[:limit]
 
-    return projects
+    return tenants
 
 
 def general_query_handler(original_query, body):
@@ -63,22 +62,24 @@ def general_query_handler(original_query, body):
                                None)
 
 
-class DynamicProjectExperiments(unittest.TestCase):
+class DynamicTenantExperiments(unittest.TestCase):
     """
     This test verifies the LLMs ability to match data across 1 dimension:
-    * project
+    * tenant
     """
 
-    def test_projects(self):
+    def test_tenants(self):
         # Get the test cases generated from the space
-        test_cases = get_test_cases()
+        test_cases = get_test_cases(3)
         # Loop through each case
-        for name, id, description, template in test_cases:
-            with self.subTest(f"{name} - {id} - {description} - {template}"):
+        for name, id, description, tags in test_cases:
+            tags_sanitized = sanitize_list(tags)
+
+            with self.subTest(f"{name} - {id} - {description} - {','.join(tags_sanitized)}"):
                 # Create a query that should generate the same result as the test case
-                query = (f"What is the ID, description, and versioning strategy template of the project \"{name}\" "
+                query = (f"List the ID, description, and tenants tags of the tenant \"{name}\" "
                          + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space. "
-                           "Print the description without modification in a code block.")
+                         + "Print the description without modification in a code block.")
 
                 def get_tools():
                     return FunctionDefinitions([
@@ -87,12 +88,15 @@ class DynamicProjectExperiments(unittest.TestCase):
 
                 result = llm_tool_query(query, get_tools).call_function()
 
-                self.assertTrue(id in result, f"Expected \"{id}\" for Project {name} in result:\n{result}")
-                if template:
-                    self.assertTrue(template in result,
-                                    f"Expected \"{template}\" for Project {name} in result:\n{result}")
+                print(result)
+
+                self.assertTrue(id in result, f"Expected \"{id}\" for Tenant {name} in result:\n{result}")
+
                 if description and description.strip():
                     # The LLM removes empty lines despite being told not to modify the description
                     sanitized_description = remove_double_whitespace(remove_empty_lines(description)).strip()
                     self.assertTrue(sanitized_description in result,
                                     f"Expected \"{sanitized_description}\" for Project {name} in result:\n{result}")
+
+                for tag in tags_sanitized:
+                    self.assertTrue(tag in result, f"Expected \"{tag}\" for Tenant {name} in result:\n{result}")
