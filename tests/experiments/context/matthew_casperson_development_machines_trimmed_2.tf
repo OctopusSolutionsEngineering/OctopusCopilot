@@ -88,6 +88,40 @@ resource "octopusdeploy_environment" "environment_development" {
   }
 }
 
+resource "octopusdeploy_cloud_region_deployment_target" "target_dallas_client_5" {
+  id                                = "Machines-18486"
+  environments                      = []
+  name                              = "dallas-client-5"
+  roles                             = ["pos-client"]
+  default_worker_pool_id            = "WorkerPools-1107"
+  health_status                     = "Healthy"
+  is_disabled                       = false
+  shell_name                        = "Unknown"
+  shell_version                     = "Unknown"
+  tenant_tags                       = []
+  tenanted_deployment_participation = "Tenanted"
+  tenants                           = []
+  thumbprint                        = ""
+  depends_on                        = []
+}
+
+
+resource "octopusdeploy_cloud_region_deployment_target" "target_pos_test_client_5" {
+  id                                = "Machines-18510"
+  environments                      = []
+  name                              = "pos-test-client-5"
+  roles                             = ["pos-client"]
+  default_worker_pool_id            = "WorkerPools-1107"
+  health_status                     = "Healthy"
+  is_disabled                       = false
+  shell_name                        = "Unknown"
+  shell_version                     = "Unknown"
+  tenant_tags                       = []
+  tenanted_deployment_participation = "Tenanted"
+  tenants                           = []
+  thumbprint                        = ""
+  depends_on                        = []
+}
 
 resource "octopusdeploy_git_credential" "gitcredential_demo_space_creator_app" {
   id       = "GitCredentials-923"
@@ -175,10 +209,10 @@ resource "octopusdeploy_polling_tentacle_deployment_target" "target_azure_iis" {
 }
 
 
-resource "octopusdeploy_cloud_region_deployment_target" "target_belfast_client_5" {
-  id                                = "Machines-18521"
-  environments                      = [""]
-  name                              = "belfast-client-5"
+resource "octopusdeploy_cloud_region_deployment_target" "target_london_client_3" {
+  id                                = "Machines-18441"
+  environments                      = []
+  name                              = "london-client-3"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
   health_status                     = "Healthy"
