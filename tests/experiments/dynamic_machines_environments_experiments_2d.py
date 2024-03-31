@@ -102,6 +102,7 @@ class DynamicAccountExperiments(unittest.TestCase):
                 result = llm_tool_query(query, get_tools).call_function()
 
                 print(result)
+                print(f"Should have found {len(machines)} machines")
 
                 # Make sure the machine is present
                 for machine in machines:
