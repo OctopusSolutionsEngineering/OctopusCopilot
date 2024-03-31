@@ -21,8 +21,9 @@ def build_hcl_prompt(step_by_step=False):
          # guide the LLM to provide as much information as possible in the answer, and not treat missing
          # information as an error.
          + "Your answer must include any information you found in the HCL context relevant to the question. "
-         + "Your answer must clearly state if the supplied context does provide the requested information. "
-         + "It is ok to include the value of empty or missing attributes in the answer. "
+         + "Your answer must clearly state if the supplied context does not provide the requested information. "
+         + "You must assume a missing HCL attribute means the value is empty. "
+         + "You must provide a response even if the context does not provide some of the requested information. "
          # The LLM will often provide a code sample that describes how to find the answer if the context does not
          # provide the requested information.
          + "You will be penalized for providing a code sample as the answer. "
