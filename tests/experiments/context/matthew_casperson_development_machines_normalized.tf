@@ -124,7 +124,7 @@ resource "octopusdeploy_target" "target_pos_dev_client_4" {
 }
 
 resource "octopusdeploy_target" "target_azure_iis" {
-  id                                = "Machines-12345"
+  id                                = "Machines-12387"
   environments                      = ["${octopusdeploy_environment.environment_development.id}"]
   name                              = "azure_iis"
   roles                             = ["pos-client"]
