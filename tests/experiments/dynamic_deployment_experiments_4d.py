@@ -145,11 +145,13 @@ class DynamicDeploymentExperiments(unittest.TestCase):
 
     This experiment always used a CoT and few-shot prompt.
 
-    GPT 3.5 was reasonably good at this task, passing over 90% of the tests (in 20 minutes) when the last 3 deployments
-    were supplied in the context. Increasing the number of deployments in the context to 20 dropped the success rate.
-    So there is a trade-off between accuracy and the number of deployments that can be queried by the prompt.
+    GPT 3.5 was reasonably good at this task, passing over 90% of the tests (in 20 minutes) when the last 20 deployments
+    were supplied in the context.
 
     GPT 4 had a success rate of 90% with 20 deployments in the context, but it took 40 minutes to complete.
+
+    The tests that failed were different between GPT3.5 and GPT4, but GPT 4 didn't increase the success rate,
+    took twice as long, and costs 100 times as much.
     """
 
     def test_get_cases(self):
