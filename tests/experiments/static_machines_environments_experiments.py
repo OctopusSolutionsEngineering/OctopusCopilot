@@ -457,7 +457,7 @@ class StaticDeploymentExperiments(unittest.TestCase):
         Few-Shot Example:   No
         Tipping:            Yes
 
-        This test generally fails.
+        This test generally passes, but not because it returned the correct information.
 
         This test removes a all targets that were not scoped to the "Development" environment. The azure target has
         been moved to lover in the file.
@@ -558,7 +558,7 @@ class StaticDeploymentExperiments(unittest.TestCase):
         Few-Shot Example:   No
         Tipping:            Yes
 
-        This test generally fails.
+        This test generally passes, but not because it returned the correct information.
 
         This test removes a all targets that were not scoped to the "Development" environment. The azure target has
         been moved to lover in the file.
@@ -659,7 +659,7 @@ class StaticDeploymentExperiments(unittest.TestCase):
         Few-Shot Example:   No
         Tipping:            Yes
 
-        This test generally fails.
+        This test generally passes.
 
         This test removes all targets that were not scoped to the "Development" environment. The azure target has
         been moved to the top of the file.
@@ -865,7 +865,7 @@ class StaticDeploymentExperiments(unittest.TestCase):
         Few-Shot Example:   No
         Tipping:            Yes
 
-        This test generally fails.
+        This test generally passes, but not because it returned the correct information.
 
         This test presents a list of octopusdeploy_target machines that are not scoped to the "Development" environment.
         The only difference between them is the resource name and the machine name. Six of the machines have the prefix
