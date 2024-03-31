@@ -56,6 +56,23 @@ class StaticDeploymentExperiments(unittest.TestCase):
 
     For this reason, the tests are disabled by not having a suffix of "_test", which prevents them being run by the
     CI/CD process. They can be run manually in the IDE.
+
+    Executive Summary
+    -----------------
+
+    GPT 3.5 displayed some unusual behaviour where it detected patterns in the names of groups of targets and
+    excluded "odd" targets that didn't match the pattern. Changing the order in which targets were processed by moving
+    the "odd" targets to the start of the context changed the outcome by allowing the "odd" targets to be included in
+    the answer. Renaming the "odd" targets to match the pattern also allowed them to be included in the answer.
+
+    Although it is not captured in these test cases (I found and fixed the bug), having a context where some, but not
+    all, targets lacked the id attribute also impacted the answer. The LLM would not include a target without an ID,
+    presumably because the question asked for the ID in the answer.
+
+    Observations:
+    * A chain-of-thought and few-shot prompt helped the LLM to generate the correct answer.
+    * Reducing the context size by removing unrelated targets also helped.
+    * Ensuring the context was consistent (with every target having an ID) helped.
     """
 
     @retry(retry=retry_func)

@@ -72,9 +72,9 @@ def general_query_handler(original_query, body):
                                None)
 
 
-class DynamicAccountExperiments(unittest.TestCase):
+class DynamicMachineEnvironmentExperiments(unittest.TestCase):
     """
-    This test verifies the LLMs ability to match data across 1 dimension:
+    This test verifies the LLMs ability to match data across 2 dimensions:
     * machine
     * environment
     """

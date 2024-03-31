@@ -6,6 +6,7 @@ from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
+from domain.config.openai import max_context
 from domain.config.users import get_admin_users
 from domain.context.octopus_context import collect_llm_context, llm_message_query, max_chars
 from domain.defaults.defaults import get_default_argument
@@ -537,7 +538,7 @@ Once default values are set, you can omit the space, environment, and project fr
             deployments = get_deployment_array_from_progression(
                 json.loads(get_project_progression(space, project, api_key, url)),
                 sanitize_environments(environments),
-                20)
+                max_context)
             context["json"] = json.dumps(deployments, indent=2)
         else:
             context["json"] = get_dashboard(space, api_key, url)

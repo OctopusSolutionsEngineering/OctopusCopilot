@@ -2,6 +2,7 @@ import json
 import os
 import unittest
 
+from domain.config.openai import max_context
 from domain.context.octopus_context import collect_llm_context
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list, sanitize_environments
@@ -92,7 +93,7 @@ def releases_query_handler(original_query, enriched_query, space, projects, envi
         deployments = get_deployment_array_from_progression(
             json.loads(get_project_progression(space, project, api_key, url)),
             sanitize_environments(environments),
-            20)
+            max_context)
         context["json"] = json.dumps(deployments, indent=2)
     else:
         context["json"] = get_dashboard(space, api_key, url)
@@ -139,8 +140,16 @@ class DynamicDeploymentExperiments(unittest.TestCase):
     * channel
     * deployments
 
-    The issue at https://intellij-support.jetbrains.com/hc/en-us/community/posts/360000024199-Python-SubTest?utm_source=pocket_saves
-    describes how to configure PyCharm to display the output of subtests individually.
+    Executive Summary
+    -----------------
+
+    This experiment always used a CoT and few-shot prompt.
+
+    GPT 3.5 was reasonably good at this task, passing over 90% of the tests (in 20 minutes) when the last 3 deployments
+    were supplied in the context. Increasing the number of deployments in the context to 20 dropped the success rate.
+    So there is a trade-off between accuracy and the number of deployments that can be queried by the prompt.
+
+    GPT 4 had a success rate of 90% with 20 deployments in the context, but it took 40 minutes to complete.
     """
 
     def test_get_cases(self):
