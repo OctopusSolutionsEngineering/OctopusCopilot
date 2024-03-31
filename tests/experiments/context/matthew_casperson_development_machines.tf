@@ -88,7 +88,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_pos_dev_client_3
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_dallas_client_5" {
   id                                = "Machines-18486"
-  environments                      = [""]
+  environments                      = []
   name                              = "dallas-client-5"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -106,7 +106,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_dallas_client_5"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_pos_test_client_5" {
   id                                = "Machines-18510"
-  environments                      = [""]
+  environments                      = []
   name                              = "pos-test-client-5"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -124,7 +124,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_pos_test_client_
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_london_client_3" {
   id                                = "Machines-18441"
-  environments                      = [""]
+  environments                      = []
   name                              = "london-client-3"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -142,7 +142,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_london_client_3"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_chicago_client_5" {
   id                                = "Machines-18512"
-  environments                      = [""]
+  environments                      = []
   name                              = "chicago-client-5"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -160,7 +160,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_chicago_client_5
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_belfast_client_5" {
   id                                = "Machines-18521"
-  environments                      = [""]
+  environments                      = []
   name                              = "belfast-client-5"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -178,7 +178,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_belfast_client_5
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_dallas_server" {
   id                                = "Machines-18503"
-  environments                      = [""]
+  environments                      = []
   name                              = "dallas-server"
   roles                             = ["pos-server"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -196,7 +196,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_dallas_server" {
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_melbourne_client_5" {
   id                                = "Machines-18506"
-  environments                      = [""]
+  environments                      = []
   name                              = "melbourne-client-5"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -214,7 +214,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_melbourne_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_vancouver_client_3" {
   id                                = "Machines-18458"
-  environments                      = [""]
+  environments                      = []
   name                              = "vancouver-client-3"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -232,7 +232,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_vancouver_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_calgary_client_4" {
   id                                = "Machines-18496"
-  environments                      = [""]
+  environments                      = []
   name                              = "calgary-client-4"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -250,7 +250,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_calgary_client_4
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_edinburgh_client_3" {
   id                                = "Machines-18473"
-  environments                      = [""]
+  environments                      = []
   name                              = "edinburgh-client-3"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -268,7 +268,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_edinburgh_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_belfast_client_1" {
   id                                = "Machines-18519"
-  environments                      = [""]
+  environments                      = []
   name                              = "belfast-client-1"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -286,7 +286,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_belfast_client_1
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_toronto_client_1" {
   id                                = "Machines-18457"
-  environments                      = [""]
+  environments                      = []
   name                              = "toronto-client-1"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -304,7 +304,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_toronto_client_1
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_toronto_client_4" {
   id                                = "Machines-18446"
-  environments                      = [""]
+  environments                      = []
   name                              = "toronto-client-4"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -322,7 +322,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_toronto_client_4
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_calgary_server" {
   id                                = "Machines-18494"
-  environments                      = [""]
+  environments                      = []
   name                              = "calgary-server"
   roles                             = ["pos-server"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -340,7 +340,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_calgary_server" 
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_pos_test_client_2" {
   id                                = "Machines-18497"
-  environments                      = [""]
+  environments                      = []
   name                              = "pos-test-client-2"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -358,7 +358,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_pos_test_client_
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_atlanta_client_2" {
   id                                = "Machines-18499"
-  environments                      = [""]
+  environments                      = []
   name                              = "atlanta-client-2"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -376,7 +376,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_atlanta_client_2
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_vancouver_client_5" {
   id                                = "Machines-18465"
-  environments                      = [""]
+  environments                      = []
   name                              = "vancouver-client-5"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -394,7 +394,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_vancouver_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_melbourne_client_1" {
   id                                = "Machines-18504"
-  environments                      = [""]
+  environments                      = []
   name                              = "melbourne-client-1"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -412,7 +412,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_melbourne_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_edinburgh_server" {
   id                                = "Machines-18471"
-  environments                      = [""]
+  environments                      = []
   name                              = "edinburgh-server"
   roles                             = ["pos-server"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -430,7 +430,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_edinburgh_server
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_brisbane_client_2" {
   id                                = "Machines-18453"
-  environments                      = [""]
+  environments                      = []
   name                              = "brisbane-client-2"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -448,7 +448,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_brisbane_client_
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_brisbane_client_4" {
   id                                = "Machines-18442"
-  environments                      = [""]
+  environments                      = []
   name                              = "brisbane-client-4"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -466,7 +466,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_brisbane_client_
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_belfast_server" {
   id                                = "Machines-18520"
-  environments                      = [""]
+  environments                      = []
   name                              = "belfast-server"
   roles                             = ["pos-server"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -484,7 +484,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_belfast_server" 
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_chicago_server" {
   id                                = "Machines-18522"
-  environments                      = [""]
+  environments                      = []
   name                              = "chicago-server"
   roles                             = ["pos-server"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -502,7 +502,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_chicago_server" 
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_sydney_client_5" {
   id                                = "Machines-18477"
-  environments                      = [""]
+  environments                      = []
   name                              = "sydney-client-5"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -542,7 +542,7 @@ resource "octopusdeploy_environment" "environment_development" {
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_calgary_client_2" {
   id                                = "Machines-18493"
-  environments                      = [""]
+  environments                      = []
   name                              = "calgary-client-2"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -560,7 +560,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_calgary_client_2
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_melbourne_client_3" {
   id                                = "Machines-18509"
-  environments                      = [""]
+  environments                      = []
   name                              = "melbourne-client-3"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -578,7 +578,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_melbourne_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_chicago_client_1" {
   id                                = "Machines-18514"
-  environments                      = [""]
+  environments                      = []
   name                              = "chicago-client-1"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -596,7 +596,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_chicago_client_1
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_pos_test_client_4" {
   id                                = "Machines-18479"
-  environments                      = [""]
+  environments                      = []
   name                              = "pos-test-client-4"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -614,7 +614,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_pos_test_client_
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_dallas_client_4" {
   id                                = "Machines-18484"
-  environments                      = [""]
+  environments                      = []
   name                              = "dallas-client-4"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -632,7 +632,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_dallas_client_4"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_brisbane_client_3" {
   id                                = "Machines-18444"
-  environments                      = [""]
+  environments                      = []
   name                              = "brisbane-client-3"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -665,7 +665,7 @@ variable "gitcredential_demo_space_creator_app" {
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_london_client_5" {
   id                                = "Machines-18449"
-  environments                      = [""]
+  environments                      = []
   name                              = "london-client-5"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -683,7 +683,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_london_client_5"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_london_server" {
   id                                = "Machines-18463"
-  environments                      = [""]
+  environments                      = []
   name                              = "london-server"
   roles                             = ["pos-server"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -701,7 +701,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_london_server" {
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_dallas_client_1" {
   id                                = "Machines-18501"
-  environments                      = [""]
+  environments                      = []
   name                              = "dallas-client-1"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -719,7 +719,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_dallas_client_1"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_sydney_client_3" {
   id                                = "Machines-18491"
-  environments                      = [""]
+  environments                      = []
   name                              = "sydney-client-3"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -737,7 +737,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_sydney_client_3"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_brisbane_client_5" {
   id                                = "Machines-18443"
-  environments                      = [""]
+  environments                      = []
   name                              = "brisbane-client-5"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -755,7 +755,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_brisbane_client_
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_edinburgh_client_1" {
   id                                = "Machines-18474"
-  environments                      = [""]
+  environments                      = []
   name                              = "edinburgh-client-1"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -773,7 +773,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_edinburgh_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_pos_test_client_1" {
   id                                = "Machines-18488"
-  environments                      = [""]
+  environments                      = []
   name                              = "pos-test-client-1"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -791,7 +791,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_pos_test_client_
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_toronto_client_2" {
   id                                = "Machines-18455"
-  environments                      = [""]
+  environments                      = []
   name                              = "toronto-client-2"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -809,7 +809,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_toronto_client_2
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_melbourne_client_4" {
   id                                = "Machines-18490"
-  environments                      = [""]
+  environments                      = []
   name                              = "melbourne-client-4"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -827,7 +827,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_melbourne_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_melbourne_server" {
   id                                = "Machines-18511"
-  environments                      = [""]
+  environments                      = []
   name                              = "melbourne-server"
   roles                             = ["pos-server"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -845,7 +845,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_melbourne_server
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_edinburgh_client_4" {
   id                                = "Machines-18505"
-  environments                      = [""]
+  environments                      = []
   name                              = "edinburgh-client-4"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -863,7 +863,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_edinburgh_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_sydney_client_1" {
   id                                = "Machines-18487"
-  environments                      = [""]
+  environments                      = []
   name                              = "sydney-client-1"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -881,7 +881,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_sydney_client_1"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_calgary_client_5" {
   id                                = "Machines-18513"
-  environments                      = [""]
+  environments                      = []
   name                              = "calgary-client-5"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -899,7 +899,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_calgary_client_5
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_toronto_server" {
   id                                = "Machines-18447"
-  environments                      = [""]
+  environments                      = []
   name                              = "toronto-server"
   roles                             = ["pos-server"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -917,7 +917,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_toronto_server" 
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_brisbane_client_1" {
   id                                = "Machines-18452"
-  environments                      = [""]
+  environments                      = []
   name                              = "brisbane-client-1"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -935,7 +935,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_brisbane_client_
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_belfast_client_3" {
   id                                = "Machines-18516"
-  environments                      = [""]
+  environments                      = []
   name                              = "belfast-client-3"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -953,7 +953,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_belfast_client_3
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_pos_test_server" {
   id                                = "Machines-18498"
-  environments                      = [""]
+  environments                      = []
   name                              = "pos-test-server"
   roles                             = ["pos-server"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -971,7 +971,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_pos_test_server"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_dallas_client_3" {
   id                                = "Machines-18485"
-  environments                      = [""]
+  environments                      = []
   name                              = "dallas-client-3"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -989,7 +989,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_dallas_client_3"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_atlanta_client_3" {
   id                                = "Machines-18481"
-  environments                      = [""]
+  environments                      = []
   name                              = "atlanta-client-3"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1007,7 +1007,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_atlanta_client_3
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_london_client_4" {
   id                                = "Machines-18448"
-  environments                      = [""]
+  environments                      = []
   name                              = "london-client-4"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1025,7 +1025,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_london_client_4"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_sydney_client_2" {
   id                                = "Machines-18478"
-  environments                      = [""]
+  environments                      = []
   name                              = "sydney-client-2"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1043,7 +1043,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_sydney_client_2"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_atlanta_client_5" {
   id                                = "Machines-18482"
-  environments                      = [""]
+  environments                      = []
   name                              = "atlanta-client-5"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1076,7 +1076,7 @@ variable "gitcredential_cac" {
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_vancouver_client_2" {
   id                                = "Machines-18459"
-  environments                      = [""]
+  environments                      = []
   name                              = "vancouver-client-2"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1094,7 +1094,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_vancouver_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_vancouver_server" {
   id                                = "Machines-18460"
-  environments                      = [""]
+  environments                      = []
   name                              = "vancouver-server"
   roles                             = ["pos-server"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1112,7 +1112,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_vancouver_server
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_sydney_server" {
   id                                = "Machines-18489"
-  environments                      = [""]
+  environments                      = []
   name                              = "sydney-server"
   roles                             = ["pos-server"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1130,7 +1130,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_sydney_server" {
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_belfast_client_2" {
   id                                = "Machines-18523"
-  environments                      = [""]
+  environments                      = []
   name                              = "belfast-client-2"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1148,7 +1148,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_belfast_client_2
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_vancouver_client_4" {
   id                                = "Machines-18461"
-  environments                      = [""]
+  environments                      = []
   name                              = "vancouver-client-4"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1166,7 +1166,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_vancouver_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_melbourne_client_2" {
   id                                = "Machines-18507"
-  environments                      = [""]
+  environments                      = []
   name                              = "melbourne-client-2"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1184,7 +1184,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_melbourne_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_toronto_client_3" {
   id                                = "Machines-18445"
-  environments                      = [""]
+  environments                      = []
   name                              = "toronto-client-3"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1202,7 +1202,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_toronto_client_3
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_atlanta_client_1" {
   id                                = "Machines-18480"
-  environments                      = [""]
+  environments                      = []
   name                              = "atlanta-client-1"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1220,7 +1220,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_atlanta_client_1
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_chicago_client_3" {
   id                                = "Machines-18515"
-  environments                      = [""]
+  environments                      = []
   name                              = "chicago-client-3"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1274,7 +1274,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_pos_dev_client_4
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_edinburgh_client_5" {
   id                                = "Machines-18472"
-  environments                      = [""]
+  environments                      = []
   name                              = "edinburgh-client-5"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1292,7 +1292,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_edinburgh_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_belfast_client_4" {
   id                                = "Machines-18518"
-  environments                      = [""]
+  environments                      = []
   name                              = "belfast-client-4"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1310,7 +1310,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_belfast_client_4
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_toronto_client_5" {
   id                                = "Machines-18456"
-  environments                      = [""]
+  environments                      = []
   name                              = "toronto-client-5"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1328,7 +1328,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_toronto_client_5
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_london_client_2" {
   id                                = "Machines-18450"
-  environments                      = [""]
+  environments                      = []
   name                              = "london-client-2"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1346,7 +1346,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_london_client_2"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_calgary_client_3" {
   id                                = "Machines-18508"
-  environments                      = [""]
+  environments                      = []
   name                              = "calgary-client-3"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1364,7 +1364,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_calgary_client_3
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_dallas_client_2" {
   id                                = "Machines-18483"
-  environments                      = [""]
+  environments                      = []
   name                              = "dallas-client-2"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1382,7 +1382,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_dallas_client_2"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_atlanta_client_4" {
   id                                = "Machines-18502"
-  environments                      = [""]
+  environments                      = []
   name                              = "atlanta-client-4"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1400,7 +1400,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_atlanta_client_4
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_chicago_client_2" {
   id                                = "Machines-18524"
-  environments                      = [""]
+  environments                      = []
   name                              = "chicago-client-2"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1418,7 +1418,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_chicago_client_2
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_brisbane_server" {
   id                                = "Machines-18454"
-  environments                      = [""]
+  environments                      = []
   name                              = "brisbane-server"
   roles                             = ["pos-server"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1436,7 +1436,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_brisbane_server"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_sydney_client_4" {
   id                                = "Machines-18492"
-  environments                      = [""]
+  environments                      = []
   name                              = "sydney-client-4"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1454,7 +1454,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_sydney_client_4"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_atlanta_server" {
   id                                = "Machines-18500"
-  environments                      = [""]
+  environments                      = []
   name                              = "atlanta-server"
   roles                             = ["pos-server"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1472,7 +1472,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_atlanta_server" 
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_vancouver_client_1" {
   id                                = "Machines-18462"
-  environments                      = [""]
+  environments                      = []
   name                              = "vancouver-client-1"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1490,7 +1490,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_vancouver_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_london_client_1" {
   id                                = "Machines-18451"
-  environments                      = [""]
+  environments                      = []
   name                              = "london-client-1"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1508,7 +1508,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_london_client_1"
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_edinburgh_client_2" {
   id                                = "Machines-18475"
-  environments                      = [""]
+  environments                      = []
   name                              = "edinburgh-client-2"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1526,7 +1526,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_edinburgh_client
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_calgary_client_1" {
   id                                = "Machines-18495"
-  environments                      = [""]
+  environments                      = []
   name                              = "calgary-client-1"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1544,7 +1544,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_calgary_client_1
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_pos_test_client_3" {
   id                                = "Machines-18476"
-  environments                      = [""]
+  environments                      = []
   name                              = "pos-test-client-3"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
@@ -1562,7 +1562,7 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_pos_test_client_
 
 resource "octopusdeploy_cloud_region_deployment_target" "target_chicago_client_4" {
   id                                = "Machines-18517"
-  environments                      = [""]
+  environments                      = []
   name                              = "chicago-client-4"
   roles                             = ["pos-client"]
   default_worker_pool_id            = "WorkerPools-1107"
