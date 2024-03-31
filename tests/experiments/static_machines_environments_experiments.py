@@ -851,3 +851,177 @@ class StaticDeploymentExperiments(unittest.TestCase):
 
         for machine in machines:
             self.assertTrue(machine in result, f"Expected \"{machine}\" in result:\n{result}")
+
+    @retry(retry=retry_func)
+    def test_get_development_machines_9(self):
+        """
+        Tests how the LLM extracts the targets for an environment associated with a space.
+
+        Features
+        -----------------------
+        ToT:                No
+        CoT Prompt:         No
+        CoT Example:        No
+        Few-Shot Example:   No
+        Tipping:            Yes
+
+        This test generally fails.
+
+        This test presents a list of octopusdeploy_target machines that are not scoped to the "Development" environment.
+        The only difference between them is the resource name and the machine name. Six of the machines have the prefix
+        "pos-dev-", while the seventh machine is called "azure_iis".
+
+        The LLM excludes the "azure_iis" machine from the results. My assumption here is that it has identified the
+        naming convention used by the other machines and excluded the "azure_iis" machine because it doesn't fit the
+        pattern.
+        """
+
+        messages = [
+            ("system",
+             "You are methodical agent who understands Terraform modules defining Octopus Deploy resources."),
+            ("system",
+             "The supplied HCL context provides details on Octopus resources like "
+             + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
+             + "library variable sets etc."),
+            ("system",
+             "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space."),
+            ("system",
+             "You must assume the supplied HCL is a complete and accurate representation of the Octopus space."),
+            ("system",
+             "You must assume all resources in the supplied HCL belong to the space mentioned in the question."),
+            # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
+            # resulted in the LLM providing instructions on how to find the information rather than presenting
+            # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
+            # The phrase "what" seems to be important in the question.
+            ("system",
+             "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
+             + "are asking you to return 'what' the value of the requested information is."),
+            # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
+            # guide the LLM to provide as much information as possible in the answer, and not treat missing
+            # information as an error.
+            ("system",
+             "Your answer must include any information you found in the HCL context relevant to the question."),
+            ("system",
+             "Your answer must clearly state if the supplied context does not provide the requested information."),
+            ("system", "You must assume a missing HCL attribute means the value is empty."),
+            ("system",
+             "You must provide a response even if the context does not provide some of the requested information."),
+            ("system",
+             "It is ok if you can not find most of the requested information in the context - "
+             + "just provide what you can find."),
+            # The LLM will often provide a code sample that describes how to find the answer if the context does not
+            # provide the requested information.
+            ("system", "You will be penalized for providing a code sample as the answer."),
+            ("system",
+             "You must assume that if a target's \"environments\" attribute is empty, "
+             + "it is not related to the environment in the question. "),
+            # Sparkle that may improve the quality of the responses.
+            ("system", "I’m going to tip $500 for a better solution!"),
+            ("user", "{input}"),
+            ("user", "Answer the question using the HCL below."),
+            # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
+            # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
+            ("user", "HCL: ###\n{hcl}\n###")]
+
+        with open('context/matthew_casperson_development_machines_normalized.tf', 'r') as file:
+            hcl = file.read()
+
+        query = (
+            f"First, find every machine with any role that belongs to the \"Development\" environment. Second, find the machine's ID and name. Finally, list the machines name and ID.")
+
+        result = llm_message_query(messages, {"json": "", "hcl": hcl, "context": None, "input": query})
+
+        print("")
+        print(result)
+
+        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", " pos-dev-client-3", "pos-dev-client-4",
+                    "pos-dev-client-5", "pos-dev-server"]
+
+        for machine in machines:
+            self.assertTrue(machine in result, f"Expected \"{machine}\" in result:\n{result}")
+
+    @retry(retry=retry_func)
+    def test_get_development_machines_10(self):
+        """
+        Tests how the LLM extracts the targets for an environment associated with a space.
+
+        Features
+        -----------------------
+        ToT:                No
+        CoT Prompt:         No
+        CoT Example:        No
+        Few-Shot Example:   No
+        Tipping:            Yes
+
+        This test generally passes.
+
+        The difference between this test and "test_get_development_machines_9" is that all the machines have the
+        prefix "pos-dev-". The LLM is able to identify all the machines in this case.
+
+        There is definitely some pattern matching going on that I have not been able to override with system instructions.
+        """
+
+        messages = [
+            ("system",
+             "You are methodical agent who understands Terraform modules defining Octopus Deploy resources."),
+            ("system",
+             "The supplied HCL context provides details on Octopus resources like "
+             + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
+             + "library variable sets etc."),
+            ("system",
+             "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space."),
+            ("system",
+             "You must assume the supplied HCL is a complete and accurate representation of the Octopus space."),
+            ("system",
+             "You must assume all resources in the supplied HCL belong to the space mentioned in the question."),
+            # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
+            # resulted in the LLM providing instructions on how to find the information rather than presenting
+            # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
+            # The phrase "what" seems to be important in the question.
+            ("system",
+             "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
+             + "are asking you to return 'what' the value of the requested information is."),
+            # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
+            # guide the LLM to provide as much information as possible in the answer, and not treat missing
+            # information as an error.
+            ("system",
+             "Your answer must include any information you found in the HCL context relevant to the question."),
+            ("system",
+             "Your answer must clearly state if the supplied context does not provide the requested information."),
+            ("system", "You must assume a missing HCL attribute means the value is empty."),
+            ("system",
+             "You must provide a response even if the context does not provide some of the requested information."),
+            ("system",
+             "It is ok if you can not find most of the requested information in the context - "
+             + "just provide what you can find."),
+            # The LLM will often provide a code sample that describes how to find the answer if the context does not
+            # provide the requested information.
+            ("system", "You will be penalized for providing a code sample as the answer."),
+            ("system",
+             "You must assume that if a target's \"environments\" attribute is empty, "
+             + "it is not related to the environment in the question. "),
+            # Sparkle that may improve the quality of the responses.
+            ("system", "I’m going to tip $500 for a better solution!"),
+            ("user", "{input}"),
+            ("user", "Answer the question using the HCL below."),
+            # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
+            # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
+            ("user", "HCL: ###\n{hcl}\n###")]
+
+        with open('context/matthew_casperson_development_machines_normalized_2.tf', 'r') as file:
+            hcl = file.read()
+
+        query = (
+            f"First, find every machine with any role that belongs to the \"Development\" environment. Second, find the machine's ID and name. Finally, list the machines name and ID.")
+
+        result = llm_message_query(messages, {"json": "", "hcl": hcl, "context": None, "input": query})
+
+        print("")
+        print(result)
+
+        machines = ["pos-dev-azure-iis", "pos-dev-client-1", "pos-dev-client-2", " pos-dev-client-3",
+                    "pos-dev-client-4",
+                    "pos-dev-client-5", "pos-dev-server"]
+
+        for machine in machines:
+            self.assertTrue(machine in result, f"Expected \"{machine}\" in result:\n{result}")
