@@ -174,6 +174,24 @@ def get_tenants(my_api_key, my_octopus_api, space_id):
     return json["Items"]
 
 
+def get_feeds(my_api_key, my_octopus_api, space_id):
+    """
+    Returns the feeds in a space
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus URL
+    :return: The list of feeds
+    """
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_feeds).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_feeds).')
+    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_feeds).')
+
+    api = build_url(my_octopus_api, f"/api/{space_id}/Feeds?take=10000")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
+
+    json = resp.json()
+    return json["Items"]
+
+
 def get_environments(my_api_key, my_octopus_api, space_id):
     """
     Returns the environments in a space
