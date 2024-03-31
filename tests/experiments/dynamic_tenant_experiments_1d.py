@@ -70,7 +70,7 @@ class DynamicTenantExperiments(unittest.TestCase):
 
     def test_tenants(self):
         # Get the test cases generated from the space
-        test_cases = get_test_cases(3)
+        test_cases = get_test_cases()
         # Loop through each case
         for name, id, description, tags in test_cases:
             tags_sanitized = sanitize_list(tags)
