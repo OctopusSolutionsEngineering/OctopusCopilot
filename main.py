@@ -173,7 +173,7 @@ def releases_query_handler(original_query, enriched_query, space, projects, envi
             json.loads(get_project_progression(space, get_item_or_none(sanitize_list(projects), 0), get_api_key(),
                                                get_octopus_api())),
             sanitize_environments(environments),
-            3)
+            20)
         context["json"] = json.dumps(deployments, indent=2)
     else:
         context["json"] = get_dashboard(space, get_api_key(), get_octopus_api())

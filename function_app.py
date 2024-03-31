@@ -537,7 +537,7 @@ Once default values are set, you can omit the space, environment, and project fr
             deployments = get_deployment_array_from_progression(
                 json.loads(get_project_progression(space, project, api_key, url)),
                 sanitize_environments(environments),
-                3)
+                20)
             context["json"] = json.dumps(deployments, indent=2)
         else:
             context["json"] = get_dashboard(space, api_key, url)

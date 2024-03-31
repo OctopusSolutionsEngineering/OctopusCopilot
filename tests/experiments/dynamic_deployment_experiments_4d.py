@@ -92,7 +92,7 @@ def releases_query_handler(original_query, enriched_query, space, projects, envi
         deployments = get_deployment_array_from_progression(
             json.loads(get_project_progression(space, project, api_key, url)),
             sanitize_environments(environments),
-            3)
+            20)
         context["json"] = json.dumps(deployments, indent=2)
     else:
         context["json"] = get_dashboard(space, api_key, url)
