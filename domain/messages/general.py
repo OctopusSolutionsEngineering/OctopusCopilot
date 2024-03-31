@@ -18,9 +18,11 @@ def build_hcl_prompt(step_by_step=False):
          # The phrase "what" seems to be important in the question.
          + "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information are asking you to return 'what' the value of the requested information is. "
          # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
-         # guide the LLM to provide as much information as possible in the answer.
+         # guide the LLM to provide as much information as possible in the answer, and not treat missing
+         # information as an error.
          + "Your answer must include any information you found in the HCL context relevant to the question. "
          + "Your answer must clearly state if the supplied context does provide the requested information. "
+         + "It is ok to include the value of empty or missing attributes in the answer. "
          # The LLM will often provide a code sample that describes how to find the answer if the context does not
          # provide the requested information.
          + "You will be penalized for providing a code sample as the answer. "
