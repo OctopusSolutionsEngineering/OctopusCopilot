@@ -145,7 +145,7 @@ class StaticDeploymentExperiments(unittest.TestCase):
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", " pos-dev-client-3", "pos-dev-client-4",
+        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
                     "pos-dev-client-5", "pos-dev-server"]
 
         for machine in machines:
@@ -244,7 +244,7 @@ class StaticDeploymentExperiments(unittest.TestCase):
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", " pos-dev-client-3", "pos-dev-client-4",
+        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
                     "pos-dev-client-5", "pos-dev-server"]
 
         for machine in machines:
@@ -341,7 +341,7 @@ class StaticDeploymentExperiments(unittest.TestCase):
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", " pos-dev-client-3", "pos-dev-client-4",
+        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
                     "pos-dev-client-5", "pos-dev-server"]
 
         for machine in machines:
@@ -438,7 +438,7 @@ class StaticDeploymentExperiments(unittest.TestCase):
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", " pos-dev-client-3", "pos-dev-client-4",
+        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
                     "pos-dev-client-5", "pos-dev-server"]
 
         for machine in machines:
@@ -539,7 +539,7 @@ class StaticDeploymentExperiments(unittest.TestCase):
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", " pos-dev-client-3", "pos-dev-client-4",
+        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
                     "pos-dev-client-5", "pos-dev-server"]
 
         for machine in machines:
@@ -640,7 +640,7 @@ class StaticDeploymentExperiments(unittest.TestCase):
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", " pos-dev-client-3", "pos-dev-client-4",
+        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
                     "pos-dev-client-5", "pos-dev-server"]
 
         for machine in machines:
@@ -740,7 +740,7 @@ class StaticDeploymentExperiments(unittest.TestCase):
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", " pos-dev-client-3", "pos-dev-client-4",
+        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
                     "pos-dev-client-5", "pos-dev-server"]
 
         for machine in machines:
@@ -846,7 +846,7 @@ class StaticDeploymentExperiments(unittest.TestCase):
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", " pos-dev-client-3", "pos-dev-client-4",
+        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
                     "pos-dev-client-5", "pos-dev-server"]
 
         for machine in machines:
@@ -934,7 +934,7 @@ class StaticDeploymentExperiments(unittest.TestCase):
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", " pos-dev-client-3", "pos-dev-client-4",
+        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
                     "pos-dev-client-5", "pos-dev-server"]
 
         for machine in machines:
@@ -1019,7 +1019,7 @@ class StaticDeploymentExperiments(unittest.TestCase):
         print("")
         print(result)
 
-        machines = ["pos-dev-azure-iis", "pos-dev-client-1", "pos-dev-client-2", " pos-dev-client-3",
+        machines = ["pos-dev-azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3",
                     "pos-dev-client-4",
                     "pos-dev-client-5", "pos-dev-server"]
 
@@ -1039,7 +1039,9 @@ class StaticDeploymentExperiments(unittest.TestCase):
         Few-Shot Example:   Yes
         Tipping:            Yes
 
-        This test generally passes. The CoT prompt and few shot example appear to override the LLMs pattern matching.
+        This test generally passes with a trimmed, but still not absolutely sanitized, context. The test
+        "test_get_development_machines_4" fails with the same context. This shows we can get a better answer
+        with a CoT and few-shot example.
         """
 
         messages = [
@@ -1154,7 +1156,7 @@ The targets that belong to the "Test" environment are:
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
             ("user", "HCL2: ###\n{hcl}\n###")]
 
-        with open('context/matthew_casperson_development_machines_trimmed_3.tf', 'r') as file:
+        with open('context/matthew_casperson_development_machines_trimmed_2.tf', 'r') as file:
             hcl = file.read()
 
         query = (
