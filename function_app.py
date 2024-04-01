@@ -19,18 +19,16 @@ from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
-from domain.messages.deployment_logs import build_plain_text_prompt
-from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.messages.general import build_hcl_prompt
 from domain.messages.test_message import build_test_prompt
 from domain.sanitizers.sanitized_list import sanitize_environments, sanitize_list, get_item_or_none, \
     none_if_falesy_or_all
 from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
-from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
-from domain.tools.logs import answer_logs_callback
-from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_callback
-from domain.tools.releases_and_deployments import answer_releases_and_deployments_callback
+from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.logs import answer_logs_wrapper
+from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_wrapper
+from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.transformers.chat_responses import get_dashboard_response
 from domain.transformers.deployments_from_progression import get_deployment_array_from_progression
 from domain.transformers.minify_hcl import minify_hcl
@@ -208,10 +206,16 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
         # Extract the query from the question
         query = extract_query(req)
 
+        # A function that ignores the query and the messages and returns the body.
+        # The body contains all the extracted entities that must be returned from the Octopus API.
+        def return_body(tool_query, body, messages):
+            return body
+
         tools = FunctionDefinitions([
-            FunctionDefinition(answer_general_query_callback(query, lambda tool_query, body: body), AnswerGeneralQuery),
+            FunctionDefinition(answer_general_query_wrapper(query, return_body), AnswerGeneralQuery),
         ])
 
+        # Result here is the body returned by return_body
         result = llm_tool_query(query, lambda q: tools, log_query).call_function()
 
         return func.HttpResponse(json.dumps(result), mimetype="application/json")
@@ -253,33 +257,33 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                       "input": query},
                                      log_query)
 
-        def logs_query_handler(original_query, new_query, space, projects, environments, channel, tenant, release):
+        def logs_query_handler(original_query, messages, space, projects, environments, channel, tenant, release):
             """
             Answers a general query about a logs
             """
             body = json.loads(get_context())
-            return llm_message_query(build_plain_text_prompt(),
+            return llm_message_query(messages,
                                      {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
-                                      "input": new_query}, log_query)
+                                      "input": original_query}, log_query)
 
-        def project_variables_usage_callback(original_query, new_query, space, projects, variables):
+        def project_variables_usage_callback(original_query, messages, space, projects, variables):
             """
             A function that passes the updated query through to the LLM
             """
             body = json.loads(get_context())
-            return llm_message_query(build_hcl_prompt(),
+            return llm_message_query(messages,
                                      {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
-                                      "input": new_query}, log_query)
+                                      "input": original_query}, log_query)
 
-        def releases_and_deployments_callback(original_query, new_query, space, projects, environments, channels,
+        def releases_and_deployments_callback(original_query, messages, space, projects, environments, channels,
                                               releases):
             """
             A function that passes the updated query through to the LLM
             """
             body = json.loads(get_context())
-            return llm_message_query(build_deployments_and_releases_prompt(),
+            return llm_message_query(messages,
                                      {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
-                                      "input": new_query}, log_query)
+                                      "input": original_query}, log_query)
 
         def get_tools(tool_query):
             return FunctionDefinitions([
@@ -287,10 +291,10 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                 FunctionDefinition(
                     answer_project_variables_callback(tool_query, project_variables_usage_callback, log_query)),
                 FunctionDefinition(
-                    answer_project_variables_usage_callback(tool_query, project_variables_usage_callback, log_query)),
+                    answer_project_variables_usage_wrapper(tool_query, project_variables_usage_callback, log_query)),
                 FunctionDefinition(
-                    answer_releases_and_deployments_callback(tool_query, releases_and_deployments_callback, log_query)),
-                FunctionDefinition(answer_logs_callback(tool_query, logs_query_handler, log_query))
+                    answer_releases_and_deployments_wrapper(tool_query, releases_and_deployments_callback, log_query)),
+                FunctionDefinition(answer_logs_wrapper(tool_query, logs_query_handler, log_query))
             ])
 
         # Call the appropriate tool. This may be a straight pass through of the query and context,
@@ -447,7 +451,7 @@ Once default values are set, you can omit the space, environment, and project fr
 * `Show me the dashboard`
 * `Show me the status of the latest deployment to the production environment`"""
 
-    def general_query_handler(original_query, body):
+    def general_query_handler(original_query, body, messages):
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), body["space_name"], "Space")
@@ -456,7 +460,6 @@ Once default values are set, you can omit the space, environment, and project fr
         environment_names = get_default_argument(get_github_user_from_form(), sanitize_list(body["environment_names"]),
                                                  "Environment")
 
-        messages = build_hcl_prompt()
         context = {"input": original_query}
 
         return collect_llm_context(original_query,
@@ -485,14 +488,13 @@ Once default values are set, you can omit the space, environment, and project fr
                                    url,
                                    log_query)
 
-    def variable_query_handler(original_query, enriched_query, space, projects, variables):
+    def variable_query_handler(original_query, messages, space, projects, variables):
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
         projects = get_default_argument(get_github_user_from_form(), projects, "Project")
 
-        messages = build_hcl_prompt()
-        context = {"input": enriched_query}
+        context = {"input": original_query}
 
         chat_response = collect_llm_context(original_query,
                                             messages,
@@ -521,7 +523,7 @@ Once default values are set, you can omit the space, environment, and project fr
                                             log_query)
         return chat_response
 
-    def releases_query_handler(original_query, enriched_query, space, projects, environments, channels, releases):
+    def releases_query_handler(original_query, messages, space, projects, environments, channels, releases):
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
@@ -530,8 +532,7 @@ Once default values are set, you can omit the space, environment, and project fr
         environments = get_default_argument(get_github_user_from_form(),
                                             get_item_or_none(sanitize_list(environments), 0), "Environment")
 
-        messages = build_deployments_and_releases_prompt()
-        context = {"input": enriched_query}
+        context = {"input": original_query}
 
         # We need some additional JSON data to answer this question
         if project:
@@ -572,7 +573,7 @@ Once default values are set, you can omit the space, environment, and project fr
 
         return chat_response
 
-    def logs_handler(original_query, enriched_query, space, projects, environments, channel, tenants, release):
+    def logs_handler(original_query, messages, space, projects, environments, channel, tenants, release):
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
@@ -587,8 +588,7 @@ Once default values are set, you can omit the space, environment, and project fr
         # Get the end of the logs if we have exceeded our context limit
         logs = logs[-max_chars:]
 
-        messages = build_plain_text_prompt()
-        context = {"input": enriched_query, "context": logs}
+        context = {"input": original_query, "context": logs}
 
         return llm_message_query(messages, context, log_query)
 
@@ -601,16 +601,16 @@ Once default values are set, you can omit the space, environment, and project fr
         """
 
         return FunctionDefinitions([
-            FunctionDefinition(answer_general_query_callback(query, general_query_handler, log_query),
+            FunctionDefinition(answer_general_query_wrapper(query, general_query_handler, log_query),
                                AnswerGeneralQuery),
             FunctionDefinition(
                 answer_project_variables_callback(query, variable_query_handler, log_query)),
             FunctionDefinition(
-                answer_project_variables_usage_callback(query, variable_query_handler, log_query)),
+                answer_project_variables_usage_wrapper(query, variable_query_handler, log_query)),
             FunctionDefinition(
-                answer_releases_and_deployments_callback(query, releases_query_handler, log_query)),
+                answer_releases_and_deployments_wrapper(query, releases_query_handler, log_query)),
             FunctionDefinition(
-                answer_logs_callback(query, logs_handler, log_query)),
+                answer_logs_wrapper(query, logs_handler, log_query)),
             FunctionDefinition(provide_help),
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(set_default_value),

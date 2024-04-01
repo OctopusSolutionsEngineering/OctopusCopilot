@@ -4,10 +4,9 @@ import unittest
 
 from domain.config.openai import max_context
 from domain.context.octopus_context import collect_llm_context
-from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list, sanitize_environments
 from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
-from domain.tools.releases_and_deployments import answer_releases_and_deployments_callback
+from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.transformers.deployments_from_progression import get_deployment_progression, \
     get_deployment_array_from_progression
 from infrastructure.octopus import get_projects, get_environments, get_project_channel, get_lifecycle, \
@@ -77,15 +76,14 @@ def get_test_cases(limit=0):
     return test_cases
 
 
-def releases_query_handler(original_query, enriched_query, space, projects, environments, channels, releases):
+def releases_query_handler(original_query, messages, space, projects, environments, channels, releases):
     api_key = os.environ.get("TEST_OCTOPUS_API_KEY")
     url = os.environ.get("TEST_OCTOPUS_URL")
 
     project = get_item_or_none(sanitize_list(projects), 0)
     environments = get_item_or_none(sanitize_list(environments), 0)
 
-    messages = build_deployments_and_releases_prompt()
-    context = {"input": enriched_query}
+    context = {"input": original_query}
 
     # We need some additional JSON data to answer this question
     if project:
@@ -169,7 +167,7 @@ class DynamicDeploymentExperiments(unittest.TestCase):
                 def get_tools(tool_query):
                     return FunctionDefinitions([
                         FunctionDefinition(
-                            answer_releases_and_deployments_callback(tool_query, releases_query_handler))])
+                            answer_releases_and_deployments_wrapper(tool_query, releases_query_handler))])
 
                 result = llm_tool_query(query, get_tools).call_function()
 

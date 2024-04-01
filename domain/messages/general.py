@@ -1,11 +1,15 @@
-def build_hcl_prompt():
+def build_hcl_prompt(few_shot=None):
     """
     Build a message prompt for the LLM that instructs it to parse the Octopus HCL context.
-    :param step_by_step: True if the LLM should display its reasoning step by step before the answer. False for concise answers.
+    :param few_shot: Additional user messages providing a few shot example.
     :return: The messages to pass to the llm.
     """
 
     # Some of the prompts come from https://arxiv.org/pdf/2312.16171.pdf
+
+    if few_shot is None:
+        few_shot = []
+
     messages = [
         ("system",
          "You are methodical agent who understands Terraform modules defining Octopus Deploy resources."),
@@ -73,6 +77,7 @@ def build_hcl_prompt():
         ("system", "I’m going to tip $500 for a better solution!"),
         # Get the LLM to implement a chain-of-thought
         ("system", "Let's think step by step"),
+        *few_shot,
         ("user", "{input}"),
         ("user", "Answer the question using the HCL below."),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api

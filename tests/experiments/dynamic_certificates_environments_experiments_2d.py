@@ -2,9 +2,8 @@ import os
 import unittest
 
 from domain.context.octopus_context import collect_llm_context
-from domain.messages.general import build_hcl_prompt
 from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
-from domain.tools.general_query import answer_general_query_callback, AnswerGeneralQuery
+from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from infrastructure.octopus import get_environments, get_certificates
 from infrastructure.openai import llm_tool_query
 
@@ -39,11 +38,10 @@ def get_test_cases(limit=0):
     return environment_machines
 
 
-def general_query_handler(original_query, body):
+def general_query_handler(original_query, body, messages):
     api_key = os.environ.get("TEST_OCTOPUS_API_KEY")
     url = os.environ.get("TEST_OCTOPUS_URL")
 
-    messages = build_hcl_prompt()
     context = {"input": original_query}
 
     return collect_llm_context(original_query,
@@ -96,7 +94,7 @@ class DynamicCertificatesEnvironmentExperiments(unittest.TestCase):
 
                 def get_tools(tool_query):
                     return FunctionDefinitions([
-                        FunctionDefinition(answer_general_query_callback(tool_query, general_query_handler),
+                        FunctionDefinition(answer_general_query_wrapper(tool_query, general_query_handler),
                                            AnswerGeneralQuery), ])
 
                 result = llm_tool_query(query, get_tools).call_function()

@@ -13,7 +13,7 @@ class PromptTest(unittest.TestCase):
         Make sure the messages can be formatted into a prompt with the question and some hcl
         :return:
         """
-        messages = build_hcl_prompt(False)
+        messages = build_hcl_prompt()
         template = ChatPromptTemplate.from_messages(messages)
         template.format_messages(
             hcl="hcl_context",
