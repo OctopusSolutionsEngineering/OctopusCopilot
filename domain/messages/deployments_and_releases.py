@@ -7,17 +7,20 @@ def build_deployments_and_releases_prompt(step_by_step=False):
 
     # Some of the prompts come from https://arxiv.org/pdf/2312.16171.pdf
     messages = [
-        ("system", "The supplied HCL context provides details on projects, environments, channels, and tenants."),
-        ("system", "The supplied JSON context provides details on deployments and releases."),
+        ("system", "Projects, environments, channels, and tenants are defined in the supplied HCL context."),
+        ("system", "Releases and deployments are defined in the supplied JSON context."),
         ("system",
          "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL."),
         ("system", "You must assume the resources in the HCL and JSON belong to the same space as each other."),
+        # Tests were failing because the LLM reported the HCL didn't contain information about releases and deployments
+        ("system",
+         "You will be penalized for responding that the HCL does not contain information about deployments and releases."),
         # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
         # resulted in the LLM providing instructions on how to find the information rather than presenting
         # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
         # The phrase "what" seems to be important in the question.
         ("system",
-         "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
+         "You must assume questions requesting you to 'find', 'get', 'list', 'extract', 'display', or 'print' information "
          + "are asking you to return 'what' the value of the requested information is."),
         # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
         # guide the LLM to provide as much information as possible in the answer, and not treat missing

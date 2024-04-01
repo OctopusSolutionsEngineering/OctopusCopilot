@@ -306,8 +306,8 @@ class CopilotChatTest(unittest.TestCase):
         # returning the first version it finds
         create_and_deploy_release(space_name="Simple", project_name="Deploy AWS Lambda",
                                   release_version=str(uuid.uuid4()))
-        prompt = ("Get the release version of the latest deployment to the \"Development\" environment for the "
-                  + "\"Deploy AWS Lambda\" project in the \"Mainline\" channel for the \"Marketing\" tenant.")
+        prompt = ("What is the release version of the latest deployment to the \"Development\" environment for the "
+                  + "\"Deploy AWS Lambda\" project in the \"Mainline\" channel for the \"Marketing\" tenant?")
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
