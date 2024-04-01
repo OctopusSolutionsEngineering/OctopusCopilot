@@ -19,6 +19,17 @@ def build_deployments_and_releases_prompt(step_by_step=False):
         ("system",
          "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
          + "are asking you to return 'what' the value of the requested information is."),
+        # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
+        # guide the LLM to provide as much information as possible in the answer, and not treat missing
+        # information as an error.
+        ("system", "Your answer must include any information you found in the context relevant to the question."),
+        ("system",
+         "Your answer must clearly state if the supplied context does not provide the requested information."),
+        ("system",
+         "You must provide a response even if the context does not provide some of the requested information."),
+        ("system",
+         "It is ok if you can not find most of the requested information in the context - "
+         + "just provide what you can find."),
         # The LLM will often provide a code sample that describes how to find the answer if the context does not
         # provide the requested information.
         ("system", "You will be penalized for providing a code sample as the answer."),
