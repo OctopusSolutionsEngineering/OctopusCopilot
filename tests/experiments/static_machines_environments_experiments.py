@@ -1148,7 +1148,7 @@ Second, find the following resources that represent targets or machines:
 - "octopusdeploy_cloud_region_deployment_target"
 - "octopusdeploy_polling_tentacle_deployment_target"
 - "octopusdeploy_kubernetes_cluster_deployment_target"
-- "octopusdeploy_ssh_connection_deployment_target" 
+- "octopusdeploy_ssh_connection_deployment_target"
 - "octopusdeploy_listening_tentacle_deployment_target"
 - "octopusdeploy_offline_package_drop_deployment_target"
 - "octopusdeploy_azure_cloud_service_deployment_target"

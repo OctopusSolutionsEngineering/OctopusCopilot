@@ -29,8 +29,7 @@ def get_test_cases(limit=0):
             m.get("Name"),
             # machine id
             m.get("Id")),
-                 filter(lambda m: e.get("Id") in m.get("EnvironmentIds"), machines)))),
-                                    environments))
+                 filter(lambda m: e.get("Id") in m.get("EnvironmentIds"), machines)))), environments))
 
     if limit > 0:
         return environment_machines[:limit]
@@ -89,10 +88,9 @@ class DynamicMachineEnvironmentExperiments(unittest.TestCase):
 
             with self.subTest(f"{name} - {','.join(map(lambda m: m[0], machines))}"):
                 # Create a query that should generate the same result as the test case
-                query = (
-                        f"List the unique names and IDs of all machines "
-                        + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space "
-                        + f"belonging to the \"{name}\" environment")
+                query = (f"List the unique names and IDs of all machines "
+                         + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space "
+                         + f"belonging to the \"{name}\" environment")
 
                 def get_tools():
                     return FunctionDefinitions([

@@ -31,8 +31,7 @@ def get_test_cases(limit=0):
             m.get("Id")),
                  # Certificates belong to an environment if they link it directory, or define no environments
                  filter(lambda m: len(m.get("EnvironmentIds")) == 0 or e.get("Id") in m.get("EnvironmentIds"),
-                        certificates)))),
-                                    environments))
+                        certificates)))), environments))
 
     if limit > 0:
         return environment_machines[:limit]
