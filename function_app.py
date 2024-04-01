@@ -205,8 +205,11 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
     :return: The HTML form
     """
     try:
+        # Extract the query from the question
+        query = extract_query(req)
+
         tools = FunctionDefinitions([
-            FunctionDefinition(answer_general_query_callback(lambda x: x), AnswerGeneralQuery),
+            FunctionDefinition(answer_general_query_callback(query, lambda x: x), AnswerGeneralQuery),
         ])
 
         query = extract_query(req)
