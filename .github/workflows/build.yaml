@@ -43,7 +43,7 @@ jobs:
       - name: Install tools
         run: |
           pip install pytest coverage setuptools radon
-          sudo apt-get install -y pycodestyle
+          sudo apt-get install -y pycodestyle mypy
       - name: Linting
         shell: bash
         run: find . -path ./domain/sanitizers/stringlifier -prune -o -path ./venv -prune -o -name "*.py" -print0 | xargs -0 -n1 pycodestyle --ignore=E501,W503,E126
