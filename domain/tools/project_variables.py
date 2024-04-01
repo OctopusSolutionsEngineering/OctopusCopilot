@@ -232,6 +232,8 @@ Answer 1:
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
-        return callback(original_query, few_shot, space, projects, variables)
+        messages = build_hcl_prompt([("user", few_shot)])
+
+        return callback(original_query, messages, space, projects, variables)
 
     return answer_project_variables
