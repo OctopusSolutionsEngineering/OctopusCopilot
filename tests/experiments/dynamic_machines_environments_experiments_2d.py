@@ -91,9 +91,9 @@ class DynamicMachineEnvironmentExperiments(unittest.TestCase):
                          + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space "
                          + f"belonging to the \"{name}\" environment")
 
-                def get_tools():
+                def get_tools(tool_query):
                     return FunctionDefinitions([FunctionDefinition(
-                        answer_general_query_callback(query, general_query_handler), AnswerGeneralQuery)])
+                        answer_general_query_callback(tool_query, general_query_handler), AnswerGeneralQuery)])
 
                 result = llm_tool_query(query, get_tools).call_function()
 

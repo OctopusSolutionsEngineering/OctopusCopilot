@@ -65,7 +65,7 @@ def llm_tool_query(query, llm_tools, log_query=None):
     ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_tools_execution).')
     ensure_not_falsy(query, 'llm_tools must not be None (handle_copilot_tools_execution).')
 
-    functions = llm_tools()
+    functions = llm_tools(query)
     tools = functions.get_tools()
 
     # Version comes from https://github.com/openai/openai-python/issues/926#issuecomment-1839426482

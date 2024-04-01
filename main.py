@@ -221,17 +221,17 @@ def logging(prefix, message):
     print(prefix + " " + ",".join(sanitize_list(message)))
 
 
-def build_tools():
+def build_tools(tool_query):
     """
     Builds the set of tools configured for use when called as a CLI application
     :return: The OpenAI tools
     """
     return FunctionDefinitions([
         FunctionDefinition(answer_general_query_callback(general_query_handler, log_query), AnswerGeneralQuery),
-        FunctionDefinition(answer_project_variables_callback(parser.query, variable_query_handler, log_query)),
-        FunctionDefinition(answer_project_variables_usage_callback(parser.query, variable_query_handler, log_query)),
-        FunctionDefinition(answer_releases_and_deployments_callback(parser.query, releases_query_handler, log_query)),
-        FunctionDefinition(answer_logs_callback(parser.query, logs_handler, log_query))
+        FunctionDefinition(answer_project_variables_callback(tool_query, variable_query_handler, log_query)),
+        FunctionDefinition(answer_project_variables_usage_callback(tool_query, variable_query_handler, log_query)),
+        FunctionDefinition(answer_releases_and_deployments_callback(tool_query, releases_query_handler, log_query)),
+        FunctionDefinition(answer_logs_callback(tool_query, logs_handler, log_query))
     ])
 
 

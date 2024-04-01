@@ -99,7 +99,9 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the feed name in the query
         """
 
-        function = llm_tool_query("What is the access key of the \"AWS Account\" account?.", build_mock_test_tools)
+        query = "What is the access key of the \"AWS Account\" account?."
+
+        function = llm_tool_query(query, build_mock_test_tools)
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")

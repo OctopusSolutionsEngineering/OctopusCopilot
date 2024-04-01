@@ -211,7 +211,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
 
         query = extract_query(req)
 
-        result = llm_tool_query(query, lambda: tools, log_query).call_function()
+        result = llm_tool_query(query, lambda query: tools, log_query).call_function()
 
         return func.HttpResponse(json.dumps(result), mimetype="application/json")
     except Exception as e:
@@ -280,16 +280,16 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                      {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
                                       "input": new_query}, log_query)
 
-        def get_tools():
+        def get_tools(tool_query):
             return FunctionDefinitions([
                 FunctionDefinition(general_query_handler),
                 FunctionDefinition(
-                    answer_project_variables_callback(query, project_variables_usage_callback, log_query)),
+                    answer_project_variables_callback(tool_query, project_variables_usage_callback, log_query)),
                 FunctionDefinition(
-                    answer_project_variables_usage_callback(query, project_variables_usage_callback, log_query)),
+                    answer_project_variables_usage_callback(tool_query, project_variables_usage_callback, log_query)),
                 FunctionDefinition(
-                    answer_releases_and_deployments_callback(query, releases_and_deployments_callback, log_query)),
-                FunctionDefinition(answer_logs_callback(query, logs_query_handler, log_query))
+                    answer_releases_and_deployments_callback(tool_query, releases_and_deployments_callback, log_query)),
+                FunctionDefinition(answer_logs_callback(tool_query, logs_query_handler, log_query))
             ])
 
         # Call the appropriate tool. This may be a straight pass through of the query and context,
@@ -591,13 +591,13 @@ Once default values are set, you can omit the space, environment, and project fr
 
         return llm_message_query(messages, context, log_query)
 
-    def build_form_tools():
+    def build_form_tools(query):
         """
         Builds a set of tools configured for use with HTTP requests (i.e. API key
         and URL extracted from an HTTP request body).
+        :param: query The query sent to the LLM
         :return: The OpenAI tools
         """
-        query = extract_query(req)
 
         return FunctionDefinitions([
             FunctionDefinition(answer_general_query_callback(query, general_query_handler, log_query),

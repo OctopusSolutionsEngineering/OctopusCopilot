@@ -166,10 +166,10 @@ class DynamicDeploymentExperiments(unittest.TestCase):
                          + f"in the \"{channel}\" channel "
                          + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space.")
 
-                def get_tools():
+                def get_tools(tool_query):
                     return FunctionDefinitions([
                         FunctionDefinition(
-                            answer_releases_and_deployments_callback(query, releases_query_handler))])
+                            answer_releases_and_deployments_callback(tool_query, releases_query_handler))])
 
                 result = llm_tool_query(query, get_tools).call_function()
 
