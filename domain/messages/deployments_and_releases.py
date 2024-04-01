@@ -42,7 +42,7 @@ def build_deployments_and_releases_prompt(few_shot=None):
         ("system", "You will be penalized for providing a code sample as the answer."),
         ("system", "I’m going to tip $500 for a better solution!"),
         *few_shot,
-        ("user", "{input}"),
+        ("user", "Question: {input}"),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
         ("user", "JSON: ###\n{json}\n###"),

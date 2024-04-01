@@ -78,7 +78,7 @@ def build_hcl_prompt(few_shot=None):
         # Get the LLM to implement a chain-of-thought
         ("system", "Let's think step by step"),
         *few_shot,
-        ("user", "{input}"),
+        ("user", "Question: {input}"),
         ("user", "Answer the question using the HCL below."),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
