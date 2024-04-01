@@ -27,7 +27,7 @@ from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from domain.tools.logs import answer_logs_wrapper
-from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_wrapper
+from domain.tools.project_variables import answer_project_variables_wrapper, answer_project_variables_usage_wrapper
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.transformers.chat_responses import get_dashboard_response
 from domain.transformers.deployments_from_progression import get_deployment_array_from_progression
@@ -208,14 +208,14 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
 
         # A function that ignores the query and the messages and returns the body.
         # The body contains all the extracted entities that must be returned from the Octopus API.
-        def return_body(tool_query, body, messages):
+        def return_body_callback(tool_query, body, messages):
             return body
 
         tools = FunctionDefinitions([
-            FunctionDefinition(answer_general_query_wrapper(query, return_body), AnswerGeneralQuery),
+            FunctionDefinition(answer_general_query_wrapper(query, return_body_callback), AnswerGeneralQuery),
         ])
 
-        # Result here is the body returned by return_body
+        # Result here is the body returned by return_body_callback
         result = llm_tool_query(query, lambda q: tools, log_query).call_function()
 
         return func.HttpResponse(json.dumps(result), mimetype="application/json")
@@ -247,7 +247,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             return minify_hcl(req.get_body().decode("utf-8"))
 
         # Define some tools that the LLM can call
-        def general_query_handler(**kwargs):
+        def general_query_callback(**kwargs):
             """
             Answers a general query about an Octopus space
             """
@@ -257,7 +257,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                       "input": query},
                                      log_query)
 
-        def logs_query_handler(original_query, messages, space, projects, environments, channel, tenant, release):
+        def logs_query_callback(original_query, messages, space, projects, environments, channel, tenant, release):
             """
             Answers a general query about a logs
             """
@@ -287,14 +287,14 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
         def get_tools(tool_query):
             return FunctionDefinitions([
-                FunctionDefinition(general_query_handler),
+                FunctionDefinition(general_query_callback),
                 FunctionDefinition(
-                    answer_project_variables_callback(tool_query, project_variables_usage_callback, log_query)),
+                    answer_project_variables_wrapper(tool_query, project_variables_usage_callback, log_query)),
                 FunctionDefinition(
                     answer_project_variables_usage_wrapper(tool_query, project_variables_usage_callback, log_query)),
                 FunctionDefinition(
                     answer_releases_and_deployments_wrapper(tool_query, releases_and_deployments_callback, log_query)),
-                FunctionDefinition(answer_logs_wrapper(tool_query, logs_query_handler, log_query))
+                FunctionDefinition(answer_logs_wrapper(tool_query, logs_query_callback, log_query))
             ])
 
         # Call the appropriate tool. This may be a straight pass through of the query and context,
@@ -451,7 +451,7 @@ Once default values are set, you can omit the space, environment, and project fr
 * `Show me the dashboard`
 * `Show me the status of the latest deployment to the production environment`"""
 
-    def general_query_handler(original_query, body, messages):
+    def general_query_callback(original_query, body, messages):
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), body["space_name"], "Space")
@@ -488,7 +488,7 @@ Once default values are set, you can omit the space, environment, and project fr
                                    url,
                                    log_query)
 
-    def variable_query_handler(original_query, messages, space, projects, variables):
+    def variable_query_callback(original_query, messages, space, projects, variables):
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
@@ -523,7 +523,7 @@ Once default values are set, you can omit the space, environment, and project fr
                                             log_query)
         return chat_response
 
-    def releases_query_handler(original_query, messages, space, projects, environments, channels, releases):
+    def releases_query_callback(original_query, messages, space, projects, environments, channels, releases):
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
@@ -573,7 +573,7 @@ Once default values are set, you can omit the space, environment, and project fr
 
         return chat_response
 
-    def logs_handler(original_query, messages, space, projects, environments, channel, tenants, release):
+    def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release):
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
@@ -601,16 +601,16 @@ Once default values are set, you can omit the space, environment, and project fr
         """
 
         return FunctionDefinitions([
-            FunctionDefinition(answer_general_query_wrapper(query, general_query_handler, log_query),
+            FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
                                AnswerGeneralQuery),
             FunctionDefinition(
-                answer_project_variables_callback(query, variable_query_handler, log_query)),
+                answer_project_variables_wrapper(query, variable_query_callback, log_query)),
             FunctionDefinition(
-                answer_project_variables_usage_wrapper(query, variable_query_handler, log_query)),
+                answer_project_variables_usage_wrapper(query, variable_query_callback, log_query)),
             FunctionDefinition(
-                answer_releases_and_deployments_wrapper(query, releases_query_handler, log_query)),
+                answer_releases_and_deployments_wrapper(query, releases_query_callback, log_query)),
             FunctionDefinition(
-                answer_logs_wrapper(query, logs_handler, log_query)),
+                answer_logs_wrapper(query, logs_callback, log_query)),
             FunctionDefinition(provide_help),
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(set_default_value),

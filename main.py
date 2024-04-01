@@ -9,7 +9,7 @@ from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environment
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from domain.tools.logs import answer_logs_wrapper
-from domain.tools.project_variables import answer_project_variables_callback, answer_project_variables_usage_wrapper
+from domain.tools.project_variables import answer_project_variables_wrapper, answer_project_variables_usage_wrapper
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from domain.transformers.deployments_from_progression import get_deployment_array_from_progression
@@ -74,7 +74,7 @@ def get_deployment_process_raw_json_cli(space_name: None, project_name: None):
     return get_raw_deployment_process(space_name, project_name, get_api_key(), get_octopus_api())
 
 
-def general_query_handler(initial_query, body, messages):
+def general_query_callback(initial_query, body, messages):
     space = get_default_argument(body['space_name'], 'Space')
 
     context = {"input": parser.query}
@@ -106,7 +106,7 @@ def general_query_handler(initial_query, body, messages):
                                logging)
 
 
-def logs_handler(original_query, messages, space, projects, environments, channel, tenants):
+def logs_callback(original_query, messages, space, projects, environments, channel, tenants):
     space = get_default_argument(space, 'Space')
 
     logs = get_deployment_logs(space, get_item_or_none(sanitize_list(projects), 0),
@@ -120,7 +120,7 @@ def logs_handler(original_query, messages, space, projects, environments, channe
     return llm_message_query(messages, context, log_query)
 
 
-def variable_query_handler(original_query, messages, space, projects, variables):
+def variable_query_callback(original_query, messages, space, projects, variables):
     space = get_default_argument(space, 'Space')
 
     context = {"input": original_query}
@@ -154,7 +154,7 @@ def variable_query_handler(original_query, messages, space, projects, variables)
     return chat_response
 
 
-def releases_query_handler(original_query, messages, space, projects, environments, channels, releases):
+def releases_query_callback(original_query, messages, space, projects, environments, channels, releases):
     space = get_default_argument(space, 'Space')
 
     context = {"input": original_query}
@@ -220,11 +220,11 @@ def build_tools(tool_query):
     :return: The OpenAI tools
     """
     return FunctionDefinitions([
-        FunctionDefinition(answer_general_query_wrapper(general_query_handler, log_query), AnswerGeneralQuery),
-        FunctionDefinition(answer_project_variables_callback(tool_query, variable_query_handler, log_query)),
-        FunctionDefinition(answer_project_variables_usage_wrapper(tool_query, variable_query_handler, log_query)),
-        FunctionDefinition(answer_releases_and_deployments_wrapper(tool_query, releases_query_handler, log_query)),
-        FunctionDefinition(answer_logs_wrapper(tool_query, logs_handler, log_query))
+        FunctionDefinition(answer_general_query_wrapper(general_query_callback, log_query), AnswerGeneralQuery),
+        FunctionDefinition(answer_project_variables_wrapper(tool_query, variable_query_callback, log_query)),
+        FunctionDefinition(answer_project_variables_usage_wrapper(tool_query, variable_query_callback, log_query)),
+        FunctionDefinition(answer_releases_and_deployments_wrapper(tool_query, releases_query_callback, log_query)),
+        FunctionDefinition(answer_logs_wrapper(tool_query, logs_callback, log_query))
     ])
 
 

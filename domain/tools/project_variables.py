@@ -147,7 +147,7 @@ Answer 1:
     return answer_project_variables_usage
 
 
-def answer_project_variables_callback(original_query, callback, logging=None):
+def answer_project_variables_wrapper(original_query, callback, logging=None):
     def answer_project_variables(space=None, projects=None, variables=None, **kwargs):
         """Answers a question about the variables defined for a project. This does not provide details about tenants.
 
