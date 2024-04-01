@@ -256,7 +256,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_tagsets(self):
-        prompt = "List the tags associated with the \"region\" tag set?"
+        prompt = "List the tags associated with the \"regions\" tag set?"
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
