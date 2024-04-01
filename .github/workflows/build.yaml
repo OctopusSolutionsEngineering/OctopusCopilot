@@ -232,6 +232,7 @@ jobs:
           packages: OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip
           overwrite_mode: OverwriteExisting
       - name: Create Octopus Release
+        if: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
         uses: OctopusDeploy/create-release-action@v3
         env:
           OCTOPUS_API_KEY: ${{ secrets.COPILOT_OCTOPUS_API }}
