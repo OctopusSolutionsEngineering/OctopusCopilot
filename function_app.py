@@ -209,7 +209,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
         query = extract_query(req)
 
         tools = FunctionDefinitions([
-            FunctionDefinition(answer_general_query_callback(query, lambda x: x), AnswerGeneralQuery),
+            FunctionDefinition(answer_general_query_callback(query, lambda tool_query, body: body), AnswerGeneralQuery),
         ])
 
         result = llm_tool_query(query, lambda q: tools, log_query).call_function()
