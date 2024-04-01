@@ -253,7 +253,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                       "input": query},
                                      log_query)
 
-        def logs_query_handler(original_query, new_query, space, projects, environments, channel, tenant):
+        def logs_query_handler(original_query, new_query, space, projects, environments, channel, tenant, release):
             """
             Answers a general query about a logs
             """
