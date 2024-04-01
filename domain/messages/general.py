@@ -38,7 +38,7 @@ def build_hcl_prompt(few_shot=None):
         ("system",
          "You must provide a response even if the context does not provide some of the requested information."),
         ("system",
-         "It is ok if you can not find most of the requested information in the context - "
+         "It is ok if you can not find most or any of the requested information in the context - "
          + "just provide what you can find."),
         # The LLM will often provide a code sample that describes how to find the answer if the context does not
         # provide the requested information.
