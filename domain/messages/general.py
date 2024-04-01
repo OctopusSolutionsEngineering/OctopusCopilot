@@ -22,7 +22,7 @@ def build_hcl_prompt():
         # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
         # The phrase "what" seems to be important in the question.
         ("system",
-         "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
+         "You must assume questions requesting you to 'find', 'get', 'list', 'extract', 'display', or 'print' information "
          + "are asking you to return 'what' the value of the requested information is."),
         # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
         # guide the LLM to provide as much information as possible in the answer, and not treat missing
