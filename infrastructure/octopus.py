@@ -518,7 +518,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
         if deployments:
             task_id = deployments[0]["TaskId"]
     else:
-        specific_deployment = list(filter(lambda d: d["ReleaseVersion"] == release_version, deployments))
+        specific_deployment = list(filter(lambda d: d["ReleaseVersion"] == release_version.strip(), deployments))
         if specific_deployment:
             task_id = specific_deployment[0]["TaskId"]
 

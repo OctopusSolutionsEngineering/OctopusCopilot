@@ -66,4 +66,4 @@ def exclude_all_variables(query, entity_list):
 
 def release_is_latest(release_version):
     phrases = ["latest", "last", "most recent"]
-    return not release_version or release_version.casefold() in phrases
+    return not release_version or not release_version.strip() or release_version.casefold() in phrases
