@@ -163,7 +163,7 @@ def answer_project_variables_callback(original_query, callback, logging=None):
         # Few shot example with chain-of-thought example to help the LLM understand the relationships between projects
         # and variables.
 
-        few_shot = f"""
+        few_shot = """
 Task: Given the HCL representation of a project and its variables, list the variables defined in a project "My Project".
 
 Example 1:
