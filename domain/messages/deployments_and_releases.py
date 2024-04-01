@@ -7,13 +7,15 @@ def build_deployments_and_releases_prompt(step_by_step=False):
 
     # Some of the prompts come from https://arxiv.org/pdf/2312.16171.pdf
     messages = [
+        ("system", "The supplied HCL context provides details on projects, environments, channels, and tenants."),
+        # The LLM will often provide a code sample that describes how to find the answer if the context does not
+        # provide the requested information.
+        ("system", "You will be penalized for providing a code sample as the answer."),
+        ("system", "The supplied JSON context provides details on deployments and releases."),
         ("system",
-         "The supplied HCL context provides details on projects, environments, channels, and tenants. "
-         + "The supplied JSON context provides details on deployments and releases. "
-         + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
-         + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
-         + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
-         + "I’m going to tip $500 for a better solution!"),
+         "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL."),
+        ("system", "You must assume the resources in the HCL and JSON belong to the same space as each other."),
+        ("system", "I’m going to tip $500 for a better solution!"),
         ("user", "{input}"),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
