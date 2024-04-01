@@ -90,10 +90,9 @@ class DynamicCertificatesEnvironmentExperiments(unittest.TestCase):
 
             with self.subTest(f"{name} - {','.join(map(lambda m: m[0], certificates))}"):
                 # Create a query that should generate the same result as the test case
-                query = (
-                        f"List the unique names and IDs of all certificates "
-                        + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space "
-                        + f"belonging to the \"{name}\" environment")
+                query = (f"List the unique names and IDs of all certificates "
+                         + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space "
+                         + f"belonging to the \"{name}\" environment")
 
                 def get_tools():
                     return FunctionDefinitions([

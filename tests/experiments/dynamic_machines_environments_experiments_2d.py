@@ -28,8 +28,7 @@ def get_test_cases(limit=0):
             # machine name
             m.get("Name"),
             # machine id
-            m.get("Id")),
-                 filter(lambda m: e.get("Id") in m.get("EnvironmentIds"), machines)))), environments))
+            m.get("Id")), filter(lambda m: e.get("Id") in m.get("EnvironmentIds"), machines)))), environments))
 
     if limit > 0:
         return environment_machines[:limit]
@@ -93,9 +92,8 @@ class DynamicMachineEnvironmentExperiments(unittest.TestCase):
                          + f"belonging to the \"{name}\" environment")
 
                 def get_tools():
-                    return FunctionDefinitions([
-                        FunctionDefinition(answer_general_query_callback(query, general_query_handler),
-                                           AnswerGeneralQuery), ])
+                    return FunctionDefinitions([FunctionDefinition(
+                        answer_general_query_callback(query, general_query_handler), AnswerGeneralQuery)])
 
                 result = llm_tool_query(query, get_tools).call_function()
 
