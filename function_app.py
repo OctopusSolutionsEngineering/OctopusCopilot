@@ -212,9 +212,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
             FunctionDefinition(answer_general_query_callback(query, lambda x: x), AnswerGeneralQuery),
         ])
 
-        query = extract_query(req)
-
-        result = llm_tool_query(query, lambda query: tools, log_query).call_function()
+        result = llm_tool_query(query, lambda q: tools, log_query).call_function()
 
         return func.HttpResponse(json.dumps(result), mimetype="application/json")
     except Exception as e:
