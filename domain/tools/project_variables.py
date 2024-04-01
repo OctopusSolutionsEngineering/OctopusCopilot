@@ -134,8 +134,6 @@ Answer 1:
 - The variable "AnotherVariable" is used by the step "Step 2".
 - The variable "SecretVariable" is used by the step "Step 2".
 - The variable "TestVariable3" is unused.
-
-Question: {original_query}
 """
 
         for key, value in kwargs.items():
