@@ -40,3 +40,13 @@ class UsersTest(unittest.TestCase):
             get_users_details("test", connection_string)
 
         self.assertEqual(0, delete_old_user_details(connection_string))
+
+    def test_login_invalid_api(self):
+        with self.assertRaises(ValueError):
+            save_users_octopus_url_from_login("12345", "https://test.com", "invalid", "password", "salt",
+                                              connection_string)
+
+    def test_login_invalid_url(self):
+        with self.assertRaises(ValueError):
+            save_users_octopus_url_from_login("12345", "blah", "API-ABCDEFG", "password", "salt",
+                                              connection_string)
