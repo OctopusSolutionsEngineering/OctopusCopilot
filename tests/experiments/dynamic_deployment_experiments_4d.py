@@ -145,13 +145,17 @@ class DynamicDeploymentExperiments(unittest.TestCase):
 
     This experiment always used a CoT and few-shot prompt.
 
-    GPT 3.5 was reasonably good at this task, passing over 90% of the tests (in 20 minutes) when the last 20 deployments
-    were supplied in the context.
+    GPT 3.5 was reasonably good at this task, passing over 90% of the tests (in 20 minutes) when the last deployments
+    provided by the progression endpoint wee used (usually just a few deployments).
 
-    GPT 4 had a success rate of 90% with 20 deployments in the context, but it took 40 minutes to complete.
+    GPT 4 also had a success rate of 90%, but it took 40 minutes to complete.
 
     The tests that failed were different between GPT3.5 and GPT4, but GPT 4 didn't increase the success rate,
     took twice as long, and costs 100 times as much.
+
+    The success rate for GPT 3.5 hovered around 80% with tests that returned the last 10, 20, and 30 deployments.
+    This wasn't an indepth test, as the deployments were already sorted and we were asking for the latest one.
+
     """
 
     def test_get_cases(self):

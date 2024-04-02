@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
+import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
-import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_context
 from domain.config.users import get_admin_users
