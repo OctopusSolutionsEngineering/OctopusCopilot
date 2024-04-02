@@ -7,10 +7,10 @@ from domain.context.octopus_context import collect_llm_context
 from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list, sanitize_environments
 from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
-from domain.transformers.deployments_from_progression import get_deployment_progression, \
-    get_deployment_array_from_progression
+from domain.transformers.deployments_from_progression import get_deployment_progression
+from domain.transformers.deployments_from_release import get_deployments_for_project
 from infrastructure.octopus import get_projects, get_environments, get_project_channel, get_lifecycle, \
-    get_project_progression_from_ids, get_project_progression, get_dashboard
+    get_project_progression_from_ids, get_dashboard
 from infrastructure.openai import llm_tool_query
 
 
@@ -88,10 +88,12 @@ def releases_query_handler(original_query, messages, space, projects, environmen
     # We need some additional JSON data to answer this question
     if project:
         # We only need the deployments, so strip out the rest of the JSON
-        deployments = get_deployment_array_from_progression(
-            json.loads(get_project_progression(space, project, api_key, url)),
-            sanitize_environments(environments),
-            max_context)
+        deployments = get_deployments_for_project(space,
+                                                  get_item_or_none(sanitize_list(projects), 0),
+                                                  sanitize_environments(environments),
+                                                  api_key,
+                                                  url,
+                                                  max_context)
         context["json"] = json.dumps(deployments, indent=2)
     else:
         context["json"] = get_dashboard(space, api_key, url)

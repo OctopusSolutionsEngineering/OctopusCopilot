@@ -30,7 +30,7 @@ from domain.tools.logs import answer_logs_wrapper
 from domain.tools.project_variables import answer_project_variables_wrapper, answer_project_variables_usage_wrapper
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.transformers.chat_responses import get_dashboard_response
-from domain.transformers.deployments_from_progression import get_deployment_array_from_progression
+from domain.transformers.deployments_from_release import get_deployments_for_project
 from domain.transformers.minify_hcl import minify_hcl
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.url.build_url import build_url
@@ -38,7 +38,7 @@ from domain.url.session import create_session_blob, extract_session_blob
 from infrastructure.github import get_github_user
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
-    create_limited_api_key, get_dashboard, get_project_progression, get_deployment_logs
+    create_limited_api_key, get_dashboard, get_deployment_logs
 from infrastructure.openai import llm_tool_query
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
@@ -537,10 +537,12 @@ Once default values are set, you can omit the space, environment, and project fr
         # We need some additional JSON data to answer this question
         if project:
             # We only need the deployments, so strip out the rest of the JSON
-            deployments = get_deployment_array_from_progression(
-                json.loads(get_project_progression(space, project, api_key, url)),
-                sanitize_environments(environments),
-                max_context)
+            deployments = get_deployments_for_project(space,
+                                                      get_item_or_none(sanitize_list(projects), 0),
+                                                      sanitize_environments(environments),
+                                                      api_key,
+                                                      url,
+                                                      max_context)
             context["json"] = json.dumps(deployments, indent=2)
         else:
             context["json"] = get_dashboard(space, api_key, url)

@@ -5,6 +5,7 @@ import pytz
 from retry import retry
 from urllib3.exceptions import HTTPError
 
+from domain.config.openai import max_context
 from domain.exceptions.request_failed import OctopusRequestFailed
 from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
@@ -383,6 +384,52 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     return resp.data.decode("utf-8")
+
+
+@retry(HTTPError, tries=3, delay=2)
+def get_project_releases(space_id, project_name, api_key, octopus_url, take=max_context):
+    """
+    Returns a deployment progression for a project.
+    :param space_name: The name of the space.
+    :param project_name: The name of the project
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
+    :return: The deployment progression raw JSON
+    """
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_project_releases).')
+    ensure_string_not_empty(project_name, 'project_name must be a non-empty string (get_project_releases).')
+
+    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+
+    project = get_item_ignoring_case(resp.json()["Items"], project_name)
+
+    if project is None:
+        raise ResourceNotFound("No projects found matching the name " + project_name)
+
+    api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Releases?take={take}")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+
+    return resp.json()
+
+
+@retry(HTTPError, tries=3, delay=2)
+def get_release_deployments(space_id, release_id, api_key, octopus_url):
+    """
+    Returns the deployments of a release.
+    :param space_name: The name of the space.
+    :param release_id: The release ID
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
+    :return: The deployment progression raw JSON
+    """
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_release_deployments).')
+    ensure_string_not_empty(release_id, 'project_name must be a non-empty string (get_release_deployments).')
+
+    api = build_url(octopus_url, f"api/{space_id}/Releases/{release_id}/Deployments")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+
+    return resp.json()
 
 
 @retry(HTTPError, tries=3, delay=2)

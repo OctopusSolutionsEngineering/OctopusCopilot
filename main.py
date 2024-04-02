@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 
+from domain.config.openai import max_context
 from domain.context.octopus_context import collect_llm_context, max_chars
 from domain.logging.query_loggin import log_query
 from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all, \
@@ -12,9 +13,9 @@ from domain.tools.logs import answer_logs_wrapper
 from domain.tools.project_variables import answer_project_variables_wrapper, answer_project_variables_usage_wrapper
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.transformers.chat_responses import get_octopus_project_names_response
-from domain.transformers.deployments_from_progression import get_deployment_array_from_progression
-from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_project_progression, \
-    get_dashboard, get_deployment_logs
+from domain.transformers.deployments_from_release import get_deployments_for_project
+from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_dashboard, \
+    get_deployment_logs
 from infrastructure.openai import llm_tool_query, llm_message_query
 
 
@@ -162,11 +163,12 @@ def releases_query_callback(original_query, messages, space, projects, environme
     # We need some additional JSON data to answer this question
     if projects:
         # We only need the deployments, so strip out the rest of the JSON
-        deployments = get_deployment_array_from_progression(
-            json.loads(get_project_progression(space, get_item_or_none(sanitize_list(projects), 0), get_api_key(),
-                                               get_octopus_api())),
-            sanitize_environments(environments),
-            20)
+        deployments = get_deployments_for_project(space,
+                                                  get_item_or_none(sanitize_list(projects), 0),
+                                                  sanitize_environments(environments),
+                                                  get_api_key(),
+                                                  get_octopus_api(),
+                                                  max_context)
         context["json"] = json.dumps(deployments, indent=2)
     else:
         context["json"] = get_dashboard(space, get_api_key(), get_octopus_api())
