@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
-import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_context
 from domain.config.users import get_admin_users
@@ -187,7 +187,7 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
                                           os.environ.get("ENCRYPTION_SALT"),
                                           get_functions_connection_string())
         return func.HttpResponse(status_code=201)
-    except (OctopusRequestFailed, OctopusApiKeyInvalid) as e:
+    except (OctopusRequestFailed, OctopusApiKeyInvalid, ValueError) as e:
         handle_error(e)
         return func.HttpResponse("Failed to generate temporary key", status_code=400)
     except Exception as e:
