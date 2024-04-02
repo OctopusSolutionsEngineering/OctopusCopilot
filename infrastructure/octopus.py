@@ -31,7 +31,8 @@ def get_octopus_headers(my_api_key):
         raise ValueError('my_api_key must be the Octopus API key.')
 
     return {
-        "X-Octopus-ApiKey": my_api_key
+        "X-Octopus-ApiKey": my_api_key,
+        "User-Agent": "OctopusAI",
     }
 
 

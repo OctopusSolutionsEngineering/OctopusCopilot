@@ -7,6 +7,8 @@ from domain.encryption.encryption import encrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
 from domain.logging.app_logging import configure_logging
 from domain.validation.argument_validation import ensure_string_not_empty
+from domain.validation.octopus_validation import is_api_key
+from domain.validation.url_validation import validate_url
 
 logger = configure_logging(__name__)
 
@@ -106,6 +108,12 @@ def save_users_octopus_url_from_login(username, url, api, encryption_password, e
     ensure_string_not_empty(api, "api must be the Octopus API key (save_users_octopus_url_from_login).")
     ensure_string_not_empty(connection_string,
                             'connection_string must be the connection string (save_users_octopus_url_from_login).')
+
+    if not validate_url(url):
+        raise ValueError("The Octopus URL is not valid (save_users_octopus_url).")
+
+    if not is_api_key(api):
+        raise ValueError("The API key is not valid (save_users_octopus_url).")
 
     encryption_password = generate_password(encryption_password, encryption_salt)
     encrypted_api_key, tag, nonce = encrypt_eax(api, encryption_password, encryption_salt)
