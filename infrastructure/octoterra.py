@@ -4,6 +4,7 @@ import os
 from retry import retry
 from urllib3.exceptions import HTTPError
 
+from domain.config.openai import max_context
 from domain.logging.app_logging import configure_logging
 from domain.query.query_inspector import exclude_all_targets, exclude_all_runbooks, exclude_all_tenants, \
     exclude_all_projects, exclude_all_library_variable_sets, exclude_all_environments, exclude_all_feeds, \
@@ -110,6 +111,9 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
         "includeSpaceInPopulation": True,
         # If any environments were mentioned, exclude targets that are not linked to the named environments.
         "excludeTargetsWithNoEnvironments": exclude_targets_with_no_environments,
+        # Limit the number of resources to prevent the context from filling up and the LLM from
+        # having to process more items than it can reasonably process.
+        "limitResourceCount": max_context,
     }
 
     resp = handle_response(lambda: http.request("POST",
