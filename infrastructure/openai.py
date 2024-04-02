@@ -38,12 +38,7 @@ def llm_message_query(message_prompt, context, log_query=None):
         return e.message
 
     if log_query:
-        log_query("query_llm", "----------------------------------------")
-        log_query("HCL:", context.get("hcl"))
-        log_query("JSON:", context.get("json"))
-        log_query("Text:", context.get("context"))
         log_query("Query:", context.get("input"))
-        log_query("Response:", response)
 
     client_response = response
 
@@ -64,6 +59,9 @@ def llm_tool_query(query, llm_tools, log_query=None):
 
     ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_tools_execution).')
     ensure_not_falsy(query, 'llm_tools must not be None (handle_copilot_tools_execution).')
+
+    if log_query:
+        log_query("Query:", query)
 
     functions = llm_tools(query)
     tools = functions.get_tools()
