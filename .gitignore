@@ -8,3 +8,4 @@ htmlcov
 **/__pycache__
 .python_packages
 *.zip
+dependencyUpdates.txt
