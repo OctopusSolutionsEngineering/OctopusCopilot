@@ -391,7 +391,7 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
 def get_project_releases(space_id, project_name, api_key, octopus_url, take=max_context):
     """
     Returns a deployment progression for a project.
-    :param space_name: The name of the space.
+    :param space_id: The ID of the space.
     :param project_name: The name of the project
     :param api_key: The Octopus API key
     :param octopus_url: The Octopus URL
@@ -418,16 +418,35 @@ def get_project_releases(space_id, project_name, api_key, octopus_url, take=max_
 def get_release_deployments(space_id, release_id, api_key, octopus_url):
     """
     Returns the deployments of a release.
-    :param space_name: The name of the space.
+    :param space_id: The ID of the space.
     :param release_id: The release ID
     :param api_key: The Octopus API key
     :param octopus_url: The Octopus URL
     :return: The deployment progression raw JSON
     """
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_release_deployments).')
-    ensure_string_not_empty(release_id, 'project_name must be a non-empty string (get_release_deployments).')
+    ensure_string_not_empty(release_id, 'release_id must be a non-empty string (get_release_deployments).')
 
     api = build_url(octopus_url, f"api/{space_id}/Releases/{release_id}/Deployments")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+
+    return resp.json()
+
+
+@retry(HTTPError, tries=3, delay=2)
+def get_task(space_id, task_id, api_key, octopus_url):
+    """
+    Returns the deployments of a release.
+    :param space_id: The ID of the space.
+    :param task_id: The task ID
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
+    :return: The deployment progression raw JSON
+    """
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_task).')
+    ensure_string_not_empty(task_id, 'task_id must be a non-empty string (get_task).')
+
+    api = build_url(octopus_url, f"api/{space_id}/Tasks/{task_id}")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     return resp.json()
