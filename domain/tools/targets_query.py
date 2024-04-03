@@ -133,7 +133,7 @@ resource "octopusdeploy_azure_web_app_deployment_target" "target_azure_web_app_d
 Sample Answer:
 First, assume all targets belong to the space called "Demo".
 
-Second, find the environment with the name "Test". 
+Second, find the environment with the name "Test".
 The "octopusdeploy_environment" resource called "environment_test" has the name "Test".
 This is the environment that the targets must reference in their "environments" attribute.
 
