@@ -86,31 +86,51 @@
     }
 
     function validateApiKey(apiKey) {
-        return /API-[A-Z0-9]+/.test(apiKey)
+        if (!apiKey || !apiKey.trim()) {
+            return false
+        }
+
+        return /API-[A-Z0-9]+/.test(apiKey.trim())
     }
 
     function validateUrl(url) {
+        if (!url || !url.trim()) {
+            return false
+        }
+
         try {
-            new URL(url);
+            new URL(url.trim());
             return true;
         } catch (_) {
             return false;
         }
     }
 
-
     async function processQuery() {
         invalid_api_key_or_url.style.display = 'none'
         response_error.style.display = 'none'
+        api.setCustomValidity('')
+        url.setCustomValidity('')
 
         form.classList.add('was-validated')
 
-        if (!form.checkValidity()) {
+        let valid = true
+        if (!validateApiKey(api.value)) {
+            api.setCustomValidity('Invalid value')
+            valid = false
+        }
+
+        if (!validateUrl(url.value)) {
+            url.setCustomValidity('Invalid value')
+            valid = false
+        }
+
+        if (!valid) {
+            invalid_api_key_or_url.style.display = 'block'
             return
         }
 
-        if (!validateApiKey(api.value) || !validateUrl(url.value)) {
-            invalid_api_key_or_url.style.display = 'block'
+        if (!form.checkValidity()) {
             return
         }
 
