@@ -104,8 +104,13 @@ class DynamicMachineEnvironmentExperiments(unittest.TestCase):
 
                 # Make sure the machine is present
                 missing_machines = []
+                found_machines = 0
                 for machine in machines:
                     if not machine[1] in result:
                         missing_machines.append(machine[0] + " (" + machine[1] + ")")
+                    else:
+                        found_machines += 1
 
-                self.assertEqual(len(missing_machines), 0, f"Missing machines: {','.join(missing_machines)}")
+                self.assertEqual(len(missing_machines), 0,
+                                 f"Found {found_machines} and missed {len(machines) - found_machines} machines. "
+                                 + f"Missing machines: {','.join(missing_machines)}")

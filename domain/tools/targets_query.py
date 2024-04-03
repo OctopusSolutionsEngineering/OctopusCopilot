@@ -118,11 +118,11 @@ resource "octopusdeploy_azure_web_app_deployment_target" "target_web_app_prod" {
   name                              = "New Web App Prod"
   roles                             = ["azure"]
 }}
-resource "octopusdeploy_azure_web_app_deployment_target" "target_azure_web_app_demo_octopus_app_api_server_internal_test" {{
+resource "octopusdeploy_azure_web_app_deployment_target" "target_azure_web_app_demo_myinstance_app_api_server_test" {{
   id                                = "Machines-62151"
   environments                      = ["${{octopusdeploy_environment.environment_test.id}}"]
-  name                              = "azure-web-app/demo.octopus.app/api-server-internal-test"
-  roles                             = ["random-quotes-web"]
+  name                              = "azure-web-app/demo.myinstance.app/api-server-test"
+  roles                             = ["api-server"]
 }}
 ###
 Sample Answer:
@@ -153,7 +153,7 @@ The targets that belong to the "Test" environment are:
 - Name: "Old Azure Service" ID: "Machines-18967"
 - Name: "Finance Cluster" ID: "Machines-18968"
 - Name: "New Web App" ID: "Machines-14526"
-- Name: "azure-web-app/demo.octopus.app/api-server-internal-test" ID: "Machines-62151"
+- Name: "azure-web-app/demo.myinstance.app/api-server-test" ID: "Machines-62151"
 """
 
         for key, value in kwargs.items():
