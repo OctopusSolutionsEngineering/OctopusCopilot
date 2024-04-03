@@ -27,7 +27,7 @@
     <div class="form-group row">
         <label for="api" class="col-2 offset-2 col-form-label">Octopus API Key</label>
         <div class="col-6">
-            <input id="api" name="query" type="password" class="form-control" required>
+            <input id="api" name="api" type="password" class="form-control" required>
             <small class="form-text text-muted">This is the <a
                     href="https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key">API key</a> used to
                 interact with your Octopus
@@ -85,14 +85,32 @@
         if (parts.length === 2) return parts.pop().split(';').shift();
     }
 
+    function validateApiKey(apiKey) {
+        return /API-[A-Z0-9]+/.test(apiKey)
+    }
+
+    function validateUrl(url) {
+        try {
+            new URL(url);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
 
     async function processQuery() {
-        invalid_api_key_or_url.style.block = 'none'
-        response_error.style.block = 'none'
+        invalid_api_key_or_url.style.display = 'none'
+        response_error.style.display = 'none'
 
         form.classList.add('was-validated')
 
         if (!form.checkValidity()) {
+            return
+        }
+
+        if (!validateApiKey(api.value) || !validateUrl(url.value)) {
+            invalid_api_key_or_url.style.display = 'block'
             return
         }
 
