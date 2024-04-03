@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
-import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_context
 from domain.config.users import get_admin_users
@@ -21,7 +21,7 @@ from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.messages.general import build_hcl_prompt
 from domain.messages.test_message import build_test_prompt
-from domain.sanitizers.sanitized_list import sanitize_environments, sanitize_list, get_item_or_none, \
+from domain.sanitizers.sanitized_list import sanitize_list, get_item_or_none, \
     none_if_falesy_or_all
 from domain.security.security import is_admin_user
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
@@ -538,8 +538,8 @@ Once default values are set, you can omit the space, environment, and project fr
         if project:
             # We only need the deployments, so strip out the rest of the JSON
             deployments = get_deployments_for_project(space,
-                                                      get_item_or_none(sanitize_list(projects), 0),
-                                                      sanitize_environments(environments),
+                                                      project,
+                                                      environments,
                                                       api_key,
                                                       url,
                                                       max_context)
