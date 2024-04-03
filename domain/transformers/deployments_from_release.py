@@ -28,11 +28,11 @@ def get_deployments_for_project(space_name, project_name, environment_names, api
     # Get the deployments associated with the releases, filtered to the environments
     deployments = []
     for release in releases["Items"]:
-        task = get_task(space_id, release["TaskId"], api_key, octopus_url)
-
         release_deployments = get_release_deployments(space_id, release["Id"], api_key,
                                                       octopus_url)
         for deployment in release_deployments["Items"]:
+            task = get_task(space_id, release["TaskId"], api_key, octopus_url) if release.get("TaskId") else None
+
             # Keep the deployment if it matches the environment, or if there were no environments
             if len(environment_ids) == 0 or deployment["EnvironmentId"] in environment_ids:
                 deployments.append({
@@ -44,8 +44,8 @@ def get_deployments_for_project(space_name, project_name, environment_names, api
                     "EnvironmentId": deployment["EnvironmentId"],
                     "ChannelId": deployment["ChannelId"],
                     "Created": deployment["Created"],
-                    "TaskState": task["State"],
-                    "TaskDuration": task["Duration"],
+                    "TaskState": task["State"] if task else None,
+                    "TaskDuration": task["Duration"] if task else None,
                 })
 
         if len(deployments) >= max_results:
