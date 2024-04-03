@@ -47,8 +47,13 @@ steps: step names"""
         few_shot = """
 Sample Question: List the name and ID of targets that belong to the \"Test\" environment.
 Sample HCL: ###
+resource "octopusdeploy_space" "octopus_space_demo_space" {{
+  id                          = "Spaces-2342"
+  description                 = "Demo space"
+  name                        = "Demo"
+}}
 resource "octopusdeploy_environment" "environment_test" {{
-  id                           = "Environments-10923"
+  id                           = "Environments-19923"
   name                         = "Test"
 }}
 resource "octopusdeploy_polling_tentacle_deployment_target" "target_azure_iis" {{
@@ -126,10 +131,13 @@ resource "octopusdeploy_azure_web_app_deployment_target" "target_azure_web_app_d
 }}
 ###
 Sample Answer:
-First, find the environment with the name "Test".  The "octopusdeploy_environment" resource has the name "Test".
-This is the environment that the targets must be assigned to.
+First, assume all targets belong to the space called "Demo".
 
-Second, find the following resources that represent targets or machines:
+Second, find the environment with the name "Test". 
+The "octopusdeploy_environment" resource called "environment_test" has the name "Test".
+This is the environment that the targets must reference in their "environments" attribute.
+
+Third, find all the following resources that represent targets or machines:
 - "octopusdeploy_cloud_region_deployment_target"
 - "octopusdeploy_polling_tentacle_deployment_target"
 - "octopusdeploy_kubernetes_cluster_deployment_target"
@@ -140,7 +148,7 @@ Second, find the following resources that represent targets or machines:
 - "octopusdeploy_azure_service_fabric_cluster_deployment_target"
 - "octopusdeploy_azure_web_app_deployment_target"
 
-Third, filter the resources based on the "environments" attribute to find the targets belonging to the "Test" environment.
+Fourth, filter the target resources based on their "environments" attribute to find targets that reference the "octopusdeploy_environment" resource called "environment_test".
 
 The targets that belong to the "Test" environment are:
 - Name: "sydney-client-5" ID: "Machines-18477"
