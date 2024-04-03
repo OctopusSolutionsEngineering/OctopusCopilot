@@ -2,9 +2,9 @@ import os
 import unittest
 
 from domain.context.octopus_context import collect_llm_context
-from domain.messages.targets import build_targets_prompt
+from domain.messages.general import build_hcl_prompt
 from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
-from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.targets_query import answer_targets_wrapper
 from infrastructure.octopus import get_machines, get_environments
 from infrastructure.openai import llm_tool_query
 
@@ -36,36 +36,37 @@ def get_test_cases(limit=0):
     return environment_machines
 
 
-def general_query_handler(original_query, body, messages):
+def targets_callback(original_query, messages, space, projects, runbooks, targets,
+                     tenants, environments, accounts, certificates, workerpools, tagsets, steps):
     api_key = os.environ.get("TEST_OCTOPUS_API_KEY")
     url = os.environ.get("TEST_OCTOPUS_URL")
 
     # Override the default messages for this experiment
-    messages = build_targets_prompt()
+    messages = build_hcl_prompt(messages)
     context = {"input": original_query}
 
     return collect_llm_context(original_query,
                                messages,
                                context,
-                               os.environ.get('TEST_OCTOPUS_SPACE_NAME'),
-                               body['project_names'],
-                               body['runbook_names'],
-                               body['target_names'],
-                               body['tenant_names'],
-                               body['library_variable_sets'],
-                               body['environment_names'],
-                               body['feed_names'],
-                               body['account_names'],
-                               body['certificate_names'],
-                               body['lifecycle_names'],
-                               body['workerpool_names'],
-                               body['machinepolicy_names'],
-                               body['tagset_names'],
-                               body['projectgroup_names'],
-                               body['channel_names'],
-                               body['release_versions'],
-                               body['step_names'],
-                               body['variable_names'],
+                               space,
+                               projects,
+                               runbooks,
+                               targets,
+                               tenants,
+                               None,
+                               environments,
+                               None,
+                               accounts,
+                               certificates,
+                               None,
+                               workerpools,
+                               None,
+                               tagsets,
+                               None,
+                               None,
+                               None,
+                               steps,
+                               None,
                                api_key,
                                url,
                                None)
@@ -93,8 +94,8 @@ class DynamicMachineEnvironmentExperiments(unittest.TestCase):
                          + f"belonging to the \"{name}\" environment")
 
                 def get_tools(tool_query):
-                    return FunctionDefinitions([FunctionDefinition(
-                        answer_general_query_wrapper(tool_query, general_query_handler), AnswerGeneralQuery)])
+                    return FunctionDefinitions(
+                        [FunctionDefinition(answer_targets_wrapper(tool_query, targets_callback))])
 
                 result = llm_tool_query(query, get_tools).call_function()
 
@@ -105,6 +106,6 @@ class DynamicMachineEnvironmentExperiments(unittest.TestCase):
                 missing_machines = []
                 for machine in machines:
                     if not machine[1] in result:
-                        missing_machines.append(machine[1])
+                        missing_machines.append(machine[0] + " (" + machine[1] + ")")
 
                 self.assertEqual(len(missing_machines), 0, f"Missing machines: {','.join(missing_machines)}")

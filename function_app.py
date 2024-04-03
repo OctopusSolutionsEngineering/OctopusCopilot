@@ -29,6 +29,7 @@ from domain.tools.general_query import answer_general_query_wrapper, AnswerGener
 from domain.tools.logs import answer_logs_wrapper
 from domain.tools.project_variables import answer_project_variables_wrapper, answer_project_variables_usage_wrapper
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
+from domain.tools.targets_query import answer_targets_wrapper
 from domain.transformers.chat_responses import get_dashboard_response
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from domain.transformers.minify_hcl import minify_hcl
@@ -285,6 +286,16 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                      {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
                                       "input": original_query}, log_query)
 
+        def targets_callback(original_query, messages, space, projects, runbooks, targets,
+                             tenants, environments, accounts, certificates, workerpools, tagsets, steps):
+            """
+            A function that passes the updated query through to the LLM
+            """
+            body = json.loads(get_context())
+            return llm_message_query(messages,
+                                     {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
+                                      "input": original_query}, log_query)
+
         def get_tools(tool_query):
             return FunctionDefinitions([
                 FunctionDefinition(general_query_callback),
@@ -294,7 +305,8 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                     answer_project_variables_usage_wrapper(tool_query, project_variables_usage_callback, log_query)),
                 FunctionDefinition(
                     answer_releases_and_deployments_wrapper(tool_query, releases_and_deployments_callback, log_query)),
-                FunctionDefinition(answer_logs_wrapper(tool_query, logs_query_callback, log_query))
+                FunctionDefinition(answer_logs_wrapper(tool_query, logs_query_callback, log_query)),
+                FunctionDefinition(answer_targets_wrapper(tool_query, targets_callback, log_query))
             ])
 
         # Call the appropriate tool. This may be a straight pass through of the query and context,
@@ -594,6 +606,46 @@ Once default values are set, you can omit the space, environment, and project fr
 
         return llm_message_query(messages, context, log_query)
 
+    def targets_callback(original_query, messages, space, projects, runbooks, targets,
+                         tenants, environments, accounts, certificates, workerpools, tagsets, steps):
+        api_key, url = get_api_key_and_url()
+
+        space = get_default_argument(get_github_user_from_form(), space, "Space")
+        project = get_default_argument(get_github_user_from_form(), get_item_or_none(sanitize_list(projects), 0),
+                                       "Project")
+        environment = get_default_argument(get_github_user_from_form(),
+                                           get_item_or_none(sanitize_list(environments), 0), "Environment")
+        tenant = get_default_argument(get_github_user_from_form(),
+                                      get_item_or_none(sanitize_list(tenants), 0), "Tenant")
+
+        context = {"input": original_query}
+
+        return collect_llm_context(original_query,
+                                   messages,
+                                   context,
+                                   space,
+                                   projects,
+                                   runbooks,
+                                   targets,
+                                   tenants,
+                                   None,
+                                   environments,
+                                   None,
+                                   accounts,
+                                   certificates,
+                                   None,
+                                   workerpools,
+                                   None,
+                                   tagsets,
+                                   None,
+                                   None,
+                                   None,
+                                   steps,
+                                   None,
+                                   api_key,
+                                   url,
+                                   log_query)
+
     def build_form_tools(query):
         """
         Builds a set of tools configured for use with HTTP requests (i.e. API key
@@ -611,8 +663,8 @@ Once default values are set, you can omit the space, environment, and project fr
                 answer_project_variables_usage_wrapper(query, variable_query_callback, log_query)),
             FunctionDefinition(
                 answer_releases_and_deployments_wrapper(query, releases_query_callback, log_query)),
-            FunctionDefinition(
-                answer_logs_wrapper(query, logs_callback, log_query)),
+            FunctionDefinition(answer_logs_wrapper(query, logs_callback, log_query)),
+            FunctionDefinition(answer_targets_wrapper(query, targets_callback, log_query)),
             FunctionDefinition(provide_help),
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(set_default_value),

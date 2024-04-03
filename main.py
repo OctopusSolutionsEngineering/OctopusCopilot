@@ -12,6 +12,7 @@ from domain.tools.general_query import answer_general_query_wrapper, AnswerGener
 from domain.tools.logs import answer_logs_wrapper
 from domain.tools.project_variables import answer_project_variables_wrapper, answer_project_variables_usage_wrapper
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
+from domain.tools.targets_query import answer_targets_wrapper
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_dashboard, \
@@ -75,12 +76,12 @@ def get_deployment_process_raw_json_cli(space_name: None, project_name: None):
     return get_raw_deployment_process(space_name, project_name, get_api_key(), get_octopus_api())
 
 
-def general_query_callback(initial_query, body, messages):
+def general_query_callback(original_query, body, messages):
     space = get_default_argument(body['space_name'], 'Space')
 
-    context = {"input": parser.query}
+    context = {"input": original_query}
 
-    return collect_llm_context(parser.query,
+    return collect_llm_context(original_query,
                                messages,
                                context,
                                space,
@@ -119,6 +120,39 @@ def logs_callback(original_query, messages, space, projects, environments, chann
     context = {"input": original_query, "context": logs}
 
     return llm_message_query(messages, context, log_query)
+
+
+def targets_callback(original_query, messages, space, projects, runbooks, targets,
+                     tenants, environments, accounts, certificates, workerpools, tagsets, steps):
+    space = get_default_argument(space, 'Space')
+
+    context = {"input": original_query}
+
+    return collect_llm_context(original_query,
+                               messages,
+                               context,
+                               space,
+                               projects,
+                               runbooks,
+                               targets,
+                               tenants,
+                               None,
+                               environments,
+                               None,
+                               accounts,
+                               certificates,
+                               None,
+                               workerpools,
+                               None,
+                               tagsets,
+                               None,
+                               None,
+                               None,
+                               steps,
+                               None,
+                               get_api_key(),
+                               get_octopus_api(),
+                               logging)
 
 
 def variable_query_callback(original_query, messages, space, projects, variables):
@@ -226,7 +260,8 @@ def build_tools(tool_query):
         FunctionDefinition(answer_project_variables_wrapper(tool_query, variable_query_callback, log_query)),
         FunctionDefinition(answer_project_variables_usage_wrapper(tool_query, variable_query_callback, log_query)),
         FunctionDefinition(answer_releases_and_deployments_wrapper(tool_query, releases_query_callback, log_query)),
-        FunctionDefinition(answer_logs_wrapper(tool_query, logs_callback, log_query))
+        FunctionDefinition(answer_logs_wrapper(tool_query, logs_callback, log_query)),
+        FunctionDefinition(answer_targets_wrapper(tool_query, targets_callback, log_query))
     ])
 
 
