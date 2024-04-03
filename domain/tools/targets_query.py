@@ -118,9 +118,17 @@ resource "octopusdeploy_azure_web_app_deployment_target" "target_web_app_prod" {
   name                              = "New Web App Prod"
   roles                             = ["azure"]
 }}
+resource "octopusdeploy_azure_web_app_deployment_target" "target_azure_web_app_demo_octopus_app_api_server_internal_test" {{
+  id                                = "Machines-26151"
+  environments                      = ["${{octopusdeploy_environment.environment_test.id}}"]
+  name                              = "azure-web-app/demo.octopus.app/api-server-internal-test"
+  roles                             = ["random-quotes-web"]
+}}
 ###
 Sample Answer:
-First, find the environment with the name "Test".  The "octopusdeploy_environment" resource has the name "Test". This is the environment that the targets must be assigned to.
+First, find the environment with the name "Test".  The "octopusdeploy_environment" resource has the name "Test".
+This is the environment that the targets must be assigned to.
+
 Second, find the following resources that represent targets or machines:
 - "octopusdeploy_cloud_region_deployment_target"
 - "octopusdeploy_polling_tentacle_deployment_target"
@@ -131,6 +139,7 @@ Second, find the following resources that represent targets or machines:
 - "octopusdeploy_azure_cloud_service_deployment_target"
 - "octopusdeploy_azure_service_fabric_cluster_deployment_target"
 - "octopusdeploy_azure_web_app_deployment_target"
+
 Third, filter the resources based on the "environments" attribute to find the targets belonging to the "Test" environment.
 
 The targets that belong to the "Test" environment are:
@@ -144,6 +153,7 @@ The targets that belong to the "Test" environment are:
 - Name: "Old Azure Service" ID: "Machines-18967"
 - Name: "Finance Cluster" ID: "Machines-18968"
 - Name: "New Web App" ID: "Machines-14526"
+- Name: "azure-web-app/demo.octopus.app/api-server-internal-test" ID: "Machines-26151"
 """
 
         for key, value in kwargs.items():
