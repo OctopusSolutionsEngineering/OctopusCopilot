@@ -21,7 +21,7 @@ def llm_message_query(message_prompt, context, log_query=None):
         azure_deployment=os.environ["OPENAI_API_DEPLOYMENT"],
         openai_api_key=os.environ["OPENAI_API_KEY"],
         azure_endpoint=os.environ["OPENAI_ENDPOINT"],
-        api_version="2024-03-01-preview",
+        api_version="2024-02-01",
     )
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)
@@ -74,7 +74,7 @@ def llm_tool_query(query, llm_tools, log_query=None):
                                        azure_deployment=os.environ["OPENAI_API_DEPLOYMENT"],
                                        openai_api_key=os.environ["OPENAI_API_KEY"],
                                        azure_endpoint=os.environ["OPENAI_ENDPOINT"],
-                                       api_version="2024-03-01-preview"),
+                                       api_version="2024-02-01"),
         tools=tools,
     )
 
