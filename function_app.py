@@ -24,6 +24,7 @@ from domain.messages.test_message import build_test_prompt
 from domain.sanitizers.sanitized_list import sanitize_list, get_item_or_none, \
     none_if_falesy_or_all
 from domain.security.security import is_admin_user
+from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from domain.tools.logs import answer_logs_wrapper
@@ -568,7 +569,7 @@ Once default values are set, you can omit the space, environment, and project fr
                                             None,
                                             None,
                                             None,
-                                            environments,
+                                            ["<all>"] if none_if_falesy_or_all(environments) else environments,
                                             None,
                                             None,
                                             None,
@@ -606,8 +607,15 @@ Once default values are set, you can omit the space, environment, and project fr
 
         return llm_message_query(messages, context, log_query)
 
-    def targets_callback(original_query, messages, space, projects, runbooks, targets,
-                         tenants, environments, accounts, certificates, workerpools, tagsets, steps):
+    def resource_specific_callback(original_query, messages, space, projects, runbooks, targets,
+                                   tenants, environments, accounts, certificates, workerpools, tagsets, steps):
+        """
+        Resource specific queries are typically used to give the LLM context about the relationship between space
+        level scopes such as environments and tenants, and how those scopes apply to resources like targets,
+        certificates, accounts etc.
+
+        While the tool functions are resource specific, this callback is generic.
+        """
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
@@ -624,12 +632,12 @@ Once default values are set, you can omit the space, environment, and project fr
                                    messages,
                                    context,
                                    space,
-                                   projects,
+                                   project,
                                    runbooks,
                                    targets,
-                                   tenants,
+                                   tenant,
                                    None,
-                                   environments,
+                                   environment,
                                    None,
                                    accounts,
                                    certificates,
@@ -664,7 +672,8 @@ Once default values are set, you can omit the space, environment, and project fr
             FunctionDefinition(
                 answer_releases_and_deployments_wrapper(query, releases_query_callback, log_query)),
             FunctionDefinition(answer_logs_wrapper(query, logs_callback, log_query)),
-            FunctionDefinition(answer_targets_wrapper(query, targets_callback, log_query)),
+            FunctionDefinition(answer_targets_wrapper(query, resource_specific_callback, log_query)),
+            FunctionDefinition(answer_certificates_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(provide_help),
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(set_default_value),

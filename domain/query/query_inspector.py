@@ -19,6 +19,8 @@ def exclude_all_library_variable_sets(query, entity_list):
 
 
 def exclude_all_environments(query, entity_list):
+    if "<all>" in entity_list:
+        return False
     return True if not entity_list and "environment" not in query.lower() else False
 
 

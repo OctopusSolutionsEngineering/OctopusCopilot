@@ -130,7 +130,7 @@ resource "octopusdeploy_azure_web_app_deployment_target" "target_azure_web_app_d
   roles                             = ["api-server"]
 }}
 ###
-Sample Answer:
+Sample Answer 1:
 First, assume all targets belong to the space called "Demo".
 
 Second, find the environment with the name "Test".
@@ -150,7 +150,6 @@ Third, find all the following resources that represent targets or machines:
 
 Fourth, filter the target resources based on their "environments" attribute to find targets that reference the "octopusdeploy_environment" resource called "environment_test".
 
-Sample Answer 1:
 The targets that belong to the "Test" environment are:
 - Name: "sydney-client-5" ID: "Machines-18477"
 - Name: "Web App" ID: "Machines-18962"
@@ -196,7 +195,7 @@ resource "octopusdeploy_polling_tentacle_deployment_target" "target_azure_iis_3"
   roles                             = ["payments-team"]
 }}
 ###
-Sample Answer:
+Sample Answer 2:
 First, assume all targets belong to the space called "Demo".
 
 Second, find all the following resources that represent targets or machines:
@@ -210,8 +209,7 @@ Second, find all the following resources that represent targets or machines:
 - "octopusdeploy_azure_service_fabric_cluster_deployment_target"
 - "octopusdeploy_azure_web_app_deployment_target"
 
-Sample Answer 2:
-The targets that belong to the "Test" environment are:
+The targets that belong to the "Demo" space are:
 - Name: "sydney-client-5" ID: "Machines-18477"
 - Name: "Web App" ID: "Machines-18962"
 - Name: "Web App 2" ID: "Machines-19002"

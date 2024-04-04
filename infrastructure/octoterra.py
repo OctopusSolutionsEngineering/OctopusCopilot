@@ -73,7 +73,7 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
         "excludeCaCProjectSettings": True,
         "excludeProjectsExcept": none_if_falesy(sanitized_project_names),
         "excludeTenantsExcept": none_if_falesy(sanitized_tenant_names),
-        "excludeEnvironmentsExcept": none_if_falesy(sanitized_environments),
+        "excludeEnvironmentsExcept": none_if_falesy_or_all(sanitized_environments),
         "excludeFeedsExcept": none_if_falesy(sanitized_feeds),
         "excludeAccountsExcept": none_if_falesy(sanitized_accounts),
         "excludeCertificatesExcept": none_if_falesy(sanitized_certificates),

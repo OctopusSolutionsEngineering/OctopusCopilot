@@ -73,7 +73,7 @@ def build_hcl_prompt(few_shot=None):
         # Sparkle that may improve the quality of the responses.
         ("system", "I’m going to tip $500 for a better solution!"),
         # Get the LLM to implement a chain-of-thought
-        ("system", "Let's think step by step"),
+        ("system", "Think carefully and logically, explaining your answer."),
         *few_shot,
         ("user", "Question: {input}"),
         ("user", "Answer the question using the HCL below."),
