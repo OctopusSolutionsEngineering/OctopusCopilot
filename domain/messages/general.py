@@ -59,9 +59,6 @@ def build_hcl_prompt(few_shot=None):
          + "- octopusdeploy_azure_cloud_service_deployment_target\n"
          + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
          + "- octopusdeploy_azure_web_app_deployment_target"),
-        ("system",
-         "You must assume that if a target's \"environments\" attribute is empty, "
-         + "it is not related to the environment in the question. "),
         # Sometimes the LLM got confused about Terraform variables and Octopus variables
         # The LLM also needed some guidance on how to identify variable usage in the steps
         ("system", "You must assume questions about variables refer to Octopus variables."),
