@@ -14,7 +14,7 @@ from infrastructure.octopus import get_projects, get_environments, get_project_c
 from infrastructure.openai import llm_tool_query
 
 
-def get_test_cases(limit=0):
+def get_test_cases(release_index=0, limit=0):
     """
     Generates a set of test cases based on the status of a real Octopus instance.
     :return: a list of tuples matching a project, environment, and channel to a deployment
@@ -66,12 +66,15 @@ def get_test_cases(limit=0):
                     if 0 < limit < count:
                         return test_cases
 
-                    test_cases.append((
-                        project["Name"],
-                        channel["Name"],
-                        environment["Name"],
-                        list(map(lambda x: x["ReleaseVersion"], environment["Deployments"]))[0],
-                    ))
+                    release = list(map(lambda x: x["ReleaseVersion"], environment["Deployments"]))
+
+                    if len(release) > release_index:
+                        test_cases.append((
+                            project["Name"],
+                            channel["Name"],
+                            environment["Name"],
+                            release[release_index],
+                        ))
 
     return test_cases
 
@@ -158,7 +161,7 @@ class DynamicDeploymentExperiments(unittest.TestCase):
 
     """
 
-    def test_get_cases(self):
+    def test_latest_release(self):
         # Get the test cases generated from the space
         test_cases = get_test_cases()
         # Loop through each case
@@ -166,6 +169,28 @@ class DynamicDeploymentExperiments(unittest.TestCase):
             with self.subTest(f"{project} - {environment} - {channel}"):
                 # Create a query that should generate the same result as the test case
                 query = (f"Get the release version of the latest deployment of the \"{project}\" project "
+                         + f"to the \"{environment}\" environment "
+                         + f"in the \"{channel}\" channel "
+                         + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space.")
+
+                def get_tools(tool_query):
+                    return FunctionDefinitions([
+                        FunctionDefinition(
+                            answer_releases_and_deployments_wrapper(tool_query, releases_query_handler))])
+
+                result = llm_tool_query(query, get_tools).call_function()
+
+                self.assertTrue(deployment in result,
+                                f"Expected {deployment} for Project {project} Environment {environment} and Channel {channel} in result:\n{result}")
+
+    def test_second_latest_release(self):
+        # Get the test cases generated from the space
+        test_cases = get_test_cases(1)
+        # Loop through each case
+        for project, channel, environment, deployment in test_cases:
+            with self.subTest(f"{project} - {environment} - {channel}"):
+                # Create a query that should generate the same result as the test case
+                query = (f"Get the release version of the second latest deployment of the \"{project}\" project "
                          + f"to the \"{environment}\" environment "
                          + f"in the \"{channel}\" channel "
                          + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space.")
