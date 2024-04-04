@@ -189,6 +189,12 @@ resource "octopusdeploy_polling_tentacle_deployment_target" "target_azure_iis_2"
   name                              = "Web App 2"
   roles                             = ["payments-team"]
 }}
+resource "octopusdeploy_polling_tentacle_deployment_target" "target_azure_iis_3" {{
+  id                                = "Machines-19003"
+  environments                      = []
+  name                              = "Web App 3"
+  roles                             = ["payments-team"]
+}}
 ###
 Sample Answer:
 First, assume all targets belong to the space called "Demo".
