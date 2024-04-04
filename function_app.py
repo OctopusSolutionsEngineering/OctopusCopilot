@@ -287,8 +287,8 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                      {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
                                       "input": original_query}, log_query)
 
-        def targets_callback(original_query, messages, space, projects, runbooks, targets,
-                             tenants, environments, accounts, certificates, workerpools, tagsets, steps):
+        def resource_specific_callback(original_query, messages, space, projects, runbooks, targets,
+                                       tenants, environments, accounts, certificates, workerpools, tagsets, steps):
             """
             A function that passes the updated query through to the LLM
             """
@@ -307,7 +307,8 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                 FunctionDefinition(
                     answer_releases_and_deployments_wrapper(tool_query, releases_and_deployments_callback, log_query)),
                 FunctionDefinition(answer_logs_wrapper(tool_query, logs_query_callback, log_query)),
-                FunctionDefinition(answer_targets_wrapper(tool_query, targets_callback, log_query))
+                FunctionDefinition(answer_targets_wrapper(tool_query, resource_specific_callback, log_query)),
+                FunctionDefinition(answer_certificates_wrapper(tool_query, resource_specific_callback, log_query))
             ])
 
         # Call the appropriate tool. This may be a straight pass through of the query and context,
