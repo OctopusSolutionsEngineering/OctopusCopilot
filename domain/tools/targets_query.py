@@ -45,8 +45,8 @@ steps: step names"""
         # between projects, deployment processes, and variables.
 
         few_shot = """
-Sample Question: List the name and ID of targets that belong to the \"Test\" environment.
-Sample HCL: ###
+Sample Question 1: List the name and ID of targets that belong to the \"Test\" environment.
+Sample HCL 1: ###
 resource "octopusdeploy_space" "octopus_space_demo_space" {{
   id                          = "Spaces-2342"
   description                 = "Demo space"
@@ -150,6 +150,7 @@ Third, find all the following resources that represent targets or machines:
 
 Fourth, filter the target resources based on their "environments" attribute to find targets that reference the "octopusdeploy_environment" resource called "environment_test".
 
+Sample Answer 1:
 The targets that belong to the "Test" environment are:
 - Name: "sydney-client-5" ID: "Machines-18477"
 - Name: "Web App" ID: "Machines-18962"
@@ -162,6 +163,52 @@ The targets that belong to the "Test" environment are:
 - Name: "Finance Cluster" ID: "Machines-18968"
 - Name: "New Web App" ID: "Machines-14526"
 - Name: "azure-web-app/demo.myinstance.app/api-server-test" ID: "Machines-62151"
+
+Sample Question 2: What targets are defined in the space "Demo"?
+Sample HCL 2: ###
+resource "octopusdeploy_space" "octopus_space_demo_space" {{
+  id                          = "Spaces-2342"
+  description                 = "Demo space"
+  name                        = "Demo"
+}}
+resource "octopusdeploy_polling_tentacle_deployment_target" "target_azure_iis" {{
+  id                                = "Machines-18962"
+  environments                      = []
+  name                              = "Web App"
+  roles                             = ["payments-team"]
+}}
+resource "octopusdeploy_cloud_region_deployment_target" "target_sydney_client_5" {{
+  id                                = "Machines-18477"
+  environments                      = [""]
+  name                              = "sydney-client-5"
+  roles                             = ["payments-team"]
+}}
+resource "octopusdeploy_polling_tentacle_deployment_target" "target_azure_iis_2" {{
+  id                                = "Machines-19002"
+  environments                      = []
+  name                              = "Web App 2"
+  roles                             = ["payments-team"]
+}}
+###
+Sample Answer:
+First, assume all targets belong to the space called "Demo".
+
+Second, find all the following resources that represent targets or machines:
+- "octopusdeploy_cloud_region_deployment_target"
+- "octopusdeploy_polling_tentacle_deployment_target"
+- "octopusdeploy_kubernetes_cluster_deployment_target"
+- "octopusdeploy_ssh_connection_deployment_target"
+- "octopusdeploy_listening_tentacle_deployment_target"
+- "octopusdeploy_offline_package_drop_deployment_target"
+- "octopusdeploy_azure_cloud_service_deployment_target"
+- "octopusdeploy_azure_service_fabric_cluster_deployment_target"
+- "octopusdeploy_azure_web_app_deployment_target"
+
+Sample Answer 2:
+The targets that belong to the "Test" environment are:
+- Name: "sydney-client-5" ID: "Machines-18477"
+- Name: "Web App" ID: "Machines-18962"
+- Name: "Web App 2" ID: "Machines-19002"
 """
 
         for key, value in kwargs.items():
