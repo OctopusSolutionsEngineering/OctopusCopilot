@@ -114,6 +114,8 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
         # Limit the number of resources to prevent the context from filling up and the LLM from
         # having to process more items than it can reasonably process.
         "limitResourceCount": max_context,
+        # Include the default channel as a standard resource rather than a data lookup
+        "includeDefaultChannel": True,
     }
 
     resp = handle_response(lambda: http.request("POST",
