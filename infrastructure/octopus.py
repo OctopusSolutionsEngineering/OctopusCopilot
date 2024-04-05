@@ -388,14 +388,14 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
 
 
 @retry(HTTPError, tries=3, delay=2)
-def get_project_releases(space_id, project_name, api_key, octopus_url, take=max_context):
+def get_project(space_id, project_name, api_key, octopus_url):
     """
-    Returns a deployment progression for a project.
+    Returns a project resource from the name
     :param space_id: The ID of the space.
     :param project_name: The name of the project
     :param api_key: The Octopus API key
     :param octopus_url: The Octopus URL
-    :return: The deployment progression raw JSON
+    :return: The project resource
     """
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_project_releases).')
     ensure_string_not_empty(project_name, 'project_name must be a non-empty string (get_project_releases).')
@@ -408,7 +408,23 @@ def get_project_releases(space_id, project_name, api_key, octopus_url, take=max_
     if project is None:
         raise ResourceNotFound("No projects found matching the name " + project_name)
 
-    api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Releases?take={take}")
+    return project
+
+
+@retry(HTTPError, tries=3, delay=2)
+def get_project_releases(space_id, project_id, api_key, octopus_url, take=max_context):
+    """
+    Returns a deployment progression for a project.
+    :param space_id: The ID of the space.
+    :param project_id: The ID of the project
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
+    :return: The deployment progression raw JSON
+    """
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_project_releases).')
+    ensure_string_not_empty(project_id, 'project_id must be a non-empty string (get_project_releases).')
+
+    api = build_url(octopus_url, f"api/{space_id}/Projects/{project_id}/Releases?take={take}")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     return resp.json()
@@ -628,17 +644,6 @@ def handle_response(callback):
         raise OctopusRequestFailed(f"Request failed with " + response.data.decode('utf-8'))
 
     return response
-
-
-def get_project(space_id, project_name, octopus_url, api_key):
-    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
-    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    project = get_item_ignoring_case(resp.json()["Items"], project_name)
-
-    if project is None:
-        raise ResourceNotFound("No projects found matching the name " + project_name)
-
-    return project
 
 
 def get_environment(space_id, environment_name, octopus_url, api_key):

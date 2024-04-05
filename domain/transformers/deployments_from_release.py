@@ -1,6 +1,6 @@
 from domain.config.openai import max_context
 from infrastructure.octopus import get_project_releases, get_release_deployments, get_environments, \
-    get_space_id_and_name_from_name, get_task
+    get_space_id_and_name_from_name, get_task, get_project
 
 
 def get_deployments_for_project(space_name, project_name, environment_names, api_key, octopus_url,
@@ -18,7 +18,8 @@ def get_deployments_for_project(space_name, project_name, environment_names, api
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
     # Not every release will have a deployment for the selected environment. So return a large number of releases,
     # which will then be filtered down.
-    releases = get_project_releases(space_id, project_name, api_key, octopus_url, 100)
+    project = get_project(space_id, project_name, api_key, octopus_url)
+    releases = get_project_releases(space_id, project["Id"], api_key, octopus_url, 100)
     environments = get_environments(api_key, octopus_url, space_id)
 
     # Convert the environment names to environment ids
@@ -37,6 +38,7 @@ def get_deployments_for_project(space_name, project_name, environment_names, api
             if len(environment_ids) == 0 or deployment["EnvironmentId"] in environment_ids:
                 deployments.append({
                     "SpaceId": space_id,
+                    "ProjectId": project["Id"],
                     "ReleaseVersion": release["Version"],
                     "DeploymentId": deployment["Id"],
                     "TaskId": deployment["TaskId"],
@@ -52,4 +54,4 @@ def get_deployments_for_project(space_name, project_name, environment_names, api
         if len(deployments) >= max_results:
             break
 
-    return deployments[:max_results]
+    return {"Deployments": deployments[:max_results]}

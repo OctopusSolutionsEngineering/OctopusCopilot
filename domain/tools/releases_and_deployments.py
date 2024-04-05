@@ -41,74 +41,80 @@ def answer_releases_and_deployments_wrapper(original_query, callback, logging=No
         # https://github.com/dave1010/tree-of-thought-prompting/blob/main/tree-of-thought-prompts.txt
 
         few_shot = """
-Task: What is the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment for the "MyChannel" channel and the "My Tenant" tenant?
+Sample Question 1: What is the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment for the "MyChannel" channel and the "My Tenant" tenant in the "Demo" space?
 
-Example 1:
-HCL: ###
+Sample JSON 1: ###
+{{
+    "Deployments": [
+        {{
+            "SpaceId": "Spaces-345",
+            "ReleaseVersion": "2.0.1",
+            "ProjectId": "Projects-91234",
+            "TenantId": "Tenants-9234",
+            "ReleaseId": "Releases-13568",
+            "EnvironmentId": "Environments-76534",
+            "DeploymentId": "Deployments-16435",
+            "ChannelId": "Channels-97001",
+            "Created": "2024-03-13T04:07:59.537+00:00",
+            "TaskState": "Success",
+            "TaskDuration": "2 minutes"
+        }},
+        {{
+            "SpaceId": "Spaces-345",
+            "ProjectId": "Projects-91234",
+            "EnvironmentId": "Environments-96789",
+            "ReleaseId": "Releases-13568",
+            "DeploymentId": "Deployments-26435",
+            "TenantId": "Tenants-9234",
+            "ChannelId": "Channels-97001",
+            "ReleaseVersion": "1.2.3-mybranch",
+            "Created": "2024-03-13T04:07:59.537+00:00",
+            "TaskState": "Success",
+            "TaskDuration": "2 minutes"
+          }}
+    ]
+}}
+
+###
+Sample HCL 1: ###
+resource "octopusdeploy_space" "octopus_space_demo_space" {{
+  id                          = "Spaces-345"
+  description                 = "A demonstration space"
+  name                        = "Demo"
+}}
 resource "octopusdeploy_environment" "theenvironmentresource" {{
   id                           = "Environments-96789"
   name                         = "MyEnvironment"
+  space_id                     = "${{octopusdeploy_space.octopus_space_demo_space.id}}"
 }}
 resource "octopusdeploy_project" "theprojectresource" {{
     id = "Projects-91234"
     name = "My Project"
+    space_id = "${{octopusdeploy_space.octopus_space_demo_space.id}}"
 }}
 resource "octopusdeploy_tenant" "thetennatresource" {{
   id = "Tenants-9234"
   name = "My Tenant"
+  space_id = "${{octopusdeploy_space.octopus_space_demo_space.id}}"
 }}
 resource "octopusdeploy_channel" "thechannelresource" {{
   id = "Channels-97001"
   name = "MyChannel"
+  space_id = "${{octopusdeploy_space.octopus_space_demo_space.id}}"
 }}
 ###
-JSON: ###
-[
-    {{
-        "Id": "Deployments-16435",
-        "ProjectId": "Projects-91234",
-        "EnvironmentId": "Environments-76534",
-        "ReleaseId": "Releases-13568",
-        "DeploymentId": "Deployments-16435",
-        "TaskId": "ServerTasks-701983",
-        "TenantId": "Tenants-9234",
-        "ChannelId": "Channels-97001",
-        "ReleaseVersion": "2.0.1",
-        "Created": "2024-03-13T04:07:59.537+00:00",
-        "QueueTime": "2024-03-13T04:07:59.537+00:00",
-        "StartTime": "2024-03-13T04:08:00.196+00:00",
-        "CompletedTime": "2024-03-13T04:08:47.885+00:00",
-        "State": "Success"
-    }},
-    {{
-        "Id": "Deployments-26435",
-        "ProjectId": "Projects-91234",
-        "EnvironmentId": "Environments-96789",
-        "ReleaseId": "Releases-13568",
-        "DeploymentId": "Deployments-26435",
-        "TaskId": "ServerTasks-701983",
-        "TenantId": "Tenants-9234",
-        "ChannelId": "Channels-97001",
-        "ReleaseVersion": "1.2.3-mybranch",
-        "Created": "2024-03-13T04:07:59.537+00:00",
-        "QueueTime": "2024-03-13T04:07:59.537+00:00",
-        "StartTime": "2024-03-13T04:08:00.196+00:00",
-        "CompletedTime": "2024-03-13T04:08:47.885+00:00",
-        "State": "Success"
-      }}
-]
-###
-Output:
+
+Sample Answer 1:
+The HCL resource with the labels "octopusdeploy_space" and "octopus_space_demo_space" has an attribute called "name" with the value "Demo" an an "id" attribute of "Spaces-345". This name matches the space name in the query. Therefore, we must find deployments with the "SpaceId" of "Spaces-345".
 The HCL resource with the labels "octopusdeploy_environment" and "theenvironmentresource" has an attribute called "name" with the value "MyEnvironment" an an "id" attribute of "Environments-96789". This name matches the environment name in the query. Therefore, we must find deployments with the "EnvironmentId" of "Environments-96789".
 The HCL resource with the labels "octopusdeploy_project" and "theprojectresource" has an attribute called "name" with the value "My Project" and "id" attribute of "Projects-91234". This name matches the project name in the query. Therefore, we must find deployments with the "ProjectId" of "Projects-91234".
 The HCL resource with the labels "octopusdeploy_tenant" and "thetennatresource" has an attribute called "name" with the value "My Tenant" and an "id" attribute of "Tenants-9234". This name matches the tenant name in the query. Therefore, we must find deployments with the "TenantId" of "Tenants-9234".
 The HCL resource with the labels "octopusdeploy_channel" and "thechannelresource" has an attribute called "name" with the value "MyChannel" and an "id" attribute of "Channels-97001". This name matches the channel name in the query. Therefore, we must find deployments with the "ChannelId" of "Channels-97001"
-We filter the JSON array of deployments for a items with a "ProjectId" attribute with the value of "Projects-91234", an "EnvironmentId" attribute with the value of "Environments-96789", a "TenantId" attribute with the value of "Tenants-9234", and a "ChannelId" attribute with the value of "Channels-97001".
-The deployment with the highest "StartTime" attribute is the latest deployment.
+We filter the JSON array of called "Deployments" for a deployment with a "ProjectId" attribute with the value of "Projects-91234", an "EnvironmentId" attribute with the value of "Environments-96789", a "TenantId" attribute with the value of "Tenants-9234", a "ChannelId" attribute with the value of "Channels-97001", and a "SpaceId" attribute with the value of "Spaces-345".
+The deployment with the highest "Created" attribute is the latest deployment.
 The release version is found in the deployment "ReleaseVersion" attribute.
 Therefore, the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "1.2.3-mybranch".
 
-The answer:
 The release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "1.2.3-mybranch"
 """
 

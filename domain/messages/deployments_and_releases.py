@@ -13,9 +13,9 @@ def build_deployments_and_releases_prompt(few_shot=None):
         ("system", "You are a concise and helpful agent."),
         ("system",
          "Projects, environments, channels, and tenants, and spaces are defined in the supplied HCL context."),
-        ("system", "Releases and deployments are defined in the supplied JSON context."),
+        ("system", "Deployments are defined by the array items in the supplied JSON context."),
         ("system",
-         "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL."),
+         "You must link the deployments in the JSON context to the projects, environments, channels, tenants, and space in the HCL context."),
         # Tests were failing because the LLM reported the HCL didn't contain information about releases and deployments.
         # We need to encourage the LLM not to report that there are no deployments in the context.
         ("system",
