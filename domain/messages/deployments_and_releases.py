@@ -11,8 +11,8 @@ def build_deployments_and_releases_prompt(few_shot=None):
     # Some of the prompts come from https://arxiv.org/pdf/2312.16171.pdf
     messages = [
         ("system", "You are a concise and helpful agent."),
-        (
-        "system", "Projects, environments, channels, and tenants, and spaces are defined in the supplied HCL context."),
+        ("system",
+         "Projects, environments, channels, and tenants, and spaces are defined in the supplied HCL context."),
         ("system", "Releases and deployments are defined in the supplied JSON context."),
         ("system",
          "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL."),
