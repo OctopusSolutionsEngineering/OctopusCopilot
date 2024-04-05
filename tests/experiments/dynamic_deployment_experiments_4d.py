@@ -159,6 +159,11 @@ class DynamicDeploymentExperiments(unittest.TestCase):
     The success rate for GPT 3.5 hovered around 80% with tests that returned the last 10, 20, and 30 deployments.
     This wasn't an indepth test, as the deployments were already sorted and we were asking for the latest one.
 
+    Changing the JSON structure from a top level array of deployment items to an object with a property called
+    "Deployments" that held the array improved the success rate from 50% to 80%:
+    * Test Results - Unittests_for_dynamic_deployment_experiments_4d_DynamicDeploymentExperiments_test_second_latest_release.html (top level array)
+    * Test Results - Unittests_for_dynamic_deployment_experiments_4d_DynamicDeploymentExperiments_test_second_latest_release_2.html (object with "Deployments" property)
+
     """
 
     def test_latest_release(self):
