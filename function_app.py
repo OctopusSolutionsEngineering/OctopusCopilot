@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
+import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
-import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_context
 from domain.config.users import get_admin_users
@@ -570,8 +570,6 @@ Once default values are set, you can omit the space, environment, and project fr
                                                       url,
                                                       max_context)
             context["json"] = json.dumps(deployments, indent=2)
-
-
         else:
             context["json"] = get_dashboard(space, api_key, url)
 
