@@ -567,7 +567,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
 
-    project = get_project(space_id, project_name, octopus_url, api_key)
+    project = get_project(space_id, project_name, api_key, octopus_url)
 
     environment = None
     if environment_name:
