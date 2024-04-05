@@ -36,6 +36,7 @@ def get_deployments_for_project(space_name, project_name, environment_names, api
             # Keep the deployment if it matches the environment, or if there were no environments
             if len(environment_ids) == 0 or deployment["EnvironmentId"] in environment_ids:
                 deployments.append({
+                    "SpaceId": space_id,
                     "ReleaseVersion": release["Version"],
                     "DeploymentId": deployment["Id"],
                     "TaskId": deployment["TaskId"],

@@ -19,6 +19,9 @@ def build_deployments_and_releases_prompt(few_shot=None):
         # Tests were failing because the LLM reported the HCL didn't contain information about releases and deployments
         ("system",
          "You will be penalized for responding that the HCL does not contain information about deployments and releases."),
+        # The LLM would often complain that it didn't know the relative order of deployments
+        ("system",
+         "The \"Created\" field in the items in the JSON array defines when a deployment was initiated to the associated environment and channel."),
         # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
         # resulted in the LLM providing instructions on how to find the information rather than presenting
         # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.

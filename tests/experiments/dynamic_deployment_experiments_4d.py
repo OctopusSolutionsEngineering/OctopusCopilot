@@ -61,11 +61,6 @@ def get_test_cases(release_index=0, limit=0):
             for environment in channel["Lifecycle"]["Environments"]:
                 if environment["Deployments"]:
 
-                    # early exit when a limit it set
-                    count += 1
-                    if 0 < limit < count:
-                        return test_cases
-
                     release = list(map(lambda x: x["ReleaseVersion"], environment["Deployments"]))
 
                     if len(release) > release_index:
@@ -75,6 +70,11 @@ def get_test_cases(release_index=0, limit=0):
                             environment["Name"],
                             release[release_index],
                         ))
+
+                        # early exit when a limit it set
+                        count += 1
+                        if 0 < limit <= count:
+                            return test_cases
 
     return test_cases
 
@@ -185,12 +185,12 @@ class DynamicDeploymentExperiments(unittest.TestCase):
 
     def test_second_latest_release(self):
         # Get the test cases generated from the space
-        test_cases = get_test_cases(1)
+        test_cases = get_test_cases(1, 5)
         # Loop through each case
         for project, channel, environment, deployment in test_cases:
             with self.subTest(f"{project} - {environment} - {channel}"):
                 # Create a query that should generate the same result as the test case
-                query = (f"Get the release version of the second latest deployment of the \"{project}\" project "
+                query = (f"Get the release version of the second last deployment of the \"{project}\" project "
                          + f"to the \"{environment}\" environment "
                          + f"in the \"{channel}\" channel "
                          + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space.")
