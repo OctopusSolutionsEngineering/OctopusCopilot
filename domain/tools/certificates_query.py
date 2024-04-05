@@ -23,7 +23,7 @@ def answer_certificates_wrapper(original_query, callback, logging=None):
     def answer_certificates(space=None, projects=None, runbooks=None, targets=None,
                             tenants=None, environments=None,
                             accounts=None, certificates=None,
-                            workerpools=None, tagsets=None,
+                            workerpools=None, machinepolicies=None, tagsets=None,
                             steps=None, **kwargs):
         """Answers a general query about certificates in an Octopus space.
 Args:
@@ -36,6 +36,7 @@ environments: environment names
 accounts: account names
 certificates: certificate names
 workerpools: worker pool names
+machinepolicies: machine policy names
 tagsets: tenant tag set names
 steps: step names"""
 
@@ -225,6 +226,7 @@ The targets that belong to the "Demo" space are:
         include_environments = ["<all>"] if not exclude_all_environments(original_query, environments) else []
 
         return callback(original_query, messages, space, projects, runbooks, targets,
-                        tenants, include_environments, accounts, certificates, workerpools, tagsets, steps)
+                        tenants, include_environments, accounts, certificates, workerpools, machinepolicies, tagsets,
+                        steps)
 
     return answer_certificates

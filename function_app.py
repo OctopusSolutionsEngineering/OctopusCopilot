@@ -288,7 +288,8 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                       "input": original_query}, log_query)
 
         def resource_specific_callback(original_query, messages, space, projects, runbooks, targets,
-                                       tenants, environments, accounts, certificates, workerpools, tagsets, steps):
+                                       tenants, environments, accounts, certificates, workerpools, machinepolicies,
+                                       tagsets, steps):
             """
             A function that passes the updated query through to the LLM
             """

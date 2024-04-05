@@ -185,7 +185,7 @@ class DynamicDeploymentExperiments(unittest.TestCase):
 
     def test_second_latest_release(self):
         # Get the test cases generated from the space
-        test_cases = get_test_cases(1, 5)
+        test_cases = get_test_cases(1)
         # Loop through each case
         for project, channel, environment, deployment in test_cases:
             with self.subTest(f"{project} - {environment} - {channel}"):
