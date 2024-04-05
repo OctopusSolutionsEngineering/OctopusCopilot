@@ -168,10 +168,10 @@ class DynamicDeploymentExperiments(unittest.TestCase):
         for project, channel, environment, deployment in test_cases:
             with self.subTest(f"{project} - {environment} - {channel}"):
                 # Create a query that should generate the same result as the test case
-                query = (f"Get the release version of the latest deployment of the \"{project}\" project "
+                query = (f"What is the release version of the latest deployment of the \"{project}\" project "
                          + f"to the \"{environment}\" environment "
                          + f"in the \"{channel}\" channel "
-                         + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space.")
+                         + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space?")
 
                 def get_tools(tool_query):
                     return FunctionDefinitions([
@@ -190,10 +190,10 @@ class DynamicDeploymentExperiments(unittest.TestCase):
         for project, channel, environment, deployment in test_cases:
             with self.subTest(f"{project} - {environment} - {channel}"):
                 # Create a query that should generate the same result as the test case
-                query = (f"Get the release version of the second last deployment of the \"{project}\" project "
+                query = (f"What is the release version of the second last deployment of the \"{project}\" project "
                          + f"to the \"{environment}\" environment "
                          + f"in the \"{channel}\" channel "
-                         + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space.")
+                         + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space?")
 
                 def get_tools(tool_query):
                     return FunctionDefinitions([
@@ -204,3 +204,5 @@ class DynamicDeploymentExperiments(unittest.TestCase):
 
                 self.assertTrue(deployment in result,
                                 f"Expected {deployment} for Project {project} Environment {environment} and Channel {channel} in result:\n{result}")
+
+                print(result)
