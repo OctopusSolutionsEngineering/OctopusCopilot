@@ -171,7 +171,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_machine_policies(self):
-        prompt = "Show the powershell health check script for the \"Windows VM Policy\" machine policy."
+        prompt = "What is the powershell health check script defined in the \"Windows VM Policy\" machine policy?"
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 

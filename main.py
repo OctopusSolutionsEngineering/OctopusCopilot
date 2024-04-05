@@ -13,7 +13,7 @@ from domain.tools.general_query import answer_general_query_wrapper, AnswerGener
 from domain.tools.logs import answer_logs_wrapper
 from domain.tools.project_variables import answer_project_variables_wrapper, answer_project_variables_usage_wrapper
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
-from domain.tools.targets_query import answer_targets_wrapper
+from domain.tools.targets_query import answer_machines_wrapper
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_dashboard, \
@@ -124,7 +124,8 @@ def logs_callback(original_query, messages, space, projects, environments, chann
 
 
 def resource_specific_callback(original_query, messages, space, projects, runbooks, targets,
-                               tenants, environments, accounts, certificates, workerpools, tagsets, steps):
+                               tenants, environments, accounts, certificates, workerpools, machinepolicies, tagsets,
+                               steps):
     space = get_default_argument(space, 'Space')
 
     context = {"input": original_query}
@@ -144,7 +145,7 @@ def resource_specific_callback(original_query, messages, space, projects, runboo
                                certificates,
                                None,
                                workerpools,
-                               None,
+                               machinepolicies,
                                tagsets,
                                None,
                                None,
@@ -262,7 +263,7 @@ def build_tools(tool_query):
         FunctionDefinition(answer_project_variables_usage_wrapper(tool_query, variable_query_callback, log_query)),
         FunctionDefinition(answer_releases_and_deployments_wrapper(tool_query, releases_query_callback, log_query)),
         FunctionDefinition(answer_logs_wrapper(tool_query, logs_callback, log_query)),
-        FunctionDefinition(answer_targets_wrapper(tool_query, resource_specific_callback, log_query)),
+        FunctionDefinition(answer_machines_wrapper(tool_query, resource_specific_callback, log_query)),
         FunctionDefinition(answer_certificates_wrapper(tool_query, resource_specific_callback, log_query))
     ])
 

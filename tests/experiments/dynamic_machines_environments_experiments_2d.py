@@ -4,7 +4,7 @@ import unittest
 from domain.context.octopus_context import collect_llm_context
 from domain.messages.general import build_hcl_prompt
 from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
-from domain.tools.targets_query import answer_targets_wrapper
+from domain.tools.targets_query import answer_machines_wrapper
 from infrastructure.octopus import get_machines, get_environments
 from infrastructure.openai import llm_tool_query
 
@@ -37,7 +37,7 @@ def get_test_cases(limit=0):
 
 
 def targets_callback(original_query, messages, space, projects, runbooks, targets,
-                     tenants, environments, accounts, certificates, workerpools, tagsets, steps):
+                     tenants, environments, accounts, certificates, workerpools, machinepolicies, tagsets, steps):
     api_key = os.environ.get("TEST_OCTOPUS_API_KEY")
     url = os.environ.get("TEST_OCTOPUS_URL")
 
@@ -60,7 +60,7 @@ def targets_callback(original_query, messages, space, projects, runbooks, target
                                certificates,
                                None,
                                workerpools,
-                               None,
+                               machinepolicies,
                                tagsets,
                                None,
                                None,
@@ -95,7 +95,7 @@ class DynamicMachineEnvironmentExperiments(unittest.TestCase):
 
                 def get_tools(tool_query):
                     return FunctionDefinitions(
-                        [FunctionDefinition(answer_targets_wrapper(tool_query, targets_callback))])
+                        [FunctionDefinition(answer_machines_wrapper(tool_query, targets_callback))])
 
                 result = llm_tool_query(query, get_tools).call_function()
 

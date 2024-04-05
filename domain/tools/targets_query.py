@@ -1,7 +1,7 @@
 from domain.messages.general import build_hcl_prompt
 
 
-def answer_targets_wrapper(original_query, callback, logging=None):
+def answer_machines_wrapper(original_query, callback, logging=None):
     """
     A wrapper's job is to return a function with the signature used by the LLM to extract entities from the query. The
     parameters of the wrapper are captured by the returned function without altering the signature of the function.
@@ -19,12 +19,12 @@ def answer_targets_wrapper(original_query, callback, logging=None):
     context is implementation specific.
     """
 
-    def answer_targets(space=None, projects=None, runbooks=None, targets=None,
-                       tenants=None, environments=None,
-                       accounts=None, certificates=None,
-                       workerpools=None, tagsets=None,
-                       steps=None, **kwargs):
-        """Answers a general query about a machines, targets, or agents in an Octopus space.
+    def answer_machines(space=None, projects=None, runbooks=None, targets=None,
+                        tenants=None, environments=None,
+                        accounts=None, certificates=None,
+                        workerpools=None, machinepolicies=None, tagsets=None,
+                        steps=None, **kwargs):
+        """Answers a general query about a machines, targets, agents, or machine policies in an Octopus space.
 Args:
 space: Space name
 projects: project names
@@ -35,11 +35,12 @@ environments: environment names
 accounts: account names
 certificates: certificate names
 workerpools: worker pool names
+machinepolicies: machine policy names
 tagsets: tenant tag set names
 steps: step names"""
 
         if logging:
-            logging("Enter:", "answer_targets")
+            logging("Enter:", "answer_machines")
 
         # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
         # between projects, deployment processes, and variables.
@@ -222,6 +223,6 @@ The targets that belong to the "Demo" space are:
         messages = build_hcl_prompt([("user", few_shot)])
 
         return callback(original_query, messages, space, projects, runbooks, targets,
-                        tenants, environments, accounts, certificates, workerpools, tagsets, steps)
+                        tenants, environments, accounts, certificates, workerpools, machinepolicies, tagsets, steps)
 
-    return answer_targets
+    return answer_machines
