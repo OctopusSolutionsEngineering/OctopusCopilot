@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
-import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_context
 from domain.config.users import get_admin_users
@@ -541,11 +541,22 @@ Once default values are set, you can omit the space, environment, and project fr
     def releases_query_callback(original_query, messages, space, projects, environments, channels, releases):
         api_key, url = get_api_key_and_url()
 
+        sanitized_projects = sanitize_list(projects)
+        sanitized_environments = sanitize_list(environments)
+
         space = get_default_argument(get_github_user_from_form(), space, "Space")
-        project = get_default_argument(get_github_user_from_form(), get_item_or_none(sanitize_list(projects), 0),
+        project = get_default_argument(get_github_user_from_form(), get_item_or_none(sanitized_projects, 0),
                                        "Project")
         environments = get_default_argument(get_github_user_from_form(),
-                                            get_item_or_none(sanitize_list(environments), 0), "Environment")
+                                            get_item_or_none(sanitized_environments, 0), "Environment")
+
+        # Let the LLM know which project and environment to find the details for
+        # if we used the default value.
+        if not sanitized_projects and project:
+            messages.append(("user", f"The project name is {project}"))
+
+        if not sanitized_environments and environments:
+            messages.append(("user", f"The environment name is {','.join(environments)}"))
 
         context = {"input": original_query}
 
@@ -559,6 +570,8 @@ Once default values are set, you can omit the space, environment, and project fr
                                                       url,
                                                       max_context)
             context["json"] = json.dumps(deployments, indent=2)
+
+
         else:
             context["json"] = get_dashboard(space, api_key, url)
 
