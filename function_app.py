@@ -420,7 +420,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         return get_dashboard_response(actual_space_name, dashboard)
 
     def set_default_value(default_name, default_value):
-        """Save a default value for a space, project, environment, or channel
+        """Save a default value for a space, query_project, environment, or channel
 
             Args:
                 default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
@@ -430,14 +430,14 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         name = str(default_name).casefold()
 
-        if not (name == "environment" or name == "project" or name == "space" or name == "channel"):
+        if not (name == "environment" or name == "query_project" or name == "space" or name == "channel"):
             return f"Invalid default name \"{default_name}\". The default name must be one of \"Environment\", \"Project\", \"Space\", or \"Channel\""
 
         save_default_values(get_github_user_from_form(), name, default_value, get_functions_connection_string())
         return f"Saved default value \"{default_value}\" for \"{name}\""
 
     def get_default_value(default_name):
-        """Save a default value for a space, project, environment, or channel
+        """Save a default value for a space, query_project, environment, or channel
 
             Args:
                 default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
@@ -452,19 +452,19 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         return """Here are some sample queries you can ask:
 * `Show me the projects in the space called Default`
 * `Show the dashboard for space MySpace`
-* `Show me the status of the latest deployment for the Web App project in the Development environment in the Default space`
+* `Show me the status of the latest deployment for the Web App query_project in the Development environment in the Default space`
 
-You can set the default space, environment, and project used by the queries above with statements like:
+You can set the default space, environment, and query_project used by the queries above with statements like:
 * `Set the default space to Default`
 * `Set the default environment to Development`
-* `Set the default project to Web App`
+* `Set the default query_project to Web App`
 
 You can view the default values with questions like:
 * `What is the default space?`
 * `What is the default environment?`
-* `What is the default project?`
+* `What is the default query_project?`
 
-Once default values are set, you can omit the space, environment, and project from your queries, or override them with a specific value. For example:
+Once default values are set, you can omit the space, environment, and query_project from your queries, or override them with a specific value. For example:
 * `Show me the dashboard`
 * `Show me the status of the latest deployment to the production environment`"""
 
@@ -547,27 +547,30 @@ Once default values are set, you can omit the space, environment, and project fr
         sanitized_environments = sanitize_environments(environments)
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
-        project = get_default_argument(get_github_user_from_form(), get_item_or_none(sanitized_projects, 0),
-                                       "Project")
-        environments = get_default_argument(get_github_user_from_form(),
-                                            get_item_or_none(sanitized_environments, 0), "Environment")
+        query_project = get_default_argument(get_github_user_from_form(),
+                                             get_item_or_none(sanitized_projects, 0),
+                                             "Project")
+        query_environments = get_default_argument(get_github_user_from_form(),
+                                                  get_item_or_none(sanitized_environments, 0),
+                                                  "Environment")
 
-        # Let the LLM know which project and environment to find the details for
+        # Let the LLM know which query_project and environment to find the details for
         # if we used the default value.
-        if not sanitized_projects and project:
-            messages.append(("user", f"The project name is {project}"))
+        if not sanitized_projects and query_project:
+            messages.append(("user", f"You must find deployments for the project \"{query_project}\""))
 
-        if not sanitized_environments and environments:
-            messages.append(("user", f"The environment name is {','.join(environments)}"))
+        if not sanitized_environments and query_environments:
+            messages.append(
+                ("user", f"You must find deployments for the environment \"{','.join(query_environments)}\""))
 
         context = {"input": original_query}
 
         # We need some additional JSON data to answer this question
-        if project:
+        if query_project:
             # We only need the deployments, so strip out the rest of the JSON
             deployments = get_deployments_for_project(space,
-                                                      project,
-                                                      environments,
+                                                      query_project,
+                                                      query_environments,
                                                       api_key,
                                                       url,
                                                       max_context)
@@ -579,12 +582,13 @@ Once default values are set, you can omit the space, environment, and project fr
                                             messages,
                                             context,
                                             space,
-                                            project,
+                                            query_project,
                                             None,
                                             None,
                                             None,
                                             None,
-                                            ["<all>"] if none_if_falesy_or_all(environments) else environments,
+                                            ["<all>"] if none_if_falesy_or_all(
+                                                query_environments) else query_environments,
                                             None,
                                             None,
                                             None,
