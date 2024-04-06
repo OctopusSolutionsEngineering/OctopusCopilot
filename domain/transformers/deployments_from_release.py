@@ -49,6 +49,7 @@ def get_deployments_for_project(space_name, project_name, environment_names, api
                     "Created": deployment["Created"],
                     "TaskState": task["State"] if task else None,
                     "TaskDuration": task["Duration"] if task else None,
+                    "ReleaseNotes": release["ReleaseNotes"],
                 })
 
         if len(deployments) >= max_results:
