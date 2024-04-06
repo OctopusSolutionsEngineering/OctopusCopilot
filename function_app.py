@@ -587,8 +587,7 @@ Once default values are set, you can omit the space, environment, and query_proj
                                             None,
                                             None,
                                             None,
-                                            ["<all>"] if none_if_falesy_or_all(
-                                                query_environments) else query_environments,
+                                            ["<all>"] if not query_environments else query_environments,
                                             None,
                                             None,
                                             None,
