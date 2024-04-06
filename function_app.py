@@ -544,6 +544,10 @@ Once default values are set, you can omit the space, environment, and query_proj
         return chat_response
 
     def releases_query_messages(original_query, space, projects, environments, channels, releases):
+        """
+        Provide some additional context about the default projects and environments that were used
+        to build the list of releases.
+        """
         query_project = get_default_argument(get_github_user_from_form(),
                                              get_item_or_none(projects, 0),
                                              "Project")

@@ -19,6 +19,13 @@ def build_deployments_and_releases_prompt(few_shot=None, additional_messages=Non
         ("system", "Deployments and releases are provided in the \"Deployments\" property in the JSON context."),
         ("system",
          "You must link the deployments in the JSON context to the projects, environments, channels, tenants, and space in the HCL context."),
+        # The LLM was confused when it saw release versions that were not traditional semver type versions.
+        # For example, the tests used to create guids for release versions to ensure the results matched the
+        # newly created releases, and the response was often something like "The JSON does not contain
+        # information about releases." Switching to calver style release versions fixed the tests.
+        ("system", "The \"ReleaseVersion\" field in the JSON context contains the version of the release."),
+        ("system", "Release versions can be any string."),
+        ("system", "You will be penalized for assuming release versions must be numbers."),
         # Tests were failing because the LLM reported the HCL didn't contain information about releases and deployments.
         # We need to encourage the LLM not to report that there are no deployments in the context.
         ("system",
