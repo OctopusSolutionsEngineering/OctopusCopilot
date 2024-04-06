@@ -560,8 +560,12 @@ Once default values are set, you can omit the space, environment, and query_proj
             messages.append(("user", f"You must find deployments for the project \"{query_project}\""))
 
         if not sanitized_environments and query_environments:
-            messages.append(
-                ("user", f"You must find deployments for the environment \"{','.join(query_environments)}\""))
+            if len(query_environments) != 1:
+                messages.append(
+                    ("user", f"You must find deployments for the environments \"{','.join(query_environments)}\""))
+            else:
+                messages.append(
+                    ("user", f"You must find deployments for the environment \"{query_environments}\""))
 
         context = {"input": original_query}
 
