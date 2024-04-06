@@ -350,7 +350,7 @@ def get_raw_deployment_process(space_name, project_name, api_key, octopus_url):
     project = get_item_ignoring_case(resp.json()["Items"], project_name)
 
     if project is None:
-        raise ResourceNotFound("No projects found matching the name " + project_name)
+        raise ResourceNotFound("Project", project_name)
 
     api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/DeploymentProcesses")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
@@ -379,7 +379,7 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
     project = get_item_ignoring_case(resp.json()["Items"], project_name)
 
     if project is None:
-        raise ResourceNotFound("No projects found matching the name " + project_name)
+        raise ResourceNotFound("Project", project_name)
 
     api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
@@ -406,7 +406,7 @@ def get_project(space_id, project_name, api_key, octopus_url):
     project = get_item_ignoring_case(resp.json()["Items"], project_name)
 
     if project is None:
-        raise ResourceNotFound("No projects found matching the name " + project_name)
+        raise ResourceNotFound("Project", project_name)
 
     return project
 
@@ -515,21 +515,21 @@ def get_deployment_status_base(space_name, environment_name, project_name, api_k
     project = get_item_ignoring_case(resp.json()["Items"], project_name)
 
     if project is None:
-        raise ResourceNotFound("No projects found matching the name " + project_name)
+        raise ResourceNotFound("Project", project_name)
 
     api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partialname=environment_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     environment = get_item_ignoring_case(resp.json()["Items"], environment_name)
 
     if environment is None:
-        raise ResourceNotFound("No environments found matching the name " + environment_name)
+        raise ResourceNotFound("Environment", environment_name)
 
     api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     releases = list(filter(lambda r: environment["Id"] in r["Deployments"], resp.json()["Releases"]))
 
     if len(releases) == 0:
-        raise ResourceNotFound(f"No deployments found for {project_name} in {environment_name}")
+        raise ResourceNotFound("Deployment", f"{project_name} in {environment_name}")
 
     return actual_space_name, environment['Name'], project['Name'], releases[0]["Deployments"][environment['Id']][0]
 
@@ -652,7 +652,7 @@ def get_environment(space_id, environment_name, octopus_url, api_key):
     environment = get_item_ignoring_case(resp.json()["Items"], environment_name)
 
     if environment is None:
-        raise ResourceNotFound("No environment found matching the name " + environment_name)
+        raise ResourceNotFound("Environment", environment_name)
 
     return environment
 
@@ -663,6 +663,6 @@ def get_tenant(space_id, tenant_name, octopus_url, api_key):
     tenant = get_item_ignoring_case(resp.json()["Items"], tenant_name)
 
     if tenant is None:
-        raise ResourceNotFound("No tenant found matching the name " + tenant_name)
+        raise ResourceNotFound("Tenant", tenant_name)
 
     return tenant

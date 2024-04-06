@@ -179,7 +179,7 @@ class LiveRequests(unittest.TestCase):
         with self.assertRaises(ResourceNotFound):
             get_deployment_status_base("Simple", "UAT2", "Deploy Web App Container", Octopus_Api_Key, Octopus_Url)
 
-    def test_et_deployment_status_preconditions(self):
+    def test_get_deployment_status_preconditions(self):
         """
         Tests preconditions
         """

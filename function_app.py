@@ -15,6 +15,7 @@ from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
 from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequestFailed
+from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
@@ -749,6 +750,11 @@ Once default values are set, you can omit the space, environment, and project fr
     except SpaceNotFound as e:
         return func.HttpResponse(convert_to_sse_response(f"The space \"{e.space_name}\" was not found. "
                                                          + "Either the space does not exist or the API key does not "
+                                                         + "have permissions to access it."),
+                                 headers=get_sse_headers())
+    except ResourceNotFound as e:
+        return func.HttpResponse(convert_to_sse_response(f"The {e.resource_type} \"{e.resource_name}\" was not found. "
+                                                         + "Either the resource does not exist or the API key does not "
                                                          + "have permissions to access it."),
                                  headers=get_sse_headers())
     except (UserNotConfigured, OctopusApiKeyInvalid) as e:
