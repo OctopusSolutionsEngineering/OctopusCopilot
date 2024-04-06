@@ -408,7 +408,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             raise OctopusApiKeyInvalid()
 
     def get_dashboard_wrapper(space_name: None):
-        """Display a table of the latest deployments for the projects in the space that emulates the Octopus dashboard
+        """Display the dashboard
 
             Args:
                 space_name: The name of the space containing the projects.
