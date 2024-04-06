@@ -32,6 +32,9 @@ def answer_logs_wrapper(query, callback, logging):
         release: release version
         """
 
+        if logging:
+            logging("Enter:", "answer_logs_usage")
+
         for key, value in kwargs.items():
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
