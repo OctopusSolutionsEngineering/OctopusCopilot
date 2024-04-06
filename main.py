@@ -276,7 +276,8 @@ def build_tools(tool_query):
         FunctionDefinition(answer_general_query_wrapper(general_query_callback, log_query), AnswerGeneralQuery),
         FunctionDefinition(answer_project_variables_wrapper(tool_query, variable_query_callback, log_query)),
         FunctionDefinition(answer_project_variables_usage_wrapper(tool_query, variable_query_callback, log_query)),
-        FunctionDefinition(answer_releases_and_deployments_wrapper(tool_query, releases_query_callback, log_query)),
+        FunctionDefinition(
+            answer_releases_and_deployments_wrapper(tool_query, releases_query_callback, None, log_query)),
         FunctionDefinition(answer_logs_wrapper(tool_query, logs_callback, log_query)),
         FunctionDefinition(answer_literal_logs_wrapper(tool_query, literal_logs_callback, log_query)),
         FunctionDefinition(answer_machines_wrapper(tool_query, resource_specific_callback, log_query)),

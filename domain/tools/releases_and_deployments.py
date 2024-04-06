@@ -1,7 +1,9 @@
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
+from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_environments, sanitize_channels, \
+    sanitize_releases
 
 
-def answer_releases_and_deployments_wrapper(original_query, callback, logging=None):
+def answer_releases_and_deployments_wrapper(original_query, callback, additional_messages=None, logging=None):
     """
     A wrapper's job is to return a function with the signature used by the LLM to extract entities from the query. The
     parameters of the wrapper are captured by the returned function without altering the signature of the function.
@@ -40,10 +42,8 @@ def answer_releases_and_deployments_wrapper(original_query, callback, logging=No
         # Then use a tree-of-thought prompt to get a consensus answer:
         # https://github.com/dave1010/tree-of-thought-prompting/blob/main/tree-of-thought-prompts.txt
 
-        few_shot = """
-Sample Question 1: What is the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment for the "MyChannel" channel and the "My Tenant" tenant in the "Demo" space?
-
-Sample JSON 1: ###
+        few_shot = """Question: What is the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment for the "MyChannel" channel and the "My Tenant" tenant in the "Demo" space?
+JSON: ###
 {{
     "Deployments": [
         {{
@@ -74,9 +74,8 @@ Sample JSON 1: ###
           }}
     ]
 }}
-
 ###
-Sample HCL 1: ###
+HCL: ###
 resource "octopusdeploy_space" "octopus_space_demo_space" {{
   id                          = "Spaces-345"
   description                 = "A demonstration space"
@@ -104,7 +103,7 @@ resource "octopusdeploy_channel" "thechannelresource" {{
 }}
 ###
 
-Sample Answer 1:
+Answer:
 The HCL resource with the labels "octopusdeploy_space" and "octopus_space_demo_space" has an attribute called "name" with the value "Demo" an an "id" attribute of "Spaces-345". This name matches the space name in the query. Therefore, we must find deployments with the "SpaceId" of "Spaces-345".
 The HCL resource with the labels "octopusdeploy_environment" and "theenvironmentresource" has an attribute called "name" with the value "MyEnvironment" an an "id" attribute of "Environments-96789". This name matches the environment name in the query. Therefore, we must find deployments with the "EnvironmentId" of "Environments-96789".
 The HCL resource with the labels "octopusdeploy_project" and "theprojectresource" has an attribute called "name" with the value "My Project" and "id" attribute of "Projects-91234". This name matches the project name in the query. Therefore, we must find deployments with the "ProjectId" of "Projects-91234".
@@ -122,8 +121,29 @@ The release version of the latest deployment of the "My Project" project to the 
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
-        messages = build_deployments_and_releases_prompt([("user", few_shot)])
+        projects = sanitize_projects(projects)
+        environments = sanitize_environments(environments)
+        channels = sanitize_channels(channels)
+        releases = sanitize_releases(releases)
 
-        return callback(original_query, messages, space, projects, environments, channels, releases)
+        messages = build_deployments_and_releases_prompt(
+            [("user", few_shot)],
+            additional_messages(
+                original_query,
+                space,
+                projects,
+                environments,
+                channels,
+                releases) if additional_messages else None
+        )
+
+        return callback(
+            original_query,
+            messages,
+            space,
+            projects,
+            environments,
+            channels,
+            releases)
 
     return answer_releases_and_deployments_usage

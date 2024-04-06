@@ -308,7 +308,10 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                 FunctionDefinition(
                     answer_project_variables_usage_wrapper(tool_query, project_variables_usage_callback, log_query)),
                 FunctionDefinition(
-                    answer_releases_and_deployments_wrapper(tool_query, releases_and_deployments_callback, log_query)),
+                    answer_releases_and_deployments_wrapper(tool_query,
+                                                            releases_and_deployments_callback,
+                                                            None,
+                                                            log_query)),
                 FunctionDefinition(answer_logs_wrapper(tool_query, logs_query_callback, log_query)),
                 FunctionDefinition(answer_machines_wrapper(tool_query, resource_specific_callback, log_query)),
                 FunctionDefinition(answer_certificates_wrapper(tool_query, resource_specific_callback, log_query))
@@ -540,6 +543,33 @@ Once default values are set, you can omit the space, environment, and query_proj
                                             log_query)
         return chat_response
 
+    def releases_query_messages(original_query, space, projects, environments, channels, releases):
+        query_project = get_default_argument(get_github_user_from_form(),
+                                             get_item_or_none(projects, 0),
+                                             "Project")
+        query_environments = get_default_argument(get_github_user_from_form(),
+                                                  get_item_or_none(environments, 0),
+                                                  "Environment")
+
+        additional_messages = []
+
+        # Let the LLM know which query_project and environment to find the details for
+        # if we used the default value.
+        if not projects and query_project:
+            additional_messages.append(
+                ("user", f"The question relates to the project \"{query_project}\""))
+
+        if not environments and query_environments:
+            if isinstance(query_environments, str):
+                additional_messages.append(
+                    ("user", f"The question relates to the environment \"{query_environments}\""))
+            else:
+                additional_messages.append(
+                    ("user",
+                     f"The question relates to the environments \"{','.join(query_environments)}\""))
+
+        return additional_messages
+
     def releases_query_callback(original_query, messages, space, projects, environments, channels, releases):
         api_key, url = get_api_key_and_url()
 
@@ -553,19 +583,6 @@ Once default values are set, you can omit the space, environment, and query_proj
         query_environments = get_default_argument(get_github_user_from_form(),
                                                   get_item_or_none(sanitized_environments, 0),
                                                   "Environment")
-
-        # Let the LLM know which query_project and environment to find the details for
-        # if we used the default value.
-        if not sanitized_projects and query_project:
-            messages.append(("user", f"You must find deployments for the project \"{query_project}\""))
-
-        if not sanitized_environments and query_environments:
-            if len(query_environments) != 1:
-                messages.append(
-                    ("user", f"You must find deployments for the environments \"{','.join(query_environments)}\""))
-            else:
-                messages.append(
-                    ("user", f"You must find deployments for the environment \"{query_environments}\""))
 
         context = {"input": original_query}
 
@@ -708,7 +725,10 @@ Once default values are set, you can omit the space, environment, and query_proj
             FunctionDefinition(
                 answer_project_variables_usage_wrapper(query, variable_query_callback, log_query)),
             FunctionDefinition(
-                answer_releases_and_deployments_wrapper(query, releases_query_callback, log_query)),
+                answer_releases_and_deployments_wrapper(query,
+                                                        releases_query_callback,
+                                                        releases_query_messages,
+                                                        log_query)),
             FunctionDefinition(answer_logs_wrapper(query, logs_callback, log_query)),
             FunctionDefinition(answer_literal_logs_wrapper(query, literal_logs_callback, log_query)),
             FunctionDefinition(answer_machines_wrapper(query, resource_specific_callback, log_query)),

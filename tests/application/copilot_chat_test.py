@@ -4,6 +4,7 @@ import re
 import time
 import unittest
 import uuid
+from datetime import datetime
 
 import azure.functions as func
 from openai import RateLimitError
@@ -281,7 +282,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment(self):
-        version = str(uuid.uuid4())
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         create_and_deploy_release(space_name="Simple", release_version=version)
         prompt = "Get the release version of the latest deployment to the \"Development\" environment for the \"Deploy Web App Container\" project."
         response = copilot_handler_internal(build_request(prompt))
@@ -300,7 +301,7 @@ class CopilotChatTest(unittest.TestCase):
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment_channel(self):
         # Create a release in the Mainline channel against a tenant
-        version = str(uuid.uuid4())
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         create_and_deploy_release(space_name="Simple", channel_name="Mainline", project_name="Deploy AWS Lambda",
                                   tenant_name="Marketing", release_version=version)
         # Create another release without a tenant to ensure the query is actually doing a search and not
@@ -316,7 +317,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment_defaults(self):
-        version = str(uuid.uuid4())
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         create_and_deploy_release(space_name="Simple", release_version=version)
         prompt = "What is the release version of the latest deployment?"
         response = copilot_handler_internal(build_request(prompt))
@@ -335,7 +336,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):
-        version = str(uuid.uuid4())
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         create_and_deploy_release(space_name="Simple", release_version=version)
         time.sleep(5)
         prompt = "Show the dashboard."
@@ -349,7 +350,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_logs(self):
-        version = str(uuid.uuid4())
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         create_and_deploy_release(space_name="Simple", release_version=version)
 
         time.sleep(30)
