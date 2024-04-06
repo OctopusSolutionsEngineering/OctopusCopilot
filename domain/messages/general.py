@@ -23,11 +23,11 @@ def build_hcl_prompt(few_shot=None):
         ("system", "You must assume all resources in the supplied HCL belong to the space mentioned in the question."),
         # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
         # resulted in the LLM providing instructions on how to find the information rather than presenting
-        # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
-        # The phrase "what" seems to be important in the question.
+        # the answer. Here we instruct the LLM to provide the answer directly.
         ("system",
-         "You must assume questions requesting you to 'find', 'get', 'list', 'extract', 'display', or 'print' information "
-         + "are asking you to return 'what' the value of the requested information is."),
+         "You must provide an answer to the question based on the data in the supplied HCL context."),
+        ("system", "You will be penalized for providing instructions on how to find the answer."),
+        ("system", "You will be penalized for providing a code sample as the answer."),
         # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
         # guide the LLM to provide as much information as possible in the answer, and not treat missing
         # information as an error.
