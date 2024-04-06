@@ -21,6 +21,9 @@ def build_hcl_prompt(few_shot=None):
          "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space."),
         ("system", "You must assume the supplied HCL is a complete and accurate representation of the Octopus space."),
         ("system", "You must assume all resources in the supplied HCL belong to the space mentioned in the question."),
+        # The LLM will often answer "Based on the provided HCL context, the answer is ...".
+        # This is not useful information for the end user.
+        ('system', "You will be penalized for mentioning that the answer was based on the HCL context"),
         # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
         # resulted in the LLM providing instructions on how to find the information rather than presenting
         # the answer. Here we instruct the LLM to provide the answer directly.

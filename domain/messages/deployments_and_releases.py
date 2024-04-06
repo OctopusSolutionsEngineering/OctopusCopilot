@@ -35,6 +35,9 @@ def build_deployments_and_releases_prompt(few_shot=None, additional_messages=Non
         # The LLM would often complain that it didn't know the relative order of deployments
         ("system",
          "The \"Created\" field in the items in the JSON array defines when a deployment was initiated to the associated environment and channel."),
+        # The LLM will often answer "Based on the provided HCL and JSON context, the answer is ...".
+        # This is not useful information for the end user.
+        ('system', "You will be penalized for mentioning that the answer was based on the HCL or JSON context"),
         # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
         # resulted in the LLM providing instructions on how to find the information rather than presenting
         # the answer. Here we instruct the LLM to provide the answer directly.
