@@ -24,6 +24,7 @@ def build_hcl_prompt(few_shot=None):
         # The LLM will often answer "Based on the provided HCL context, the answer is ...".
         # This is not useful information for the end user.
         ('system', "You will be penalized for mentioning that the answer was based on the HCL context"),
+        ('system', "You will be penalized for including phrases like \"Based on the HCL\" in the answer"),
         # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
         # resulted in the LLM providing instructions on how to find the information rather than presenting
         # the answer. Here we instruct the LLM to provide the answer directly.
