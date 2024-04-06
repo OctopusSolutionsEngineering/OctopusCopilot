@@ -318,7 +318,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_get_latest_deployment_defaults(self):
         version = str(uuid.uuid4())
         create_and_deploy_release(space_name="Simple", release_version=version)
-        prompt = "Get the release version of the latest deployment."
+        prompt = "What is the release version of the latest deployment?"
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
