@@ -3,6 +3,7 @@ import os
 import urllib.parse
 
 from azure.core.exceptions import HttpResponseError
+from langchain_core.messages import SystemMessage
 
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
@@ -721,7 +722,11 @@ Once default values are set, you can omit the space, environment, and project fr
                 convert_to_sse_response("Ask a question like \"Show me the projects in the space called Default\""),
                 headers=get_sse_headers())
 
-        result = llm_tool_query(query, build_form_tools, log_query).call_function()
+        result = llm_tool_query(
+            query,
+            build_form_tools,
+            log_query,
+            get_extra_messages(get_github_user_from_form())).call_function()
 
         return func.HttpResponse(convert_to_sse_response(result), headers=get_sse_headers())
 
@@ -755,6 +760,30 @@ Once default values are set, you can omit the space, environment, and project fr
         return func.HttpResponse(convert_to_sse_response(
             "An unexpected error was thrown. This error has been logged. I'm sorry for the inconvenience."),
             headers=get_sse_headers())
+
+
+def get_extra_messages(github_user):
+    """
+    The extra messages pass through some additional information to the LLM to let
+    it know that there are some default values set for the user.
+    :param github_user: The current user
+    :return: Any additional messages
+    """
+    extra_prompt_messages = []
+
+    space = get_default_argument(github_user, None, "Space")
+    if space:
+        extra_prompt_messages.append(SystemMessage(f"The default space name is {space}"))
+
+    project = get_default_argument(github_user, None, "Project")
+    if project:
+        extra_prompt_messages.append(SystemMessage(f"The default project name is {project}"))
+
+    environment = get_default_argument(github_user, None, "Environment")
+    if environment:
+        extra_prompt_messages.append(SystemMessage(f"The default project name is {environment}"))
+
+    return extra_prompt_messages
 
 
 def extract_query(req: func.HttpRequest):

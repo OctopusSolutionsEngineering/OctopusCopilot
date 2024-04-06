@@ -48,12 +48,13 @@ def llm_message_query(message_prompt, context, log_query=None):
     return client_response
 
 
-def llm_tool_query(query, llm_tools, log_query=None):
+def llm_tool_query(query, llm_tools, log_query=None, extra_prompt_messages=None):
     """
     This is the handler that responds to a chat request.
     :param log_query: The function used to log the query
     :param query: The pain text query
     :param llm_tools: A function that returns the set of tools used by OpenAI
+    :param extra_prompt_messages: Additional messages to pass to the LLM
     :return: The result of the function, defined by the set of tools, that was called in response to the query
     """
 
@@ -76,6 +77,7 @@ def llm_tool_query(query, llm_tools, log_query=None):
                                        azure_endpoint=os.environ["OPENAI_ENDPOINT"],
                                        api_version="2024-02-01"),
         tools=tools,
+        extra_prompt_messages=extra_prompt_messages
     )
 
     try:
