@@ -45,7 +45,7 @@ def llm_message_query(message_prompt, context, log_query=None):
     if context.get("percent_trimmed"):
         client_response += f"\n\nThe space context was trimmed by {context['percent_trimmed']}% to fit within the token limit. The answer may be based on incomplete information."
 
-    return client_response
+    return client_response.strip()
 
 
 def llm_tool_query(query, llm_tools, log_query=None, extra_prompt_messages=None):
