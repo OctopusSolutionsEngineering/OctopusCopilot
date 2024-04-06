@@ -65,7 +65,7 @@ def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
     if len(filtered_spaces) == 1:
         return filtered_spaces[0]["Id"], filtered_spaces[0]["Name"]
 
-    raise SpaceNotFound(f"No space with name '{space_name}' found")
+    raise SpaceNotFound(space_name)
 
 
 @retry(HTTPError, tries=3, delay=2)

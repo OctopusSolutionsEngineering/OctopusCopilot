@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
-import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_context
 from domain.config.users import get_admin_users
@@ -725,7 +725,7 @@ Once default values are set, you can omit the space, environment, and project fr
         return func.HttpResponse(convert_to_sse_response("You are not authorized."),
                                  headers=get_sse_headers())
     except SpaceNotFound as e:
-        return func.HttpResponse(convert_to_sse_response("The requested space was not found. "
+        return func.HttpResponse(convert_to_sse_response(f"The space \"{e.space_name}\" was not found. "
                                                          + "Either the space does not exist or the API key does not "
                                                          + "have permissions to access it."),
                                  headers=get_sse_headers())
