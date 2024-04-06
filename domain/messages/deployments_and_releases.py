@@ -37,11 +37,11 @@ def build_deployments_and_releases_prompt(few_shot=None, additional_messages=Non
          "The \"Created\" field in the items in the JSON array defines when a deployment was initiated to the associated environment and channel."),
         # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
         # resulted in the LLM providing instructions on how to find the information rather than presenting
-        # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
-        # The phrase "what" seems to be important in the question.
+        # the answer. Here we instruct the LLM to provide the answer directly.
         ("system",
-         "You must assume questions requesting you to 'find', 'get', 'list', 'extract', 'display', or 'print' information "
-         + "are asking you to return 'what' the value of the requested information is."),
+         "You must provide an answer to the question based on the data in the supplied JSON and HCL context."),
+        ("system", "You will be penalized for providing instructions on how to find the answer."),
+        ("system", "You will be penalized for providing a code sample as the answer."),
         # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
         # guide the LLM to provide as much information as possible in the answer, and not treat missing
         # information as an error.
@@ -53,9 +53,6 @@ def build_deployments_and_releases_prompt(few_shot=None, additional_messages=Non
         ("system",
          "It is ok if you can not find most of the requested information in the context - "
          + "just provide what you can find."),
-        # The LLM will often provide a code sample that describes how to find the answer if the context does not
-        # provide the requested information.
-        ("system", "You will be penalized for providing a code sample as the answer."),
         ("system", "I’m going to tip $500 for a better solution!"),
         *few_shot,
         ("user", "Question: {input}"),
