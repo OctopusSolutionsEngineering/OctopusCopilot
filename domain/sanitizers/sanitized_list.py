@@ -2,88 +2,88 @@ import re
 
 
 def sanitize_space(input_string):
-    input_list = sanitize_list(input_string, "\\*|Space|Space\\s*[0-9A-Z]|My\\s*Space")
+    input_list = sanitize_list(input_string, "all|\\*|Space|Space\\s*[0-9A-Z]|My\\s*Space")
     if len(input_list) > 0:
         return input_list[0]
     return None
 
 
 def sanitize_projects(input_list):
-    return sanitize_list(input_list, "\\*|Project\\s*[0-9A-Z]|My\\s*Project")
+    return sanitize_list(input_list, "all|\\*|Project\\s*[0-9A-Z]|My\\s*Project")
 
 
 def sanitize_tenants(input_list):
-    return sanitize_list(input_list, "\\*|Tenant\\s*[0-9A-Z]|My\\s*Tenant")
+    return sanitize_list(input_list, "all|\\*|Tenant\\s*[0-9A-Z]|My\\s*Tenant")
 
 
 def sanitize_feeds(input_list):
-    return sanitize_list(input_list, "\\*|Feed\\s*[0-9A-Z]|My\\s*Feed")
+    return sanitize_list(input_list, "all|\\*|Feed\\s*[0-9A-Z]|My\\s*Feed")
 
 
 def sanitize_accounts(input_list):
-    return sanitize_list(input_list, "\\*|Account\\s*[0-9A-Z]|My\\s*Account")
+    return sanitize_list(input_list, "all|\\*|Account\\s*[0-9A-Z]|My\\s*Account")
 
 
 def sanitize_workerpools(input_list):
-    return sanitize_list(input_list, "\\*|Worker\\s*Pool\\s*[0-9A-Z]|My\\s*Worker\\s*Pool")
+    return sanitize_list(input_list, "all|\\*|Worker\\s*Pool\\s*[0-9A-Z]|My\\s*Worker\\s*Pool")
 
 
 def sanitize_machinepolicies(input_list):
-    return sanitize_list(input_list, "\\*|Machine\\s*Policy\\s*[0-9A-Z]|My\\s*Machine\\s*Policy")
+    return sanitize_list(input_list, "all|\\*|Machine\\s*Policy\\s*[0-9A-Z]|My\\s*Machine\\s*Policy")
 
 
 def sanitize_tenanttagsets(input_list):
-    return sanitize_list(input_list, "\\*|Tag\\s*Set\\s*[0-9A-Z]|My\\s*Tag\\s*Set")
+    return sanitize_list(input_list, "all|\\*|Tag\\s*Set\\s*[0-9A-Z]|My\\s*Tag\\s*Set")
 
 
 def sanitize_gitcredentials(input_list):
-    return sanitize_list(input_list, "\\*|Git\\s*Credential\\s*[0-9A-Z]|My\\s*Git\\s*Credential")
+    return sanitize_list(input_list, "all|\\*|Git\\s*Credential\\s*[0-9A-Z]|My\\s*Git\\s*Credential")
 
 
 def sanitize_projectgroups(input_list):
-    return sanitize_list(input_list, "\\*|Project\\s*Group\\s*[0-9A-Z]|My\\s*Project\\s*Group")
+    return sanitize_list(input_list, "all|\\*|Project\\s*Group\\s*[0-9A-Z]|My\\s*Project\\s*Group")
 
 
 def sanitize_channels(input_list):
-    return sanitize_list(input_list, "\\*|Channel\\s*[0-9A-Z]|My\\s*Channel")
+    return sanitize_list(input_list, "all|\\*|Channel\\s*[0-9A-Z]|My\\s*Channel")
 
 
 def sanitize_releases(input_list):
-    return sanitize_list(input_list, "\\*|Release\\s*[0-9A-Z]|My\\s*Release")
+    return sanitize_list(input_list, "all|\\*|Release\\s*[0-9A-Z]|My\\s*Release")
 
 
 def sanitize_steps(input_list):
-    return sanitize_list(input_list, "\\*|Step\\s*[0-9A-Z]|My\\s*Step")
+    return sanitize_list(input_list, "all|\\*|Step\\s*[0-9A-Z]|My\\s*Step")
 
 
 def sanitize_variables(input_list):
-    return sanitize_list(input_list, "\\*|Variable\\s*[0-9A-Z]|My\\s*Variable")
+    return sanitize_list(input_list, "all|\\*|Variable\\s*[0-9A-Z]|My\\s*Variable")
 
 
 def sanitize_lifecycles(input_list):
-    return sanitize_list(input_list, "\\*|Lifecycle\\s*[0-9A-Z]|My\\s*Lifecycle")
+    return sanitize_list(input_list, "all|\\*|Lifecycle\\s*[0-9A-Z]|My\\s*Lifecycle")
 
 
 def sanitize_certificates(input_list):
-    return sanitize_list(input_list, "\\*|Certificate\\s*[0-9A-Z]|My\\s*Certificate")
+    return sanitize_list(input_list, "all|\\*|Certificate\\s*[0-9A-Z]|My\\s*Certificate")
 
 
 def sanitize_environments(input_list):
-    return sanitize_list(input_list, "\\*|Environment\\s*[0-9A-Z]|My\\s*Environment")
+    return sanitize_list(input_list, "all|\\*|Environment\\s*[0-9A-Z]|My\\s*Environment")
 
 
 def sanitize_targets(input_list):
     return sanitize_list(input_list,
-                         "\\*|Machine\\s*[0-9A-Z]|Target\\s*[0-9A-Z]|My\\s*Machine|My\\s*Target")
+                         "all|\\*|Machine\\s*[0-9A-Z]|Target\\s*[0-9A-Z]|My\\s*Machine|My\\s*Target")
 
 
 def sanitize_runbooks(input_list):
-    return sanitize_list(input_list, "\\*|Runbook\\s*[0-9A-Z]|My\\s*Runbook")
+    return sanitize_list(input_list, "all|\\*|Runbook\\s*[0-9A-Z]|My\\s*Runbook")
 
 
 def sanitize_library_variable_sets(input_list):
     return sanitize_list(input_list,
-                         "\\*|(Library\\s*)?Variable\\s*Set\\s*[0-9A-Z]|Variables|My\\s*Variable\\s*Set")
+                         "all|\\*|(Library\\s*)?Variable\\s*Set\\s*[0-9A-Z]|Variables|My\\s*Variable\\s*Set")
 
 
 def sanitize_bool(input_bool):

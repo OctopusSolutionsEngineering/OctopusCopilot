@@ -23,7 +23,7 @@ from domain.logging.query_loggin import log_query
 from domain.messages.general import build_hcl_prompt
 from domain.messages.test_message import build_test_prompt
 from domain.sanitizers.sanitized_list import sanitize_list, get_item_or_none, \
-    none_if_falesy_or_all
+    none_if_falesy_or_all, sanitize_projects, sanitize_environments
 from domain.security.security import is_admin_user
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
@@ -543,8 +543,8 @@ Once default values are set, you can omit the space, environment, and project fr
     def releases_query_callback(original_query, messages, space, projects, environments, channels, releases):
         api_key, url = get_api_key_and_url()
 
-        sanitized_projects = sanitize_list(projects)
-        sanitized_environments = sanitize_list(environments)
+        sanitized_projects = sanitize_projects(projects)
+        sanitized_environments = sanitize_environments(environments)
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
         project = get_default_argument(get_github_user_from_form(), get_item_or_none(sanitized_projects, 0),
