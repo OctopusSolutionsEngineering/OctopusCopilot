@@ -10,6 +10,7 @@ from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environment
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.literal_logs import answer_literal_logs_wrapper
 from domain.tools.logs import answer_logs_wrapper
 from domain.tools.project_variables import answer_project_variables_wrapper, answer_project_variables_usage_wrapper
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
@@ -109,7 +110,7 @@ def general_query_callback(original_query, body, messages):
                                logging)
 
 
-def logs_callback(original_query, messages, space, projects, environments, channel, tenants):
+def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release):
     space = get_default_argument(space, 'Space')
 
     logs = get_deployment_logs(space, get_item_or_none(sanitize_list(projects), 0),
@@ -121,6 +122,20 @@ def logs_callback(original_query, messages, space, projects, environments, chann
     context = {"input": original_query, "context": logs}
 
     return llm_message_query(messages, context, log_query)
+
+
+def literal_logs_callback(space, projects, environments, channel, tenants, release):
+    space = get_default_argument(space, 'Space')
+
+    logs = get_deployment_logs(space,
+                               get_item_or_none(sanitize_list(projects), 0),
+                               get_item_or_none(sanitize_list(environments), 0),
+                               get_item_or_none(sanitize_list(tenants), 0),
+                               release,
+                               get_api_key(),
+                               get_octopus_api())
+
+    return logs
 
 
 def resource_specific_callback(original_query, messages, space, projects, runbooks, targets,
@@ -263,6 +278,7 @@ def build_tools(tool_query):
         FunctionDefinition(answer_project_variables_usage_wrapper(tool_query, variable_query_callback, log_query)),
         FunctionDefinition(answer_releases_and_deployments_wrapper(tool_query, releases_query_callback, log_query)),
         FunctionDefinition(answer_logs_wrapper(tool_query, logs_callback, log_query)),
+        FunctionDefinition(answer_literal_logs_wrapper(tool_query, literal_logs_callback, log_query)),
         FunctionDefinition(answer_machines_wrapper(tool_query, resource_specific_callback, log_query)),
         FunctionDefinition(answer_certificates_wrapper(tool_query, resource_specific_callback, log_query))
     ])

@@ -1,4 +1,4 @@
-from langchain.chat_models import AzureChatOpenAI
+from langchain_community.chat_models import AzureChatOpenAI
 
 
 class AzureChatOpenAIWithTooling(AzureChatOpenAI):
