@@ -22,9 +22,11 @@ logger = configure_logging()
 
 def logging_wrapper(func):
     def wrapper():
-        print(func.__name__ + " Enter")
-        func()
-        print(func.__name__ + " Exit")
+        try:
+            print(func.__name__ + " Enter")
+            func()
+        finally:
+            print(func.__name__ + " Exit")
 
     return wrapper
 
