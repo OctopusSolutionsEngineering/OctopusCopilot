@@ -235,7 +235,7 @@ def releases_query_callback(original_query, messages, space, projects, environme
     chat_response = collect_llm_context(parser.query,
                                         messages,
                                         context,
-                                        space,
+                                        space_id,
                                         projects,
                                         None,
                                         None,

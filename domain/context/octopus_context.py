@@ -38,7 +38,7 @@ def collect_llm_context(original_query, messages, context, space_id, project_nam
     """
 
     ensure_string_starts_with(space_id, 'Spaces-',
-                              'space_id must be a non-empty string starting with "Spaces-" (handle_copilot_query).')
+                              'space_id must be a non-empty string starting with "Spaces-" (collect_llm_context).')
 
     if log_query:
         log_query("collect_llm_context", f"""
