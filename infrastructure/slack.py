@@ -9,7 +9,7 @@ from domain.validation.argument_validation import ensure_string_not_empty
 logger = configure_logging(__name__)
 
 
-async def send_slack_message_async(message, slack_url):
+async def send_slack_message(message, slack_url):
     """
     Sends a message to a slack channel
     :param message: The message to send
