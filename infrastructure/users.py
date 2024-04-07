@@ -9,10 +9,12 @@ from domain.logging.app_logging import configure_logging
 from domain.validation.argument_validation import ensure_string_not_empty
 from domain.validation.octopus_validation import is_api_key
 from domain.validation.url_validation import validate_url
+from infrastructure.octopus import logging_wrapper
 
 logger = configure_logging(__name__)
 
 
+@logging_wrapper
 def database_connection_test(connection_string):
     ensure_string_not_empty(connection_string,
                             'connection_string must be the connection string (test_database).')
@@ -28,9 +30,8 @@ def database_connection_test(connection_string):
     table_client.upsert_entity(test)
 
 
+@logging_wrapper
 def save_default_values(username, default_name, default_value, connection_string):
-    logger.info("save_default_values - Enter")
-
     ensure_string_not_empty(username, "username must be the GitHub user's ID (save_default_values).")
     ensure_string_not_empty(default_name, "default_name must be a non-empty string (save_default_values).")
     ensure_string_not_empty(default_value, "default_value must be a non-empty string (save_default_values).")
@@ -48,9 +49,8 @@ def save_default_values(username, default_name, default_value, connection_string
     table_client.upsert_entity(user)
 
 
+@logging_wrapper
 def get_default_values(username, default_name, connection_string):
-    logger.info("get_default_values - Enter")
-
     ensure_string_not_empty(username, "username must be the GitHub user's ID (get_default_values).")
     ensure_string_not_empty(default_name, "default_name must be a non-empty string (get_default_values).")
     ensure_string_not_empty(connection_string,
@@ -71,9 +71,8 @@ def get_default_values(username, default_name, connection_string):
         return None
 
 
+@logging_wrapper
 def save_users_octopus_url(username, octopus_url, encrypted_api_key, tag, nonce, connection_string):
-    logger.info("save_users_octopus_url - Enter")
-
     ensure_string_not_empty(username, "username must be the GitHub user's ID (save_users_octopus_url).")
     ensure_string_not_empty(octopus_url, "octopus_url must be an Octopus URL (save_users_octopus_url).")
     ensure_string_not_empty(encrypted_api_key,
@@ -99,9 +98,8 @@ def save_users_octopus_url(username, octopus_url, encrypted_api_key, tag, nonce,
     table_client.upsert_entity(user)
 
 
+@logging_wrapper
 def save_users_octopus_url_from_login(username, url, api, encryption_password, encryption_salt, connection_string):
-    logger.info("save_users_octopus_url_from_login - Enter")
-
     ensure_string_not_empty(username,
                             "username must be the GitHub user ID (save_users_octopus_url_from_login).")
     ensure_string_not_empty(url, "url must be the Octopus URL (save_users_octopus_url_from_login).")
@@ -120,9 +118,8 @@ def save_users_octopus_url_from_login(username, url, api, encryption_password, e
     save_users_octopus_url(username, url, encrypted_api_key, tag, nonce, connection_string)
 
 
+@logging_wrapper
 def get_users_details(username, connection_string):
-    logger.info("get_users_details - Enter")
-
     ensure_string_not_empty(username, "username must be the GitHub user's ID (get_users_details).")
     ensure_string_not_empty(connection_string,
                             'connection_string must be the connection string (save_users_octopus_url).')
@@ -132,6 +129,7 @@ def get_users_details(username, connection_string):
     return table_client.get_entity("github.com", username)
 
 
+@logging_wrapper
 def delete_old_user_details(connection_string):
     """
     We don't want to hold onto keys for very long. Every hour or so keys older than 8 hours are purged from the database
@@ -139,7 +137,6 @@ def delete_old_user_details(connection_string):
     :param connection_string: The database connection string
     :return: The number of deleted records.
     """
-    logger.info("delete_old_user_details - Enter")
 
     ensure_string_not_empty(connection_string,
                             'connection_string must be the connection string (delete_old_user_details).')
@@ -164,12 +161,12 @@ def delete_old_user_details(connection_string):
         handle_error(e)
 
 
+@logging_wrapper
 def delete_all_user_details(connection_string):
     """
     Delete all user details.
     :param connection_string: The database connection string
     """
-    logger.info("delete_all_user_details - Enter")
 
     ensure_string_not_empty(connection_string,
                             'connection_string must be the connection string (delete_all_user_details).')

@@ -1,5 +1,6 @@
 import json
 import os
+
 from retry import retry
 from urllib3.exceptions import HTTPError
 
@@ -16,12 +17,13 @@ from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_tenants
     sanitize_projectgroups, none_if_falesy, sanitize_steps, none_if_falesy_or_all, sanitize_variables
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http
-from infrastructure.octopus import handle_response, get_space_id_and_name_from_name
+from infrastructure.octopus import handle_response, logging_wrapper
 
 logger = configure_logging(__name__)
 
 
 @retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_octoterra_space(query, space_id, project_names, runbook_names, target_names, tenant_names,
                         library_variable_sets, environment_names, feed_names, account_names, certificate_names,
                         lifecycle_names, workerpool_names, machinepolicy_names, tagset_names, projectgroup_names,
@@ -34,7 +36,6 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
     :param octopus_url: The Octopus URL
     :return: The space terraform module
     """
-    logger.info("get_octoterra_space - Enter")
 
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_octoterra_space).')
     ensure_string_not_empty(query, 'query must be a non-empty string (get_octoterra_space).')
