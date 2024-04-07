@@ -1,5 +1,3 @@
-from threading import Thread
-
 from domain.config.slack import get_slack_url
 from domain.logging.app_logging import configure_logging
 from domain.sanitizers.sanitize_logs import sanitize_message, anonymize_message
@@ -18,12 +16,8 @@ def log_query(message, query):
     """
     ensure_string_not_empty(message, 'message must be a non-empty string (log_query).')
 
-    def logging_async():
-        sanitized_query = sanitize_list(query)
-        message_detail = anonymize_message(sanitize_message(",".join(sanitized_query)))
-        complete_message = message + " " + message_detail
-        logger.info(complete_message)
-        send_slack_message_async(complete_message, get_slack_url())
-
-    # Some of the anonymization and sanitization can be slow, so we'll run this in a separate thread
-    Thread(target=logging_async).start()
+    sanitized_query = sanitize_list(query)
+    message_detail = anonymize_message(sanitize_message(",".join(sanitized_query)))
+    complete_message = message + " " + message_detail
+    logger.info(complete_message)
+    send_slack_message_async(complete_message, get_slack_url())

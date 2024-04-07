@@ -1,6 +1,6 @@
 from domain.config.openai import max_context
 from infrastructure.octopus import get_project_releases, get_release_deployments, get_environments, \
-    get_space_id_and_name_from_name, get_task, get_project
+    get_task, get_project
 
 
 def get_deployments_for_project(space_id, project_name, environment_names, api_key, octopus_url,
@@ -52,6 +52,9 @@ def get_deployments_for_project(space_id, project_name, environment_names, api_k
                     "ReleaseNotes": release["ReleaseNotes"],
                     "DeployedBy": deployment["DeployedBy"],
                 })
+
+                if len(deployments) >= max_results:
+                    break
 
         if len(deployments) >= max_results:
             break
