@@ -1,6 +1,6 @@
 from domain.logging.app_logging import configure_logging
 from domain.transformers.minify_hcl import minify_hcl
-from domain.validation.argument_validation import ensure_string_not_empty
+from domain.validation.argument_validation import ensure_string_starts_with
 from infrastructure.octoterra import get_octoterra_space
 from infrastructure.openai import llm_message_query
 
@@ -25,7 +25,7 @@ def collect_llm_context(original_query, messages, context, space_id, project_nam
 
     The LLM messages are also tailored here to guide the LLM in how it processes the context.
 
-    :param space_name: The Octopus space name
+    :param space_id: The Octopus space name
     :param project_names: The project names found in the query
     :param runbook_names: The runbook names found in the query
     :param target_names: The target names found in the query
@@ -37,7 +37,8 @@ def collect_llm_context(original_query, messages, context, space_id, project_nam
     :return: The query result
     """
 
-    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (handle_copilot_query).')
+    ensure_string_starts_with(space_id, 'Spaces-',
+                              'space_id must be a non-empty string starting with "Spaces-" (handle_copilot_query).')
 
     if log_query:
         log_query("collect_llm_context", f"""
