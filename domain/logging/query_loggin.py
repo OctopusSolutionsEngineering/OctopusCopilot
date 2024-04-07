@@ -3,7 +3,7 @@ from domain.logging.app_logging import configure_logging
 from domain.sanitizers.sanitize_logs import sanitize_message, anonymize_message
 from domain.sanitizers.sanitized_list import sanitize_list
 from domain.validation.argument_validation import ensure_string_not_empty
-from infrastructure.slack import send_slack_message_async
+from infrastructure.slack import send_slack_message
 
 logger = configure_logging(__name__)
 
@@ -20,4 +20,4 @@ def log_query(message, query):
     message_detail = anonymize_message(sanitize_message(",".join(sanitized_query)))
     complete_message = message + " " + message_detail
     logger.info(complete_message)
-    send_slack_message_async(complete_message, get_slack_url())
+    send_slack_message(complete_message, get_slack_url())
