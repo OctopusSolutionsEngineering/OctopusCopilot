@@ -1,4 +1,5 @@
 # This is the number of items you can place in the context of a question before the LLM starts to
-# generate incorrect responses. It is mostly based on the observations from the experiment in
-# dynamic_deployment_experiments_4d.py and dynamic_account_environments_experiments_2d.py.
-max_context = 30
+# generate incorrect responses.
+# Lists of simple resources usually started to fail around the 40 item mark.
+# Reports and tables with more complex data started to fail around the 20 item mark.
+max_context = 20
