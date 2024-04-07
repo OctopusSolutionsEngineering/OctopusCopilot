@@ -17,7 +17,7 @@ from domain.logging.app_logging import configure_logging
 from domain.transformers.chat_responses import get_dashboard_response
 from infrastructure.octopus import get_project_progression, get_raw_deployment_process, get_octopus_project_names_base, \
     get_current_user, create_limited_api_key, get_deployment_status_base, get_dashboard, get_deployment_logs, \
-    get_item_ignoring_case
+    get_item_ignoring_case, get_space_id_and_name_from_name
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 
@@ -206,8 +206,10 @@ class LiveRequests(unittest.TestCase):
 
         create_and_deploy_release(space_name="Simple")
 
+        space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+
         dashboard_json = get_dashboard("Simple", Octopus_Api_Key, Octopus_Url)
-        dashboard = get_dashboard_response(space_name, dashboard_json)
+        dashboard = get_dashboard_response(space_id, dashboard_json)
 
         # Make sure something was returned. We aren't trying to validate the Markdown tables here though.
         self.assertTrue(dashboard)
@@ -221,10 +223,10 @@ class LiveRequests(unittest.TestCase):
             get_dashboard("", Octopus_Api_Key, Octopus_Url)
 
         with self.assertRaises(ValueError):
-            get_dashboard("Simple", "", Octopus_Url)
+            get_dashboard("Spaces-1", "", Octopus_Url)
 
         with self.assertRaises(ValueError):
-            get_dashboard("Simple", Octopus_Api_Key, "")
+            get_dashboard("Spaces-1", Octopus_Api_Key, "")
 
     def test_get_project_progression(self):
         """
