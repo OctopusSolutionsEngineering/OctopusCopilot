@@ -125,6 +125,7 @@ def releases_query_handler(original_query, messages, space, projects, environmen
                                         releases,
                                         None,
                                         None,
+                                        None,
                                         api_key,
                                         url,
                                         None)

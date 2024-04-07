@@ -69,6 +69,7 @@ def general_query_handler(original_query, body, messages):
                                body['release_versions'],
                                body['step_names'],
                                body['variable_names'],
+                               body['dates'],
                                api_key,
                                url,
                                None)

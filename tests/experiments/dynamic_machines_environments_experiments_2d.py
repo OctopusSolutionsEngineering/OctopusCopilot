@@ -69,6 +69,7 @@ def targets_callback(original_query, messages, space, projects, runbooks, target
                                None,
                                steps,
                                None,
+                               None,
                                api_key,
                                url,
                                None)

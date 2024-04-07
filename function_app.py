@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
-import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_context
 from domain.config.users import get_admin_users
@@ -507,6 +507,7 @@ Once default values are set, you can omit the space, environment, and query_proj
                                    body['release_versions'],
                                    body['step_names'],
                                    body['variable_names'],
+                                   body['dates'],
                                    api_key,
                                    url,
                                    log_query)
@@ -543,6 +544,7 @@ Once default values are set, you can omit the space, environment, and query_proj
                                             None,
                                             None,
                                             ["<all>"] if none_if_falesy_or_all(variables) else variables,
+                                            None,
                                             api_key,
                                             url,
                                             log_query)
@@ -633,6 +635,7 @@ Once default values are set, you can omit the space, environment, and query_proj
                                             None,
                                             None,
                                             None,
+                                            dates,
                                             api_key,
                                             url,
                                             log_query)
@@ -718,6 +721,7 @@ Once default values are set, you can omit the space, environment, and query_proj
                                    None,
                                    None,
                                    steps,
+                                   None,
                                    None,
                                    api_key,
                                    url,

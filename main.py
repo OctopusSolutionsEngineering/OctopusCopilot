@@ -107,6 +107,7 @@ def general_query_callback(original_query, body, messages):
                                body['release_versions'],
                                body['step_names'],
                                body['variable_names'],
+                               body['dates'],
                                get_api_key(),
                                get_octopus_api(),
                                logging)
@@ -171,6 +172,7 @@ def resource_specific_callback(original_query, messages, space, projects, runboo
                                None,
                                steps,
                                None,
+                               None,
                                get_api_key(),
                                get_octopus_api(),
                                logging)
@@ -205,6 +207,7 @@ def variable_query_callback(original_query, messages, space, projects, variables
                                         None,
                                         None,
                                         ["<all>"] if none_if_falesy_or_all(variables) else variables,
+                                        None,
                                         get_api_key(),
                                         get_octopus_api(),
                                         logging)
@@ -242,6 +245,7 @@ def releases_query_callback(original_query, messages, space, projects, environme
                                         None,
                                         None,
                                         environments,
+                                        None,
                                         None,
                                         None,
                                         None,
