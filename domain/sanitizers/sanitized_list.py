@@ -89,7 +89,7 @@ def sanitize_library_variable_sets(input_list):
                          "all|\\*|(Library\\s*)?Variable\\s*Set\\s*[0-9A-Z]|Variables|My\\s*Variable\\s*Set")
 
 
-def sanitize_date(input_list):
+def sanitize_dates(input_list):
     list = [replace_with_empty_string(date.lower(),
                                       "after|before|between|on|today|yesterday|tomorrow|last\\s*week|last\\s*month|last\\s*year|next\\s*week|next\\s*month|next\\s*year")
             for date in sanitize_list(input_list)]

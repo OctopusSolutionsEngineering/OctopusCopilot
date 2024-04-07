@@ -1,6 +1,6 @@
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_environments, sanitize_channels, \
-    sanitize_releases
+    sanitize_releases, sanitize_dates
 
 
 def answer_releases_and_deployments_wrapper(original_query, callback, additional_messages=None, logging=None):
@@ -123,6 +123,7 @@ The release version of the latest deployment of the "My Project" project to the 
         environments = sanitize_environments(environments)
         channels = sanitize_channels(channels)
         releases = sanitize_releases(releases)
+        dates = sanitize_dates(dates)
 
         messages = build_deployments_and_releases_prompt(
             [("user", few_shot)],

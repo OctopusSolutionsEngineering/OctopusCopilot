@@ -4,7 +4,7 @@ from domain.messages.general import build_hcl_prompt
 from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_runbooks, sanitize_targets, sanitize_tenants, \
     sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, sanitize_certificates, \
     sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, sanitize_projectgroups, \
-    sanitize_channels, sanitize_releases, sanitize_steps, sanitize_gitcredentials, sanitize_space, sanitize_date
+    sanitize_channels, sanitize_releases, sanitize_steps, sanitize_gitcredentials, sanitize_space, sanitize_dates
 
 
 def answer_general_query_wrapper(query, callback, logging=None):
@@ -88,7 +88,7 @@ dates: any dates in the query"""
             "step_names": sanitize_steps(steps),
             "variable_names": sanitize_steps(variables),
             "gitcredential_names": sanitize_gitcredentials(git_credentials),
-            "dates": sanitize_date(dates)
+            "dates": sanitize_dates(dates)
         }
 
         for key, value in kwargs.items():
