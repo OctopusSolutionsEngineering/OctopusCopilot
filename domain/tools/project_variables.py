@@ -1,4 +1,5 @@
 from domain.messages.general import build_hcl_prompt
+from infrastructure.octopus import logging_wrapper
 
 
 def answer_project_variables_usage_wrapper(original_query, callback, logging=None):
@@ -148,6 +149,7 @@ Answer 1:
 
 
 def answer_project_variables_wrapper(original_query, callback, logging=None):
+    @logging_wrapper
     def answer_project_variables(space=None, projects=None, variables=None, **kwargs):
         """Answers a question about the variables defined for a project. This does not provide details about tenants.
 
@@ -156,9 +158,6 @@ def answer_project_variables_wrapper(original_query, callback, logging=None):
         projects: project names
         variables: variable names
         """
-
-        if logging:
-            logging("Enter:", "answer_project_variables")
 
         # Few shot example with chain-of-thought example to help the LLM understand the relationships between projects
         # and variables.

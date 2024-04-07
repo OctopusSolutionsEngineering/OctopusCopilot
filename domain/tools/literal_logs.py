@@ -1,3 +1,6 @@
+from infrastructure.octopus import logging_wrapper
+
+
 def answer_literal_logs_wrapper(query, callback, logging):
     """
     A wrapper's job is to return a function with the signature used by the LLM to extract entities from the query. The
@@ -16,6 +19,7 @@ def answer_literal_logs_wrapper(query, callback, logging):
     context is implementation specific.
     """
 
+    @logging_wrapper
     def answer_literal_logs_usage(space=None, project=None, environment=None, channel=None, tenant=None, release=None,
                                   **kwargs):
         """Prints, writes, or outputs the deployment logs without any processing.

@@ -1,4 +1,5 @@
 from domain.messages.deployment_logs import build_plain_text_prompt
+from infrastructure.octopus import logging_wrapper
 
 
 def answer_logs_wrapper(query, callback, logging):
@@ -19,6 +20,7 @@ def answer_logs_wrapper(query, callback, logging):
     context is implementation specific.
     """
 
+    @logging_wrapper
     def answer_logs_usage(space=None, project=None, environment=None, channel=None, tenant=None, release=None,
                           **kwargs):
         """Answers a query about the contents of a deployment log for an octopus project.
