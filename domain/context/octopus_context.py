@@ -37,28 +37,28 @@ def collect_llm_context(original_query, messages, context, space_id, project_nam
     :return: The query result
     """
 
-    ensure_string_not_empty(space_name, 'space_name must be a non-empty string (handle_copilot_query).')
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (handle_copilot_query).')
 
     if log_query:
-        log_query("handle_configuration_query", "-----------------------------")
-        log_query("Space Id:", space_id)
-        log_query("Project Names:", project_names)
-        log_query("Runbook Names:", runbook_names)
-        log_query("Target Names:", target_names)
-        log_query("Tenant Names:", tenant_names)
-        log_query("Library Variable Set Names:", library_variable_sets)
-        log_query("Environment Names:", environment_names)
-        log_query("Feed Names:", feed_names)
-        log_query("Account Names:", account_names)
-        log_query("Certificate Names:", certificate_names)
-        log_query("Worker Pool Names:", workerpool_names)
-        log_query("Machine Policy Names:", machinepolicy_names)
-        log_query("Tag Set Names:", tagset_names)
-        log_query("Project Group Names:", projectgroup_names)
-        log_query("Channel Names:", channel_names)
-        log_query("Release Versions:", release_versions)
-        log_query("Steps:", step_names)
-        log_query("Variables:", variable_names)
+        log_query("collect_llm_context", f"""
+Space Id: {space_id}
+Project Names: {project_names}
+Runbook Names: {runbook_names}
+Target Names: {target_names}
+Tenant Names: {tenant_names}
+Library Variable Set Names: {library_variable_sets}
+Environment Names: {environment_names}
+Feed Names: {feed_names}
+Account Names: {account_names}
+Certificate Names: {certificate_names}
+Worker Pool Names: {workerpool_names}
+Machine Policy Names: {machinepolicy_names}
+Tag Set Names: {tagset_names}
+Project Group Names: {projectgroup_names}
+Channel Names: {channel_names}
+Release Versions: {release_versions}
+Steps: {step_names}
+Variables: {variable_names}""")
 
     # This context provides details about resources like projects, environments, feeds, accounts, certificates, etc.
     hcl = get_octoterra_space(original_query,
