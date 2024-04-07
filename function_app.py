@@ -419,8 +419,8 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         """
         api_key, url = get_api_key_and_url()
         space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
-        actual_space_name, dashboard = get_dashboard(space_name, api_key, url)
-        return get_dashboard_response(actual_space_name, dashboard)
+        dashboard = get_dashboard(space_name, api_key, url)
+        return get_dashboard_response(dashboard)
 
     def set_default_value(default_name, default_value):
         """Save a default value for a space, query_project, environment, or channel

@@ -206,7 +206,7 @@ class LiveRequests(unittest.TestCase):
 
         create_and_deploy_release(space_name="Simple")
 
-        space_name, dashboard_json = get_dashboard("Simple", Octopus_Api_Key, Octopus_Url)
+        dashboard_json = get_dashboard("Simple", Octopus_Api_Key, Octopus_Url)
         dashboard = get_dashboard_response(space_name, dashboard_json)
 
         # Make sure something was returned. We aren't trying to validate the Markdown tables here though.

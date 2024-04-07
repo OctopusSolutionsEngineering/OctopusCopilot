@@ -1,5 +1,6 @@
 import datetime
 import json
+
 import pytz
 from retry import retry
 from urllib3.exceptions import HTTPError
@@ -19,6 +20,15 @@ from infrastructure.http_pool import http, TAKE_ALL
 logger = configure_logging()
 
 
+def logging_wrapper(func):
+    def wrapper():
+        print(func.__name__ + " Enter")
+        func()
+        print(func.__name__ + " Exit")
+
+    return wrapper
+
+
 def get_octopus_headers(my_api_key):
     """
     Build the headers used to make an Octopus API request
@@ -35,6 +45,7 @@ def get_octopus_headers(my_api_key):
     }
 
 
+@logging_wrapper
 def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
     """
     Gets a space ID and actual space name from a name extracted from a query.
@@ -45,10 +56,9 @@ def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
     :return: The space ID and actual name
     """
 
-    logger.info("get_space_id_and_name_from_name - Enter")
-
     ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_space_id_and_name_from_name).')
-    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_space_id_and_name_from_name).')
+    ensure_string_not_empty(my_octopus_api,
+                            'my_octopus_api must be the Octopus Url (get_space_id_and_name_from_name).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_space_id_and_name_from_name).')
 
     api = build_url(my_octopus_api, "api/spaces", dict(take=TAKE_ALL))
@@ -68,6 +78,7 @@ def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
 
 
 @retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
     """
     The base function used to get a list of project names.
@@ -76,9 +87,6 @@ def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
     :param my_octopus_api: The Octopus URL
     :return: The list of projects in the space
     """
-
-    logger.info("get_octopus_project_names_base - Enter")
-
     ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_octopus_project_names_base).')
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_octopus_project_names_base).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_octopus_project_names_base).')
@@ -95,6 +103,7 @@ def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
 
 
 @retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_dashboard(space_id, my_api_key, my_octopus_api):
     """
     The base function used to get the dashboard summary
@@ -104,8 +113,6 @@ def get_dashboard(space_id, my_api_key, my_octopus_api):
     :return: The actual space name and the dashboard summary
     """
 
-    logger.info("get_octopus_project_names_base - Enter")
-
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_octopus_project_names_base).')
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_octopus_project_names_base).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_octopus_project_names_base).')
@@ -114,11 +121,10 @@ def get_dashboard(space_id, my_api_key, my_octopus_api):
                     dict(highestLatestVersionPerProjectAndEnvironment="true"))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
-    json = resp.json()
-
-    return actual_space_name, json
+    return resp.json()
 
 
+@logging_wrapper
 def get_current_user(my_api_key, my_octopus_api):
     """
     Returns the ID of the octopus user. This can be used to verify an API key, as even Octopus users with
@@ -137,6 +143,7 @@ def get_current_user(my_api_key, my_octopus_api):
     return json["Id"]
 
 
+@logging_wrapper
 def get_projects(my_api_key, my_octopus_api, space_id):
     """
     Returns the projects in a space
@@ -155,6 +162,7 @@ def get_projects(my_api_key, my_octopus_api, space_id):
     return json["Items"]
 
 
+@logging_wrapper
 def get_tenants(my_api_key, my_octopus_api, space_id):
     """
     Returns the tenants in a space
@@ -173,6 +181,7 @@ def get_tenants(my_api_key, my_octopus_api, space_id):
     return json["Items"]
 
 
+@logging_wrapper
 def get_feeds(my_api_key, my_octopus_api, space_id):
     """
     Returns the feeds in a space
@@ -191,6 +200,7 @@ def get_feeds(my_api_key, my_octopus_api, space_id):
     return json["Items"]
 
 
+@logging_wrapper
 def get_accounts(my_api_key, my_octopus_api, space_id):
     """
     Returns the accounts in a space
@@ -209,6 +219,7 @@ def get_accounts(my_api_key, my_octopus_api, space_id):
     return json["Items"]
 
 
+@logging_wrapper
 def get_machines(my_api_key, my_octopus_api, space_id):
     """
     Returns the machines in a space
@@ -227,6 +238,7 @@ def get_machines(my_api_key, my_octopus_api, space_id):
     return json["Items"]
 
 
+@logging_wrapper
 def get_certificates(my_api_key, my_octopus_api, space_id):
     """
     Returns the certificate in a space
@@ -245,6 +257,7 @@ def get_certificates(my_api_key, my_octopus_api, space_id):
     return json["Items"]
 
 
+@logging_wrapper
 def get_environments(my_api_key, my_octopus_api, space_id):
     """
     Returns the environments in a space
@@ -263,6 +276,7 @@ def get_environments(my_api_key, my_octopus_api, space_id):
     return json["Items"]
 
 
+@logging_wrapper
 def get_project_channel(my_api_key, my_octopus_api, space_id, project_id):
     """
     Returns the channels associated with a project
@@ -281,6 +295,7 @@ def get_project_channel(my_api_key, my_octopus_api, space_id, project_id):
     return json["Items"]
 
 
+@logging_wrapper
 def get_lifecycle(my_api_key, my_octopus_api, space_id, lifecycle_id):
     """
     Return the lifecycle with the given ID
@@ -299,6 +314,7 @@ def get_lifecycle(my_api_key, my_octopus_api, space_id, lifecycle_id):
     return json
 
 
+@logging_wrapper
 def create_limited_api_key(user, my_api_key, my_octopus_api):
     """
     This function creates an API key that expires tomorrow.
@@ -327,6 +343,7 @@ def create_limited_api_key(user, my_api_key, my_octopus_api):
 
 
 @retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_raw_deployment_process(space_name, project_name, api_key, octopus_url):
     """
     Returns a deployment process as raw JSON.
@@ -356,6 +373,7 @@ def get_raw_deployment_process(space_name, project_name, api_key, octopus_url):
 
 
 @retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_project_progression(space_name, project_name, api_key, octopus_url):
     """
     Returns a deployment progression for a project.
@@ -385,6 +403,7 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
 
 
 @retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_project(space_id, project_name, api_key, octopus_url):
     """
     Returns a project resource from the name
@@ -409,6 +428,7 @@ def get_project(space_id, project_name, api_key, octopus_url):
 
 
 @retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_project_releases(space_id, project_id, api_key, octopus_url, take=max_context):
     """
     Returns a deployment progression for a project.
@@ -428,6 +448,7 @@ def get_project_releases(space_id, project_id, api_key, octopus_url, take=max_co
 
 
 @retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_release_deployments(space_id, release_id, api_key, octopus_url):
     """
     Returns the deployments of a release.
@@ -447,6 +468,7 @@ def get_release_deployments(space_id, release_id, api_key, octopus_url):
 
 
 @retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_task(space_id, task_id, api_key, octopus_url):
     """
     Returns the deployments of a release.
@@ -466,6 +488,7 @@ def get_task(space_id, task_id, api_key, octopus_url):
 
 
 @retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_project_progression_from_ids(space_id, project_id, api_key, octopus_url):
     """
     Returns a deployment progression for a project.
@@ -485,6 +508,7 @@ def get_project_progression_from_ids(space_id, project_id, api_key, octopus_url)
 
 
 @retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_deployment_status_base(space_name, environment_name, project_name, api_key, octopus_url):
     """
     The base function used to get a list of project names.
@@ -545,6 +569,7 @@ def get_item_ignoring_case(items, name):
 
 
 @retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_deployment_logs(space_name, project_name, environment_name, tenant_name, release_version, api_key, octopus_url):
     """
     Returns a logs for a deployment to an environment.
@@ -643,6 +668,7 @@ def handle_response(callback):
     return response
 
 
+@logging_wrapper
 def get_environment(space_id, environment_name, octopus_url, api_key):
     api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partialname=environment_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
@@ -654,6 +680,7 @@ def get_environment(space_id, environment_name, octopus_url, api_key):
     return environment
 
 
+@logging_wrapper
 def get_tenant(space_id, tenant_name, octopus_url, api_key):
     api = build_url(octopus_url, "api/" + space_id + "/Tenants", dict(partialname=tenant_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))

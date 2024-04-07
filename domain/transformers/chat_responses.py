@@ -38,7 +38,7 @@ def get_deployment_status_base_response(actual_space_name, actual_environment_na
     return f"{icon} The latest deployment in `{actual_space_name}` to `{actual_environment_name}` for `{actual_project_name}` is version `{deployment['ReleaseVersion']}` with state `{deployment['State']}`."
 
 
-def get_dashboard_response(actual_space_name, dashboard):
+def get_dashboard_response(dashboard):
     table = ""
     for project_group in dashboard["ProjectGroups"]:
 
