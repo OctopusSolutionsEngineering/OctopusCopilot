@@ -1,7 +1,6 @@
 from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
 from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_environments, sanitize_channels, \
     sanitize_releases
-from infrastructure.octopus import logging_wrapper
 
 
 def answer_releases_and_deployments_wrapper(original_query, callback, additional_messages=None, logging=None):
@@ -22,7 +21,6 @@ def answer_releases_and_deployments_wrapper(original_query, callback, additional
     context is implementation specific.
     """
 
-    @logging_wrapper
     def answer_releases_and_deployments_usage(space=None, projects=None, environments=None, channels=None,
                                               releases=None, **kwargs):
         """Answers a question about deployments and releases.

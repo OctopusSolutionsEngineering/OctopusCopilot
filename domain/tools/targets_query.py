@@ -1,5 +1,4 @@
 from domain.messages.general import build_hcl_prompt
-from infrastructure.octopus import logging_wrapper
 
 
 def answer_machines_wrapper(original_query, callback, logging=None):
@@ -20,7 +19,6 @@ def answer_machines_wrapper(original_query, callback, logging=None):
     context is implementation specific.
     """
 
-    @logging_wrapper
     def answer_machines(space=None, projects=None, runbooks=None, targets=None,
                         tenants=None, environments=None,
                         accounts=None, certificates=None,
