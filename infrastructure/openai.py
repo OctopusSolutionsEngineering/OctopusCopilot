@@ -32,12 +32,10 @@ def llm_message_query(message_prompt, context, log_query=None):
 
     try:
         response = chain.invoke(context).content
-    except openai.BadRequestError | openai.APITimeoutError as e:
-        # This will be something like:
-        # {'error': {'message': "This model's maximum context length is 16384 tokens. However, your messages resulted in 17570 tokens. Please reduce the length of the messages.", 'type': 'invalid_request_error', 'param': 'messages', 'code': 'context_length_exceeded'}}
-        if e.body and 'message' in e.body:
-            return e.body.get('message')
-        return e.message
+    except openai.BadRequestError as e:
+        return handle_openai_exception(e)
+    except openai.APITimeoutError as e:
+        return handle_openai_exception(e)
 
     if log_query:
         log_query("Query:", context.get("input"))
@@ -48,6 +46,14 @@ def llm_message_query(message_prompt, context, log_query=None):
         client_response += f"\n\nThe space context was trimmed by {context['percent_trimmed']}% to fit within the token limit. The answer may be based on incomplete information."
 
     return client_response.strip()
+
+
+def handle_openai_exception(exception):
+    # This will be something like:
+    # {'error': {'message': "This model's maximum context length is 16384 tokens. However, your messages resulted in 17570 tokens. Please reduce the length of the messages.", 'type': 'invalid_request_error', 'param': 'messages', 'code': 'context_length_exceeded'}}
+    if exception.body and 'message' in exception.body:
+        return exception.body.get('message')
+    return exception.message
 
 
 def llm_tool_query(query, llm_tools, log_query=None, extra_prompt_messages=None):
