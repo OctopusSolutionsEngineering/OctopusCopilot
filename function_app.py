@@ -613,7 +613,7 @@ Once default values are set, you can omit the space, environment, and query_proj
         chat_response = collect_llm_context(original_query,
                                             messages,
                                             context,
-                                            space,
+                                            space_id,
                                             query_project,
                                             None,
                                             None,
