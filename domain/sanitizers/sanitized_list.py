@@ -1,5 +1,8 @@
 import re
 
+from domain.date.parse_dates import parse_unknown_format_date
+from domain.sanitizers.sanitize_strings import replace_with_empty_string
+
 
 def sanitize_space(input_string):
     input_list = sanitize_list(input_string, "all|\\*|Space|Space\\s*[0-9A-Z]|My\\s*Space")
@@ -84,6 +87,14 @@ def sanitize_runbooks(input_list):
 def sanitize_library_variable_sets(input_list):
     return sanitize_list(input_list,
                          "all|\\*|(Library\\s*)?Variable\\s*Set\\s*[0-9A-Z]|Variables|My\\s*Variable\\s*Set")
+
+
+def sanitize_date(input_list):
+    list = [replace_with_empty_string(date.lower(),
+                                      "after|before|between|on|today|yesterday|tomorrow|last\\s*week|last\\s*month|last\\s*year|next\\s*week|next\\s*month|next\\s*year")
+            for date in sanitize_list(input_list)]
+    dates = [parse_unknown_format_date(item.strip()) for item in list]
+    return [date for date in dates if date]
 
 
 def sanitize_bool(input_bool):

@@ -40,11 +40,9 @@ def get_deployments_for_project(space_id, project_name, environment_names, api_k
 
             # If there were two dates, treat them as a range, and exclude anything outside the range
             if dates and len(dates) == 2:
-                date1 = parse_unknown_format_date(dates[0])
-                date2 = parse_unknown_format_date(dates[1])
                 created = parse_unknown_format_date(deployment["Created"])
 
-                if created < min(date1, date2) or created > max(date1, date2):
+                if created < min(dates[0], dates[1]) or created > max(dates[0], dates[1]):
                     continue
 
             task = get_task(space_id, deployment["TaskId"], api_key, octopus_url) if deployment.get(

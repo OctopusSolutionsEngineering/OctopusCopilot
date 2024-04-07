@@ -259,6 +259,20 @@ class MockRequests(unittest.TestCase):
         self.assertTrue("Manual Intervention" in body["step_names"])
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_general_date_question(self):
+        """
+        Tests that the llm identifies the step name in the query
+        """
+
+        function = llm_tool_query("Find deployments after \"1st Jan 2024\" and before \"2nd Mar 2024\"?",
+                                  build_mock_test_tools)
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue(body["dates"][0].day == 1 and body["dates"][0].month == 1 and body["dates"][0].year == 2024)
+        self.assertTrue(body["dates"][1].day == 2 and body["dates"][1].month == 3 and body["dates"][1].year == 2024)
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_machine_question(self):
         """
         Tests that the llm identifies the machine name in the query
