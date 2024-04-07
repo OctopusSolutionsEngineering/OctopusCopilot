@@ -7,6 +7,7 @@ from langchain_openai import AzureChatOpenAI
 from openai import RateLimitError
 from retry import retry
 
+from domain.config.openai import llm_timeout
 from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
 from domain.tools.function_call import FunctionCall
 from domain.validation.argument_validation import ensure_string_not_empty, ensure_not_falsy
@@ -22,7 +23,7 @@ def llm_message_query(message_prompt, context, log_query=None):
         openai_api_key=os.environ["OPENAI_API_KEY"],
         azure_endpoint=os.environ["OPENAI_ENDPOINT"],
         api_version="2024-02-01",
-        request_timeout=45
+        request_timeout=llm_timeout
     )
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)

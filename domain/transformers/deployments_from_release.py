@@ -1,4 +1,5 @@
 from domain.config.openai import max_context
+from domain.sanitizers.url_remover import strip_markdown_urls
 from infrastructure.octopus import get_project_releases, get_release_deployments, get_environments, \
     get_task, get_project
 
@@ -50,7 +51,8 @@ def get_deployments_for_project(space_id, project_name, environment_names, api_k
                     "Created": deployment["Created"],
                     "TaskState": task["State"] if task else None,
                     "TaskDuration": task["Duration"] if task else None,
-                    "ReleaseNotes": release["ReleaseNotes"],
+                    # Urls in markdown often resulted in the LLM not returning any results
+                    "ReleaseNotes": strip_markdown_urls(release["ReleaseNotes"]),
                     "DeployedBy": deployment["DeployedBy"],
                 })
 
