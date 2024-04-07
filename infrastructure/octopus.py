@@ -24,7 +24,7 @@ def logging_wrapper(func):
     def wrapper(*args, **kwargs):
         try:
             print(func.__name__ + " Enter")
-            func(*args, **kwargs)
+            return func(*args, **kwargs)
         finally:
             print(func.__name__ + " Exit")
 
