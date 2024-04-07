@@ -6,7 +6,7 @@ from domain.sanitizers.sanitize_strings import remove_double_whitespace, remove_
 from domain.sanitizers.sanitized_list import sanitize_list
 from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
-from infrastructure.octopus import get_tenants
+from infrastructure.octopus import get_tenants, get_space_id_and_name_from_name
 from infrastructure.openai import llm_tool_query
 
 
@@ -33,10 +33,13 @@ def general_query_handler(original_query, body, messages):
 
     context = {"input": original_query}
 
+    space_id, actual_space_name = get_space_id_and_name_from_name(os.environ.get('TEST_OCTOPUS_SPACE_NAME'), api_key,
+                                                                  url)
+
     return collect_llm_context(original_query,
                                messages,
                                context,
-                               os.environ.get('TEST_OCTOPUS_SPACE_NAME'),
+                               space_id,
                                body['project_names'],
                                body['runbook_names'],
                                body['target_names'],

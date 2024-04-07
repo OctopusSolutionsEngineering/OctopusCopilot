@@ -42,7 +42,7 @@ from domain.url.session import create_session_blob, extract_session_blob
 from infrastructure.github import get_github_user
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
-    create_limited_api_key, get_dashboard, get_deployment_logs
+    create_limited_api_key, get_dashboard, get_deployment_logs, get_space_id_and_name_from_name
 from infrastructure.openai import llm_tool_query
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
@@ -482,10 +482,12 @@ Once default values are set, you can omit the space, environment, and query_proj
 
         context = {"input": original_query}
 
+        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
+
         return collect_llm_context(original_query,
                                    messages,
                                    context,
-                                   space,
+                                   space_id,
                                    project_names,
                                    body['runbook_names'],
                                    body['target_names'],
@@ -516,10 +518,12 @@ Once default values are set, you can omit the space, environment, and query_proj
 
         context = {"input": original_query}
 
+        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
+
         chat_response = collect_llm_context(original_query,
                                             messages,
                                             context,
-                                            space,
+                                            space_id,
                                             projects,
                                             None,
                                             None,
@@ -590,10 +594,12 @@ Once default values are set, you can omit the space, environment, and query_proj
 
         context = {"input": original_query}
 
+        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
+
         # We need some additional JSON data to answer this question
         if query_project:
             # We only need the deployments, so strip out the rest of the JSON
-            deployments = get_deployments_for_project(space,
+            deployments = get_deployments_for_project(space_id,
                                                       query_project,
                                                       query_environments,
                                                       api_key,
@@ -601,7 +607,7 @@ Once default values are set, you can omit the space, environment, and query_proj
                                                       max_context)
             context["json"] = json.dumps(deployments, indent=2)
         else:
-            context["json"] = get_dashboard(space, api_key, url)
+            context["json"] = get_dashboard(space_id, api_key, url)
 
         chat_response = collect_llm_context(original_query,
                                             messages,
@@ -687,10 +693,12 @@ Once default values are set, you can omit the space, environment, and query_proj
 
         context = {"input": original_query}
 
+        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
+
         return collect_llm_context(original_query,
                                    messages,
                                    context,
-                                   space,
+                                   space_id,
                                    project,
                                    runbooks,
                                    targets,

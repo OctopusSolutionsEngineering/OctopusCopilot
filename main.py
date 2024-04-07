@@ -18,7 +18,7 @@ from domain.tools.targets_query import answer_machines_wrapper
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_dashboard, \
-    get_deployment_logs
+    get_deployment_logs, get_space_id_and_name_from_name
 from infrastructure.openai import llm_tool_query, llm_message_query
 
 
@@ -83,10 +83,12 @@ def general_query_callback(original_query, body, messages):
 
     context = {"input": original_query}
 
+    space_id, actual_space_name = get_space_id_and_name_from_name(space, get_api_key(), get_octopus_api())
+
     return collect_llm_context(original_query,
                                messages,
                                context,
-                               space,
+                               space_id,
                                body['project_names'],
                                body['runbook_names'],
                                body['target_names'],
@@ -145,10 +147,12 @@ def resource_specific_callback(original_query, messages, space, projects, runboo
 
     context = {"input": original_query}
 
+    space_id, actual_space_name = get_space_id_and_name_from_name(space, get_api_key(), get_octopus_api())
+
     return collect_llm_context(original_query,
                                messages,
                                context,
-                               space,
+                               space_id,
                                projects,
                                runbooks,
                                targets,
@@ -177,10 +181,12 @@ def variable_query_callback(original_query, messages, space, projects, variables
 
     context = {"input": original_query}
 
+    space_id, actual_space_name = get_space_id_and_name_from_name(space, get_api_key(), get_octopus_api())
+
     chat_response = collect_llm_context(parser.query,
                                         messages,
                                         context,
-                                        space,
+                                        space_id,
                                         projects,
                                         None,
                                         None,
@@ -211,10 +217,12 @@ def releases_query_callback(original_query, messages, space, projects, environme
 
     context = {"input": original_query}
 
+    space_id, actual_space_name = get_space_id_and_name_from_name(space, get_api_key(), get_octopus_api())
+
     # We need some additional JSON data to answer this question
     if projects:
         # We only need the deployments, so strip out the rest of the JSON
-        deployments = get_deployments_for_project(space,
+        deployments = get_deployments_for_project(space_id,
                                                   get_item_or_none(sanitize_list(projects), 0),
                                                   sanitize_environments(environments),
                                                   get_api_key(),
@@ -222,7 +230,7 @@ def releases_query_callback(original_query, messages, space, projects, environme
                                                   max_context)
         context["json"] = json.dumps(deployments, indent=2)
     else:
-        context["json"] = get_dashboard(space, get_api_key(), get_octopus_api())
+        context["json"] = get_dashboard(space_id, get_api_key(), get_octopus_api())
 
     chat_response = collect_llm_context(parser.query,
                                         messages,

@@ -3,11 +3,11 @@ from infrastructure.octopus import get_project_releases, get_release_deployments
     get_space_id_and_name_from_name, get_task, get_project
 
 
-def get_deployments_for_project(space_name, project_name, environment_names, api_key, octopus_url,
+def get_deployments_for_project(space_id, project_name, environment_names, api_key, octopus_url,
                                 max_results=max_context):
     """
     Gets the list of deployments for a specific environment from the progression of a project
-    :param space_name: The name of the space
+    :param space_id: The id of the space
     :param project_name: The name of the project
     :param environment_names: And environments to filter the deployments to
     :param api_key: The Octopus API key
@@ -15,7 +15,7 @@ def get_deployments_for_project(space_name, project_name, environment_names, api
     :param max_results: The maximum number of results
     :return: The list of deployments
     """
-    space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
+
     # Not every release will have a deployment for the selected environment. So return a large number of releases,
     # which will then be filtered down.
     project = get_project(space_id, project_name, api_key, octopus_url)

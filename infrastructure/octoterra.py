@@ -1,6 +1,5 @@
 import json
 import os
-
 from retry import retry
 from urllib3.exceptions import HTTPError
 
@@ -23,13 +22,13 @@ logger = configure_logging(__name__)
 
 
 @retry(HTTPError, tries=3, delay=2)
-def get_octoterra_space(query, space_name, project_names, runbook_names, target_names, tenant_names,
+def get_octoterra_space(query, space_id, project_names, runbook_names, target_names, tenant_names,
                         library_variable_sets, environment_names, feed_names, account_names, certificate_names,
                         lifecycle_names, workerpool_names, machinepolicy_names, tagset_names, projectgroup_names,
                         step_names, variable_names, api_key, octopus_url):
     """
     Returns the terraform representation of a space
-    :param space_name: The name of the space.
+    :param space_id: The ID of the space.
     :param project_names: The names of the projects to limit the export to.
     :param api_key: The Octopus API key
     :param octopus_url: The Octopus URL
@@ -37,12 +36,10 @@ def get_octoterra_space(query, space_name, project_names, runbook_names, target_
     """
     logger.info("get_octoterra_space - Enter")
 
-    ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_octoterra_space).')
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_octoterra_space).')
     ensure_string_not_empty(query, 'query must be a non-empty string (get_octoterra_space).')
     ensure_string_not_empty(api_key, 'api_key must be a non-empty string (get_octoterra_space).')
     ensure_string_not_empty(octopus_url, 'octopus_url must be a non-empty string (get_octoterra_space).')
-
-    space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
 
     # We want to restrict the size of the exported Terraform configuration as much as possible,
     # so we make heavy use of the options to exclude resources unless they were mentioned in the query.

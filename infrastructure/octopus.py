@@ -1,6 +1,5 @@
 import datetime
 import json
-
 import pytz
 from retry import retry
 from urllib3.exceptions import HTTPError
@@ -96,10 +95,10 @@ def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
 
 
 @retry(HTTPError, tries=3, delay=2)
-def get_dashboard(space_name, my_api_key, my_octopus_api):
+def get_dashboard(space_id, my_api_key, my_octopus_api):
     """
     The base function used to get the dashboard summary
-    :param space_name: The name of the Octopus space containing the projects
+    :param space_id: The id of the Octopus space containing the projects
     :param my_api_key: The Octopus API key
     :param my_octopus_api: The Octopus URL
     :return: The actual space name and the dashboard summary
@@ -107,11 +106,9 @@ def get_dashboard(space_name, my_api_key, my_octopus_api):
 
     logger.info("get_octopus_project_names_base - Enter")
 
-    ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_octopus_project_names_base).')
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_octopus_project_names_base).')
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_octopus_project_names_base).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_octopus_project_names_base).')
-
-    space_id, actual_space_name = get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api)
 
     api = build_url(my_octopus_api, "api/" + space_id + "/Dashboard",
                     dict(highestLatestVersionPerProjectAndEnvironment="true"))

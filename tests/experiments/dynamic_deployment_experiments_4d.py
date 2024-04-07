@@ -10,7 +10,7 @@ from domain.tools.releases_and_deployments import answer_releases_and_deployment
 from domain.transformers.deployments_from_progression import get_deployment_progression
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from infrastructure.octopus import get_projects, get_environments, get_project_channel, get_lifecycle, \
-    get_project_progression_from_ids, get_dashboard
+    get_project_progression_from_ids, get_dashboard, get_space_id_and_name_from_name
 from infrastructure.openai import llm_tool_query
 
 
@@ -88,10 +88,12 @@ def releases_query_handler(original_query, messages, space, projects, environmen
 
     context = {"input": original_query}
 
+    space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
+
     # We need some additional JSON data to answer this question
     if project:
         # We only need the deployments, so strip out the rest of the JSON
-        deployments = get_deployments_for_project(space,
+        deployments = get_deployments_for_project(space_id,
                                                   get_item_or_none(sanitize_list(projects), 0),
                                                   sanitize_environments(environments),
                                                   api_key,
@@ -99,12 +101,12 @@ def releases_query_handler(original_query, messages, space, projects, environmen
                                                   max_context)
         context["json"] = json.dumps(deployments, indent=2)
     else:
-        context["json"] = get_dashboard(space, api_key, url)
+        context["json"] = get_dashboard(space_id, api_key, url)
 
     chat_response = collect_llm_context(original_query,
                                         messages,
                                         context,
-                                        space,
+                                        space_id,
                                         project,
                                         None,
                                         None,

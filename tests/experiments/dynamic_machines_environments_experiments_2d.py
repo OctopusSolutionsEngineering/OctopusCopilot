@@ -5,7 +5,7 @@ from domain.context.octopus_context import collect_llm_context
 from domain.messages.general import build_hcl_prompt
 from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.targets_query import answer_machines_wrapper
-from infrastructure.octopus import get_machines, get_environments
+from infrastructure.octopus import get_machines, get_environments, get_space_id_and_name_from_name
 from infrastructure.openai import llm_tool_query
 
 
@@ -45,10 +45,12 @@ def targets_callback(original_query, messages, space, projects, runbooks, target
     messages = build_hcl_prompt(messages)
     context = {"input": original_query}
 
+    space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
+
     return collect_llm_context(original_query,
                                messages,
                                context,
-                               space,
+                               space_id,
                                projects,
                                runbooks,
                                targets,

@@ -11,7 +11,7 @@ my_log = configure_logging()
 max_chars = 13500 * 4
 
 
-def collect_llm_context(original_query, messages, context, space_name, project_names, runbook_names, target_names,
+def collect_llm_context(original_query, messages, context, space_id, project_names, runbook_names, target_names,
                         tenant_names,
                         library_variable_sets, environment_names, feed_names, account_names, certificate_names,
                         lifecycle_names, workerpool_names, machinepolicy_names, tagset_names, projectgroup_names,
@@ -41,7 +41,7 @@ def collect_llm_context(original_query, messages, context, space_name, project_n
 
     if log_query:
         log_query("handle_configuration_query", "-----------------------------")
-        log_query("Space Name:", space_name)
+        log_query("Space Id:", space_id)
         log_query("Project Names:", project_names)
         log_query("Runbook Names:", runbook_names)
         log_query("Target Names:", target_names)
@@ -62,7 +62,7 @@ def collect_llm_context(original_query, messages, context, space_name, project_n
 
     # This context provides details about resources like projects, environments, feeds, accounts, certificates, etc.
     hcl = get_octoterra_space(original_query,
-                              space_name,
+                              space_id,
                               project_names,
                               runbook_names,
                               target_names,
