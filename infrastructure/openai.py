@@ -32,7 +32,7 @@ def llm_message_query(message_prompt, context, log_query=None):
 
     try:
         response = chain.invoke(context).content
-    except openai.BadRequestError as e:
+    except openai.BadRequestError | openai.APITimeoutError as e:
         # This will be something like:
         # {'error': {'message': "This model's maximum context length is 16384 tokens. However, your messages resulted in 17570 tokens. Please reduce the length of the messages.", 'type': 'invalid_request_error', 'param': 'messages', 'code': 'context_length_exceeded'}}
         if e.body and 'message' in e.body:

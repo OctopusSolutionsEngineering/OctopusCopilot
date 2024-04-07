@@ -7,4 +7,7 @@ max_context = 10
 
 # "Adversarial" queries can tie up a LLM for a long time. The Copilot interface times out after 60 seconds.
 # Our timeout is set to 45 seconds to allow for some additional processing time.
+# Another issue here is the Azure event driven scaling.
+# As noted at https://learn.microsoft.com/en-us/azure/azure-functions/event-driven-scaling?tabs=azure-cli#understanding-scaling-behaviors,
+# Azure functions add at most 1 function instance every 30 seconds.
 llm_timeout = 45
