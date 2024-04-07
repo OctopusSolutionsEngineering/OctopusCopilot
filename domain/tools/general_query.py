@@ -4,7 +4,7 @@ from domain.messages.general import build_hcl_prompt
 from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_runbooks, sanitize_targets, sanitize_tenants, \
     sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, sanitize_certificates, \
     sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, sanitize_projectgroups, \
-    sanitize_channels, sanitize_releases, sanitize_steps, sanitize_gitcredentials, sanitize_space
+    sanitize_channels, sanitize_releases, sanitize_steps, sanitize_gitcredentials, sanitize_space, sanitize_list
 
 
 def answer_general_query_wrapper(query, callback, logging=None):
@@ -29,30 +29,13 @@ def answer_general_query_wrapper(query, callback, logging=None):
     def answer_general_query(space=None, projects=None, runbooks=None, targets=None,
                              tenants=None, library_variable_sets=None, environments=None,
                              feeds=None, accounts=None, certificates=None, lifecycles=None,
-                             workerpools=None, machinepolicies=None, tagsets=None, projectgroups=None, channels=None,
-                             releases=None, steps=None, variables=None, gitcredentials=None, **kwargs):
-        """Answers a general query about an Octopus space.
-Args:
-space: Space name
-projects: project names
-runbooks: runbook names
-targets: target/machine names
-tenants: tenant names
-library_variable_sets: library variable set names
-environments: environment names
-feeds: feed names
-accounts: account names
-certificates: certificate names
-lifecycles: lifecycle names
-workerpools: worker pool names
-machinepolicies: machine policy names
-tagsets: tenant tag set names
-projectgroups: project group names
-channels: channel names
-releases: release versions
-steps: step names
-variables: variable names
-gitcredentials: git credential names"""
+                             worker_pools=None, machine_policies=None, tagsets=None, project_groups=None, channels=None,
+                             releases=None, steps=None, variables=None, git_credentials=None, dates=None, **kwargs):
+        """
+        Answers a general query about an Octopus space and resources like projects, runbooks, targets, tenants,
+        library variable sets, environments, feeds, accounts, certificates, lifecycles, worker pools, machine policies,
+        tags, project groups, channels, release, steps, variables, git credentials, and dates.
+        """
 
         if logging:
             logging("Enter:", "answer_general_query")
@@ -77,15 +60,16 @@ gitcredentials: git credential names"""
             "account_names": sanitize_accounts(accounts),
             "certificate_names": sanitize_certificates(certificates),
             "lifecycle_names": sanitize_lifecycles(lifecycles),
-            "workerpool_names": sanitize_workerpools(workerpools),
-            "machinepolicy_names": sanitize_machinepolicies(machinepolicies),
+            "workerpool_names": sanitize_workerpools(worker_pools),
+            "machinepolicy_names": sanitize_machinepolicies(machine_policies),
             "tagset_names": sanitize_tenanttagsets(tagsets),
-            "projectgroup_names": sanitize_projectgroups(projectgroups),
+            "projectgroup_names": sanitize_projectgroups(project_groups),
             "channel_names": sanitize_channels(channels),
             "release_versions": sanitize_releases(releases),
             "step_names": sanitize_steps(steps),
             "variable_names": sanitize_steps(variables),
-            "gitcredential_names": sanitize_gitcredentials(gitcredentials),
+            "gitcredential_names": sanitize_gitcredentials(git_credentials),
+            "dates": sanitize_list(dates)
         }
 
         for key, value in kwargs.items():
