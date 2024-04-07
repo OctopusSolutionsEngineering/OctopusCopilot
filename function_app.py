@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
+import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
-import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_context
 from domain.config.users import get_admin_users
@@ -579,7 +579,7 @@ Once default values are set, you can omit the space, environment, and query_proj
 
         return additional_messages
 
-    def releases_query_callback(original_query, messages, space, projects, environments, channels, releases):
+    def releases_query_callback(original_query, messages, space, projects, environments, channels, releases, dates):
         api_key, url = get_api_key_and_url()
 
         sanitized_projects = sanitize_projects(projects)
@@ -605,6 +605,7 @@ Once default values are set, you can omit the space, environment, and query_proj
                                                       query_environments,
                                                       api_key,
                                                       url,
+                                                      dates,
                                                       max_context)
             context["json"] = json.dumps(deployments, indent=2)
         else:

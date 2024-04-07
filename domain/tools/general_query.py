@@ -35,6 +35,8 @@ def answer_general_query_wrapper(query, callback, logging=None):
         Answers a general query about an Octopus space and resources like projects, runbooks, targets, tenants,
         library variable sets, environments, feeds, accounts, certificates, lifecycles, worker pools, machine policies,
         tags, project groups, channels, release, steps, variables, git credentials, and dates.
+
+        Dates must be converted to the ISO 8601 format.
         """
 
         if logging:

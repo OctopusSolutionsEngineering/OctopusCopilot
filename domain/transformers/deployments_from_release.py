@@ -1,10 +1,11 @@
 from domain.config.openai import max_context
+from domain.date.parse_dates import parse_unknown_format_date
 from domain.sanitizers.url_remover import strip_markdown_urls
 from infrastructure.octopus import get_project_releases, get_release_deployments, get_environments, \
     get_task, get_project
 
 
-def get_deployments_for_project(space_id, project_name, environment_names, api_key, octopus_url,
+def get_deployments_for_project(space_id, project_name, environment_names, api_key, octopus_url, dates,
                                 max_results=max_context):
     """
     Gets the list of deployments for a specific environment from the progression of a project
@@ -34,30 +35,41 @@ def get_deployments_for_project(space_id, project_name, environment_names, api_k
                                                       octopus_url)
         for deployment in release_deployments["Items"]:
             # Keep the deployment if it matches the environment, or if there were no environments
-            if len(environment_ids) == 0 or deployment["EnvironmentId"] in environment_ids:
-                task = get_task(space_id, deployment["TaskId"], api_key, octopus_url) if deployment.get(
-                    "TaskId") else None
+            if len(environment_ids) != 0 and deployment["EnvironmentId"] not in environment_ids:
+                continue
 
-                deployments.append({
-                    "SpaceId": space_id,
-                    "ProjectId": project["Id"],
-                    "ReleaseVersion": release["Version"],
-                    "DeploymentId": deployment["Id"],
-                    "TaskId": deployment["TaskId"],
-                    "TenantId": deployment["TenantId"],
-                    "ReleaseId": deployment["ReleaseId"],
-                    "EnvironmentId": deployment["EnvironmentId"],
-                    "ChannelId": deployment["ChannelId"],
-                    "Created": deployment["Created"],
-                    "TaskState": task["State"] if task else None,
-                    "TaskDuration": task["Duration"] if task else None,
-                    # Urls in markdown often resulted in the LLM not returning any results
-                    "ReleaseNotes": strip_markdown_urls(release["ReleaseNotes"]),
-                    "DeployedBy": deployment["DeployedBy"],
-                })
+            # If there were two dates, treat them as a range, and exclude anything outside the range
+            if dates and len(dates) == 2:
+                date1 = parse_unknown_format_date(dates[0])
+                date2 = parse_unknown_format_date(dates[1])
+                created = parse_unknown_format_date(deployment["Created"])
 
-                if len(deployments) >= max_results:
-                    break
+                if created < min(date1, date2) or created > max(date1, date2):
+                    continue
+
+            task = get_task(space_id, deployment["TaskId"], api_key, octopus_url) if deployment.get(
+                "TaskId") else None
+
+            deployments.append({
+                "SpaceId": space_id,
+                "ProjectId": project["Id"],
+                "ReleaseVersion": release["Version"],
+                "DeploymentId": deployment["Id"],
+                "TaskId": deployment["TaskId"],
+                "TenantId": deployment["TenantId"],
+                "ReleaseId": deployment["ReleaseId"],
+                "EnvironmentId": deployment["EnvironmentId"],
+                "ChannelId": deployment["ChannelId"],
+                "Created": deployment["Created"],
+                "TaskState": task["State"] if task else None,
+                "TaskDuration": task["Duration"] if task else None,
+                # Urls in markdown often resulted in the LLM not returning any results
+                "ReleaseNotes": strip_markdown_urls(release["ReleaseNotes"]),
+                "DeployedBy": deployment["DeployedBy"],
+            })
+
+            if len(deployments) >= max_results:
+                break
 
         if len(deployments) >= max_results:
             break

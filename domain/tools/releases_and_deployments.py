@@ -22,7 +22,7 @@ def answer_releases_and_deployments_wrapper(original_query, callback, additional
     """
 
     def answer_releases_and_deployments_usage(space=None, projects=None, environments=None, channels=None,
-                                              releases=None, **kwargs):
+                                              releases=None, dates=None, **kwargs):
         """Answers a question about deployments and releases.
 
         Args:
@@ -31,6 +31,7 @@ def answer_releases_and_deployments_wrapper(original_query, callback, additional
         environments: variable names
         channels: chanel names
         releases: release versions
+        dates: the dates in the query
         """
 
         # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
@@ -141,6 +142,7 @@ The release version of the latest deployment of the "My Project" project to the 
             projects,
             environments,
             channels,
-            releases)
+            releases,
+            dates)
 
     return answer_releases_and_deployments_usage

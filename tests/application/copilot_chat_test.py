@@ -290,6 +290,16 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue(version in response_text, "Response was " + response_text)
 
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_get_date_range_deployment(self):
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        create_and_deploy_release(space_name="Simple", release_version=version)
+        prompt = "Get the release version of the last deployment made to the \"Development\" environment for the \"Deploy Web App Container\" project between 1st January 2024 and 31st December 2099."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue(version in response_text, "Response was " + response_text)
+
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_channels(self):
         prompt = "List the channels defined in the \"Deploy AWS Lambda\" project in a markdown table."
