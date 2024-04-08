@@ -28,7 +28,6 @@ from domain.security.security import is_admin_user
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
-from domain.tools.literal_logs import answer_literal_logs_wrapper
 from domain.tools.logs import answer_logs_wrapper
 from domain.tools.project_variables import answer_project_variables_wrapper, answer_project_variables_usage_wrapper
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
@@ -748,7 +747,6 @@ Once default values are set, you can omit the space, environment, and query_proj
                                                         releases_query_messages,
                                                         log_query)),
             FunctionDefinition(answer_logs_wrapper(query, logs_callback, log_query)),
-            FunctionDefinition(answer_literal_logs_wrapper(query, literal_logs_callback, log_query)),
             FunctionDefinition(answer_machines_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(answer_certificates_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(provide_help),
