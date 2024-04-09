@@ -250,7 +250,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             return minify_hcl(req.get_body().decode("utf-8"))
 
         # Define some tools that the LLM can call
-        def general_query_callback(**kwargs):
+        def general_query_callback(*args, **kwargs):
             """
             Answers a general query about an Octopus space
             """
@@ -260,7 +260,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                       "input": query},
                                      log_query)
 
-        def logs_query_callback(original_query, messages, space, projects, environments, channel, tenant, release):
+        def logs_query_callback(original_query, messages, *args, **kwargs):
             """
             Answers a general query about a logs
             """
@@ -269,7 +269,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                      {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
                                       "input": original_query}, log_query)
 
-        def project_variables_usage_callback(original_query, messages, space, projects, variables):
+        def project_variables_usage_callback(original_query, messages, *args, **kwargs):
             """
             A function that passes the updated query through to the LLM
             """
@@ -278,8 +278,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                      {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
                                       "input": original_query}, log_query)
 
-        def releases_and_deployments_callback(original_query, messages, space, projects, environments, channels,
-                                              releases):
+        def releases_and_deployments_callback(original_query, messages, *args, **kwargs):
             """
             A function that passes the updated query through to the LLM
             """
@@ -288,9 +287,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                      {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
                                       "input": original_query}, log_query)
 
-        def resource_specific_callback(original_query, messages, space, projects, runbooks, targets,
-                                       tenants, environments, accounts, certificates, workerpools, machinepolicies,
-                                       tagsets, steps):
+        def resource_specific_callback(original_query, messages, *args, **kwargs):
             """
             A function that passes the updated query through to the LLM
             """
