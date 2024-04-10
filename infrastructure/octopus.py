@@ -366,7 +366,7 @@ def get_raw_deployment_process(space_name, project_name, api_key, octopus_url):
     project = get_item_fuzzy(resp.json()["Items"], project_name)
 
     if project is None:
-        api = build_url(octopus_url, "api/" + space_id + "/Projects")
+        api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(take="10000"))
         resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
         project = get_item_fuzzy(resp.json()["Items"], project_name)
         if project is None:
@@ -399,7 +399,7 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
     project = get_item_fuzzy(resp.json()["Items"], project_name)
 
     if project is None:
-        api = build_url(octopus_url, "api/" + space_id + "/Projects")
+        api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(take="10000"))
         resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
         project = get_item_fuzzy(resp.json()["Items"], project_name)
         if project is None:
@@ -430,7 +430,7 @@ def get_project(space_id, project_name, api_key, octopus_url):
     project = get_item_fuzzy(resp.json()["Items"], project_name)
 
     if project is None:
-        api = build_url(octopus_url, "api/" + space_id + "/Projects")
+        api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(take="10000"))
         resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
         project = get_item_fuzzy(resp.json()["Items"], project_name)
         if project is None:
@@ -549,7 +549,7 @@ def get_deployment_status_base(space_name, environment_name, project_name, api_k
 
     if project is None:
         # Try again, this time returning all projects so we can fuzzy match
-        api = build_url(octopus_url, "api/" + space_id + "/Projects")
+        api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(take="10000"))
         resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
         project = get_item_fuzzy(resp.json()["Items"], project_name)
         if project is None:
@@ -560,7 +560,7 @@ def get_deployment_status_base(space_name, environment_name, project_name, api_k
     environment = get_item_fuzzy(resp.json()["Items"], environment_name)
 
     if environment is None:
-        api = build_url(octopus_url, "api/" + space_id + "/Environments")
+        api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(take="10000"))
         resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
         environment = get_item_fuzzy(resp.json()["Items"], environment_name)
         if environment is None:
