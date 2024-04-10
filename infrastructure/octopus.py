@@ -2,6 +2,7 @@ import datetime
 import json
 
 import pytz
+from fuzzywuzzy import fuzz
 from retry import retry
 from urllib3.exceptions import HTTPError
 
@@ -362,11 +363,14 @@ def get_raw_deployment_process(space_name, project_name, api_key, octopus_url):
 
     api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-
-    project = get_item_ignoring_case(resp.json()["Items"], project_name)
+    project = get_item_fuzzy(resp.json()["Items"], project_name)
 
     if project is None:
-        raise ResourceNotFound("Project", project_name)
+        api = build_url(octopus_url, "api/" + space_id + "/Projects")
+        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+        project = get_item_fuzzy(resp.json()["Items"], project_name)
+        if project is None:
+            raise ResourceNotFound("Project", project_name)
 
     api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/DeploymentProcesses")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
@@ -392,11 +396,14 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
 
     api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-
-    project = get_item_ignoring_case(resp.json()["Items"], project_name)
+    project = get_item_fuzzy(resp.json()["Items"], project_name)
 
     if project is None:
-        raise ResourceNotFound("Project", project_name)
+        api = build_url(octopus_url, "api/" + space_id + "/Projects")
+        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+        project = get_item_fuzzy(resp.json()["Items"], project_name)
+        if project is None:
+            raise ResourceNotFound("Project", project_name)
 
     api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
@@ -420,11 +427,14 @@ def get_project(space_id, project_name, api_key, octopus_url):
 
     api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-
-    project = get_item_ignoring_case(resp.json()["Items"], project_name)
+    project = get_item_fuzzy(resp.json()["Items"], project_name)
 
     if project is None:
-        raise ResourceNotFound("Project", project_name)
+        api = build_url(octopus_url, "api/" + space_id + "/Projects")
+        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+        project = get_item_fuzzy(resp.json()["Items"], project_name)
+        if project is None:
+            raise ResourceNotFound("Project", project_name)
 
     return project
 
@@ -535,17 +545,26 @@ def get_deployment_status_base(space_name, environment_name, project_name, api_k
 
     api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    project = get_item_ignoring_case(resp.json()["Items"], project_name)
+    project = get_item_fuzzy(resp.json()["Items"], project_name)
 
     if project is None:
-        raise ResourceNotFound("Project", project_name)
+        # Try again, this time returning all projects so we can fuzzy match
+        api = build_url(octopus_url, "api/" + space_id + "/Projects")
+        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+        project = get_item_fuzzy(resp.json()["Items"], project_name)
+        if project is None:
+            raise ResourceNotFound("Project", project_name)
 
     api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partialname=environment_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    environment = get_item_ignoring_case(resp.json()["Items"], environment_name)
+    environment = get_item_fuzzy(resp.json()["Items"], environment_name)
 
     if environment is None:
-        raise ResourceNotFound("Environment", environment_name)
+        api = build_url(octopus_url, "api/" + space_id + "/Environments")
+        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+        environment = get_item_fuzzy(resp.json()["Items"], environment_name)
+        if environment is None:
+            raise ResourceNotFound("Environment", environment_name)
 
     api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
@@ -557,7 +576,13 @@ def get_deployment_status_base(space_name, environment_name, project_name, api_k
     return actual_space_name, environment['Name'], project['Name'], releases[0]["Deployments"][environment['Id']][0]
 
 
-def get_item_ignoring_case(items, name):
+def get_item_fuzzy(items, name):
+    """
+    Get an item, first using an exact match, then case-insensitive match, then the closest match
+    :param items: The list of items to search through
+    :param name: The name of the item to return
+    :return: The closest match that could be found in the items
+    """
     case_insensitive_items = list(filter(lambda p: p["Name"].casefold() == name.casefold(), items))
     case_sensitive_items = list(filter(lambda p: p["Name"] == name, case_insensitive_items))
 
@@ -566,6 +591,13 @@ def get_item_ignoring_case(items, name):
 
     if len(case_insensitive_items) != 0:
         return case_insensitive_items[0]
+
+    # allow fuzzy matching and return the best match
+    fuzz_match = [{"ratio": fuzz.ratio(name, item["Name"]), "item": item} for item in items]
+    fuzz_match_sored = sorted(fuzz_match, key=lambda x: x["ratio"], reverse=True)
+
+    if len(fuzz_match_sored) != 0:
+        return fuzz_match_sored[0]["item"]
 
     return None
 
@@ -674,10 +706,14 @@ def handle_response(callback):
 def get_environment(space_id, environment_name, octopus_url, api_key):
     api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partialname=environment_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    environment = get_item_ignoring_case(resp.json()["Items"], environment_name)
+    environment = get_item_fuzzy(resp.json()["Items"], environment_name)
 
     if environment is None:
-        raise ResourceNotFound("Environment", environment_name)
+        api = build_url(octopus_url, "api/" + space_id + "/Environments")
+        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+        environment = get_item_fuzzy(resp.json()["Items"], environment_name)
+        if environment is None:
+            raise ResourceNotFound("Environment", environment_name)
 
     return environment
 
@@ -686,9 +722,13 @@ def get_environment(space_id, environment_name, octopus_url, api_key):
 def get_tenant(space_id, tenant_name, octopus_url, api_key):
     api = build_url(octopus_url, "api/" + space_id + "/Tenants", dict(partialname=tenant_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    tenant = get_item_ignoring_case(resp.json()["Items"], tenant_name)
+    tenant = get_item_fuzzy(resp.json()["Items"], tenant_name)
 
     if tenant is None:
-        raise ResourceNotFound("Tenant", tenant_name)
+        api = build_url(octopus_url, "api/" + space_id + "/Tenants")
+        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+        tenant = get_item_fuzzy(resp.json()["Items"], tenant_name)
+        if tenant is None:
+            raise ResourceNotFound("Tenant", tenant_name)
 
     return tenant

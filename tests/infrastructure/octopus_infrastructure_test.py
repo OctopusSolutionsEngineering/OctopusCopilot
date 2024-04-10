@@ -17,7 +17,7 @@ from domain.logging.app_logging import configure_logging
 from domain.transformers.chat_responses import get_dashboard_response
 from infrastructure.octopus import get_project_progression, get_raw_deployment_process, get_octopus_project_names_base, \
     get_current_user, create_limited_api_key, get_deployment_status_base, get_dashboard, get_deployment_logs, \
-    get_item_ignoring_case, get_space_id_and_name_from_name
+    get_item_fuzzy, get_space_id_and_name_from_name
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 
@@ -291,10 +291,10 @@ class LiveRequests(unittest.TestCase):
 
 class UnitTests(unittest.TestCase):
     def test_get_item_ignoring_case(self):
-        self.assertEqual("Test", get_item_ignoring_case([{"Name": "Test"}], "test")["Name"])
-        self.assertEqual("Test", get_item_ignoring_case([{"Name": "Test"}], "Test")["Name"])
-        self.assertEqual("Test", get_item_ignoring_case([{"Name": "test"}, {"Name": "Test"}], "Test")["Name"])
-        self.assertEqual("test", get_item_ignoring_case([{"Name": "test"}, {"Name": "Test"}], "test")["Name"])
+        self.assertEqual("Test", get_item_fuzzy([{"Name": "Test"}], "test")["Name"])
+        self.assertEqual("Test", get_item_fuzzy([{"Name": "Test"}], "Test")["Name"])
+        self.assertEqual("Test", get_item_fuzzy([{"Name": "test"}, {"Name": "Test"}], "Test")["Name"])
+        self.assertEqual("test", get_item_fuzzy([{"Name": "test"}, {"Name": "Test"}], "test")["Name"])
 
 
 def run_terraform(directory, url, api, space=None):

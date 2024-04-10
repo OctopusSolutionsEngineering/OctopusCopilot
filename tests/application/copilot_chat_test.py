@@ -291,6 +291,16 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue(version in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_get_latest_deployment_fuzzy(self):
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        create_and_deploy_release(space_name="Simple", release_version=version)
+        prompt = "Get the release version of the latest deployment to the \"Develpment\" environment for the \"Deploy WebApp Container\" project."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue(version in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_date_range_deployment(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         create_and_deploy_release(space_name="Simple", release_version=version)

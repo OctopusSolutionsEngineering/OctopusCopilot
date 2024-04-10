@@ -24,6 +24,9 @@ requests==2.31.0
 pyjwt==2.8.0
 aiohttp==3.9.3
 python-dateutil==2.9.0.post0
+fuzzywuzzy==0.18.0
+python-Levenshtein==0.25.1
+
 
 # Required for stringlifier
 ipdb==0.13.13
