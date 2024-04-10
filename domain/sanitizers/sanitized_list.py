@@ -2,6 +2,7 @@ import re
 
 from domain.date.parse_dates import parse_unknown_format_date
 from domain.sanitizers.sanitize_strings import replace_with_empty_string
+from domain.transformers.date_convert import datetime_to_str
 
 
 def sanitize_space(input_string):
@@ -94,7 +95,7 @@ def sanitize_dates(input_list):
                                       "after|before|between|on|today|yesterday|tomorrow|last\\s*week|last\\s*month|last\\s*year|next\\s*week|next\\s*month|next\\s*year")
             for date in sanitize_list(input_list)]
     dates = [parse_unknown_format_date(item.strip()) for item in list]
-    return [date for date in dates if date]
+    return [datetime_to_str(date) for date in dates if date]
 
 
 def sanitize_bool(input_bool):
