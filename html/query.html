@@ -126,7 +126,10 @@
         var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(query.value), {
             headers: {
                 'X-GitHub-Token': token.value
-            }
+            },
+            // https://stackoverflow.com/questions/71688537/event-source-timeout-in-45-seconds
+            // Increase timeouts as it can take some time to process the request.
+            heartbeatTimeout: 120000,
         });
 
         let response = ""
