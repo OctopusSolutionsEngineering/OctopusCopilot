@@ -15,6 +15,7 @@ from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.transformers.chat_responses import get_dashboard_response
+from domain.transformers.deployments_from_dashboard import get_deployments_from_dashboard
 from infrastructure.octopus import get_project_progression, get_raw_deployment_process, get_octopus_project_names_base, \
     get_current_user, create_limited_api_key, get_deployment_status_base, get_dashboard, get_deployment_logs, \
     get_item_fuzzy, get_space_id_and_name_from_name
@@ -178,6 +179,21 @@ class LiveRequests(unittest.TestCase):
 
         with self.assertRaises(ResourceNotFound):
             get_deployment_status_base("Simple", "UAT2", "Deploy Web App Container", Octopus_Api_Key, Octopus_Url)
+
+    def test_get_dashboard_releases(self):
+        """
+        Tests that we can get the releases from a dashboard
+        """
+
+        create_and_deploy_release(space_name="Simple")
+
+        time.sleep(5)
+
+        space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+
+        deployments = get_deployments_from_dashboard(space_id, Octopus_Api_Key, Octopus_Url)
+
+        self.assertTrue(len(deployments["Deployments"]) > 0)
 
     def test_get_deployment_status_preconditions(self):
         """

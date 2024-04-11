@@ -115,9 +115,9 @@ def get_dashboard(space_id, my_api_key, my_octopus_api):
     :return: The actual space name and the dashboard summary
     """
 
-    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_octopus_project_names_base).')
-    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_octopus_project_names_base).')
-    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_octopus_project_names_base).')
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_dashboard).')
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_dashboard).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_dashboard).')
 
     api = build_url(my_octopus_api, "api/" + space_id + "/Dashboard",
                     dict(highestLatestVersionPerProjectAndEnvironment="true"))

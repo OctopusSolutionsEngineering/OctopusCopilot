@@ -17,7 +17,7 @@ def dashboard_item_to_deployment(space_id, environments, projects, item):
     return {
         "SpaceId": space_id,
         "ProjectId": item["ProjectId"],
-        "Projectname": get_key_or_none(next(projects.filter(lambda project: project["Id"] == item["ProjectId"])),
+        "ProjectName": get_key_or_none(next(filter(lambda project: project["Id"] == item["ProjectId"], projects)),
                                        "Name"),
         "ReleaseVersion": item["ReleaseVersion"],
         "DeploymentId": item["DeploymentId"],
@@ -25,7 +25,7 @@ def dashboard_item_to_deployment(space_id, environments, projects, item):
         "TenantId": item["TenantId"],
         "ReleaseId": item["ReleaseId"],
         "EnvironmentId": item["EnvironmentId"],
-        "EnvironmentName": get_key_or_none(next(environments.filter(lambda env: env["Id"] == item["EnvironmentId"])),
+        "EnvironmentName": get_key_or_none(next(filter(lambda env: env["Id"] == item["EnvironmentId"], environments)),
                                            "Name"),
         "ChannelId": item["ChannelId"],
         "Created": item["Created"],
