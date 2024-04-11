@@ -1,5 +1,6 @@
 from domain.config.openai import max_context
 from domain.date.parse_dates import parse_unknown_format_date
+from domain.sanitizers.sanitized_list import get_key_or_none
 from domain.sanitizers.url_remover import strip_markdown_urls
 from infrastructure.octopus import get_project_releases, get_release_deployments, get_environments, \
     get_task, get_project
@@ -53,12 +54,15 @@ def get_deployments_for_project(space_id, project_name, environment_names, api_k
             deployments.append({
                 "SpaceId": space_id,
                 "ProjectId": project["Id"],
+                "ProjectName": project["Name"],
                 "ReleaseVersion": release["Version"],
                 "DeploymentId": deployment["Id"],
                 "TaskId": deployment["TaskId"],
                 "TenantId": deployment["TenantId"],
                 "ReleaseId": deployment["ReleaseId"],
                 "EnvironmentId": deployment["EnvironmentId"],
+                "EnvironmentName": get_key_or_none(
+                    next(filter(lambda env: env["Id"] == deployment["EnvironmentId"], environments)), "Name"),
                 "ChannelId": deployment["ChannelId"],
                 "Created": deployment["Created"],
                 "TaskState": task["State"] if task else None,

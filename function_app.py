@@ -33,6 +33,7 @@ from domain.tools.project_variables import answer_project_variables_wrapper, ans
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.tools.targets_query import answer_machines_wrapper
 from domain.transformers.chat_responses import get_dashboard_response
+from domain.transformers.deployments_from_dashboard import get_deployments_from_dashboard
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from domain.transformers.minify_hcl import minify_hcl
 from domain.transformers.sse_transformers import convert_to_sse_response
@@ -634,7 +635,8 @@ Once default values are set, you can omit the space, environment, and query_proj
 
         # We need some additional JSON data to answer this question
         if query_project:
-            # We only need the deployments, so strip out the rest of the JSON
+            # When the query limits the results to certain projects, we
+            # can dive deeper and return a larger collection of deployments
             deployments = get_deployments_for_project(space_id,
                                                       query_project,
                                                       query_environments,
@@ -644,7 +646,9 @@ Once default values are set, you can omit the space, environment, and query_proj
                                                       max_context)
             context["json"] = json.dumps(deployments, indent=2)
         else:
-            context["json"] = get_dashboard(space_id, api_key, url)
+            # When the query is more general, we rely on the deployment information
+            # returned to supply the dashboard. The results are broad, but not deep.
+            context["json"] = get_deployments_from_dashboard(space_id, api_key, url)
 
         chat_response = collect_llm_context(original_query,
                                             messages,

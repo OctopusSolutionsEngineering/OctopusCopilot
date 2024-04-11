@@ -178,6 +178,13 @@ def get_item_or_none(array, index):
         return None
 
 
+def get_key_or_none(source, key):
+    if not source:
+        return None
+
+    return source.get(key)
+
+
 def flatten_list(deployments):
     return [item for sublist in deployments for item in sublist]
 
