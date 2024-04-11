@@ -439,7 +439,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         name = str(default_name).casefold()
 
-        if not (name == "environment" or name == "query_project" or name == "space" or name == "channel"):
+        if not (name == "environment" or name == "project" or name == "space" or name == "channel"):
             return f"Invalid default name \"{default_name}\". The default name must be one of \"Environment\", \"Project\", \"Space\", or \"Channel\""
 
         save_default_values(get_github_user_from_form(), name, default_value, get_functions_connection_string())
@@ -454,7 +454,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         name = str(default_name).casefold()
 
-        if not (name == "environment" or name == "query_project" or name == "space" or name == "channel"):
+        if not (name == "environment" or name == "project" or name == "space" or name == "channel"):
             return f"Invalid default name \"{default_name}\". The default name must be one of \"Environment\", \"Project\", \"Space\", or \"Channel\""
 
         delete_default_values(get_github_user_from_form(), name, get_functions_connection_string())
