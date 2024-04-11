@@ -361,16 +361,7 @@ def get_raw_deployment_process(space_name, project_name, api_key, octopus_url):
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
 
-    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
-    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    project = get_item_fuzzy(resp.json()["Items"], project_name)
-
-    if project is None:
-        api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(take="10000"))
-        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-        project = get_item_fuzzy(resp.json()["Items"], project_name)
-        if project is None:
-            raise ResourceNotFound("Project", project_name)
+    project = get_project(space_id, project_name, api_key, octopus_url)
 
     api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/DeploymentProcesses")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
@@ -394,16 +385,7 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
 
-    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
-    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    project = get_item_fuzzy(resp.json()["Items"], project_name)
-
-    if project is None:
-        api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(take="10000"))
-        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-        project = get_item_fuzzy(resp.json()["Items"], project_name)
-        if project is None:
-            raise ResourceNotFound("Project", project_name)
+    project = get_project(space_id, project_name, api_key, octopus_url)
 
     api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
@@ -543,28 +525,8 @@ def get_deployment_status_base(space_name, environment_name, project_name, api_k
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
 
-    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
-    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    project = get_item_fuzzy(resp.json()["Items"], project_name)
-
-    if project is None:
-        # Try again, this time returning all projects so we can fuzzy match
-        api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(take="10000"))
-        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-        project = get_item_fuzzy(resp.json()["Items"], project_name)
-        if project is None:
-            raise ResourceNotFound("Project", project_name)
-
-    api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partialname=environment_name))
-    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    environment = get_item_fuzzy(resp.json()["Items"], environment_name)
-
-    if environment is None:
-        api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(take="10000"))
-        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-        environment = get_item_fuzzy(resp.json()["Items"], environment_name)
-        if environment is None:
-            raise ResourceNotFound("Environment", environment_name)
+    project = get_project(space_id, project_name, api_key, octopus_url)
+    environment = get_environment(space_id, environment_name, api_key, octopus_url)
 
     api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
