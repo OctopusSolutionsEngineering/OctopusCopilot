@@ -589,11 +589,11 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
 
     environment = None
     if environment_name:
-        environment = get_environment(space_id, environment_name, octopus_url, api_key)
+        environment = get_environment(space_id, environment_name, api_key, octopus_url)
 
     tenant = None
     if tenant_name:
-        tenant = get_tenant(space_id, tenant_name, octopus_url, api_key)
+        tenant = get_tenant(space_id, tenant_name, api_key, octopus_url)
 
     api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
@@ -683,7 +683,7 @@ def get_environment(space_id, environment_name, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_tenant(space_id, tenant_name, octopus_url, api_key):
+def get_tenant(space_id, tenant_name, api_key, octopus_url):
     api = build_url(octopus_url, "api/" + space_id + "/Tenants", dict(partialname=tenant_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     tenant = get_item_fuzzy(resp.json()["Items"], tenant_name)
