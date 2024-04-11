@@ -609,7 +609,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
         deployments = flatten_list(map(lambda r: r["Deployments"][environment['Id']], filtered_releases))
     else:
         # Every deployment is a candidate
-        deployments = flatten_list(map(lambda r: r["Deployments"][environment['Id']], releases))
+        deployments = flatten_list(map(lambda r: r["Deployments"][environment['Id']], releases["Releases"]))
 
     if tenant:
         deployments = list(filter(lambda d: d["TenantId"] == tenant["Id"], deployments))
