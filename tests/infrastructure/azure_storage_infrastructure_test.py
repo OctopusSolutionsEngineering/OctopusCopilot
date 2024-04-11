@@ -2,7 +2,7 @@ import unittest
 
 from infrastructure.users import save_default_values, get_default_values, \
     save_users_octopus_url_from_login, get_users_details, delete_all_user_details, delete_old_user_details, \
-    database_connection_test
+    database_connection_test, delete_default_values
 
 connection_string = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
 
@@ -23,6 +23,13 @@ class UsersTest(unittest.TestCase):
         value = get_default_values("test", "Space", connection_string)
 
         self.assertEqual("Default", value)
+
+    def test_delete_default_values(self):
+        save_default_values("test", "Space", "Default", connection_string)
+        delete_default_values("test", "Space", connection_string)
+        value = get_default_values("test", "Space", connection_string)
+
+        self.assertIsNone(value)
 
     def test_login(self):
         save_users_octopus_url_from_login("12345", "https://test.com", "API-ABCDEFG", "password", "salt",

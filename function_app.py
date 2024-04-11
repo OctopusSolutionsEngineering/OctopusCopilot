@@ -45,7 +45,7 @@ from infrastructure.octopus import get_current_user, \
 from infrastructure.openai import llm_tool_query
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
-    get_default_values, database_connection_test
+    get_default_values, database_connection_test, delete_default_values
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
@@ -436,6 +436,21 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         save_default_values(get_github_user_from_form(), name, default_value, get_functions_connection_string())
         return f"Saved default value \"{default_value}\" for \"{name}\""
 
+    def remove_default_value(default_name):
+        """Removes, clears, or deletes a default value for a space, query_project, environment, or channel
+
+            Args:
+                default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
+        """
+
+        name = str(default_name).casefold()
+
+        if not (name == "environment" or name == "query_project" or name == "space" or name == "channel"):
+            return f"Invalid default name \"{default_name}\". The default name must be one of \"Environment\", \"Project\", \"Space\", or \"Channel\""
+
+        delete_default_values(get_github_user_from_form(), name, get_functions_connection_string())
+        return f"Deleted default value for \"{name}\""
+
     def get_default_value(default_name):
         """Save a default value for a space, query_project, environment, or channel
 
@@ -761,6 +776,7 @@ Once default values are set, you can omit the space, environment, and query_proj
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
+            FunctionDefinition(remove_default_value),
             FunctionDefinition(get_dashboard_wrapper),
         ])
 
