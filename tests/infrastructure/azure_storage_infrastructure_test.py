@@ -26,7 +26,7 @@ class UsersTest(unittest.TestCase):
 
     def test_delete_default_values(self):
         save_default_values("test", "Space", "Default", connection_string)
-        delete_default_values("test", "Space", connection_string)
+        delete_default_values("test", connection_string)
         value = get_default_values("test", "Space", connection_string)
 
         self.assertIsNone(value)

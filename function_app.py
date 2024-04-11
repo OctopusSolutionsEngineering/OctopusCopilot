@@ -447,20 +447,12 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                             get_functions_connection_string())
         return f"Saved default value \"{default_value}\" for \"{default_name.casefold()}\""
 
-    def remove_default_value(default_name):
+    def remove_default_value():
         """Removes, clears, or deletes a default value for a space, query_project, environment, or channel
-
-            Args:
-                default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
         """
 
-        try:
-            validate_default_value_name(default_name)
-        except ValueError as e:
-            return e.args[0]
-
-        delete_default_values(get_github_user_from_form(), default_name.casefold(), get_functions_connection_string())
-        return f"Deleted default value for \"{default_name.casefold()}\""
+        delete_default_values(get_github_user_from_form(), get_functions_connection_string())
+        return f"Deleted default valued"
 
     def get_default_value(default_name):
         """Save a default value for a space, query_project, environment, or channel
@@ -498,6 +490,9 @@ Once default values are set, you can omit the space, environment, and query_proj
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), body["space_name"], "Space")
+
+        if not space:
+            return "Please provide a space name in the question or define a default space name with the command \"Set default space to 'space name'\""
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -542,6 +537,9 @@ Once default values are set, you can omit the space, environment, and query_proj
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
+
+        if not space:
+            return "Please provide a space name in the question or define a default space name with the command \"Set default space to 'space name'\""
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -620,6 +618,9 @@ Once default values are set, you can omit the space, environment, and query_proj
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
 
+        if not space:
+            return "Please provide a space name in the question or define a default space name with the command \"Set default space to 'space name'\""
+
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
         sanitized_projects = sanitize_projects_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
@@ -686,6 +687,9 @@ Once default values are set, you can omit the space, environment, and query_proj
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
 
+        if not space:
+            return "Please provide a space name in the question or define a default space name with the command \"Set default space to 'space name'\""
+
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
         sanitized_projects = sanitize_projects_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
@@ -719,6 +723,9 @@ Once default values are set, you can omit the space, environment, and query_proj
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
+
+        if not space:
+            return "Please provide a space name in the question or define a default space name with the command \"Set default space to 'space name'\""
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 

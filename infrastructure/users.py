@@ -50,9 +50,8 @@ def save_default_values(username, default_name, default_value, connection_string
 
 
 @logging_wrapper
-def delete_default_values(username, default_name, connection_string):
+def delete_default_values(username, connection_string):
     ensure_string_not_empty(username, "username must be the GitHub user's ID (delete_default_values).")
-    ensure_string_not_empty(default_name, "default_name must be a non-empty string (delete_default_values).")
     ensure_string_not_empty(connection_string,
                             'connection_string must be the connection string (delete_default_values).')
 
