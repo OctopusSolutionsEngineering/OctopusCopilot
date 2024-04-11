@@ -1,6 +1,12 @@
 from domain.sanitizers.sanitized_list import get_key_or_none
 from infrastructure.octopus import get_dashboard
 
+# 40 projects results in th error:
+# This model's maximum context length is 16384 tokens. However, your messages resulted in 29801 tokens. Please reduce the length of the messages.
+# So we limit the dashboard results to 20 projects
+
+max_projects = 20
+
 
 def get_deployments_from_dashboard(space_id, api_key, octopus_url):
     dashboard = get_dashboard(space_id, api_key, octopus_url)
@@ -9,7 +15,7 @@ def get_deployments_from_dashboard(space_id, api_key, octopus_url):
                    item in dashboard["Items"]]
 
     return {
-        "Deployments": deployments,
+        "Deployments": deployments[:max_projects],
     }
 
 
