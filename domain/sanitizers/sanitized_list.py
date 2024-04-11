@@ -18,15 +18,16 @@ def sanitize_projects(input_list):
     return sanitize_list(input_list, "all|\\*|Project\\s*[0-9A-Z]|My\\s*Project")
 
 
-def sanitize_projects_fuzzy(space_projects, projects):
+def sanitize_projects_fuzzy(space_projects_generator, projects):
     """
     Match the list of projects to the closest project names that exist in the space. This allows
-    for minor typos in the query.
+    for minor typos in the query. This version uses a generator to avoid loading all the projects
+    if there is an exact match withing the earlier batch requests.
     :param projects: The list of project names to match
-    :param space_projects: The list of project names from the space
+    :param space_projects_generator: The list of project names from the space
     :return: A list of the closest matching project names from the space
     """
-    fuzzy_items = [get_item_fuzzy(space_projects, project) for project in projects]
+    fuzzy_items = [get_item_fuzzy_generator(space_projects_generator, project) for project in projects]
     return [project["Name"] for project in fuzzy_items if project]
 
 
@@ -200,6 +201,45 @@ def get_item_fuzzy(items, name):
     # allow fuzzy matching and return the best match
     fuzz_match = [{"ratio": fuzz.ratio(name, item["Name"]), "item": item} for item in items]
     fuzz_match_sored = sorted(fuzz_match, key=lambda x: x["ratio"], reverse=True)
+
+    if len(fuzz_match_sored) != 0:
+        return fuzz_match_sored[0]["item"]
+
+    return None
+
+
+def get_item_fuzzy_generator(items_generator, name):
+    """
+    Get an item, first using an exact match, then case-insensitive match, then the closest match.
+    This version of the function uses a generator to allow for an early exit if the exact name is found in the early
+    batched requests.
+    :param items_generator: A function returning the list of items to search through. Ideally this uses batched API
+    calls, but this is not a requirement.
+    :param name: The name of the item to return
+    :return: The closest match that could be found in the items
+    """
+
+    case_insensitive = None
+    fuzzy_matches = []
+    for item in items_generator():
+        # Early exit on exact name match. If the generator function uses lazy loading, this can have
+        # a performance benefit.
+        if item["Name"] == name:
+            return item
+
+        # Track any case-insensitive matches
+        if item["Name"].casefold() == name.casefold():
+            case_insensitive = item
+
+        # Calculate the fuzzy match
+        fuzzy_matches.append({"ratio": fuzz.ratio(name, item["Name"]), "item": item})
+
+    # In the absence of an exact match, return a case-insensitive match
+    if case_insensitive:
+        return case_insensitive
+
+    # Fall back to the best fuzzy match
+    fuzz_match_sored = sorted(fuzzy_matches, key=lambda x: x["ratio"], reverse=True)
 
     if len(fuzz_match_sored) != 0:
         return fuzz_match_sored[0]["item"]

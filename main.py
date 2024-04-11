@@ -17,7 +17,7 @@ from domain.tools.targets_query import answer_machines_wrapper
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_dashboard, \
-    get_deployment_logs, get_space_id_and_name_from_name, get_projects
+    get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator
 from infrastructure.openai import llm_tool_query, llm_message_query
 
 
@@ -84,8 +84,9 @@ def general_query_callback(original_query, body, messages):
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space, get_api_key(), get_octopus_api())
 
-    space_projects = get_projects(space_id, get_api_key(), get_octopus_api())
-    sanitized_projects = sanitize_projects_fuzzy(space_projects, sanitize_projects(body["project_names"]))
+    sanitized_projects = sanitize_projects_fuzzy(
+        lambda: get_projects_generator(space_id, get_api_key(), get_octopus_api()),
+        sanitize_projects(body["project_names"]))
 
     return collect_llm_context(original_query,
                                messages,

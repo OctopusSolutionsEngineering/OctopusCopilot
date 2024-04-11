@@ -146,7 +146,8 @@ def get_current_user(my_api_key, my_octopus_api):
 
 
 @logging_wrapper
-def get_projects(my_api_key, my_octopus_api, space_id):
+@retry(HTTPError, tries=3, delay=2)
+def get_projects(space_id, my_api_key, my_octopus_api):
     """
     Returns the projects in a space
     :param my_api_key: The Octopus API key
@@ -165,7 +166,8 @@ def get_projects(my_api_key, my_octopus_api, space_id):
 
 
 @logging_wrapper
-def get_tenants(my_api_key, my_octopus_api, space_id):
+@retry(HTTPError, tries=3, delay=2)
+def get_tenants(space_id, my_api_key, my_octopus_api):
     """
     Returns the tenants in a space
     :param my_api_key: The Octopus API key
@@ -394,10 +396,27 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_projects(space_id, api_key, octopus_url):
-    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(take="10000"))
+def get_projects_batch(skip, take, space_id, api_key, octopus_url):
+    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(take=take, skip=skip))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     return resp.json()["Items"]
+
+
+@logging_wrapper
+def get_projects_generator(space_id, api_key, octopus_url):
+    skip = 0
+    take = 30
+
+    while True:
+        batch_projects = get_projects_batch(skip, take, space_id, api_key, octopus_url)
+
+        for project in batch_projects:
+            yield project
+
+        if len(batch_projects) != take:
+            break
+
+        skip += take
 
 
 @retry(HTTPError, tries=3, delay=2)
@@ -645,6 +664,7 @@ def handle_response(callback):
     return response
 
 
+@retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_environment(space_id, environment_name, octopus_url, api_key):
     api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partialname=environment_name))
@@ -661,6 +681,7 @@ def get_environment(space_id, environment_name, octopus_url, api_key):
     return environment
 
 
+@retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_tenant(space_id, tenant_name, octopus_url, api_key):
     api = build_url(octopus_url, "api/" + space_id + "/Tenants", dict(partialname=tenant_name))

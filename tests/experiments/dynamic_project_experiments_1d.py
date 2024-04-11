@@ -14,8 +14,8 @@ def get_test_cases(limit=0):
     Generates a set of test cases based on the status of a real Octopus instance.
     :return: a list of tuples matching a project name, id, description and versioning strategy template
     """
-    projects = get_projects(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
-                            os.environ.get("TEST_OCTOPUS_SPACE_ID"))
+    projects = get_projects(os.environ.get("TEST_OCTOPUS_SPACE_ID"), os.environ.get("TEST_OCTOPUS_API_KEY"),
+                            os.environ.get("TEST_OCTOPUS_URL"))
 
     projects = list(
         map(lambda x: (x["Name"], x["Id"], x["Description"],
