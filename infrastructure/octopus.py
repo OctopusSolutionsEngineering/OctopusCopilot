@@ -666,7 +666,7 @@ def handle_response(callback):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_environment(space_id, environment_name, octopus_url, api_key):
+def get_environment(space_id, environment_name, api_key, octopus_url):
     api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partialname=environment_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     environment = get_item_fuzzy(resp.json()["Items"], environment_name)
