@@ -39,6 +39,7 @@ from domain.transformers.minify_hcl import minify_hcl
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
+from domain.validation.default_value_validation import validate_default_value_name
 from infrastructure.github import get_github_user
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
@@ -437,13 +438,14 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                 default_value: The default value
         """
 
-        name = str(default_name).casefold()
+        try:
+            validate_default_value_name(default_name)
+        except ValueError as e:
+            return e.args[0]
 
-        if not (name == "environment" or name == "project" or name == "space" or name == "channel"):
-            return f"Invalid default name \"{default_name}\". The default name must be one of \"Environment\", \"Project\", \"Space\", or \"Channel\""
-
-        save_default_values(get_github_user_from_form(), name, default_value, get_functions_connection_string())
-        return f"Saved default value \"{default_value}\" for \"{name}\""
+        save_default_values(get_github_user_from_form(), default_name.casefold(), default_value,
+                            get_functions_connection_string())
+        return f"Saved default value \"{default_value}\" for \"{default_name.casefold()}\""
 
     def remove_default_value(default_name):
         """Removes, clears, or deletes a default value for a space, query_project, environment, or channel
@@ -452,13 +454,13 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                 default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
         """
 
-        name = str(default_name).casefold()
+        try:
+            validate_default_value_name(default_name)
+        except ValueError as e:
+            return e.args[0]
 
-        if not (name == "environment" or name == "project" or name == "space" or name == "channel"):
-            return f"Invalid default name \"{default_name}\". The default name must be one of \"Environment\", \"Project\", \"Space\", or \"Channel\""
-
-        delete_default_values(get_github_user_from_form(), name, get_functions_connection_string())
-        return f"Deleted default value for \"{name}\""
+        delete_default_values(get_github_user_from_form(), default_name.casefold(), get_functions_connection_string())
+        return f"Deleted default value for \"{default_name.casefold()}\""
 
     def get_default_value(default_name):
         """Save a default value for a space, query_project, environment, or channel
