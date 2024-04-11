@@ -336,6 +336,24 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue(version in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_get_latest_deployment_channel_fuzzy(self):
+        # Create a release in the Mainline channel against a tenant
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        create_and_deploy_release(space_name="Simple", channel_name="Mainline", project_name="Deploy AWS Lambda",
+                                  tenant_name="Marketing", release_version=version)
+        # Create another release without a tenant to ensure the query is actually doing a search and not
+        # returning the first version it finds
+        create_and_deploy_release(space_name="Simple", project_name="Deploy AWS Lambda",
+                                  release_version=str(uuid.uuid4()))
+        # The project name is misspelled here deliberately to test the fuzzy matching
+        prompt = ("What is the release version of the latest deployment to the \"Development\" environment for the "
+                  + "\"Deploy AS Lambda\" project in the \"Mainline\" channel for the \"Marketing\" tenant?")
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue(version in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment_defaults(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         create_and_deploy_release(space_name="Simple", release_version=version)

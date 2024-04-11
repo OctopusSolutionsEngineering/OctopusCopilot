@@ -1,5 +1,7 @@
 import re
 
+from fuzzywuzzy import fuzz
+
 from domain.date.parse_dates import parse_unknown_format_date
 from domain.sanitizers.sanitize_strings import replace_with_empty_string
 from domain.transformers.date_convert import datetime_to_str
