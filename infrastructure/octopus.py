@@ -683,6 +683,14 @@ def get_environment(space_id, environment_name, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
+def get_channel(space_id, channel_id, api_key, octopus_url):
+    api = build_url(octopus_url, "api/" + space_id + f"/Channels/{channel_id}")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_tenant(space_id, tenant_name, api_key, octopus_url):
     api = build_url(octopus_url, "api/" + space_id + "/Tenants", dict(partialname=tenant_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))

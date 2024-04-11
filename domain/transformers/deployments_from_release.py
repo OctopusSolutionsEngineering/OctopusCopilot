@@ -3,7 +3,7 @@ from domain.date.parse_dates import parse_unknown_format_date
 from domain.sanitizers.sanitized_list import get_key_or_none
 from domain.sanitizers.url_remover import strip_markdown_urls
 from infrastructure.octopus import get_project_releases, get_release_deployments, get_environments, \
-    get_task, get_project
+    get_task, get_project, get_channel
 
 
 def get_deployments_for_project(space_id, project_name, environment_names, api_key, octopus_url, dates,
@@ -51,6 +51,8 @@ def get_deployments_for_project(space_id, project_name, environment_names, api_k
             task = get_task(space_id, deployment["TaskId"], api_key, octopus_url) if deployment.get(
                 "TaskId") else None
 
+            channel = get_channel(space_id, deployment["ChannelId"], api_key, octopus_url)
+
             deployments.append({
                 "SpaceId": space_id,
                 "ProjectId": project["Id"],
@@ -64,6 +66,7 @@ def get_deployments_for_project(space_id, project_name, environment_names, api_k
                 "EnvironmentName": get_key_or_none(
                     next(filter(lambda env: env["Id"] == deployment["EnvironmentId"], environments)), "Name"),
                 "ChannelId": deployment["ChannelId"],
+                "ChannelName": channel["Name"],
                 "Created": deployment["Created"],
                 "TaskState": task["State"] if task else None,
                 "TaskDuration": task["Duration"] if task else None,
