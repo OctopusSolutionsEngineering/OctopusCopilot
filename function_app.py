@@ -45,7 +45,7 @@ from infrastructure.octopus import get_current_user, \
 from infrastructure.openai import llm_tool_query
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
-    get_default_values, database_connection_test, delete_default_values
+    get_default_values, database_connection_test, delete_default_values, delete_user_details
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
@@ -361,6 +361,14 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                       get_admin_users(),
                       lambda: delete_all_user_details(get_functions_connection_string()))
         return f"Deleted all records"
+
+    def logout():
+        """Logs out or signs out the user
+        """
+
+        delete_user_details(get_github_user_from_form(), get_functions_connection_string())
+
+        return f"Sign out successful"
 
     def get_api_key_and_url():
         try:
@@ -774,6 +782,7 @@ Once default values are set, you can omit the space, environment, and query_proj
             FunctionDefinition(answer_certificates_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(provide_help),
             FunctionDefinition(clean_up_all_records),
+            FunctionDefinition(logout),
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
             FunctionDefinition(remove_default_value),
