@@ -16,6 +16,18 @@ def sanitize_projects(input_list):
     return sanitize_list(input_list, "all|\\*|Project\\s*[0-9A-Z]|My\\s*Project")
 
 
+def sanitize_projects_fuzzy(space_projects, projects):
+    """
+    Match the list of projects to the closest project names that exist in the space. This allows
+    for minor typos in the query.
+    :param projects: The list of project names to match
+    :param space_projects: The list of project names from the space
+    :return: A list of the closest matching project names from the space
+    """
+    fuzzy_items = [get_item_fuzzy(space_projects, project) for project in projects]
+    return [project["Name"] for project in fuzzy_items if project]
+
+
 def sanitize_tenants(input_list):
     return sanitize_list(input_list, "all|\\*|Tenant\\s*[0-9A-Z]|My\\s*Tenant")
 
@@ -165,3 +177,29 @@ def get_item_or_none(array, index):
 
 def flatten_list(deployments):
     return [item for sublist in deployments for item in sublist]
+
+
+def get_item_fuzzy(items, name):
+    """
+    Get an item, first using an exact match, then case-insensitive match, then the closest match
+    :param items: The list of items to search through
+    :param name: The name of the item to return
+    :return: The closest match that could be found in the items
+    """
+    case_insensitive_items = list(filter(lambda p: p["Name"].casefold() == name.casefold(), items))
+    case_sensitive_items = list(filter(lambda p: p["Name"] == name, case_insensitive_items))
+
+    if len(case_sensitive_items) != 0:
+        return case_sensitive_items[0]
+
+    if len(case_insensitive_items) != 0:
+        return case_insensitive_items[0]
+
+    # allow fuzzy matching and return the best match
+    fuzz_match = [{"ratio": fuzz.ratio(name, item["Name"]), "item": item} for item in items]
+    fuzz_match_sored = sorted(fuzz_match, key=lambda x: x["ratio"], reverse=True)
+
+    if len(fuzz_match_sored) != 0:
+        return fuzz_match_sored[0]["item"]
+
+    return None

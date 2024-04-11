@@ -2,7 +2,6 @@ import datetime
 import json
 
 import pytz
-from fuzzywuzzy import fuzz
 from retry import retry
 from urllib3.exceptions import HTTPError
 
@@ -13,7 +12,7 @@ from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.query.query_inspector import release_is_latest
-from domain.sanitizers.sanitized_list import flatten_list
+from domain.sanitizers.sanitized_list import flatten_list, get_item_fuzzy
 from domain.url.build_url import build_url
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http, TAKE_ALL
@@ -395,6 +394,14 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
+def get_projects(space_id, api_key, octopus_url):
+    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(take="10000"))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()["Items"]
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_project(space_id, project_name, api_key, octopus_url):
     """
     Returns a project resource from the name
@@ -536,32 +543,6 @@ def get_deployment_status_base(space_name, environment_name, project_name, api_k
         raise ResourceNotFound("Deployment", f"{project_name} in {environment_name}")
 
     return actual_space_name, environment['Name'], project['Name'], releases[0]["Deployments"][environment['Id']][0]
-
-
-def get_item_fuzzy(items, name):
-    """
-    Get an item, first using an exact match, then case-insensitive match, then the closest match
-    :param items: The list of items to search through
-    :param name: The name of the item to return
-    :return: The closest match that could be found in the items
-    """
-    case_insensitive_items = list(filter(lambda p: p["Name"].casefold() == name.casefold(), items))
-    case_sensitive_items = list(filter(lambda p: p["Name"] == name, case_insensitive_items))
-
-    if len(case_sensitive_items) != 0:
-        return case_sensitive_items[0]
-
-    if len(case_insensitive_items) != 0:
-        return case_insensitive_items[0]
-
-    # allow fuzzy matching and return the best match
-    fuzz_match = [{"ratio": fuzz.ratio(name, item["Name"]), "item": item} for item in items]
-    fuzz_match_sored = sorted(fuzz_match, key=lambda x: x["ratio"], reverse=True)
-
-    if len(fuzz_match_sored) != 0:
-        return fuzz_match_sored[0]["item"]
-
-    return None
 
 
 @retry(HTTPError, tries=3, delay=2)

@@ -22,8 +22,8 @@ from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.messages.general import build_hcl_prompt
 from domain.messages.test_message import build_test_prompt
-from domain.sanitizers.sanitized_list import sanitize_list, get_item_or_none, \
-    none_if_falesy_or_all, sanitize_projects, sanitize_environments
+from domain.sanitizers.sanitized_list import get_item_or_none, \
+    none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_projects_fuzzy, sanitize_tenants
 from domain.security.security import is_admin_user
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
@@ -41,7 +41,7 @@ from domain.url.session import create_session_blob, extract_session_blob
 from infrastructure.github import get_github_user
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
-    create_limited_api_key, get_dashboard, get_deployment_logs, get_space_id_and_name_from_name
+    create_limited_api_key, get_dashboard, get_deployment_logs, get_space_id_and_name_from_name, get_projects
 from infrastructure.openai import llm_tool_query
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
@@ -472,14 +472,18 @@ Once default values are set, you can omit the space, environment, and query_proj
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), body["space_name"], "Space")
-        project_names = get_default_argument(get_github_user_from_form(), sanitize_list(body["project_names"]),
-                                             "Project")
-        environment_names = get_default_argument(get_github_user_from_form(), sanitize_list(body["environment_names"]),
+
+        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
+
+        space_projects = get_projects(space_id, api_key, url)
+        sanitized_projects = sanitize_projects_fuzzy(space_projects, sanitize_projects(body["project_names"]))
+
+        project_names = get_default_argument(get_github_user_from_form(), sanitized_projects, "Project")
+        environment_names = get_default_argument(get_github_user_from_form(),
+                                                 sanitize_environments(body["environment_names"]),
                                                  "Environment")
 
         context = {"input": original_query}
-
-        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
         return collect_llm_context(original_query,
                                    messages,
@@ -512,7 +516,13 @@ Once default values are set, you can omit the space, environment, and query_proj
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
-        projects = get_default_argument(get_github_user_from_form(), projects, "Project")
+
+        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
+
+        space_projects = get_projects(space_id, api_key, url)
+        sanitized_projects = sanitize_projects_fuzzy(space_projects, sanitize_projects(projects))
+
+        projects = get_default_argument(get_github_user_from_form(), sanitized_projects, "Project")
 
         context = {"input": original_query}
 
@@ -580,20 +590,24 @@ Once default values are set, you can omit the space, environment, and query_proj
     def releases_query_callback(original_query, messages, space, projects, environments, channels, releases, dates):
         api_key, url = get_api_key_and_url()
 
-        sanitized_projects = sanitize_projects(projects)
         sanitized_environments = sanitize_environments(environments)
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
+
+        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
+
+        space_projects = get_projects(space_id, api_key, url)
+        sanitized_projects = sanitize_projects_fuzzy(space_projects, sanitize_projects(projects))
+
         query_project = get_default_argument(get_github_user_from_form(),
                                              get_item_or_none(sanitized_projects, 0),
                                              "Project")
+
         query_environments = get_default_argument(get_github_user_from_form(),
                                                   get_item_or_none(sanitized_environments, 0),
                                                   "Environment")
 
         context = {"input": original_query}
-
-        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
         # We need some additional JSON data to answer this question
         if query_project:
@@ -638,31 +652,22 @@ Once default values are set, you can omit the space, environment, and query_proj
 
         return chat_response
 
-    def literal_logs_callback(space, projects, environments, channel, tenants, release):
-        api_key, url = get_api_key_and_url()
-
-        space = get_default_argument(get_github_user_from_form(), space, "Space")
-        project = get_default_argument(get_github_user_from_form(), get_item_or_none(sanitize_list(projects), 0),
-                                       "Project")
-        environment = get_default_argument(get_github_user_from_form(),
-                                           get_item_or_none(sanitize_list(environments), 0), "Environment")
-        tenant = get_default_argument(get_github_user_from_form(),
-                                      get_item_or_none(sanitize_list(tenants), 0), "Tenant")
-
-        logs = get_deployment_logs(space, project, environment, tenant, release, api_key, url)
-
-        return f"```{logs}```"
-
     def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release):
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
-        project = get_default_argument(get_github_user_from_form(), get_item_or_none(sanitize_list(projects), 0),
+
+        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
+
+        space_projects = get_projects(space_id, api_key, url)
+        sanitized_projects = sanitize_projects_fuzzy(space_projects, sanitize_projects(projects))
+
+        project = get_default_argument(get_github_user_from_form(), get_item_or_none(sanitized_projects, 0),
                                        "Project")
         environment = get_default_argument(get_github_user_from_form(),
-                                           get_item_or_none(sanitize_list(environments), 0), "Environment")
+                                           get_item_or_none(sanitize_environments(environments), 0), "Environment")
         tenant = get_default_argument(get_github_user_from_form(),
-                                      get_item_or_none(sanitize_list(tenants), 0), "Tenant")
+                                      get_item_or_none(sanitize_tenants(tenants), 0), "Tenant")
 
         logs = get_deployment_logs(space, project, environment, tenant, release, api_key, url)
         # Get the end of the logs if we have exceeded our context limit
@@ -685,12 +690,18 @@ Once default values are set, you can omit the space, environment, and query_proj
         api_key, url = get_api_key_and_url()
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
-        project = get_default_argument(get_github_user_from_form(), get_item_or_none(sanitize_list(projects), 0),
+
+        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
+
+        space_projects = get_projects(space_id, api_key, url)
+        sanitized_projects = sanitize_projects_fuzzy(space_projects, sanitize_projects(projects))
+
+        project = get_default_argument(get_github_user_from_form(), get_item_or_none(sanitized_projects, 0),
                                        "Project")
         environment = get_default_argument(get_github_user_from_form(),
-                                           get_item_or_none(sanitize_list(environments), 0), "Environment")
+                                           get_item_or_none(sanitize_environments(environments), 0), "Environment")
         tenant = get_default_argument(get_github_user_from_form(),
-                                      get_item_or_none(sanitize_list(tenants), 0), "Tenant")
+                                      get_item_or_none(sanitize_tenants(tenants), 0), "Tenant")
 
         context = {"input": original_query}
 

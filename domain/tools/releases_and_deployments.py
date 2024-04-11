@@ -3,7 +3,8 @@ from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_environ
     sanitize_releases, sanitize_dates
 
 
-def answer_releases_and_deployments_wrapper(original_query, callback, additional_messages=None, logging=None):
+def answer_releases_and_deployments_wrapper(original_query, callback, additional_messages=None,
+                                            logging=None):
     """
     A wrapper's job is to return a function with the signature used by the LLM to extract entities from the query. The
     parameters of the wrapper are captured by the returned function without altering the signature of the function.

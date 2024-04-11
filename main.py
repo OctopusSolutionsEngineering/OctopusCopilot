@@ -6,7 +6,7 @@ from domain.config.openai import max_context
 from domain.context.octopus_context import collect_llm_context, max_chars
 from domain.logging.query_loggin import log_query
 from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all, \
-    get_item_or_none
+    get_item_or_none, sanitize_projects_fuzzy, sanitize_projects
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
@@ -17,7 +17,7 @@ from domain.tools.targets_query import answer_machines_wrapper
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_dashboard, \
-    get_deployment_logs, get_space_id_and_name_from_name
+    get_deployment_logs, get_space_id_and_name_from_name, get_projects
 from infrastructure.openai import llm_tool_query, llm_message_query
 
 
@@ -84,11 +84,14 @@ def general_query_callback(original_query, body, messages):
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space, get_api_key(), get_octopus_api())
 
+    space_projects = get_projects(space_id, get_api_key(), get_octopus_api())
+    sanitized_projects = sanitize_projects_fuzzy(space_projects, sanitize_projects(body["project_names"]))
+
     return collect_llm_context(original_query,
                                messages,
                                context,
                                space_id,
-                               body['project_names'],
+                               sanitized_projects,
                                body['runbook_names'],
                                body['target_names'],
                                body['tenant_names'],
