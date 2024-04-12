@@ -63,40 +63,122 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
 
     exclude_targets_with_no_environments = len(sanitized_environments) != 0
 
+    # This is a list of the resources that are set to all be included in the context.
+    # This is usually a sign or a poorly formatted question.
+    include_all_resources = []
+
+    exclude_all_projects_value = exclude_all_projects(query, sanitized_project_names)
+    exclude_projects_except = none_if_falesy(sanitized_project_names)
+    if not exclude_all_projects_value and not exclude_projects_except:
+        include_all_resources.append("projects")
+
+    exclude_all_tenants_value = exclude_all_tenants(query, sanitized_tenant_names)
+    exclude_tenants_except = none_if_falesy(sanitized_tenant_names)
+    if not exclude_all_tenants_value and not exclude_projects_except:
+        include_all_resources.append("tenants")
+
+    exclude_all_targets_value = exclude_all_targets(query, sanitized_target_names)
+    exclude_targets_except = none_if_falesy(sanitized_target_names)
+    if not exclude_all_targets_value and not exclude_targets_except:
+        include_all_resources.append("targets")
+
+    exclude_all_environments_value = exclude_all_environments(query, sanitized_environments)
+    exclude_environments_except = none_if_falesy_or_all(sanitized_environments)
+    if not exclude_all_environments_value and not exclude_environments_except:
+        include_all_resources.append("environments")
+
+    exclude_all_feeds_value = exclude_all_feeds(query, sanitized_feeds)
+    exclude_feeds_except = none_if_falesy(sanitized_feeds)
+    if not exclude_all_feeds_value and not exclude_feeds_except:
+        include_all_resources.append("feeds")
+
+    exclude_all_accounts_value = exclude_all_accounts(query, sanitized_accounts)
+    exclude_accounts_except = none_if_falesy(sanitized_accounts)
+    if not exclude_all_accounts_value and not exclude_accounts_except:
+        include_all_resources.append("accounts")
+
+    exclude_all_certificates_value = exclude_all_certificates(query, sanitized_certificates)
+    exclude_certificates_except = none_if_falesy(sanitized_certificates)
+    if not exclude_all_certificates_value and not exclude_certificates_except:
+        include_all_resources.append("certificates")
+
+    exclude_all_lifecycles_value = exclude_all_lifecycles(query, sanitized_lifecycles)
+    exclude_lifecycles_except = none_if_falesy(sanitized_lifecycles)
+    if not exclude_all_lifecycles_value and not exclude_lifecycles_except:
+        include_all_resources.append("lifecycles")
+
+    exclude_all_workerpools_value = exclude_all_worker_pools(query, sanitized_workerpools)
+    exclude_workerpools_except = none_if_falesy(sanitized_workerpools)
+    if not exclude_all_workerpools_value and not exclude_workerpools_except:
+        include_all_resources.append("worker pools")
+
+    exclude_all_machinepolicies_value = exclude_all_machine_policies(query, sanitized_machinepolicies)
+    exclude_machinepolicies_except = none_if_falesy(sanitized_machinepolicies)
+    if not exclude_all_machinepolicies_value and not exclude_machinepolicies_except:
+        include_all_resources.append("machine policies")
+
+    exclude_all_runbooks_value = exclude_all_runbooks(query, sanitized_runbook_names)
+    exclude_runbooks_except = none_if_falesy(sanitized_runbook_names)
+    if not exclude_all_runbooks_value and not exclude_runbooks_except:
+        include_all_resources.append("runbooks")
+
+    exclude_all_projectgroups_value = exclude_all_project_groups(query, sanitized_projectgroups)
+    exclude_projectgroups_except = none_if_falesy(sanitized_projectgroups)
+    if not exclude_all_projectgroups_value and not exclude_projectgroups_except:
+        include_all_resources.append("project groups")
+
+    exclude_all_projectvariables_value = exclude_all_variables(query, sanitized_variable_names)
+    exclude_projectvariables_except = none_if_falesy_or_all(sanitized_variable_names)
+    if not exclude_all_projectvariables_value and not exclude_projectvariables_except:
+        include_all_resources.append("project variables")
+
+    exclude_all_libraryvariablesets_value = exclude_all_library_variable_sets(query, sanitized_library_variable_sets)
+    exclude_libraryvariablesets_except = none_if_falesy_or_all(sanitized_library_variable_sets)
+    if not exclude_all_libraryvariablesets_value and not exclude_libraryvariablesets_except:
+        include_all_resources.append("library variable sets")
+
+    exclude_all_tenanttags_value = exclude_all_tagsets(query, sanitized_tagsets)
+    exclude_tenanttags_except = none_if_falesy(sanitized_tagsets)
+    if not exclude_all_tenanttags_value and not exclude_tenanttags_except:
+        include_all_resources.append("tenant tags")
+
     body = {
         "space": space_id,
         "url": octopus_url,
         "apiKey": api_key,
         "ignoreCacManagedValues": False,
         "excludeCaCProjectSettings": True,
-        "excludeProjectsExcept": none_if_falesy(sanitized_project_names),
-        "excludeTenantsExcept": none_if_falesy(sanitized_tenant_names),
-        "excludeEnvironmentsExcept": none_if_falesy_or_all(sanitized_environments),
-        "excludeFeedsExcept": none_if_falesy(sanitized_feeds),
-        "excludeAccountsExcept": none_if_falesy(sanitized_accounts),
-        "excludeCertificatesExcept": none_if_falesy(sanitized_certificates),
-        "excludeLifecyclesExcept": none_if_falesy(sanitized_lifecycles),
-        "excludeWorkerPoolsExcept": none_if_falesy(sanitized_workerpools),
-        "excludeMachinePoliciesExcept": none_if_falesy(sanitized_machinepolicies),
-        "excludeTenantTagSetsExcept": none_if_falesy(sanitized_tagsets),
-        "excludeProjectGroupsExcept": none_if_falesy(sanitized_projectgroups),
-        "excludeAllProjects": exclude_all_projects(query, sanitized_project_names),
-        "excludeAllTenants": exclude_all_tenants(query, sanitized_tenant_names),
-        "excludeAllTargets": exclude_all_targets(query, sanitized_target_names),
-        "excludeAllRunbooks": exclude_all_runbooks(query, sanitized_runbook_names),
-        "excludeAllFeeds": exclude_all_feeds(query, sanitized_feeds),
-        "excludeAllAccounts": exclude_all_accounts(query, sanitized_accounts),
-        "excludeAllEnvironments": exclude_all_environments(query, sanitized_environments),
-        "excludeAllCertificates": exclude_all_certificates(query, sanitized_certificates),
-        "excludeAllLifecycles": exclude_all_lifecycles(query, sanitized_lifecycles),
-        "excludeAllWorkerPools": exclude_all_worker_pools(query, sanitized_workerpools),
-        "excludeAllMachinePolicies": exclude_all_machine_policies(query, sanitized_machinepolicies),
-        "excludeAllTenantTagSets": exclude_all_tagsets(query, sanitized_tagsets),
-        "excludeAllProjectGroups": exclude_all_project_groups(query, sanitized_projectgroups),
-        "excludeAllLibraryVariableSets": exclude_all_library_variable_sets(query, sanitized_library_variable_sets),
+        "excludeProjectsExcept": exclude_projects_except,
+        "excludeTenantsExcept": exclude_tenants_except,
+        "excludeTargetsExcept": exclude_targets_except,
+        "excludeEnvironmentsExcept": exclude_environments_except,
+        "excludeFeedsExcept": exclude_feeds_except,
+        "excludeAccountsExcept": exclude_accounts_except,
+        "excludeCertificatesExcept": exclude_all_certificates_value,
+        "excludeLifecyclesExcept": exclude_lifecycles_except,
+        "excludeWorkerPoolsExcept": exclude_workerpools_except,
+        "excludeMachinePoliciesExcept": exclude_machinepolicies_except,
+        "excludeRunbooksExcept": exclude_runbooks_except,
+        "excludeTenantTagSetsExcept": exclude_tenanttags_except,
+        "excludeProjectGroupsExcept": exclude_projectgroups_except,
+        "excludeLibraryVariableSetsExcept": exclude_libraryvariablesets_except,
+        "excludeAllProjects": exclude_all_projects_value,
+        "excludeAllTenants": exclude_all_tenants_value,
+        "excludeAllTargets": exclude_all_targets_value,
+        "excludeAllRunbooks": exclude_all_runbooks_value,
+        "excludeAllFeeds": exclude_all_feeds_value,
+        "excludeAllAccounts": exclude_all_accounts_value,
+        "excludeAllEnvironments": exclude_all_environments_value,
+        "excludeAllCertificates": exclude_all_certificates_value,
+        "excludeAllLifecycles": exclude_all_lifecycles_value,
+        "excludeAllWorkerPools": exclude_all_workerpools_value,
+        "excludeAllMachinePolicies": exclude_all_machinepolicies_value,
+        "excludeAllTenantTagSets": exclude_all_tenanttags_value,
+        "excludeAllProjectGroups": exclude_all_projectgroups_value,
+        "excludeAllLibraryVariableSets": exclude_all_libraryvariablesets_value,
         "excludeAllSteps": exclude_all_steps(query, sanitized_step_names),
-        "excludeAllProjectVariables": exclude_all_variables(query, sanitized_variable_names),
-        "excludeProjectVariablesExcept": none_if_falesy_or_all(sanitized_variable_names),
+        "excludeAllProjectVariables": exclude_all_projectvariables_value,
+        "excludeProjectVariablesExcept": exclude_projectvariables_except,
         "limitAttributeLength": 100,
         # This setting ensures that any project, tenant, runbook, or target names are valid.
         # If not, the assumption is made that the LLM incorrectly identified the resource in the query,
@@ -120,4 +202,18 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
                                                 os.environ["APPLICATION_OCTOTERRA_URL"] + "/api/octoterra",
                                                 body=json.dumps(body)))
 
-    return resp.data.decode("utf-8")
+    answer = resp.data.decode("utf-8")
+
+    # Broad questions are inaccurate, so add a warning when resources are included in the context in bulk.
+    if len(include_all_resources) != 0:
+        answer += (
+                f"\n\nThe following resources were included in bulk in the context of the question: "
+                + f"{', '.join(include_all_resources)}."
+                + "\nThis occurs when a specific resource name is not included in the question."
+                + f"\nThe AI agent will only process {max_context} resources of each type "
+                + f"(i.e. {max_context} projects, {max_context} accounts etc.), "
+                + "meaning broad questions in large spaces results in many resources being ignored."
+                + "\nIncluding the names of specific resources in the question results in a more accurate answer."
+                + "\nSee https://github.com/OctopusSolutionsEngineering/OctopusCopilot/wiki/Prompt-Engineering-with-Octopus for more details.")
+
+    return answer
