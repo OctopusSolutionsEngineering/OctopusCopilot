@@ -131,7 +131,7 @@ def none_if_falesy_or_all(input_list):
     :param input_list: The list to inspect
     :return: None if the list is empty or includes a single item of "<all>", or the original list otherwise
     """
-    if not input_list:
+    if not input_list or not isinstance(input_list, list):
         return None
     if len(input_list) == 1 and input_list[0] == "<all>":
         return None
