@@ -38,7 +38,7 @@ def dashboard_item_to_deployment(space_id, environments, projects, item, api_key
         "EnvironmentName": get_key_or_none(next(filter(lambda env: env["Id"] == item["EnvironmentId"], environments)),
                                            "Name"),
         "ChannelId": item["ChannelId"],
-        "ChannelName": channel["ChannelName"],
+        "ChannelName": channel["Name"],
         "Created": item["Created"],
         "TaskState": item["State"],
         "TaskDuration": item["Duration"],
