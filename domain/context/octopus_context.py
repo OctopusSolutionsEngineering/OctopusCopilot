@@ -1,3 +1,4 @@
+from domain.config.openai import max_context
 from domain.logging.app_logging import configure_logging
 from domain.transformers.minify_hcl import minify_hcl
 from domain.validation.argument_validation import ensure_string_starts_with
@@ -63,26 +64,26 @@ Variables: {variable_names}
 Dates: {dates}""")
 
     # This context provides details about resources like projects, environments, feeds, accounts, certificates, etc.
-    hcl = get_octoterra_space(original_query,
-                              space_id,
-                              project_names,
-                              runbook_names,
-                              target_names,
-                              tenant_names,
-                              library_variable_sets,
-                              environment_names,
-                              feed_names,
-                              account_names,
-                              certificate_names,
-                              lifecycle_names,
-                              workerpool_names,
-                              machinepolicy_names,
-                              tagset_names,
-                              projectgroup_names,
-                              step_names,
-                              variable_names,
-                              api_key,
-                              octopus_url)
+    hcl, include_all_resources = get_octoterra_space(original_query,
+                                                     space_id,
+                                                     project_names,
+                                                     runbook_names,
+                                                     target_names,
+                                                     tenant_names,
+                                                     library_variable_sets,
+                                                     environment_names,
+                                                     feed_names,
+                                                     account_names,
+                                                     certificate_names,
+                                                     lifecycle_names,
+                                                     workerpool_names,
+                                                     machinepolicy_names,
+                                                     tagset_names,
+                                                     projectgroup_names,
+                                                     step_names,
+                                                     variable_names,
+                                                     api_key,
+                                                     octopus_url)
 
     minified_hcl = minify_hcl(hcl)
     available_chars = max_chars
@@ -97,4 +98,18 @@ Dates: {dates}""")
     context["hcl"] = minified_hcl[:available_chars]
     context["percent_trimmed"] = round((len(minified_hcl) - len(context["hcl"])) / len(minified_hcl) * 100, 2)
 
-    return llm_message_query(messages, context, log_query)
+    answer = llm_message_query(messages, context, log_query)
+
+    # Broad questions are inaccurate, so add a warning when resources are included in the context in bulk.
+    if len(include_all_resources) != 0:
+        answer += (
+                f"\n\nThe following resources were included in bulk in the context of the question: "
+                + f"{', '.join(include_all_resources)}."
+                + "\nThis occurs when a specific resource name is not included in the question."
+                + f"\nThe AI agent will only process {max_context} resources of each type "
+                + f"(i.e. {max_context} projects, {max_context} accounts etc.), "
+                + "meaning broad questions in large spaces results in many resources being ignored."
+                + "\nIncluding the names of specific resources in the question results in a more accurate answer."
+                + "\nSee https://github.com/OctopusSolutionsEngineering/OctopusCopilot/wiki/Prompt-Engineering-with-Octopus for more details.")
+
+    return answer

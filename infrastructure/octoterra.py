@@ -204,16 +204,4 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
 
     answer = resp.data.decode("utf-8")
 
-    # Broad questions are inaccurate, so add a warning when resources are included in the context in bulk.
-    if len(include_all_resources) != 0:
-        answer += (
-                f"\n\nThe following resources were included in bulk in the context of the question: "
-                + f"{', '.join(include_all_resources)}."
-                + "\nThis occurs when a specific resource name is not included in the question."
-                + f"\nThe AI agent will only process {max_context} resources of each type "
-                + f"(i.e. {max_context} projects, {max_context} accounts etc.), "
-                + "meaning broad questions in large spaces results in many resources being ignored."
-                + "\nIncluding the names of specific resources in the question results in a more accurate answer."
-                + "\nSee https://github.com/OctopusSolutionsEngineering/OctopusCopilot/wiki/Prompt-Engineering-with-Octopus for more details.")
-
-    return answer
+    return answer, include_all_resources
