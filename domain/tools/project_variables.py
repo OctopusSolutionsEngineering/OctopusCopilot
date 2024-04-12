@@ -225,6 +225,9 @@ Answer 1:
 - "Azure.Account"
 """
 
+        if logging:
+            logging("Enter:", "answer_project_variables")
+
         for key, value in kwargs.items():
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")

@@ -116,6 +116,9 @@ Therefore, the release version of the latest deployment of the "My Project" proj
 The release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "1.2.3-mybranch"
 """
 
+        if logging:
+            logging("Enter:", "answer_releases_and_deployments_usage")
+
         for key, value in kwargs.items():
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
