@@ -5,6 +5,14 @@ def exclude_all_targets(query, entity_list):
                     and "agent" not in query.lower()
                     and "listening" not in query.lower()
                     and "ssh" not in query.lower()
+                    and "cloud region" not in query.lower()
+                    and "cloudregion" not in query.lower()
+                    and "kubernetes" not in query.lower()
+                    and "ecs" not in query.lower()
+                    and "web app" not in query.lower()
+                    and "webapp" not in query.lower()
+                    and "service fabric" not in query.lower()
+                    and "servicefabric" not in query.lower()
                     and "polling" not in query.lower()) else False
 
 
