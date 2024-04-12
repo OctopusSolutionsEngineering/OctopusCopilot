@@ -154,7 +154,7 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
         "excludeEnvironmentsExcept": exclude_environments_except,
         "excludeFeedsExcept": exclude_feeds_except,
         "excludeAccountsExcept": exclude_accounts_except,
-        "excludeCertificatesExcept": exclude_all_certificates_value,
+        "excludeCertificatesExcept": exclude_certificates_except,
         "excludeLifecyclesExcept": exclude_lifecycles_except,
         "excludeWorkerPoolsExcept": exclude_workerpools_except,
         "excludeMachinePoliciesExcept": exclude_machinepolicies_except,
