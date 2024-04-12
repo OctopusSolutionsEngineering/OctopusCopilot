@@ -578,7 +578,14 @@ Once default values are set, you can omit the space, environment, and query_proj
                                             api_key,
                                             url,
                                             log_query)
-        return chat_response
+
+        additional_information = ""
+        if not projects:
+            additional_information = (
+                    "\n\nThe query did not specify a project so the response may reference a subset of all the projects in a space."
+                    + "\nTo see more detailed information, specify a project name in the query.")
+
+        return chat_response + additional_information
 
     def releases_query_messages(original_query, space, projects, environments, channels, releases):
         """
@@ -680,7 +687,13 @@ Once default values are set, you can omit the space, environment, and query_proj
                                             url,
                                             log_query)
 
-        return chat_response
+        additional_information = ""
+        if not query_project:
+            additional_information = (
+                    "\n\nThe query did not specify a project so the response is limited to the latest deployments for all projects."
+                    + "\nTo see more detailed information, specify a project name in the query.")
+
+        return chat_response + additional_information
 
     def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release):
         api_key, url = get_api_key_and_url()
