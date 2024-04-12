@@ -15,7 +15,7 @@ from testcontainers.core.waiting_utils import wait_for_logs
 
 from function_app import copilot_handler_internal, health_internal
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
-from tests.infrastructure.create_and_deploy_release import create_and_deploy_release
+from tests.infrastructure.create_and_deploy_release import create_and_deploy_release, wait_for_task
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.octopus_infrastructure_test import run_terraform
 
@@ -363,6 +363,18 @@ class CopilotChatTest(unittest.TestCase):
 
         self.assertTrue(version in response_text, "Response was " + response_text)
 
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_get_hotfix_deployments(self):
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        deployment = create_and_deploy_release(space_name="Simple", release_version=version + "-hotfix-timeouts-iss253")
+        wait_for_task(deployment["TaskId"], space_name="Simple")
+
+        prompt = "When was the last deployment hotfix successfully applied?"
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        self.assertTrue(version + "-hotfix-timeouts-iss253" in response_text, "Response was " + response_text)
+
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_question(self):
         prompt = "What does the project \"Deploy Web App Container\" do?"
@@ -389,9 +401,8 @@ class CopilotChatTest(unittest.TestCase):
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_logs(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
-        create_and_deploy_release(space_name="Simple", release_version=version)
-
-        time.sleep(30)
+        deployment = create_and_deploy_release(space_name="Simple", release_version=version)
+        wait_for_task(deployment["TaskId"], space_name="Simple")
 
         prompt = "List anything interesting in the deployment logs for the latest deployment."
         response = copilot_handler_internal(build_request(prompt))
@@ -399,6 +410,15 @@ class CopilotChatTest(unittest.TestCase):
 
         # This response could be anything, but make sure the LLM isn't saying sorry for something.
         self.assertTrue("sorry" not in response_text.casefold(), "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_count_projects(self):
+        prompt = "How many projects are there in this space?"
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = response.get_body().decode('utf8')
+
+        # This response could be anything, but make sure the LLM isn't saying sorry for something.
+        self.assertTrue("3" in response_text.casefold(), "Response was " + response_text)
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 import json
+import time
 
 import requests
 
@@ -147,7 +148,32 @@ def create_and_deploy_release(octopus_server_uri="http://localhost:8080", octopu
     # Deploy
     uri = '{0}/api/{1}/deployments'.format(octopus_server_uri, space['Id'])
     response = requests.post(uri, headers=headers, json=deploymentJson)
-    print(response.json())
+    response_json = response.json()
+    print(response_json)
     response.raise_for_status()
 
-    return releaseVersion
+    return response_json
+
+
+def wait_for_task(task_id, octopus_server_uri="http://localhost:8080", octopus_api_key=Octopus_Api_Key,
+                  space_name="Default", ):
+    headers = {'X-Octopus-ApiKey': octopus_api_key}
+
+    # Get space
+    uri = '{0}/api/spaces'.format(octopus_server_uri)
+    spaces = get_octopus_resource(uri, headers)
+    space = next((x for x in spaces if x['Name'] == space_name), None)
+
+    uri = '{0}/api/{1}/Tasks/{2}'.format(octopus_server_uri, space['Id'], task_id)
+
+    # Wait for a minute for the task to finish
+    for i in range(0, 12):
+        response = requests.get(uri, headers=headers)
+        response.raise_for_status()
+        task = response.json()
+
+        if task["State"] == "Executing" or task["State"] == "Cancelling" or task["State"] == "Queued":
+            print("Task is still running")
+            time.sleep(5)
+        else:
+            break
