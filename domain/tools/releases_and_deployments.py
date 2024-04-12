@@ -24,7 +24,10 @@ def answer_releases_and_deployments_wrapper(original_query, callback, additional
 
     def answer_releases_and_deployments_usage(space=None, projects=None, environments=None, channels=None,
                                               releases=None, dates=None, **kwargs):
-        """Answers a question about deployments and releases.
+        """
+        Answers a question about deployments and releases, including details like the success or failure of a
+        deployment, the duration of a deployment, how long a deployment takes to complete, the release version, who
+        created the deployment.
 
         Args:
         space: Space name
