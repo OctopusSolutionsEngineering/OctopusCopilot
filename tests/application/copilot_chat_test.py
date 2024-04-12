@@ -417,8 +417,9 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 
-        # This response could be anything, but make sure the LLM isn't saying sorry for something.
-        self.assertTrue("3" in response_text.casefold(), "Response was " + response_text)
+        # This should return the one default project (even though there are 3 overall)
+        self.assertTrue("1" in response_text.casefold() or "one" in response_text.casefold(),
+                        "Response was " + response_text)
 
 
 if __name__ == '__main__':
