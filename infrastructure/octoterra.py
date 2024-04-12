@@ -74,7 +74,7 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
 
     exclude_all_tenants_value = exclude_all_tenants(query, sanitized_tenant_names)
     exclude_tenants_except = none_if_falesy(sanitized_tenant_names)
-    if not exclude_all_tenants_value and not exclude_projects_except:
+    if not exclude_all_tenants_value and not exclude_tenants_except:
         include_all_resources.append("tenants")
 
     exclude_all_targets_value = exclude_all_targets(query, sanitized_target_names)
