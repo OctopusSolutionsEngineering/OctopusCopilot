@@ -1,5 +1,11 @@
 def exclude_all_targets(query, entity_list):
-    return True if not entity_list and "target" not in query.lower() and "machine" not in query.lower() and "agent" not in query.lower() else False
+    return True if (not entity_list
+                    and "target" not in query.lower()
+                    and "machine" not in query.lower()
+                    and "agent" not in query.lower()
+                    and "listening" not in query.lower()
+                    and "ssh" not in query.lower()
+                    and "polling" not in query.lower()) else False
 
 
 def exclude_all_runbooks(query, entity_list):
