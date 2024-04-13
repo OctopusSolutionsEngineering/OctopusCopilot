@@ -56,10 +56,10 @@ def get_github_user(get_token):
     return str(json["id"])
 
 
-def search_repo(repo, language, keywords, get_token):
+def search_repo(repo, language, keywords, get_token=None):
     query = f"{' '.join(keywords)} in:file language:{language} repo:{repo}"
     api = build_github_url("search/code", {"q": query})
-    resp = http.request("GET", api, headers=get_github_headers(get_token))
+    resp = http.request("GET", api, headers=get_github_headers(get_token) if get_token is not None else None)
 
     if resp.status != 200:
         raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))

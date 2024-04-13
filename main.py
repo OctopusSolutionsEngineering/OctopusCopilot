@@ -3,8 +3,10 @@ import json
 import os
 
 from domain.config.openai import max_context
+from domain.context.github_docs import get_docs_context
 from domain.context.octopus_context import collect_llm_context, max_chars
 from domain.logging.query_loggin import log_query
+from domain.messages.docs_messages import docs_prompt
 from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all, \
     get_item_or_none, sanitize_projects_fuzzy, sanitize_projects
 from domain.tools.certificates_query import answer_certificates_wrapper
@@ -18,7 +20,6 @@ from domain.tools.targets_query import answer_machines_wrapper
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from infrastructure.github import search_repo
-from infrastructure.http_pool import http
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_dashboard, \
     get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator
 from infrastructure.openai import llm_tool_query, llm_message_query
@@ -281,15 +282,8 @@ def releases_query_callback(original_query, messages, space, projects, environme
 
 def how_to_callback(original_query, keywords):
     results = search_repo("OctopusDeploy/docs", "markdown", keywords, get_github_token())
-    text = ""
-    # Get the first 5 docs
-    for match in results["items"][:5]:
-        raw_url = match["html_url"].replace("/blob/", "/raw/")
-        resp = http.request("GET", raw_url)
-        text += resp.data.decode("utf-8") + "\n\n"
-
-    messages = [('user', text[:max_chars].replace("{", "{{").replace("}", "}}")),
-                ('user', "{input}")]
+    text = get_docs_context(results)
+    messages = docs_prompt(text)
 
     context = {"input": original_query}
 

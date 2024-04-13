@@ -8,6 +8,7 @@ import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_context
 from domain.config.users import get_admin_users
+from domain.context.github_docs import get_docs_context
 from domain.context.octopus_context import collect_llm_context, llm_message_query, max_chars
 from domain.defaults.defaults import get_default_argument
 from domain.encryption.encryption import decrypt_eax, generate_password
@@ -20,6 +21,7 @@ from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
+from domain.messages.docs_messages import docs_prompt
 from domain.messages.general import build_hcl_prompt
 from domain.messages.test_message import build_test_prompt
 from domain.sanitizers.sanitized_list import get_item_or_none, \
@@ -300,6 +302,20 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                      {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
                                       "input": original_query}, log_query)
 
+        def how_to_callback(original_query, keywords, *args, **kwargs):
+            """
+            A function that queries the documentation via the LLM
+            """
+            results = search_repo("OctopusDeploy/docs", "markdown", keywords)
+            text = get_docs_context(results)
+            messages = docs_prompt(text)
+
+            context = {"input": original_query}
+
+            chat_response = llm_message_query(messages, context, log_query)
+
+            return chat_response
+
         def get_tools(tool_query):
             return FunctionDefinitions([
                 FunctionDefinition(general_query_callback),
@@ -314,7 +330,8 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                                             log_query)),
                 FunctionDefinition(answer_logs_wrapper(tool_query, logs_query_callback, log_query)),
                 FunctionDefinition(answer_machines_wrapper(tool_query, resource_specific_callback, log_query)),
-                FunctionDefinition(answer_certificates_wrapper(tool_query, resource_specific_callback, log_query))
+                FunctionDefinition(answer_certificates_wrapper(tool_query, resource_specific_callback, log_query)),
+                FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
             ])
 
         # Call the appropriate tool. This may be a straight pass through of the query and context,
@@ -800,15 +817,8 @@ Once default values are set, you can omit the space, environment, and query_proj
 
     def how_to_callback(original_query, keywords):
         results = search_repo("OctopusDeploy/docs", "markdown", keywords, get_github_user_from_form())
-        text = ""
-        # Get the first 5 docs
-        for match in results["items"][:5]:
-            raw_url = match["html_url"].replace("/blob/", "/raw/")
-            resp = http.request("GET", raw_url)
-            text += resp.data.decode("utf-8") + "\n\n"
-
-        messages = [('user', text[:max_chars].replace("{", "{{").replace("}", "}}")),
-                    ('user', "{input}")]
+        text = get_docs_context(results)
+        messages = docs_prompt(text)
 
         context = {"input": original_query}
 
