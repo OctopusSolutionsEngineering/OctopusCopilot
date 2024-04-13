@@ -5,6 +5,7 @@ import os
 from domain.config.openai import max_context
 from domain.context.github_docs import get_docs_context
 from domain.context.octopus_context import collect_llm_context, max_chars
+from domain.errors.error_handling import handle_error
 from domain.logging.query_loggin import log_query
 from domain.messages.docs_messages import docs_prompt
 from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all, \
@@ -312,16 +313,17 @@ def build_tools(tool_query):
     :return: The OpenAI tools
     """
     return FunctionDefinitions([
-        FunctionDefinition(answer_general_query_wrapper(general_query_callback, log_query), AnswerGeneralQuery),
+        FunctionDefinition(answer_general_query_wrapper(tool_query, general_query_callback, log_query),
+                           AnswerGeneralQuery),
         FunctionDefinition(answer_project_variables_wrapper(tool_query, variable_query_callback, log_query)),
         FunctionDefinition(answer_project_variables_usage_wrapper(tool_query, variable_query_callback, log_query)),
         FunctionDefinition(
             answer_releases_and_deployments_wrapper(tool_query, releases_query_callback, None, log_query)),
         FunctionDefinition(answer_logs_wrapper(tool_query, logs_callback, log_query)),
         FunctionDefinition(answer_machines_wrapper(tool_query, resource_specific_callback, log_query)),
-        FunctionDefinition(answer_certificates_wrapper(tool_query, resource_specific_callback, log_query)),
-        FunctionDefinition(how_to_wrapper(tool_query, how_to_callback, log_query))
-    ])
+        FunctionDefinition(answer_certificates_wrapper(tool_query, resource_specific_callback, log_query))],
+        fallback=FunctionDefinition(how_to_wrapper(tool_query, how_to_callback, log_query))
+    )
 
 
 try:
@@ -329,4 +331,4 @@ try:
                             lambda x, y: print(x + " " + ",".join(sanitize_list(y)))).call_function()
     print(result)
 except Exception as e:
-    print(e)
+    handle_error(e)

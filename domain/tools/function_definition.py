@@ -28,8 +28,14 @@ class FunctionDefinitions:
     This class represents a collection of FunctionDefinition objects.
     """
 
-    def __init__(self, functions):
-        self.functions = functions
+    def __init__(self, functions, fallback=None):
+        """
+        Construct a collection of function tools that can be used by OpenAI.
+        :param functions: The list of functions to use as tool
+        :param fallback: If the functions do not match, use this function as a fallback
+        """
+        self.functions = [function for function in functions if function]
+        self.fallback = fallback
 
     def get_tools(self):
         """
@@ -37,6 +43,16 @@ class FunctionDefinitions:
         :return: The OpenAI tools
         """
         return list(map(lambda f: f.tool, self.functions))
+
+    def has_fallback(self):
+        return self.fallback is not None
+
+    def get_fallback_tool(self):
+        """
+        Get the fallback tool
+        :return: The OpenAI tools
+        """
+        return FunctionDefinitions([self.fallback])
 
     def get_function(self, function_name):
         """

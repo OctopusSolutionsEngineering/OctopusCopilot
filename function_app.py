@@ -854,15 +854,14 @@ Once default values are set, you can omit the space, environment, and query_proj
             FunctionDefinition(answer_logs_wrapper(query, logs_callback, log_query)),
             FunctionDefinition(answer_machines_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(answer_certificates_wrapper(query, resource_specific_callback, log_query)),
-            FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
-            FunctionDefinition(provide_help),
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(logout),
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
             FunctionDefinition(remove_default_value),
-            FunctionDefinition(get_dashboard_wrapper),
-        ])
+            FunctionDefinition(get_dashboard_wrapper)],
+            fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query))
+        )
 
     try:
         query = extract_query(req)

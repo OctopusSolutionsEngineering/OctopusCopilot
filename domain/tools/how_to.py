@@ -20,11 +20,11 @@ def how_to_wrapper(query, callback, logging):
     """
 
     def how_to_usage(keywords=None, **kwargs):
-        """Answers a query about how to perform a task, where to access, see, or view
-         certain information, how to configure a setting, how to use the REST API, what a general
-         concept is, how a feature works, how to troubleshoot an issue, how to set up a deployment, where to
-         access metrics, how to configure security, and any other information that would be answered through
-         documentation.
+        """Answers any question on how or where to create, use, add, remove, setup, enable, disable, configure, find, etc.
+        Octopus Deploy features like Projects, Environments, Lifecycles, Channels, Deployments, Releases,
+        Deployment Processes, Variables, Lifecycle Events, Integrations, Retention Policies, Security,
+        Audit Logs, Targets, Machines, Agents, Authentication, Tentacles, SSH, Step Templates, Licenses,
+         Metrics, DORA, etc.
 
         Args:
         keywords: The keywords extracted from the query

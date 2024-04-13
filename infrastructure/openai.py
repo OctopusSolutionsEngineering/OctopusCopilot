@@ -98,8 +98,10 @@ def llm_tool_query(query, llm_tools, log_query=None, extra_prompt_messages=None)
             return e.body.get('message')
         return e.message
 
-    # In the event that there was no matched function, return a canned response
-    if not hasattr(action, "tool"):
-        return FunctionCall(lambda: NO_FUNCTION_RESPONSE, "none", {})
+    if hasattr(action, "tool"):
+        return FunctionCall(functions.get_function(action.tool), action.tool, action.tool_input)
 
-    return FunctionCall(functions.get_function(action.tool), action.tool, action.tool_input)
+    if functions.has_fallback():
+        return llm_tool_query(query, lambda _: functions.get_fallback_tool(), log_query, extra_prompt_messages)
+
+    return FunctionCall(lambda: NO_FUNCTION_RESPONSE, "none", {})
