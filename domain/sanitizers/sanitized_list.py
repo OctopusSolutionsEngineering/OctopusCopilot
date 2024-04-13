@@ -1,4 +1,5 @@
 import re
+from functools import reduce
 
 from fuzzywuzzy import fuzz
 
@@ -18,6 +19,18 @@ def sanitize_projects(input_list):
     return sanitize_list(input_list, "all|\\*|Project\\s*[0-9A-Z]|My\\s*Project")
 
 
+def update_query(original_query, sanitized_projects):
+    """
+    Replace resource names in the original query with those found by fuzzy matching.
+    :param original_query: The original query
+    :param sanitized_projects: The output of the sanitize_projects_fuzzy function
+    :return: The query with misnamed resources replaced with their fuzzy matches
+    """
+    return reduce(
+        lambda new_query, name_map: new_query.replace(name_map["original"], name_map["matched"]),
+        sanitized_projects, original_query)
+
+
 def sanitize_projects_fuzzy(space_projects_generator, projects):
     """
     Match the list of projects to the closest project names that exist in the space. This allows
@@ -28,7 +41,8 @@ def sanitize_projects_fuzzy(space_projects_generator, projects):
     :return: A list of the closest matching project names from the space
     """
     fuzzy_items = [get_item_fuzzy_generator(space_projects_generator, project) for project in projects]
-    return [project["Name"] for project in fuzzy_items if project]
+    return [{"original": project["original"], "matched": project["matched"]["Name"]} for project in fuzzy_items if
+            project]
 
 
 def sanitize_tenants(input_list):
@@ -232,7 +246,7 @@ def get_item_fuzzy_generator(items_generator, name):
         # Early exit on exact name match. If the generator function uses lazy loading, this can have
         # a performance benefit.
         if item["Name"] == name:
-            return item
+            return {"original": name, "matched": item}
 
         # Track any case-insensitive matches
         if item["Name"].casefold() == name.casefold():
@@ -243,12 +257,12 @@ def get_item_fuzzy_generator(items_generator, name):
 
     # In the absence of an exact match, return a case-insensitive match
     if case_insensitive:
-        return case_insensitive
+        return {"original": name, "matched": case_insensitive}
 
     # Fall back to the best fuzzy match
     fuzz_match_sored = sorted(fuzzy_matches, key=lambda x: x["ratio"], reverse=True)
 
     if len(fuzz_match_sored) != 0:
-        return fuzz_match_sored[0]["item"]
+        return {"original": name, "matched": fuzz_match_sored[0]["item"]}
 
     return None

@@ -23,7 +23,8 @@ from domain.logging.query_loggin import log_query
 from domain.messages.general import build_hcl_prompt
 from domain.messages.test_message import build_test_prompt
 from domain.sanitizers.sanitized_list import get_item_or_none, \
-    none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_projects_fuzzy, sanitize_tenants
+    none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_projects_fuzzy, sanitize_tenants, \
+    update_query
 from domain.security.security import is_admin_user
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
@@ -499,14 +500,17 @@ Once default values are set, you can omit the space, environment, and query_proj
         sanitized_projects = sanitize_projects_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
                                                      sanitize_projects(body["project_names"]))
 
-        project_names = get_default_argument(get_github_user_from_form(), sanitized_projects, "Project")
+        project_names = get_default_argument(get_github_user_from_form(),
+                                             [project["matched"] for project in sanitized_projects], "Project")
         environment_names = get_default_argument(get_github_user_from_form(),
                                                  sanitize_environments(body["environment_names"]),
                                                  "Environment")
 
-        context = {"input": original_query}
+        processed_query = update_query(original_query, sanitized_projects)
 
-        return collect_llm_context(original_query,
+        context = {"input": processed_query}
+
+        return collect_llm_context(processed_query,
                                    messages,
                                    context,
                                    space_id,
@@ -546,13 +550,14 @@ Once default values are set, you can omit the space, environment, and query_proj
         sanitized_projects = sanitize_projects_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
                                                      sanitize_projects(projects))
 
-        projects = get_default_argument(get_github_user_from_form(), sanitized_projects, "Project")
+        projects = get_default_argument(get_github_user_from_form(),
+                                        [project["matched"] for project in sanitized_projects], "Project")
 
-        context = {"input": original_query}
+        processed_query = update_query(original_query, sanitized_projects)
 
-        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
+        context = {"input": processed_query}
 
-        chat_response = collect_llm_context(original_query,
+        chat_response = collect_llm_context(processed_query,
                                             messages,
                                             context,
                                             space_id,
@@ -634,14 +639,17 @@ Once default values are set, you can omit the space, environment, and query_proj
                                                      sanitize_projects(projects))
 
         query_project = get_default_argument(get_github_user_from_form(),
-                                             get_item_or_none(sanitized_projects, 0),
+                                             get_item_or_none(
+                                                 [project["matched"] for project in sanitized_projects], 0),
                                              "Project")
 
         query_environments = get_default_argument(get_github_user_from_form(),
                                                   get_item_or_none(sanitized_environments, 0),
                                                   "Environment")
 
-        context = {"input": original_query}
+        processed_query = update_query(original_query, sanitized_projects)
+
+        context = {"input": processed_query}
 
         # We need some additional JSON data to answer this question
         if query_project:
@@ -660,7 +668,7 @@ Once default values are set, you can omit the space, environment, and query_proj
             # returned to supply the dashboard. The results are broad, but not deep.
             context["json"] = get_deployments_from_dashboard(space_id, api_key, url)
 
-        chat_response = collect_llm_context(original_query,
+        chat_response = collect_llm_context(processed_query,
                                             messages,
                                             context,
                                             space_id,
@@ -708,7 +716,9 @@ Once default values are set, you can omit the space, environment, and query_proj
         sanitized_projects = sanitize_projects_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
                                                      sanitize_projects(projects))
 
-        project = get_default_argument(get_github_user_from_form(), get_item_or_none(sanitized_projects, 0),
+        project = get_default_argument(get_github_user_from_form(),
+                                       get_item_or_none([project["matched"] for project in sanitized_projects],
+                                                        0),
                                        "Project")
         environment = get_default_argument(get_github_user_from_form(),
                                            get_item_or_none(sanitize_environments(environments), 0), "Environment")
@@ -719,7 +729,9 @@ Once default values are set, you can omit the space, environment, and query_proj
         # Get the end of the logs if we have exceeded our context limit
         logs = logs[-max_chars:]
 
-        context = {"input": original_query, "context": logs}
+        processed_query = update_query(original_query, sanitized_projects)
+
+        context = {"input": processed_query, "context": logs}
 
         return llm_message_query(messages, context, log_query)
 
@@ -745,18 +757,20 @@ Once default values are set, you can omit the space, environment, and query_proj
         sanitized_projects = sanitize_projects_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
                                                      sanitize_projects(projects))
 
-        project = get_default_argument(get_github_user_from_form(), get_item_or_none(sanitized_projects, 0),
+        project = get_default_argument(get_github_user_from_form(),
+                                       get_item_or_none([project["matched"] for project in sanitized_projects],
+                                                        0),
                                        "Project")
         environment = get_default_argument(get_github_user_from_form(),
                                            get_item_or_none(sanitize_environments(environments), 0), "Environment")
         tenant = get_default_argument(get_github_user_from_form(),
                                       get_item_or_none(sanitize_tenants(tenants), 0), "Tenant")
 
-        context = {"input": original_query}
+        processed_query = update_query(original_query, sanitized_projects)
 
-        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
+        context = {"input": processed_query}
 
-        return collect_llm_context(original_query,
+        return collect_llm_context(processed_query,
                                    messages,
                                    context,
                                    space_id,

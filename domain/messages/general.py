@@ -74,13 +74,6 @@ def build_hcl_prompt(few_shot=None):
         ("system", "The values of secret variables are not defined in the Terraform configuration."),
         ("system",
          "You will be penalized if you mention the fact that the values of secret variables are not defined."),
-        # Project names have fuzzy matching and the name in the question may not be the name that is used
-        # to provide the answer.
-        ("system", "The name of the project in the HCL context is the definitive project name."),
-        ("system",
-         "The name of the project in the question may not exactly match the name of any project in the HCL context."),
-        ("system",
-         "If the project name supplied in the question can not be found in the HCL context, use the project name in the HCL in the answer."),
         # Sparkle that may improve the quality of the responses.
         ("system", "I’m going to tip $500 for a better solution!"),
         # Get the LLM to implement a chain-of-thought
