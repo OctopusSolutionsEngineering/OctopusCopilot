@@ -29,6 +29,7 @@ from domain.security.security import is_admin_user
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.how_to import how_to_wrapper
 from domain.tools.logs import answer_logs_wrapper
 from domain.tools.project_variables import answer_project_variables_wrapper, answer_project_variables_usage_wrapper
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
@@ -41,7 +42,7 @@ from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
 from domain.validation.default_value_validation import validate_default_value_name
-from infrastructure.github import get_github_user
+from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
     create_limited_api_key, get_dashboard, get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator
@@ -797,6 +798,24 @@ Once default values are set, you can omit the space, environment, and query_proj
                                    url,
                                    log_query)
 
+    def how_to_callback(original_query, keywords):
+        results = search_repo("OctopusDeploy/docs", "markdown", keywords, get_github_user_from_form())
+        text = ""
+        # Get the first 5 docs
+        for match in results["items"][:5]:
+            raw_url = match["html_url"].replace("/blob/", "/raw/")
+            resp = http.request("GET", raw_url)
+            text += resp.data.decode("utf-8") + "\n\n"
+
+        messages = [('user', text[:max_chars].replace("{", "{{").replace("}", "}}")),
+                    ('user', "{input}")]
+
+        context = {"input": original_query}
+
+        chat_response = llm_message_query(messages, context, log_query)
+
+        return chat_response
+
     def build_form_tools(query):
         """
         Builds a set of tools configured for use with HTTP requests (i.e. API key
@@ -820,6 +839,7 @@ Once default values are set, you can omit the space, environment, and query_proj
             FunctionDefinition(answer_logs_wrapper(query, logs_callback, log_query)),
             FunctionDefinition(answer_machines_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(answer_certificates_wrapper(query, resource_specific_callback, log_query)),
+            FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
             FunctionDefinition(provide_help),
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(logout),

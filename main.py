@@ -10,12 +10,15 @@ from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environment
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.how_to import how_to_wrapper
 from domain.tools.logs import answer_logs_wrapper
 from domain.tools.project_variables import answer_project_variables_wrapper, answer_project_variables_usage_wrapper
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.tools.targets_query import answer_machines_wrapper
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from domain.transformers.deployments_from_release import get_deployments_for_project
+from infrastructure.github import search_repo
+from infrastructure.http_pool import http
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_dashboard, \
     get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator
 from infrastructure.openai import llm_tool_query, llm_message_query
@@ -43,6 +46,14 @@ def get_api_key():
     :return: The Octopus API key
     """
     return os.environ.get('OCTOPUS_CLI_API_KEY')
+
+
+def get_github_token():
+    """
+    A function that extracts the Github token from an environment variable
+    :return: The Octopus API key
+    """
+    return os.environ.get('GH_TEST_TOKEN')
 
 
 def get_octopus_api():
@@ -268,6 +279,25 @@ def releases_query_callback(original_query, messages, space, projects, environme
     return chat_response
 
 
+def how_to_callback(original_query, keywords):
+    results = search_repo("OctopusDeploy/docs", "markdown", keywords, get_github_token())
+    text = ""
+    # Get the first 5 docs
+    for match in results["items"][:5]:
+        raw_url = match["html_url"].replace("/blob/", "/raw/")
+        resp = http.request("GET", raw_url)
+        text += resp.data.decode("utf-8") + "\n\n"
+
+    messages = [('user', text[:max_chars].replace("{", "{{").replace("}", "}}")),
+                ('user', "{input}")]
+
+    context = {"input": original_query}
+
+    chat_response = llm_message_query(messages, context, logging)
+
+    return chat_response
+
+
 def get_default_argument(argument, default_name):
     if argument:
         return argument
@@ -295,7 +325,8 @@ def build_tools(tool_query):
             answer_releases_and_deployments_wrapper(tool_query, releases_query_callback, None, log_query)),
         FunctionDefinition(answer_logs_wrapper(tool_query, logs_callback, log_query)),
         FunctionDefinition(answer_machines_wrapper(tool_query, resource_specific_callback, log_query)),
-        FunctionDefinition(answer_certificates_wrapper(tool_query, resource_specific_callback, log_query))
+        FunctionDefinition(answer_certificates_wrapper(tool_query, resource_specific_callback, log_query)),
+        FunctionDefinition(how_to_wrapper(tool_query, how_to_callback, log_query))
     ])
 
 
