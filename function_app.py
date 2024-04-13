@@ -304,7 +304,12 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
         def how_to_callback(original_query, keywords, *args, **kwargs):
             """
-            A function that queries the documentation via the LLM
+            A function that queries the documentation via the LLM.
+
+            Note that this function involves some inefficiency when called from the Chrome
+            extension, as the extension will first attempt to find any resource names,
+            build the context, and then pass the query back to the agent with the context.
+            However, this callback ignores the context.
             """
             results = search_repo("OctopusDeploy/docs", "markdown", keywords)
             text = get_docs_context(results)
