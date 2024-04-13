@@ -68,7 +68,7 @@ dates: any dates in the query"""
         # of these resources anywhere in the question. We clean up the results before sending them back
         # to the client.
         body = {
-            "space_name": sanitize_space(space),
+            "space_name": sanitize_space(query, space),
             "project_names": sanitize_projects(projects),
             "runbook_names": sanitize_runbooks(runbooks),
             "target_names": sanitize_targets(targets),

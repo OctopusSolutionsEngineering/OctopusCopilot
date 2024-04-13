@@ -8,8 +8,13 @@ from domain.sanitizers.sanitize_strings import replace_with_empty_string
 from domain.transformers.date_convert import datetime_to_str
 
 
-def sanitize_space(input_string):
+def sanitize_space(query, input_string):
     input_list = sanitize_list(input_string, "all|\\*|Space|Space\\s*[0-9A-Z]|My\\s*Space")
+
+    # The LLM will sometimes return the space name of "default" when no specific space is mentioned
+    # If the query does not contain "default" or "Default", we ignore the name default.
+    if "default" or "Default" not in query:
+        input_list = sanitize_list(input_string, "default|Default")
     if len(input_list) > 0:
         return input_list[0]
     return None
