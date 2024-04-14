@@ -101,7 +101,7 @@ Dates: {dates}""")
 
     # Broad questions are inaccurate, so add a warning when resources are included in the context in bulk.
     if len(include_all_resources) != 0:
-        answer += ("The question was too broad to generate an accurate answer."
+        answer += ("\n\nNOTE: The question was too broad to generate an accurate answer."
                    + f"\nProvide specific names for the following resources to generate a more accurate answer: {', '.join(include_all_resources)}."
                    + "\nSee https://github.com/OctopusSolutionsEngineering/OctopusCopilot/wiki/Prompt-Engineering-with-Octopus for more details.")
 
