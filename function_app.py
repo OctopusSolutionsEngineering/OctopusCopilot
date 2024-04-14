@@ -821,7 +821,12 @@ Once default values are set, you can omit the space, environment, and query_proj
                                    log_query)
 
     def how_to_callback(original_query, keywords):
-        results = search_repo("OctopusDeploy/docs", "markdown", keywords, get_github_user_from_form())
+        try:
+            results = search_repo("OctopusDeploy/docs", "markdown", keywords, get_github_user_from_form())
+        except GitHubRequestFailed as e:
+            # Fallback to an unauthenticated search
+            results = search_repo("OctopusDeploy/docs", "markdown", keywords)
+
         text = get_docs_context(results)
         messages = docs_prompt(text)
 
