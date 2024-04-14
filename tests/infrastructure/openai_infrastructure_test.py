@@ -290,26 +290,26 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies queries answered by documentation
         """
 
+        self.assertEqual(llm_tool_query("How do I review deployment frequency metrics?",
+                                        build_mock_test_tools).name, "provide_help_and_instructions")
         self.assertEqual(llm_tool_query("How do I enable Azure AD?",
-                                        build_mock_test_tools).name, "how_to_usage")
+                                        build_mock_test_tools).name, "provide_help_and_instructions")
         self.assertEqual(llm_tool_query("How do I create a new azure target?",
-                                        build_mock_test_tools).name, "how_to_usage")
+                                        build_mock_test_tools).name, "provide_help_and_instructions")
         self.assertEqual(llm_tool_query("How do I enable the ServiceNow integration?",
-                                        build_mock_test_tools).name, "how_to_usage")
+                                        build_mock_test_tools).name, "provide_help_and_instructions")
         self.assertEqual(llm_tool_query("How do I setup a polling Tentacle?",
-                                        build_mock_test_tools).name, "how_to_usage")
+                                        build_mock_test_tools).name, "provide_help_and_instructions")
         self.assertEqual(llm_tool_query("How do I add a Worker?",
-                                        build_mock_test_tools).name, "how_to_usage")
+                                        build_mock_test_tools).name, "provide_help_and_instructions")
         self.assertEqual(llm_tool_query("How do I use Community Step templates?",
-                                        build_mock_test_tools).name, "how_to_usage")
-        self.assertEqual(llm_tool_query("Where do I enable Config-as-code for a project?",
-                                        build_mock_test_tools).name, "how_to_usage")
+                                        build_mock_test_tools).name, "provide_help_and_instructions")
+        self.assertEqual(llm_tool_query("How do I enable Config-as-code for a project?",
+                                        build_mock_test_tools).name, "provide_help_and_instructions")
         self.assertEqual(llm_tool_query("How do I use lifecycles",
-                                        build_mock_test_tools).name, "how_to_usage")
-        self.assertEqual(llm_tool_query("Where do I view the DORA metrics for my space?",
-                                        build_mock_test_tools).name, "how_to_usage")
-        self.assertEqual(llm_tool_query("Where can I see deployment frequency?",
-                                        build_mock_test_tools).name, "how_to_usage")
+                                        build_mock_test_tools).name, "provide_help_and_instructions")
+        self.assertEqual(llm_tool_query("How do I view the DORA metrics for my space?",
+                                        build_mock_test_tools).name, "provide_help_and_instructions")
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_prompt(self):

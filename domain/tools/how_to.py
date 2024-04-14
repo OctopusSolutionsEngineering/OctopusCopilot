@@ -19,20 +19,22 @@ def how_to_wrapper(query, callback, logging):
     context is implementation specific.
     """
 
-    def how_to_usage(keywords=None, **kwargs):
-        """Answers any question on how or where to create, use, add, remove, setup, enable, disable, configure, find, etc.
-        Octopus Deploy features like Projects, Environments, Lifecycles, Channels, Deployments, Releases,
+    def provide_help_and_instructions(keywords=None, **kwargs):
+        """Answers questions like how or where to create, use, add, remove, setup, enable, disable, configure, or find
+        Octopus Deploy features like: Projects, Environments, Lifecycles, Channels, Deployments, Releases,
         Deployment Processes, Variables, Lifecycle Events, Integrations, Retention Policies, Security,
         Audit Logs, Targets, Machines, Agents, Authentication, Tentacles, SSH, Step Templates, Licenses,
-        Metrics, DORA, etc. This function also answers questions about the use of the CLI, code samples, REST API,
-        and explanations of high level concepts.
+        Metrics, DORA, Config-as-Code (CaC) etc. It also answers questions about the use of the CLI, code samples, REST API,
+        explanations of high level concepts, integration with continuous integration (CI) servers. It also provides
+        details on metrics like deployment frequency, lead time for changes, change failure rate, and recovery time,
+        and how and where to measure, view, and generate these metrics.
 
         Args:
         keywords: The keywords extracted from the query
         """
 
         if logging:
-            logging("Enter:", "how_to_usage")
+            logging("Enter:", "provide_help_and_instructions")
 
         for key, value in kwargs.items():
             if logging:
@@ -41,4 +43,4 @@ def how_to_wrapper(query, callback, logging):
         # This is just a passthrough to the original callback
         return callback(query, sanitize_list(keywords))
 
-    return how_to_usage
+    return provide_help_and_instructions
