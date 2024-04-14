@@ -883,11 +883,13 @@ Once default values are set, you can omit the space, environment, and query_proj
         return func.HttpResponse(convert_to_sse_response("Your GitHub token is invalid."),
                                  headers=get_sse_headers())
     except OctopusRequestFailed as e:
+        handle_error(e)
         return func.HttpResponse(convert_to_sse_response(
             "The request to the Octopus API failed. "
             + "Either your API key is invalid, or there was an issue contacting the server."),
             headers=get_sse_headers())
     except GitHubRequestFailed as e:
+        handle_error(e)
         return func.HttpResponse(
             convert_to_sse_response("The request to the GitHub API failed. "
                                     + "Your GitHub token is likely to be invalid."),
