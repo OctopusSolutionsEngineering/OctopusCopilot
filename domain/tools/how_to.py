@@ -24,7 +24,8 @@ def how_to_wrapper(query, callback, logging):
         Octopus Deploy features like Projects, Environments, Lifecycles, Channels, Deployments, Releases,
         Deployment Processes, Variables, Lifecycle Events, Integrations, Retention Policies, Security,
         Audit Logs, Targets, Machines, Agents, Authentication, Tentacles, SSH, Step Templates, Licenses,
-         Metrics, DORA, etc.
+        Metrics, DORA, etc. This function also answers questions about the use of the CLI, code samples, REST API,
+        and explanations of high level concepts.
 
         Args:
         keywords: The keywords extracted from the query
