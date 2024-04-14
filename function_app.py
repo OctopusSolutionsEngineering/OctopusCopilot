@@ -377,8 +377,11 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         server = req.headers.get("X-Octopus-Server")
         return api_key, server
 
+    def get_github_token():
+        return req.headers.get("X-GitHub-Token")
+
     def get_github_user_from_form():
-        return get_github_user(req.headers.get("X-GitHub-Token"))
+        return get_github_user(get_github_token())
 
     def clean_up_all_records():
         """Cleans up, or deletes, all user records
@@ -822,7 +825,7 @@ Once default values are set, you can omit the space, environment, and query_proj
 
     def how_to_callback(original_query, keywords):
         try:
-            results = search_repo("OctopusDeploy/docs", "markdown", keywords, get_github_user_from_form())
+            results = search_repo("OctopusDeploy/docs", "markdown", keywords, get_github_token())
         except GitHubRequestFailed as e:
             # Fallback to an unauthenticated search
             results = search_repo("OctopusDeploy/docs", "markdown", keywords)
