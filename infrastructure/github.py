@@ -4,21 +4,22 @@ from domain.exceptions.request_failed import GitHubRequestFailed
 from infrastructure.http_pool import http
 
 
-def get_github_headers(get_token):
+def get_github_auth_headers(get_token):
     """
     Build the headers used to make an Octopus API request
     :param get_token: The function used to get theGithub token
     :return: The headers required to call the Octopus API
     """
 
-    if get_token is None:
-        raise ValueError('get_token must be the Github token.')
-
-    return {
+    headers = {
         "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Authorization": "Bearer {}".format(get_token)
+        "X-GitHub-Api-Version": "2022-11-28"
     }
+
+    if get_token:
+        headers["Authorization"] = "Bearer {}".format(get_token)
+
+    return headers
 
 
 def build_github_url(path, query):
@@ -46,7 +47,7 @@ def get_github_user(get_token):
 
     api = build_github_url("user", "")
 
-    resp = http.request("GET", api, headers=get_github_headers(get_token))
+    resp = http.request("GET", api, headers=get_github_auth_headers(get_token))
 
     if resp.status != 200:
         raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
@@ -59,7 +60,7 @@ def get_github_user(get_token):
 def search_repo(repo, language, keywords, get_token=None):
     query = f"{' '.join(keywords)} in:file language:{language} repo:{repo}"
     api = build_github_url("search/code", {"q": query})
-    resp = http.request("GET", api, headers=get_github_headers(get_token) if get_token is not None else None)
+    resp = http.request("GET", api, headers=get_github_auth_headers(get_token))
 
     if resp.status != 200:
         raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
