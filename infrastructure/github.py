@@ -58,6 +58,12 @@ def get_github_user(get_token):
 
 
 def search_repo(repo, language, keywords, get_token=None):
+    # The docs at https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-code note that:
+    # "This endpoint can be used without authentication if only public resources are requested."
+    # However, this does not appear to be true, with issues like https://github.com/pbek/QOwnNotes/issues/2772#issuecomment-1513352222
+    # noting:
+    # "GitHub now demands an access token for the code search API and has a harsh quota on the amounts of searches per person"
+    # I think the GitHub docs are incorrect, as I have not been able to perform a search without a token.
     query = f"{' '.join(keywords)} in:file language:{language} repo:{repo}"
     api = build_github_url("search/code", {"q": query})
     resp = http.request("GET", api, headers=get_github_auth_headers(get_token))
