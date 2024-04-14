@@ -12,7 +12,9 @@ from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWith
 from domain.tools.function_call import FunctionCall
 from domain.validation.argument_validation import ensure_string_not_empty, ensure_not_falsy
 
-NO_FUNCTION_RESPONSE = "Sorry, I did not understand that request."
+NO_FUNCTION_RESPONSE = ("Sorry, I did not understand that request. View the documentation at "
+                        + "https://github.com/OctopusSolutionsEngineering/OctopusCopilot/wiki/Prompt-Engineering-with-Octopus "
+                        + "to learn how to interact with the Octopus AI agent.")
 
 
 @retry(RateLimitError, tries=3, delay=5)
