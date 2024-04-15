@@ -966,7 +966,7 @@ def request_config_details():
         return func.HttpResponse(convert_to_sse_response(
             f"To continue chatting please [log in](https://github.com/login/oauth/authorize?"
             + f"client_id={os.environ.get('GITHUB_CLIENT_ID')}"
-            + f"&redirect_url={urllib.parse.quote('https://octopuscopilotproduction.azurewebsites.net/api/oauth_callback')}"
+            + f"&redirect_url={urllib.parse.quote(os.environ.get('GITHUB_CLIENT_REDIRECT'))}"
             + "&scope=user&allow_signup=false)"),
             status_code=200,
             headers=get_sse_headers())
