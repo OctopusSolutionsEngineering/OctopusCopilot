@@ -14,7 +14,7 @@ a guide on prompt engineering with this agent.
 | OpenAI integration tests identifying common resource names in query              | 🟢     | Done in [openai_infrastructure_test.py](https://github.com/OctopusSolutionsEngineering/OctopusCopilot/blob/main/tests/infrastructure/openai_infrastructure_test.py) |
 | End-to-end tests querying common resources in simple, ephemeral Octopus instance | 🟢     | Done in [copilot_chat_test.py](https://github.com/OctopusSolutionsEngineering/OctopusCopilot/blob/main/tests/application/copilot_chat_test.py)                      | 
 | Security review of sensitive information handling                                | 🟠     | Reached out to secops team                                                                                                                                          |
-| Load test verifying queries of common resources in a live Octopus instance       | 🟢     | Done      |
+| Load test verifying queries of common resources in a live Octopus instance       | 🟢     | Done                                                                                                                                                                |
 | Prompt engineering documentation                                                 | 🟢     | [Here](https://github.com/OctopusSolutionsEngineering/OctopusCopilot/wiki/Prompt-Engineering-with-Octopus)                                                          |
 | CI/CD pipeline                                                                   | 🟠     | Done in personal space, needs to be moved to deploy.octopus.app                                                                                                     |
 
@@ -44,7 +44,7 @@ resources, but not to modify them.
 The primary interface for this agent is via the GitHub Copilot chat. This requires individual users to be invited to
 the private beta.
 
-We have a [test web site](https://octopuscopilotproduction.azurewebsites.net/api/form) that responds to the same queries
+We have a [test web site](https://octopusai-f3adanckatdqedfh.a02.azurefd.net/api/form) that responds to the same queries
 as the chat interface. The web based interface is functionally equivalent to the Copilot chat interface in terms of
 interacting with an Octopus server.
 
