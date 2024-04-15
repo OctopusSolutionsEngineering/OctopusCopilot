@@ -1,6 +1,7 @@
 import json
 import os
 import urllib.parse
+from urllib.parse import urlparse
 
 from azure.core.exceptions import HttpResponseError
 
@@ -142,11 +143,13 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
                                            os.environ.get("ENCRYPTION_PASSWORD"),
                                            os.environ.get("ENCRYPTION_SALT"))
 
+        requested_url = urlparse(req.url)
+
         # Normally the session information would be persisted in a cookie. I could not get Azure functions to pass
         # through a cookie. So we pass it as a query param.
         return func.HttpResponse(status_code=301,
                                  headers={
-                                     "Location": "https://octopuscopilotproduction.azurewebsites.net/api/octopus?state=" + session_json})
+                                     "Location": f"{requested_url.scheme}://{requested_url.hostname}/api/octopus?state=" + session_json})
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
