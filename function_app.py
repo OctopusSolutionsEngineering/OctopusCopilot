@@ -11,7 +11,7 @@ from domain.config.openai import max_deployments
 from domain.config.users import get_admin_users
 from domain.context.github_docs import get_docs_context
 from domain.context.octopus_context import collect_llm_context, llm_message_query, max_chars
-from domain.defaults.defaults import get_default_argument
+from domain.defaults.defaults import get_default_argument, get_default_argument_list
 from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
@@ -690,13 +690,13 @@ Once default values are set, you can omit the space, environment, and query_proj
                                                  [project["matched"] for project in sanitized_projects], 0),
                                              "Project")
 
-        query_environments = get_default_argument(get_github_user_from_form(),
-                                                  get_item_or_none(sanitized_environments, 0),
-                                                  "Environment")
+        query_environments = get_default_argument_list(get_github_user_from_form(),
+                                                       get_item_or_none(sanitized_environments, 0),
+                                                       "Environment")
 
-        query_tenants = get_default_argument(get_github_user_from_form(),
-                                             get_item_or_none(sanitized_tenants, 0),
-                                             "Tenant")
+        query_tenants = get_default_argument_list(get_github_user_from_form(),
+                                                  get_item_or_none(sanitized_tenants, 0),
+                                                  "Tenant")
 
         processed_query = update_query(original_query, sanitized_projects)
 

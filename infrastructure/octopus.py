@@ -18,6 +18,9 @@ from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http, TAKE_ALL
 
 logger = configure_logging()
+channel_cache = {}
+tenant_cache = {}
+environment_cache = {}
 
 
 def logging_wrapper(func):
@@ -728,6 +731,21 @@ def get_environment(space_id, environment_name, api_key, octopus_url):
     return environment
 
 
+@logging_wrapper
+def get_environment_cached(space_id, environment_name, api_key, octopus_url):
+    if not environment_cache.get(octopus_url):
+        environment_cache[octopus_url] = {}
+
+    if not environment_cache[octopus_url].get(space_id):
+        environment_cache[octopus_url][space_id] = {}
+
+    if not environment_cache[octopus_url][space_id].get(environment_name):
+        environment_cache[octopus_url][space_id][environment_name] = get_environment(space_id, environment_name,
+                                                                                     api_key, octopus_url)
+
+    return environment_cache[octopus_url][space_id][environment_name]
+
+
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_tenant(space_id, tenant_name, api_key, octopus_url):
@@ -745,9 +763,37 @@ def get_tenant(space_id, tenant_name, api_key, octopus_url):
     return tenant
 
 
+@logging_wrapper
+def get_tenant_cached(space_id, tenant_name, api_key, octopus_url):
+    if not tenant_cache.get(octopus_url):
+        tenant_cache[octopus_url] = {}
+
+    if not tenant_cache[octopus_url].get(space_id):
+        tenant_cache[octopus_url][space_id] = {}
+
+    if not tenant_cache[octopus_url][space_id].get(tenant_name):
+        tenant_cache[octopus_url][space_id][tenant_name] = get_tenant(space_id, tenant_name, api_key, octopus_url)
+
+    return tenant_cache[octopus_url][space_id][tenant_name]
+
+
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_channel(space_id, channel_id, api_key, octopus_url):
     api = build_url(octopus_url, "api/" + space_id + f"/Channels/{channel_id}")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     return resp.json()
+
+
+@logging_wrapper
+def get_channel_cached(space_id, channel_id, api_key, octopus_url):
+    if not channel_cache.get(octopus_url):
+        channel_cache[octopus_url] = {}
+
+    if not channel_cache[octopus_url].get(space_id):
+        channel_cache[octopus_url][space_id] = {}
+
+    if not channel_cache[octopus_url][space_id].get(channel_id):
+        channel_cache[octopus_url][space_id][channel_id] = get_channel(space_id, channel_id, api_key, octopus_url)
+
+    return channel_cache[octopus_url][space_id][channel_id]

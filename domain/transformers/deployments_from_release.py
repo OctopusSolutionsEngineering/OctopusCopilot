@@ -1,9 +1,9 @@
 from domain.config.openai import max_context
 from domain.date.parse_dates import parse_unknown_format_date
-from domain.sanitizers.sanitized_list import get_key_or_none
+from domain.sanitizers.sanitized_list import get_key_or_none, sanitize_list
 from domain.sanitizers.url_remover import strip_markdown_urls
-from infrastructure.octopus import get_project_releases, get_release_deployments, get_task, get_project, get_channel, \
-    get_environment, get_tenant
+from infrastructure.octopus import get_project_releases, get_release_deployments, get_task, get_project, \
+    get_channel_cached, get_tenant_cached, get_environment_cached
 
 
 def get_deployments_for_project(space_id, project_name, environment_names, tenant_names, api_key, octopus_url, dates,
@@ -25,11 +25,16 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
     project = get_project(space_id, project_name, api_key, octopus_url)
     releases = get_project_releases(space_id, project["Id"], api_key, octopus_url, 100)
 
+    # We expect lists here
+    environment_names = sanitize_list(environment_names)
+    tenant_names = sanitize_list(tenant_names)
+
     # Convert the environment names to environment ids
-    environments = list(map(lambda env: get_environment(space_id, env, api_key, octopus_url),
+    environments = list(map(lambda env: get_environment_cached(space_id, env, api_key, octopus_url),
                             environment_names)) if environment_names else []
     tenants = list(
-        map(lambda tenant: get_tenant(space_id, tenant, api_key, octopus_url), tenant_names)) if tenant_names else []
+        map(lambda tenant: get_tenant_cached(space_id, tenant, api_key, octopus_url),
+            tenant_names)) if tenant_names else []
 
     # Get the deployments associated with the releases, filtered to the environments
     deployments = []
@@ -58,7 +63,7 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
             task = get_task(space_id, deployment["TaskId"], api_key, octopus_url) if deployment.get(
                 "TaskId") else None
 
-            channel = get_channel(space_id, deployment["ChannelId"], api_key, octopus_url)
+            channel = get_channel_cached(space_id, deployment["ChannelId"], api_key, octopus_url)
 
             deployments.append({
                 "SpaceId": space_id,
