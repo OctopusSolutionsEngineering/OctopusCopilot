@@ -1,4 +1,5 @@
 import os
+import time
 
 import openai
 from langchain.agents import OpenAIFunctionsAgent
@@ -32,6 +33,11 @@ def llm_message_query(message_prompt, context, log_query=None):
 
     chain = prompt | llm
 
+    start_time = time.time()
+    if log_query:
+        log_query("Query start:", start_time)
+        log_query("Query:", context.get("input"))
+
     try:
         response = chain.invoke(context).content
     except openai.BadRequestError as e:
@@ -39,8 +45,11 @@ def llm_message_query(message_prompt, context, log_query=None):
     except openai.APITimeoutError as e:
         return handle_openai_exception(e)
 
+    end_time = time.time()
+    execution_time = end_time - start_time
     if log_query:
-        log_query("Query:", context.get("input"))
+        log_query("Query end:", end_time)
+        log_query("Query time:", f"{execution_time} seconds")
 
     client_response = response
 
