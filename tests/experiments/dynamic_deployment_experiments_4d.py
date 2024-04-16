@@ -96,7 +96,7 @@ def releases_query_handler(original_query, messages, space, projects, environmen
         # We only need the deployments, so strip out the rest of the JSON
         deployments = get_deployments_for_project(space_id,
                                                   get_item_or_none(sanitize_list(projects), 0),
-                                                  sanitize_environments(environments),
+                                                  sanitize_environments(original_query, environments),
                                                   sanitize_tenants(tenants),
                                                   api_key,
                                                   url,

@@ -3,9 +3,9 @@ import os
 import urllib.parse
 from urllib.parse import urlparse
 
+import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
-import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_deployments
 from domain.config.users import get_admin_users
@@ -548,7 +548,7 @@ Once default values are set, you can omit the space, environment, and query_proj
         project_names = get_default_argument(get_github_user_from_form(),
                                              [project["matched"] for project in sanitized_projects], "Project")
         environment_names = get_default_argument(get_github_user_from_form(),
-                                                 sanitize_environments(body["environment_names"]),
+                                                 sanitize_environments(original_query, body["environment_names"]),
                                                  "Environment")
 
         processed_query = update_query(original_query, sanitized_projects)
@@ -672,7 +672,7 @@ Once default values are set, you can omit the space, environment, and query_proj
                                 dates):
         api_key, url = get_api_key_and_url()
 
-        sanitized_environments = sanitize_environments(environments)
+        sanitized_environments = sanitize_environments(original_query, environments)
         sanitized_tenants = sanitize_tenants(tenants)
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
@@ -773,7 +773,8 @@ Once default values are set, you can omit the space, environment, and query_proj
                                                         0),
                                        "Project")
         environment = get_default_argument(get_github_user_from_form(),
-                                           get_item_or_none(sanitize_environments(environments), 0), "Environment")
+                                           get_item_or_none(sanitize_environments(original_query, environments), 0),
+                                           "Environment")
         tenant = get_default_argument(get_github_user_from_form(),
                                       get_item_or_none(sanitize_tenants(tenants), 0), "Tenant")
 
@@ -814,7 +815,8 @@ Once default values are set, you can omit the space, environment, and query_proj
                                                         0),
                                        "Project")
         environment = get_default_argument(get_github_user_from_form(),
-                                           get_item_or_none(sanitize_environments(environments), 0), "Environment")
+                                           get_item_or_none(sanitize_environments(original_query, environments), 0),
+                                           "Environment")
         tenant = get_default_argument(get_github_user_from_form(),
                                       get_item_or_none(sanitize_tenants(tenants), 0), "Tenant")
 

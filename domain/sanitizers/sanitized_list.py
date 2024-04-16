@@ -108,8 +108,11 @@ def sanitize_certificates(input_list):
     return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Certificate\\s*[0-9A-Z]|My\\s*Certificate")
 
 
-def sanitize_environments(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Environment\\s*[0-9A-Z]|My\\s*Environment")
+def sanitize_environments(input_query, input_list):
+    list = sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Environment\\s*[0-9A-Z]|My\\s*Environment")
+    # The LLM will sometimes return environment names that were never mentioned in the query. I suspect the
+    # names comes from the few-shot examples. Every environment needs to be mentioned in the query.
+    return [env for env in list if env in input_query]
 
 
 def sanitize_targets(input_list):

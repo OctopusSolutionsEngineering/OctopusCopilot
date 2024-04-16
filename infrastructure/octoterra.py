@@ -50,7 +50,7 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
     sanitized_target_names = sanitize_targets(target_names)
     sanitized_runbook_names = sanitize_runbooks(runbook_names)
     sanitized_library_variable_sets = sanitize_library_variable_sets(library_variable_sets)
-    sanitized_environments = sanitize_environments(environment_names)
+    sanitized_environments = sanitize_environments(query, environment_names)
     sanitized_feeds = sanitize_feeds(feed_names)
     sanitized_accounts = sanitize_accounts(account_names)
     sanitized_certificates = sanitize_certificates(certificate_names)

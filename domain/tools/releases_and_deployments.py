@@ -128,7 +128,7 @@ The release version of the latest deployment of the "My Project" project to the 
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
         projects = sanitize_projects(projects)
-        environments = sanitize_environments(environments)
+        environments = sanitize_environments(original_query, environments)
         channels = sanitize_channels(channels)
         releases = sanitize_releases(releases)
         dates = sanitize_dates(dates)

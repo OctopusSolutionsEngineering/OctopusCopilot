@@ -74,7 +74,7 @@ dates: any dates in the query"""
             "target_names": sanitize_targets(targets),
             "tenant_names": sanitize_tenants(tenants),
             "library_variable_sets": sanitize_library_variable_sets(library_variable_sets),
-            "environment_names": sanitize_environments(environments),
+            "environment_names": sanitize_environments(query, environments),
             "feed_names": sanitize_feeds(feeds),
             "account_names": sanitize_accounts(accounts),
             "certificate_names": sanitize_certificates(certificates),

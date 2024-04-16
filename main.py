@@ -245,7 +245,8 @@ def releases_query_callback(original_query, messages, space, projects, environme
         # We only need the deployments, so strip out the rest of the JSON
         deployments = timing_wrapper(lambda: get_deployments_for_project(space_id,
                                                                          get_item_or_none(sanitize_list(projects), 0),
-                                                                         sanitize_environments(environments),
+                                                                         sanitize_environments(parser.query,
+                                                                                               environments),
                                                                          sanitize_tenants(tenants),
                                                                          get_api_key(),
                                                                          get_octopus_api(),

@@ -369,7 +369,7 @@ class CopilotChatTest(unittest.TestCase):
         deployment = create_and_deploy_release(space_name="Simple", release_version=version + "-hotfix-timeouts-iss253")
         wait_for_task(deployment["TaskId"], space_name="Simple")
 
-        prompt = "When was the last deployment hotfix successfully applied to the \"Development\" environment?"
+        prompt = "When was the last deployment hotfix successfully applied?"
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode('utf8')
 

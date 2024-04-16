@@ -200,4 +200,4 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_list("hi"))
         self.assertTrue(sanitize_list(["hi"]))
         self.assertFalse(sanitize_list([["hi"]]))
-        self.assertFalse(sanitize_environments(None))
+        self.assertFalse(sanitize_environments("find releases in production", None))
