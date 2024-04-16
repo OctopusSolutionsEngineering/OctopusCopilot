@@ -467,7 +467,8 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         """Save a default value for a space, query_project, environment, or channel
 
             Args:
-                default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
+                default_name: The name of the default value. For example, "Environment", "Project", "Space", "Channel",
+                or "Tenant"
 
                 default_value: The default value
         """
@@ -661,6 +662,7 @@ Once default values are set, you can omit the space, environment, and query_proj
         api_key, url = get_api_key_and_url()
 
         sanitized_environments = sanitize_environments(environments)
+        sanitized_tenants = sanitize_tenants(tenants)
 
         space = get_default_argument(get_github_user_from_form(), space, "Space")
 
@@ -681,6 +683,10 @@ Once default values are set, you can omit the space, environment, and query_proj
                                                   get_item_or_none(sanitized_environments, 0),
                                                   "Environment")
 
+        query_tenants = get_default_argument(get_github_user_from_form(),
+                                             get_item_or_none(sanitized_tenants, 0),
+                                             "Tenant")
+
         processed_query = update_query(original_query, sanitized_projects)
 
         context = {"input": processed_query}
@@ -692,6 +698,7 @@ Once default values are set, you can omit the space, environment, and query_proj
             deployments = get_deployments_for_project(space_id,
                                                       query_project,
                                                       query_environments,
+                                                      query_tenants,
                                                       api_key,
                                                       url,
                                                       dates,
@@ -718,7 +725,7 @@ Once default values are set, you can omit the space, environment, and query_proj
                                             None,
                                             None,
                                             None,
-                                            tenants,
+                                            query_tenants,
                                             None,
                                             None,
                                             None,
