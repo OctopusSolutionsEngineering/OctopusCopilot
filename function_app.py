@@ -703,7 +703,7 @@ Once default values are set, you can omit the space, environment, and query_proj
                                                                              api_key,
                                                                              url,
                                                                              dates,
-                                                                             max_context), "Deployments", log_query)
+                                                                             max_context), "Deployments")
             context["json"] = json.dumps(deployments, indent=2)
         else:
             # When the query is more general, we rely on the deployment information

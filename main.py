@@ -250,7 +250,7 @@ def releases_query_callback(original_query, messages, space, projects, environme
                                                                          get_api_key(),
                                                                          get_octopus_api(),
                                                                          dates,
-                                                                         max_context), "Deployments", logging)
+                                                                         max_context), "Deployments")
         context["json"] = json.dumps(deployments, indent=2)
     else:
         context["json"] = get_dashboard(space_id, get_api_key(), get_octopus_api())

@@ -202,7 +202,7 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
     resp = timing_wrapper(lambda: handle_response(lambda: http.request("POST",
                                                                        os.environ[
                                                                            "APPLICATION_OCTOTERRA_URL"] + "/api/octoterra",
-                                                                       body=json.dumps(body))), "octoterra", log_query)
+                                                                       body=json.dumps(body))), "octoterra")
 
     answer = resp.data.decode("utf-8")
 
