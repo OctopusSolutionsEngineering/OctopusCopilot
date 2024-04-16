@@ -691,11 +691,11 @@ Once default values are set, you can omit the space, environment, and query_proj
                                              "Project")
 
         query_environments = get_default_argument_list(get_github_user_from_form(),
-                                                       get_item_or_none(sanitized_environments, 0),
+                                                       sanitized_environments,
                                                        "Environment")
 
         query_tenants = get_default_argument_list(get_github_user_from_form(),
-                                                  get_item_or_none(sanitized_tenants, 0),
+                                                  sanitized_tenants,
                                                   "Tenant")
 
         processed_query = update_query(original_query, sanitized_projects)

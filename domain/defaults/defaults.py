@@ -32,4 +32,9 @@ def get_default_argument_list(user, argument, default_name):
     :return: The argument is if it is not blank, or the default value
     """
 
+    value = get_default_argument(user, argument, default_name)
+
+    if isinstance(value, list):
+        return value
+
     return [get_default_argument(user, argument, default_name)]
