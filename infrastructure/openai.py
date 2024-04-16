@@ -1,5 +1,4 @@
 import os
-import time
 
 import openai
 from langchain.agents import OpenAIFunctionsAgent
@@ -10,6 +9,7 @@ from retry import retry
 
 from domain.config.openai import llm_timeout
 from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
+from domain.performance.timing import timing_wrapper
 from domain.tools.function_call import FunctionCall
 from domain.validation.argument_validation import ensure_string_not_empty, ensure_not_falsy
 
@@ -33,23 +33,12 @@ def llm_message_query(message_prompt, context, log_query=None):
 
     chain = prompt | llm
 
-    start_time = time.time()
-    if log_query:
-        log_query("Query start:", start_time)
-        log_query("Query:", context.get("input"))
-
     try:
-        response = chain.invoke(context).content
+        response = timing_wrapper(lambda: chain.invoke(context).content, "Query", log_query)
     except openai.BadRequestError as e:
         return handle_openai_exception(e)
     except openai.APITimeoutError as e:
         return handle_openai_exception(e)
-
-    end_time = time.time()
-    execution_time = end_time - start_time
-    if log_query:
-        log_query("Query end:", end_time)
-        log_query("Query time:", f"{execution_time} seconds")
 
     client_response = response
 

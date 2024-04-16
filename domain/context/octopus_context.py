@@ -82,7 +82,8 @@ Dates: {dates}""")
                                                      step_names,
                                                      variable_names,
                                                      api_key,
-                                                     octopus_url)
+                                                     octopus_url,
+                                                     log_query)
 
     minified_hcl = minify_hcl(hcl)
     available_chars = max_chars

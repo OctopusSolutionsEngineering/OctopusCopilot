@@ -9,7 +9,7 @@ from domain.errors.error_handling import handle_error
 from domain.logging.query_loggin import log_query
 from domain.messages.docs_messages import docs_prompt
 from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all, \
-    get_item_or_none, sanitize_projects_fuzzy, sanitize_projects
+    get_item_or_none, sanitize_projects_fuzzy, sanitize_projects, sanitize_tenants
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
@@ -231,7 +231,8 @@ def variable_query_callback(original_query, messages, space, projects, variables
     return chat_response
 
 
-def releases_query_callback(original_query, messages, space, projects, environments, channels, releases):
+def releases_query_callback(original_query, messages, space, projects, environments, channels, releases, tenants,
+                            dates):
     space = get_default_argument(space, 'Space')
 
     context = {"input": original_query}
@@ -244,8 +245,10 @@ def releases_query_callback(original_query, messages, space, projects, environme
         deployments = get_deployments_for_project(space_id,
                                                   get_item_or_none(sanitize_list(projects), 0),
                                                   sanitize_environments(environments),
+                                                  sanitize_tenants(tenants),
                                                   get_api_key(),
                                                   get_octopus_api(),
+                                                  dates,
                                                   max_context)
         context["json"] = json.dumps(deployments, indent=2)
     else:
@@ -258,7 +261,7 @@ def releases_query_callback(original_query, messages, space, projects, environme
                                         projects,
                                         None,
                                         None,
-                                        None,
+                                        tenants,
                                         None,
                                         environments,
                                         None,
@@ -273,7 +276,7 @@ def releases_query_callback(original_query, messages, space, projects, environme
                                         None,
                                         None,
                                         None,
-                                        None,
+                                        dates,
                                         get_api_key(),
                                         get_octopus_api(),
                                         logging)

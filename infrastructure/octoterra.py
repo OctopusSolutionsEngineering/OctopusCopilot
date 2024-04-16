@@ -6,6 +6,7 @@ from urllib3.exceptions import HTTPError
 
 from domain.config.openai import max_context
 from domain.logging.app_logging import configure_logging
+from domain.performance.timing import timing_wrapper
 from domain.query.query_inspector import exclude_all_targets, exclude_all_runbooks, exclude_all_tenants, \
     exclude_all_projects, exclude_all_library_variable_sets, exclude_all_environments, exclude_all_feeds, \
     exclude_all_accounts, exclude_all_certificates, exclude_all_lifecycles, exclude_all_worker_pools, \
@@ -27,7 +28,7 @@ logger = configure_logging(__name__)
 def get_octoterra_space(query, space_id, project_names, runbook_names, target_names, tenant_names,
                         library_variable_sets, environment_names, feed_names, account_names, certificate_names,
                         lifecycle_names, workerpool_names, machinepolicy_names, tagset_names, projectgroup_names,
-                        step_names, variable_names, api_key, octopus_url):
+                        step_names, variable_names, api_key, octopus_url, log_query):
     """
     Returns the terraform representation of a space
     :param space_id: The ID of the space.
@@ -198,9 +199,10 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
         "includeDefaultChannel": True,
     }
 
-    resp = handle_response(lambda: http.request("POST",
-                                                os.environ["APPLICATION_OCTOTERRA_URL"] + "/api/octoterra",
-                                                body=json.dumps(body)))
+    resp = timing_wrapper(lambda: handle_response(lambda: http.request("POST",
+                                                                       os.environ[
+                                                                           "APPLICATION_OCTOTERRA_URL"] + "/api/octoterra",
+                                                                       body=json.dumps(body))), "octoterra", log_query)
 
     answer = resp.data.decode("utf-8")
 
