@@ -449,8 +449,8 @@ def get_project(space_id, project_name, api_key, octopus_url):
     :param octopus_url: The Octopus URL
     :return: The project resource
     """
-    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_project_releases).')
-    ensure_string_not_empty(project_name, 'project_name must be a non-empty string (get_project_releases).')
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_project).')
+    ensure_string_not_empty(project_name, 'project_name must be a non-empty string (get_project).')
 
     api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
@@ -464,6 +464,34 @@ def get_project(space_id, project_name, api_key, octopus_url):
             raise ResourceNotFound("Project", project_name)
 
     return project
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_environment(space_id, environment_name, api_key, octopus_url):
+    """
+    Returns a project resource from the name
+    :param space_id: The ID of the space.
+    :param environment_name: The name of the environment
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
+    :return: The project resource
+    """
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_environment).')
+    ensure_string_not_empty(environment_name, 'project_name must be a non-empty string (get_environment).')
+
+    api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partialname=environment_name))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    environment = get_item_fuzzy(resp.json()["Items"], environment_name)
+
+    if environment is None:
+        api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(take="10000"))
+        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+        environment = get_item_fuzzy(resp.json()["Items"], environment_name)
+        if environment is None:
+            raise ResourceNotFound("Environment", environment_name)
+
+    return environment
 
 
 @retry(HTTPError, tries=3, delay=2)
@@ -702,14 +730,6 @@ def get_environment(space_id, environment_name, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_channel(space_id, channel_id, api_key, octopus_url):
-    api = build_url(octopus_url, "api/" + space_id + f"/Channels/{channel_id}")
-    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    return resp.json()
-
-
-@retry(HTTPError, tries=3, delay=2)
-@logging_wrapper
 def get_tenant(space_id, tenant_name, api_key, octopus_url):
     api = build_url(octopus_url, "api/" + space_id + "/Tenants", dict(partialname=tenant_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
@@ -723,3 +743,11 @@ def get_tenant(space_id, tenant_name, api_key, octopus_url):
             raise ResourceNotFound("Tenant", tenant_name)
 
     return tenant
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_channel(space_id, channel_id, api_key, octopus_url):
+    api = build_url(octopus_url, "api/" + space_id + f"/Channels/{channel_id}")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()

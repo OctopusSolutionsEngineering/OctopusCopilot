@@ -2,8 +2,8 @@ from domain.config.openai import max_context
 from domain.date.parse_dates import parse_unknown_format_date
 from domain.sanitizers.sanitized_list import get_key_or_none
 from domain.sanitizers.url_remover import strip_markdown_urls
-from infrastructure.octopus import get_project_releases, get_release_deployments, get_environments, \
-    get_task, get_project, get_channel, get_tenants
+from infrastructure.octopus import get_project_releases, get_release_deployments, get_task, get_project, get_channel, \
+    get_environment, get_tenant
 
 
 def get_deployments_for_project(space_id, project_name, environment_names, tenant_names, api_key, octopus_url, dates,
@@ -25,16 +25,11 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
     project = get_project(space_id, project_name, api_key, octopus_url)
     releases = get_project_releases(space_id, project["Id"], api_key, octopus_url, 100)
 
-    environments = get_environments(api_key, octopus_url, space_id) if environment_names else []
-    tenants = get_tenants(api_key, octopus_url, space_id) if tenant_names else []
-
     # Convert the environment names to environment ids
-    environment_ids = [environment["Id"] for environment in environments if
-                       environment["Name"] in environment_names] if environment_names else []
-
-    # Convert the tenant names to tenant ids
-    tenant_ids = [tenant["Id"] for tenant in tenants if
-                  tenant["Name"] in tenant_names] if tenant_names else []
+    environments = list(map(lambda env: get_environment(space_id, env, api_key, octopus_url),
+                            environment_names)) if environment_names else []
+    tenants = list(
+        map(lambda tenant: get_tenant(space_id, tenant, api_key, octopus_url), tenant_names)) if tenant_names else []
 
     # Get the deployments associated with the releases, filtered to the environments
     deployments = []
@@ -43,11 +38,12 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
                                                       octopus_url)
         for deployment in release_deployments["Items"]:
             # Keep the deployment if it matches the environment, or if there were no environments
-            if len(environment_ids) != 0 and deployment["EnvironmentId"] not in environment_ids:
+            if len(environments) != 0 and len(
+                    list(filter(lambda x: x["Id"] == deployment["EnvironmentId"], environments))) == 0:
                 continue
 
             # Keep the deployment if it matches the tenant, or if there were no tenants
-            if len(tenant_ids) != 0 and deployment["TenantId"] not in tenant_ids:
+            if len(tenants) != 0 and len(list(filter(lambda x: x["Id"] == deployment["TenantId"], tenants))) == 0:
                 continue
 
             # If there were two dates, treat them as a range, and exclude anything outside the range
