@@ -7,8 +7,8 @@ from infrastructure.openai import llm_message_query
 my_log = configure_logging()
 
 # Each token is roughly four characters for typical English text. OpenAI accepts a max of 16384 tokens.
-# We'll allow 13000 tokens for the HCL to avoid an error.
-max_chars = 13000 * 4
+# We'll allow 12850 tokens for the HCL to avoid an error.
+max_chars = 12850 * 4
 
 
 def collect_llm_context(original_query, messages, context, space_id, project_names, runbook_names, target_names,
