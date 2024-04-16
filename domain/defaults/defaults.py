@@ -34,6 +34,9 @@ def get_default_argument_list(user, argument, default_name):
 
     value = get_default_argument(user, argument, default_name)
 
+    if not value:
+        return []
+
     if isinstance(value, list):
         return value
 
