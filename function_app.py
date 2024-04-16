@@ -7,7 +7,7 @@ from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
-from domain.config.openai import max_context
+from domain.config.openai import max_deployments
 from domain.config.users import get_admin_users
 from domain.context.github_docs import get_docs_context
 from domain.context.octopus_context import collect_llm_context, llm_message_query, max_chars
@@ -713,7 +713,7 @@ Once default values are set, you can omit the space, environment, and query_proj
                                                                              api_key,
                                                                              url,
                                                                              dates,
-                                                                             max_context), "Deployments")
+                                                                             max_deployments), "Deployments")
             context["json"] = json.dumps(deployments, indent=2)
         else:
             # When the query is more general, we rely on the deployment information

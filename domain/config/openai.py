@@ -4,6 +4,10 @@
 # Lists of complex resources, like deployments with release notes, started to fail around the 30 item mark.
 max_context = 20
 
+# Deployments contain a lot of information, and retrieving it all can be slow. We limit the deployment history to 10
+# to reduce the likelihood of a timeout.
+max_deployments = 10
+
 # "Adversarial" queries can tie up a LLM for a long time. The Copilot interface times out after 60 seconds.
 # Our timeout is set to 45 seconds to allow for some additional processing time.
 # Another issue here is the Azure event driven scaling.
