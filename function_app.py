@@ -455,6 +455,10 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         """
         api_key, url = get_api_key_and_url()
         space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
+
+        if not space_name:
+            return "Please provide a space name in the question or define a default space name with the command \"Set default space to 'space name'\""
+
         space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
         dashboard = get_dashboard(space_id, api_key, url)
         return get_dashboard_response(dashboard)
