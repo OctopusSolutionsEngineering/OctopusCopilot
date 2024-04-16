@@ -2,6 +2,7 @@ from domain.config.openai import max_context
 from domain.date.parse_dates import parse_unknown_format_date
 from domain.sanitizers.sanitized_list import get_key_or_none, sanitize_list
 from domain.sanitizers.url_remover import strip_markdown_urls
+from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.octopus import get_project_releases, get_release_deployments, get_task, get_project, \
     get_channel_cached, get_tenant_cached, get_environment_cached
 
@@ -19,6 +20,11 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
     :param max_results: The maximum number of results
     :return: The list of deployments
     """
+
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_deployments_for_project).')
+    ensure_string_not_empty(project_name, 'project_name must be a non-empty string (get_deployments_for_project).')
+    ensure_string_not_empty(api_key, 'api_key must be a non-empty string (get_deployments_for_project).')
+    ensure_string_not_empty(octopus_url, 'octopus_url must be a non-empty string (get_deployments_for_project).')
 
     # Not every release will have a deployment for the selected environment. So return a large number of releases,
     # which will then be filtered down.
@@ -52,7 +58,7 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
                 continue
 
             # If there were two dates, treat them as a range, and exclude anything outside the range
-            if dates and len(dates) == 2:
+            if dates and isinstance(dates, list) and len(dates) == 2:
                 created = parse_unknown_format_date(deployment["Created"])
                 date1 = parse_unknown_format_date(dates[0])
                 date2 = parse_unknown_format_date(dates[1])
