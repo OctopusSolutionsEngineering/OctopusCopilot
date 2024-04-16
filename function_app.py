@@ -718,7 +718,7 @@ Once default values are set, you can omit the space, environment, and query_proj
                                             None,
                                             None,
                                             None,
-                                            None,
+                                            tenants,
                                             None,
                                             None,
                                             None,
