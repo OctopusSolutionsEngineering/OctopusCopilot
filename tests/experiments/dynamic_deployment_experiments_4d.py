@@ -79,7 +79,8 @@ def get_test_cases(release_index=0, limit=0):
     return test_cases
 
 
-def releases_query_handler(original_query, messages, space, projects, environments, channels, releases):
+def releases_query_handler(original_query, messages, space, projects, environments, channels, releases, tenants, dates,
+                           **kwargs):
     api_key = os.environ.get("TEST_OCTOPUS_API_KEY")
     url = os.environ.get("TEST_OCTOPUS_URL")
 

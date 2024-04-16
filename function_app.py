@@ -656,7 +656,8 @@ Once default values are set, you can omit the space, environment, and query_proj
 
         return additional_messages
 
-    def releases_query_callback(original_query, messages, space, projects, environments, channels, releases, dates):
+    def releases_query_callback(original_query, messages, space, projects, environments, channels, releases, tenants,
+                                dates):
         api_key, url = get_api_key_and_url()
 
         sanitized_environments = sanitize_environments(environments)
