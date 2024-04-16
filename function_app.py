@@ -219,6 +219,11 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
         # Extract the query from the question
         query = extract_query(req)
 
+        if not query.strip():
+            return func.HttpResponse(
+                convert_to_sse_response("Ask a question like \"What are the projects in the space called Default?\""),
+                headers=get_sse_headers())
+
         # A function that ignores the query and the messages and returns the body.
         # The body contains all the extracted entities that must be returned from the Octopus API.
         def return_body_callback(tool_query, body, messages):
@@ -255,6 +260,11 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
     try:
         # Extract the query from the question
         query = extract_query(req)
+
+        if not query.strip():
+            return func.HttpResponse(
+                convert_to_sse_response("Ask a question like \"What are the projects in the space called Default?\""),
+                headers=get_sse_headers())
 
         def get_context():
             return minify_hcl(req.get_body().decode("utf-8"))
@@ -893,7 +903,7 @@ Once default values are set, you can omit the space, environment, and query_proj
 
         if not query.strip():
             return func.HttpResponse(
-                convert_to_sse_response("Ask a question like \"Show me the projects in the space called Default\""),
+                convert_to_sse_response("Ask a question like \"What are the projects in the space called Default?\""),
                 headers=get_sse_headers())
 
         result = llm_tool_query(
@@ -957,14 +967,24 @@ def extract_query(req: func.HttpRequest):
     if query:
         return query.strip()
 
-    body = json.loads(req.get_body())
+    body_raw = req.get_body()
 
-    # This is the format supplied by copilot
-    if 'messages' in body and len(body.get('messages')) != 0:
-        # We don't care about the chat history, just the last message
-        message = body.get('messages')[-1]
-        if 'content' in message:
-            return message.get('content').strip()
+    if not body_raw or not body_raw.strip():
+        return ""
+
+    try:
+        body = json.loads(body_raw)
+
+        # This is the format supplied by copilot
+        if 'messages' in body and len(body.get('messages')) != 0:
+            # We don't care about the chat history, just the last message
+            message = body.get('messages')[-1]
+            if 'content' in message:
+                return message.get('content').strip()
+    except Exception as e:
+        # Probably a malformed request. Just ignore it.
+        handle_error(e)
+        return ""
 
     return ""
 
