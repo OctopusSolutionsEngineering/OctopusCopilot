@@ -105,5 +105,7 @@ Dates: {dates}""")
         answer += ("\n\nNOTE: The question was too broad to generate an accurate answer."
                    + f"\nProvide specific names for the following resources to generate a more accurate answer: {', '.join(include_all_resources)}."
                    + "\nSee https://github.com/OctopusSolutionsEngineering/OctopusCopilot/wiki/Prompt-Engineering-with-Octopus for more details.")
+    elif context["percent_trimmed"] != 0:
+        answer += f"\n\nNOTE: The space context was trimmed by {context['percent_trimmed']}% to fit within the token limit. The answer may be based on incomplete information."
 
     return answer
