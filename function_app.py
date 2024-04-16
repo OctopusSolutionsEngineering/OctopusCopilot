@@ -25,6 +25,7 @@ from domain.logging.query_loggin import log_query
 from domain.messages.docs_messages import docs_prompt
 from domain.messages.general import build_hcl_prompt
 from domain.messages.test_message import build_test_prompt
+from domain.performance.timing import timing_wrapper
 from domain.sanitizers.sanitized_list import get_item_or_none, \
     none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_projects_fuzzy, sanitize_tenants, \
     update_query
@@ -695,14 +696,14 @@ Once default values are set, you can omit the space, environment, and query_proj
         if query_project:
             # When the query limits the results to certain projects, we
             # can dive deeper and return a larger collection of deployments
-            deployments = get_deployments_for_project(space_id,
-                                                      query_project,
-                                                      query_environments,
-                                                      query_tenants,
-                                                      api_key,
-                                                      url,
-                                                      dates,
-                                                      max_context)
+            deployments = timing_wrapper(lambda: get_deployments_for_project(space_id,
+                                                                             query_project,
+                                                                             query_environments,
+                                                                             query_tenants,
+                                                                             api_key,
+                                                                             url,
+                                                                             dates,
+                                                                             max_context), "Deployments", log_query)
             context["json"] = json.dumps(deployments, indent=2)
         else:
             # When the query is more general, we rely on the deployment information

@@ -8,6 +8,7 @@ from domain.context.octopus_context import collect_llm_context, max_chars
 from domain.errors.error_handling import handle_error
 from domain.logging.query_loggin import log_query
 from domain.messages.docs_messages import docs_prompt
+from domain.performance.timing import timing_wrapper
 from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all, \
     get_item_or_none, sanitize_projects_fuzzy, sanitize_projects, sanitize_tenants
 from domain.tools.certificates_query import answer_certificates_wrapper
@@ -242,14 +243,14 @@ def releases_query_callback(original_query, messages, space, projects, environme
     # We need some additional JSON data to answer this question
     if projects:
         # We only need the deployments, so strip out the rest of the JSON
-        deployments = get_deployments_for_project(space_id,
-                                                  get_item_or_none(sanitize_list(projects), 0),
-                                                  sanitize_environments(environments),
-                                                  sanitize_tenants(tenants),
-                                                  get_api_key(),
-                                                  get_octopus_api(),
-                                                  dates,
-                                                  max_context)
+        deployments = timing_wrapper(lambda: get_deployments_for_project(space_id,
+                                                                         get_item_or_none(sanitize_list(projects), 0),
+                                                                         sanitize_environments(environments),
+                                                                         sanitize_tenants(tenants),
+                                                                         get_api_key(),
+                                                                         get_octopus_api(),
+                                                                         dates,
+                                                                         max_context), "Deployments", logging)
         context["json"] = json.dumps(deployments, indent=2)
     else:
         context["json"] = get_dashboard(space_id, get_api_key(), get_octopus_api())
