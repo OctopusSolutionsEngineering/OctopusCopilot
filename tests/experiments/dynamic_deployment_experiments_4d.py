@@ -4,7 +4,7 @@ import unittest
 
 from domain.config.openai import max_context
 from domain.context.octopus_context import collect_llm_context
-from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list, sanitize_environments
+from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list, sanitize_environments, sanitize_tenants
 from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.transformers.deployments_from_progression import get_deployment_progression
@@ -97,6 +97,7 @@ def releases_query_handler(original_query, messages, space, projects, environmen
         deployments = get_deployments_for_project(space_id,
                                                   get_item_or_none(sanitize_list(projects), 0),
                                                   sanitize_environments(environments),
+                                                  sanitize_tenants(tenants),
                                                   api_key,
                                                   url,
                                                   max_context)
@@ -111,7 +112,7 @@ def releases_query_handler(original_query, messages, space, projects, environmen
                                         project,
                                         None,
                                         None,
-                                        None,
+                                        tenants,
                                         None,
                                         environments,
                                         None,

@@ -73,11 +73,13 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
                 "TaskId": deployment["TaskId"],
                 "TenantId": deployment["TenantId"],
                 "TenantName": get_key_or_none(
-                    next(filter(lambda tenant: tenant["Id"] == deployment["TenantId"], tenants)), "Name"),
+                    next(filter(lambda tenant: tenant["Id"] == deployment["TenantId"], tenants)),
+                    "Name") if tenants else None,
                 "ReleaseId": deployment["ReleaseId"],
                 "EnvironmentId": deployment["EnvironmentId"],
                 "EnvironmentName": get_key_or_none(
-                    next(filter(lambda env: env["Id"] == deployment["EnvironmentId"], environments)), "Name"),
+                    next(filter(lambda env: env["Id"] == deployment["EnvironmentId"], environments)),
+                    "Name") if environments else None,
                 "ChannelId": deployment["ChannelId"],
                 "ChannelName": channel["Name"],
                 "Created": deployment["Created"],
