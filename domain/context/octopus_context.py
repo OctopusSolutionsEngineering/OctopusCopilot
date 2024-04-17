@@ -9,7 +9,7 @@ my_log = configure_logging()
 # Each token is roughly four characters for typical English text. OpenAI accepts a max of 16384 tokens.
 # Unfortunately you can't just multiply 16384 by 4 as it turns ouy getting the logs was frequently overrunning the
 # limit. So the limit below is fairly conservative.
-max_chars = 12000 * 4
+max_chars = 10000 * 4
 
 
 def collect_llm_context(original_query, messages, context, space_id, project_names, runbook_names, target_names,
