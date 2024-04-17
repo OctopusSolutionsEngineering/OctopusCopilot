@@ -689,10 +689,11 @@ def get_logs(log_item, depth):
     if depth == 0 and len(log_item["LogElements"]) == 0 and len(log_item["Children"]) == 0:
         return f"No logs found (status: {log_item['Status']})."
 
-    logs = "\n".join(list(map(lambda e: e["MessageText"], log_item["LogElements"])))
+    logs = log_item["Name"] + "\n"
+    logs += "\n".join(list(map(lambda e: e["MessageText"], log_item["LogElements"])))
     if log_item["Children"]:
         for child in log_item["Children"]:
-            logs += get_logs(child, depth + 1)
+            logs += "\n" + get_logs(child, depth + 1)
 
     return logs
 
