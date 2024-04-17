@@ -1,7 +1,9 @@
 from domain.messages.general import build_hcl_prompt
 from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_runbooks, sanitize_targets, sanitize_tenants, \
     sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, sanitize_certificates, \
-    sanitize_lifecycles, sanitize_workerpools, sanitize_tenanttagsets, sanitize_steps, sanitize_space
+    sanitize_lifecycles, sanitize_workerpools, sanitize_tenanttagsets, sanitize_steps, sanitize_space, \
+    sanitize_machinepolicies, sanitize_projectgroups, sanitize_releases, sanitize_channels, sanitize_gitcredentials, \
+    sanitize_dates
 
 
 def answer_step_features_wrapper(query, callback, logging=None):
@@ -26,8 +28,9 @@ def answer_step_features_wrapper(query, callback, logging=None):
     def answer_step_features(space=None, projects=None, runbooks=None, targets=None,
                              tenants=None, library_variable_sets=None, environments=None,
                              feeds=None, accounts=None, certificates=None, lifecycles=None,
-                             worker_pools=None, tag_sets=None,
-                             steps=None, variables=None, **kwargs):
+                             worker_pools=None, machine_policies=None, tag_sets=None, project_groups=None,
+                             channels=None, releases=None, steps=None, variables=None, git_credentials=None, dates=None,
+                             **kwargs):
         """A query about step features like retries.
 Args:
 space: Space name
@@ -46,12 +49,14 @@ tagsets: tenant tag set names
 steps: step names
 variables: variable names"""
 
+        # Note that the function description does not list every argument because the length of the string
+        # causes an error with GPT 3.5. Only the arguments that are relevant to steps are documented. This
+        # allows for a longer description of the function in the future.
+        # That said, the LLM will often pass in the arguments despite the fact that they are not documented, so we
+        # capture them as there is no downside to having more information about the context to build.
+
         if logging:
             logging("Enter:", "answer_step_features")
-
-        # This function is a specialized version of the general query function. It's parameters are those that relate
-        # to steps, and it has few-shot examples of interpreting the configuration of steps. Otherwise, it is
-        # expected to be processed with the same callback
 
         body = {
             "space_name": sanitize_space(query, space),
@@ -66,15 +71,15 @@ variables: variable names"""
             "certificate_names": sanitize_certificates(certificates),
             "lifecycle_names": sanitize_lifecycles(lifecycles),
             "workerpool_names": sanitize_workerpools(worker_pools),
-            "machinepolicy_names": None,
+            "machinepolicy_names": sanitize_machinepolicies(machine_policies),
             "tagset_names": sanitize_tenanttagsets(tag_sets),
-            "projectgroup_names": None,
-            "channel_names": None,
-            "release_versions": None,
+            "projectgroup_names": sanitize_projectgroups(project_groups),
+            "channel_names": sanitize_channels(channels),
+            "release_versions": sanitize_releases(releases),
             "step_names": sanitize_steps(steps),
             "variable_names": sanitize_steps(variables),
-            "gitcredential_names": None,
-            "dates": None
+            "gitcredential_names": sanitize_gitcredentials(git_credentials),
+            "dates": sanitize_dates(dates)
         }
 
         for key, value in kwargs.items():

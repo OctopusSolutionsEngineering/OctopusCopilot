@@ -109,7 +109,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project1" {
       name                               = "Deploy to IIS"
       condition                          = "Success"
       run_on_server                      = true
-      is_disabled                        = false
+      is_disabled                        = true
       can_be_used_for_project_versioning = true
       is_required                        = false
       worker_pool_variable               = ""
