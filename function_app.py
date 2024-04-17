@@ -3,9 +3,9 @@ import os
 import urllib.parse
 from urllib.parse import urlparse
 
-import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_deployments
 from domain.config.users import get_admin_users
@@ -37,6 +37,7 @@ from domain.tools.how_to import how_to_wrapper
 from domain.tools.logs import answer_logs_wrapper
 from domain.tools.project_variables import answer_project_variables_wrapper, answer_project_variables_usage_wrapper
 from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
+from domain.tools.step_features import answer_step_features_wrapper
 from domain.tools.targets_query import answer_machines_wrapper
 from domain.transformers.chat_responses import get_dashboard_response
 from domain.transformers.deployments_from_dashboard import get_deployments_from_dashboard
@@ -878,6 +879,7 @@ Once default values are set, you can omit the space, environment, and query_proj
         return FunctionDefinitions([
             FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
                                AnswerGeneralQuery),
+            FunctionDefinition(answer_step_features_wrapper(query, general_query_callback, log_query)),
             FunctionDefinition(
                 answer_project_variables_wrapper(query, variable_query_callback, log_query)),
             FunctionDefinition(

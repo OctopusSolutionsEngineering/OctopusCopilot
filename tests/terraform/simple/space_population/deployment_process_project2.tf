@@ -16,21 +16,22 @@ resource "octopusdeploy_deployment_process" "deployment_process_project2" {
       can_be_used_for_project_versioning = false
       is_required                        = false
       worker_pool_id                     = ""
-      properties                         = {
-        "Octopus.Action.Script.Syntax" = "Bash"
-        "Octopus.Action.Script.ScriptBody" = "echo \"hi\""
-        "Octopus.Action.RunOnServer" = "true"
+      properties = {
+        "Octopus.Action.Script.Syntax"       = "Bash"
+        "Octopus.Action.Script.ScriptBody"   = "echo \"hi\""
+        "Octopus.Action.RunOnServer"         = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
       }
-      environments                       = []
-      excluded_environments              = []
-      channels                           = []
-      tenant_tags                        = []
-      features                           = []
+      environments          = []
+      excluded_environments = []
+      channels              = []
+      tenant_tags           = []
+      features              = []
     }
 
-    properties   = {}
+    properties = {}
     target_roles = []
   }
+
   depends_on = []
 }
