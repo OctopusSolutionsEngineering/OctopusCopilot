@@ -19,6 +19,7 @@ name: Python Build
     - cron: '0 0 * * *'
 jobs:
   build:
+    name: Build
     runs-on:
       group: ubuntu-large-runner
       labels: 4core-ubuntu-runner
