@@ -397,8 +397,8 @@ class CopilotChatTest(unittest.TestCase):
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "\\u26aa" in response_text or "\\ud83d\\udfe2" in response_text or "\\ud83d\\udd34" in response_text
-            or "\\ud83d\\udfe1" in response_text or "\\ud83d\\udd35" in response_text, "Response was " + response_text)
+            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_logs(self):
