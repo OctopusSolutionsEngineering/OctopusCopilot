@@ -13,6 +13,8 @@ from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
+from domain.transformers.clean_response import strip_before_first_curly_bracket
+from domain.transformers.sse_transformers import convert_from_sse_response
 from function_app import copilot_handler_internal, health_internal
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release, wait_for_task
@@ -151,7 +153,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_machines(self):
         prompt = "What machines are in the space \"Simple\"?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Cloud Region Target" in response_text, "Response was " + response_text)
 
@@ -420,6 +422,22 @@ class CopilotChatTest(unittest.TestCase):
         # This should return the one default project (even though there are 3 overall)
         self.assertTrue("1" in response_text.casefold() or "one" in response_text.casefold(),
                         "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_find_retries(self):
+        prompt = "What project steps have retries enabled? Provide the response as a JSON object like {\"steps\": [{\"name\": \"Step 1\", \"retries\": false}, {\"name\": \"Step 2\", \"retries\": true}]}."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        response_json = json.loads(strip_before_first_curly_bracket(response_text))
+
+        self.assertTrue(next(filter(lambda step: step["name"] == "Run a Script 2", response_json["steps"]))["retries"]),
+        self.assertTrue(next(filter(lambda step: step["name"] == "Deploy to IIS", response_json["steps"]))["retries"])
+        self.assertFalse(
+            next(filter(lambda step: step["name"] == "Configure the load balancer", response_json["steps"]))["retries"])
+        # This is a red herring. The step is named "Retry this step" but it doesn't actually have retries enabled.
+        self.assertFalse(
+            next(filter(lambda step: step["name"] == "Retry this step", response_json["steps"]))["retries"])
 
 
 if __name__ == '__main__':
