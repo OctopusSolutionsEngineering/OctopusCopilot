@@ -112,7 +112,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_get_variables(self):
         prompt = "List the variables defined in the project \"Deploy Web App Container\" in space \"Simple\"."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Test.Variable" in response_text, "Response was " + response_text)
 
@@ -120,7 +120,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_get_variables_no_github_user(self):
         prompt = "List the variables defined in the project \"Deploy Web App Container\" in space \"Simple\"."
         response = copilot_handler_internal(build_test_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Test.Variable" in response_text, "Response was " + response_text)
 
@@ -128,7 +128,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_get_variables_with_defaults(self):
         prompt = "List the variables defined in the project."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Test.Variable" in response_text, "Response was " + response_text)
 
@@ -136,7 +136,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_step(self):
         prompt = "What does the step \"Run a Script\" do in the project \"Deploy Web App Container\" in space \"Simple\"."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Hi there" in response_text, "Response was " + response_text)
 
@@ -144,7 +144,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_missing_step(self):
         prompt = "What does the project \"Deploy Web App Container\" in space \"Simple\" do."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertFalse("Hi there" in response_text,
                          "Response was " + response_text)
@@ -161,7 +161,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_all_projects(self):
         prompt = "What projects are in the space \"Simple\"."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Deploy Web App Container" in response_text, "Response was " + response_text)
 
@@ -169,7 +169,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_runbook(self):
         prompt = "What is the description of the \"Backup Database\" runbook in the \"Runbook Project\" project."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Test Runbook" in response_text, "Response was " + response_text)
 
@@ -177,7 +177,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_machine_policies(self):
         prompt = "What is the powershell health check script defined in the \"Windows VM Policy\" machine policy?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("win32_LogicalDisk" in response_text, "Response was " + response_text)
 
@@ -185,7 +185,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_project_groups(self):
         prompt = "What is the description of the \"Azure Apps\" project group?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Test Description" in response_text, "Response was " + response_text)
 
@@ -193,7 +193,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_tenants(self):
         prompt = "Describe the tenant \"Marketing\"."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Marketing" in response_text, "Response was " + response_text)
 
@@ -206,7 +206,7 @@ class CopilotChatTest(unittest.TestCase):
         """
         prompt = "List the unique tenant names in the space, sorted in alphabetical order. Display the answer in a markdown table."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Marketing" in response_text, "Response was " + response_text)
 
@@ -214,7 +214,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_environment(self):
         prompt = "Does the \"Development\" environment allow dynamic infrastructure?."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Development" in response_text, "Response was " + response_text)
 
@@ -222,7 +222,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_feed(self):
         prompt = "What is the URI of the \"Helm\" feed?."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("https://charts.helm.sh/stable/" in response_text, "Response was " + response_text)
 
@@ -230,7 +230,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_account(self):
         prompt = "What is the access key in the \"AWS Account\" account."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("ABCDEFGHIJKLMNOPQRST" in response_text, "Response was " + response_text)
 
@@ -238,7 +238,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_variable_set(self):
         prompt = "List the variables belonging to the \"Database Settings\" library variable set."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Test.Variable" in response_text, "Response was " + response_text)
 
@@ -246,7 +246,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_worker_pool(self):
         prompt = "What is the description of the \"Docker\" worker pool?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Workers running Docker containers" in response_text, "Response was " + response_text)
 
@@ -254,7 +254,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_certificate(self):
         prompt = "What is the note of the \"Kind CA\" certificate?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("A test certificate" in response_text, "Response was " + response_text)
 
@@ -262,7 +262,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_tagsets(self):
         prompt = "List the tags associated with the \"regions\" tag set?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("us-east-1" in response_text, "Response was " + response_text)
 
@@ -270,7 +270,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_lifecycle(self):
         prompt = "What environments are in the \"Simple\" lifecycle?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Production" in response_text, "Response was " + response_text)
 
@@ -278,7 +278,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_git_creds(self):
         prompt = "What is the username for the \"GitHub Credentials\" git credentials?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("admin" in response_text, "Response was " + response_text)
 
@@ -288,7 +288,7 @@ class CopilotChatTest(unittest.TestCase):
         create_and_deploy_release(space_name="Simple", release_version=version)
         prompt = "Get the release version of the latest deployment to the \"Development\" environment for the \"Deploy Web App Container\" project."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue(version in response_text, "Response was " + response_text)
 
@@ -298,7 +298,7 @@ class CopilotChatTest(unittest.TestCase):
         create_and_deploy_release(space_name="Simple", release_version=version)
         prompt = "Get the release version of the latest deployment to the \"Develpment\" environment for the \"Deploy WebApp Container\" project."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue(version in response_text, "Response was " + response_text)
 
@@ -308,7 +308,7 @@ class CopilotChatTest(unittest.TestCase):
         create_and_deploy_release(space_name="Simple", release_version=version)
         prompt = "Get the release version of the last deployment made to the \"Development\" environment for the \"Deploy Web App Container\" project between 1st January 2024 and 31st December 2099."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue(version in response_text, "Response was " + response_text)
 
@@ -316,7 +316,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_get_channels(self):
         prompt = "List the channels defined in the \"Deploy AWS Lambda\" project in a markdown table."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue(re.search("Mainline", response_text), "Response was " + response_text)
 
@@ -333,7 +333,7 @@ class CopilotChatTest(unittest.TestCase):
         prompt = ("What is the release version of the latest deployment to the \"Development\" environment for the "
                   + "\"Deploy AWS Lambda\" project in the \"Mainline\" channel for the \"Marketing\" tenant?")
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue(version in response_text, "Response was " + response_text)
 
@@ -351,7 +351,7 @@ class CopilotChatTest(unittest.TestCase):
         prompt = ("What is the release version of the latest deployment to the \"Development\" environment for the "
                   + "\"Deploy AS Lambda\" project in the \"Mainline\" channel for the \"Marketing\" tenant?")
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue(version in response_text, "Response was " + response_text)
 
@@ -361,7 +361,7 @@ class CopilotChatTest(unittest.TestCase):
         create_and_deploy_release(space_name="Simple", release_version=version)
         prompt = "What is the release version of the latest deployment?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue(version in response_text, "Response was " + response_text)
 
@@ -373,7 +373,7 @@ class CopilotChatTest(unittest.TestCase):
 
         prompt = "When was the last deployment hotfix successfully applied?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue(version + "-hotfix-timeouts-iss253" in response_text, "Response was " + response_text)
 
@@ -381,7 +381,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_general_question(self):
         prompt = "What does the project \"Deploy Web App Container\" do?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         # This response could be anything, but make sure the LLM isn't saying sorry for something.
         self.assertTrue("sorry" not in response_text.casefold(), "Response was " + response_text)
@@ -393,7 +393,7 @@ class CopilotChatTest(unittest.TestCase):
         time.sleep(5)
         prompt = "Show the dashboard."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
@@ -408,7 +408,7 @@ class CopilotChatTest(unittest.TestCase):
 
         prompt = "List anything interesting in the deployment logs for the latest deployment."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         # This response could be anything, but make sure the LLM isn't saying sorry for something.
         self.assertTrue("sorry" not in response_text.casefold(), "Response was " + response_text)
@@ -417,7 +417,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_count_projects(self):
         prompt = "How many projects are there in this space?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         # This should return the one default project (even though there are 3 overall)
         self.assertTrue("1" in response_text.casefold() or "one" in response_text.casefold(),
