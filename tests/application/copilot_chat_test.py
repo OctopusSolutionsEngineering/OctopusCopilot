@@ -153,7 +153,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_describe_machines(self):
         prompt = "What machines are in the space \"Simple\"?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = response.get_body().decode('utf8')
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Cloud Region Target" in response_text, "Response was " + response_text)
 
