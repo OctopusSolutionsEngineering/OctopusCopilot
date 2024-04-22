@@ -7,17 +7,6 @@ Azure OpenAI service.
 View the [Wiki](https://github.com/OctopusSolutionsEngineering/OctopusCopilot/wiki/Prompt-Engineering-with-Octopus) for
 a guide on prompt engineering with this agent.
 
-# Status
-
-| Task                                                                             | Status | Notes                                                                                                                                                               |
-|----------------------------------------------------------------------------------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| OpenAI integration tests identifying common resource names in query              | 🟢     | Done in [openai_infrastructure_test.py](https://github.com/OctopusSolutionsEngineering/OctopusCopilot/blob/main/tests/infrastructure/openai_infrastructure_test.py) |
-| End-to-end tests querying common resources in simple, ephemeral Octopus instance | 🟢     | Done in [copilot_chat_test.py](https://github.com/OctopusSolutionsEngineering/OctopusCopilot/blob/main/tests/application/copilot_chat_test.py)                      | 
-| Security review of sensitive information handling                                | 🟠     | Reached out to secops team                                                                                                                                          |
-| Load test verifying queries of common resources in a live Octopus instance       | 🟢     | Done                                                                                                                                                                |
-| Prompt engineering documentation                                                 | 🟢     | [Here](https://github.com/OctopusSolutionsEngineering/OctopusCopilot/wiki/Prompt-Engineering-with-Octopus)                                                          |
-| CI/CD pipeline                                                                   | 🟠     | Done in personal space, needs to be moved to deploy.octopus.app                                                                                                     |
-
 # Creating a service account
 
 This agent requires an account to interact with Octopus. This is best done with a
