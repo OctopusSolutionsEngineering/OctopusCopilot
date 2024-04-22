@@ -2,6 +2,11 @@ from urllib.parse import urlparse
 
 
 def validate_url(url):
+    """
+    Tests that the string is a valid URL
+    :param url: The value to test
+    :return: True if the string is a URL and False otherwise
+    """
     if not url or not isinstance(url, str):
         return False
 
