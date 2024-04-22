@@ -1,7 +1,7 @@
 import json
 import unittest
 
-from domain.transformers.sse_transformers import convert_to_sse_response
+from domain.transformers.sse_transformers import convert_to_sse_response, convert_from_sse_response
 
 
 class ConvertToSseResponse(unittest.TestCase):
@@ -10,6 +10,10 @@ class ConvertToSseResponse(unittest.TestCase):
             json.loads(convert_to_sse_response("hi").split("\n")[0].replace("data:", "")).get('choices')[0].get(
                 'delta').get(
                 'content'), "hi\n")
+
+    def test_convert_to_and_from_sse_response(self):
+        self.assertEqual(convert_from_sse_response(convert_to_sse_response("hi")), "hi")
+        self.assertEqual(convert_from_sse_response(convert_to_sse_response("hi\nthere")), "hi\nthere")
 
     def test_convert_to_sse_response_stop(self):
         self.assertEqual(
