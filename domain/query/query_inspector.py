@@ -234,7 +234,5 @@ def release_is_latest(release_version):
     :return: True if all variables should be excluded, False otherwise
     """
 
-    ensure_string(release_version, 'release_version must be a string (release_is_latest).')
-
     phrases = ["latest", "last", "most recent"]
     return not release_version or not release_version.strip() or release_version.casefold() in phrases
