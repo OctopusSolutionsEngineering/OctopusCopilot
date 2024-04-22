@@ -146,14 +146,14 @@
                 }
             );
 
-            enable_inputs()
-
             if (!response.ok) {
                 if (response.status === 400) {
                     invalid_api_key_or_url.style.display = 'block'
                 } else {
                     response_error.style.display = 'block'
                 }
+
+                enable_inputs()
             } else {
                 success.style.display = 'block'
             }
