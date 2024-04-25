@@ -358,6 +358,10 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
         # or may update the query with additional examples.
         result = llm_tool_query(query, get_tools, log_query).call_function()
 
+        # Streaming the result could remove some timeouts. Sadly, this is yet to be implemented with
+        # Python: https://github.com/Azure/azure-functions-python-worker/discussions/1349
+        # So we return a bunch of SSE events as a single result.
+
         return func.HttpResponse(result)
     except Exception as e:
         handle_error(e)
