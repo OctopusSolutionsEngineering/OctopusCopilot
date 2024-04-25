@@ -779,7 +779,10 @@ Once default values are set, you can omit the space, environment, and query_proj
         tenant = get_default_argument(get_github_user_from_form(),
                                       get_item_or_none(sanitize_tenants(tenants), 0), "Tenant")
 
-        logs = get_deployment_logs(space, project, environment, tenant, release, api_key, url)
+        logs = timing_wrapper(
+            lambda: get_deployment_logs(space, project, environment, tenant, release, api_key, url),
+            "Deployment logs")
+
         # Get the end of the logs if we have exceeded our context limit
         logs = logs[-max_chars:]
 
