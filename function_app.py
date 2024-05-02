@@ -46,6 +46,7 @@ from domain.transformers.minify_hcl import minify_hcl
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
+from domain.url.url_builder import base_request_url
 from domain.validation.default_value_validation import validate_default_value_name
 from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
@@ -145,13 +146,11 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
                                            os.environ.get("ENCRYPTION_PASSWORD"),
                                            os.environ.get("ENCRYPTION_SALT"))
 
-        requested_url = urlparse(req.url)
-
         # Normally the session information would be persisted in a cookie. I could not get Azure functions to pass
         # through a cookie. So we pass it as a query param.
         return func.HttpResponse(status_code=301,
                                  headers={
-                                     "Location": f"{requested_url.scheme}://{requested_url.hostname}/api/octopus?state=" + session_json})
+                                     "Location": f"{base_request_url(req)}/api/octopus?state=" + session_json})
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
