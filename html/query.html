@@ -145,7 +145,7 @@
         }
 
         debugging.innerHTML = ""
-        startTime = new Date().getTime()
+        const startTime = new Date().getTime()
 
         // Use the polyfill to get the ability to send headers.
         var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(query.value), {
@@ -159,7 +159,7 @@
 
         let response = ""
         evtSource.onmessage = (event) => {
-            endTime = new Date().getTime()
+            const endTime = new Date().getTime()
 
             debugging.innerHTML = "Time taken: " + ((endTime - startTime) / 1000).toFixed(2) + " seconds"
             debugging.innerHTML += "<br>Event: " + JSON.stringify(event)
