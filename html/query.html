@@ -14,13 +14,21 @@
     <span class="navbar-brand text-center col-12 h1"><a
             href="/api/form" style="color: white">Octopus Copilot</a>
 
-    <a style="color: white; float:right"
+        <span style="float:right">
+    <a href="javascript:void(0)" id="debug" style="color: white;">
+        <svg  xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bug-fill" viewBox="0 0 16 16">
+          <path d="M4.978.855a.5.5 0 1 0-.956.29l.41 1.352A5 5 0 0 0 3 6h10a5 5 0 0 0-1.432-3.503l.41-1.352a.5.5 0 1 0-.956-.29l-.291.956A5 5 0 0 0 8 1a5 5 0 0 0-2.731.811l-.29-.956z"/>
+          <path d="M13 6v1H8.5v8.975A5 5 0 0 0 13 11h.5a.5.5 0 0 1 .5.5v.5a.5.5 0 1 0 1 0v-.5a1.5 1.5 0 0 0-1.5-1.5H13V9h1.5a.5.5 0 0 0 0-1H13V7h.5A1.5 1.5 0 0 0 15 5.5V5a.5.5 0 0 0-1 0v.5a.5.5 0 0 1-.5.5zm-5.5 9.975V7H3V6h-.5a.5.5 0 0 1-.5-.5V5a.5.5 0 0 0-1 0v.5A1.5 1.5 0 0 0 2.5 7H3v1H1.5a.5.5 0 0 0 0 1H3v1h-.5A1.5 1.5 0 0 0 1 11.5v.5a.5.5 0 1 0 1 0v-.5a.5.5 0 0 1 .5-.5H3a5 5 0 0 0 4.5 4.975"/>
+        </svg>
+        </a>
+
+    <a style="color: white;"
             href="https://octopus.com/docs/administration/copilot"><svg xmlns="http://www.w3.org/2000/svg" width="16"
                                                                         height="16" fill="currentColor"
                                                                         class="bi bi-question-circle-fill"
                                                                         viewBox="0 0 16 16">
   <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.496 6.033h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286a.237.237 0 0 0 .241.247m2.325 6.443c.61 0 1.029-.394 1.029-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94 0 .533.425.927 1.01.927z"/>
-    </svg></a>
+    </svg></a></span>
     </span>
 </nav>
 <form id="form" class="needs-validation" novalidate>
@@ -62,6 +70,12 @@
         <label class="col-lg-2 offset-lg-2 col-form-label">Response</label>
         <div class="col-lg-6">
             <div id="markdown"></div>
+        </div>
+    </div>
+    <div id="debuggingParent" class="form-group row m-md-1" style="display: none">
+        <label class="col-lg-2 offset-lg-2 col-form-label">Debug</label>
+        <div class="col-lg-6">
+            <div id="debugging"></div>
         </div>
     </div>
 </form>
@@ -129,6 +143,8 @@
             processing = false
         }
 
+        startTime = time.time()
+
         // Use the polyfill to get the ability to send headers.
         var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(query.value), {
             headers: {
@@ -141,6 +157,11 @@
 
         let response = ""
         evtSource.onmessage = (event) => {
+            endTime = time.time()
+
+            debugging.innerHTML = "Time taken: " + (endTime - startTime) + " seconds"
+            debugging.innerHTML += "<br>Event: " + JSON.stringify(event)
+
             console.log(event)
             evtSource.close()
             /*
@@ -160,6 +181,7 @@
             enableInput()
         };
         evtSource.onerror = (event) => {
+            debugging.innerHTML = "Event: " + JSON.stringify(event)
             console.log(event)
             evtSource.close()
             markdown.innerHTML = "The request resulted in an error."
@@ -178,6 +200,14 @@
     sampleQuery.onclick = function () {
         query.value = "Show me the projects in the Default space"
         return false
+    }
+
+    debug.onclick = function () {
+        if (debuggingParent.style.display === "none") {
+            debuggingParent.style.display = "block"
+        } else {
+            debuggingParent.style.display = "none"
+        }
     }
 </script>
 </html>
