@@ -473,7 +473,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
 
         if not space_name:
-            return "Please provide a space name in the question or define a default space name with the command \"Set default space to 'space name'\""
+            space_name = "Default"
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
         dashboard = get_dashboard(space_id, api_key, url)
@@ -543,7 +543,7 @@ Once default values are set, you can omit the space, environment, and query_proj
         space = get_default_argument(get_github_user_from_form(), body["space_name"], "Space")
 
         if not space:
-            return "Please provide a space name in the question or define a default space name with the command \"Set default space to 'space name'\""
+            space = "Default"
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -593,7 +593,7 @@ Once default values are set, you can omit the space, environment, and query_proj
         space = get_default_argument(get_github_user_from_form(), space, "Space")
 
         if not space:
-            return "Please provide a space name in the question or define a default space name with the command \"Set default space to 'space name'\""
+            space = "Default"
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -683,7 +683,7 @@ Once default values are set, you can omit the space, environment, and query_proj
         space = get_default_argument(get_github_user_from_form(), space, "Space")
 
         if not space:
-            return "Please provide a space name in the question or define a default space name with the command \"Set default space to 'space name'\""
+            space = "Default"
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -766,7 +766,7 @@ Once default values are set, you can omit the space, environment, and query_proj
         space = get_default_argument(get_github_user_from_form(), space, "Space")
 
         if not space:
-            return "Please provide a space name in the question or define a default space name with the command \"Set default space to 'space name'\""
+            space = "Default"
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -811,7 +811,7 @@ Once default values are set, you can omit the space, environment, and query_proj
         space = get_default_argument(get_github_user_from_form(), space, "Space")
 
         if not space:
-            return "Please provide a space name in the question or define a default space name with the command \"Set default space to 'space name'\""
+            space = "Default"
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
