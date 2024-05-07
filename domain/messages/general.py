@@ -80,9 +80,9 @@ def build_hcl_prompt(few_shot=None):
         ("system", "Think carefully and logically, explaining your answer."),
         *few_shot,
         ("user", "Question: {input}"),
-        ("user", "Answer the question using the HCL below."),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-        ("user", "HCL: ###\n{hcl}\n###")]
+        ("user", "HCL: ###\n{hcl}\n###"),
+        ("user", "Answer:")]
 
     return messages

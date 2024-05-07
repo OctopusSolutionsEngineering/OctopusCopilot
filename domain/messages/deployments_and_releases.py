@@ -65,6 +65,7 @@ def build_deployments_and_releases_prompt(few_shot=None, additional_messages=Non
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
         ("user", "JSON: ###\n{json}\n###"),
-        ("user", "HCL: ###\n{hcl}\n###")]
+        ("user", "HCL: ###\n{hcl}\n###"),
+        ("user", "Answer:")]
 
     return messages

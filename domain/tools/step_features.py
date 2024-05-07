@@ -89,9 +89,7 @@ variables: variable names"""
                 logging(f"Conflicting Key: {key}", "Value: {value}")
 
         few_shot = """
-Task: Given the HCL representation of a project and its steps, which steps have retries enabled?
-
-Example 1:
+Question: Given the HCL representation of a project and its steps, which steps have retries enabled?
 HCL: ###
 resource "octopusdeploy_project" "test_project" {{
     name = "My Project"
@@ -149,13 +147,12 @@ resource "octopusdeploy_deployment_process" "test_project_deployment_process" {{
   }}
 }}
 ###
-Output:
+Answer:
 The action with the name "My Sample Step" has a property called "Octopus.Action.AutoRetry.MaximumCount" set to "3". Because the "Octopus.Action.AutoRetry.MaximumCount" property is greater than 0, this action has step reties enabled.
 The action with the name "Step 2" does not have a property called "Octopus.Action.AutoRetry.MaximumCount" defined. Because the "Octopus.Action.AutoRetry.MaximumCount" property is not defined, this action does not have step reties enabled.
 The action with the name "Retry the login" does not have a property called "Octopus.Action.AutoRetry.MaximumCount" defined. Because the "Octopus.Action.AutoRetry.MaximumCount" property is not defined, this action does not have step reties enabled.
 The action with the name "Restart the service" does not have a property called "Octopus.Action.AutoRetry.MaximumCount" defined. Because the "Octopus.Action.AutoRetry.MaximumCount" property is not defined, this action does not have step reties enabled.
 
-Answer 1:
 - The step "My Sample Step" has retries enabled.
 """
 

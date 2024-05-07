@@ -47,8 +47,8 @@ steps: step names"""
         # between projects, deployment processes, and variables.
 
         few_shot = """
-Sample Question 1: List the name and ID of certificates that belong to the \"Test\" environment.
-Sample HCL 1: ###
+Question: List the name and ID of certificates that belong to the \"Test\" environment.
+HCL: ###
 resource "octopusdeploy_space" "octopus_space_demo_space" {{
   id                          = "Spaces-2342"
   description                 = "Demo space"
@@ -128,7 +128,7 @@ resource "octopusdeploy_certificate" "certificate_global_certificate" {{
   depends_on                        = []
 }}
 ###
-Sample Answer 1:
+Answer:
 First, assume all certificates belong to the space called "Demo".
 
 Second, find the "octopusdeploy_certificate" resources that have an empty "environments" attribute, which indicates the certificate is not scoped to any environment.
@@ -149,8 +149,8 @@ The targets that belong to the "Test" environment are:
 - Name: "Unscoped certificate" ID: "Certificates-12323"
 - Name: "Global certificate" ID: "Certificates-12324"
 
-Sample Question 2: What targets are defined in the space "Demo"?
-Sample HCL 2: ###
+Question: What targets are defined in the space "Demo"?
+HCL: ###
 resource "octopusdeploy_space" "octopus_space_demo_space" {{
   id                          = "Spaces-2342"
   description                 = "Demo space"
@@ -196,7 +196,7 @@ resource "octopusdeploy_certificate" "certificate_another_certificate" {{
   depends_on                        = []
 }}
 ###
-Sample Answer 2:
+Answer:
 First, assume all targets belong to the space called "Demo".
 
 Second, find all the certificates, which are represented by "octopusdeploy_certificate" resources.

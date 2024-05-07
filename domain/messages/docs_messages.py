@@ -13,4 +13,5 @@ def docs_prompt(context):
 
     return [('system', "You must prioritise the details in the Documentation context when answering the question."),
             ('user', 'Documentation: ###\n' + context[:max_chars].replace("{", "{{").replace("}", "}}\n###")),
-            ('user', "{input}")]
+            ('user', "Question: {input}"),
+            ('user', "Answer:")]

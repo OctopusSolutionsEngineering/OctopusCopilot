@@ -18,6 +18,7 @@ def build_plain_text_prompt(few_shot=None):
         ("user", "Question: {input}"),
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-        ("user", "Deployment Log: ###\n{context}\n###")]
+        ("user", "Deployment Log: ###\n{context}\n###"),
+        ("user", "Answer:")]
 
     return messages

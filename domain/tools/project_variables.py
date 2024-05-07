@@ -35,9 +35,7 @@ def answer_project_variables_usage_wrapper(original_query, callback, logging=Non
         # between projects, deployment processes, and variables.
 
         few_shot = """
-Task: Given the HCL representation of a project and its variables, where are the variables are used in the project "My Project"?
-
-Example 1:
+Question: Given the HCL representation of a project and its variables, where are the variables are used in the project "My Project"?
 HCL: ###
 resource "octopusdeploy_project" "test_project" {{
     name = "My Project"
@@ -118,7 +116,7 @@ resource "octopusdeploy_variable" "azure_account" {{
   is_sensitive = false
 }}
 ###
-Output:
+Answer:
 The resource with the labels "octopusdeploy_project" and "test_project" has an attribute called "name" with the value "My Project". This name matches the project name in the query. Therefore, this is the project we base the answer on.
 The resource with the labels "octopusdeploy_deployment_process" "test_project_deployment_process" has an attribute called "project_id" that matches the labels of the project called "My Project". Therefore, this deployment process belongs to the project \"My Project\"".
 
@@ -129,7 +127,7 @@ The resource with the labels "octopusdeploy_variable" "azure_account" has an att
 The resource with the labels "octopusdeploy_variable" "variable3" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "TestVariable3". None of the attributes assigned to the deployment process belonging to the "My Project" project uses the string "TestVariable3". Therefore, the variable "TestVariable3" is unused.
 The resource with the labels "octopusdeploy_variable" "secondprojectvariable" has an attribute called "owner_id" that does not match match the labels of the project called "My Project". Therefore, the variable "SecondProjectVariable" is not included in the answer.
 
-Answer 1:
+These are the variables used in the project "My Project":
 - The variable "Variable.Test" is used by the step "My Sample Step".
 - The variable "AnotherVariable" is used by the step "Step 2".
 - The variable "SecretVariable" is used by the step "Step 2".
@@ -161,9 +159,7 @@ def answer_project_variables_wrapper(original_query, callback, logging=None):
         # and variables.
 
         few_shot = """
-Task: Given the HCL representation of a project and its variables, list the variables defined in a project "My Project".
-
-Example 1:
+Question: Given the HCL representation of a project and its variables, list the variables defined in a project "My Project".
 HCL: ###
 resource "octopusdeploy_project" "test_project" {{
     name = "My Project"
@@ -210,16 +206,15 @@ resource "octopusdeploy_variable" "secondprojectvariable" {{
   name         = "SecondProjectVariable"
 }}
 ###
-Output:
+Answer:
 
 The resource with the labels "octopusdeploy_project" and "test_project" has an attribute called "name" with the value "My Project". This name matches the project name in the query. Therefore, this is the project we base the answer on.
-
 The resource with the labels "octopusdeploy_variable" "project_variable" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "Variable.Test". Therefore, the variable "Variable.Test" is defined in the project "My Project".
 The resource with the labels "octopusdeploy_variable" "secret_variable" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "SecretVariable". Therefore, the variable "SecretVariable" is defined in the project "My Project".
 The resource with the labels "octopusdeploy_variable" "azure_account" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "Azure.Account". Therefore, the variable "Azure.Account" is defined in the project "My Project".
 The resource with the labels "octopusdeploy_variable" "secondprojectvariable" has an attribute called "owner_id" that does not match match the labels of the project called "My Project". Therefore, the variable "SecondProjectVariable" is not included in the answer.
 
-Answer 1:
+These are the variables defined in the project "My Project":
 - "Variable.Test"
 - "SecretVariable"
 - "Azure.Account"

@@ -46,8 +46,8 @@ steps: step names"""
         # between projects, deployment processes, and variables.
 
         few_shot = """
-Sample Question 1: List the name and ID of targets that belong to the \"Test\" environment.
-Sample HCL 1: ###
+Question: List the name and ID of targets that belong to the \"Test\" environment.
+HCL: ###
 resource "octopusdeploy_space" "octopus_space_demo_space" {{
   id                          = "Spaces-2342"
   description                 = "Demo space"
@@ -131,7 +131,7 @@ resource "octopusdeploy_azure_web_app_deployment_target" "target_azure_web_app_d
   roles                             = ["api-server"]
 }}
 ###
-Sample Answer 1:
+Answer:
 First, assume all targets belong to the space called "Demo".
 
 Second, find the environment with the name "Test".
@@ -164,8 +164,8 @@ The targets that belong to the "Test" environment are:
 - Name: "New Web App" ID: "Machines-14526"
 - Name: "azure-web-app/demo.myinstance.app/api-server-test" ID: "Machines-62151"
 
-Sample Question 2: What targets are defined in the space "Demo"?
-Sample HCL 2: ###
+Question: What targets are defined in the space "Demo"?
+HCL: ###
 resource "octopusdeploy_space" "octopus_space_demo_space" {{
   id                          = "Spaces-2342"
   description                 = "Demo space"
@@ -196,7 +196,7 @@ resource "octopusdeploy_polling_tentacle_deployment_target" "target_azure_iis_3"
   roles                             = ["payments-team"]
 }}
 ###
-Sample Answer 2:
+Answer:
 First, assume all targets belong to the space called "Demo".
 
 Second, find all the following resources that represent targets or machines:
