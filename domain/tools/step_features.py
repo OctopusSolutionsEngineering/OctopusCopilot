@@ -153,7 +153,8 @@ The action with the name "Step 2" does not have a property called "Octopus.Actio
 The action with the name "Retry the login" does not have a property called "Octopus.Action.AutoRetry.MaximumCount" defined. Because the "Octopus.Action.AutoRetry.MaximumCount" property is not defined, this action does not have step reties enabled.
 The action with the name "Restart the service" does not have a property called "Octopus.Action.AutoRetry.MaximumCount" defined. Because the "Octopus.Action.AutoRetry.MaximumCount" property is not defined, this action does not have step reties enabled.
 
-- The step "My Sample Step" has retries enabled.
+The steps with retries enabled are:
+- My Sample Step
 """
 
         messages = build_hcl_prompt([("user", few_shot)])
