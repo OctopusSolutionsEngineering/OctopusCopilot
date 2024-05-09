@@ -904,7 +904,9 @@ Once default values are set, you can omit the space, environment, and query_proj
             FunctionDefinition(get_default_value),
             FunctionDefinition(remove_default_value),
             FunctionDefinition(get_dashboard_wrapper)],
-            fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query))
+            fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
+            invalid=FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
+                                       AnswerGeneralQuery)
         )
 
     try:
