@@ -21,10 +21,20 @@ def handle_error(exception):
         error_message = anonymize_message(sanitize_message(getattr(exception, 'message', repr(exception))))
         stack_trace = anonymize_message(sanitize_message(traceback.format_exc()))
 
+        # Get the wrapped exception, if any
+        original_exception = anonymize_message(
+            sanitize_message(getattr(exception, 'original_exception', repr(exception))))
+        original_error_message = anonymize_message(sanitize_message(
+            getattr(original_exception, 'message', repr(original_exception)))) if original_exception else None
+
         logger.error(error_message)
+        if original_error_message:
+            logger.error(original_error_message)
         logger.error(stack_trace)
 
         send_slack_message(error_message, get_slack_url())
+        if original_error_message:
+            send_slack_message(original_error_message, get_slack_url())
         send_slack_message(stack_trace, get_slack_url())
     except Exception as e:
         logger.error(getattr(exception, 'message', repr(e)))
