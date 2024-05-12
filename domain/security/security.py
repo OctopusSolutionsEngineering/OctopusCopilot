@@ -2,6 +2,7 @@ import json
 import logging
 
 from domain.errors.error_handling import handle_error
+from domain.exceptions.invalid_admin_users import InvalidAdminUsers
 from domain.exceptions.not_authorized import NotAuthorized
 
 
@@ -24,7 +25,7 @@ def is_admin_user(user, get_admin_users, callback):
         admin_users = list(map(lambda x: str(x), json.loads(get_admin_users)))
 
     except Exception as e:
-        handle_error(e)
+        handle_error(InvalidAdminUsers("Failed to parse list of admin users: " + get_admin_users, e))
         raise NotAuthorized()
 
     if str(user) not in admin_users:

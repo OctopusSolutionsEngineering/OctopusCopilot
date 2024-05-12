@@ -28,14 +28,16 @@ class FunctionDefinitions:
     This class represents a collection of FunctionDefinition objects.
     """
 
-    def __init__(self, functions, fallback=None):
+    def __init__(self, functions, fallback=None, invalid=None):
         """
         Construct a collection of function tools that can be used by OpenAI.
         :param functions: The list of functions to use as tool
         :param fallback: If the functions do not match, use this function as a fallback
+        :param invalid: Sometimes an LLM will invent a function name. In this case, we use this function to handle the response.
         """
         self.functions = [function for function in functions if function]
         self.fallback = fallback
+        self.invalid = invalid
 
     def get_tools(self):
         """
@@ -67,5 +69,10 @@ class FunctionDefinitions:
         function = list(filter(lambda f: f.name == function_name, self.functions))
         if len(function) == 1:
             return function[0].function
+
+        # If the LLM gave us an invalid function name, we can defer the response to the optional
+        # invalid function fallback.
+        if self.invalid:
+            return self.invalid
 
         raise Exception(f"Function {function_name} was not found")
