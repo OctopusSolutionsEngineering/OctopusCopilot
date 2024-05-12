@@ -1,7 +1,6 @@
 import json
 import os
 import urllib.parse
-from urllib.parse import urlparse
 
 from azure.core.exceptions import HttpResponseError
 
@@ -190,7 +189,9 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         # the next cleanup cycle triggered by api_key_cleanup. Using temporary keys mens we never
         # persist a long-lived key.
         user = get_current_user(body['api'], body['url'])
-        api_key = create_limited_api_key(user, body['api'], body['url'])
+
+        # The guest API key is a fixed string and we do not create a new temporary key
+        api_key = create_limited_api_key(user, body['api'], body['url']) if body['api'] != "API-GUEST" else "API-GUEST"
 
         # Persist the Octopus details against the GitHub user
         save_users_octopus_url_from_login(user_id,
