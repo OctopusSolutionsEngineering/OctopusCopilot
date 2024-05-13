@@ -409,6 +409,20 @@ class CopilotChatTest(unittest.TestCase):
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_dashboard_fuzzy_space(self):
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        create_and_deploy_release(space_name="Simple", release_version=version)
+        time.sleep(5)
+        prompt = "Show the dashboard for space \"Simpleish\"."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
+        self.assertTrue(
+            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_logs(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         deployment = create_and_deploy_release(space_name="Simple", release_version=version)

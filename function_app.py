@@ -50,8 +50,8 @@ from domain.validation.default_value_validation import validate_default_value_na
 from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
-    create_limited_api_key, get_dashboard, get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, \
-    get_spaces_generator
+    create_limited_api_key, get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, \
+    get_spaces_generator, get_dashboard
 from infrastructure.openai import llm_tool_query
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
@@ -463,22 +463,31 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             logger.info("Encryption password must have changed because the api key could not be decrypted")
             raise OctopusApiKeyInvalid()
 
-    def get_dashboard_wrapper(space_name: None):
-        """Display the dashboard
+    def get_dashboard_wrapper(original_query):
 
-            Args:
-                space_name: The name of the space containing the projects.
-                If this value is not defined, the default value will be used.
-        """
-        api_key, url = get_api_key_and_url()
-        space_name = get_default_argument(get_github_user_from_form(), space_name, "Space")
+        def get_dashboard_tool(space_name: None):
+            """Display the dashboard
 
-        if not space_name:
-            space_name = "Default"
+                Args:
+                    space_name: The name of the space containing the projects.
+                    If this value is not defined, the default value will be used.
+            """
+            api_key, url = get_api_key_and_url()
 
-        space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
-        dashboard = get_dashboard(space_id, api_key, url)
-        return get_dashboard_response(dashboard)
+            sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
+                                                  sanitize_space(original_query, space_name))
+
+            space_name = get_default_argument(get_github_user_from_form(),
+                                              sanitized_space["matched"] if sanitized_space else None, "Space")
+
+            if not space_name:
+                space_name = "Default"
+
+            space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
+            dashboard = get_dashboard(space_id, api_key, url)
+            return get_dashboard_response(dashboard)
+
+        return get_dashboard_tool
 
     def set_default_value(default_name, default_value):
         """Save a default value for a space, query_project, environment, or channel
@@ -925,7 +934,7 @@ Once default values are set, you can omit the space, environment, and query_proj
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
             FunctionDefinition(remove_default_value),
-            FunctionDefinition(get_dashboard_wrapper)],
+            FunctionDefinition(get_dashboard_wrapper(query))],
             fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
             invalid=FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
                                        AnswerGeneralQuery)
