@@ -793,11 +793,11 @@ Once default values are set, you can omit the space, environment, and query_proj
     def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release):
 
         log_query("logs_callback", f"""
-    Space Id: {space}
-    Project Names: {projects}
-    Tenant Names: {tenants}
-    Environment Names: {environments}
-    Channel Names: {channel}""")
+Space Id: {space}
+Project Names: {projects}
+Tenant Names: {tenants}
+Environment Names: {environments}
+Channel Names: {channel}""")
 
         api_key, url = get_api_key_and_url()
 
