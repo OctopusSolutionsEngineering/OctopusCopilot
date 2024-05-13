@@ -84,6 +84,31 @@ def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
+def get_spaces_batch(skip, take, api_key, octopus_url):
+    api = build_url(octopus_url, "api/Spaces", dict(take=take, skip=skip))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()["Items"]
+
+
+@logging_wrapper
+def get_spaces_generator(api_key, octopus_url):
+    skip = 0
+    take = 30
+
+    while True:
+        batch_spaces = get_spaces_batch(skip, take, api_key, octopus_url)
+
+        for space in batch_spaces:
+            yield space
+
+        if len(batch_spaces) != take:
+            break
+
+        skip += take
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
     """
     The base function used to get a list of project names.
@@ -662,7 +687,8 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
         # Get all the deployments belonging to a release
         deployment_environments = list(map(lambda r: r["Deployments"], releases["Releases"]))
         # Get all the deployments to all environments
-        deployments = flatten_list(map(lambda dep_env: flatten_list(map(lambda env: dep_env[env], dep_env.keys())), deployment_environments))
+        deployments = flatten_list(
+            map(lambda dep_env: flatten_list(map(lambda env: dep_env[env], dep_env.keys())), deployment_environments))
 
     if tenant:
         deployments = list(filter(lambda d: d["TenantId"] == tenant["Id"], deployments))

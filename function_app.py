@@ -26,8 +26,8 @@ from domain.messages.general import build_hcl_prompt
 from domain.messages.test_message import build_test_prompt
 from domain.performance.timing import timing_wrapper
 from domain.sanitizers.sanitized_list import get_item_or_none, \
-    none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_projects_fuzzy, sanitize_tenants, \
-    update_query
+    none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_names_fuzzy, sanitize_tenants, \
+    update_query, sanitize_space, sanitize_name_fuzzy
 from domain.security.security import is_admin_user
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
@@ -50,7 +50,8 @@ from domain.validation.default_value_validation import validate_default_value_na
 from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
-    create_limited_api_key, get_dashboard, get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator
+    create_limited_api_key, get_dashboard, get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, \
+    get_spaces_generator
 from infrastructure.openai import llm_tool_query
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
@@ -540,15 +541,19 @@ Once default values are set, you can omit the space, environment, and query_proj
     def general_query_callback(original_query, body, messages):
         api_key, url = get_api_key_and_url()
 
-        space = get_default_argument(get_github_user_from_form(), body["space_name"], "Space")
+        sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
+                                              sanitize_space(original_query, body["space_name"]))
+
+        space = get_default_argument(get_github_user_from_form(),
+                                     sanitized_space["matched"] if sanitized_space else None, "Space")
 
         if not space:
             space = "Default"
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
-        sanitized_projects = sanitize_projects_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
-                                                     sanitize_projects(body["project_names"]))
+        sanitized_projects = sanitize_names_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
+                                                  sanitize_projects(body["project_names"]))
 
         project_names = get_default_argument(get_github_user_from_form(),
                                              [project["matched"] for project in sanitized_projects], "Project")
@@ -590,15 +595,19 @@ Once default values are set, you can omit the space, environment, and query_proj
     def variable_query_callback(original_query, messages, space, projects, variables):
         api_key, url = get_api_key_and_url()
 
-        space = get_default_argument(get_github_user_from_form(), space, "Space")
+        sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
+                                              sanitize_space(original_query, space))
+
+        space = get_default_argument(get_github_user_from_form(),
+                                     sanitized_space["matched"] if sanitized_space else None, "Space")
 
         if not space:
             space = "Default"
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
-        sanitized_projects = sanitize_projects_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
-                                                     sanitize_projects(projects))
+        sanitized_projects = sanitize_names_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
+                                                  sanitize_projects(projects))
 
         projects = get_default_argument(get_github_user_from_form(),
                                         [project["matched"] for project in sanitized_projects], "Project")
@@ -680,15 +689,19 @@ Once default values are set, you can omit the space, environment, and query_proj
         sanitized_environments = sanitize_environments(original_query, environments)
         sanitized_tenants = sanitize_tenants(tenants)
 
-        space = get_default_argument(get_github_user_from_form(), space, "Space")
+        sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
+                                              sanitize_space(original_query, space))
+
+        space = get_default_argument(get_github_user_from_form(),
+                                     sanitized_space["matched"] if sanitized_space else None, "Space")
 
         if not space:
             space = "Default"
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
-        sanitized_projects = sanitize_projects_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
-                                                     sanitize_projects(projects))
+        sanitized_projects = sanitize_names_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
+                                                  sanitize_projects(projects))
 
         query_project = get_default_argument(get_github_user_from_form(),
                                              get_item_or_none(
@@ -763,15 +776,19 @@ Once default values are set, you can omit the space, environment, and query_proj
     def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release):
         api_key, url = get_api_key_and_url()
 
-        space = get_default_argument(get_github_user_from_form(), space, "Space")
+        sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
+                                              sanitize_space(original_query, space))
+
+        space = get_default_argument(get_github_user_from_form(),
+                                     sanitized_space["matched"] if sanitized_space else None, "Space")
 
         if not space:
             space = "Default"
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
-        sanitized_projects = sanitize_projects_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
-                                                     sanitize_projects(projects))
+        sanitized_projects = sanitize_names_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
+                                                  sanitize_projects(projects))
 
         project = get_default_argument(get_github_user_from_form(),
                                        get_item_or_none([project["matched"] for project in sanitized_projects],
@@ -808,15 +825,19 @@ Once default values are set, you can omit the space, environment, and query_proj
         """
         api_key, url = get_api_key_and_url()
 
-        space = get_default_argument(get_github_user_from_form(), space, "Space")
+        sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
+                                              sanitize_space(original_query, space))
+
+        space = get_default_argument(get_github_user_from_form(),
+                                     sanitized_space["matched"] if sanitized_space else None, "Space")
 
         if not space:
             space = "Default"
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
-        sanitized_projects = sanitize_projects_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
-                                                     sanitize_projects(projects))
+        sanitized_projects = sanitize_names_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
+                                                  sanitize_projects(projects))
 
         project = get_default_argument(get_github_user_from_form(),
                                        get_item_or_none([project["matched"] for project in sanitized_projects],

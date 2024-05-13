@@ -38,18 +38,34 @@ def update_query(original_query, sanitized_projects):
         sanitized_projects, original_query)
 
 
-def sanitize_projects_fuzzy(space_projects_generator, projects):
+def sanitize_names_fuzzy(names_generator, projects):
     """
-    Match the list of projects to the closest project names that exist in the space. This allows
-    for minor typos in the query. This version uses a generator to avoid loading all the projects
+    Match the list of resources to the closest project names that exist in the space. This allows
+    for minor typos in the query. This version uses a generator to avoid loading all the resources
     if there is an exact match withing the earlier batch requests.
     :param projects: The list of project names to match
-    :param space_projects_generator: The list of project names from the space
+    :param names_generator: The list of resource names from the space
     :return: A list of the closest matching project names from the space
     """
-    fuzzy_items = [get_item_fuzzy_generator(space_projects_generator, project) for project in projects]
+    fuzzy_items = [get_item_fuzzy_generator(names_generator, project) for project in projects]
     return [{"original": project["original"], "matched": project["matched"]["Name"]} for project in fuzzy_items if
             project]
+
+
+def sanitize_name_fuzzy(names_generator, name):
+    """
+    Match the resource to the closest project names that exist in the space. This allows
+    for minor typos in the query. This version uses a generator to avoid loading all the resources
+    if there is an exact match withing the earlier batch requests.
+    :param name: The resource name
+    :param names_generator: The list of resource names from the space
+    :return: The closest matching resource names from the space
+    """
+    if not name:
+        return None
+
+    fuzzy_item = get_item_fuzzy_generator(names_generator, name)
+    return {"original": fuzzy_item["original"], "matched": fuzzy_item["matched"]["Name"]} if fuzzy_item else None
 
 
 def sanitize_tenants(input_list):
@@ -263,7 +279,8 @@ def get_item_fuzzy_generator(items_generator, name):
             case_insensitive = item
 
         # Calculate the fuzzy match
-        fuzzy_matches.append({"ratio": fuzz.ratio(name, item["Name"]), "item": item})
+        ratio = fuzz.ratio(name, item["Name"])
+        fuzzy_matches.append({"ratio": ratio, "item": item})
 
     # In the absence of an exact match, return a case-insensitive match
     if case_insensitive:

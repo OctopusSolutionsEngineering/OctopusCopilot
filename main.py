@@ -10,7 +10,7 @@ from domain.logging.query_loggin import log_query
 from domain.messages.docs_messages import docs_prompt
 from domain.performance.timing import timing_wrapper
 from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all, \
-    get_item_or_none, sanitize_projects_fuzzy, sanitize_projects, sanitize_tenants
+    get_item_or_none, sanitize_names_fuzzy, sanitize_projects, sanitize_tenants, sanitize_space, sanitize_name_fuzzy
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
@@ -23,7 +23,7 @@ from domain.transformers.chat_responses import get_octopus_project_names_respons
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from infrastructure.github import search_repo
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_dashboard, \
-    get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator
+    get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, get_spaces_generator
 from infrastructure.openai import llm_tool_query, llm_message_query
 
 
@@ -92,21 +92,26 @@ def get_deployment_process_raw_json_cli(space_name: None, project_name: None):
 
 
 def general_query_callback(original_query, body, messages):
-    space = get_default_argument(body['space_name'], 'Space')
+    sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(get_api_key(), get_octopus_api()),
+                                          sanitize_space(original_query, body["space_name"]))
+
+    space = get_default_argument(sanitized_space["matched"] if sanitized_space else None, "Space")
 
     context = {"input": original_query}
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space, get_api_key(), get_octopus_api())
 
-    sanitized_projects = sanitize_projects_fuzzy(
+    sanitized_projects = sanitize_names_fuzzy(
         lambda: get_projects_generator(space_id, get_api_key(), get_octopus_api()),
         sanitize_projects(body["project_names"]))
+
+    project_names = [project["matched"] for project in sanitized_projects]
 
     return collect_llm_context(original_query,
                                messages,
                                context,
                                space_id,
-                               sanitized_projects,
+                               project_names,
                                body['runbook_names'],
                                body['target_names'],
                                body['tenant_names'],
