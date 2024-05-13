@@ -996,6 +996,10 @@ Once default values are set, you can omit the space, environment, and query_proj
         # This exception means there is no Octopus instance configured for the GitHub user making the request.
         # The Octopus instance is supplied via a chat message.
         return request_config_details()
+    except ValueError as e:
+        # Assume this is the error "Azure has not provided the response due to a content filter being triggered"
+        # from azure_openai.py in langchain.
+        return func.HttpResponse(convert_to_sse_response(NO_FUNCTION_RESPONSE), headers=get_sse_headers())
     except Exception as e:
         handle_error(e)
         return func.HttpResponse(convert_to_sse_response(
