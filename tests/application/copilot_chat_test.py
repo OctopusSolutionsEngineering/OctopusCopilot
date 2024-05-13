@@ -110,7 +110,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_variables(self):
-        prompt = "List the variables defined in the project \"Deploy Web App Container\" in space \"Simple\"."
+        prompt = "List the variable names defined in the project \"Deploy Web App Container\" in space \"Simple\"."
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
@@ -126,7 +126,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_variables_no_github_user(self):
-        prompt = "List the variables defined in the project \"Deploy Web App Container\" in space \"Simple\"."
+        prompt = "List the variable names defined in the project \"Deploy Web App Container\" in space \"Simple\"."
         response = copilot_handler_internal(build_test_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
@@ -134,7 +134,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_variables_with_defaults(self):
-        prompt = "List the variables defined in the project."
+        prompt = "List the variable names defined in the project."
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
