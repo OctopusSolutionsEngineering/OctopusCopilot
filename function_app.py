@@ -14,6 +14,7 @@ from domain.defaults.defaults import get_default_argument, get_default_argument_
 from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
+from domain.exceptions.openai_error import OpenAIContentFilter, OpenAITokenLengthExceeded
 from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequestFailed
 from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
@@ -52,7 +53,7 @@ from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
     create_limited_api_key, get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, \
     get_spaces_generator, get_dashboard
-from infrastructure.openai import llm_tool_query
+from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
     get_default_values, database_connection_test, delete_default_values, delete_user_details
@@ -364,6 +365,13 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
         # So we return a bunch of SSE events as a single result.
 
         return func.HttpResponse(result)
+    except OpenAIContentFilter as e:
+        handle_error(e)
+        return func.HttpResponse(NO_FUNCTION_RESPONSE, status_code=400)
+    except OpenAITokenLengthExceeded as e:
+        handle_error(e)
+        return func.HttpResponse("The query and context exceeded the context window size. This error has been logged.",
+                                 status_code=500)
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("An exception was raised. See the logs for more details.",
