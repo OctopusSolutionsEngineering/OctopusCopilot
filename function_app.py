@@ -797,6 +797,7 @@ Space Id: {space}
 Project Names: {projects}
 Tenant Names: {tenants}
 Environment Names: {environments}
+Release Version: {release}
 Channel Names: {channel}""")
 
         api_key, url = get_api_key_and_url()
