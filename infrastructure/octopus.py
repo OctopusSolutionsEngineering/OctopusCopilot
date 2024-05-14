@@ -12,7 +12,7 @@ from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.query.query_inspector import release_is_latest
-from domain.sanitizers.sanitized_list import flatten_list, get_item_fuzzy
+from domain.sanitizers.sanitized_list import get_item_fuzzy
 from domain.url.build_url import build_url
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http, TAKE_ALL
@@ -670,25 +670,14 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
     if tenant_name:
         tenant = get_tenant(space_id, tenant_name, api_key, octopus_url)
 
-    api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
+    api = build_url(octopus_url, f"api/{space_id}/Deployments", dict(projects=project['Id']))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
-    releases = json.loads(resp.data.decode("utf-8"))
-
-    if "Releases" not in releases:
-        return ""
+    deployments = json.loads(resp.data.decode("utf-8")).get("Items")
 
     if environment:
         # Only releases to the environment are a candidate
-        filtered_releases = list(filter(lambda r: environment["Id"] in r["Deployments"].keys(), releases["Releases"]))
-        deployments = flatten_list(map(lambda r: r["Deployments"][environment['Id']], filtered_releases))
-    else:
-        # Every deployment is a candidate
-        # Get all the deployments belonging to a release
-        deployment_environments = list(map(lambda r: r["Deployments"], releases["Releases"]))
-        # Get all the deployments to all environments
-        deployments = flatten_list(
-            map(lambda dep_env: flatten_list(map(lambda env: dep_env[env], dep_env.keys())), deployment_environments))
+        deployments = list(filter(lambda d: d["EnvironmentId"] == environment["Id"], deployments))
 
     if tenant:
         deployments = list(filter(lambda d: d["TenantId"] == tenant["Id"], deployments))
@@ -698,7 +687,22 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
         if deployments:
             task_id = deployments[0]["TaskId"]
     else:
-        specific_deployment = list(filter(lambda d: d["ReleaseVersion"] == release_version.strip(), deployments))
+        # We need to match the release version to a release, and the release to a deployment
+
+        # Start by getting the releases for a project
+        api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Releases", dict(take=100))
+        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+        releases = json.loads(resp.data.decode("utf-8")).get("Items")
+
+        # Find the specific release
+        release = next(filter(lambda r: r["Version"] == release_version.strip(), releases))
+
+        # If the release is not found, exit
+        if not release:
+            return ""
+
+        # Find the specific deployment
+        specific_deployment = list(filter(lambda d: d["ReleaseId"] == release["Id"], deployments))
         if specific_deployment:
             task_id = specific_deployment[0]["TaskId"]
 

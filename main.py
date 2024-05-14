@@ -140,7 +140,7 @@ def logs_callback(original_query, messages, space, projects, environments, chann
 
     logs = get_deployment_logs(space, get_item_or_none(sanitize_list(projects), 0),
                                get_item_or_none(sanitize_list(environments), 0),
-                               get_item_or_none(sanitize_list(tenants), 0), "latest", get_api_key(), get_octopus_api())
+                               get_item_or_none(sanitize_list(tenants), 0), release, get_api_key(), get_octopus_api())
     # Get the end of the logs if we have exceeded our context limit
     logs = logs[-max_chars:]
 
