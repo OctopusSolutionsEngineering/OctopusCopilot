@@ -159,11 +159,13 @@ jobs:
           reporter: java-junit
           fail-on-error: 'false'
       - name: Generate SBOM
+        if: ${{ github.event_name != 'schedule' }}
         run: |
           python -m pip install cyclonedx-bom
           cyclonedx-py  environment > bom.json
         shell: bash
       - name: Package
+        if: ${{ github.event_name != 'schedule' }}
         run: |-
           zip -R OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip \
             '*.py' \
@@ -192,14 +194,14 @@ jobs:
             -x "tests/*" \
         shell: bash
       - name: Tag Release
-        if: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'schedule' }}
         uses: mathieudutour/github-tag-action@v6.1
         with:
           custom_tag: ${{ steps.determine_version.outputs.semVer }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - id: create_release
         name: Create Release
-        if: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'schedule' }}
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.determine_version.outputs.semVer }}+run${{ github.run_number }}-attempt${{ github.run_attempt }}
@@ -207,12 +209,13 @@ jobs:
           draft: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
           name: Release ${{ steps.determine_version.outputs.semVer }} Run ${{ github.run_number }} Attempt ${{ github.run_attempt }}
       - name: Upload Release Asset
-        if: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'schedule' }}
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.determine_version.outputs.semVer }}+run${{ github.run_number }}-attempt${{ github.run_attempt }}
           files: OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip
       - name: Push packages to Octopus Deploy
+        if: ${{ github.event_name != 'schedule' }}
         uses: OctopusDeploy/push-package-action@v3
         env:
           OCTOPUS_API_KEY: ${{ secrets.COPILOT_OCTOPUS_API }}
@@ -222,6 +225,7 @@ jobs:
           packages: OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip
           overwrite_mode: OverwriteExisting
       - name: Push build information to Octopus Deploy
+        if: ${{ github.event_name != 'schedule' }}
         uses: OctopusDeploy/push-build-information-action@v3
         env:
           OCTOPUS_API_KEY: ${{ secrets.COPILOT_OCTOPUS_API }}
@@ -231,7 +235,7 @@ jobs:
           packages: OctopusCopilot
           version: ${{ steps.determine_version.outputs.semVer }}
       - name: Create Octopus Release
-        if: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'schedule' }}
         uses: OctopusDeploy/create-release-action@v3
         env:
           OCTOPUS_API_KEY: ${{ secrets.COPILOT_OCTOPUS_API }}
