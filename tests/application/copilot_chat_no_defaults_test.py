@@ -121,10 +121,9 @@ class CopilotChatNoDefaultsTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
-        # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
-            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
+            "The query did not specify a space so the so the space named Default was assumed" in response_text,
+            "Response was " + response_text)
 
 
 if __name__ == '__main__':
