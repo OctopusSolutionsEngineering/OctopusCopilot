@@ -98,6 +98,19 @@ class CopilotChatNoDefaultsTest(unittest.TestCase):
 
         self.assertTrue("the space has no projects" in response_text.casefold(), "Response was " + response_text)
 
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_get_logs_fuzzy(self):
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        deployment = create_and_deploy_release(space_name="Simple", release_version=version)
+        wait_for_task(deployment["TaskId"], space_name="Simple")
+
+        # Use fuzzy matching for project and space
+        prompt = "Print the last 30 lines from the latest deployment of the \"Deploy Web App Container blah\" project to the \"Development\" environment in the \"Simpleish\" space."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        self.assertTrue("the space has no projects" not in response_text.casefold(), "Response was " + response_text)
+
 
 if __name__ == '__main__':
     unittest.main()
