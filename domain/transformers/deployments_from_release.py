@@ -80,12 +80,12 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
                 "TaskId": deployment["TaskId"],
                 "TenantId": deployment["TenantId"],
                 "TenantName": get_key_or_none(
-                    next(filter(lambda tenant: tenant["Id"] == deployment["TenantId"], tenants)),
+                    next(filter(lambda tenant: tenant["Id"] == deployment["TenantId"], tenants), None),
                     "Name") if tenants else None,
                 "ReleaseId": deployment["ReleaseId"],
                 "EnvironmentId": deployment["EnvironmentId"],
                 "EnvironmentName": get_key_or_none(
-                    next(filter(lambda env: env["Id"] == deployment["EnvironmentId"], environments)),
+                    next(filter(lambda env: env["Id"] == deployment["EnvironmentId"], environments), None),
                     "Name") if environments else None,
                 "ChannelId": deployment["ChannelId"],
                 "ChannelName": channel["Name"],

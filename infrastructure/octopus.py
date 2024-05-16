@@ -720,7 +720,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
         releases = json.loads(resp.data.decode("utf-8")).get("Items")
 
         # Find the specific release
-        release = next(filter(lambda r: r["Version"] == release_version.strip(), releases))
+        release = next(filter(lambda r: r["Version"] == release_version.strip(), releases), None)
 
         # If the release is not found, exit
         if not release:
