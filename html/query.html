@@ -50,7 +50,8 @@
         <div class="col-lg-6">
             <input id="query" name="query" type="text" class="form-control" required>
             <small id="queryHelp" class="form-text text-muted">This is a plain text query. Ask something like "<a
-                    id="sampleQuery" href="#">Show me the projects in the Default space</a>".</small>
+                    id="sampleQuery" href="#">Show me the projects in the Default space</a>" or "<a
+                    id="helpQuery" href="#">What do you do?</a>".</small>
             <div class="invalid-feedback">
                 Please provide a valid query.
             </div>
@@ -201,6 +202,11 @@
 
     sampleQuery.onclick = function () {
         query.value = "Show me the projects in the Default space"
+        return false
+    }
+
+    helpQuery.onclick = function () {
+        query.value = "What do you do?"
         return false
     }
 
