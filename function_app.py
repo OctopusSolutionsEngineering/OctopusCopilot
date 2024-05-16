@@ -611,7 +611,7 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
         warnings = ""
 
         if not space:
-            space = next(get_spaces_generator(api_key, url), "Default")
+            space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
             warnings = f"The query did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
@@ -670,7 +670,7 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
         warnings = ""
 
         if not space:
-            space = next(get_spaces_generator(api_key, url), "Default")
+            space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
             warnings = f"The query did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
@@ -767,7 +767,7 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
         warnings = ""
 
         if not space:
-            space = next(get_spaces_generator(api_key, url), "Default")
+            space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
             warnings = f"The query did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
@@ -866,13 +866,22 @@ Channel Names: {channel}""")
         warnings = ""
 
         if not space:
-            space = next(get_spaces_generator(api_key, url), "Default")
+            space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
             warnings = f"The query did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
+        # The project from the query
+        original_sanitized_projects = sanitize_projects(projects)
+
+        # The closest project match
         sanitized_projects = sanitize_names_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
-                                                  sanitize_projects(projects))
+                                                  original_sanitized_projects)
+
+        # If we had a project in the query but nothing matched, it means there were no projects in the space
+        # (or no projects that the user had access to).
+        if original_sanitized_projects and len(sanitized_projects) == 0:
+            return "The space has no projects."
 
         project = get_default_argument(get_github_user_from_form(),
                                        get_item_or_none([project["matched"] for project in sanitized_projects],
@@ -924,7 +933,7 @@ Channel Names: {channel}""")
         warnings = ""
 
         if not space:
-            space = next(get_spaces_generator(api_key, url), "Default")
+            space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
             warnings = f"The query did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
