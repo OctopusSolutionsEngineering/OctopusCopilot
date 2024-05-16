@@ -395,6 +395,18 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue("sorry" not in response_text.casefold(), "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_help(self):
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        create_and_deploy_release(space_name="Simple", release_version=version)
+        time.sleep(5)
+        prompt = "help me"
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
+        self.assertTrue("Here are some sample queries you can ask" in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         create_and_deploy_release(space_name="Simple", release_version=version)

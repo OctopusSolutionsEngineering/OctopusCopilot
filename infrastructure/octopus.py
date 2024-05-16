@@ -468,6 +468,31 @@ def get_projects_generator(space_id, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
+def get_environments_batch(skip, take, space_id, api_key, octopus_url):
+    api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(take=take, skip=skip))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()["Items"]
+
+
+@logging_wrapper
+def get_environments_generator(space_id, api_key, octopus_url):
+    skip = 0
+    take = 30
+
+    while True:
+        batch_environments = get_environments_batch(skip, take, space_id, api_key, octopus_url)
+
+        for environment in batch_environments:
+            yield environment
+
+        if len(batch_environments) != take:
+            break
+
+        skip += take
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_project(space_id, project_name, api_key, octopus_url):
     """
     Returns a project resource from the name

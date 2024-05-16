@@ -52,7 +52,7 @@ from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
     create_limited_api_key, get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, \
-    get_spaces_generator, get_dashboard
+    get_spaces_generator, get_dashboard, get_environments_generator
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
@@ -544,26 +544,30 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         return f"The default value for \"{name}\" is \"{value}\""
 
     def provide_help():
-        """Provides help with example queries that people can ask.
         """
-        return """Here are some sample queries you can ask:
-* `Show me the projects in the space called Default`
-* `Show the dashboard for space MySpace`
-* `Show me the status of the latest deployment for the Web App query_project in the Development environment in the Default space`
+        Provide help or example queries for the user
+        """
+        api_key, url = get_api_key_and_url()
 
-You can set the default space, environment, and query_project used by the queries above with statements like:
-* `Set the default space to Default`
-* `Set the default environment to Development`
-* `Set the default query_project to Web App`
+        for space in get_spaces_generator(api_key, url):
+            first_project = next(get_projects_generator(space["Id"], api_key, url), None)
+            first_environment = next(get_environments_generator(space["Id"], api_key, url), None)
 
-You can view the default values with questions like:
-* `What is the default space?`
-* `What is the default environment?`
-* `What is the default query_project?`
+            # The first space we find with projects and environments is used as the example
+            if first_project and first_environment:
+                return f"""Here are some sample queries you can ask:
+    * @octopus-ai-app Show me the dashboard for the space "{space["Name"]}"
+    * @octopus-ai-app List the projects in the space "{space["Name"]}"
+    * @octopus-ai-app What does the "{first_project["Name"]}" project in the "{space["Name"]}" space do?
+    * @octopus-ai-app Show me the status of the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space
+    * @octopus-ai-app Summarise the deployment logs for the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space
+    * @octopus-ai-app List any URLs printed in the deployment logs for the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space
+    * @octopus-ai-app How do I enable server side apply?
+    * @octopus-ai-app The status "success" is represented with the 🟢 character. The status "In Progress" is represented by the 🔵 character. Other statuses are represented with the 🔴 character. Show the release version, release notes, and status of the last 5 deployments for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space in a markdown table.
+    See the [documentation](https://octopus.com/docs/administration/copilot) for more information.
+    """
 
-Once default values are set, you can omit the space, environment, and query_project from your queries, or override them with a specific value. For example:
-* `Show me the dashboard`
-* `Show me the status of the latest deployment to the production environment`"""
+        return "See the [documentation](https://octopus.com/docs/administration/copilot) for more information."
 
     def general_query_callback(original_query, body, messages):
         api_key, url = get_api_key_and_url()
@@ -961,7 +965,8 @@ Channel Names: {channel}""")
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
             FunctionDefinition(remove_default_value),
-            FunctionDefinition(get_dashboard_wrapper(query))],
+            FunctionDefinition(get_dashboard_wrapper(query)),
+            FunctionDefinition(provide_help)],
             fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
             invalid=FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
                                        AnswerGeneralQuery)
