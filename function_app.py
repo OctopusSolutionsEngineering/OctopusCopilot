@@ -62,6 +62,10 @@ app = func.FunctionApp()
 logger = configure_logging(__name__)
 
 GUEST_API_KEY = "API-GUEST"
+LOGIN_MESSAGE = (f"To continue chatting please [log in](https://github.com/login/oauth/authorize?"
+                 + f"client_id={os.environ.get('GITHUB_CLIENT_ID')}"
+                 + f"&redirect_url={urllib.parse.quote(os.environ.get('GITHUB_CLIENT_REDIRECT'))}"
+                 + "&scope=user&allow_signup=false)")
 
 
 @app.function_name(name="api_key_cleanup")
@@ -551,10 +555,20 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         value = get_default_values(get_github_user_from_form(), name, get_functions_connection_string())
         return f"The default value for \"{name}\" is \"{value}\""
 
+    def say_hello():
+        """
+        Responds to greetings like "hello" or "hi"
+        """
+        return provide_help()
+
     def provide_help():
         """
-        Provide help or example queries for the user
+        Provide help and example queries, answers questions about what the agent does,
+        responds to greetings, responds to a prompt like "hello" or "hi",
+        answers questions like "what do you do" or "how do I get started" or "how can I use this",
+        provides details on how to get started, provides details on how to use the agent, and provides documentation and support.
         """
+
         api_key, url = get_api_key_and_url()
 
         for space in get_spaces_generator(api_key, url):
@@ -563,7 +577,9 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
             # The first space we find with projects and environments is used as the example
             if first_project and first_environment:
-                return f"""Here are some sample queries you can ask:
+                return f"""I am an AI assistant that can help you with your Octopus Deploy queries. I can answer questions about your Octopus Deploy spaces, projects, environments, deployments, and more.
+                
+Here are some sample queries you can ask:
 * @octopus-ai-app Show me the dashboard for the space "{space["Name"]}"
 * @octopus-ai-app List the projects in the space "{space["Name"]}"
 * @octopus-ai-app What do the deployment steps in the "{first_project["Name"]}" project in the "{space["Name"]}" space do?
@@ -975,6 +991,7 @@ Channel Names: {channel}""")
             FunctionDefinition(get_default_value),
             FunctionDefinition(remove_default_value),
             FunctionDefinition(get_dashboard_wrapper(query)),
+            FunctionDefinition(say_hello),
             FunctionDefinition(provide_help)],
             fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
             invalid=FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
@@ -1087,13 +1104,9 @@ def get_sse_headers():
 def request_config_details():
     try:
         logger.info("User has not configured Octopus instance")
-        return func.HttpResponse(convert_to_sse_response(
-            f"To continue chatting please [log in](https://github.com/login/oauth/authorize?"
-            + f"client_id={os.environ.get('GITHUB_CLIENT_ID')}"
-            + f"&redirect_url={urllib.parse.quote(os.environ.get('GITHUB_CLIENT_REDIRECT'))}"
-            + "&scope=user&allow_signup=false)"),
-            status_code=200,
-            headers=get_sse_headers())
+        return func.HttpResponse(convert_to_sse_response(LOGIN_MESSAGE),
+                                 status_code=200,
+                                 headers=get_sse_headers())
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("data: An exception was raised. See the logs for more details.\n\n",
