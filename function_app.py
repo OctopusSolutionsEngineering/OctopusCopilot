@@ -510,12 +510,17 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             space_name = get_default_argument(get_github_user_from_form(),
                                               sanitized_space["matched"] if sanitized_space else None, "Space")
 
+            warnings = ""
+
             if not space_name:
-                space_name = "Default"
+                space_name = next(get_spaces_generator(api_key, url), "Default")
+                warnings = f"The query did not specify a space so the so the space named {space_name} was assumed."
 
             space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
             dashboard = get_dashboard(space_id, api_key, url)
-            return get_dashboard_response(dashboard)
+            response = get_dashboard_response(dashboard)
+
+            return "\n".join(filter(lambda x: x, [response, warnings]))
 
         return get_dashboard_tool
 
