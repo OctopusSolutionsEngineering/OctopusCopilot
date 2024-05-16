@@ -12,6 +12,9 @@ def build_plain_text_prompt(few_shot=None):
         ("system", "You understand Octopus Deploy log output."),
         ("system", "You are a concise and helpful agent."),
         ("system", "Answer the question given the supplied deployment log output."),
+        # The user can ask for the output in a markdown code block specifically, but we should also ask the agent
+        # to do this by default.
+        ("system", "Print any log output in a markdown code block."),
         ("system",
          "You must assume that the supplied deployment log and all items in it directly relate to the space, project, environment, tenant, and channel from the question."),
         *few_shot,
