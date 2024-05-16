@@ -111,7 +111,7 @@ def octopus(req: func.HttpRequest) -> func.HttpResponse:
                                      headers={"Content-Type": "text/html"})
     except Exception as e:
         handle_error(e)
-        return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
+        return func.HttpResponse("Failed to read HTML form", status_code=500)
 
 
 @app.route(route="oauth_callback", auth_level=func.AuthLevel.ANONYMOUS)
@@ -163,7 +163,15 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
                                      "Location": f"{base_request_url(req)}/api/octopus?state=" + session_json})
     except Exception as e:
         handle_error(e)
-        return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
+
+        try:
+            with open("html/login-failed.html", "r") as file:
+                return func.HttpResponse(file.read(),
+                                         headers={"Content-Type": "text/html"},
+                                         status_code=500)
+
+        except Exception as e:
+            return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
 
 
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
