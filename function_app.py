@@ -61,6 +61,8 @@ from infrastructure.users import get_users_details, delete_old_user_details, \
 app = func.FunctionApp()
 logger = configure_logging(__name__)
 
+GUEST_API_KEY = "API-GUEST"
+
 
 @app.function_name(name="api_key_cleanup")
 @app.timer_trigger(schedule="0 0 * * * *",
@@ -193,7 +195,8 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         user = get_current_user(body['api'], body['url'])
 
         # The guest API key is a fixed string and we do not create a new temporary key
-        api_key = create_limited_api_key(user, body['api'], body['url']) if body['api'] != "API-GUEST" else "API-GUEST"
+        api_key = create_limited_api_key(user, body['api'], body['url']) \
+            if body['api'].upper().strip() != GUEST_API_KEY else GUEST_API_KEY
 
         # Persist the Octopus details against the GitHub user
         save_users_octopus_url_from_login(user_id,
