@@ -603,8 +603,11 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
         space = get_default_argument(get_github_user_from_form(),
                                      sanitized_space["matched"] if sanitized_space else None, "Space")
 
+        warnings = ""
+
         if not space:
-            space = "Default"
+            space = next(get_spaces_generator(api_key, url), "Default")
+            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -621,32 +624,34 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
 
         context = {"input": processed_query}
 
-        return collect_llm_context(processed_query,
-                                   messages,
-                                   context,
-                                   space_id,
-                                   project_names,
-                                   body['runbook_names'],
-                                   body['target_names'],
-                                   body['tenant_names'],
-                                   body['library_variable_sets'],
-                                   environment_names,
-                                   body['feed_names'],
-                                   body['account_names'],
-                                   body['certificate_names'],
-                                   body['lifecycle_names'],
-                                   body['workerpool_names'],
-                                   body['machinepolicy_names'],
-                                   body['tagset_names'],
-                                   body['projectgroup_names'],
-                                   body['channel_names'],
-                                   body['release_versions'],
-                                   body['step_names'],
-                                   body['variable_names'],
-                                   body['dates'],
-                                   api_key,
-                                   url,
-                                   log_query)
+        response = collect_llm_context(processed_query,
+                                       messages,
+                                       context,
+                                       space_id,
+                                       project_names,
+                                       body['runbook_names'],
+                                       body['target_names'],
+                                       body['tenant_names'],
+                                       body['library_variable_sets'],
+                                       environment_names,
+                                       body['feed_names'],
+                                       body['account_names'],
+                                       body['certificate_names'],
+                                       body['lifecycle_names'],
+                                       body['workerpool_names'],
+                                       body['machinepolicy_names'],
+                                       body['tagset_names'],
+                                       body['projectgroup_names'],
+                                       body['channel_names'],
+                                       body['release_versions'],
+                                       body['step_names'],
+                                       body['variable_names'],
+                                       body['dates'],
+                                       api_key,
+                                       url,
+                                       log_query)
+
+        return "\n".join(filter(lambda x: x, [response, warnings]))
 
     def variable_query_callback(original_query, messages, space, projects, variables):
         api_key, url = get_api_key_and_url()
@@ -657,8 +662,11 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
         space = get_default_argument(get_github_user_from_form(),
                                      sanitized_space["matched"] if sanitized_space else None, "Space")
 
+        warnings = ""
+
         if not space:
-            space = "Default"
+            space = next(get_spaces_generator(api_key, url), "Default")
+            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -702,10 +710,10 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
         additional_information = ""
         if not projects:
             additional_information = (
-                    "\n\nThe query did not specify a project so the response may reference a subset of all the projects in a space."
+                    "\nThe query did not specify a project so the response may reference a subset of all the projects in a space."
                     + "\nTo see more detailed information, specify a project name in the query.")
 
-        return chat_response + additional_information
+        return "\n".join(filter(lambda x: x, [chat_response, warnings, additional_information]))
 
     def releases_query_messages(original_query, space, projects, environments, channels, releases):
         """
@@ -751,8 +759,11 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
         space = get_default_argument(get_github_user_from_form(),
                                      sanitized_space["matched"] if sanitized_space else None, "Space")
 
+        warnings = ""
+
         if not space:
-            space = "Default"
+            space = next(get_spaces_generator(api_key, url), "Default")
+            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -824,10 +835,10 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
         additional_information = ""
         if not query_project:
             additional_information = (
-                    "\n\nThe query did not specify a project so the response is limited to the latest deployments for all projects."
+                    "\nThe query did not specify a project so the response is limited to the latest deployments for all projects."
                     + "\nTo see more detailed information, specify a project name in the query.")
 
-        return chat_response + additional_information
+        return "\n".join(filter(lambda x: x, [chat_response, warnings, additional_information]))
 
     def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release):
 
@@ -847,8 +858,11 @@ Channel Names: {channel}""")
         space = get_default_argument(get_github_user_from_form(),
                                      sanitized_space["matched"] if sanitized_space else None, "Space")
 
+        warnings = ""
+
         if not space:
-            space = "Default"
+            space = next(get_spaces_generator(api_key, url), "Default")
+            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -876,7 +890,9 @@ Channel Names: {channel}""")
 
         context = {"input": processed_query, "context": logs}
 
-        return llm_message_query(messages, context, log_query)
+        response = llm_message_query(messages, context, log_query)
+
+        return "\n".join(filter(lambda x: x, [response, warnings]))
 
     def resource_specific_callback(original_query, messages, space, projects, runbooks, targets,
                                    tenants, environments, accounts, certificates, workerpools, machinepolicies, tagsets,
@@ -896,8 +912,11 @@ Channel Names: {channel}""")
         space = get_default_argument(get_github_user_from_form(),
                                      sanitized_space["matched"] if sanitized_space else None, "Space")
 
+        warnings = ""
+
         if not space:
-            space = "Default"
+            space = next(get_spaces_generator(api_key, url), "Default")
+            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -918,32 +937,34 @@ Channel Names: {channel}""")
 
         context = {"input": processed_query}
 
-        return collect_llm_context(processed_query,
-                                   messages,
-                                   context,
-                                   space_id,
-                                   project,
-                                   runbooks,
-                                   targets,
-                                   tenant,
-                                   None,
-                                   environment,
-                                   None,
-                                   accounts,
-                                   certificates,
-                                   None,
-                                   workerpools,
-                                   machinepolicies,
-                                   tagsets,
-                                   None,
-                                   None,
-                                   None,
-                                   steps,
-                                   None,
-                                   None,
-                                   api_key,
-                                   url,
-                                   log_query)
+        response = collect_llm_context(processed_query,
+                                       messages,
+                                       context,
+                                       space_id,
+                                       project,
+                                       runbooks,
+                                       targets,
+                                       tenant,
+                                       None,
+                                       environment,
+                                       None,
+                                       accounts,
+                                       certificates,
+                                       None,
+                                       workerpools,
+                                       machinepolicies,
+                                       tagsets,
+                                       None,
+                                       None,
+                                       None,
+                                       steps,
+                                       None,
+                                       None,
+                                       api_key,
+                                       url,
+                                       log_query)
+
+        return "\n".join(filter(lambda x: x, [response, warnings]))
 
     def how_to_callback(original_query, keywords):
         try:
