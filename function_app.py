@@ -873,6 +873,10 @@ Channel Names: {channel}""")
                                        get_item_or_none([project["matched"] for project in sanitized_projects],
                                                         0),
                                        "Project")
+
+        if not project:
+            return "Please specify a project name in the query."
+
         environment = get_default_argument(get_github_user_from_form(),
                                            get_item_or_none(sanitize_environments(original_query, environments), 0),
                                            "Environment")
