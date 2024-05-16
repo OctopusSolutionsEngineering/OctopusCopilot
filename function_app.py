@@ -578,7 +578,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             # The first space we find with projects and environments is used as the example
             if first_project and first_environment:
                 return f"""I am an AI assistant that can help you with your Octopus Deploy queries. I can answer questions about your Octopus Deploy spaces, projects, environments, deployments, and more.
-                
+
 Here are some sample queries you can ask:
 * @octopus-ai-app Show me the dashboard for the space "{space["Name"]}"
 * @octopus-ai-app List the projects in the space "{space["Name"]}"
