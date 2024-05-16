@@ -143,7 +143,14 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
         if resp.status != 200:
             raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
 
-        access_token = resp.json()["access_token"]
+        response_json = resp.json()
+
+        # You can get 200 ok response with a bad request:
+        # https://github.com/orgs/community/discussions/57068
+        if "access_token" not in response_json:
+            raise GitHubRequestFailed(f"Request failed with " + json.dumps(response_json))
+
+        access_token = response_json["access_token"]
 
         session_json = create_session_blob(get_github_user(access_token),
                                            os.environ.get("ENCRYPTION_PASSWORD"),
