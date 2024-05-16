@@ -444,8 +444,20 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
-        # This response could be anything, but make sure the LLM isn't saying sorry for something.
         self.assertTrue("sorry" not in response_text.casefold(), "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_get_logs_raw(self):
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        deployment = create_and_deploy_release(space_name="Simple", release_version=version)
+        wait_for_task(deployment["TaskId"], space_name="Simple")
+
+        prompt = "Print the last 30 lines of text from the deployment logs of the latest release."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        # The response should have formatted the text as a code block
+        self.assertTrue("```" in response_text.casefold(), "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_count_projects(self):
