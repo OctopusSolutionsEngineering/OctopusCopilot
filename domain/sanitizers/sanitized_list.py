@@ -13,7 +13,7 @@ def sanitize_space(query, input_string):
 
     # The LLM will sometimes return the space name of "default" when no specific space is mentioned
     # If the query does not contain "default" or "Default", we ignore the name default.
-    if "default" or "Default" not in query:
+    if "default" not in query and "Default" not in query:
         input_list = sanitize_list(input_list, "default|Default")
 
     if len(input_list) > 0:
