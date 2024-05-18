@@ -1,7 +1,6 @@
 import json
 import os
 import urllib.parse
-
 from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
@@ -592,7 +591,7 @@ Here are some sample queries you can ask:
 * @octopus-ai-app Summarise the deployment logs for the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space
 * @octopus-ai-app List any URLs printed in the deployment logs for the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space
 * @octopus-ai-app How do I enable server side apply?
-* @octopus-ai-app The status "success" is represented with the 🟢 character. The status "In Progress" is represented by the 🔵 character. Other statuses are represented with the 🔴 character. Show the release version, release notes, and status of the last 5 deployments for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space in a markdown table.
+* @octopus-ai-app The status "Success" is represented with the 🟢 character. The status "In Progress" is represented by the 🔵 character. Other statuses are represented with the 🔴 character. Show the release version, release notes, and status of the last 5 deployments for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space in a markdown table.
 
 See the [documentation](https://octopus.com/docs/administration/copilot) for more information.
 """
