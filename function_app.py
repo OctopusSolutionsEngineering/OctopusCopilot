@@ -564,7 +564,6 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         """
         return provide_help()
 
-
     def what_do_you_do():
         """Responds to questions like "What do you do?"
         """
