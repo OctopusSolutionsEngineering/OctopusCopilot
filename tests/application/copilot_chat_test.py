@@ -404,7 +404,7 @@ class CopilotChatTest(unittest.TestCase):
         create_and_deploy_release(space_name="Simple", release_version=version)
         time.sleep(5)
 
-        for prompt in ["help me", "hello", "hi", "what do you do", "what do you do?", "What do you do?"]:
+        for prompt in ["what questions can I ask", "help me", "hello", "hi", "what do you do", "what do you do?", "What do you do?"]:
             response = copilot_handler_internal(build_request(prompt))
             response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 

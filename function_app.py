@@ -572,7 +572,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
     def provide_help():
         """Provide help and example queries, answers questions about what the agent does,
         responds to greetings, responds to a prompt like "hello" or "hi",
-        answers questions like "What do you do?" or "How do I get started?" or "how can I use this?",
+        answers questions like "What do you do?" or "How do I get started?" or "how can I use this?" or "What questions can I ask?",,
         provides details on how to get started, provides details on how to use the agent, and provides documentation and support.
         """
 
