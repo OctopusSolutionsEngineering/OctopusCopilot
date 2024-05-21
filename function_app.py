@@ -591,7 +591,7 @@ Here are some sample queries you can ask:
 * @octopus-ai-app List the projects in the space "{space["Name"]}"
 * @octopus-ai-app What do the deployment steps in the "{first_project["Name"]}" project in the "{space["Name"]}" space do?
 * @octopus-ai-app Show me the status of the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space
-* @octopus-ai-app Summarise the deployment logs for the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space
+* @octopus-ai-app Summarize the deployment logs for the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space
 * @octopus-ai-app List any URLs printed in the deployment logs for the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space
 * @octopus-ai-app How do I enable server side apply?
 * @octopus-ai-app The status "Success" is represented with the 🟢 character. The status "In Progress" is represented by the 🔵 character. Other statuses are represented with the 🔴 character. Show the release version, release notes, and status of the last 5 deployments for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space in a markdown table.
