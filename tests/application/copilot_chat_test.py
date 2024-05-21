@@ -87,6 +87,10 @@ class CopilotChatTest(unittest.TestCase):
                           json.loads(output)["octopus_space_id"]["value"])
             run_terraform("../terraform/empty/space_creation", Octopus_Url, Octopus_Api_Key)
         except Exception as e:
+            print("Failed to start containers. Consider running ryuk in privileged mode by setting "
+                  + "TESTCONTAINERS_RYUK_PRIVILEGED=true or disabling ryuk by setting "
+                  + "TESTCONTAINERS_RYUK_DISABLED=true.")
+            print(e)
             cls.tearDownClass()
 
     @classmethod
@@ -400,7 +404,7 @@ class CopilotChatTest(unittest.TestCase):
         create_and_deploy_release(space_name="Simple", release_version=version)
         time.sleep(5)
 
-        for prompt in ["help me", "hello", "hi", "what do you do"]:
+        for prompt in ["help me", "hello", "hi", "what do you do", "what do you do?", "What do you do?"]:
             response = copilot_handler_internal(build_request(prompt))
             response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 

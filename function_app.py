@@ -560,16 +560,20 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         return f"The default value for \"{name}\" is \"{value}\""
 
     def say_hello():
+        """Responds to greetings like "hello" or "hi"
         """
-        Responds to greetings like "hello" or "hi"
+        return provide_help()
+
+
+    def what_do_you_do():
+        """Responds to questions like "What do you do?"
         """
         return provide_help()
 
     def provide_help():
-        """
-        Provide help and example queries, answers questions about what the agent does,
+        """Provide help and example queries, answers questions about what the agent does,
         responds to greetings, responds to a prompt like "hello" or "hi",
-        answers questions like "what do you do" or "how do I get started" or "how can I use this",
+        answers questions like "What do you do?" or "How do I get started?" or "how can I use this?",
         provides details on how to get started, provides details on how to use the agent, and provides documentation and support.
         """
 
@@ -1030,6 +1034,7 @@ Channel Names: {channel}""")
             FunctionDefinition(remove_default_value),
             FunctionDefinition(get_dashboard_wrapper(query)),
             FunctionDefinition(say_hello),
+            FunctionDefinition(what_do_you_do),
             FunctionDefinition(provide_help)],
             fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
             invalid=FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
