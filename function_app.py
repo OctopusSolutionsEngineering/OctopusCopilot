@@ -1,6 +1,7 @@
 import json
 import os
 import urllib.parse
+
 from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
@@ -849,14 +850,6 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
 
     def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release):
 
-        log_query("logs_callback", f"""
-Space Id: {space}
-Project Names: {projects}
-Tenant Names: {tenants}
-Environment Names: {environments}
-Release Version: {release}
-Channel Names: {channel}""")
-
         api_key, url = get_api_key_and_url()
 
         sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
@@ -898,6 +891,14 @@ Channel Names: {channel}""")
                                            "Environment")
         tenant = get_default_argument(get_github_user_from_form(),
                                       get_item_or_none(sanitize_tenants(tenants), 0), "Tenant")
+
+        log_query("logs_callback", f"""
+Space Id: {space}
+Project Names: {project}
+Tenant Names: {tenant}
+Environment Names: {environments}
+Release Version: {release}
+Channel Names: {channel}""")
 
         logs = timing_wrapper(
             lambda: get_deployment_logs(space, project, environment, tenant, release, api_key, url),
