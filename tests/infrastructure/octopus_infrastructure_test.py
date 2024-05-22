@@ -18,7 +18,7 @@ from domain.transformers.chat_responses import get_dashboard_response
 from domain.transformers.deployments_from_dashboard import get_deployments_from_dashboard
 from infrastructure.octopus import get_project_progression, get_raw_deployment_process, get_octopus_project_names_base, \
     get_current_user, create_limited_api_key, get_deployment_status_base, get_dashboard, get_deployment_logs, \
-    get_item_fuzzy, get_space_id_and_name_from_name
+    get_item_fuzzy, get_space_id_and_name_from_name, activity_logs_to_string
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 
@@ -162,13 +162,15 @@ class LiveRequests(unittest.TestCase):
 
         time.sleep(30)
 
-        logs = get_deployment_logs("Simple",
-                                   "Deploy Web App Container",
-                                   "Development",
-                                   None,
-                                   "latest",
-                                   Octopus_Api_Key,
-                                   Octopus_Url)
+        activity_logs = get_deployment_logs("Simple",
+                                            "Deploy Web App Container",
+                                            "Development",
+                                            None,
+                                            "latest",
+                                            Octopus_Api_Key,
+                                            Octopus_Url)
+
+        logs = activity_logs_to_string(activity_logs, None)
 
         self.assertTrue("The deployment completed successfully" in logs)
 
