@@ -14,7 +14,7 @@ from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.query.query_inspector import release_is_latest
-from domain.sanitizers.sanitized_list import get_item_fuzzy, sanitize_log_steps, normalize_log_step_name
+from domain.sanitizers.sanitized_list import get_item_fuzzy, normalize_log_step_name
 from domain.url.build_url import build_url
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http, TAKE_ALL
@@ -668,7 +668,8 @@ def get_deployment_status_base(space_name, environment_name, project_name, api_k
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_deployment_logs(space_name, project_name, environment_name, tenant_name, release_version, steps, api_key,
+def get_deployment_logs(space_name, project_name, environment_name, tenant_name, release_version,
+                        api_key,
                         octopus_url):
     """
     Returns a logs for a deployment to an environment.
@@ -742,8 +743,13 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     task = json.loads(resp.data.decode("utf-8"))
 
-    activity_logs = task["ActivityLogs"]
-    sanitized_steps = sanitize_log_steps(steps, activity_logs)
+    return task["ActivityLogs"]
+
+
+def activity_logs_to_string(activity_logs, sanitized_steps):
+    if not activity_logs:
+        return ""
+
     logs = "\n".join(list(map(lambda i: get_logs(i, 0, sanitized_steps), activity_logs)))
 
     return logs

@@ -154,7 +154,17 @@ def sanitize_dates(input_list):
     return [datetime_to_str(date) for date in dates if date]
 
 
-def sanitize_log_steps(input_list, logs):
+def sanitize_log_lines(lines, input_query):
+    """
+    return the lines count if the integer actually appeared in the input query
+    :param lines: The lines reported to be in the query
+    :param input_query: The actual query
+    :return: The number of lines to return or None if the number was not in the query
+    """
+    return lines if str(lines) in input_query else None
+
+
+def sanitize_log_steps(input_list, input_query, logs):
     """
     When querying logs, it is handy to limit the logs to the output of certain steps. This is because the LLM sometimes
     has trouble finding information in large log outputs. The steps can either be in int
@@ -162,6 +172,7 @@ def sanitize_log_steps(input_list, logs):
     However, the values returned by the LLM for step names can be a bit off. This function only returns ints or
     step names that are at least an 80% match with the step names in the logs.
     :param input_list: The list of steps to include in the logs
+    :param input_query The original query
     :param logs: The log output
     :return: The list of steps that are either ints or steps names that closely match actual logged output
     """
@@ -177,11 +188,21 @@ def sanitize_log_steps(input_list, logs):
                 # Valid steps names are either ints (less than the number of steps)
                 # or something that is at least an 80% match for a step name
                 valid_steps = [step for step in sanitized_steps if
-                               (string_to_int(step) and string_to_int(step) <= len(
-                                   step_names)) or step_name_is_fuzzy_match(step, step_names)]
+                               step_index_is_valid(step, input_query) or step_name_is_fuzzy_match(step, step_names)]
                 return valid_steps
 
     return []
+
+
+def step_index_is_valid(step, input_query):
+    """
+    The LLM has a habit of inventing a value here. So we check if the step is an integer and that the original
+    query included that integer.
+    :param step: The step name or index
+    :param input_query: The original query
+    :return:
+    """
+    return string_to_int(step) and step in input_query
 
 
 def step_name_is_fuzzy_match(step_name, step_names):

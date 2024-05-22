@@ -11,7 +11,8 @@ from domain.logging.query_loggin import log_query
 from domain.messages.docs_messages import docs_prompt
 from domain.performance.timing import timing_wrapper
 from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all, \
-    get_item_or_none, sanitize_names_fuzzy, sanitize_projects, sanitize_tenants, sanitize_space, sanitize_name_fuzzy
+    get_item_or_none, sanitize_names_fuzzy, sanitize_projects, sanitize_tenants, sanitize_space, sanitize_name_fuzzy, \
+    sanitize_log_steps, sanitize_log_lines
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
@@ -24,7 +25,8 @@ from domain.transformers.chat_responses import get_octopus_project_names_respons
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from infrastructure.github import search_repo
 from infrastructure.octopus import get_octopus_project_names_base, get_raw_deployment_process, get_dashboard, \
-    get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, get_spaces_generator
+    get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, get_spaces_generator, \
+    activity_logs_to_string
 from infrastructure.openai import llm_tool_query, llm_message_query
 
 
@@ -139,15 +141,21 @@ def general_query_callback(original_query, body, messages):
 def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release, steps, lines):
     space = get_default_argument(space, 'Space')
 
-    logs = get_deployment_logs(space, get_item_or_none(sanitize_list(projects), 0),
-                               get_item_or_none(sanitize_list(environments), 0),
-                               get_item_or_none(sanitize_list(tenants), 0), release, steps, get_api_key(),
-                               get_octopus_api())
+    activity_logs = get_deployment_logs(space, get_item_or_none(sanitize_list(projects), 0),
+                                        get_item_or_none(sanitize_list(environments), 0),
+                                        get_item_or_none(sanitize_list(tenants), 0), release,
+                                        get_api_key(),
+                                        get_octopus_api())
+
+    sanitized_steps = sanitize_log_steps(steps, original_query, activity_logs)
+
+    logs = activity_logs_to_string(activity_logs, sanitized_steps)
+
     # Get the end of the logs if we have exceeded our context limit
     logs = logs[-max_chars:]
 
     # return the last n lines of the logs
-    log_lines = string_to_int(lines)
+    log_lines = sanitize_log_lines(string_to_int(lines), original_query)
     if log_lines and log_lines > 0:
         logs = "\n".join(logs.split("\n")[-log_lines:])
 
@@ -159,13 +167,15 @@ def logs_callback(original_query, messages, space, projects, environments, chann
 def literal_logs_callback(space, projects, environments, channel, tenants, release):
     space = get_default_argument(space, 'Space')
 
-    logs = get_deployment_logs(space,
-                               get_item_or_none(sanitize_list(projects), 0),
-                               get_item_or_none(sanitize_list(environments), 0),
-                               get_item_or_none(sanitize_list(tenants), 0),
-                               release,
-                               get_api_key(),
-                               get_octopus_api())
+    activity_logs = get_deployment_logs(space,
+                                        get_item_or_none(sanitize_list(projects), 0),
+                                        get_item_or_none(sanitize_list(environments), 0),
+                                        get_item_or_none(sanitize_list(tenants), 0),
+                                        release,
+                                        get_api_key(),
+                                        get_octopus_api())
+
+    logs = activity_logs_to_string(activity_logs, None)
 
     return logs
 

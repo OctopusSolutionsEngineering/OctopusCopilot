@@ -29,7 +29,7 @@ from domain.messages.test_message import build_test_prompt
 from domain.performance.timing import timing_wrapper
 from domain.sanitizers.sanitized_list import get_item_or_none, \
     none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_names_fuzzy, sanitize_tenants, \
-    update_query, sanitize_space, sanitize_name_fuzzy
+    update_query, sanitize_space, sanitize_name_fuzzy, sanitize_log_steps, sanitize_log_lines
 from domain.security.security import is_admin_user
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
@@ -53,7 +53,7 @@ from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
     create_limited_api_key, get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, \
-    get_spaces_generator, get_dashboard, get_environments_generator
+    get_spaces_generator, get_dashboard, get_environments_generator, activity_logs_to_string
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
@@ -893,6 +893,22 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
         tenant = get_default_argument(get_github_user_from_form(),
                                       get_item_or_none(sanitize_tenants(tenants), 0), "Tenant")
 
+        activity_logs = timing_wrapper(
+            lambda: get_deployment_logs(space, project, environment, tenant, release, api_key, url),
+            "Deployment logs")
+
+        sanitized_steps = sanitize_log_steps(steps, original_query, activity_logs)
+
+        logs = activity_logs_to_string(activity_logs, sanitized_steps)
+
+        # Get the end of the logs if we have exceeded our context limit
+        logs = logs[-max_chars:]
+
+        # return the last n lines of the logs
+        log_lines = sanitize_log_lines(string_to_int(lines), original_query)
+        if log_lines and log_lines > 0:
+            logs = "\n".join(logs.split("\n")[-log_lines:])
+
         log_query("logs_callback", f"""
 Space Id: {space}
 Project Names: {project}
@@ -900,20 +916,8 @@ Tenant Names: {tenant}
 Environment Names: {environments}
 Release Version: {release}
 Channel Names: {channel}
-Steps: {steps}
-Lines: {lines}""")
-
-        logs = timing_wrapper(
-            lambda: get_deployment_logs(space, project, environment, tenant, release, steps, api_key, url),
-            "Deployment logs")
-
-        # Get the end of the logs if we have exceeded our context limit
-        logs = logs[-max_chars:]
-
-        # return the last n lines of the logs
-        log_lines = string_to_int(lines)
-        if log_lines and log_lines > 0:
-            logs = "\n".join(logs.split("\n")[-log_lines:])
+Steps: {sanitized_steps}
+Lines: {log_lines}""")
 
         processed_query = update_query(original_query, sanitized_projects)
 
