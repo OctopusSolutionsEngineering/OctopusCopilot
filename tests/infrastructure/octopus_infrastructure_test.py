@@ -167,7 +167,6 @@ class LiveRequests(unittest.TestCase):
                                    "Development",
                                    None,
                                    "latest",
-                                   lambda x: [],
                                    Octopus_Api_Key,
                                    Octopus_Url)
 
