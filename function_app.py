@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
-import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_deployments, max_log_lines
 from domain.config.users import get_admin_users
@@ -911,7 +911,7 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
 
         if len(logs.split("\n")) > max_log_lines:
             warnings.append(f"The logs exceed {max_log_lines} lines. "
-                            + "This may impact the extensions ability to process them. "
+                            + "This may impact the extension's ability to process them. "
                             + "Consider reducing the number of lines requested "
                             + f"e.g. 'Show the last 100 lines from the deployment logs for the latest deployment of project \"{project}\".' "
                             + f"or 'Show me the the deployment logs for step 2 for the latest deployment of project \"{project}\".'")
