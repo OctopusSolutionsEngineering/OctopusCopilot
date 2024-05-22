@@ -6,7 +6,7 @@ from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
-from domain.config.openai import max_deployments
+from domain.config.openai import max_deployments, max_log_lines
 from domain.config.users import get_admin_users
 from domain.context.github_docs import get_docs_context
 from domain.context.octopus_context import collect_llm_context, llm_message_query, max_chars
@@ -859,11 +859,11 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
         space = get_default_argument(get_github_user_from_form(),
                                      sanitized_space["matched"] if sanitized_space else None, "Space")
 
-        warnings = ""
+        warnings = []
 
         if not space:
             space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
+            warnings.append(f"The query did not specify a space so the so the space named {space} was assumed.")
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -909,6 +909,13 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
         if log_lines and log_lines > 0:
             logs = "\n".join(logs.split("\n")[-log_lines:])
 
+        if len(logs.split("\n")) > max_log_lines:
+            warnings.append(f"The logs exceed {max_log_lines} lines. "
+                            + "This may impact the extensions ability to process them. "
+                            + "Consider reducing the number of lines requested "
+                            + f"e.g. 'Show the last 100 lines from the deployment logs for the latest deployment of project \"{project}\".' "
+                            + f"or 'Show me the the deployment logs for step 2 for the latest deployment of project \"{project}\".'")
+
         log_query("logs_callback", f"""
 Space Id: {space}
 Project Names: {project}
@@ -923,9 +930,10 @@ Lines: {log_lines}""")
 
         context = {"input": processed_query, "context": logs}
 
-        response = llm_message_query(messages, context, log_query)
+        response = [llm_message_query(messages, context, log_query)]
+        response.extend(warnings)
 
-        return "\n".join(filter(lambda x: x, [response, warnings]))
+        return "\n".join(response)
 
     def resource_specific_callback(original_query, messages, space, projects, runbooks, targets,
                                    tenants, environments, accounts, certificates, workerpools, machinepolicies, tagsets,
