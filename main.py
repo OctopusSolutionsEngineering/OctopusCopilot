@@ -5,6 +5,7 @@ import os
 from domain.config.openai import max_context
 from domain.context.github_docs import get_docs_context
 from domain.context.octopus_context import collect_llm_context, max_chars
+from domain.converters.string_to_int import string_to_int
 from domain.errors.error_handling import handle_error
 from domain.logging.query_loggin import log_query
 from domain.messages.docs_messages import docs_prompt
@@ -144,6 +145,11 @@ def logs_callback(original_query, messages, space, projects, environments, chann
                                get_octopus_api())
     # Get the end of the logs if we have exceeded our context limit
     logs = logs[-max_chars:]
+
+    # return the last n lines of the logs
+    log_lines = string_to_int(lines)
+    if log_lines and log_lines > 0:
+        logs = "\n".join(logs.split("\n")[-log_lines:])
 
     context = {"input": original_query, "context": logs}
 

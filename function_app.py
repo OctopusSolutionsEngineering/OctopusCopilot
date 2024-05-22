@@ -913,7 +913,7 @@ Lines: {lines}""")
         # return the last n lines of the logs
         log_lines = string_to_int(lines)
         if log_lines and log_lines > 0:
-            logs = logs[-log_lines:]
+            logs = "\n".join(logs.split("\n")[-log_lines:])
 
         processed_query = update_query(original_query, sanitized_projects)
 
