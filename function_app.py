@@ -10,6 +10,7 @@ from domain.config.openai import max_deployments
 from domain.config.users import get_admin_users
 from domain.context.github_docs import get_docs_context
 from domain.context.octopus_context import collect_llm_context, llm_message_query, max_chars
+from domain.converters.string_to_int import string_to_int
 from domain.defaults.defaults import get_default_argument, get_default_argument_list
 from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
@@ -848,7 +849,7 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
 
         return "\n".join(filter(lambda x: x, [chat_response, warnings, additional_information]))
 
-    def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release, steps):
+    def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release, steps, lines):
 
         api_key, url = get_api_key_and_url()
 
@@ -898,7 +899,9 @@ Project Names: {project}
 Tenant Names: {tenant}
 Environment Names: {environments}
 Release Version: {release}
-Channel Names: {channel}""")
+Channel Names: {channel}
+Steps: {steps}
+Lines: {lines}""")
 
         logs = timing_wrapper(
             lambda: get_deployment_logs(space, project, environment, tenant, release, steps, api_key, url),
@@ -906,6 +909,11 @@ Channel Names: {channel}""")
 
         # Get the end of the logs if we have exceeded our context limit
         logs = logs[-max_chars:]
+
+        # return the last n lines of the logs
+        log_lines = string_to_int(lines)
+        if log_lines and log_lines > 0:
+            logs = logs[-log_lines:]
 
         processed_query = update_query(original_query, sanitized_projects)
 

@@ -135,7 +135,7 @@ def general_query_callback(original_query, body, messages):
                                logging)
 
 
-def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release, steps):
+def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release, steps, lines):
     space = get_default_argument(space, 'Space')
 
     logs = get_deployment_logs(space, get_item_or_none(sanitize_list(projects), 0),

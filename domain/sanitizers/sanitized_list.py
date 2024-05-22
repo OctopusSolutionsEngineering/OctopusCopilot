@@ -174,14 +174,19 @@ def sanitize_log_steps(input_list, logs):
             if sanitized_steps and len(sanitized_steps) != 0:
                 # These are the name of the top level log items
                 step_names = [child_log_item["Name"] for child_log_item in log_item["Children"]]
-                # Valid steps names are either ints or something that is at least an 80% match for a step name
+                # Valid steps names are either ints (less than the number of steps)
+                # or something that is at least an 80% match for a step name
                 valid_steps = [step for step in sanitized_steps if
-                               string_to_int(step) or [step_name for step_name in step_names if
-                                                       fuzz.ratio(normalize_log_step_name(step_name),
-                                                                  normalize_log_step_name(step)) > 80]]
+                               (string_to_int(step) and string_to_int(step) <= len(
+                                   step_names)) or step_name_is_fuzzy_match(step, step_names)]
                 return valid_steps
 
     return []
+
+
+def step_name_is_fuzzy_match(step_name, step_names):
+    return any(
+        filter(lambda s: fuzz.ratio(normalize_log_step_name(step_name), normalize_log_step_name(s)) > 80, step_names))
 
 
 def normalize_log_step_name(name):
