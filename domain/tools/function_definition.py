@@ -18,6 +18,9 @@ class FunctionDefinition:
         if function is None:
             raise ValueError('function must reference a valid function.')
 
+        if not callable(function):
+            raise ValueError('function is not callable: ' + str(function))
+
         self.name = function.__name__
         self.function = function
         self.tool = StructuredTool.from_function(function, schema)

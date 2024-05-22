@@ -7,6 +7,9 @@ class FunctionCall:
         if function is None:
             raise ValueError('function must reference a valid function.')
 
+        if not callable(function):
+            raise ValueError('function is not callable: ' + str(function))
+
         self.function = function
         self.name = name
         self.function_args = args
