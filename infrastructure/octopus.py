@@ -2,17 +2,19 @@ import datetime
 import json
 
 import pytz
+from fuzzywuzzy import fuzz
 from retry import retry
 from urllib3.exceptions import HTTPError
 
 from domain.config.openai import max_context
+from domain.converters.string_to_int import string_to_int
 from domain.exceptions.request_failed import OctopusRequestFailed
 from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.query.query_inspector import release_is_latest
-from domain.sanitizers.sanitized_list import get_item_fuzzy
+from domain.sanitizers.sanitized_list import get_item_fuzzy, sanitize_log_steps, normalize_log_step_name
 from domain.url.build_url import build_url
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http, TAKE_ALL
@@ -666,7 +668,8 @@ def get_deployment_status_base(space_name, environment_name, project_name, api_k
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_deployment_logs(space_name, project_name, environment_name, tenant_name, release_version, api_key, octopus_url):
+def get_deployment_logs(space_name, project_name, environment_name, tenant_name, release_version, steps, api_key,
+                        octopus_url):
     """
     Returns a logs for a deployment to an environment.
     :param space_name: The name of the space.
@@ -674,6 +677,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
     :param environment_name: The name of the environment
     :param tenant_name: The name of the tenant
     :param release_version: The name of the release
+    :param steps: The steps to limit the logs to
     :param api_key: The Octopus API key
     :param octopus_url: The Octopus URL
     :return: The deployment progression raw JSON
@@ -738,20 +742,39 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     task = json.loads(resp.data.decode("utf-8"))
 
-    logs = "\n".join(list(map(lambda i: get_logs(i, 0), task["ActivityLogs"])))
+    activity_logs = task["ActivityLogs"]
+    sanitized_steps = sanitize_log_steps(steps, activity_logs)
+    logs = "\n".join(list(map(lambda i: get_logs(i, 0, sanitized_steps), activity_logs)))
 
     return logs
 
 
-def get_logs(log_item, depth):
+def get_logs(log_item, depth, steps=None):
     if depth == 0 and len(log_item["LogElements"]) == 0 and len(log_item["Children"]) == 0:
         return f"No logs found (status: {log_item['Status']})."
 
     logs = log_item["Name"] + "\n"
     logs += "\n".join(list(map(lambda e: e["MessageText"], log_item["LogElements"])))
+
+    # limit the result to either step indexes or names
+    if depth == 1:
+        if steps and len(steps) != 0:
+            step_ints = [step for step in steps if string_to_int(step)]
+            # Find the logs by index
+            found_index = step_ints and len(step_ints) != 0 and len(
+                [step_int for step_int in step_ints if log_item["Name"].startswith("Step " + step_int)]) != 0
+            # Find the logs by name
+            found_name = len([step for step in steps if fuzz.ratio(normalize_log_step_name(step),
+                                                                   normalize_log_step_name(
+                                                                       log_item["Name"])) > 80]) != 0
+
+            # If none match, don't dig deeper
+            if not found_index and not found_name:
+                return logs
+
     if log_item["Children"]:
         for child in log_item["Children"]:
-            logs += "\n" + get_logs(child, depth + 1)
+            logs += "\n" + get_logs(child, depth + 1, steps)
 
     return logs
 

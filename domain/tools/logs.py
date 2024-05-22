@@ -20,6 +20,7 @@ def answer_logs_wrapper(query, callback, logging):
     """
 
     def answer_logs_usage(space=None, project=None, environment=None, channel=None, tenant=None, release=None,
+                          steps=None,
                           **kwargs):
         """Answers a query about the contents of a deployment log for an octopus project.
 
@@ -30,6 +31,7 @@ def answer_logs_wrapper(query, callback, logging):
         channel: channel name
         tenant: tenant name
         release: release version
+        steps: the steps to get logs from
         """
 
         if logging:
@@ -42,6 +44,6 @@ def answer_logs_wrapper(query, callback, logging):
         messages = build_plain_text_prompt()
 
         # This is just a passthrough to the original callback
-        return callback(query, messages, space, project, environment, channel, tenant, release)
+        return callback(query, messages, space, project, environment, channel, tenant, release, steps)
 
     return answer_logs_usage

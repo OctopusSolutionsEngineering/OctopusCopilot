@@ -3,6 +3,7 @@ from functools import reduce
 
 from fuzzywuzzy import fuzz
 
+from domain.converters.string_to_int import string_to_int
 from domain.date.parse_dates import parse_unknown_format_date
 from domain.sanitizers.sanitize_strings import replace_with_empty_string
 from domain.transformers.date_convert import datetime_to_str
@@ -153,6 +154,43 @@ def sanitize_dates(input_list):
     return [datetime_to_str(date) for date in dates if date]
 
 
+def sanitize_log_steps(input_list, logs):
+    """
+    When querying logs, it is handy to limit the logs to the output of certain steps. This is because the LLM sometimes
+    has trouble finding information in large log outputs. The steps can either be in int
+    index (i.e. a value of 1 returns logs for "Step 1: xxx") or the name of a step (e.g. "Deploy with CLI").
+    However, the values returned by the LLM for step names can be a bit off. This function only returns ints or
+    step names that are at least an 80% match with the step names in the logs.
+    :param input_list: The list of steps to include in the logs
+    :param logs: The log output
+    :return: The list of steps that are either ints or steps names that closely match actual logged output
+    """
+    if not logs:
+        return []
+
+    for log_item in logs:
+        if log_item["Children"] and len(log_item["Children"]) != 0:
+            sanitized_steps = force_to_list(input_list)
+            if sanitized_steps and len(sanitized_steps) != 0:
+                # These are the name of the top level log items
+                step_names = [child_log_item["Name"] for child_log_item in log_item["Children"]]
+                # Valid steps names are either ints or something that is at least an 80% match for a step name
+                valid_steps = [step for step in sanitized_steps if
+                               string_to_int(step) or [step_name for step_name in step_names if
+                                                       fuzz.ratio(normalize_log_step_name(step_name),
+                                                                  normalize_log_step_name(step)) > 80]]
+                return valid_steps
+
+    return []
+
+
+def normalize_log_step_name(name):
+    if not name:
+        return ""
+
+    return re.sub(r"Step\s*[0-9]+:\s*", "", name).lower().strip()
+
+
 def sanitize_bool(input_bool):
     if isinstance(input_bool, bool):
         return input_bool
@@ -202,6 +240,23 @@ def sanitize_list(input_list, ignored_re=None):
     # Open AI will give you a list with a single asterisk if the list is empty
     return [entry.strip() for entry in input_list if
             isinstance(entry, str) and entry.strip() and not is_re_match(entry, ignored_re)]
+
+
+def force_to_list(input_list):
+    """
+    Force an input to a list
+    :param input_list: The list to sanitize
+    :return: The sanitized list of strings
+    """
+    if not input_list:
+        return []
+
+    # return a list if the input is already a list
+    if isinstance(input_list, list):
+        return input_list
+
+    # return the string representation of the input in a list
+    return [str(input_list)]
 
 
 def is_re_match(entry, ignored_re):

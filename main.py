@@ -135,12 +135,13 @@ def general_query_callback(original_query, body, messages):
                                logging)
 
 
-def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release):
+def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release, steps):
     space = get_default_argument(space, 'Space')
 
     logs = get_deployment_logs(space, get_item_or_none(sanitize_list(projects), 0),
                                get_item_or_none(sanitize_list(environments), 0),
-                               get_item_or_none(sanitize_list(tenants), 0), release, get_api_key(), get_octopus_api())
+                               get_item_or_none(sanitize_list(tenants), 0), release, steps, get_api_key(),
+                               get_octopus_api())
     # Get the end of the logs if we have exceeded our context limit
     logs = logs[-max_chars:]
 

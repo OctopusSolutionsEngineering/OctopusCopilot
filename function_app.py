@@ -848,7 +848,7 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
 
         return "\n".join(filter(lambda x: x, [chat_response, warnings, additional_information]))
 
-    def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release):
+    def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release, steps):
 
         api_key, url = get_api_key_and_url()
 
@@ -901,7 +901,7 @@ Release Version: {release}
 Channel Names: {channel}""")
 
         logs = timing_wrapper(
-            lambda: get_deployment_logs(space, project, environment, tenant, release, api_key, url),
+            lambda: get_deployment_logs(space, project, environment, tenant, release, steps, api_key, url),
             "Deployment logs")
 
         # Get the end of the logs if we have exceeded our context limit
