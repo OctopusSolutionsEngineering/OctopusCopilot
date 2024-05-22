@@ -76,6 +76,6 @@ class FunctionDefinitions:
         # If the LLM gave us an invalid function name, we can defer the response to the optional
         # invalid function fallback.
         if self.invalid:
-            return self.invalid
+            return self.invalid.function
 
         raise Exception(f"Function {function_name} was not found")
