@@ -2,9 +2,9 @@ import json
 import os
 import urllib.parse
 
+import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
-import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_deployments, max_log_lines
 from domain.config.users import get_admin_users
@@ -933,7 +933,7 @@ Lines: {log_lines}""")
         response = [llm_message_query(messages, context, log_query)]
         response.extend(warnings)
 
-        return "\n".join(response)
+        return "\n\n".join(response)
 
     def resource_specific_callback(original_query, messages, space, projects, runbooks, targets,
                                    tenants, environments, accounts, certificates, workerpools, machinepolicies, tagsets,
