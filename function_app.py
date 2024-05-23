@@ -913,8 +913,8 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
             warnings.append(f"The logs exceed {max_log_lines} lines. "
                             + "This may impact the extension's ability to process them. "
                             + "Consider reducing the number of lines requested "
-                            + f"e.g. 'Show the last 100 lines from the deployment logs for the latest deployment of project \"{project}\".' "
-                            + f"or 'Show me the the deployment logs for step 2 for the latest deployment of project \"{project}\".'")
+                            + f"e.g. `Show the last 100 lines from the deployment logs for the latest deployment of project \"{project}\".` "
+                            + f"or `Show me the the deployment logs for step 2 for the latest deployment of project \"{project}\".`")
 
         log_query("logs_callback", f"""
 Space Id: {space}
