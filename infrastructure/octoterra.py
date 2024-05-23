@@ -145,8 +145,6 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
 
     body = {
         "space": space_id,
-        "url": octopus_url,
-        "apiKey": api_key,
         "ignoreCacManagedValues": False,
         "excludeCaCProjectSettings": True,
         "excludeProjectsExcept": exclude_projects_except,
@@ -199,10 +197,16 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
         "includeDefaultChannel": True,
     }
 
+    headers = {
+        "X-Octopus-ApiKey": api_key,
+        "X-Octopus-Url": octopus_url
+    }
+
     resp = timing_wrapper(lambda: handle_response(lambda: http.request("POST",
                                                                        os.environ[
                                                                            "APPLICATION_OCTOTERRA_URL"] + "/api/octoterra",
-                                                                       body=json.dumps(body))), "octoterra")
+                                                                       body=json.dumps(body),
+                                                                       headers=headers)), "octoterra")
 
     answer = resp.data.decode("utf-8")
 
