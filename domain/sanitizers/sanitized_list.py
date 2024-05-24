@@ -10,7 +10,7 @@ from domain.transformers.date_convert import datetime_to_str
 
 
 def sanitize_space(query, input_string):
-    input_list = sanitize_list(input_string, "all|\\*|Space|Space\\s*[0-9A-Z]|My\\s*Space")
+    input_list = sanitize_list(input_string, "Any|all|\\*|Space|Space\\s*[0-9A-Z]|My\\s*Space")
 
     # The LLM will sometimes return the space name of "default" when no specific space is mentioned
     # If the query does not contain "default" or "Default", we ignore the name default.
@@ -24,7 +24,7 @@ def sanitize_space(query, input_string):
 
 
 def sanitize_projects(input_list):
-    return sanitize_list(input_list, "all|\\*|Project\\s*[0-9A-Z]|My\\s*Project")
+    return sanitize_list(input_list, "Any|all|\\*|Project\\s*[0-9A-Z]|My\\s*Project")
 
 
 def update_query(original_query, sanitized_projects):
@@ -70,63 +70,65 @@ def sanitize_name_fuzzy(names_generator, name):
 
 
 def sanitize_tenants(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Tenant\\s*[0-9A-Z]|My\\s*Tenant")
+    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Tenant\\s*[0-9A-Z]|My\\s*Tenant")
 
 
 def sanitize_feeds(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Feed\\s*[0-9A-Z]|My\\s*Feed")
+    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Feed\\s*[0-9A-Z]|My\\s*Feed")
 
 
 def sanitize_accounts(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Account\\s*[0-9A-Z]|My\\s*Account")
+    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Account\\s*[0-9A-Z]|My\\s*Account")
 
 
 def sanitize_workerpools(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Worker\\s*Pool\\s*[0-9A-Z]|My\\s*Worker\\s*Pool")
+    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Worker\\s*Pool\\s*[0-9A-Z]|My\\s*Worker\\s*Pool")
 
 
 def sanitize_machinepolicies(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Machine\\s*Policy\\s*[0-9A-Z]|My\\s*Machine\\s*Policy")
+    return sanitize_list(input_list,
+                         "(?i)\\.\\*|Any|None|all|\\*|Machine\\s*Policy\\s*[0-9A-Z]|My\\s*Machine\\s*Policy")
 
 
 def sanitize_tenanttagsets(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Tag\\s*Set\\s*[0-9A-Z]|My\\s*Tag\\s*Set")
+    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Tag\\s*Set\\s*[0-9A-Z]|My\\s*Tag\\s*Set")
 
 
 def sanitize_gitcredentials(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Git\\s*Credential\\s*[0-9A-Z]|My\\s*Git\\s*Credential")
+    return sanitize_list(input_list,
+                         "(?i)\\.\\*|Any|None|all|\\*|Git\\s*Credential\\s*[0-9A-Z]|My\\s*Git\\s*Credential")
 
 
 def sanitize_projectgroups(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Project\\s*Group\\s*[0-9A-Z]|My\\s*Project\\s*Group")
+    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Project\\s*Group\\s*[0-9A-Z]|My\\s*Project\\s*Group")
 
 
 def sanitize_channels(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Channel\\s*[0-9A-Z]|My\\s*Channel")
+    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Channel\\s*[0-9A-Z]|My\\s*Channel")
 
 
 def sanitize_releases(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Release\\s*[0-9A-Z]|My\\s*Release")
+    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Release\\s*[0-9A-Z]|My\\s*Release")
 
 
 def sanitize_steps(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Step\\s*[0-9A-Z]|My\\s*Step")
+    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Step\\s*[0-9A-Z]|My\\s*Step")
 
 
 def sanitize_variables(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Variable\\s*[0-9A-Z]|My\\s*Variable")
+    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Variable\\s*[0-9A-Z]|My\\s*Variable")
 
 
 def sanitize_lifecycles(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Lifecycle\\s*[0-9A-Z]|My\\s*Lifecycle")
+    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Lifecycle\\s*[0-9A-Z]|My\\s*Lifecycle")
 
 
 def sanitize_certificates(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Certificate\\s*[0-9A-Z]|My\\s*Certificate")
+    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Certificate\\s*[0-9A-Z]|My\\s*Certificate")
 
 
 def sanitize_environments(input_query, input_list):
-    list = sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Environment\\s*[0-9A-Z]|My\\s*Environment")
+    list = sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Environment\\s*[0-9A-Z]|My\\s*Environment")
     # The LLM will sometimes return environment names that were never mentioned in the query. I suspect the
     # names comes from the few-shot examples. Every environment needs to be mentioned in the query.
     return [env for env in list if env in input_query]
@@ -134,16 +136,16 @@ def sanitize_environments(input_query, input_list):
 
 def sanitize_targets(input_list):
     return sanitize_list(input_list,
-                         "(?i)\\.\\*|None|all|\\*|Machine\\s*[0-9A-Z]|Target\\s*[0-9A-Z]|My\\s*Machine|My\\s*Target")
+                         "(?i)\\.\\*|Any|None|all|\\*|Machine\\s*[0-9A-Z]|Target\\s*[0-9A-Z]|My\\s*Machine|My\\s*Target")
 
 
 def sanitize_runbooks(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|None|all|\\*|Runbook\\s*[0-9A-Z]|My\\s*Runbook")
+    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Runbook\\s*[0-9A-Z]|My\\s*Runbook")
 
 
 def sanitize_library_variable_sets(input_list):
     return sanitize_list(input_list,
-                         "\\.\\*|None|all|\\*|(Library\\s*)?Variable\\s*Set\\s*[0-9A-Z]|Variables|My\\s*Variable\\s*Set")
+                         "\\.\\*|Any|None|all|\\*|(Library\\s*)?Variable\\s*Set\\s*[0-9A-Z]|Variables|My\\s*Variable\\s*Set")
 
 
 def sanitize_dates(input_list):
