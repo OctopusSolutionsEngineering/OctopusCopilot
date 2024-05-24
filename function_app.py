@@ -593,6 +593,7 @@ Here are some sample queries you can ask:
 * @octopus-ai-app List the projects in the space "{space["Name"]}"
 * @octopus-ai-app What do the deployment steps in the "{first_project["Name"]}" project in the "{space["Name"]}" space do?
 * @octopus-ai-app Show me the status of the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space
+* @octopus-ai-app Show me any non-successful deployments for the "{first_project["Name"]}" project in the space "{space["Name"]}" for the "{first_environment["Name"]}" environment in a markdown table
 * @octopus-ai-app Summarize the deployment logs for the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space
 * @octopus-ai-app List any URLs printed in the deployment logs for the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space
 * @octopus-ai-app How do I enable server side apply?
