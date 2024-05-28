@@ -32,6 +32,12 @@ terraform apply -var=octopus_server=https://yourinstance.octopus.app -var=octopu
 This creates a service account, team, and user role called `Copilot`. The role includes permissions to view Octopus
 resources, but not to modify them.
 
+# Azure Function outbound IPs
+
+The list of outbound IP addresses for the functions that make up this extension can be found
+in [outboundips.txt](outboundips.txt). These IP addresses must be placed into an allowlist for any Octopus instance the
+extension will interact with.
+
 # Test web site
 
 The primary interface for this agent is via the GitHub Copilot chat. This requires individual users to be invited to
