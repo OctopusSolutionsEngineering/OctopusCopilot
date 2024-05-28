@@ -38,6 +38,8 @@ The list of outbound IP addresses for the functions that make up this extension 
 in [outboundips.txt](outboundips.txt). These IP addresses must be placed into an allowlist for any Octopus instance the
 extension will interact with.
 
+Note that Octopus cloud instances do not need to take any additional action to grant the extension access.
+
 # Test web site
 
 The primary interface for this agent is via the GitHub Copilot chat. This requires individual users to be invited to
