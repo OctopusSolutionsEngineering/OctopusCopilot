@@ -2,6 +2,10 @@ This project provides an agent for GitHub's Copilot that can query an Octopus
 Server. It is deployed as an Azure functions app, and integrates with the
 Azure OpenAI service.
 
+# Documentation
+
+View the documentation [here](https://octopus.com/docs/administration/copilot).
+
 # Prompt Engineering Guide
 
 View the [Wiki](https://github.com/OctopusSolutionsEngineering/OctopusCopilot/wiki/Prompt-Engineering-with-Octopus) for
@@ -33,7 +37,7 @@ resources, but not to modify them.
 The primary interface for this agent is via the GitHub Copilot chat. This requires individual users to be invited to
 the private beta.
 
-We have a [test web site](https://octopusai-f3adanckatdqedfh.a02.azurefd.net/api/form) that responds to the same queries
+We have a [test web site](https://aiagent.octopus.com/api/form) that responds to the same queries
 as the chat interface. The web based interface is functionally equivalent to the Copilot chat interface in terms of
 interacting with an Octopus server.
 
