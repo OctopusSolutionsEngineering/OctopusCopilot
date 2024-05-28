@@ -2,7 +2,7 @@ name: Find Outbound IPs
 'on':
   workflow_dispatch: { }
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '1 0 * * *'
 jobs:
   outboundips:
     name: Outbound IPs
@@ -28,3 +28,5 @@ jobs:
           message: Update outbound IP addresses
           committer_name: GitHub Actions
           committer_email: actions@github.com
+permissions:
+  contents: write
