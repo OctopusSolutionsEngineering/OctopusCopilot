@@ -6,9 +6,7 @@ name: Find Outbound IPs
 jobs:
   outboundips:
     name: Outbound IPs
-    runs-on:
-      group: ubuntu-large-runner
-      labels: 4core-ubuntu-runner
+    runs-on: ubuntu-latest
     steps:
       - uses: azure/login@v2
         with:
