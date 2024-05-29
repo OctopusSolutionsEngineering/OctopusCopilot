@@ -93,5 +93,19 @@
     <text font-size="12.8" style="fill: #1e90ff; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="420" y="20">
       <tspan x="420" y="20">Octopus Extension for GitHub Copilot</tspan>
     </text>
+    <g>
+      <rect style="fill: #f58231; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #9a6324" x="140" y="60" width="206.3" height="100" rx="0" ry="0"/>
+      <text font-size="12.8" style="fill: #ffffff; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="243.15" y="113.881">
+        <tspan x="243.15" y="113.881">GitHub OAuth App</tspan>
+      </text>
+    </g>
+    <g>
+      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" x1="750" y1="280" x2="355.067" y2="89.2347"/>
+      <polygon style="fill: #1e90ff; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" fill-rule="evenodd" points="348.313,85.9726 359.493,85.8198 355.067,89.2347 355.143,94.8243 "/>
+    </g>
+    <g>
+      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" x1="346.3" y1="135" x2="691.225" y2="300.782"/>
+      <polygon style="fill: #1e90ff; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" fill-rule="evenodd" points="697.985,304.031 686.806,304.206 691.225,300.782 691.138,295.193 "/>
+    </g>
   </g>
 </svg>
