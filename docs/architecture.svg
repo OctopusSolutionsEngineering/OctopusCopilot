@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="70cm" height="34cm" viewBox="-141 -10 1382 671" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g id="Background">
+    <g>
+      <rect style="fill: #ffffff; fill-opacity: 0; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" x="400" y="-9" width="580" height="669" rx="0" ry="0"/>
+      <text font-size="12.8" style="fill: #1e90ff; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="690" y="329.381">
+        <tspan x="690" y="329.381"></tspan>
+      </text>
+    </g>
+    <g>
+      <rect style="fill: #e6194b; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #800000" x="700" y="280" width="200" height="100" rx="0" ry="0"/>
+      <text font-size="12.8" style="fill: #ffffff; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="800" y="325.881">
+        <tspan x="800" y="325.881">Azure Function, Python,</tspan>
+        <tspan x="800" y="341.881">Chat Agent</tspan>
+      </text>
+    </g>
+    <g>
+      <rect style="fill: #e6194b; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #800000" x="700" y="500" width="200" height="100" rx="0" ry="0"/>
+      <text font-size="12.8" style="fill: #ffffff; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="800" y="545.881">
+        <tspan x="800" y="545.881">Azure Function, Go,</tspan>
+        <tspan x="800" y="561.881">Terraform Serializer</tspan>
+      </text>
+    </g>
+    <g>
+      <rect style="fill: #4363d8; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #000075" x="1020" y="400" width="220" height="100" rx="0" ry="0"/>
+      <text font-size="12.8" style="fill: #ffffff; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1130" y="453.881">
+        <tspan x="1130" y="453.881">Octopus Server</tspan>
+      </text>
+    </g>
+    <g>
+      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" x1="900" y1="330" x2="1012.37" y2="418.957"/>
+      <polygon style="fill: #1e90ff; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" fill-rule="evenodd" points="1018.25,423.612 1007.3,421.325 1012.37,418.957 1013.51,413.485 "/>
+    </g>
+    <g>
+      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" x1="900" y1="550" x2="1011.74" y2="480.16"/>
+      <polygon style="fill: #1e90ff; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" fill-rule="evenodd" points="1018.1,476.185 1012.27,485.725 1011.74,480.16 1006.97,477.245 "/>
+    </g>
+    <g>
+      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" x1="800" y1="380" x2="800" y2="490.264"/>
+      <polygon style="fill: #1e90ff; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" fill-rule="evenodd" points="800,497.764 795,487.764 800,490.264 805,487.764 "/>
+    </g>
+    <g>
+      <rect style="fill: #f58231; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #9a6324" x="-140" y="280" width="200.8" height="100" rx="0" ry="0"/>
+      <text font-size="12.8" style="fill: #ffffff; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="-39.6" y="333.881">
+        <tspan x="-39.6" y="333.881">Copilot Chat</tspan>
+      </text>
+    </g>
+    <g>
+      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" x1="60.8" y1="330" x2="130.264" y2="330"/>
+      <polygon style="fill: #1e90ff; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" fill-rule="evenodd" points="137.764,330 127.764,335 130.264,330 127.764,325 "/>
+    </g>
+    <g>
+      <rect style="fill: #e6194b; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #800000" x="700" y="60" width="200" height="100" rx="0" ry="0"/>
+      <text font-size="12.8" style="fill: #ffffff; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="800" y="113.881">
+        <tspan x="800" y="113.881">Azure Open AI</tspan>
+      </text>
+    </g>
+    <g>
+      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" x1="800" y1="280" x2="800" y2="169.736"/>
+      <polygon style="fill: #1e90ff; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" fill-rule="evenodd" points="800,162.236 805,172.236 800,169.736 795,172.236 "/>
+    </g>
+    <g>
+      <rect style="fill: #e6194b; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #800000" x="420" y="280" width="200" height="100" rx="0" ry="0"/>
+      <text font-size="12.8" style="fill: #ffffff; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="520" y="333.881">
+        <tspan x="520" y="333.881">Azure FrontDoor</tspan>
+      </text>
+    </g>
+    <g>
+      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" x1="620" y1="330" x2="690.264" y2="330"/>
+      <polygon style="fill: #1e90ff; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" fill-rule="evenodd" points="697.764,330 687.764,335 690.264,330 687.764,325 "/>
+    </g>
+    <g>
+      <rect style="fill: #e6194b; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #800000" x="859.9" y="260" width="112.65" height="40" rx="0" ry="0"/>
+      <text font-size="12.8" style="fill: #ffffff; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="916.225" y="283.881">
+        <tspan x="916.225" y="283.881">Azure Storage</tspan>
+      </text>
+    </g>
+    <g>
+      <rect style="fill: #f58231; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #9a6324" x="140" y="280" width="206.3" height="100" rx="0" ry="0"/>
+      <text font-size="12.8" style="fill: #ffffff; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="243.15" y="325.881">
+        <tspan x="243.15" y="325.881">GitHub App</tspan>
+        <tspan x="243.15" y="341.881">Octopus AI App</tspan>
+      </text>
+    </g>
+    <g>
+      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" x1="347.302" y1="330" x2="410.264" y2="330"/>
+      <polygon style="fill: #1e90ff; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" fill-rule="evenodd" points="417.764,330 407.764,335 410.264,330 407.764,325 "/>
+    </g>
+    <text font-size="12.8" style="fill: #1e90ff; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="690" y="325.5">
+      <tspan x="690" y="325.5"></tspan>
+    </text>
+    <text font-size="12.8" style="fill: #1e90ff; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="420" y="20">
+      <tspan x="420" y="20">Octopus Extension for GitHub Copilot</tspan>
+    </text>
+  </g>
+</svg>

@@ -49,6 +49,10 @@ We have a [test web site](https://aiagent.octopus.com/api/form) that responds to
 as the chat interface. The web based interface is functionally equivalent to the Copilot chat interface in terms of
 interacting with an Octopus server.
 
+# Architecture diagram
+
+![](docs/architecture.svg)
+
 # Code structure
 
 This project is organized using the structure described
