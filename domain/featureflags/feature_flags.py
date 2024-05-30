@@ -29,7 +29,7 @@ def is_feature_enabled_for_github_user(feature_name: str, github_user: str, user
 
     # If the feature is enabled for the group
     if next(filter(lambda group: is_feature_flagged_for_group(feature_name, group, connection_string),
-                                  sanitized_user_groups), False):
+                   sanitized_user_groups), False):
         return True
 
     # If the feature is enabled for the user, return true
