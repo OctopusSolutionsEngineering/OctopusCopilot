@@ -256,7 +256,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
             return body
 
         tools = FunctionDefinitions([
-            FunctionDefinition(answer_general_query_wrapper(query, return_body_callback), AnswerGeneralQuery),
+            FunctionDefinition(answer_general_query_wrapper(query, return_body_callback), schema=AnswerGeneralQuery),
         ])
 
         # Result here is the body returned by return_body_callback
@@ -1034,7 +1034,7 @@ Lines: {log_lines}""")
 
         return FunctionDefinitions([
             FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
-                               AnswerGeneralQuery),
+                               schema=AnswerGeneralQuery),
             FunctionDefinition(answer_step_features_wrapper(query, general_query_callback, log_query)),
             FunctionDefinition(
                 answer_project_variables_wrapper(query, variable_query_callback, log_query)),
@@ -1059,7 +1059,7 @@ Lines: {log_lines}""")
             FunctionDefinition(provide_help)],
             fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
             invalid=FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
-                                       AnswerGeneralQuery)
+                                       schema=AnswerGeneralQuery)
         )
 
     try:

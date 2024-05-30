@@ -1,8 +1,12 @@
 import unittest
 
+from domain.featureflags.feature_flags import is_feature_enabled_for_github_user
 from infrastructure.users import save_default_values, get_default_values, \
     save_users_octopus_url_from_login, get_users_details, delete_all_user_details, delete_old_user_details, \
-    database_connection_test, delete_default_values
+    database_connection_test, delete_default_values, enable_feature_flag_for_user, is_feature_flagged_for_user, \
+    disable_feature_flag_for_user, enable_feature_flag_for_group, is_feature_flagged_for_group, \
+    disable_feature_flag_for_group, enable_feature_flag_for_all, is_feature_flagged_for_all, \
+    disable_feature_flag_for_all
 
 connection_string = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
 
@@ -14,6 +18,42 @@ class UsersTest(unittest.TestCase):
 
     docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite
     """
+
+    def test_feature_flag_user(self):
+        enable_feature_flag_for_user("testfeature", "testuser", connection_string)
+        self.assertTrue(is_feature_flagged_for_user("testfeature", "testuser", connection_string))
+        self.assertFalse(is_feature_flagged_for_user("testfeature", "anotheruser", connection_string))
+
+        self.assertTrue(is_feature_enabled_for_github_user("testfeature", "testuser", [], connection_string))
+        self.assertFalse(is_feature_enabled_for_github_user("testfeature", "anotheruser", [], connection_string))
+
+        disable_feature_flag_for_user("testfeature", "testuser", connection_string)
+        self.assertFalse(is_feature_flagged_for_user("testfeature", "testuser", connection_string))
+
+        self.assertFalse(is_feature_flagged_for_user("unsetfeature", "testuser", connection_string))
+
+    def test_feature_flag_group(self):
+        enable_feature_flag_for_group("testgroupfeature", "testgroup", connection_string)
+        self.assertTrue(is_feature_flagged_for_group("testgroupfeature", "testgroup", connection_string))
+        self.assertFalse(is_feature_flagged_for_group("testgroupfeature", "anothergroup", connection_string))
+
+        self.assertTrue(is_feature_enabled_for_github_user("testgroupfeature", "testuser", ["testgroup"], connection_string))
+        self.assertFalse(is_feature_enabled_for_github_user("testgroupfeature", "testuser", ["anothergroup"], connection_string))
+
+        disable_feature_flag_for_group("testgroupfeature", "testgroup", connection_string)
+        self.assertFalse(is_feature_flagged_for_group("testgroupfeature", "testgroup", connection_string))
+
+        self.assertFalse(is_feature_flagged_for_group("unsetfeature", "testgroup", connection_string))
+
+    def test_feature_flag_global(self):
+        enable_feature_flag_for_all("testallfeature", connection_string)
+        self.assertTrue(is_feature_flagged_for_all("testallfeature", connection_string))
+        self.assertTrue(is_feature_enabled_for_github_user("testallfeature", "testuser", ["testgroup"], connection_string))
+
+        disable_feature_flag_for_all("testallfeature", connection_string)
+        self.assertFalse(is_feature_flagged_for_all("testallfeature", connection_string))
+
+        self.assertFalse(is_feature_flagged_for_all("unsetfeature", connection_string))
 
     def test_health(self):
         database_connection_test(connection_string)

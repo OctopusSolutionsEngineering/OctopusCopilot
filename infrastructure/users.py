@@ -31,6 +31,178 @@ def database_connection_test(connection_string):
 
 
 @logging_wrapper
+def enable_feature_flag_for_user(feature_name, github_user, connection_string):
+    ensure_string_not_empty(feature_name, "feature_name must be feature name (enable_feature_flag_for_user).")
+    ensure_string_not_empty(github_user, "github_user must be the Github user ID (enable_feature_flag_for_user).")
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (enable_feature_flag_for_user).')
+
+    flag = {
+        'PartitionKey': "github.com",
+        'RowKey': feature_name.casefold().strip(),
+        github_user.casefold().strip(): True
+    }
+
+    table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+    table_client = table_service_client.create_table_if_not_exists("featureflagsuser")
+    table_client.upsert_entity(flag)
+
+
+@logging_wrapper
+def enable_feature_flag_for_group(feature_name, user_group, connection_string):
+    ensure_string_not_empty(feature_name, "feature_name must be feature name (enable_feature_flag_for_group).")
+    ensure_string_not_empty(user_group,
+                            "user_group must be the name of the user group (enable_feature_flag_for_group).")
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (enable_feature_flag_for_group).')
+
+    flag = {
+        'PartitionKey': "github.com",
+        'RowKey': feature_name.casefold().strip(),
+        user_group.casefold().strip(): True
+    }
+
+    table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+    table_client = table_service_client.create_table_if_not_exists("featureflagsgroup")
+    table_client.upsert_entity(flag)
+
+
+@logging_wrapper
+def enable_feature_flag_for_all(feature_name, connection_string):
+    ensure_string_not_empty(feature_name, "feature_name must be feature name (enable_feature_flag_for_all).")
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (enable_feature_flag_for_all).')
+
+    flag = {
+        'PartitionKey': "github.com",
+        'RowKey': feature_name.casefold().strip(),
+        'enabled': True
+    }
+
+    table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+    table_client = table_service_client.create_table_if_not_exists("featureflagsglobal")
+    table_client.upsert_entity(flag)
+
+
+@logging_wrapper
+def disable_feature_flag_for_user(feature_name, github_user, connection_string):
+    ensure_string_not_empty(feature_name, "feature_name must be feature name (disable_feature_flag_for_user).")
+    ensure_string_not_empty(github_user, "github_user must be the Github user ID (disable_feature_flag_for_user).")
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (disable_feature_flag_for_user).')
+
+    flag = {
+        'PartitionKey': "github.com",
+        'RowKey': feature_name.casefold().strip(),
+        github_user.casefold().strip(): False
+    }
+
+    table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+    table_client = table_service_client.create_table_if_not_exists("featureflagsuser")
+    table_client.upsert_entity(flag)
+
+
+@logging_wrapper
+def disable_feature_flag_for_group(feature_name, user_group, connection_string):
+    ensure_string_not_empty(feature_name, "feature_name must be feature name (disable_feature_flag_for_group).")
+    ensure_string_not_empty(user_group,
+                            "user_group must be the name of the user group (disable_feature_flag_for_group).")
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (disable_feature_flag_for_group).')
+
+    flag = {
+        'PartitionKey': "github.com",
+        'RowKey': feature_name.casefold().strip(),
+        user_group.casefold().strip(): False
+    }
+
+    table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+    table_client = table_service_client.create_table_if_not_exists("featureflagsgroup")
+    table_client.upsert_entity(flag)
+
+
+@logging_wrapper
+def disable_feature_flag_for_all(feature_name, connection_string):
+    ensure_string_not_empty(feature_name, "feature_name must be feature name (disable_feature_flag_for_all).")
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (disable_feature_flag_for_all).')
+
+    flag = {
+        'PartitionKey': "github.com",
+        'RowKey': feature_name.casefold().strip(),
+        'enabled': False
+    }
+
+    table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+    table_client = table_service_client.create_table_if_not_exists("featureflagsglobal")
+    table_client.upsert_entity(flag)
+
+
+@logging_wrapper
+def is_feature_flagged_for_user(feature_name, github_user, connection_string):
+    ensure_string_not_empty(feature_name, "feature_name must be feature name (is_feature_flagged_for_user).")
+    ensure_string_not_empty(github_user, "github_user must be the Github user ID (is_feature_flagged_for_user).")
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (is_feature_flagged_for_user).')
+
+    try:
+        table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+        table_client = table_service_client.create_table_if_not_exists("featureflagsuser")
+        defaults = table_client.get_entity("github.com", feature_name.casefold().strip())
+
+        sanitised_github_user = github_user.casefold().strip()
+
+        if sanitised_github_user in defaults:
+            return defaults[sanitised_github_user]
+
+        return False
+    except HttpResponseError as e:
+        return False
+
+
+@logging_wrapper
+def is_feature_flagged_for_group(feature_name, user_group, connection_string):
+    ensure_string_not_empty(feature_name, "feature_name must be feature name (is_feature_flagged_for_group).")
+    ensure_string_not_empty(user_group,
+                            "user_group must be the name of the user group (is_feature_flagged_for_group).")
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (is_feature_flagged_for_group).')
+
+    try:
+        table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+        table_client = table_service_client.create_table_if_not_exists("featureflagsgroup")
+        defaults = table_client.get_entity("github.com", feature_name.casefold().strip())
+
+        sanitised_user_group = user_group.casefold().strip()
+
+        if sanitised_user_group in defaults:
+            return defaults[sanitised_user_group]
+
+        return False
+    except HttpResponseError as e:
+        return False
+
+
+@logging_wrapper
+def is_feature_flagged_for_all(feature_name, connection_string):
+    ensure_string_not_empty(feature_name, "feature_name must be feature name (is_feature_flagged_for_all).")
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (is_feature_flagged_for_all).')
+
+    try:
+        table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+        table_client = table_service_client.create_table_if_not_exists("featureflagsglobal")
+        defaults = table_client.get_entity("github.com", feature_name.casefold().strip())
+
+        if 'enabled' in defaults:
+            return defaults['enabled']
+
+        return False
+    except HttpResponseError as e:
+        return False
+
+
+@logging_wrapper
 def save_default_values(username, default_name, default_value, connection_string):
     ensure_string_not_empty(username, "username must be the GitHub user's ID (save_default_values).")
     ensure_string_not_empty(default_name, "default_name must be a non-empty string (save_default_values).")

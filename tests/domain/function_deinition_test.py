@@ -15,7 +15,24 @@ class FunctionDefinitionTest(unittest.TestCase):
             """
             pass
 
-        functions = FunctionDefinitions([FunctionDefinition(no_op)])
+        def disabled_function():
+            """
+            Does nothing
+            """
+            pass
+
+        def enabled_function():
+            """
+            Does nothing
+            """
+            pass
+
+        functions = FunctionDefinitions([
+            FunctionDefinition(no_op),
+            FunctionDefinition(disabled_function, is_enabled=False),
+            FunctionDefinition(enabled_function, is_enabled=True),
+
+        ])
 
         with self.assertRaises(ValueError):
             functions.get_function(None)
@@ -23,4 +40,10 @@ class FunctionDefinitionTest(unittest.TestCase):
         with self.assertRaises(Exception):
             functions.get_function("does not exist")
 
+        with self.assertRaises(Exception):
+            functions.get_function("disabled_function")
+
         self.assertEqual(no_op, functions.get_function("no_op"))
+        self.assertEqual(enabled_function, functions.get_function("enabled_function"))
+
+        self.assertEqual(2, len(functions.get_tools()))

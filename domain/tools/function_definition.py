@@ -7,11 +7,12 @@ class FunctionDefinition:
     by OpenAI.
     """
 
-    def __init__(self, function, schema=None):
+    def __init__(self, function, is_enabled=True, schema=None):
         """
         Given a function, store the function, the name of the function, and
         the OpenAI tool representation of the function.
         :param function: The function that the LLM can call
+        :param is_enabled: Whether the function is enabled or not
         :param schema: The pydantic schema of the function
         """
 
@@ -24,6 +25,7 @@ class FunctionDefinition:
         self.name = function.__name__
         self.function = function
         self.tool = StructuredTool.from_function(function, schema)
+        self.enabled = is_enabled
 
 
 class FunctionDefinitions:
@@ -47,7 +49,8 @@ class FunctionDefinitions:
         Generate a set of tools that can be passed to OpenAI
         :return: The OpenAI tools
         """
-        return list(map(lambda f: f.tool, self.functions))
+        enabled_tools = filter(lambda f: f.enabled, self.functions)
+        return list(map(lambda f: f.tool, enabled_tools))
 
     def has_fallback(self):
         return self.fallback is not None
@@ -69,7 +72,8 @@ class FunctionDefinitions:
         if not function_name:
             raise ValueError('function_name must be a non-empty string.')
 
-        function = list(filter(lambda f: f.name == function_name, self.functions))
+        enabled_functions = filter(lambda f: f.enabled, self.functions)
+        function = list(filter(lambda f: f.name == function_name, enabled_functions))
         if len(function) == 1:
             return function[0].function
 
