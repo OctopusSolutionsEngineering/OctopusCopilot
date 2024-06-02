@@ -3,9 +3,9 @@ import json
 from domain.errors.error_handling import sanitize_message
 
 
-def convert_to_sse_response(result):
+def convert_to_sse_response(result, prompt_title=None, prompt_message=None, prompt_id=None):
     """
-    Converts a string to an SSE data only response.
+    Converts a string to an SSE data only response. Optionally includes a confirmation prompt.
     :param result: The text to convert to an SSE stream
     :return: The SSE data only stream
     """
@@ -15,14 +15,27 @@ def convert_to_sse_response(result):
     if not result.strip():
         return stop + "\n\n"
 
-    # https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#data-only_messages
-    # "Each notification is sent as a block of text terminated by a pair of newlines."
-    content = "\n".join(
+    content = list(
         map(lambda line: "data: " + json.dumps(
             {"choices": [{"index": 0, "delta": {"content": sanitize_message(line) + "\n"}}]}),
             result.strip().split("\n")))
 
-    return content + "\n" + stop + "\n\n"
+    if prompt_title and prompt_message and prompt_id:
+        prompt_data = "data: " + json.dumps(
+            {"choices": [{"index": 0, "delta": {"content": "!"}, "finish_reason": "null"}],
+             "copilot_confirmation": {"type": "action",
+                                      "title": prompt_title,
+                                      "message": prompt_message,
+                                      "confirmation": {
+                                          "id": prompt_id
+                                      }}})
+        content.append(prompt_data)
+
+    content.append(stop)
+
+    # https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#data-only_messages
+    # "Each notification is sent as a block of text terminated by a pair of newlines."
+    return "\n".join(content) + "\n\n"
 
 
 def convert_from_sse_response(sse_response):

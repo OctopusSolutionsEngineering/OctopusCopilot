@@ -27,6 +27,8 @@ from domain.messages.docs_messages import docs_prompt
 from domain.messages.general import build_hcl_prompt
 from domain.messages.test_message import build_test_prompt
 from domain.performance.timing import timing_wrapper
+from domain.requestparsing.extract_query import extract_query
+from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import get_item_or_none, \
     none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_names_fuzzy, sanitize_tenants, \
     update_query, sanitize_space, sanitize_name_fuzzy, sanitize_log_steps, sanitize_log_lines
@@ -440,7 +442,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         is_admin_user(get_github_user_from_form(),
                       get_admin_users(),
                       lambda: delete_all_user_details(get_functions_connection_string()))
-        return f"Deleted all records"
+        return CopilotResponse(f"Deleted all records")
 
     def logout():
         """Logs out or signs out the user
@@ -448,7 +450,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         delete_user_details(get_github_user_from_form(), get_functions_connection_string())
 
-        return f"Sign out successful"
+        return CopilotResponse(f"Sign out successful")
 
     def get_api_key_and_url():
         try:
@@ -521,7 +523,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             dashboard = get_dashboard(space_id, api_key, url)
             response = get_dashboard_response(dashboard)
 
-            return "\n".join(filter(lambda x: x, [response, warnings]))
+            return CopilotResponse("\n\n".join(filter(lambda x: x, [response, warnings])))
 
         return get_dashboard_tool
 
@@ -538,18 +540,18 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         try:
             validate_default_value_name(default_name)
         except ValueError as e:
-            return e.args[0]
+            return CopilotResponse(e.args[0])
 
         save_default_values(get_github_user_from_form(), default_name.casefold(), default_value,
                             get_functions_connection_string())
-        return f"Saved default value \"{default_value}\" for \"{default_name.casefold()}\""
+        return CopilotResponse(f"Saved default value \"{default_value}\" for \"{default_name.casefold()}\"")
 
     def remove_default_value():
         """Removes, clears, or deletes a default value for a space, query_project, environment, or channel
         """
 
         delete_default_values(get_github_user_from_form(), get_functions_connection_string())
-        return f"Deleted default valued"
+        return CopilotResponse(f"Deleted default valued")
 
     def get_default_value(default_name):
         """Save a default value for a space, query_project, environment, or channel
@@ -559,7 +561,13 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         """
         name = str(default_name).casefold()
         value = get_default_values(get_github_user_from_form(), name, get_functions_connection_string())
-        return f"The default value for \"{name}\" is \"{value}\""
+        return CopilotResponse(f"The default value for \"{name}\" is \"{value}\"")
+
+    def test_confirmation():
+        """Test a confirmation prompt
+        """
+        return CopilotResponse("This is an example of a mutating action", "Do you want to continue?",
+                               "This can not be undone", "123")
 
     def say_hello():
         """Responds to greetings like "hello" or "hi"
@@ -586,7 +594,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
             # The first space we find with projects and environments is used as the example
             if first_project and first_environment:
-                return f"""I am an AI assistant that can help you with your Octopus Deploy queries. I can answer questions about your Octopus Deploy spaces, projects, environments, deployments, and more.
+                return CopilotResponse(f"""I am an AI assistant that can help you with your Octopus Deploy queries. I can answer questions about your Octopus Deploy spaces, projects, environments, deployments, and more.
 
 Here are some sample queries you can ask:
 * @octopus-ai-app Show me the dashboard for the space "{space["Name"]}"
@@ -600,9 +608,10 @@ Here are some sample queries you can ask:
 * @octopus-ai-app The status "Success" is represented with the 🟢 character. The status "In Progress" is represented by the 🔵 character. Other statuses are represented with the 🔴 character. Show the release version, release notes, and status of the last 5 deployments for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space in a markdown table.
 
 See the [documentation](https://octopus.com/docs/administration/copilot) for more information.
-"""
+""")
 
-        return "See the [documentation](https://octopus.com/docs/administration/copilot) for more information."
+        return CopilotResponse(
+            "See the [documentation](https://octopus.com/docs/administration/copilot) for more information.")
 
     def general_query_callback(original_query, body, messages):
         api_key, url = get_api_key_and_url()
@@ -661,7 +670,7 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
                                        url,
                                        log_query)
 
-        return "\n".join(filter(lambda x: x, [response, warnings]))
+        return CopilotResponse(response="\n".join(filter(lambda x: x, [response, warnings])))
 
     def variable_query_callback(original_query, messages, space, projects, variables):
         api_key, url = get_api_key_and_url()
@@ -723,7 +732,7 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
                     "\nThe query did not specify a project so the response may reference a subset of all the projects in a space."
                     + "\nTo see more detailed information, specify a project name in the query.")
 
-        return "\n".join(filter(lambda x: x, [chat_response, warnings, additional_information]))
+        return CopilotResponse("\n".join(filter(lambda x: x, [chat_response, warnings, additional_information])))
 
     def releases_query_messages(original_query, space, projects, environments, channels, releases):
         """
@@ -848,7 +857,7 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
                     "\nThe query did not specify a project so the response is limited to the latest deployments for all projects."
                     + "\nTo see more detailed information, specify a project name in the query.")
 
-        return "\n".join(filter(lambda x: x, [chat_response, warnings, additional_information]))
+        return CopilotResponse("\n".join(filter(lambda x: x, [chat_response, warnings, additional_information])))
 
     def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release, steps, lines):
 
@@ -878,7 +887,7 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
         # If we had a project in the query but nothing matched, it means there were no projects in the space
         # (or no projects that the user had access to).
         if original_sanitized_projects and len(sanitized_projects) == 0:
-            return "The space has no projects."
+            return CopilotResponse("The space has no projects.")
 
         project = get_default_argument(get_github_user_from_form(),
                                        get_item_or_none([project["matched"] for project in sanitized_projects],
@@ -886,7 +895,7 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
                                        "Project")
 
         if not project:
-            return "Please specify a project name in the query."
+            return CopilotResponse("Please specify a project name in the query.")
 
         environment = get_default_argument(get_github_user_from_form(),
                                            get_item_or_none(sanitize_environments(original_query, environments), 0),
@@ -934,7 +943,7 @@ Lines: {log_lines}""")
         response = [llm_message_query(messages, context, log_query)]
         response.extend(warnings)
 
-        return "\n\n".join(response)
+        return CopilotResponse("\n\n".join(response))
 
     def resource_specific_callback(original_query, messages, space, projects, runbooks, targets,
                                    tenants, environments, accounts, certificates, workerpools, machinepolicies, tagsets,
@@ -1006,7 +1015,7 @@ Lines: {log_lines}""")
                                        url,
                                        log_query)
 
-        return "\n".join(filter(lambda x: x, [response, warnings]))
+        return CopilotResponse("\n\n".join(filter(lambda x: x, [response, warnings])))
 
     def how_to_callback(original_query, keywords):
         try:
@@ -1022,7 +1031,7 @@ Lines: {log_lines}""")
 
         chat_response = llm_message_query(messages, context, log_query)
 
-        return chat_response
+        return CopilotResponse(chat_response)
 
     def build_form_tools(query):
         """
@@ -1076,7 +1085,9 @@ Lines: {log_lines}""")
             build_form_tools,
             log_query).call_function()
 
-        return func.HttpResponse(convert_to_sse_response(result), headers=get_sse_headers())
+        return func.HttpResponse(
+            convert_to_sse_response(result.response, result.prompt_title, result.prompt_message, result.prompt_id),
+            headers=get_sse_headers())
 
     except UserNotLoggedIn as e:
         return func.HttpResponse(convert_to_sse_response("Your GitHub token is invalid."),
@@ -1119,43 +1130,6 @@ Lines: {log_lines}""")
         return func.HttpResponse(convert_to_sse_response(
             "An unexpected error was thrown. This error has been logged. I'm sorry for the inconvenience."),
             headers=get_sse_headers())
-
-
-def extract_query(req: func.HttpRequest):
-    """
-    Traditional web based SSE only supports GET requests, so testing the integration from a HTML form
-    means making a GET request with the query as a parameter. Copilot makes POST requests with the
-    query in the body. This functon extracts the query for both HTML forms and Copilot requests.
-    :param req: The HTTP request
-    :return: The query
-    """
-
-    # This is the query from a HTML form
-    query = req.params.get("message")
-
-    if query:
-        return query.strip()
-
-    body_raw = req.get_body()
-
-    if not body_raw or not body_raw.strip():
-        return ""
-
-    try:
-        body = json.loads(body_raw)
-
-        # This is the format supplied by copilot
-        if 'messages' in body and len(body.get('messages')) != 0:
-            # We don't care about the chat history, just the last message
-            message = body.get('messages')[-1]
-            if 'content' in message:
-                return message.get('content').strip()
-    except Exception as e:
-        # Probably a malformed request. Just ignore it.
-        handle_error(e)
-        return ""
-
-    return ""
 
 
 def get_sse_headers():
