@@ -32,7 +32,7 @@ from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import get_item_or_none, \
     none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_names_fuzzy, sanitize_tenants, \
     update_query, sanitize_space, sanitize_name_fuzzy, sanitize_log_steps, sanitize_log_lines
-from domain.security.security import is_admin_user
+from domain.security.security import call_admin_function
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
@@ -439,9 +439,9 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
     def clean_up_all_records():
         """Cleans up, or deletes, all user records
         """
-        is_admin_user(get_github_user_from_form(),
-                      get_admin_users(),
-                      lambda: delete_all_user_details(get_functions_connection_string()))
+        call_admin_function(get_github_user_from_form(),
+                            get_admin_users(),
+                            lambda: delete_all_user_details(get_functions_connection_string()))
         return CopilotResponse(f"Deleted all records")
 
     def logout():

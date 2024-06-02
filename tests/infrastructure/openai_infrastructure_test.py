@@ -178,7 +178,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the git credentials name in the query
         """
 
-        function = llm_tool_query("What is the username for the \"GitHub Credentials\" git credentials?",
+        function = llm_tool_query("What is the username for the git credentials called \"GitHub Credentials\"?",
                                   build_mock_test_tools)
         body = function.call_function()
 
@@ -290,6 +290,10 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies queries answered by documentation
         """
 
+        self.assertEqual(llm_tool_query("How do I review the DORA metrics for my space?",
+                                        build_mock_test_tools).name, "provide_help_and_instructions")
+        self.assertEqual(llm_tool_query("How do I use Community Step templates?",
+                                        build_mock_test_tools).name, "provide_help_and_instructions")
         self.assertEqual(llm_tool_query("How do I review deployment frequency metrics?",
                                         build_mock_test_tools).name, "provide_help_and_instructions")
         self.assertEqual(llm_tool_query("How do I enable Azure AD?",
@@ -302,13 +306,9 @@ class MockRequests(unittest.TestCase):
                                         build_mock_test_tools).name, "provide_help_and_instructions")
         self.assertEqual(llm_tool_query("How do I add a Worker?",
                                         build_mock_test_tools).name, "provide_help_and_instructions")
-        self.assertEqual(llm_tool_query("How do I use Community Step templates?",
-                                        build_mock_test_tools).name, "provide_help_and_instructions")
         self.assertEqual(llm_tool_query("How do I enable Config-as-code for a project?",
                                         build_mock_test_tools).name, "provide_help_and_instructions")
         self.assertEqual(llm_tool_query("How do I use lifecycles",
-                                        build_mock_test_tools).name, "provide_help_and_instructions")
-        self.assertEqual(llm_tool_query("How do I view the DORA metrics for my space?",
                                         build_mock_test_tools).name, "provide_help_and_instructions")
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)

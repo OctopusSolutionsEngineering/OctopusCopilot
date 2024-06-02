@@ -6,7 +6,31 @@ from domain.exceptions.invalid_admin_users import InvalidAdminUsers
 from domain.exceptions.not_authorized import NotAuthorized
 
 
-def is_admin_user(user, get_admin_users, callback):
+def is_admin_user(user, get_admin_users):
+    """
+        Check if the user is an admin.
+        :param user: A function returning the current user
+        :param get_admin_users: A function returning a JSON list of users
+        :return: The value returned by the callback
+        """
+
+    empty_string_is_authorized(get_admin_users)
+    empty_string_is_authorized(user)
+
+    try:
+        admin_users = list(map(lambda x: str(x), json.loads(get_admin_users)))
+
+    except Exception as e:
+        handle_error(InvalidAdminUsers("Failed to parse list of admin users: " + get_admin_users, e))
+        return False
+
+    if str(user) not in admin_users:
+        return False
+
+    return True
+
+
+def call_admin_function(user, get_admin_users, callback):
     """
     A wrapper function that checks to see if the user is an admin. If so, the callback is called. If not, an exception is raised.
     :param user: A function returning the current user

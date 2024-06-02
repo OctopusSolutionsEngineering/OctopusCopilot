@@ -24,7 +24,7 @@ def how_to_wrapper(query, callback, logging):
         Octopus Deploy features like: Projects, Environments, Lifecycles, Channels, Deployments, Releases,
         Deployment Processes, Variables, Lifecycle Events, Integrations, Retention Policies, Security,
         Audit Logs, Targets, Machines, Agents, Authentication, Tentacles, SSH, Step Templates, Licenses,
-        Metrics, DORA, Config-as-Code (CaC), OCL etc. It also answers questions about the use of the CLI, code samples,
+        Metrics, DORA, DORA metrics, Config-as-Code (CaC), OCL, community step templates etc. It also answers questions about the use of the CLI, code samples,
         REST API, explanations of high level concepts, integration with continuous integration (CI) servers. It also provides
         details on metrics like deployment frequency, lead time for changes, change failure rate, and recovery time,
         and how and where to measure, view, and generate these metrics.

@@ -24,7 +24,7 @@ def sanitize_space(query, input_string):
 
 
 def sanitize_projects(input_list):
-    return sanitize_list(input_list, "Any|all|\\*|Project\\s*[0-9A-Z]|My\\s*Project")
+    return sanitize_list(input_list, "Any|all|\\*|Project\\s*[0-9A-Z]|My\\s*Project|project\\d")
 
 
 def update_query(original_query, sanitized_projects):
@@ -96,7 +96,7 @@ def sanitize_tenanttagsets(input_list):
 
 def sanitize_gitcredentials(input_list):
     return sanitize_list(input_list,
-                         "(?i)\\.\\*|Any|None|all|\\*|Git\\s*Credential\\s*[0-9A-Z]|My\\s*Git\\s*Credential")
+                         "(?i)\\.\\*|Any|None|all|\\*|Git\\s*Credential\\s*[0-9A-Z]|My\\s*Git\\s*Credential|cred\\d")
 
 
 def sanitize_projectgroups(input_list):
@@ -116,7 +116,7 @@ def sanitize_steps(input_list):
 
 
 def sanitize_variables(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Variable\\s*[0-9A-Z]|My\\s*Variable")
+    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Variable\\s*[0-9A-Z]|My\\s*Variable|var\\d")
 
 
 def sanitize_lifecycles(input_list):
@@ -128,7 +128,7 @@ def sanitize_certificates(input_list):
 
 
 def sanitize_environments(input_query, input_list):
-    list = sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Environment\\s*[0-9A-Z]|My\\s*Environment")
+    list = sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Environment\\s*[0-9A-Z]|My\\s*Environment|env\\d")
     # The LLM will sometimes return environment names that were never mentioned in the query. I suspect the
     # names comes from the few-shot examples. Every environment needs to be mentioned in the query.
     return [env for env in list if env in input_query]

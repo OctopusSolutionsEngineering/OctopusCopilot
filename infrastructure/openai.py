@@ -97,10 +97,18 @@ def llm_tool_query(query, llm_tools, log_query=None, extra_prompt_messages=None)
 
         raise OpenAIBadRequest(e)
 
+    # We always want to match a tool. This is a big part of how we prevent the extension from returning
+    # undesirable answers unrelated to Octopus.
     if hasattr(action, "tool"):
         return FunctionCall(functions.get_function(action.tool), action.tool, action.tool_input)
 
+    # Either no tool was matched, or the LLM returned an answer rather than a list of tools.
+    # We don't want answers, as any general questions must be served by our own tools.
+    # The fallback process will typically run through a more generic set of tools to try and
+    # respond to general queries.
     if functions.has_fallback():
         return llm_tool_query(query, lambda _: functions.get_fallback_tool(), log_query, extra_prompt_messages)
 
+    # If no tool was found and there was no fallback, we return a generic apology.
+    # We will never ask a general question of the LLM, because we don't want to answer questions unrelated to Octopus.
     return FunctionCall(lambda: NO_FUNCTION_RESPONSE, "none", {})

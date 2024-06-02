@@ -32,7 +32,7 @@ def answer_general_query_wrapper(query, callback, logging=None):
                              worker_pools=None, machine_policies=None, tag_sets=None, project_groups=None,
                              channels=None,
                              releases=None, steps=None, variables=None, git_credentials=None, dates=None, **kwargs):
-        """A query about an Octopus space.
+        """A query about the configuration or state of an Octopus space.
 Args:
 space: Space name
 projects: project names
@@ -45,15 +45,15 @@ feeds: feed names
 accounts: account names
 certificates: certificate names
 lifecycles: lifecycle names
-workerpools: worker pool names
-machinepolicies: machine policy names
-tagsets: tenant tag set names
-projectgroups: project group names
+worker_pools: worker pool names
+machine_policies: machine policy names
+tag_sets: tenant tag set names
+project_groups: project group names
 channels: channel names
 releases: release versions
 steps: step names
 variables: variable names
-gitcredentials: git credential names
+git_credentials: git credential names
 dates: any dates in the query"""
 
         if logging:
