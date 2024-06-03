@@ -9,13 +9,13 @@ from domain.sanitizers.sanitize_strings import replace_with_empty_string
 from domain.transformers.date_convert import datetime_to_str
 
 
-def sanitize_space(query, input_string):
-    input_list = sanitize_list(input_string, "(?i)Any|all|\\*|Space|Space\\s*[0-9A-Z]|My\\s*Space|current|this")
+def sanitize_space(query, input_list):
+    input_list = sanitize_list(input_list, "(?i)Any|all|\\*|Space|Space\\s*[0-9A-Z]|My\\s*Space|current|this")
 
     # The LLM will sometimes return the space name of "default" when no specific space is mentioned
     # If the query does not contain "default" or "Default", we ignore the name default.
-    if "default" not in query and "Default" not in query:
-        input_list = sanitize_list(input_list, "default|Default")
+    if not query or "default" not in query.casefold():
+        input_list = sanitize_list(input_list, "(?i)default")
 
     if len(input_list) > 0:
         return input_list[0]
