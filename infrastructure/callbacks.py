@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from azure.core.exceptions import HttpResponseError
 from azure.data.tables import TableServiceClient
 
@@ -70,6 +72,37 @@ def delete_callback(callback_id, connection_string):
         table_client.delete_entity("github.com", callback_id)
 
         logger.info(f"Deleted callback {callback_id}")
+
+    except HttpResponseError as e:
+        handle_error(e)
+
+
+@logging_wrapper
+def delete_old_callbacks(lifetime, connection_string):
+    """
+    We don't want to hold onto callback functions for very long. This function deletes any old callbacks.
+    :param connection_string: The database connection string
+    :return: The number of deleted records.
+    """
+
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (delete_old_user_details).')
+
+    try:
+        table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+        table_client = table_service_client.get_table_client(table_name="callback")
+
+        old_records = (datetime.now() - timedelta(minutes=lifetime)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+        rows = table_client.query_entities(f"Timestamp lt datetime'{old_records}'")
+        counter = 0
+        for row in rows:
+            counter = counter + 1
+            table_client.delete_entity("github.com", row['RowKey'])
+
+        logger.info(f"Cleaned up {counter} entries.")
+
+        return counter
 
     except HttpResponseError as e:
         handle_error(e)

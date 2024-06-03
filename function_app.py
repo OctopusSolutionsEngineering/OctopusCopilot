@@ -53,7 +53,7 @@ from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
 from domain.url.url_builder import base_request_url
 from domain.validation.default_value_validation import validate_default_value_name
-from infrastructure.callbacks import save_callback, load_callback, delete_callback
+from infrastructure.callbacks import save_callback, load_callback, delete_callback, delete_old_callbacks
 from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
@@ -86,6 +86,21 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
     """
     try:
         delete_old_user_details(get_functions_connection_string())
+    except Exception as e:
+        handle_error(e)
+
+
+@app.function_name(name="callback_cleanup")
+@app.timer_trigger(schedule="0 0 * * * *",
+                   arg_name="mytimer",
+                   run_on_startup=True)
+def callback_cleanup(mytimer: func.TimerRequest) -> None:
+    """
+    A function handler used to clean up old callbacks
+    :param mytimer: The Timer request
+    """
+    try:
+        delete_old_callbacks(5, get_functions_connection_string())
     except Exception as e:
         handle_error(e)
 
