@@ -1258,9 +1258,7 @@ def execute_function(req, build_form_tools):
     logger.info("Query: " + (query or "None"))
 
     if not query.strip():
-        return func.HttpResponse(
-            convert_to_sse_response("Ask a question like \"What are the projects in the space called Default?\""),
-            headers=get_sse_headers())
+        return CopilotResponse("Ask a question like \"What are the projects in the space called Default?\"")
 
     return llm_tool_query(
         query,

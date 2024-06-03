@@ -11,6 +11,7 @@ from domain.config.openai import llm_timeout
 from domain.exceptions.openai_error import OpenAIContentFilter, OpenAITokenLengthExceeded, OpenAIBadRequest
 from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
 from domain.performance.timing import timing_wrapper
+from domain.response.copilot_response import CopilotResponse
 from domain.tools.function_call import FunctionCall
 from domain.validation.argument_validation import ensure_string_not_empty, ensure_not_falsy
 
@@ -110,4 +111,4 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
 
     # If no tool was found and there was no fallback, we return a generic apology.
     # We will never ask a general question of the LLM, because we don't want to answer questions unrelated to Octopus.
-    return FunctionCall(lambda: NO_FUNCTION_RESPONSE, "none", {})
+    return FunctionCall(lambda: CopilotResponse(NO_FUNCTION_RESPONSE), "none", {})
