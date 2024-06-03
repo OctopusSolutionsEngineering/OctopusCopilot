@@ -10,7 +10,7 @@ from domain.transformers.date_convert import datetime_to_str
 
 
 def sanitize_space(query, input_string):
-    input_list = sanitize_list(input_string, "Any|all|\\*|Space|Space\\s*[0-9A-Z]|My\\s*Space")
+    input_list = sanitize_list(input_string, "(?i)Any|all|\\*|Space|Space\\s*[0-9A-Z]|My\\s*Space|current|this")
 
     # The LLM will sometimes return the space name of "default" when no specific space is mentioned
     # If the query does not contain "default" or "Default", we ignore the name default.
@@ -24,7 +24,7 @@ def sanitize_space(query, input_string):
 
 
 def sanitize_projects(input_list):
-    return sanitize_list(input_list, "Any|all|\\*|Project\\s*[0-9A-Z]|My\\s*Project|project\\d")
+    return sanitize_list(input_list, "(?i)Any|all|\\*|Project\\s*[0-9A-Z]|My\\s*Project|project\\d")
 
 
 def update_query(original_query, sanitized_projects):
@@ -145,7 +145,7 @@ def sanitize_runbooks(input_list):
 
 def sanitize_library_variable_sets(input_list):
     return sanitize_list(input_list,
-                         "\\.\\*|Any|None|all|\\*|(Library\\s*)?Variable\\s*Set\\s*[0-9A-Z]|Variables|My\\s*Variable\\s*Set")
+                         "(?i)\\.\\*|Any|None|all|\\*|(Library\\s*)?Variable\\s*Set\\s*[0-9A-Z]|Variables|My\\s*Variable\\s*Set")
 
 
 def sanitize_dates(input_list):
