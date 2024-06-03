@@ -629,8 +629,8 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                 # The first space we find with projects and environments is used as the example
                 if first_project and first_environment:
                     space_name = space["Name"]
-                    first_project = space_first_project
-                    first_environment = space_first_environment
+                    first_project = space_first_project["Name"]
+                    first_environment = space_first_environment["Name"]
                     break
 
         # If we have a space, project, and environment, use these for the examples
