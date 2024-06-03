@@ -37,8 +37,8 @@ def extract_confirmation_state_and_id(req: func.HttpRequest):
             # We don't care about the chat history, just the last message
             message = body.get('messages')[-1]
             if 'copilot_confirmations' in message:
-                return (message.get('copilot_confirmations').get('state'),
-                        message.get('copilot_confirmations').get('confirmation').get('id'))
+                return (message.get('copilot_confirmations', {}).get('state'),
+                        message.get('copilot_confirmations', {}).get('confirmation', {}).get('id'))
     except Exception as e:
         # Probably a malformed request. Just ignore it.
         handle_error(e)
