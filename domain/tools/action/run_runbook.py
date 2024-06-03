@@ -7,7 +7,7 @@ def run_runbook_wrapper(url, api_key, github_user, original_query):
     def run_runbook(space_name, project_name, runbook_name, environment_name, tenant_name):
         """
         Runs a published runbook in Octopus Deploy.
-        
+
         Args:
         space_name: The name of the space
         project_name: The name of the project
