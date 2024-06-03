@@ -12,7 +12,7 @@ logger = configure_logging(__name__)
 
 
 @logging_wrapper
-def save_callback(github_user, function_name, callback_id, arguments, connection_string):
+def save_callback(github_user, function_name, callback_id, arguments, query, connection_string):
     ensure_string_not_empty(connection_string,
                             'connection_string must be the connection string (save_callback).')
     ensure_string_not_empty(function_name,
@@ -21,6 +21,8 @@ def save_callback(github_user, function_name, callback_id, arguments, connection
                             'callback_id must be the id of the confirmation callback (save_callback).')
     ensure_string_not_empty(github_user,
                             'github_user must be the github user ID of the confirmation callback (save_callback).')
+    ensure_string_not_empty(query,
+                            'query must be the original query (save_callback).')
 
     table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
     table_client = table_service_client.create_table_if_not_exists("callback")
@@ -33,6 +35,7 @@ def save_callback(github_user, function_name, callback_id, arguments, connection
         'FunctionName': function_name,
         'Arguments': arguments,
         'GithubUser': sanitised_github_user,
+        'Query': query,
     }
 
     table_client.upsert_entity(callback)
@@ -55,12 +58,12 @@ def load_callback(github_user, callback_id, connection_string):
         sanitised_github_user = github_user.casefold().strip()
 
         if not callback['GithubUser'] == sanitised_github_user:
-            return None, None
+            return None, None, None
 
-        return callback['FunctionName'], callback['Arguments']
+        return callback['FunctionName'], callback['Arguments'], callback['Query']
 
     except HttpResponseError as e:
-        return None, None
+        return None, None, None
 
 
 @logging_wrapper

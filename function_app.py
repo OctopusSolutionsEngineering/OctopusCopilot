@@ -584,14 +584,17 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         value = get_default_values(get_github_user_from_form(), name, get_functions_connection_string())
         return CopilotResponse(f"The default value for \"{name}\" is \"{value}\"")
 
-    def test_confirmation():
-        """Test a confirmation prompt
-        """
-        callback_id = str(uuid.uuid4())
-        save_callback(get_github_user_from_form(), test_confirmation.__name__, callback_id, json.dumps({}),
-                      get_functions_connection_string())
-        return CopilotResponse("This is an example of a mutating action", "Do you want to continue?",
-                               "This can not be undone", callback_id)
+    def test_confirmation(original_query):
+        def test_confirmation_callback():
+            """Test a confirmation prompt
+                    """
+            callback_id = str(uuid.uuid4())
+            save_callback(get_github_user_from_form(), test_confirmation.__name__, callback_id, json.dumps({}),
+                          original_query, get_functions_connection_string())
+            return CopilotResponse("This is an example of a mutating action", "Do you want to continue?",
+                                   "This can not be undone", callback_id)
+
+        return test_confirmation_callback
 
     def test_confirmation_callback():
         """Test a confirmation prompt
@@ -1133,7 +1136,7 @@ Lines: {log_lines}""")
             FunctionDefinition(say_hello),
             FunctionDefinition(what_do_you_do),
             FunctionDefinition(provide_help),
-            FunctionDefinition(test_confirmation, callback=test_confirmation_callback,
+            FunctionDefinition(test_confirmation(query), callback=test_confirmation_callback,
                                is_enabled=is_admin_user(get_github_user_from_form(), get_admin_users()))],
             fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
             invalid=FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
@@ -1141,11 +1144,8 @@ Lines: {log_lines}""")
         )
 
     try:
-        query = extract_query(req)
-
-        functions = build_form_tools(query)
-
-        result = execute_callback(req, functions, get_github_user_from_form()) or execute_function(query, functions)
+        result = (execute_callback(req, build_form_tools, get_github_user_from_form()) or
+                  execute_function(req, build_form_tools))
 
         return func.HttpResponse(
             convert_to_sse_response(result.response, result.prompt_title, result.prompt_message, result.prompt_id),
@@ -1214,11 +1214,11 @@ def request_config_details():
                                  headers=get_sse_headers())
 
 
-def execute_callback(req, functions, github_user):
+def execute_callback(req, build_form_tools, github_user):
     """
     Extract a confirmation from the request and execute the function callback
     :param req: The HTTP request
-    :param functions: The functions database
+    :param build_form_tools: The function that builds the tools
     :param github_user: The github user
     :return: The result of calling the callback if the confirmation is "accepted"
     """
@@ -1230,13 +1230,14 @@ def execute_callback(req, functions, github_user):
     # We have received a confirmation, so call the callback
     if state and task_id:
         if state.strip().casefold() == "accepted":
-            function_name, arguments = load_callback(github_user, task_id,
-                                                     get_functions_connection_string())
+            function_name, arguments, query = load_callback(github_user, task_id.strip(),
+                                                            get_functions_connection_string())
             parsed_args = {}
             if arguments:
                 parsed_args = json.loads(arguments)
 
             if function_name:
+                functions = build_form_tools(query)
                 result = FunctionCall(functions.get_callback_function(function_name),
                                       function_name,
                                       parsed_args).call_function()
@@ -1248,7 +1249,11 @@ def execute_callback(req, functions, github_user):
     return None
 
 
-def execute_function(query, functions):
+def execute_function(req, build_form_tools):
+    query = extract_query(req)
+
+    functions = build_form_tools(query)
+
     logger.info("Query: " + (query or "None"))
 
     if not query.strip():

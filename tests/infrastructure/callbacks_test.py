@@ -14,31 +14,35 @@ class Callbacktests(unittest.TestCase):
     """
 
     def test_cleanup_function(self):
-        save_callback("1234567", "testfunction", "123", "{}", connection_string)
+        save_callback("1234567", "testfunction", "123", "{}", "query", connection_string)
         delete_old_callbacks(0, connection_string)
-        func_name, args = load_callback("1234567", "123", connection_string)
+        func_name, args, query = load_callback("1234567", "123", connection_string)
 
         self.assertIsNone(func_name)
         self.assertIsNone(args)
+        self.assertIsNone(query)
 
     def test_save_load_function(self):
-        save_callback("1234567", "testfunction", "123", "{}", connection_string)
-        func_name, args = load_callback("1234567", "123", connection_string)
+        save_callback("1234567", "testfunction", "123", "{}", "query", connection_string)
+        func_name, args, query = load_callback("1234567", "123", connection_string)
 
         self.assertEqual("testfunction", func_name)
         self.assertEqual("{}", args)
+        self.assertEqual("query", query)
 
     def test_save_delete_function(self):
-        save_callback("1234567", "testfunction", "123", "{}", connection_string)
+        save_callback("1234567", "testfunction", "123", "{}", "query", connection_string)
         delete_callback("123", connection_string)
-        func_name, args = load_callback("1234567", "123", connection_string)
+        func_name, args, query = load_callback("1234567", "123", connection_string)
 
         self.assertIsNone(func_name)
         self.assertIsNone(args)
+        self.assertIsNone(query)
 
     def test_load_missing_function(self):
         delete_callback("xxx", connection_string)
-        func_name, args = load_callback("1234567", "123", connection_string)
+        func_name, args, query = load_callback("1234567", "123", connection_string)
 
         self.assertIsNone(func_name)
         self.assertIsNone(args)
+        self.assertIsNone(query)
