@@ -41,13 +41,13 @@ def extract_confirmation_state_and_id(req: func.HttpRequest):
                 confirmation_message = message.get('copilot_confirmations', [])
 
                 # Make sure there is 1 confirmation
-                if len(confirmation_message) == 0:
+                if not confirmation_message or len(confirmation_message) == 0:
                     return None, None
 
                 # We assume that we are only confirming one action at a time
                 # Return the details of the last confirmation
-                return (confirmation_message[:-1].get('state'),
-                        confirmation_message[:-1].get('confirmation', {}).get('id'))
+                return (confirmation_message[-1].get('state'),
+                        confirmation_message[-1].get('confirmation', {}).get('id'))
     except Exception as e:
         # Probably a malformed request. Just ignore it.
         handle_error(e)
