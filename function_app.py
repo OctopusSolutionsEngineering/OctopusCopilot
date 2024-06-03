@@ -1228,20 +1228,21 @@ def execute_callback(req, functions, github_user):
     logger.info("Task ID: " + (task_id or "None"))
 
     # We have received a confirmation, so call the callback
-    if state == "accepted":
-        function_name, arguments = load_callback(github_user, task_id,
-                                                 get_functions_connection_string())
-        parsed_args = {}
-        if arguments:
-            parsed_args = json.loads(arguments)
+    if state and task_id:
+        if state.strip().casefold() == "accepted":
+            function_name, arguments = load_callback(github_user, task_id,
+                                                     get_functions_connection_string())
+            parsed_args = {}
+            if arguments:
+                parsed_args = json.loads(arguments)
 
-        if function_name:
-            result = FunctionCall(functions.get_callback_function(function_name),
-                                  function_name,
-                                  parsed_args).call_function()
-            delete_callback(task_id, get_functions_connection_string())
-            return result
-    elif state:
+            if function_name:
+                result = FunctionCall(functions.get_callback_function(function_name),
+                                      function_name,
+                                      parsed_args).call_function()
+                delete_callback(task_id, get_functions_connection_string())
+                return result
+
         return CopilotResponse("Confirmation was denied")
 
     return None

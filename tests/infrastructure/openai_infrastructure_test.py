@@ -91,7 +91,7 @@ class MockRequests(unittest.TestCase):
         """
 
         query = "Does the \"Helm\" feed have a password?."
-        function = llm_tool_query(query, build_mock_test_tools)
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
