@@ -70,7 +70,7 @@ def load_callback(github_user, callback_id, connection_string):
 def delete_callback(callback_id, connection_string):
     try:
         table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
-        table_client = table_service_client.get_table_client(table_name="callback")
+        table_client = table_service_client.create_table_if_not_exists(table_name="callback")
 
         table_client.delete_entity("github.com", callback_id)
 
@@ -93,7 +93,7 @@ def delete_old_callbacks(lifetime, connection_string):
 
     try:
         table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
-        table_client = table_service_client.get_table_client(table_name="callback")
+        table_client = table_service_client.create_table_if_not_exists(table_name="callback")
 
         old_records = (datetime.now() - timedelta(minutes=lifetime)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
