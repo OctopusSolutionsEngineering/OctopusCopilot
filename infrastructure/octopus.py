@@ -10,11 +10,13 @@ from domain.config.openai import max_context
 from domain.converters.string_to_int import string_to_int
 from domain.exceptions.request_failed import OctopusRequestFailed
 from domain.exceptions.resource_not_found import ResourceNotFound
+from domain.exceptions.runbook_not_published import RunbookNotPublished
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.query.query_inspector import release_is_latest
 from domain.sanitizers.sanitized_list import get_item_fuzzy, normalize_log_step_name
+from domain.sanitizers.url_sanitizer import quote_safe
 from domain.url.build_url import build_url
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http, TAKE_ALL
@@ -137,7 +139,7 @@ def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api)
 
-    api = build_url(my_octopus_api, "api/" + space_id + "/Projects", dict(take=TAKE_ALL))
+    api = build_url(my_octopus_api, f"api/{quote_safe(space_id)}/Projects", dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -161,7 +163,7 @@ def get_dashboard(space_id, my_api_key, my_octopus_api):
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_dashboard).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_dashboard).')
 
-    api = build_url(my_octopus_api, "api/" + space_id + "/Dashboard",
+    api = build_url(my_octopus_api, f"api/{quote_safe(space_id)}/Dashboard",
                     dict(highestLatestVersionPerProjectAndEnvironment="true"))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
@@ -198,9 +200,9 @@ def get_projects(space_id, my_api_key, my_octopus_api):
     """
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_projects).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_projects).')
-    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_projects).')
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (get_projects).')
 
-    api = build_url(my_octopus_api, f"/api/{space_id}/Projects?take=10000")
+    api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Projects", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -218,9 +220,9 @@ def get_tenants(space_id, my_api_key, my_octopus_api):
     """
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_tenants).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_tenants).')
-    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_tenants).')
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (get_tenants).')
 
-    api = build_url(my_octopus_api, f"/api/{space_id}/Tenants?take=10000")
+    api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Tenants", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -237,9 +239,9 @@ def get_feeds(my_api_key, my_octopus_api, space_id):
     """
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_feeds).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_feeds).')
-    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_feeds).')
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (get_feeds).')
 
-    api = build_url(my_octopus_api, f"/api/{space_id}/Feeds?take=10000")
+    api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Feeds", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -256,9 +258,9 @@ def get_accounts(my_api_key, my_octopus_api, space_id):
     """
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_accounts).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_accounts).')
-    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_accounts).')
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (get_accounts).')
 
-    api = build_url(my_octopus_api, f"/api/{space_id}/Accounts?take=10000")
+    api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Accounts", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -275,9 +277,9 @@ def get_machines(my_api_key, my_octopus_api, space_id):
     """
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_machines).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_machines).')
-    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_machines).')
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (get_machines).')
 
-    api = build_url(my_octopus_api, f"/api/{space_id}/Machines?take=10000")
+    api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Machines", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -294,9 +296,9 @@ def get_certificates(my_api_key, my_octopus_api, space_id):
     """
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_certificates).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_certificates).')
-    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_certificates).')
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (get_certificates).')
 
-    api = build_url(my_octopus_api, f"/api/{space_id}/Certificates?take=10000")
+    api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Certificates", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -313,9 +315,9 @@ def get_environments(my_api_key, my_octopus_api, space_id):
     """
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_environments).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_environments).')
-    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_environments).')
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (get_environments).')
 
-    api = build_url(my_octopus_api, f"/api/{space_id}/Environments?take=10000")
+    api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Environments", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -332,9 +334,9 @@ def get_tenants(my_api_key, my_octopus_api, space_id):
     """
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_environments).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_environments).')
-    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_environments).')
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (get_environments).')
 
-    api = build_url(my_octopus_api, f"/api/{space_id}/Tenants?take=10000")
+    api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Tenants", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -351,9 +353,9 @@ def get_project_channel(my_api_key, my_octopus_api, space_id, project_id):
     """
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_project_channel).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_project_channel).')
-    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_project_channel).')
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (get_project_channel).')
 
-    api = build_url(my_octopus_api, f"/api/{space_id}/Projects/{project_id}/Channels")
+    api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/Channels")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -370,9 +372,9 @@ def get_lifecycle(my_api_key, my_octopus_api, space_id, lifecycle_id):
     """
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_lifecycle).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_lifecycle).')
-    ensure_string_not_empty(my_api_key, 'space_id must be the space ID (get_lifecycle).')
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (get_lifecycle).')
 
-    api = build_url(my_octopus_api, f"/api/{space_id}/Lifecycles/{lifecycle_id}")
+    api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Lifecycles/{quote_safe(lifecycle_id)}")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -400,7 +402,7 @@ def create_limited_api_key(user, my_api_key, my_octopus_api):
         'Expires': tomorrow.isoformat()
     }
 
-    api = build_url(my_octopus_api, "/api/users/" + user + "/apikeys")
+    api = build_url(my_octopus_api, f"/api/users/{quote_safe(user)}/apikeys")
     resp = handle_response(lambda: http.request("POST", api, json=api_key, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -425,7 +427,7 @@ def get_raw_deployment_process(space_name, project_name, api_key, octopus_url):
 
     project = get_project(space_id, project_name, api_key, octopus_url)
 
-    api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/DeploymentProcesses")
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Projects/{quote_safe(project['Id'])}/DeploymentProcesses")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     return resp.data.decode("utf-8")
@@ -449,7 +451,7 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
 
     project = get_project(space_id, project_name, api_key, octopus_url)
 
-    api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Projects/{quote_safe(project['Id'])}/Progression")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     return resp.data.decode("utf-8")
@@ -458,7 +460,7 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_projects_batch(skip, take, space_id, api_key, octopus_url):
-    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(take=take, skip=skip))
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Projects", dict(take=take, skip=skip))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     return resp.json()["Items"]
 
@@ -483,7 +485,7 @@ def get_projects_generator(space_id, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_environments_batch(skip, take, space_id, api_key, octopus_url):
-    api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(take=take, skip=skip))
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Environments", dict(take=take, skip=skip))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     return resp.json()["Items"]
 
@@ -519,12 +521,14 @@ def get_project(space_id, project_name, api_key, octopus_url):
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_project).')
     ensure_string_not_empty(project_name, 'project_name must be a non-empty string (get_project).')
 
-    api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(partialname=project_name))
+    base_url = f"api/{quote_safe(space_id)}/Projects"
+
+    api = build_url(octopus_url, base_url, dict(partialname=project_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     project = get_item_fuzzy(resp.json()["Items"], project_name)
 
     if project is None:
-        api = build_url(octopus_url, "api/" + space_id + "/Projects", dict(take="10000"))
+        api = build_url(octopus_url, base_url, dict(take=TAKE_ALL))
         resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
         project = get_item_fuzzy(resp.json()["Items"], project_name)
         if project is None:
@@ -547,12 +551,14 @@ def get_environment(space_id, environment_name, api_key, octopus_url):
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_environment).')
     ensure_string_not_empty(environment_name, 'project_name must be a non-empty string (get_environment).')
 
-    api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partialname=environment_name))
+    base_url = f"api/{quote_safe(space_id)}/Environments"
+
+    api = build_url(octopus_url, base_url, dict(partialname=environment_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     environment = get_item_fuzzy(resp.json()["Items"], environment_name)
 
     if environment is None:
-        api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(take="10000"))
+        api = build_url(octopus_url, base_url, dict(take="10000"))
         resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
         environment = get_item_fuzzy(resp.json()["Items"], environment_name)
         if environment is None:
@@ -575,7 +581,8 @@ def get_project_releases(space_id, project_id, api_key, octopus_url, take=max_co
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_project_releases).')
     ensure_string_not_empty(project_id, 'project_id must be a non-empty string (get_project_releases).')
 
-    api = build_url(octopus_url, f"api/{space_id}/Projects/{project_id}/Releases?take={take}")
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/Releases",
+                    query=dict(take=take))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     return resp.json()
@@ -595,7 +602,7 @@ def get_release_deployments(space_id, release_id, api_key, octopus_url):
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_release_deployments).')
     ensure_string_not_empty(release_id, 'release_id must be a non-empty string (get_release_deployments).')
 
-    api = build_url(octopus_url, f"api/{space_id}/Releases/{release_id}/Deployments")
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Releases/{quote_safe(release_id)}/Deployments")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     return resp.json()
@@ -615,7 +622,7 @@ def get_task(space_id, task_id, api_key, octopus_url):
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_task).')
     ensure_string_not_empty(task_id, 'task_id must be a non-empty string (get_task).')
 
-    api = build_url(octopus_url, f"api/{space_id}/Tasks/{task_id}")
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Tasks/{quote_safe(task_id)}")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     return resp.json()
@@ -635,7 +642,7 @@ def get_project_progression_from_ids(space_id, project_id, api_key, octopus_url)
     ensure_string_not_empty(space_id, 'space_name must be a non-empty string (get_project_progression).')
     ensure_string_not_empty(project_id, 'project_name must be a non-empty string (get_project_progression).')
 
-    api = build_url(octopus_url, f"api/{space_id}/Projects/{project_id}/Progression")
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/Progression")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     return resp.json()
@@ -666,9 +673,9 @@ def get_deployment_status_base(space_name, environment_name, project_name, api_k
     space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
 
     project = get_project(space_id, project_name, api_key, octopus_url)
-    environment = get_environment(space_id, environment_name, api_key, octopus_url)
+    environment = get_environment_fuzzy(space_id, environment_name, api_key, octopus_url)
 
-    api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Progression")
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Projects/{quote_safe(project['Id'])}/Progression")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     releases = list(filter(lambda r: environment["Id"] in r["Deployments"], resp.json()["Releases"]))
 
@@ -706,13 +713,13 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
 
     environment = None
     if environment_name:
-        environment = get_environment(space_id, environment_name, api_key, octopus_url)
+        environment = get_environment_fuzzy(space_id, environment_name, api_key, octopus_url)
 
     tenant = None
     if tenant_name:
-        tenant = get_tenant(space_id, tenant_name, api_key, octopus_url)
+        tenant = get_tenant_fuzzy(space_id, tenant_name, api_key, octopus_url)
 
-    api = build_url(octopus_url, f"api/{space_id}/Deployments", dict(projects=project['Id']))
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Deployments", dict(projects=project['Id']))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     deployments = json.loads(resp.data.decode("utf-8")).get("Items")
@@ -732,7 +739,8 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
         # We need to match the release version to a release, and the release to a deployment
 
         # Start by getting the releases for a project
-        api = build_url(octopus_url, f"api/{space_id}/Projects/{project['Id']}/Releases", dict(take=100))
+        api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Projects/{quote_safe(project['Id'])}/Releases",
+                        dict(take=100))
         resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
         releases = json.loads(resp.data.decode("utf-8")).get("Items")
 
@@ -751,7 +759,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
     if not task_id:
         return ""
 
-    api = build_url(octopus_url, f"api/{space_id}/Tasks/{task_id}/details")
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Tasks/{task_id}/details")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     task = json.loads(resp.data.decode("utf-8"))
 
@@ -816,13 +824,14 @@ def handle_response(callback):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_environment(space_id, environment_name, api_key, octopus_url):
-    api = build_url(octopus_url, "api/" + space_id + "/Environments", dict(partialname=environment_name))
+def get_environment_fuzzy(space_id, environment_name, api_key, octopus_url):
+    base_url = f"api/{quote_safe(space_id)}/Environments"
+    api = build_url(octopus_url, base_url, dict(partialname=environment_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     environment = get_item_fuzzy(resp.json()["Items"], environment_name)
 
     if environment is None:
-        api = build_url(octopus_url, "api/" + space_id + "/Environments")
+        api = build_url(octopus_url, base_url)
         resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
         environment = get_item_fuzzy(resp.json()["Items"], environment_name)
         if environment is None:
@@ -840,21 +849,22 @@ def get_environment_cached(space_id, environment_name, api_key, octopus_url):
         environment_cache[octopus_url][space_id] = {}
 
     if not environment_cache[octopus_url][space_id].get(environment_name):
-        environment_cache[octopus_url][space_id][environment_name] = get_environment(space_id, environment_name,
-                                                                                     api_key, octopus_url)
+        environment_cache[octopus_url][space_id][environment_name] = get_environment_fuzzy(space_id, environment_name,
+                                                                                           api_key, octopus_url)
 
     return environment_cache[octopus_url][space_id][environment_name]
 
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_tenant(space_id, tenant_name, api_key, octopus_url):
-    api = build_url(octopus_url, "api/" + space_id + "/Tenants", dict(partialname=tenant_name))
+def get_tenant_fuzzy(space_id, tenant_name, api_key, octopus_url):
+    base_url = f"api/{quote_safe(space_id)}/Tenants"
+    api = build_url(octopus_url, base_url, dict(partialname=tenant_name))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     tenant = get_item_fuzzy(resp.json()["Items"], tenant_name)
 
     if tenant is None:
-        api = build_url(octopus_url, "api/" + space_id + "/Tenants")
+        api = build_url(octopus_url, base_url)
         resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
         tenant = get_item_fuzzy(resp.json()["Items"], tenant_name)
         if tenant is None:
@@ -872,7 +882,7 @@ def get_tenant_cached(space_id, tenant_name, api_key, octopus_url):
         tenant_cache[octopus_url][space_id] = {}
 
     if not tenant_cache[octopus_url][space_id].get(tenant_name):
-        tenant_cache[octopus_url][space_id][tenant_name] = get_tenant(space_id, tenant_name, api_key, octopus_url)
+        tenant_cache[octopus_url][space_id][tenant_name] = get_tenant_fuzzy(space_id, tenant_name, api_key, octopus_url)
 
     return tenant_cache[octopus_url][space_id][tenant_name]
 
@@ -880,7 +890,7 @@ def get_tenant_cached(space_id, tenant_name, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_channel(space_id, channel_id, api_key, octopus_url):
-    api = build_url(octopus_url, "api/" + space_id + f"/Channels/{channel_id}")
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Channels/{quote_safe(channel_id)}")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     return resp.json()
 
@@ -897,3 +907,83 @@ def get_channel_cached(space_id, channel_id, api_key, octopus_url):
         channel_cache[octopus_url][space_id][channel_id] = get_channel(space_id, channel_id, api_key, octopus_url)
 
     return channel_cache[octopus_url][space_id][channel_id]
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_project_fuzzy(space_id, project_name, api_key, octopus_url):
+    # First try to find a nice match using a partial name lookup.
+    # This is a shortcut that means we don't have to loop the entire list of project.
+    # This will succeed if any resources match the supplied partial name.
+    base_url = f"api/{quote_safe(space_id)}/Projects"
+    api = build_url(octopus_url, base_url, dict(partialname=project_name))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    project = get_item_fuzzy(resp.json()["Items"], project_name)
+
+    # This is a higher cost fallback used when the partial name returns no results.
+    if project is None:
+        api = build_url(octopus_url, base_url)
+        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+        project = get_item_fuzzy(resp.json()["Items"], project_name)
+        if project is None:
+            raise ResourceNotFound("Project", project_name)
+
+    return project
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_runbook_fuzzy(space_id, project_id, runbook_name, api_key, octopus_url):
+    # First try to find a nice match using a partial name lookup.
+    # This is a shortcut that means we don't have to loop the entire list of runbooks.
+    # This will succeed if any resources match the supplied partial name.
+    base_url = f"api/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/Runbooks"
+    api = build_url(octopus_url, base_url, dict(partialname=runbook_name))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    runbook = get_item_fuzzy(resp.json()["Items"], runbook_name)
+
+    # This is a higher cost fallback used when the partial name returns no results.
+    if runbook is None:
+        api = build_url(octopus_url, base_url)
+        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+        runbook = get_item_fuzzy(resp.json()["Items"], runbook_name)
+        if runbook is None:
+            raise ResourceNotFound("Runbook", runbook_name)
+
+    return runbook
+
+
+@logging_wrapper
+def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environment_name, tenant_name, my_api_key,
+                                my_octopus_api):
+    """
+    Runs a published runbook
+    """
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (run_published_runbook_fuzzy).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (run_published_runbook_fuzzy).')
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (run_published_runbook_fuzzy).')
+    ensure_string_not_empty(project_name, 'project_name must be the project (run_published_runbook_fuzzy).')
+    ensure_string_not_empty(runbook_name, 'runbook_name must be the runbook (run_published_runbook_fuzzy).')
+    ensure_string_not_empty(environment_name, 'environment_name must be the environment (run_published_runbook_fuzzy).')
+
+    project = get_project_fuzzy(space_id, project_name, my_api_key, my_octopus_api)
+    runbook = get_runbook_fuzzy(space_id, project["Id"], runbook_name, my_api_key, my_octopus_api)
+    environment = get_environment_fuzzy(space_id, environment_name, my_api_key, my_octopus_api)
+    tenant = get_tenant_fuzzy(space_id, tenant_name, my_api_key, my_octopus_api)
+
+    if not runbook['PublishedRunbookSnapshotId']:
+        raise RunbookNotPublished(runbook_name)
+
+    base_url = "api/runbookRuns"
+    api = build_url(my_octopus_api, base_url)
+
+    runbook_run = {
+        'RunbookId': runbook['Id'],
+        'RunbookSnapshotId': runbook['PublishedRunbookSnapshotId'],
+        'EnvironmentId': environment['Id'],
+        'TenantId': tenant['Id'] if tenant else None,
+        'SkipActions': None,
+        'SpecificMachineIds': None,
+        'ExcludedMachineIds': None
+    }
+    handle_response(lambda: http.request("POST", api, json=runbook_run, headers=get_octopus_headers(my_api_key)))

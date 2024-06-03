@@ -314,22 +314,36 @@ def flatten_list(deployments):
 
 def get_item_fuzzy(items, name):
     """
-    Get an item, first using an exact match, then case-insensitive match, then the closest match
-    :param items: The list of items to search through
+    Get an item, first using an exact match, then case-insensitive match, then the closest match. Uses lazy evaluation.
+    :param items: An iterable collection of items to search through
     :param name: The name of the item to return
     :return: The closest match that could be found in the items
     """
-    case_insensitive_items = list(filter(lambda p: p["Name"].casefold() == name.casefold(), items))
-    case_sensitive_items = list(filter(lambda p: p["Name"] == name, case_insensitive_items))
 
-    if len(case_sensitive_items) != 0:
+    if not items:
+        return None
+
+    if not name:
+        return None
+
+    case_sensitive_items = []
+    fuzz_match = []
+
+    for item in items:
+        if "Name" not in item:
+            continue
+
+        if item["Name"] == name:
+            return item
+
+        if item["Name"].casefold() == name.casefold():
+            case_sensitive_items += item
+
+        fuzz_match.append({"ratio": fuzz.ratio(name, item["Name"]), "item": item})
+
+    if case_sensitive_items:
         return case_sensitive_items[0]
 
-    if len(case_insensitive_items) != 0:
-        return case_insensitive_items[0]
-
-    # allow fuzzy matching and return the best match
-    fuzz_match = [{"ratio": fuzz.ratio(name, item["Name"]), "item": item} for item in items]
     fuzz_match_sored = sorted(fuzz_match, key=lambda x: x["ratio"], reverse=True)
 
     if len(fuzz_match_sored) != 0:
