@@ -35,3 +35,10 @@ class Callbacktests(unittest.TestCase):
 
         self.assertIsNone(func_name)
         self.assertIsNone(args)
+
+    def test_load_missing_function(self):
+        delete_callback("xxx", connection_string)
+        func_name, args = load_callback("1234567", "123", connection_string)
+
+        self.assertIsNone(func_name)
+        self.assertIsNone(args)
