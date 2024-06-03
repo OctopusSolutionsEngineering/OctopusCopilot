@@ -1145,7 +1145,7 @@ Lines: {log_lines}""")
 
         functions = build_form_tools(query)
 
-        result = execute_callback(req, functions, get_github_user_from_form()) or execute_function(req, functions)
+        result = execute_callback(req, functions, get_github_user_from_form()) or execute_function(query, functions)
 
         return func.HttpResponse(
             convert_to_sse_response(result.response, result.prompt_title, result.prompt_message, result.prompt_id),
@@ -1214,7 +1214,7 @@ def request_config_details():
                                  headers=get_sse_headers())
 
 
-def execute_callback(req: func.HttpRequest, functions, github_user):
+def execute_callback(req, functions, github_user):
     """
     Extract a confirmation from the request and execute the function callback
     :param req: The HTTP request
@@ -1224,8 +1224,8 @@ def execute_callback(req: func.HttpRequest, functions, github_user):
     """
     state, task_id = extract_confirmation_state_and_id(req)
 
-    logger.info("State: " + state)
-    logger.info("Task ID: " + task_id)
+    logger.info("State: " + (state or "None"))
+    logger.info("Task ID: " + (task_id or "None"))
 
     # We have received a confirmation, so call the callback
     if state == "accepted":
@@ -1247,13 +1247,10 @@ def execute_callback(req: func.HttpRequest, functions, github_user):
     return None
 
 
-def execute_function(req, functions):
-    query = extract_query(req)
-
-    logger.info("Query: " + query)
+def execute_function(query, functions):
+    logger.info("Query: " + (query or "None"))
 
     if not query.strip():
-        logger.info(req.get_body())
         return func.HttpResponse(
             convert_to_sse_response("Ask a question like \"What are the projects in the space called Default?\""),
             headers=get_sse_headers())
