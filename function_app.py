@@ -3,9 +3,9 @@ import os
 import urllib.parse
 import uuid
 
+import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
-import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_deployments, max_log_lines
 from domain.config.users import get_admin_users
@@ -589,7 +589,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             """Test a confirmation prompt
                     """
             callback_id = str(uuid.uuid4())
-            save_callback(get_github_user_from_form(), test_confirmation.__name__, callback_id, json.dumps({}),
+            save_callback(get_github_user_from_form(), test_confirmation_callback.__name__, callback_id, json.dumps({}),
                           original_query, get_functions_connection_string())
             return CopilotResponse("This is an example of a mutating action", "Do you want to continue?",
                                    "This can not be undone", callback_id)
