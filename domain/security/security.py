@@ -8,14 +8,14 @@ from domain.exceptions.not_authorized import NotAuthorized
 
 def is_admin_user(user, get_admin_users):
     """
-        Check if the user is an admin.
-        :param user: A function returning the current user
-        :param get_admin_users: A function returning a JSON list of users
-        :return: The value returned by the callback
-        """
+    Check if the user is an admin.
+    :param user: A function returning the current user
+    :param get_admin_users: A function returning a JSON list of users
+    :return: The value returned by the callback
+    """
 
-    empty_string_is_authorized(get_admin_users)
-    empty_string_is_authorized(user)
+    if not user or not get_admin_users:
+        return False
 
     try:
         admin_users = list(map(lambda x: str(x), json.loads(get_admin_users)))

@@ -32,7 +32,7 @@ from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import get_item_or_none, \
     none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_names_fuzzy, sanitize_tenants, \
     update_query, sanitize_space, sanitize_name_fuzzy, sanitize_log_steps, sanitize_log_lines
-from domain.security.security import call_admin_function
+from domain.security.security import call_admin_function, is_admin_user
 from domain.tools.certificates_query import answer_certificates_wrapper
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
@@ -1065,7 +1065,9 @@ Lines: {log_lines}""")
             FunctionDefinition(get_dashboard_wrapper(query)),
             FunctionDefinition(say_hello),
             FunctionDefinition(what_do_you_do),
-            FunctionDefinition(provide_help)],
+            FunctionDefinition(provide_help),
+            FunctionDefinition(test_confirmation, is_enabled=is_admin_user(get_github_user_from_form(),
+                                                                           get_admin_users()))],
             fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
             invalid=FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
                                        schema=AnswerGeneralQuery)
