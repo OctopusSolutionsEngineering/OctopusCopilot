@@ -30,7 +30,7 @@ class MockRequests(unittest.TestCase):
         query = "What is the size of the earth?"
         function = llm_tool_query(query, build_mock_test_tools(query))
 
-        self.assertTrue(function.call_function().index("Sorry, I did not understand that request.") != -1)
+        self.assertTrue("Sorry, I did not understand that request." in function.call_function().response)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_project_question(self):
