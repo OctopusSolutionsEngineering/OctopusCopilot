@@ -7,13 +7,14 @@ class FunctionDefinition:
     by OpenAI.
     """
 
-    def __init__(self, function, is_enabled=True, schema=None):
+    def __init__(self, function, is_enabled=True, schema=None, callback=None):
         """
         Given a function, store the function, the name of the function, and
         the OpenAI tool representation of the function.
         :param function: The function that the LLM can call
         :param is_enabled: Whether the function is enabled or not
         :param schema: The pydantic schema of the function
+        :param callback: The callback function to use if the original function needs to confirm an action
         """
 
         if function is None:
@@ -26,6 +27,7 @@ class FunctionDefinition:
         self.function = function
         self.tool = StructuredTool.from_function(function, schema)
         self.enabled = is_enabled
+        self.callback = callback
 
 
 class FunctionDefinitions:
@@ -61,6 +63,23 @@ class FunctionDefinitions:
         :return: The OpenAI tools
         """
         return FunctionDefinitions([self.fallback])
+
+    def get_callback_function(self, function_name):
+        """
+        Get the callback function that matches the supplied name
+        :param function_name: The name of the function
+        :return: The callback function associated with the name
+        """
+
+        if not function_name:
+            raise ValueError('function_name must be a non-empty string.')
+
+        enabled_functions = filter(lambda f: f.enabled, self.functions)
+        function = list(filter(lambda f: f.name == function_name, enabled_functions))
+        if len(function) == 1:
+            return function[0].callback
+
+        raise Exception(f"Callback for function {function_name} was not found")
 
     def get_function(self, function_name):
         """

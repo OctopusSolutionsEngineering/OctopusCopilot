@@ -54,12 +54,12 @@ def handle_openai_exception(exception):
     return exception.message
 
 
-def llm_tool_query(query, llm_tools, log_query=None, extra_prompt_messages=None):
+def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None):
     """
     This is the handler that responds to a chat request.
     :param log_query: The function used to log the query
     :param query: The pain text query
-    :param llm_tools: A function that returns the set of tools used by OpenAI
+    :param functions: The set of tools used by OpenAI
     :param extra_prompt_messages: Additional messages to pass to the LLM
     :return: The result of the function, defined by the set of tools, that was called in response to the query
     """
@@ -67,7 +67,6 @@ def llm_tool_query(query, llm_tools, log_query=None, extra_prompt_messages=None)
     ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_tools_execution).')
     ensure_not_falsy(query, 'llm_tools must not be None (handle_copilot_tools_execution).')
 
-    functions = llm_tools(query)
     tools = functions.get_tools()
 
     # Version comes from https://github.com/openai/openai-python/issues/926#issuecomment-1839426482
@@ -107,7 +106,7 @@ def llm_tool_query(query, llm_tools, log_query=None, extra_prompt_messages=None)
     # The fallback process will typically run through a more generic set of tools to try and
     # respond to general queries.
     if functions.has_fallback():
-        return llm_tool_query(query, lambda _: functions.get_fallback_tool(), log_query, extra_prompt_messages)
+        return llm_tool_query(query, functions.get_fallback_tool(), log_query, extra_prompt_messages)
 
     # If no tool was found and there was no fallback, we return a generic apology.
     # We will never ask a general question of the LLM, because we don't want to answer questions unrelated to Octopus.

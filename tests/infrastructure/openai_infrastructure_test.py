@@ -27,7 +27,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm responds appropriately when no function is a match
         """
 
-        function = llm_tool_query("What is the size of the earth?", build_mock_test_tools)
+        query = "What is the size of the earth?"
+        function = llm_tool_query(query, build_mock_test_tools(query))
 
         self.assertTrue(function.call_function().index("Sorry, I did not understand that request.") != -1)
 
@@ -37,7 +38,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the project name in the query
         """
 
-        function = llm_tool_query("What does the project \"Deploy WebApp\" do?", build_mock_test_tools)
+        query = "What does the project \"Deploy WebApp\" do?"
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -49,7 +51,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the project group name in the query
         """
 
-        function = llm_tool_query("What is the description of the \"Azure Apps\" project group?", build_mock_test_tools)
+        query = "What is the description of the \"Azure Apps\" project group?"
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -61,9 +64,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the runbook name in the query
         """
 
-        function = llm_tool_query(
-            "What is the description of the \"Backup Database\" runbook defined in the \"Runbook Project\" project.",
-            build_mock_test_tools)
+        query = "What is the description of the \"Backup Database\" runbook defined in the \"Runbook Project\" project."
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -75,7 +77,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the tenant name in the query
         """
 
-        function = llm_tool_query("Describe the \"Team A\" tenant.", build_mock_test_tools)
+        query = "Describe the \"Team A\" tenant."
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -87,7 +90,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the feed name in the query
         """
 
-        function = llm_tool_query("Does the \"Helm\" feed have a password?.", build_mock_test_tools)
+        query = "Does the \"Helm\" feed have a password?."
+        function = llm_tool_query(query, build_mock_test_tools)
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -101,7 +105,7 @@ class MockRequests(unittest.TestCase):
 
         query = "What is the access key of the \"AWS Account\" account?."
 
-        function = llm_tool_query(query, build_mock_test_tools)
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -113,8 +117,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the library variable set name in the query
         """
 
-        function = llm_tool_query("List the variables belonging to the \"Database Settings\" library variable set.",
-                                  build_mock_test_tools)
+        query = "List the variables belonging to the \"Database Settings\" library variable set."
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -126,8 +130,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the worker pool name in the query
         """
 
-        function = llm_tool_query("What is the description of the \"Docker\" worker pool?",
-                                  build_mock_test_tools)
+        query = "What is the description of the \"Docker\" worker pool?"
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -139,8 +143,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the certificate name in the query
         """
 
-        function = llm_tool_query("What is the note of the \"Kind CA\" certificate?",
-                                  build_mock_test_tools)
+        query = "What is the note of the \"Kind CA\" certificate?"
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -152,8 +156,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the tagset name in the query
         """
 
-        function = llm_tool_query("List the tags associated with the \"region\" tag set?",
-                                  build_mock_test_tools)
+        query = "List the tags associated with the \"region\" tag set?"
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -165,8 +169,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the lifecycle name in the query
         """
 
-        function = llm_tool_query("What environments are in the \"Simple\" lifecycle?",
-                                  build_mock_test_tools)
+        query = "What environments are in the \"Simple\" lifecycle?"
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -178,8 +182,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the git credentials name in the query
         """
 
-        function = llm_tool_query("What is the username for the git credentials called \"GitHub Credentials\"?",
-                                  build_mock_test_tools)
+        query = "What is the username for the git credentials called \"GitHub Credentials\"?"
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -191,9 +195,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the machine policy name in the query
         """
 
-        function = llm_tool_query(
-            "Show the powershell health check script for the \"Windows VM Policy\" machine policy.",
-            build_mock_test_tools)
+        query = "Show the powershell health check script for the \"Windows VM Policy\" machine policy."
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -205,9 +208,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the environment in the query
         """
 
-        function = llm_tool_query(
-            "List the variables scoped to the \"Development\" environment in the project \"Deploy WebApp\".",
-            build_mock_test_tools)
+        query = "List the variables scoped to the \"Development\" environment in the project \"Deploy WebApp\"."
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -223,9 +225,8 @@ class MockRequests(unittest.TestCase):
         pass unknown arguments in the past does not break the function.
         """
 
-        function = llm_tool_query(
-            "Find steps in the \"Commercial Billing\" project with a type of \"Octopus.Manual\". Double check the type of each step to ensure it is \"Octopus.Manual\". Show the step name and type in a markdown table.",
-            build_mock_test_tools)
+        query = "Find steps in the \"Commercial Billing\" project with a type of \"Octopus.Manual\". Double check the type of each step to ensure it is \"Octopus.Manual\". Show the step name and type in a markdown table."
+        function = llm_tool_query(query, build_mock_test_tools(query))
 
         # Not raising an exception here is the test
         function.call_function()
@@ -238,8 +239,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm responds appropriately when no function is a match
         """
 
-        function = llm_tool_query("Where is the variable \"Database\" used in the project \"Project1\"?",
-                                  build_mock_test_tools)
+        query = "Where is the variable \"Database\" used in the project \"Project1\"?"
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -251,8 +252,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies the step name in the query
         """
 
-        function = llm_tool_query("What do does the step \"Manual Intervention\" in the \"Project1\" do?",
-                                  build_mock_test_tools)
+        query = "What do does the step \"Manual Intervention\" in the \"Project1\" do?"
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -264,8 +265,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies the step name in the query
         """
 
-        function = llm_tool_query("Find deployments after \"1st Jan 2024\" and before \"2nd Mar 2024\"?",
-                                  build_mock_test_tools)
+        query = "Find deployments after \"1st Jan 2024\" and before \"2nd Mar 2024\"?"
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -278,8 +279,8 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies the machine name in the query
         """
 
-        function = llm_tool_query("Show the details of the machine \"Cloud Region target\"?",
-                                  build_mock_test_tools)
+        query = "Show the details of the machine \"Cloud Region target\"?"
+        function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query")
@@ -290,26 +291,35 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies queries answered by documentation
         """
 
-        self.assertEqual(llm_tool_query("How do I review the DORA metrics for my space?",
-                                        build_mock_test_tools).name, "provide_help_and_instructions")
-        self.assertEqual(llm_tool_query("How do I use Community Step templates?",
-                                        build_mock_test_tools).name, "provide_help_and_instructions")
-        self.assertEqual(llm_tool_query("How do I review deployment frequency metrics?",
-                                        build_mock_test_tools).name, "provide_help_and_instructions")
-        self.assertEqual(llm_tool_query("How do I enable Azure AD?",
-                                        build_mock_test_tools).name, "provide_help_and_instructions")
-        self.assertEqual(llm_tool_query("How do I create a new azure target?",
-                                        build_mock_test_tools).name, "provide_help_and_instructions")
-        self.assertEqual(llm_tool_query("How do I enable the ServiceNow integration?",
-                                        build_mock_test_tools).name, "provide_help_and_instructions")
-        self.assertEqual(llm_tool_query("How do I setup a polling Tentacle?",
-                                        build_mock_test_tools).name, "provide_help_and_instructions")
-        self.assertEqual(llm_tool_query("How do I add a Worker?",
-                                        build_mock_test_tools).name, "provide_help_and_instructions")
-        self.assertEqual(llm_tool_query("How do I enable Config-as-code for a project?",
-                                        build_mock_test_tools).name, "provide_help_and_instructions")
-        self.assertEqual(llm_tool_query("How do I use lifecycles",
-                                        build_mock_test_tools).name, "provide_help_and_instructions")
+        query1 = "How do I review the DORA metrics for my space?"
+        self.assertEqual(llm_tool_query(query1, build_mock_test_tools(query1)).name, "provide_help_and_instructions")
+
+        query2 = "How do I use Community Step templates?"
+        self.assertEqual(llm_tool_query(query2, build_mock_test_tools(query2)).name, "provide_help_and_instructions")
+
+        query3 = "How do I review deployment frequency metrics?"
+        self.assertEqual(llm_tool_query(query3, build_mock_test_tools(query3)).name, "provide_help_and_instructions")
+
+        query4 = "How do I enable Azure AD?"
+        self.assertEqual(llm_tool_query(query4, build_mock_test_tools(query4)).name, "provide_help_and_instructions")
+
+        query5 = "How do I create a new azure target?"
+        self.assertEqual(llm_tool_query(query5, build_mock_test_tools(query5)).name, "provide_help_and_instructions")
+
+        query6 = "How do I integrate with ServiceNow?"
+        self.assertEqual(llm_tool_query(query6, build_mock_test_tools(query6)).name, "provide_help_and_instructions")
+
+        query7 = "How do I setup a polling Tentacle?"
+        self.assertEqual(llm_tool_query(query7, build_mock_test_tools(query7)).name, "provide_help_and_instructions")
+
+        query8 = "How do I add a Worker?"
+        self.assertEqual(llm_tool_query(query8, build_mock_test_tools(query8)).name, "provide_help_and_instructions")
+
+        query9 = "How do I enable Config-as-code for a project?"
+        self.assertEqual(llm_tool_query(query9, build_mock_test_tools(query9)).name, "provide_help_and_instructions")
+
+        query10 = "How do I use lifecycles"
+        self.assertEqual(llm_tool_query(query10, build_mock_test_tools(query10)).name, "provide_help_and_instructions")
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_prompt(self):

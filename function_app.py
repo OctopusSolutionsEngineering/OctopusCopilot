@@ -1,6 +1,7 @@
 import json
 import os
 import urllib.parse
+import uuid
 
 from azure.core.exceptions import HttpResponseError
 
@@ -27,13 +28,14 @@ from domain.messages.docs_messages import docs_prompt
 from domain.messages.general import build_hcl_prompt
 from domain.messages.test_message import build_test_prompt
 from domain.performance.timing import timing_wrapper
-from domain.requestparsing.extract_query import extract_query
+from domain.requestparsing.extract_query import extract_query, extract_confirmation_state_and_id
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import get_item_or_none, \
     none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_names_fuzzy, sanitize_tenants, \
     update_query, sanitize_space, sanitize_name_fuzzy, sanitize_log_steps, sanitize_log_lines
 from domain.security.security import call_admin_function, is_admin_user
 from domain.tools.certificates_query import answer_certificates_wrapper
+from domain.tools.function_call import FunctionCall
 from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from domain.tools.how_to import how_to_wrapper
@@ -51,6 +53,7 @@ from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
 from domain.url.url_builder import base_request_url
 from domain.validation.default_value_validation import validate_default_value_name
+from infrastructure.callbacks import save_callback, load_callback, delete_callback
 from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
@@ -264,7 +267,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
         ])
 
         # Result here is the body returned by return_body_callback
-        result = llm_tool_query(query, lambda q: tools, log_query).call_function()
+        result = llm_tool_query(query, tools, log_query).call_function()
 
         return func.HttpResponse(json.dumps(result), mimetype="application/json")
     except Exception as e:
@@ -386,7 +389,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
         # Call the appropriate tool. This may be a straight pass through of the query and context,
         # or may update the query with additional examples.
-        result = llm_tool_query(query, get_tools, log_query).call_function()
+        result = llm_tool_query(query, get_tools(query), log_query).call_function()
 
         # Streaming the result could remove some timeouts. Sadly, this is yet to be implemented with
         # Python: https://github.com/Azure/azure-functions-python-worker/discussions/1349
@@ -569,8 +572,16 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
     def test_confirmation():
         """Test a confirmation prompt
         """
+        callback_id = str(uuid.uuid4())
+        save_callback(get_github_user_from_form(), test_confirmation.__name__, callback_id, json.dumps({}),
+                      get_functions_connection_string())
         return CopilotResponse("This is an example of a mutating action", "Do you want to continue?",
-                               "This can not be undone", "123")
+                               "This can not be undone", callback_id)
+
+    def test_confirmation_callback():
+        """Test a confirmation prompt
+        """
+        return CopilotResponse("The confirmation callback was successfully executed")
 
     def say_hello():
         """Responds to greetings like "hello" or "hi"
@@ -1107,8 +1118,8 @@ Lines: {log_lines}""")
             FunctionDefinition(say_hello),
             FunctionDefinition(what_do_you_do),
             FunctionDefinition(provide_help),
-            FunctionDefinition(test_confirmation, is_enabled=is_admin_user(get_github_user_from_form(),
-                                                                           get_admin_users()))],
+            FunctionDefinition(test_confirmation, callback=test_confirmation_callback,
+                               is_enabled=is_admin_user(get_github_user_from_form(), get_admin_users()))],
             fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
             invalid=FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
                                        schema=AnswerGeneralQuery)
@@ -1116,18 +1127,10 @@ Lines: {log_lines}""")
 
     try:
         query = extract_query(req)
-        logger.info("Query: " + query)
 
-        if not query.strip():
-            logger.info(req.get_body())
-            return func.HttpResponse(
-                convert_to_sse_response("Ask a question like \"What are the projects in the space called Default?\""),
-                headers=get_sse_headers())
+        functions = build_form_tools(query)
 
-        result = llm_tool_query(
-            query,
-            build_form_tools,
-            log_query).call_function()
+        result = execute_callback(req, functions, get_github_user_from_form()) or execute_function(req, functions)
 
         return func.HttpResponse(
             convert_to_sse_response(result.response, result.prompt_title, result.prompt_message, result.prompt_id),
@@ -1194,3 +1197,53 @@ def request_config_details():
         return func.HttpResponse("data: An exception was raised. See the logs for more details.\n\n",
                                  status_code=500,
                                  headers=get_sse_headers())
+
+
+def execute_callback(req: func.HttpRequest, functions, github_user):
+    """
+    Extract a confirmation from the request and execute the function callback
+    :param req: The HTTP request
+    :param functions: The functions database
+    :param github_user: The github user
+    :return: The result of calling the callback if the confirmation is "accepted"
+    """
+    state, task_id = extract_confirmation_state_and_id(req)
+
+    logger.info("State: " + state)
+    logger.info("Task ID: " + task_id)
+
+    # We have received a confirmation, so call the callback
+    if state == "accepted":
+        function_name, arguments = load_callback(github_user, task_id,
+                                                 get_functions_connection_string())
+        parsed_args = {}
+        if arguments:
+            parsed_args = json.loads(arguments)
+
+        if function_name:
+            result = FunctionCall(functions.get_callback_function(function_name),
+                                  function_name,
+                                  parsed_args).call_function()
+            delete_callback(task_id, get_functions_connection_string())
+            return result
+    elif state:
+        return CopilotResponse("Confirmation was denied")
+
+    return None
+
+
+def execute_function(req, functions):
+    query = extract_query(req)
+
+    logger.info("Query: " + query)
+
+    if not query.strip():
+        logger.info(req.get_body())
+        return func.HttpResponse(
+            convert_to_sse_response("Ask a question like \"What are the projects in the space called Default?\""),
+            headers=get_sse_headers())
+
+    return llm_tool_query(
+        query,
+        functions,
+        log_query).call_function()
