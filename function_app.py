@@ -597,6 +597,13 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         # See if the default space exists and has projects we can refer to
         default_space_name = get_default_argument(get_github_user_from_form(), None, "Space")
+
+        # Also try and use the default project name
+        default_project_name = get_default_argument(get_github_user_from_form(), None, "Project")
+
+        # And the default environment
+        default_environment_name = get_default_argument(get_github_user_from_form(), None, "Environment")
+
         if default_space_name:
             try:
                 default_space_id, resolved_default_space_name = get_space_id_and_name_from_name(default_space_name,
@@ -605,10 +612,11 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                     default_space_id, api_key, url)
 
                 # The default space can be used if it has a project and environment
-                if default_first_project and default_first_environment:
+                if (default_first_project or default_project_name) and (
+                        default_first_environment or default_environment_name):
                     space_name = resolved_default_space_name
-                    first_project = default_first_project
-                    first_environment = default_first_environment
+                    first_project = default_project_name or default_first_project
+                    first_environment = default_environment_name or default_first_environment
             except Exception as e:
                 pass
 
