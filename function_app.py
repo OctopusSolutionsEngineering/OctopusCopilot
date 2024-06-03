@@ -55,7 +55,8 @@ from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
     create_limited_api_key, get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, \
-    get_spaces_generator, get_dashboard, get_environments_generator, activity_logs_to_string
+    get_spaces_generator, get_dashboard, activity_logs_to_string, \
+    get_space_first_project_and_environment
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
@@ -589,24 +590,54 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         api_key, url = get_api_key_and_url()
 
-        for space in get_spaces_generator(api_key, url):
-            first_project = next(get_projects_generator(space["Id"], api_key, url), None)
-            first_environment = next(get_environments_generator(space["Id"], api_key, url), None)
+        space_name = None
+        first_project = None
+        first_environment = None
 
-            # The first space we find with projects and environments is used as the example
-            if first_project and first_environment:
-                return CopilotResponse(f"""I am an AI assistant that can help you with your Octopus Deploy queries. I can answer questions about your Octopus Deploy spaces, projects, environments, deployments, and more.
+        # See if the default space exists and has projects we can refer to
+        default_space_name = get_default_argument(get_github_user_from_form(), None, "Space")
+        if default_space_name:
+            try:
+                default_space_id, resolved_default_space_name = get_space_id_and_name_from_name(default_space_name,
+                                                                                                api_key, url)
+                default_first_project, default_first_environment = get_space_first_project_and_environment(
+                    default_space_id, api_key, url)
+
+                # The default space can be used if it has a project and environment
+                if default_first_project and default_first_environment:
+                    space_name = resolved_default_space_name
+                    first_project = default_first_project
+                    first_environment = default_first_environment
+            except Exception as e:
+                pass
+
+        # Otherwise find the first space with a project and environment
+        if not space_name:
+            for space in get_spaces_generator(api_key, url):
+                space_first_project, space_first_environment = get_space_first_project_and_environment(
+                    space["Id"], api_key, url)
+
+                # The first space we find with projects and environments is used as the example
+                if first_project and first_environment:
+                    space_name = space["Name"]
+                    first_project = space_first_project
+                    first_environment = space_first_environment
+                    break
+
+        # If we have a space, project, and environment, use these for the examples
+        if space_name and first_project and first_environment:
+            return CopilotResponse(f"""I am an AI assistant that can help you with your Octopus Deploy queries. I can answer questions about your Octopus Deploy spaces, projects, environments, deployments, and more.
 
 Here are some sample queries you can ask:
-* @octopus-ai-app Show me the dashboard for the space "{space["Name"]}"
-* @octopus-ai-app List the projects in the space "{space["Name"]}"
-* @octopus-ai-app What do the deployment steps in the "{first_project["Name"]}" project in the "{space["Name"]}" space do?
-* @octopus-ai-app Show me the status of the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space
-* @octopus-ai-app Show me any non-successful deployments for the "{first_project["Name"]}" project in the space "{space["Name"]}" for the "{first_environment["Name"]}" environment in a markdown table. If all deployments are successful, say so.
-* @octopus-ai-app Summarize the deployment logs for the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the space called "{space["Name"]}"
-* @octopus-ai-app List any URLs printed in the deployment logs for the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the space called "{space["Name"]}"
+* @octopus-ai-app Show me the dashboard for the space "{space_name}"
+* @octopus-ai-app List the projects in the space "{space_name}"
+* @octopus-ai-app What do the deployment steps in the "{first_project["Name"]}" project in the "{space_name}" space do?
+* @octopus-ai-app Show me the status of the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space_name}" space
+* @octopus-ai-app Show me any non-successful deployments for the "{first_project["Name"]}" project in the space "{space_name}" for the "{first_environment["Name"]}" environment in a markdown table. If all deployments are successful, say so.
+* @octopus-ai-app Summarize the deployment logs for the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the space called "{space_name}"
+* @octopus-ai-app List any URLs printed in the deployment logs for the latest deployment for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the space called "{space_name}"
 * @octopus-ai-app How do I enable server side apply?
-* @octopus-ai-app The status "Success" is represented with the 🟢 character. The status "In Progress" is represented by the 🔵 character. Other statuses are represented with the 🔴 character. Show the release version, release notes, and status of the last 5 deployments for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space["Name"]}" space in a markdown table.
+* @octopus-ai-app The status "Success" is represented with the 🟢 character. The status "In Progress" is represented by the 🔵 character. Other statuses are represented with the 🔴 character. Show the release version, release notes, and status of the last 5 deployments for the project "{first_project["Name"]}" in the "{first_environment["Name"]}" environment in the "{space_name}" space in a markdown table.
 
 See the [documentation](https://octopus.com/docs/administration/copilot) for more information.
 """)

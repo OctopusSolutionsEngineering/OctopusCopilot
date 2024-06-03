@@ -70,58 +70,58 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
 
     exclude_all_projects_value, exclude_projects_except, resources = includes_all_projects(query,
                                                                                            sanitized_project_names)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     exclude_all_tenants_value, exclude_tenants_except, resources = includes_all_tenants(query, sanitized_tenant_names)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     exclude_all_targets_value, exclude_targets_except, resources = include_all_targets(query, sanitized_target_names)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     exclude_all_environments_value, exclude_environments_except, resources = include_all_environments(query,
                                                                                                       sanitized_environments)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     exclude_all_feeds_value, exclude_feeds_except, resources = include_all_feeds(query, sanitized_feeds)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     exclude_all_accounts_value, exclude_accounts_except, resources = include_all_accounts(query, sanitized_accounts)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     exclude_all_certificates_value, exclude_certificates_except, resources = include_all_certificates(query,
                                                                                                       sanitized_certificates)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     exclude_all_lifecycles_value, exclude_lifecycles_except, resources = include_all_lifecycles(query,
                                                                                                 sanitized_lifecycles)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     exclude_all_workerpools_value, exclude_workerpools_except, resources = include_all_workerpools(query,
                                                                                                    sanitized_workerpools)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     exclude_all_machinepolicies_value, exclude_machinepolicies_except, resources = include_all_machinepolicies(query,
                                                                                                                sanitized_machinepolicies)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     exclude_all_runbooks_value, exclude_runbooks_except, resources = include_all_runbooks(query,
                                                                                           sanitized_runbook_names)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     exclude_all_projectgroups_value, exclude_projectgroups_except, resources = include_all_projectgroups(query,
                                                                                                          sanitized_projectgroups)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     exclude_all_projectvariables_value, exclude_projectvariables_except, resources = include_all_variables(query,
                                                                                                            sanitized_variable_names)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     exclude_all_libraryvariablesets_value, exclude_libraryvariablesets_except, resources = include_all_library_variable_sets(
         query, sanitized_library_variable_sets)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     exclude_all_tenanttags_value, exclude_tenanttags_except, resources = include_all_tagsets(query, sanitized_tagsets)
-    include_all_resources.append(resources)
+    include_all_resources += resources
 
     body = {
         "space": space_id,

@@ -53,6 +53,18 @@ def get_octopus_headers(my_api_key):
 
 
 @logging_wrapper
+def get_space_first_project_and_environment(space_id, api_key, url):
+    space_first_project = next(get_projects_generator(space_id, api_key, url), None)
+    space_first_environment = next(get_environments_generator(space_id, api_key, url), None)
+
+    # The first space we find with projects and environments is used as the example
+    if space_first_project and space_first_environment:
+        return space_first_project, space_first_environment
+
+    return None, None
+
+
+@logging_wrapper
 def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
     """
     Gets a space ID and actual space name from a name extracted from a query.
