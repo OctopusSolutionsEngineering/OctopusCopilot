@@ -292,6 +292,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
         query = extract_query(req)
 
         if not query.strip():
+            logger.info(req.get_body())
             return func.HttpResponse(
                 convert_to_sse_response("Ask a question like \"What are the projects in the space called Default?\""),
                 headers=get_sse_headers())
@@ -1110,6 +1111,7 @@ Lines: {log_lines}""")
         logger.info("Query: " + query)
 
         if not query.strip():
+            logger.info(req.get_body())
             return func.HttpResponse(
                 convert_to_sse_response("Ask a question like \"What are the projects in the space called Default?\""),
                 headers=get_sse_headers())
