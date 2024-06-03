@@ -1,6 +1,6 @@
-from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
-from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
-from domain.tools.how_to import how_to_wrapper
+from domain.tools.query.function_definition import FunctionDefinitions, FunctionDefinition
+from domain.tools.query.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.query.how_to import how_to_wrapper
 
 
 def general_query_handler(query, body, messages):

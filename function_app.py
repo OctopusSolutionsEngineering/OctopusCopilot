@@ -3,9 +3,9 @@ import os
 import urllib.parse
 import uuid
 
+import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
-import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_deployments, max_log_lines
 from domain.config.users import get_admin_users
@@ -34,16 +34,17 @@ from domain.sanitizers.sanitized_list import get_item_or_none, \
     none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_names_fuzzy, sanitize_tenants, \
     update_query, sanitize_space, sanitize_name_fuzzy, sanitize_log_steps, sanitize_log_lines
 from domain.security.security import call_admin_function, is_admin_user
-from domain.tools.certificates_query import answer_certificates_wrapper
-from domain.tools.function_call import FunctionCall
-from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
-from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
-from domain.tools.how_to import how_to_wrapper
-from domain.tools.logs import answer_logs_wrapper
-from domain.tools.project_variables import answer_project_variables_wrapper, answer_project_variables_usage_wrapper
-from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
-from domain.tools.step_features import answer_step_features_wrapper
-from domain.tools.targets_query import answer_machines_wrapper
+from domain.tools.query.certificates_query import answer_certificates_wrapper
+from domain.tools.query.function_call import FunctionCall
+from domain.tools.query.function_definition import FunctionDefinitions, FunctionDefinition
+from domain.tools.query.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.query.how_to import how_to_wrapper
+from domain.tools.query.logs import answer_logs_wrapper
+from domain.tools.query.project_variables import answer_project_variables_wrapper, \
+    answer_project_variables_usage_wrapper
+from domain.tools.query.releases_and_deployments import answer_releases_and_deployments_wrapper
+from domain.tools.query.step_features import answer_step_features_wrapper
+from domain.tools.query.targets_query import answer_machines_wrapper
 from domain.transformers.chat_responses import get_dashboard_response
 from domain.transformers.deployments_from_dashboard import get_deployments_from_dashboard
 from domain.transformers.deployments_from_release import get_deployments_for_project

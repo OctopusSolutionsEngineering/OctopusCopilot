@@ -12,7 +12,7 @@ from domain.exceptions.openai_error import OpenAIContentFilter, OpenAITokenLengt
 from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
-from domain.tools.function_call import FunctionCall
+from domain.tools.query.function_call import FunctionCall
 from domain.validation.argument_validation import ensure_string_not_empty, ensure_not_falsy
 
 NO_FUNCTION_RESPONSE = ("Sorry, I did not understand that request. View the documentation at "

@@ -1,6 +1,6 @@
 import unittest
 
-from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
+from domain.tools.query.function_definition import FunctionDefinition, FunctionDefinitions
 
 
 class FunctionDefinitionTest(unittest.TestCase):

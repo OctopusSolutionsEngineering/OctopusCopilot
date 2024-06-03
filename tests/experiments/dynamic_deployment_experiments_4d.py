@@ -5,8 +5,8 @@ import unittest
 from domain.config.openai import max_context
 from domain.context.octopus_context import collect_llm_context
 from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list, sanitize_environments, sanitize_tenants
-from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
-from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
+from domain.tools.query.function_definition import FunctionDefinition, FunctionDefinitions
+from domain.tools.query.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.transformers.deployments_from_progression import get_deployment_progression
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from infrastructure.octopus import get_projects, get_environments, get_project_channel, get_lifecycle, \

@@ -3,8 +3,8 @@ import unittest
 
 from domain.context.octopus_context import collect_llm_context
 from domain.messages.general import build_hcl_prompt
-from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
-from domain.tools.targets_query import answer_machines_wrapper
+from domain.tools.query.function_definition import FunctionDefinition, FunctionDefinitions
+from domain.tools.query.targets_query import answer_machines_wrapper
 from infrastructure.octopus import get_machines, get_environments, get_space_id_and_name_from_name
 from infrastructure.openai import llm_tool_query
 

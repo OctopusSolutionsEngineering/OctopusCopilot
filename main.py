@@ -13,14 +13,15 @@ from domain.performance.timing import timing_wrapper
 from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all, \
     get_item_or_none, sanitize_names_fuzzy, sanitize_projects, sanitize_tenants, sanitize_space, sanitize_name_fuzzy, \
     sanitize_log_steps, sanitize_log_lines
-from domain.tools.certificates_query import answer_certificates_wrapper
-from domain.tools.function_definition import FunctionDefinitions, FunctionDefinition
-from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
-from domain.tools.how_to import how_to_wrapper
-from domain.tools.logs import answer_logs_wrapper
-from domain.tools.project_variables import answer_project_variables_wrapper, answer_project_variables_usage_wrapper
-from domain.tools.releases_and_deployments import answer_releases_and_deployments_wrapper
-from domain.tools.targets_query import answer_machines_wrapper
+from domain.tools.query.certificates_query import answer_certificates_wrapper
+from domain.tools.query.function_definition import FunctionDefinitions, FunctionDefinition
+from domain.tools.query.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.query.how_to import how_to_wrapper
+from domain.tools.query.logs import answer_logs_wrapper
+from domain.tools.query.project_variables import answer_project_variables_wrapper, \
+    answer_project_variables_usage_wrapper
+from domain.tools.query.releases_and_deployments import answer_releases_and_deployments_wrapper
+from domain.tools.query.targets_query import answer_machines_wrapper
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from infrastructure.github import search_repo

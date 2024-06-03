@@ -3,8 +3,8 @@ import unittest
 
 from domain.context.octopus_context import collect_llm_context
 from domain.sanitizers.sanitize_strings import remove_double_whitespace, remove_empty_lines
-from domain.tools.function_definition import FunctionDefinition, FunctionDefinitions
-from domain.tools.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.query.function_definition import FunctionDefinition, FunctionDefinitions
+from domain.tools.query.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from infrastructure.octopus import get_projects, get_space_id_and_name_from_name
 from infrastructure.openai import llm_tool_query
 

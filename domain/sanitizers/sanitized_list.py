@@ -337,7 +337,7 @@ def get_item_fuzzy(items, name):
             return item
 
         if item["Name"].casefold() == name.casefold():
-            case_sensitive_items += item
+            case_sensitive_items.append(item)
 
         fuzz_match.append({"ratio": fuzz.ratio(name, item["Name"]), "item": item})
 
