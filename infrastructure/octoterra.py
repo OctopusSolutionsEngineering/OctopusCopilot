@@ -68,80 +68,60 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
     # This is usually a sign or a poorly formatted question.
     include_all_resources = []
 
-    exclude_all_projects_value = exclude_all_projects(query, sanitized_project_names)
-    exclude_projects_except = none_if_falesy(sanitized_project_names)
-    if not exclude_all_projects_value and not exclude_projects_except:
-        include_all_resources.append("projects")
+    exclude_all_projects_value, exclude_projects_except, resources = includes_all_projects(query,
+                                                                                           sanitized_project_names)
+    include_all_resources.append(resources)
 
-    exclude_all_tenants_value = exclude_all_tenants(query, sanitized_tenant_names)
-    exclude_tenants_except = none_if_falesy(sanitized_tenant_names)
-    if not exclude_all_tenants_value and not exclude_tenants_except:
-        include_all_resources.append("tenants")
+    exclude_all_tenants_value, exclude_tenants_except, resources = includes_all_tenants(query, sanitized_tenant_names)
+    include_all_resources.append(resources)
 
-    exclude_all_targets_value = exclude_all_targets(query, sanitized_target_names)
-    exclude_targets_except = none_if_falesy(sanitized_target_names)
-    if not exclude_all_targets_value and not exclude_targets_except:
-        include_all_resources.append("targets")
+    exclude_all_targets_value, exclude_targets_except, resources = include_all_targets(query, sanitized_target_names)
+    include_all_resources.append(resources)
 
-    exclude_all_environments_value = exclude_all_environments(query, sanitized_environments)
-    exclude_environments_except = none_if_falesy_or_all(sanitized_environments)
-    if not exclude_all_environments_value and not exclude_environments_except:
-        include_all_resources.append("environments")
+    exclude_all_environments_value, exclude_environments_except, resources = include_all_environments(query,
+                                                                                                      sanitized_environments)
+    include_all_resources.append(resources)
 
-    exclude_all_feeds_value = exclude_all_feeds(query, sanitized_feeds)
-    exclude_feeds_except = none_if_falesy(sanitized_feeds)
-    if not exclude_all_feeds_value and not exclude_feeds_except:
-        include_all_resources.append("feeds")
+    exclude_all_feeds_value, exclude_feeds_except, resources = include_all_feeds(query, sanitized_feeds)
+    include_all_resources.append(resources)
 
-    exclude_all_accounts_value = exclude_all_accounts(query, sanitized_accounts)
-    exclude_accounts_except = none_if_falesy(sanitized_accounts)
-    if not exclude_all_accounts_value and not exclude_accounts_except:
-        include_all_resources.append("accounts")
+    exclude_all_accounts_value, exclude_accounts_except, resources = include_all_accounts(query, sanitized_accounts)
+    include_all_resources.append(resources)
 
-    exclude_all_certificates_value = exclude_all_certificates(query, sanitized_certificates)
-    exclude_certificates_except = none_if_falesy(sanitized_certificates)
-    if not exclude_all_certificates_value and not exclude_certificates_except:
-        include_all_resources.append("certificates")
+    exclude_all_certificates_value, exclude_certificates_except, resources = include_all_certificates(query,
+                                                                                                      sanitized_certificates)
+    include_all_resources.append(resources)
 
-    exclude_all_lifecycles_value = exclude_all_lifecycles(query, sanitized_lifecycles)
-    exclude_lifecycles_except = none_if_falesy(sanitized_lifecycles)
-    if not exclude_all_lifecycles_value and not exclude_lifecycles_except:
-        include_all_resources.append("lifecycles")
+    exclude_all_lifecycles_value, exclude_lifecycles_except, resources = include_all_lifecycles(query,
+                                                                                                sanitized_lifecycles)
+    include_all_resources.append(resources)
 
-    exclude_all_workerpools_value = exclude_all_worker_pools(query, sanitized_workerpools)
-    exclude_workerpools_except = none_if_falesy(sanitized_workerpools)
-    if not exclude_all_workerpools_value and not exclude_workerpools_except:
-        include_all_resources.append("worker pools")
+    exclude_all_workerpools_value, exclude_workerpools_except, resources = include_all_workerpools(query,
+                                                                                                   sanitized_workerpools)
+    include_all_resources.append(resources)
 
-    exclude_all_machinepolicies_value = exclude_all_machine_policies(query, sanitized_machinepolicies)
-    exclude_machinepolicies_except = none_if_falesy(sanitized_machinepolicies)
-    if not exclude_all_machinepolicies_value and not exclude_machinepolicies_except:
-        include_all_resources.append("machine policies")
+    exclude_all_machinepolicies_value, exclude_machinepolicies_except, resources = include_all_machinepolicies(query,
+                                                                                                               sanitized_machinepolicies)
+    include_all_resources.append(resources)
 
-    exclude_all_runbooks_value = exclude_all_runbooks(query, sanitized_runbook_names)
-    exclude_runbooks_except = none_if_falesy(sanitized_runbook_names)
-    if not exclude_all_runbooks_value and not exclude_runbooks_except:
-        include_all_resources.append("runbooks")
+    exclude_all_runbooks_value, exclude_runbooks_except, resources = include_all_runbooks(query,
+                                                                                          sanitized_runbook_names)
+    include_all_resources.append(resources)
 
-    exclude_all_projectgroups_value = exclude_all_project_groups(query, sanitized_projectgroups)
-    exclude_projectgroups_except = none_if_falesy(sanitized_projectgroups)
-    if not exclude_all_projectgroups_value and not exclude_projectgroups_except:
-        include_all_resources.append("project groups")
+    exclude_all_projectgroups_value, exclude_projectgroups_except, resources = include_all_projectgroups(query,
+                                                                                                         sanitized_projectgroups)
+    include_all_resources.append(resources)
 
-    exclude_all_projectvariables_value = exclude_all_variables(query, sanitized_variable_names)
-    exclude_projectvariables_except = none_if_falesy_or_all(sanitized_variable_names)
-    if not exclude_all_projectvariables_value and not exclude_projectvariables_except:
-        include_all_resources.append("project variables")
+    exclude_all_projectvariables_value, exclude_projectvariables_except, resources = include_all_variables(query,
+                                                                                                           sanitized_variable_names)
+    include_all_resources.append(resources)
 
-    exclude_all_libraryvariablesets_value = exclude_all_library_variable_sets(query, sanitized_library_variable_sets)
-    exclude_libraryvariablesets_except = none_if_falesy_or_all(sanitized_library_variable_sets)
-    if not exclude_all_libraryvariablesets_value and not exclude_libraryvariablesets_except:
-        include_all_resources.append("library variable sets")
+    exclude_all_libraryvariablesets_value, exclude_libraryvariablesets_except, resources = include_all_library_variable_sets(
+        query, sanitized_library_variable_sets)
+    include_all_resources.append(resources)
 
-    exclude_all_tenanttags_value = exclude_all_tagsets(query, sanitized_tagsets)
-    exclude_tenanttags_except = none_if_falesy(sanitized_tagsets)
-    if not exclude_all_tenanttags_value and not exclude_tenanttags_except:
-        include_all_resources.append("tenant tags")
+    exclude_all_tenanttags_value, exclude_tenanttags_except, resources = include_all_tagsets(query, sanitized_tagsets)
+    include_all_resources.append(resources)
 
     body = {
         "space": space_id,
@@ -211,3 +191,140 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
     answer = resp.data.decode("utf-8")
 
     return answer, include_all_resources
+
+
+def includes_all_projects(query, sanitized_project_names):
+    exclude_all_projects_value = exclude_all_projects(query, sanitized_project_names)
+    exclude_projects_except = none_if_falesy(sanitized_project_names)
+    include_all_resources = []
+    if not exclude_all_projects_value and not exclude_projects_except:
+        include_all_resources.append("projects")
+    return exclude_all_projects_value, exclude_projects_except, include_all_resources
+
+
+def includes_all_tenants(query, sanitized_tenant_names):
+    exclude_all_tenants_value = exclude_all_tenants(query, sanitized_tenant_names)
+    exclude_tenants_except = none_if_falesy(sanitized_tenant_names)
+    include_all_resources = []
+
+    if not exclude_all_tenants_value and not exclude_tenants_except:
+        include_all_resources.append("tenants")
+
+    return exclude_all_tenants_value, exclude_tenants_except, include_all_resources
+
+
+def include_all_targets(query, sanitized_target_names):
+    exclude_all_targets_value = exclude_all_targets(query, sanitized_target_names)
+    exclude_targets_except = none_if_falesy(sanitized_target_names)
+    include_all_resources = []
+    if not exclude_all_targets_value and not exclude_targets_except:
+        include_all_resources.append("targets")
+    return exclude_all_targets_value, exclude_targets_except, include_all_resources
+
+
+def include_all_environments(query, sanitized_environments):
+    exclude_all_environments_value = exclude_all_environments(query, sanitized_environments)
+    exclude_environments_except = none_if_falesy_or_all(sanitized_environments)
+    include_all_resources = []
+    if not exclude_all_environments_value and not exclude_environments_except:
+        include_all_resources.append("environments")
+    return exclude_all_environments_value, exclude_environments_except, include_all_resources
+
+
+def include_all_feeds(query, sanitized_feeds):
+    exclude_all_feeds_value = exclude_all_feeds(query, sanitized_feeds)
+    exclude_feeds_except = none_if_falesy(sanitized_feeds)
+    include_all_resources = []
+    if not exclude_all_feeds_value and not exclude_feeds_except:
+        include_all_resources.append("feeds")
+    return exclude_all_feeds_value, exclude_feeds_except, include_all_resources
+
+
+def include_all_accounts(query, sanitized_accounts):
+    exclude_all_accounts_value = exclude_all_accounts(query, sanitized_accounts)
+    exclude_accounts_except = none_if_falesy(sanitized_accounts)
+    include_all_resources = []
+    if not exclude_all_accounts_value and not exclude_accounts_except:
+        include_all_resources.append("accounts")
+    return exclude_all_accounts_value, exclude_accounts_except, include_all_resources
+
+
+def include_all_certificates(query, sanitized_certificates):
+    exclude_all_certificates_value = exclude_all_certificates(query, sanitized_certificates)
+    exclude_certificates_except = none_if_falesy(sanitized_certificates)
+    include_all_resources = []
+    if not exclude_all_certificates_value and not exclude_certificates_except:
+        include_all_resources.append("certificates")
+    return exclude_all_certificates_value, exclude_certificates_except, include_all_resources
+
+
+def include_all_lifecycles(query, sanitized_lifecycles):
+    exclude_all_lifecycles_value = exclude_all_lifecycles(query, sanitized_lifecycles)
+    exclude_lifecycles_except = none_if_falesy(sanitized_lifecycles)
+    include_all_resources = []
+    if not exclude_all_lifecycles_value and not exclude_lifecycles_except:
+        include_all_resources.append("lifecycles")
+    return exclude_all_lifecycles_value, exclude_lifecycles_except, include_all_resources
+
+
+def include_all_workerpools(query, sanitized_workerpools):
+    exclude_all_workerpools_value = exclude_all_worker_pools(query, sanitized_workerpools)
+    exclude_workerpools_except = none_if_falesy(sanitized_workerpools)
+    include_all_resources = []
+    if not exclude_all_workerpools_value and not exclude_workerpools_except:
+        include_all_resources.append("worker pools")
+    return exclude_all_workerpools_value, exclude_workerpools_except, include_all_resources
+
+
+def include_all_machinepolicies(query, sanitized_machinepolicies):
+    exclude_all_machinepolicies_value = exclude_all_machine_policies(query, sanitized_machinepolicies)
+    exclude_machinepolicies_except = none_if_falesy(sanitized_machinepolicies)
+    include_all_resources = []
+    if not exclude_all_machinepolicies_value and not exclude_machinepolicies_except:
+        include_all_resources.append("machine policies")
+    return exclude_all_machinepolicies_value, exclude_machinepolicies_except, include_all_resources
+
+
+def include_all_runbooks(query, sanitized_runbook_names):
+    exclude_all_runbooks_value = exclude_all_runbooks(query, sanitized_runbook_names)
+    exclude_runbooks_except = none_if_falesy(sanitized_runbook_names)
+    include_all_resources = []
+    if not exclude_all_runbooks_value and not exclude_runbooks_except:
+        include_all_resources.append("runbooks")
+    return exclude_all_runbooks_value, exclude_runbooks_except, include_all_resources
+
+
+def include_all_projectgroups(query, sanitized_projectgroups):
+    exclude_all_projectgroups_value = exclude_all_project_groups(query, sanitized_projectgroups)
+    exclude_projectgroups_except = none_if_falesy(sanitized_projectgroups)
+    include_all_resources = []
+    if not exclude_all_projectgroups_value and not exclude_projectgroups_except:
+        include_all_resources.append("project groups")
+    return exclude_all_projectgroups_value, exclude_projectgroups_except, include_all_resources
+
+
+def include_all_variables(query, sanitized_variable_names):
+    exclude_all_projectvariables_value = exclude_all_variables(query, sanitized_variable_names)
+    exclude_projectvariables_except = none_if_falesy_or_all(sanitized_variable_names)
+    include_all_resources = []
+    if not exclude_all_projectvariables_value and not exclude_projectvariables_except:
+        include_all_resources.append("project variables")
+    return exclude_all_projectvariables_value, exclude_projectvariables_except, include_all_resources
+
+
+def include_all_library_variable_sets(query, sanitized_library_variable_sets):
+    exclude_all_libraryvariablesets_value = exclude_all_library_variable_sets(query, sanitized_library_variable_sets)
+    exclude_libraryvariablesets_except = none_if_falesy_or_all(sanitized_library_variable_sets)
+    include_all_resources = []
+    if not exclude_all_libraryvariablesets_value and not exclude_libraryvariablesets_except:
+        include_all_resources.append("library variable sets")
+    return exclude_all_libraryvariablesets_value, exclude_libraryvariablesets_except, include_all_resources
+
+
+def include_all_tagsets(query, sanitized_tagsets):
+    exclude_all_tenanttags_value = exclude_all_tagsets(query, sanitized_tagsets)
+    exclude_tenanttags_except = none_if_falesy(sanitized_tagsets)
+    include_all_resources = []
+    if not exclude_all_tenanttags_value and not exclude_tenanttags_except:
+        include_all_resources.append("tenant tags")
+    return exclude_all_tenanttags_value, exclude_tenanttags_except, include_all_resources

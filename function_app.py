@@ -248,6 +248,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
         query = extract_query(req)
 
         if not query.strip():
+            logger.info(req.get_body())
             return func.HttpResponse(
                 convert_to_sse_response("Ask a question like \"What are the projects in the space called Default?\""),
                 headers=get_sse_headers())

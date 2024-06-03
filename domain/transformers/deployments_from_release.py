@@ -1,5 +1,6 @@
 from domain.config.openai import max_context
 from domain.date.parse_dates import parse_unknown_format_date
+from domain.filter.list_filter import list_empty_or_match
 from domain.sanitizers.sanitized_list import get_key_or_none, sanitize_list
 from domain.sanitizers.url_remover import strip_markdown_urls
 from domain.validation.argument_validation import ensure_string_not_empty
@@ -49,12 +50,11 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
                                                       octopus_url)
         for deployment in release_deployments["Items"]:
             # Keep the deployment if it matches the environment, or if there were no environments
-            if len(environments) != 0 and len(
-                    list(filter(lambda x: x["Id"] == deployment["EnvironmentId"], environments))) == 0:
+            if not list_empty_or_match(environments, lambda x: x["Id"], deployment["EnvironmentId"]):
                 continue
 
             # Keep the deployment if it matches the tenant, or if there were no tenants
-            if len(tenants) != 0 and len(list(filter(lambda x: x["Id"] == deployment["TenantId"], tenants))) == 0:
+            if not list_empty_or_match(tenants, lambda x: x["Id"], deployment["TenantId"]):
                 continue
 
             # If there were two dates, treat them as a range, and exclude anything outside the range
