@@ -22,8 +22,7 @@ def convert_to_sse_response(result, prompt_title=None, prompt_message=None, prom
 
     if prompt_title and prompt_message and prompt_id:
         prompt_data = "data: " + json.dumps(
-            {"choices": [{"index": 0, "delta": {"content": "!"}, "finish_reason": "null"}],
-             "copilot_confirmation": {"type": "action",
+            {"copilot_confirmation": {"type": "action",
                                       "title": prompt_title,
                                       "message": prompt_message,
                                       "confirmation": {
