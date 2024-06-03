@@ -3,9 +3,9 @@ import os
 import urllib.parse
 import uuid
 
-import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_deployments, max_log_lines
 from domain.config.users import get_admin_users
@@ -1148,8 +1148,13 @@ Lines: {log_lines}""")
                                   build_form_tools,
                                   get_github_user_from_form()) or execute_function(req, build_form_tools)
 
+        # The insiders version of VS Code, which is required to test confirmations, fails to print markdown
+        # on the first line of the response. So pad the response with a newline. I assume this bug will
+        # be fixed at some point and we this can be removed.
+        result_response = "\n" + result.response
+
         return func.HttpResponse(
-            convert_to_sse_response(result.response, result.prompt_title, result.prompt_message, result.prompt_id),
+            convert_to_sse_response(result_response, result.prompt_title, result.prompt_message, result.prompt_id),
             headers=get_sse_headers())
 
     except UserNotLoggedIn as e:
