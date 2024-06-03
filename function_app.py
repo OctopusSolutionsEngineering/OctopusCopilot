@@ -1144,8 +1144,9 @@ Lines: {log_lines}""")
         )
 
     try:
-        result = (execute_callback(req, build_form_tools, get_github_user_from_form()) or
-                  execute_function(req, build_form_tools))
+        result = execute_callback(req,
+                                  build_form_tools,
+                                  get_github_user_from_form()) or execute_function(req, build_form_tools)
 
         return func.HttpResponse(
             convert_to_sse_response(result.response, result.prompt_title, result.prompt_message, result.prompt_id),
