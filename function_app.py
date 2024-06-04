@@ -3,9 +3,9 @@ import os
 import urllib.parse
 import uuid
 
-import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_deployments, max_log_lines
 from domain.config.users import get_admin_users
@@ -34,12 +34,13 @@ from domain.sanitizers.sanitized_list import get_item_or_none, \
     none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_names_fuzzy, sanitize_tenants, \
     update_query, sanitize_space, sanitize_name_fuzzy, sanitize_log_steps, sanitize_log_lines
 from domain.security.security import call_admin_function, is_admin_user
+from domain.tools.githubactions.run_runbook import run_runbook_wrapper, run_runbook_confirm_callback_wrapper
 from domain.tools.query.certificates_query import answer_certificates_wrapper
 from domain.tools.query.function_call import FunctionCall
 from domain.tools.query.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.query.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from domain.tools.query.how_to import how_to_wrapper
-from domain.tools.query.logs import answer_logs_wrapper
+from domain.tools.query.logs import answer_project_deployment_logs_wrapper
 from domain.tools.query.project_variables import answer_project_variables_wrapper, \
     answer_project_variables_usage_wrapper
 from domain.tools.query.releases_and_deployments import answer_releases_and_deployments_wrapper
@@ -397,7 +398,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                                             releases_and_deployments_callback,
                                                             None,
                                                             log_query)),
-                FunctionDefinition(answer_logs_wrapper(tool_query, logs_query_callback, log_query)),
+                FunctionDefinition(answer_project_deployment_logs_wrapper(tool_query, logs_query_callback, log_query)),
                 FunctionDefinition(answer_machines_wrapper(tool_query, resource_specific_callback, log_query)),
                 FunctionDefinition(answer_certificates_wrapper(tool_query, resource_specific_callback, log_query)),
                 FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
@@ -592,7 +593,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             callback_id = str(uuid.uuid4())
             save_callback(get_github_user_from_form(), test_confirmation_callback.__name__, callback_id, json.dumps({}),
                           original_query, get_functions_connection_string())
-            return CopilotResponse("This is an example of a mutating action", "Do you want to continue?",
+            return CopilotResponse("This is an example of a mutating actions", "Do you want to continue?",
                                    "This can not be undone", callback_id)
 
         return test_confirmation_callback
@@ -1112,6 +1113,8 @@ Lines: {log_lines}""")
         :return: The OpenAI tools
         """
 
+        api_key, url = get_api_key_and_url()
+
         return FunctionDefinitions([
             FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
                                schema=AnswerGeneralQuery),
@@ -1125,7 +1128,7 @@ Lines: {log_lines}""")
                                                         releases_query_callback,
                                                         releases_query_messages,
                                                         log_query)),
-            FunctionDefinition(answer_logs_wrapper(query, logs_callback, log_query)),
+            FunctionDefinition(answer_project_deployment_logs_wrapper(query, logs_callback, log_query)),
             FunctionDefinition(answer_machines_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(answer_certificates_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(clean_up_all_records),
@@ -1137,7 +1140,15 @@ Lines: {log_lines}""")
             FunctionDefinition(say_hello),
             FunctionDefinition(what_do_you_do),
             FunctionDefinition(provide_help),
-            FunctionDefinition(test_confirmation(query), callback=test_confirmation_callback,
+            FunctionDefinition(test_confirmation(query),
+                               callback=test_confirmation_callback,
+                               is_enabled=is_admin_user(get_github_user_from_form(), get_admin_users())),
+            FunctionDefinition(run_runbook_wrapper(url,
+                                                   api_key,
+                                                   get_github_user_from_form(),
+                                                   query,
+                                                   get_functions_connection_string()),
+                               callback=run_runbook_confirm_callback_wrapper(url, api_key),
                                is_enabled=is_admin_user(get_github_user_from_form(), get_admin_users()))],
             fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
             invalid=FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),

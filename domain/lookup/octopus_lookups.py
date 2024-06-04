@@ -5,7 +5,7 @@ from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_f
     get_environments_generator, get_tenants_generator, get_runbooks_generator
 
 
-def lookup_space(url, api_key, github_user, original_query, sanitized_space_name):
+def lookup_space(url, api_key, user_id, original_query, sanitized_space_name):
     """
     Find the space id and name from the space name. Does fuzzy matching and uses any default values.
     """
@@ -14,8 +14,8 @@ def lookup_space(url, api_key, github_user, original_query, sanitized_space_name
                                           sanitize_space(original_query, sanitized_space_name))
     sanitized_space_name = sanitized_space["matched"] if sanitized_space else None
 
-    if github_user:
-        sanitized_space_name = get_default_argument(github_user, sanitized_space_name, "Space")
+    if user_id:
+        sanitized_space_name = get_default_argument(user_id, sanitized_space_name, "Space")
 
     warnings = []
 
@@ -29,49 +29,49 @@ def lookup_space(url, api_key, github_user, original_query, sanitized_space_name
     return space_id, actual_space_name, warnings
 
 
-def lookup_projects(url, api_key, github_user, original_query, space_id, project_name):
+def lookup_projects(url, api_key, user_id, original_query, space_id, project_name):
     sanitized_projects = sanitize_names_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
                                               sanitize_projects(project_name))
 
     sanitized_project_names = [project["matched"] for project in sanitized_projects]
 
-    if github_user:
-        sanitized_project_names = get_default_argument(github_user, sanitized_project_names, "Project")
+    if user_id:
+        sanitized_project_names = get_default_argument(user_id, sanitized_project_names, "Project")
 
     return sanitized_project_names
 
 
-def lookup_environments(url, api_key, github_user, original_query, space_id, environment_name):
+def lookup_environments(url, api_key, user_id, original_query, space_id, environment_name):
     sanitized_environments = sanitize_names_fuzzy(lambda: get_environments_generator(space_id, api_key, url),
                                                   sanitize_environments(original_query, environment_name))
 
     sanitized_environment_names = [environment["matched"] for environment in sanitized_environments]
 
-    if github_user:
-        sanitized_environment_names = get_default_argument(github_user, sanitized_environment_names, "Environment")
+    if user_id:
+        sanitized_environment_names = get_default_argument(user_id, sanitized_environment_names, "Environment")
 
     return sanitized_environment_names
 
 
-def lookup_tenants(url, api_key, github_user, original_query, space_id, tenant_name):
+def lookup_tenants(url, api_key, user_id, original_query, space_id, tenant_name):
     sanitized_tenants = sanitize_names_fuzzy(lambda: get_tenants_generator(space_id, api_key, url),
                                              sanitize_tenants(tenant_name))
 
     sanitized_tenant_names = [tenant["matched"] for tenant in sanitized_tenants]
 
-    if github_user:
-        sanitized_tenant_names = get_default_argument(github_user, sanitized_tenant_names, "Tenant")
+    if user_id:
+        sanitized_tenant_names = get_default_argument(user_id, sanitized_tenant_names, "Tenant")
 
     return sanitized_tenant_names
 
 
-def lookup_runbooks(url, api_key, github_user, original_query, space_id, project_id, runbook_name):
+def lookup_runbooks(url, api_key, user_id, original_query, space_id, project_id, runbook_name):
     sanitized_runbooks = sanitize_names_fuzzy(lambda: get_runbooks_generator(space_id, project_id, api_key, url),
                                               sanitize_runbooks(runbook_name))
 
     sanitized_runbook_names = [runbook["matched"] for runbook in sanitized_runbooks]
 
-    if github_user:
-        sanitized_runbook_names = get_default_argument(github_user, sanitized_runbook_names, "Runbook")
+    if user_id:
+        sanitized_runbook_names = get_default_argument(user_id, sanitized_runbook_names, "Runbook")
 
     return sanitized_runbook_names

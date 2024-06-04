@@ -1,7 +1,7 @@
 from domain.messages.deployment_logs import build_plain_text_prompt
 
 
-def answer_logs_wrapper(query, callback, logging):
+def answer_project_deployment_logs_wrapper(query, callback, logging):
     """
     A wrapper's job is to return a function with the signature used by the LLM to extract entities from the query. The
     parameters of the wrapper are captured by the returned function without altering the signature of the function.
@@ -19,9 +19,10 @@ def answer_logs_wrapper(query, callback, logging):
     context is implementation specific.
     """
 
-    def answer_logs_usage(space=None, project=None, environment=None, channel=None, tenant=None, release=None,
-                          steps=None, lines=None, **kwargs):
-        """Answers a query about the contents of a deployment log for an octopus project.
+    def answer_project_deployment_logs(space=None, project=None, environment=None, channel=None, tenant=None,
+                                       release=None,
+                                       steps=None, lines=None, **kwargs):
+        """Answers a query about the contents of the log output of a deployment of an octopus project to an environment.
 
         Args:
         space: Space name
@@ -46,4 +47,4 @@ def answer_logs_wrapper(query, callback, logging):
         # This is just a passthrough to the original callback
         return callback(query, messages, space, project, environment, channel, tenant, release, steps, lines)
 
-    return answer_logs_usage
+    return answer_project_deployment_logs

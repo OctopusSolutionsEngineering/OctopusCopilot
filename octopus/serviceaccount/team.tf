@@ -1,6 +1,6 @@
 terraform {
   required_providers {
-    octopusdeploy = { source = "OctopusDeployLabs/octopusdeploy", version = "0.15.0" }
+    octopusdeploy = { source = "OctopusDeployLabs/octopusdeploy", version = "0.20.0" }
   }
 }
 
