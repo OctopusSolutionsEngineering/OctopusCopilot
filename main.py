@@ -14,12 +14,11 @@ from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all, \
     get_item_or_none, sanitize_names_fuzzy, sanitize_projects, sanitize_tenants, sanitize_space, sanitize_name_fuzzy, \
     sanitize_log_steps, sanitize_log_lines
-from domain.tools.action.run_runbook import run_runbook_wrapper
 from domain.tools.query.certificates_query import answer_certificates_wrapper
 from domain.tools.query.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.query.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from domain.tools.query.how_to import how_to_wrapper
-from domain.tools.query.logs import answer_logs_wrapper
+from domain.tools.query.logs import answer_project_deployment_logs_wrapper
 from domain.tools.query.project_variables import answer_project_variables_wrapper, \
     answer_project_variables_usage_wrapper
 from domain.tools.query.releases_and_deployments import answer_releases_and_deployments_wrapper
@@ -343,14 +342,13 @@ def build_tools(tool_query):
     :return: The OpenAI tools
     """
     return FunctionDefinitions([
-        FunctionDefinition(run_runbook_wrapper(get_octopus_api(), get_api_key(), None, tool_query)),
         FunctionDefinition(answer_general_query_wrapper(tool_query, general_query_callback, log_query),
                            AnswerGeneralQuery),
         FunctionDefinition(answer_project_variables_wrapper(tool_query, variable_query_callback, log_query)),
         FunctionDefinition(answer_project_variables_usage_wrapper(tool_query, variable_query_callback, log_query)),
         FunctionDefinition(
             answer_releases_and_deployments_wrapper(tool_query, releases_query_callback, None, log_query)),
-        FunctionDefinition(answer_logs_wrapper(tool_query, logs_callback, log_query)),
+        FunctionDefinition(answer_project_deployment_logs_wrapper(tool_query, logs_callback, log_query)),
         FunctionDefinition(answer_machines_wrapper(tool_query, resource_specific_callback, log_query)),
         FunctionDefinition(answer_certificates_wrapper(tool_query, resource_specific_callback, log_query))],
         fallback=FunctionDefinition(how_to_wrapper(tool_query, how_to_callback, log_query))

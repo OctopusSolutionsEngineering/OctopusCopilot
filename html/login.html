@@ -17,8 +17,8 @@
         <label for="url" class="col-2 offset-2 col-form-label">Octopus URL</label>
         <div class="col-6">
             <input id="url" name="token" type="text" class="form-control" required>
-            <small class="form-text text-muted">This is the URL to your cloud Octopus instance e.g.
-                https://myinstance.octopus.app</small>
+            <small class="form-text text-muted">This is the public URL to your Octopus instance e.g.
+                https://myinstance.octopus.app</small>.
             <div class="invalid-feedback">
                 Please provide a valid Octopus URL.
             </div>
@@ -63,6 +63,9 @@
         <div class="offset-4 col-6">
             <div id="invalid_api_key_or_url" class="alert alert-danger" role="alert" style="display: none">
                 The Login Token, API key or URL you provided is invalid.
+            </div>
+            <div id="octopus_too_old" class="alert alert-danger" role="alert" style="display: none">
+                The Octopus instance is too old. Please upgrade your Octopus instance to the latest version.
             </div>
             <div id="response_error" class="alert alert-danger" role="alert" style="display: none">
                 There was an error logging in. Please try again later.
@@ -124,6 +127,7 @@
 
     async function processQuery() {
         invalid_api_key_or_url.style.display = 'none'
+        octopus_too_old.style.display = 'none'
         response_error.style.display = 'none'
         api.setCustomValidity('')
         url.setCustomValidity('')
@@ -168,7 +172,16 @@
 
             if (!response.ok) {
                 if (response.status === 400) {
-                    invalid_api_key_or_url.style.display = 'block'
+
+                    const response_body = response.json()
+
+                    if (response_body.error === "octopus_too_old") {
+                        octopus_too_old.style.display = 'block'
+                    } else if (response_body.error === "octopus_key_invalid") {
+                        invalid_api_key_or_url.style.display = 'block'
+                    } else {
+                        response_error.style.display = 'block'
+                    }
                 } else {
                     response_error.style.display = 'block'
                 }

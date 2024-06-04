@@ -7,6 +7,7 @@ from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
+from domain.config.octopus import min_octopus_version
 from domain.config.openai import max_deployments, max_log_lines
 from domain.config.users import get_admin_users
 from domain.context.github_docs import get_docs_context
@@ -21,7 +22,7 @@ from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequest
 from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
-from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
+from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn, OctopusVersionInvalid
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.messages.docs_messages import docs_prompt
@@ -34,12 +35,13 @@ from domain.sanitizers.sanitized_list import get_item_or_none, \
     none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_names_fuzzy, sanitize_tenants, \
     update_query, sanitize_space, sanitize_name_fuzzy, sanitize_log_steps, sanitize_log_lines
 from domain.security.security import call_admin_function, is_admin_user
+from domain.tools.githubactions.run_runbook import run_runbook_wrapper, run_runbook_confirm_callback_wrapper
 from domain.tools.query.certificates_query import answer_certificates_wrapper
 from domain.tools.query.function_call import FunctionCall
 from domain.tools.query.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.query.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from domain.tools.query.how_to import how_to_wrapper
-from domain.tools.query.logs import answer_logs_wrapper
+from domain.tools.query.logs import answer_project_deployment_logs_wrapper
 from domain.tools.query.project_variables import answer_project_variables_wrapper, \
     answer_project_variables_usage_wrapper
 from domain.tools.query.releases_and_deployments import answer_releases_and_deployments_wrapper
@@ -54,13 +56,14 @@ from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
 from domain.url.url_builder import base_request_url
 from domain.validation.default_value_validation import validate_default_value_name
+from domain.versions.octopus_version import octopus_version_at_least
 from infrastructure.callbacks import save_callback, load_callback, delete_callback, delete_old_callbacks
 from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
     create_limited_api_key, get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, \
     get_spaces_generator, get_dashboard, activity_logs_to_string, \
-    get_space_first_project_and_environment
+    get_space_first_project_and_environment, get_version
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
@@ -226,6 +229,11 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
     try:
         body = json.loads(req.get_body())
 
+        octopus_version = get_version(body['url'])
+
+        if not octopus_version_at_least(octopus_version, min_octopus_version):
+            raise OctopusVersionInvalid(octopus_version)
+
         # Extract the GitHub user from the client side session
         user_id = extract_session_blob(req.params.get("state"),
                                        os.environ.get("ENCRYPTION_PASSWORD"),
@@ -236,7 +244,7 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         # persist a long-lived key.
         user = get_current_user(body['api'], body['url'])
 
-        # The guest API key is a fixed string and we do not create a new temporary key
+        # The guest API key is a fixed string, and we do not create a new temporary key
         api_key = create_limited_api_key(user, body['api'], body['url']) \
             if body['api'].upper().strip() != GUEST_API_KEY else GUEST_API_KEY
 
@@ -248,9 +256,16 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
                                           os.environ.get("ENCRYPTION_SALT"),
                                           get_functions_connection_string())
         return func.HttpResponse(status_code=201)
+    except OctopusVersionInvalid as e:
+        handle_error(e)
+        return func.HttpResponse(
+            json.dumps({"error": "octopus_too_old", "message": f"Octopus version is too old ({e.version})"}),
+            status_code=400)
     except (OctopusRequestFailed, OctopusApiKeyInvalid, ValueError) as e:
         handle_error(e)
-        return func.HttpResponse("Failed to generate temporary key", status_code=400)
+        return func.HttpResponse(
+            json.dumps({"error": "octopus_key_invalid", "message": "Failed to generate temporary key"}),
+            status_code=400)
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to read form HTML", status_code=500)
@@ -397,7 +412,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                                                             releases_and_deployments_callback,
                                                             None,
                                                             log_query)),
-                FunctionDefinition(answer_logs_wrapper(tool_query, logs_query_callback, log_query)),
+                FunctionDefinition(answer_project_deployment_logs_wrapper(tool_query, logs_query_callback, log_query)),
                 FunctionDefinition(answer_machines_wrapper(tool_query, resource_specific_callback, log_query)),
                 FunctionDefinition(answer_certificates_wrapper(tool_query, resource_specific_callback, log_query)),
                 FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
@@ -592,7 +607,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             callback_id = str(uuid.uuid4())
             save_callback(get_github_user_from_form(), test_confirmation_callback.__name__, callback_id, json.dumps({}),
                           original_query, get_functions_connection_string())
-            return CopilotResponse("This is an example of a mutating action", "Do you want to continue?",
+            return CopilotResponse("This is an example of a mutating actions", "Do you want to continue?",
                                    "This can not be undone", callback_id)
 
         return test_confirmation_callback
@@ -999,14 +1014,14 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
                             + f"or `Show me the the deployment logs for step 2 for the latest deployment of project \"{project}\".`")
 
         log_query("logs_callback", f"""
-Space: {space}
-Project Names: {project}
-Tenant Names: {tenant}
-Environment Names: {environments}
-Release Version: {release}
-Channel Names: {channel}
-Steps: {sanitized_steps}
-Lines: {log_lines}""")
+            Space: {space}
+            Project Names: {project}
+            Tenant Names: {tenant}
+            Environment Names: {environments}
+            Release Version: {release}
+            Channel Names: {channel}
+            Steps: {sanitized_steps}
+            Lines: {log_lines}""")
 
         processed_query = update_query(original_query, sanitized_projects)
 
@@ -1113,6 +1128,8 @@ Lines: {log_lines}""")
         :return: The OpenAI tools
         """
 
+        api_key, url = get_api_key_and_url()
+
         return FunctionDefinitions([
             FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
                                schema=AnswerGeneralQuery),
@@ -1126,7 +1143,7 @@ Lines: {log_lines}""")
                                                         releases_query_callback,
                                                         releases_query_messages,
                                                         log_query)),
-            FunctionDefinition(answer_logs_wrapper(query, logs_callback, log_query)),
+            FunctionDefinition(answer_project_deployment_logs_wrapper(query, logs_callback, log_query)),
             FunctionDefinition(answer_machines_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(answer_certificates_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(clean_up_all_records),
@@ -1138,7 +1155,15 @@ Lines: {log_lines}""")
             FunctionDefinition(say_hello),
             FunctionDefinition(what_do_you_do),
             FunctionDefinition(provide_help),
-            FunctionDefinition(test_confirmation(query), callback=test_confirmation_callback,
+            FunctionDefinition(test_confirmation(query),
+                               callback=test_confirmation_callback,
+                               is_enabled=is_admin_user(get_github_user_from_form(), get_admin_users())),
+            FunctionDefinition(run_runbook_wrapper(url,
+                                                   api_key,
+                                                   get_github_user_from_form(),
+                                                   query,
+                                                   get_functions_connection_string()),
+                               callback=run_runbook_confirm_callback_wrapper(url, api_key),
                                is_enabled=is_admin_user(get_github_user_from_form(), get_admin_users()))],
             fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
             invalid=FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
@@ -1161,7 +1186,7 @@ Lines: {log_lines}""")
         handle_error(e)
         return func.HttpResponse(convert_to_sse_response(
             "The request to the Octopus API failed. "
-            + "Either your API key is invalid, or there was an issue contacting the server."),
+            + "Either your API key is invalid, does not have the required permissions, or there was an issue contacting the server."),
             headers=get_sse_headers())
     except GitHubRequestFailed as e:
         handle_error(e)

@@ -100,6 +100,14 @@ def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
+def get_version(octopus_url):
+    api = build_url(octopus_url, "api")
+    resp = handle_response(lambda: http.request("GET", api))
+    return resp.json()["Version"]
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_spaces_batch(skip, take, api_key, octopus_url):
     api = build_url(octopus_url, "api/Spaces", dict(take=take, skip=skip))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
