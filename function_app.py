@@ -679,6 +679,11 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                     first_environment = space_first_environment["Name"]
                     break
 
+        log_query("provide_help", f"""
+            Space: {space_name}
+            Project Names: {first_project}
+            Environment Names: {first_environment}""")
+
         # If we have a space, project, and environment, use these for the examples
         if space_name and first_project and first_environment:
             return CopilotResponse(f"""I am an AI assistant that can help you with your Octopus Deploy queries. I can answer questions about your Octopus Deploy spaces, projects, environments, deployments, and more.
