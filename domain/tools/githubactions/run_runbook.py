@@ -16,8 +16,8 @@ def run_runbook_confirm_callback_wrapper(url, api_key):
             Space: {space_id}
             Project Names: {project_name}
             Runbook Names: {runbook_name}
-            Tenant Names: {environment_name}
-            Environment Names: {tenant_name}""")
+            Tenant Names: {tenant_name}
+            Environment Names: {environment_name}""")
 
         try:
             response = run_published_runbook_fuzzy(space_id,
@@ -94,7 +94,7 @@ Environment Names: {arguments["environment_name"]}""")
                       connection_string)
         return CopilotResponse("Run a runbook",
                                f"Do you want to continue running the runbook {sanitized_runbook_names[0]} "
-                               + f"in the project {sanitized_project_names[0]} in the space {actual_space_name}?",
+                               + f"in the project {sanitized_project_names[0]} in the environment {sanitized_environment_names[0]} in the space {actual_space_name}?",
                                "Please confirm the runbook name, project name, and space name are correct before proceeding.",
                                callback_id)
 

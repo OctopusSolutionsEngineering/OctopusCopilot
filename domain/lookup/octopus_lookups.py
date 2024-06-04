@@ -1,6 +1,6 @@
 from domain.defaults.defaults import get_default_argument
 from domain.sanitizers.sanitized_list import sanitize_name_fuzzy, sanitize_space, sanitize_names_fuzzy, \
-    sanitize_projects, sanitize_environments, sanitize_tenants, sanitize_runbooks
+    sanitize_projects, sanitize_environments, sanitize_tenants, sanitize_runbooks, sanitize_list
 from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_from_name, get_projects_generator, \
     get_environments_generator, get_tenants_generator, get_runbooks_generator
 
@@ -36,7 +36,7 @@ def lookup_projects(url, api_key, user_id, original_query, space_id, project_nam
     sanitized_project_names = [project["matched"] for project in sanitized_projects]
 
     if user_id:
-        sanitized_project_names = get_default_argument(user_id, sanitized_project_names, "Project")
+        sanitized_project_names = sanitize_list(get_default_argument(user_id, sanitized_project_names, "Project"))
 
     return sanitized_project_names
 
@@ -48,7 +48,8 @@ def lookup_environments(url, api_key, user_id, original_query, space_id, environ
     sanitized_environment_names = [environment["matched"] for environment in sanitized_environments]
 
     if user_id:
-        sanitized_environment_names = get_default_argument(user_id, sanitized_environment_names, "Environment")
+        sanitized_environment_names = sanitize_list(
+            get_default_argument(user_id, sanitized_environment_names, "Environment"))
 
     return sanitized_environment_names
 
@@ -60,7 +61,7 @@ def lookup_tenants(url, api_key, user_id, original_query, space_id, tenant_name)
     sanitized_tenant_names = [tenant["matched"] for tenant in sanitized_tenants]
 
     if user_id:
-        sanitized_tenant_names = get_default_argument(user_id, sanitized_tenant_names, "Tenant")
+        sanitized_tenant_names = sanitize_list(get_default_argument(user_id, sanitized_tenant_names, "Tenant"))
 
     return sanitized_tenant_names
 
@@ -72,6 +73,6 @@ def lookup_runbooks(url, api_key, user_id, original_query, space_id, project_id,
     sanitized_runbook_names = [runbook["matched"] for runbook in sanitized_runbooks]
 
     if user_id:
-        sanitized_runbook_names = get_default_argument(user_id, sanitized_runbook_names, "Runbook")
+        sanitized_runbook_names = sanitize_list(get_default_argument(user_id, sanitized_runbook_names, "Runbook"))
 
     return sanitized_runbook_names
