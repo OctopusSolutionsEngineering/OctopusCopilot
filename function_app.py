@@ -7,6 +7,7 @@ from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
+from domain.config.octopus import min_octopus_version
 from domain.config.openai import max_deployments, max_log_lines
 from domain.config.users import get_admin_users
 from domain.context.github_docs import get_docs_context
@@ -21,7 +22,7 @@ from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequest
 from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
-from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn
+from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn, OctopusVersionInvalid
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.messages.docs_messages import docs_prompt
@@ -55,13 +56,14 @@ from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
 from domain.url.url_builder import base_request_url
 from domain.validation.default_value_validation import validate_default_value_name
+from domain.versions.octopus_version import octopus_version_at_least
 from infrastructure.callbacks import save_callback, load_callback, delete_callback, delete_old_callbacks
 from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
     create_limited_api_key, get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, \
     get_spaces_generator, get_dashboard, activity_logs_to_string, \
-    get_space_first_project_and_environment
+    get_space_first_project_and_environment, get_version
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
@@ -227,6 +229,11 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
     try:
         body = json.loads(req.get_body())
 
+        octopus_version = get_version(body['url'])
+
+        if not octopus_version_at_least(octopus_version, min_octopus_version):
+            raise OctopusVersionInvalid(octopus_version)
+
         # Extract the GitHub user from the client side session
         user_id = extract_session_blob(req.params.get("state"),
                                        os.environ.get("ENCRYPTION_PASSWORD"),
@@ -237,7 +244,7 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         # persist a long-lived key.
         user = get_current_user(body['api'], body['url'])
 
-        # The guest API key is a fixed string and we do not create a new temporary key
+        # The guest API key is a fixed string, and we do not create a new temporary key
         api_key = create_limited_api_key(user, body['api'], body['url']) \
             if body['api'].upper().strip() != GUEST_API_KEY else GUEST_API_KEY
 
@@ -249,9 +256,16 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
                                           os.environ.get("ENCRYPTION_SALT"),
                                           get_functions_connection_string())
         return func.HttpResponse(status_code=201)
+    except OctopusVersionInvalid as e:
+        handle_error(e)
+        return func.HttpResponse(
+            json.dumps({"error": "octopus_too_old", "message": f"Octopus version is too old ({e.version})"}),
+            status_code=400)
     except (OctopusRequestFailed, OctopusApiKeyInvalid, ValueError) as e:
         handle_error(e)
-        return func.HttpResponse("Failed to generate temporary key", status_code=400)
+        return func.HttpResponse(
+            json.dumps({"error": "octopus_key_invalid", "message": "Failed to generate temporary key"}),
+            status_code=400)
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to read form HTML", status_code=500)
