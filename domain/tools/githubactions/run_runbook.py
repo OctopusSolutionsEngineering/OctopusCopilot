@@ -96,7 +96,7 @@ Environment Names: {arguments["environment_name"]}""")
         if arguments["tenant_name"]:
             return CopilotResponse("Run a runbook",
                                    f"Do you want to continue running the runbook \"{sanitized_runbook_names[0]}\" "
-                                   + f"in the project \"{sanitized_project_names[0]}\" for the environment \"{sanitized_environment_names[0]}\" and tenant \"{arguments["tenant_name"]}\" in the space \"{actual_space_name}\"?",
+                                   + f"in the project \"{sanitized_project_names[0]}\" for the environment \"{sanitized_environment_names[0]}\" and tenant \"{arguments['tenant_name']}\" in the space \"{actual_space_name}\"?",
                                    "Please confirm the runbook name, project name, and space name are correct before proceeding.",
                                    callback_id)
 
