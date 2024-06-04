@@ -3,9 +3,9 @@ import os
 import urllib.parse
 import uuid
 
-import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.openai import max_deployments, max_log_lines
 from domain.config.users import get_admin_users
@@ -648,6 +648,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                     first_project = default_project_name or default_first_project["Name"]
                     first_environment = default_environment_name or default_first_environment["Name"]
             except Exception as e:
+                handle_error(e)
                 pass
 
         # Otherwise find the first space with a project and environment
