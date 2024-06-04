@@ -10,9 +10,11 @@ from domain.errors.error_handling import handle_error
 from domain.logging.query_loggin import log_query
 from domain.messages.docs_messages import docs_prompt
 from domain.performance.timing import timing_wrapper
+from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all, \
     get_item_or_none, sanitize_names_fuzzy, sanitize_projects, sanitize_tenants, sanitize_space, sanitize_name_fuzzy, \
     sanitize_log_steps, sanitize_log_lines
+from domain.tools.action.run_runbook import run_runbook_wrapper
 from domain.tools.query.certificates_query import answer_certificates_wrapper
 from domain.tools.query.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.query.general_query import answer_general_query_wrapper, AnswerGeneralQuery
@@ -341,6 +343,7 @@ def build_tools(tool_query):
     :return: The OpenAI tools
     """
     return FunctionDefinitions([
+        FunctionDefinition(run_runbook_wrapper(get_octopus_api(), get_api_key(), None, tool_query)),
         FunctionDefinition(answer_general_query_wrapper(tool_query, general_query_callback, log_query),
                            AnswerGeneralQuery),
         FunctionDefinition(answer_project_variables_wrapper(tool_query, variable_query_callback, log_query)),
@@ -355,8 +358,12 @@ def build_tools(tool_query):
 
 
 try:
-    result = llm_tool_query(parser.query, build_tools,
+    result = llm_tool_query(parser.query, build_tools(parser.query),
                             lambda x, y: print(x + " " + ",".join(sanitize_list(y)))).call_function()
-    print(result)
+
+    if isinstance(result, CopilotResponse):
+        print(result.response)
+    else:
+        print(result)
 except Exception as e:
     handle_error(e)

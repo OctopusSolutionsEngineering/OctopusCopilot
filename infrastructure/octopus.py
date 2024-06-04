@@ -509,6 +509,57 @@ def get_environments_generator(space_id, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
+def get_tenants_batch(skip, take, space_id, api_key, octopus_url):
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Tenants", dict(take=take, skip=skip))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()["Items"]
+
+
+@logging_wrapper
+def get_tenants_generator(space_id, api_key, octopus_url):
+    skip = 0
+    take = 30
+
+    while True:
+        batch_tenants = get_tenants_batch(skip, take, space_id, api_key, octopus_url)
+
+        for tenant in batch_tenants:
+            yield tenant
+
+        if len(batch_tenants) != take:
+            break
+
+        skip += take
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_runbooks_batch(skip, take, space_id, project_id, api_key, octopus_url):
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/Runbooks",
+                    dict(take=take, skip=skip))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()["Items"]
+
+
+@logging_wrapper
+def get_runbooks_generator(space_id, project_id, api_key, octopus_url):
+    skip = 0
+    take = 30
+
+    while True:
+        batch_runbooks = get_runbooks_batch(skip, take, space_id, project_id, api_key, octopus_url)
+
+        for tenant in batch_runbooks:
+            yield tenant
+
+        if len(batch_runbooks) != take:
+            break
+
+        skip += take
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_project(space_id, project_name, api_key, octopus_url):
     """
     Returns a project resource from the name
@@ -815,7 +866,7 @@ def handle_response(callback):
     if response.status == 401:
         logger.info(response.data.decode('utf-8'))
         raise OctopusApiKeyInvalid()
-    if response.status != 200:
+    if response.status != 200 and response.status != 201:
         logger.info(response.data.decode('utf-8'))
         raise OctopusRequestFailed(f"Request failed with " + response.data.decode('utf-8'))
 
@@ -969,7 +1020,7 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
     project = get_project_fuzzy(space_id, project_name, my_api_key, my_octopus_api)
     runbook = get_runbook_fuzzy(space_id, project["Id"], runbook_name, my_api_key, my_octopus_api)
     environment = get_environment_fuzzy(space_id, environment_name, my_api_key, my_octopus_api)
-    tenant = get_tenant_fuzzy(space_id, tenant_name, my_api_key, my_octopus_api)
+    tenant = get_tenant_fuzzy(space_id, tenant_name, my_api_key, my_octopus_api) if tenant_name else None
 
     if not runbook['PublishedRunbookSnapshotId']:
         raise RunbookNotPublished(runbook_name)
@@ -986,4 +1037,7 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
         'SpecificMachineIds': None,
         'ExcludedMachineIds': None
     }
-    handle_response(lambda: http.request("POST", api, json=runbook_run, headers=get_octopus_headers(my_api_key)))
+    response = handle_response(
+        lambda: http.request("POST", api, json=runbook_run, headers=get_octopus_headers(my_api_key)))
+
+    return response.json()
