@@ -17,7 +17,7 @@ def run_runbook_confirm_callback_wrapper(url, api_key):
             Project Names: {project_name}
             Runbook Names: {runbook_name}
             Tenant Names: {environment_name}
-            Environment Names: {tenant_name}}""")
+            Environment Names: {tenant_name}""")
 
         try:
             response = run_published_runbook_fuzzy(space_id,
