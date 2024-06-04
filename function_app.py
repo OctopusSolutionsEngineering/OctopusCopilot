@@ -588,7 +588,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         """
 
         delete_default_values(get_github_user_from_form(), get_functions_connection_string())
-        return CopilotResponse(f"Deleted default valued")
+        return CopilotResponse(f"Deleted default values")
 
     def get_default_value(default_name):
         """Save a default value for a space, query_project, environment, or channel
@@ -673,7 +673,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                     space["Id"], api_key, url)
 
                 # The first space we find with projects and environments is used as the example
-                if first_project and first_environment:
+                if space_first_project and space_first_environment:
                     space_name = space["Name"]
                     first_project = space_first_project["Name"]
                     first_environment = space_first_environment["Name"]
