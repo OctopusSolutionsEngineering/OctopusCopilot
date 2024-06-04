@@ -1185,7 +1185,7 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
         handle_error(e)
         return func.HttpResponse(convert_to_sse_response(
             "The request to the Octopus API failed. "
-            + "Either your API key is invalid, or there was an issue contacting the server."),
+            + "Either your API key is invalid, does not have the required permissions, or there was an issue contacting the server."),
             headers=get_sse_headers())
     except GitHubRequestFailed as e:
         handle_error(e)
