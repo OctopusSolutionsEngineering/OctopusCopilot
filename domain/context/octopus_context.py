@@ -43,25 +43,25 @@ def collect_llm_context(original_query, messages, context, space_id, project_nam
 
     if log_query:
         log_query("collect_llm_context", f"""
-Space Id: {space_id}
-Project Names: {project_names}
-Runbook Names: {runbook_names}
-Target Names: {target_names}
-Tenant Names: {tenant_names}
-Library Variable Set Names: {library_variable_sets}
-Environment Names: {environment_names}
-Feed Names: {feed_names}
-Account Names: {account_names}
-Certificate Names: {certificate_names}
-Worker Pool Names: {workerpool_names}
-Machine Policy Names: {machinepolicy_names}
-Tag Set Names: {tagset_names}
-Project Group Names: {projectgroup_names}
-Channel Names: {channel_names}
-Release Versions: {release_versions}
-Steps: {step_names}
-Variables: {variable_names}
-Dates: {dates}""")
+            Space Id: {space_id}
+            Project Names: {project_names}
+            Runbook Names: {runbook_names}
+            Target Names: {target_names}
+            Tenant Names: {tenant_names}
+            Library Variable Set Names: {library_variable_sets}
+            Environment Names: {environment_names}
+            Feed Names: {feed_names}
+            Account Names: {account_names}
+            Certificate Names: {certificate_names}
+            Worker Pool Names: {workerpool_names}
+            Machine Policy Names: {machinepolicy_names}
+            Tag Set Names: {tagset_names}
+            Project Group Names: {projectgroup_names}
+            Channel Names: {channel_names}
+            Release Versions: {release_versions}
+            Steps: {step_names}
+            Variables: {variable_names}
+            Dates: {dates}""")
 
     # This context provides details about resources like projects, environments, feeds, accounts, certificates, etc.
     hcl, include_all_resources = get_octoterra_space(original_query,

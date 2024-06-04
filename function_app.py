@@ -1013,14 +1013,14 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
                             + f"or `Show me the the deployment logs for step 2 for the latest deployment of project \"{project}\".`")
 
         log_query("logs_callback", f"""
-Space: {space}
-Project Names: {project}
-Tenant Names: {tenant}
-Environment Names: {environments}
-Release Version: {release}
-Channel Names: {channel}
-Steps: {sanitized_steps}
-Lines: {log_lines}""")
+            Space: {space}
+            Project Names: {project}
+            Tenant Names: {tenant}
+            Environment Names: {environments}
+            Release Version: {release}
+            Channel Names: {channel}
+            Steps: {sanitized_steps}
+            Lines: {log_lines}""")
 
         processed_query = update_query(original_query, sanitized_projects)
 

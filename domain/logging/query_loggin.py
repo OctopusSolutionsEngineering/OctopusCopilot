@@ -8,7 +8,7 @@ from infrastructure.slack import send_slack_message
 logger = configure_logging(__name__)
 
 
-def log_query(message, query):
+def log_query(message, query, strip_leading_whitespace=True):
     """
     Logs a query to an external source
     :param message: The message prefix
@@ -18,6 +18,10 @@ def log_query(message, query):
 
     sanitized_query = sanitize_list(query)
     message_detail = anonymize_message(sanitize_message(",".join(sanitized_query)))
-    complete_message = message + " " + message_detail
+    complete_message = message + "\n" + message_detail
+
+    if strip_leading_whitespace:
+        complete_message = "\n".join(list(map(lambda x: x.strip(), complete_message.split("\n"))))
+
     logger.info(complete_message)
     send_slack_message(complete_message, get_slack_url())

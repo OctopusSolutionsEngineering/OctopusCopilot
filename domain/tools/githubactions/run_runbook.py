@@ -2,6 +2,7 @@ import json
 import uuid
 
 from domain.exceptions.runbook_not_published import RunbookNotPublished
+from domain.logging.query_loggin import log_query
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_environments, lookup_tenants, \
     lookup_runbooks
 from domain.response.copilot_response import CopilotResponse
@@ -11,6 +12,13 @@ from infrastructure.octopus import run_published_runbook_fuzzy, get_project
 
 def run_runbook_confirm_callback_wrapper(url, api_key):
     def run_runbook_confirm_callback(space_id, project_name, project_id, runbook_name, environment_name, tenant_name):
+        log_query("run_runbook_confirm_callback", f"""
+            Space: {space_id}
+            Project Names: {project_name}
+            Runbook Names: {runbook_name}
+            Tenant Names: {environment_name}
+            Environment Names: {tenant_name}}""")
+
         try:
             response = run_published_runbook_fuzzy(space_id,
                                                    project_name,
@@ -70,13 +78,21 @@ def run_runbook_wrapper(url, api_key, github_user, original_query, connection_st
             "environment_name": sanitized_environment_names[0],
             "tenant_name": sanitized_tenant_names[0] if sanitized_tenant_names else None
         }
+
+        log_query("run_runbook", f"""
+Space: {arguments["space_id"]}
+Project Names: {arguments["project_name"]}
+Runbook Names: {arguments["runbook_name"]}
+Tenant Names: {arguments["tenant_name"]}
+Environment Names: {arguments["environment_name"]}""")
+
         save_callback(github_user,
                       run_runbook.__name__,
                       callback_id,
                       json.dumps(arguments),
                       original_query,
                       connection_string)
-        return CopilotResponse("",
+        return CopilotResponse("Run a runbook",
                                f"Do you want to continue running the runbook {sanitized_runbook_names[0]} "
                                + f"in the project {sanitized_project_names[0]} in the space {actual_space_name}?",
                                "Please confirm the runbook name, project name, and space name are correct before proceeding.",
