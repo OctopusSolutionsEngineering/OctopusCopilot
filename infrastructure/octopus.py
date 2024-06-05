@@ -14,6 +14,7 @@ from domain.exceptions.runbook_not_published import RunbookNotPublished
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
+from domain.logging.query_loggin import log_query
 from domain.query.query_inspector import release_is_latest
 from domain.sanitizers.sanitized_list import get_item_fuzzy, normalize_log_step_name
 from domain.sanitizers.url_sanitizer import quote_safe
@@ -1045,6 +1046,19 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
         'SpecificMachineIds': None,
         'ExcludedMachineIds': None
     }
+
+    log_query("run_runbook_confirm_callback", f"""
+                Space: {space_id}
+                Project Names: {project_name}
+                Project Id: {project['Id']}
+                Runbook Names: {runbook_name}
+                Runbook Id: {runbook['Id']}
+                Runbook Published Snapshot Id: {runbook['PublishedRunbookSnapshotId']}
+                Tenant Names: {tenant_name}
+                Tenant Id: {tenant['Id'] if tenant else None}
+                Environment Names: {environment_name}
+                Environment Id: {environment['Id']}""")
+
     response = handle_response(
         lambda: http.request("POST", api, json=runbook_run, headers=get_octopus_headers(my_api_key)))
 
