@@ -598,32 +598,23 @@ def get_project(space_id, project_name, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_environment(space_id, environment_name, api_key, octopus_url):
+def get_environment(space_id, environment_id, api_key, octopus_url):
     """
-    Returns a project resource from the name
+    Returns a environment resource from the id
     :param space_id: The ID of the space.
-    :param environment_name: The name of the environment
+    :param environment_id: The Id of the environment
     :param api_key: The Octopus API key
     :param octopus_url: The Octopus URL
-    :return: The project resource
+    :return: The environment resource
     """
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_environment).')
-    ensure_string_not_empty(environment_name, 'project_name must be a non-empty string (get_environment).')
+    ensure_string_not_empty(environment_id, 'environment_id must be a non-empty string (get_environment).')
 
-    base_url = f"api/{quote_safe(space_id)}/Environments"
+    base_url = f"api/{quote_safe(space_id)}/Environments/{quote_safe(environment_id)}"
 
-    api = build_url(octopus_url, base_url, dict(partialname=environment_name))
+    api = build_url(octopus_url, base_url)
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    environment = get_item_fuzzy(resp.json()["Items"], environment_name)
-
-    if environment is None:
-        api = build_url(octopus_url, base_url, dict(take="10000"))
-        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-        environment = get_item_fuzzy(resp.json()["Items"], environment_name)
-        if environment is None:
-            raise ResourceNotFound("Environment", environment_name)
-
-    return environment
+    return resp.json()
 
 
 @retry(HTTPError, tries=3, delay=2)

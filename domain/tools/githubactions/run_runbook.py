@@ -6,7 +6,7 @@ from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_
     lookup_runbooks
 from domain.response.copilot_response import CopilotResponse
 from infrastructure.callbacks import save_callback
-from infrastructure.octopus import run_published_runbook_fuzzy, get_project
+from infrastructure.octopus import run_published_runbook_fuzzy, get_project, get_runbook_fuzzy, get_environment
 
 
 def run_runbook_confirm_callback_wrapper(url, api_key, log_query):
@@ -68,6 +68,16 @@ def run_runbook_wrapper(url, api_key, github_user, original_query, connection_st
 
         if not sanitized_environment_names:
             return CopilotResponse("Please specify an environment name in the query.")
+
+        # Make sure the environment was valid
+        runbook = get_runbook_fuzzy(space_id, project["Id"], sanitized_runbook_names[0], api_key, url)
+        runbook_environments = [get_environment(space_id, x["Id"], api_key, url)["Name"] for x in
+                                runbook["Environments"]]
+        valid = any(filter(lambda x: x == sanitized_environment_names[0], runbook_environments))
+        if not valid:
+            return CopilotResponse(
+                f"The environment {sanitized_runbook_names[0]} is not valid for the runbook {sanitized_runbook_names[0]}."
+                + "Valid environments are " + ", ".join(runbook_environments) + ".")
 
         callback_id = str(uuid.uuid4())
         arguments = {
