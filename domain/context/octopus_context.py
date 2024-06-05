@@ -103,7 +103,7 @@ def collect_llm_context(original_query, messages, context, space_id, project_nam
 
     # Broad questions are inaccurate, so add a warning when resources are included in the context in bulk.
     if len(include_all_resources) != 0:
-        answer += ("\n\nNOTE: The question was too broad to generate an accurate answer."
+        answer += ("\n\nNOTE: The question may be too broad to generate an accurate answer."
                    + f"\nProvide specific names for the following resources to generate a more accurate answer: {', '.join(include_all_resources)}."
                    + "\nSee https://github.com/OctopusSolutionsEngineering/OctopusCopilot/wiki/Prompt-Engineering-with-Octopus for more details.")
     elif context["percent_trimmed"] != 0:
