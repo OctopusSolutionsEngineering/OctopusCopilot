@@ -1034,7 +1034,7 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
     if not runbook['PublishedRunbookSnapshotId']:
         raise RunbookNotPublished(runbook_name)
 
-    base_url = "api/runbookRuns"
+    base_url = f"api/{quote_safe(space_id)}/runbookRuns"
     api = build_url(my_octopus_api, base_url)
 
     runbook_run = {
