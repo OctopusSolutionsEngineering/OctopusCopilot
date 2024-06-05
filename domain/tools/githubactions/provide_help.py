@@ -86,8 +86,8 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
     * @octopus-ai-app How do I enable server side apply?
     * @octopus-ai-app The status "Success" is represented with the 🟢 character. The status "Executing" is represented by the 🔵 character. The status "In Progress" is represented by the ⚪ character. Other statuses are represented with the 🔴 character. Show the release version, release notes, and status of the last 5 deployments for the project "{first_project}" in the "{first_environment}" environment in the "{space_name}" space in a markdown table.
 
-    These utility prompts streamline your workflow. By setting default values for the space, project, environment, and other entities, you can omit them from your queries.
-    This way, you can write prompts without specifying the space, project, or environment each time.
+    By setting default values for the space, project, environment, and other entities, you can omit them from your queries.
+    This way, you can write prompts without specifying the space, project, environment, runbook, or tenant each time.
     * @octopus-ai-app Set the default space to "{space_name}"
     * @octopus-ai-app Set the default project to "{first_project}"
     * @octopus-ai-app Set the default environment to "{first_environment}"
