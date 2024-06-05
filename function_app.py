@@ -588,7 +588,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         """
 
         delete_default_values(get_github_user_from_form(), get_functions_connection_string())
-        return CopilotResponse(f"Deleted default valued")
+        return CopilotResponse(f"Deleted default values")
 
     def get_default_value(default_name):
         """Save a default value for a space, query_project, environment, or channel
@@ -663,6 +663,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                     first_project = default_project_name or default_first_project["Name"]
                     first_environment = default_environment_name or default_first_environment["Name"]
             except Exception as e:
+                handle_error(e)
                 pass
 
         # Otherwise find the first space with a project and environment
@@ -672,11 +673,16 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                     space["Id"], api_key, url)
 
                 # The first space we find with projects and environments is used as the example
-                if first_project and first_environment:
+                if space_first_project and space_first_environment:
                     space_name = space["Name"]
                     first_project = space_first_project["Name"]
                     first_environment = space_first_environment["Name"]
                     break
+
+        log_query("provide_help", f"""
+            Space: {space_name}
+            Project Names: {first_project}
+            Environment Names: {first_environment}""")
 
         # If we have a space, project, and environment, use these for the examples
         if space_name and first_project and first_environment:
@@ -691,7 +697,7 @@ Here are some sample queries you can ask:
 * @octopus-ai-app Summarize the deployment logs for the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the space called "{space_name}"
 * @octopus-ai-app List any URLs printed in the deployment logs for the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the space called "{space_name}"
 * @octopus-ai-app How do I enable server side apply?
-* @octopus-ai-app The status "Success" is represented with the 🟢 character. The status "In Progress" is represented by the 🔵 character. Other statuses are represented with the 🔴 character. Show the release version, release notes, and status of the last 5 deployments for the project "{first_project}" in the "{first_environment}" environment in the "{space_name}" space in a markdown table.
+* @octopus-ai-app The status "Success" is represented with the 🟢 character. The status "Executing" is represented by the 🔵 character. The status "In Progress" is represented by the ⚪ character. Other statuses are represented with the 🔴 character. Show the release version, release notes, and status of the last 5 deployments for the project "{first_project}" in the "{first_environment}" environment in the "{space_name}" space in a markdown table.
 
 See the [documentation](https://octopus.com/docs/administration/copilot) for more information.
 """)

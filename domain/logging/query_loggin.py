@@ -18,7 +18,11 @@ def log_query(message, query, strip_leading_whitespace=True):
 
     sanitized_query = sanitize_list(query)
     message_detail = anonymize_message(sanitize_message(",".join(sanitized_query)))
-    complete_message = message + "\n" + message_detail
+
+    # messages that end with a colon place the message detail on the same line, otherwise on a new line
+    separator = " " if message[-1] == ":" else "\n"
+
+    complete_message = message + separator + message_detail
 
     if strip_leading_whitespace:
         complete_message = "\n".join(list(map(lambda x: x.strip(), complete_message.split("\n"))))
