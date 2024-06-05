@@ -15,3 +15,7 @@ def add_spaces_before_capitals(s):
 
 def replace_with_empty_string(input_string, pattern):
     return re.sub(pattern, '', input_string)
+
+
+def strip_leading_whitespace(input_string):
+    return '\n'.join([line.lstrip(' \t') for line in input_string.splitlines()])
