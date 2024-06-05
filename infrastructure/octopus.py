@@ -769,7 +769,15 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
     if tenant_name:
         tenant = get_tenant_fuzzy(space_id, tenant_name, api_key, octopus_url)
 
-    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Deployments", dict(projects=project['Id']))
+    # Find deployment count
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Deployments", dict(take=0, projects=project['Id']))
+    resp_json = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key))).json()
+    total_results = resp_json["TotalResults"]
+    skip = max(0, total_results - 30)
+
+    # Get the latest deployments
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Deployments",
+                    dict(take=30, skip=skip, projects=project['Id']))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     deployments = json.loads(resp.data.decode("utf-8")).get("Items")
