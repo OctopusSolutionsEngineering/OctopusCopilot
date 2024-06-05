@@ -777,7 +777,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
 
     # Get the latest deployments
     api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Deployments",
-                    dict(take=30, skip=skip, projects=project['Id']))
+                    dict(take=100, skip=skip, projects=project['Id']))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     deployments = json.loads(resp.data.decode("utf-8")).get("Items")
