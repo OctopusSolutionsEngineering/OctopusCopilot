@@ -2,7 +2,6 @@ import json
 import uuid
 
 from domain.exceptions.runbook_not_published import RunbookNotPublished
-from domain.logging.query_loggin import log_query
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_environments, lookup_tenants, \
     lookup_runbooks
 from domain.response.copilot_response import CopilotResponse
@@ -10,7 +9,7 @@ from infrastructure.callbacks import save_callback
 from infrastructure.octopus import run_published_runbook_fuzzy, get_project
 
 
-def run_runbook_confirm_callback_wrapper(url, api_key):
+def run_runbook_confirm_callback_wrapper(url, api_key, log_query):
     def run_runbook_confirm_callback(space_id, project_name, project_id, runbook_name, environment_name, tenant_name):
         log_query("run_runbook_confirm_callback", f"""
             Space: {space_id}
@@ -26,7 +25,8 @@ def run_runbook_confirm_callback_wrapper(url, api_key):
                                                    environment_name,
                                                    tenant_name,
                                                    api_key,
-                                                   url)
+                                                   url,
+                                                   log_query)
 
             return CopilotResponse(
                 f"[Runbook Run]({url}/app#/{space_id}/projects/{project_id}/operations/runbooks/{response['RunbookId']}/snapshots/{response['RunbookSnapshotId']}/runs/{response['Id']})")
@@ -36,7 +36,7 @@ def run_runbook_confirm_callback_wrapper(url, api_key):
     return run_runbook_confirm_callback
 
 
-def run_runbook_wrapper(url, api_key, github_user, original_query, connection_string):
+def run_runbook_wrapper(url, api_key, github_user, original_query, connection_string, log_query):
     def run_runbook(space_name, project_name, runbook_name, environment_name, tenant_name):
         """
         Runs a published runbook in Octopus Deploy.

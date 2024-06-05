@@ -14,7 +14,6 @@ from domain.exceptions.runbook_not_published import RunbookNotPublished
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
-from domain.logging.query_loggin import log_query
 from domain.query.query_inspector import release_is_latest
 from domain.sanitizers.sanitized_list import get_item_fuzzy, normalize_log_step_name
 from domain.sanitizers.url_sanitizer import quote_safe
@@ -1015,7 +1014,7 @@ def get_runbook_fuzzy(space_id, project_id, runbook_name, api_key, octopus_url):
 
 @logging_wrapper
 def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environment_name, tenant_name, my_api_key,
-                                my_octopus_api):
+                                my_octopus_api, log_query):
     """
     Runs a published runbook
     """
