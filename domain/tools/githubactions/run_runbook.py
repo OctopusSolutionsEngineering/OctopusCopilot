@@ -71,7 +71,7 @@ def run_runbook_wrapper(url, api_key, github_user, original_query, connection_st
 
         # Make sure the environment was valid
         runbook = get_runbook_fuzzy(space_id, project["Id"], sanitized_runbook_names[0], api_key, url)
-        runbook_environments = [get_environment(space_id, x["Id"], api_key, url)["Name"] for x in
+        runbook_environments = [get_environment(space_id, x, api_key, url)["Name"] for x in
                                 runbook["Environments"]]
         valid = any(filter(lambda x: x == sanitized_environment_names[0], runbook_environments))
         if not valid:
