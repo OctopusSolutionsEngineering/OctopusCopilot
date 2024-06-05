@@ -1046,17 +1046,18 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
         'ExcludedMachineIds': None
     }
 
-    log_query("run_published_runbook_fuzzy", f"""
-                Space: {space_id}
-                Project Names: {project_name}
-                Project Id: {project['Id']}
-                Runbook Names: {runbook_name}
-                Runbook Id: {runbook['Id']}
-                Runbook Published Snapshot Id: {runbook['PublishedRunbookSnapshotId']}
-                Tenant Names: {tenant_name}
-                Tenant Id: {tenant['Id'] if tenant else None}
-                Environment Names: {environment_name}
-                Environment Id: {environment['Id']}""")
+    if log_query:
+        log_query("run_published_runbook_fuzzy", f"""
+                    Space: {space_id}
+                    Project Names: {project_name}
+                    Project Id: {project['Id']}
+                    Runbook Names: {runbook_name}
+                    Runbook Id: {runbook['Id']}
+                    Runbook Published Snapshot Id: {runbook['PublishedRunbookSnapshotId']}
+                    Tenant Names: {tenant_name}
+                    Tenant Id: {tenant['Id'] if tenant else None}
+                    Environment Names: {environment_name}
+                    Environment Id: {environment['Id']}""")
 
     response = handle_response(
         lambda: http.request("POST", api, json=runbook_run, headers=get_octopus_headers(my_api_key)))
