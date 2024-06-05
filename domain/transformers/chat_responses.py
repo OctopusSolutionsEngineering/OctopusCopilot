@@ -56,13 +56,13 @@ def get_dashboard_response(dashboard):
                     elif last_deployment['State'] == "Failed":
                         icon = "🔴"
                     elif last_deployment['State'] == "Canceled":
-                        icon = "🔴"
+                        icon = "⚪"
                     elif last_deployment['State'] == "TimedOut":
                         icon = "🔴"
                     elif last_deployment['State'] == "Cancelling":
                         icon = "🔴"
                     elif last_deployment['State'] == "Queued":
-                        icon = "⚪"
+                        icon = "🟣"
 
                     table += f"| {icon} {last_deployment['ReleaseVersion']}"
                 else:
