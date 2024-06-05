@@ -35,6 +35,7 @@ from domain.sanitizers.sanitized_list import get_item_or_none, \
     none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_names_fuzzy, sanitize_tenants, \
     update_query, sanitize_space, sanitize_name_fuzzy, sanitize_log_steps, sanitize_log_lines
 from domain.security.security import call_admin_function, is_admin_user
+from domain.tools.githubactions.provide_help import provide_help_wrapper
 from domain.tools.githubactions.run_runbook import run_runbook_wrapper, run_runbook_confirm_callback_wrapper
 from domain.tools.query.certificates_query import answer_certificates_wrapper
 from domain.tools.query.function_call import FunctionCall
@@ -63,7 +64,7 @@ from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
     create_limited_api_key, get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, \
     get_spaces_generator, get_dashboard, activity_logs_to_string, \
-    get_space_first_project_and_environment, get_version
+    get_version
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
@@ -617,94 +618,6 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         """
         return CopilotResponse("The confirmation callback was successfully executed")
 
-    def say_hello():
-        """Responds to greetings like "hello" or "hi"
-        """
-        return provide_help()
-
-    def what_do_you_do():
-        """Responds to questions like "What do you do?"
-        """
-        return provide_help()
-
-    def provide_help():
-        """Provide help and example queries, answers questions about what the agent does,
-        responds to greetings, responds to a prompt like "hello" or "hi",
-        answers questions like "What do you do?" or "How do I get started?" or "how can I use this?" or "What questions can I ask?",,
-        provides details on how to get started, provides details on how to use the agent, and provides documentation and support.
-        """
-
-        api_key, url = get_api_key_and_url()
-
-        space_name = None
-        first_project = None
-        first_environment = None
-
-        # See if the default space exists and has projects we can refer to
-        default_space_name = get_default_argument(get_github_user_from_form(), None, "Space")
-
-        # Also try and use the default project name
-        default_project_name = get_default_argument(get_github_user_from_form(), None, "Project")
-
-        # And the default environment
-        default_environment_name = get_default_argument(get_github_user_from_form(), None, "Environment")
-
-        if default_space_name:
-            try:
-                default_space_id, resolved_default_space_name = get_space_id_and_name_from_name(default_space_name,
-                                                                                                api_key, url)
-                default_first_project, default_first_environment = get_space_first_project_and_environment(
-                    default_space_id, api_key, url)
-
-                # The default space can be used if it has a project and environment
-                if (default_first_project or default_project_name) and (
-                        default_first_environment or default_environment_name):
-                    space_name = resolved_default_space_name
-                    first_project = default_project_name or default_first_project["Name"]
-                    first_environment = default_environment_name or default_first_environment["Name"]
-            except Exception as e:
-                handle_error(e)
-                pass
-
-        # Otherwise find the first space with a project and environment
-        if not space_name:
-            for space in get_spaces_generator(api_key, url):
-                space_first_project, space_first_environment = get_space_first_project_and_environment(
-                    space["Id"], api_key, url)
-
-                # The first space we find with projects and environments is used as the example
-                if space_first_project and space_first_environment:
-                    space_name = space["Name"]
-                    first_project = space_first_project["Name"]
-                    first_environment = space_first_environment["Name"]
-                    break
-
-        log_query("provide_help", f"""
-            Space: {space_name}
-            Project Names: {first_project}
-            Environment Names: {first_environment}""")
-
-        # If we have a space, project, and environment, use these for the examples
-        if space_name and first_project and first_environment:
-            return CopilotResponse(f"""I am an AI assistant that can help you with your Octopus Deploy queries. I can answer questions about your Octopus Deploy spaces, projects, environments, deployments, and more.
-
-Here are some sample queries you can ask:
-* @octopus-ai-app Show me the dashboard for the space "{space_name}"
-* @octopus-ai-app List the projects in the space "{space_name}"
-* @octopus-ai-app What do the deployment steps in the "{first_project}" project in the "{space_name}" space do?
-* @octopus-ai-app Show me the status of the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the "{space_name}" space
-* @octopus-ai-app Show me any non-successful deployments for the "{first_project}" project in the space "{space_name}" for the "{first_environment}" environment in a markdown table. If all deployments are successful, say so.
-* @octopus-ai-app Summarize the deployment logs for the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the space called "{space_name}"
-* @octopus-ai-app List any URLs printed in the deployment logs for the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the space called "{space_name}"
-* @octopus-ai-app How do I enable server side apply?
-* @octopus-ai-app The status "Success" is represented with the 🟢 character. The status "Executing" is represented by the 🔵 character. The status "In Progress" is represented by the ⚪ character. Other statuses are represented with the 🔴 character. Show the release version, release notes, and status of the last 5 deployments for the project "{first_project}" in the "{first_environment}" environment in the "{space_name}" space in a markdown table.
-
-See the [documentation](https://octopus.com/docs/administration/copilot) for more information.
-""")
-
-        return CopilotResponse(
-            "See the [documentation](https://octopus.com/docs/administration/copilot) for more information.")
-
     def general_query_callback(original_query, body, messages):
         api_key, url = get_api_key_and_url()
 
@@ -1135,19 +1048,31 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
 
         api_key, url = get_api_key_and_url()
 
+        # A bunch of functions that do the same thing
+        provide_help, say_hello, what_do_you_do = provide_help_wrapper(
+            get_github_user_from_form(),
+            url,
+            api_key,
+            log_query)
+
         return FunctionDefinitions([
-            FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
-                               schema=AnswerGeneralQuery),
+            FunctionDefinition(
+                answer_general_query_wrapper(
+                    query,
+                    general_query_callback,
+                    log_query),
+                schema=AnswerGeneralQuery),
             FunctionDefinition(answer_step_features_wrapper(query, general_query_callback, log_query)),
             FunctionDefinition(
                 answer_project_variables_wrapper(query, variable_query_callback, log_query)),
             FunctionDefinition(
                 answer_project_variables_usage_wrapper(query, variable_query_callback, log_query)),
             FunctionDefinition(
-                answer_releases_and_deployments_wrapper(query,
-                                                        releases_query_callback,
-                                                        releases_query_messages,
-                                                        log_query)),
+                answer_releases_and_deployments_wrapper(
+                    query,
+                    releases_query_callback,
+                    releases_query_messages,
+                    log_query)),
             FunctionDefinition(answer_project_deployment_logs_wrapper(query, logs_callback, log_query)),
             FunctionDefinition(answer_machines_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(answer_certificates_wrapper(query, resource_specific_callback, log_query)),
@@ -1159,27 +1084,31 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
             FunctionDefinition(get_dashboard_wrapper(query)),
             FunctionDefinition(say_hello),
             FunctionDefinition(what_do_you_do),
-            FunctionDefinition(provide_help),
-            FunctionDefinition(test_confirmation(query),
-                               callback=test_confirmation_callback,
-                               is_enabled=is_admin_user(get_github_user_from_form(), get_admin_users())),
-            FunctionDefinition(run_runbook_wrapper(url,
-                                                   api_key,
-                                                   get_github_user_from_form(),
-                                                   query,
-                                                   get_functions_connection_string(),
-                                                   log_query),
-                               callback=run_runbook_confirm_callback_wrapper(url, api_key, log_query),
-                               is_enabled=is_admin_user(get_github_user_from_form(), get_admin_users()))],
+            FunctionDefinition(provide_help_wrapper(get_github_user_from_form(), url, api_key, log_query)),
+            FunctionDefinition(
+                test_confirmation(query),
+                callback=test_confirmation_callback,
+                is_enabled=is_admin_user(get_github_user_from_form(), get_admin_users())),
+            FunctionDefinition(run_runbook_wrapper(
+                url,
+                api_key,
+                get_github_user_from_form(),
+                query,
+                get_functions_connection_string(),
+                log_query),
+                callback=run_runbook_confirm_callback_wrapper(url, api_key, log_query),
+                is_enabled=is_admin_user(get_github_user_from_form(), get_admin_users()))],
             fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
-            invalid=FunctionDefinition(answer_general_query_wrapper(query, general_query_callback, log_query),
-                                       schema=AnswerGeneralQuery)
+            invalid=FunctionDefinition(
+                answer_general_query_wrapper(query, general_query_callback, log_query),
+                schema=AnswerGeneralQuery)
         )
 
     try:
-        result = execute_callback(req,
-                                  build_form_tools,
-                                  get_github_user_from_form()) or execute_function(req, build_form_tools)
+        result = execute_callback(
+            req,
+            build_form_tools,
+            get_github_user_from_form()) or execute_function(req, build_form_tools)
 
         return func.HttpResponse(
             convert_to_sse_response(result.response, result.prompt_title, result.prompt_message, result.prompt_id),
@@ -1204,15 +1133,17 @@ See the [documentation](https://octopus.com/docs/administration/copilot) for mor
         return func.HttpResponse(convert_to_sse_response("You are not authorized."),
                                  headers=get_sse_headers())
     except SpaceNotFound as e:
-        return func.HttpResponse(convert_to_sse_response(f"The space \"{e.space_name}\" was not found. "
-                                                         + "Either the space does not exist or the API key does not "
-                                                         + "have permissions to access it."),
-                                 headers=get_sse_headers())
+        return func.HttpResponse(
+            convert_to_sse_response(f"The space \"{e.space_name}\" was not found. "
+                                    + "Either the space does not exist or the API key does not "
+                                    + "have permissions to access it."),
+            headers=get_sse_headers())
     except ResourceNotFound as e:
-        return func.HttpResponse(convert_to_sse_response(f"The {e.resource_type} \"{e.resource_name}\" was not found. "
-                                                         + "Either the resource does not exist or the API key does not "
-                                                         + "have permissions to access it."),
-                                 headers=get_sse_headers())
+        return func.HttpResponse(
+            convert_to_sse_response(f"The {e.resource_type} \"{e.resource_name}\" was not found. "
+                                    + "Either the resource does not exist or the API key does not "
+                                    + "have permissions to access it."),
+            headers=get_sse_headers())
     except (UserNotConfigured, OctopusApiKeyInvalid) as e:
         # This exception means there is no Octopus instance configured for the GitHub user making the request.
         # The Octopus instance is supplied via a chat message.
