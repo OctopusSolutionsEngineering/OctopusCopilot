@@ -1049,7 +1049,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         api_key, url = get_api_key_and_url()
 
         # A bunch of functions that do the same thing
-        provide_help, say_hello, what_do_you_do = [FunctionDefinition(func) for func in provide_help_wrapper(
+        help_functions = [FunctionDefinition(tool) for tool in provide_help_wrapper(
             get_github_user_from_form(),
             url,
             api_key,
@@ -1082,9 +1082,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             FunctionDefinition(get_default_value),
             FunctionDefinition(remove_default_value),
             FunctionDefinition(get_dashboard_wrapper(query)),
-            FunctionDefinition(say_hello),
-            FunctionDefinition(what_do_you_do),
-            FunctionDefinition(provide_help),
+            *help_functions,
             FunctionDefinition(
                 test_confirmation(query),
                 callback=test_confirmation_callback,

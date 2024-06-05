@@ -20,8 +20,7 @@ def answer_project_deployment_logs_wrapper(query, callback, logging):
     """
 
     def answer_project_deployment_logs(space=None, project=None, environment=None, channel=None, tenant=None,
-                                       release=None,
-                                       steps=None, lines=None, **kwargs):
+                                       release=None, steps=None, lines=None, **kwargs):
         """Answers a query about the contents of the log output of a deployment of an octopus project to an environment.
 
         Args:
