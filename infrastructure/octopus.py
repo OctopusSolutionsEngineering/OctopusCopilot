@@ -792,7 +792,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
     task_id = None
     if release_is_latest(release_version):
         if deployments:
-            task_id = deployments[0]["TaskId"]
+            task_id = deployments[-1]["TaskId"]
     else:
         # We need to match the release version to a release, and the release to a deployment
 
