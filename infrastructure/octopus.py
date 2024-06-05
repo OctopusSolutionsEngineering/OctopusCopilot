@@ -1047,7 +1047,7 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
         'ExcludedMachineIds': None
     }
 
-    log_query("run_runbook_confirm_callback", f"""
+    log_query("run_published_runbook_fuzzy", f"""
                 Space: {space_id}
                 Project Names: {project_name}
                 Project Id: {project['Id']}
