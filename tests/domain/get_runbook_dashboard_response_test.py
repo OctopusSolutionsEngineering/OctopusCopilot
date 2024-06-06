@@ -100,6 +100,7 @@ sample_json = """{
 
 class RunbookDashboardest(unittest.TestCase):
     def test_get_runbook_dashboard_response(self):
-        result = get_runbook_dashboard_response(json.loads(sample_json), lambda x: x)
+        result = get_runbook_dashboard_response({"Name": "Project"}, {"Name": "Runbook"}, json.loads(sample_json),
+                                                lambda x: x)
         print(result)
         self.assertTrue("🟡" in result, result)
