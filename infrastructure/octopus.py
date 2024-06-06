@@ -195,7 +195,7 @@ def get_runbooks_dashboard(space_id, runbook_id, my_api_key, my_octopus_api):
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_runbooks_dashboard).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_runbooks_dashboard).')
 
-    api = build_url(my_octopus_api, f"api/{quote_safe(space_id)}/progressopm/runbooks//{quote_safe(runbook_id)}")
+    api = build_url(my_octopus_api, f"api/{quote_safe(space_id)}/progression/runbooks/{quote_safe(runbook_id)}")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     return resp.json()
