@@ -178,6 +178,29 @@ def get_dashboard(space_id, my_api_key, my_octopus_api):
     return resp.json()
 
 
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_runbooks_dashboard(space_id, runbook_id, my_api_key, my_octopus_api):
+    """
+    The base function used to get the runbooks dashboard summary
+    :param space_id: The id of the Octopus space containing the runbook
+    :param runbook_id: The id of the runbook
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus URL
+    :return: The actual space name and the dashboard summary
+    """
+
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_runbooks_dashboard).')
+    ensure_string_not_empty(runbook_id, 'runbook_id must be a non-empty string (get_runbooks_dashboard).')
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_runbooks_dashboard).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_runbooks_dashboard).')
+
+    api = build_url(my_octopus_api, f"api/{quote_safe(space_id)}/progressopm/runbooks//{quote_safe(runbook_id)}")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
+
+    return resp.json()
+
+
 @logging_wrapper
 def get_current_user(my_api_key, my_octopus_api):
     """

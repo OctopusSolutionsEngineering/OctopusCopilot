@@ -35,6 +35,7 @@ from domain.sanitizers.sanitized_list import get_item_or_none, \
     none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_names_fuzzy, sanitize_tenants, \
     update_query, sanitize_space, sanitize_name_fuzzy, sanitize_log_steps, sanitize_log_lines
 from domain.security.security import call_admin_function, is_admin_user
+from domain.tools.githubactions.dashboard import get_dashboard_wrapper
 from domain.tools.githubactions.provide_help import provide_help_wrapper
 from domain.tools.githubactions.run_runbook import run_runbook_wrapper, run_runbook_confirm_callback_wrapper
 from domain.tools.query.certificates_query import answer_certificates_wrapper
@@ -48,7 +49,6 @@ from domain.tools.query.project_variables import answer_project_variables_wrappe
 from domain.tools.query.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.tools.query.step_features import answer_step_features_wrapper
 from domain.tools.query.targets_query import answer_machines_wrapper
-from domain.transformers.chat_responses import get_dashboard_response
 from domain.transformers.deployments_from_dashboard import get_deployments_from_dashboard
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from domain.transformers.minify_hcl import minify_hcl
@@ -63,7 +63,7 @@ from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
     create_limited_api_key, get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, \
-    get_spaces_generator, get_dashboard, activity_logs_to_string, \
+    get_spaces_generator, activity_logs_to_string, \
     get_version
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
 from infrastructure.users import get_users_details, delete_old_user_details, \
@@ -533,37 +533,6 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         except ValueError as e:
             logger.info("Encryption password must have changed because the api key could not be decrypted")
             raise OctopusApiKeyInvalid()
-
-    def get_dashboard_wrapper(original_query):
-
-        def get_dashboard_tool(space_name: None):
-            """Display the dashboard
-
-                Args:
-                    space_name: The name of the space containing the projects.
-                    If this value is not defined, the default value will be used.
-            """
-            api_key, url = get_api_key_and_url()
-
-            sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
-                                                  sanitize_space(original_query, space_name))
-
-            space_name = get_default_argument(get_github_user_from_form(),
-                                              sanitized_space["matched"] if sanitized_space else None, "Space")
-
-            warnings = ""
-
-            if not space_name:
-                space_name = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-                warnings = f"The query did not specify a space so the so the space named {space_name} was assumed."
-
-            space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
-            dashboard = get_dashboard(space_id, api_key, url)
-            response = get_dashboard_response(dashboard)
-
-            return CopilotResponse("\n\n".join(filter(lambda x: x, [response, warnings])))
-
-        return get_dashboard_tool
 
     def set_default_value(default_name, default_value):
         """Save a default value for a space, query_project, environment, or channel
@@ -1084,7 +1053,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
             FunctionDefinition(remove_default_value),
-            FunctionDefinition(get_dashboard_wrapper(query)),
+            FunctionDefinition(get_dashboard_wrapper(query, get_github_user_from_form(), api_key, url)),
             *help_functions,
             FunctionDefinition(
                 test_confirmation(query),

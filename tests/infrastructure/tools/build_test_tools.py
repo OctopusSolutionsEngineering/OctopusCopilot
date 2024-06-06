@@ -12,6 +12,7 @@ def how_to_callback(query, keywords):
 
 
 def build_mock_test_tools(tool_query):
+    docs_functions = [FunctionDefinition(tool) for tool in how_to_wrapper(tool_query, how_to_callback, None)]
     return FunctionDefinitions([
-        FunctionDefinition(answer_general_query_wrapper(tool_query, general_query_handler), AnswerGeneralQuery)],
-        FunctionDefinition(how_to_wrapper(tool_query, how_to_callback, None)))
+        FunctionDefinition(answer_general_query_wrapper(tool_query, general_query_handler), AnswerGeneralQuery),
+        *docs_functions])
