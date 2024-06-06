@@ -21,7 +21,7 @@ def answer_runbook_run_logs_wrapper(query, callback, logging):
 
     def answer_runbook_run_logs(space=None, project=None, runbook=None, environment=None, channel=None, tenant=None,
                                 steps=None, lines=None, **kwargs):
-        """Answers a query about the contents of deployment logs for a runbook run.
+        """Answers a query about the contents of the logs of a runbook run.
         Use this function when the prompt asks anything about runbook logs.
 
         Args:

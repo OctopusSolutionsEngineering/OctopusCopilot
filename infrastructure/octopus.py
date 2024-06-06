@@ -863,6 +863,7 @@ def get_runbook_deployment_logs(space_name, project_name, runbook_name, environm
     """
     ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_deployment_logs).')
     ensure_string_not_empty(project_name, 'project_name must be a non-empty string (get_deployment_logs).')
+    ensure_string_not_empty(runbook_name, 'runbook_name must be a non-empty string (get_deployment_logs).')
     ensure_string_not_empty(octopus_url, 'octopus_url must be the Octopus Url (get_deployment_logs).')
     ensure_string_not_empty(api_key, 'api_key must be the Octopus Api key (get_deployment_logs).')
 

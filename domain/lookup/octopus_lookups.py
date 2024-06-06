@@ -38,7 +38,7 @@ def lookup_projects(url, api_key, user_id, original_query, space_id, project_nam
     if user_id:
         sanitized_project_names = sanitize_list(get_default_argument(user_id, sanitized_project_names, "Project"))
 
-    return sanitized_project_names
+    return sanitized_project_names, sanitized_projects
 
 
 def lookup_environments(url, api_key, user_id, original_query, space_id, environment_name):

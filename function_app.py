@@ -45,7 +45,7 @@ from domain.tools.query.function_call import FunctionCall
 from domain.tools.query.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.query.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from domain.tools.query.how_to import how_to_wrapper
-from domain.tools.query.logs import answer_project_deployment_logs_wrapper
+from domain.tools.query.project_logs import answer_project_deployment_logs_wrapper
 from domain.tools.query.project_variables import answer_project_variables_wrapper, \
     answer_project_variables_usage_wrapper
 from domain.tools.query.releases_and_deployments import answer_releases_and_deployments_wrapper

@@ -17,7 +17,8 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
                               steps, lines):
 
         space_id, actual_space_name, warnings = lookup_space(url, api_key, github_user, original_query, space)
-        sanitized_project_names = lookup_projects(url, api_key, github_user, original_query, space_id, project)
+        sanitized_project_names, sanitized_projects = lookup_projects(url, api_key, github_user, original_query,
+                                                                      space_id, project)
 
         if not sanitized_project_names:
             return CopilotResponse("Please specify a project name in the query.")
@@ -39,7 +40,7 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
         sanitized_tenant_names = lookup_tenants(url, api_key, github_user, original_query, space_id, tenants)
 
         activity_logs = timing_wrapper(
-            lambda: get_runbook_deployment_logs(space,
+            lambda: get_runbook_deployment_logs(actual_space_name,
                                                 sanitized_project_names[0],
                                                 sanitized_runbook_names[0],
                                                 sanitized_environment_names[0],
@@ -77,7 +78,7 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
             Steps: {sanitized_steps}
             Lines: {log_lines}""")
 
-        processed_query = update_query(original_query, sanitized_project_names[0])
+        processed_query = update_query(original_query, sanitized_projects)
 
         context = {"input": processed_query, "context": logs}
 

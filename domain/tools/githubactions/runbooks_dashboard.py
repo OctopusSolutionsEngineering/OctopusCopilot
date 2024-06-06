@@ -31,7 +31,8 @@ def get_runbook_dashboard_wrapper(original_query, github_user, api_key, url):
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
 
-        sanitized_project_names = lookup_projects(url, api_key, github_user, original_query, space_id, project_name)
+        sanitized_project_names, sanitized_projects = lookup_projects(url, api_key, github_user, original_query,
+                                                                      space_id, project_name)
 
         if not sanitized_project_names:
             return CopilotResponse("Please specify a project name in the query.")

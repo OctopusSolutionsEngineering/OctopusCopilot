@@ -50,7 +50,8 @@ def run_runbook_wrapper(url, api_key, github_user, original_query, connection_st
         """
 
         space_id, actual_space_name, warnings = lookup_space(url, api_key, github_user, original_query, space_name)
-        sanitized_project_names = lookup_projects(url, api_key, github_user, original_query, space_id, project_name)
+        sanitized_project_names, sanitized_projects = lookup_projects(url, api_key, github_user, original_query,
+                                                                      space_id, project_name)
 
         if not sanitized_project_names:
             return CopilotResponse("Please specify a project name in the query.")
