@@ -104,7 +104,7 @@ def get_runbook_dashboard_response(dashboard, get_tenant):
             runs = dashboard["RunbookRuns"][environment]
             for run in runs:
                 if run['TenantId'] == tenant or (not run['TenantId'] and tenant == "Untenanted"):
-                    table += f"| {run['TenantId']} "
+                    table += f"| {"Untenanted" if not run['TenantId'] else run['TenantId']} "
                     icon = get_state_icon(run['State'], run['HasWarningsOrErrors'])
                     table += f"| {icon} "
                     table += "|\n"
