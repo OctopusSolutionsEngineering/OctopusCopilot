@@ -20,7 +20,7 @@ class DateDifferenceTest(unittest.TestCase):
 
         self.assertEqual("30 days", get_date_difference_summary(difference))
 
-    def test_date_difference_hours(self):
+    def test_date_difference_hour(self):
         from datetime import datetime
         date1 = datetime(2024, 1, 1, 1, 1, 1)
         date2 = datetime(2024, 1, 1, 2, 1, 1)
