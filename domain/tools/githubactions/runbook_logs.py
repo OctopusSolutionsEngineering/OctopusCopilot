@@ -13,7 +13,7 @@ from infrastructure.openai import llm_message_query
 
 
 def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
-    def runbook_logs_callback(original_query, messages, space, project, runbook, environments, channel, tenants,
+    def runbook_logs_callback(original_query, messages, space, project, runbook, environments, tenants,
                               steps, lines):
 
         space_id, actual_space_name, warnings = lookup_space(url, api_key, github_user, original_query, space)

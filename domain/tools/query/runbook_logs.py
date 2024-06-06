@@ -19,7 +19,7 @@ def answer_runbook_run_logs_wrapper(query, callback, logging):
     context is implementation specific.
     """
 
-    def answer_runbook_run_logs(space=None, project=None, runbook=None, environment=None, channel=None, tenant=None,
+    def answer_runbook_run_logs(space=None, project=None, runbook=None, environment=None, tenant=None,
                                 steps=None, lines=None, **kwargs):
         """Answers a query about the contents of the logs of a runbook run.
         Use this function when the prompt asks anything about runbook logs.
@@ -29,7 +29,6 @@ def answer_runbook_run_logs_wrapper(query, callback, logging):
         project: project names
         runbook: runbook names
         environment: variable names
-        channel: channel name
         tenant: tenant name
         steps: the step names or indexes to get logs from
         lines: the number of lines to return
@@ -45,6 +44,6 @@ def answer_runbook_run_logs_wrapper(query, callback, logging):
         messages = build_plain_text_prompt()
 
         # This is just a passthrough to the original callback
-        return callback(query, messages, space, project, runbook, environment, channel, tenant, steps, lines)
+        return callback(query, messages, space, project, runbook, environment, tenant, steps, lines)
 
     return answer_runbook_run_logs
