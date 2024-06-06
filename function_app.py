@@ -1055,6 +1055,9 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             api_key,
             log_query)]
 
+        # A bunch of functions that search the docs
+        docs_functions = [FunctionDefinition(tool) for tool in how_to_wrapper(query, how_to_callback, log_query)]
+
         return FunctionDefinitions([
             FunctionDefinition(
                 answer_general_query_wrapper(
@@ -1096,7 +1099,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                 log_query),
                 callback=run_runbook_confirm_callback_wrapper(url, api_key, log_query),
                 is_enabled=is_admin_user(get_github_user_from_form(), get_admin_users()))],
-            fallback=FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
+            fallback=FunctionDefinitions(docs_functions),
             invalid=FunctionDefinition(
                 answer_general_query_wrapper(query, general_query_callback, log_query),
                 schema=AnswerGeneralQuery)

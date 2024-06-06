@@ -19,6 +19,26 @@ def how_to_wrapper(query, callback, logging):
     context is implementation specific.
     """
 
+    def how_do_i(keywords=None, **kwargs):
+        """Answers questions about how to do something in Octopus Deploy. Questions like:
+        * How do I do X?
+        * How can I enable X?
+        * How do I add X?
+        * How do I remove X?
+        * How do I configure X?
+        * How do I find X?
+        * How do I use X?
+        * How do I create X?
+        * How do I disable X?
+        * How do I setup X?
+        * How do I enable X?
+
+        Args:
+        keywords: The keywords extracted from the query
+        """
+
+        return provide_help_and_instructions(keywords, **kwargs)
+
     def provide_help_and_instructions(keywords=None, **kwargs):
         """Answers questions like how or where to create, use, add, remove, setup, enable, disable, configure, or find
         Octopus Deploy features like: Projects, Environments, Lifecycles, Channels, Deployments, Releases,
@@ -44,4 +64,4 @@ def how_to_wrapper(query, callback, logging):
         # This is just a passthrough to the original callback
         return callback(query, sanitize_list(keywords))
 
-    return provide_help_and_instructions
+    return provide_help_and_instructions, how_do_i

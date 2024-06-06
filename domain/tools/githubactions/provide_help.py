@@ -86,7 +86,7 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 * @octopus-ai-app List any URLs printed in the deployment logs for the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the space called "{space_name}"
                 * @octopus-ai-app How do I enable server side apply?
                 * @octopus-ai-app The status "Success" is represented with the 🟢 character. The status "Executing" is represented by the 🔵 character. The status "In Progress" is represented by the ⚪ character. Other statuses are represented with the 🔴 character. Show the release version, release notes, and status of the last 5 deployments for the project "{first_project}" in the "{first_environment}" environment in the "{space_name}" space in a markdown table.
-            
+
                 By setting default values for the space, project, environment, and other entities, you can omit them from your queries.
                 This way, you can write prompts without specifying the space, project, environment, runbook, or tenant each time.
                 * @octopus-ai-app Set the default space to "{space_name}"
@@ -100,10 +100,10 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 * @octopus-ai-app Show the default environment
                 * @octopus-ai-app Show the default tenant
                 * @octopus-ai-app Show the default runbook
-            
+
                 Logout of your session with:
                 * @octopus-ai-app logout
-            
+
                 See the [documentation](https://octopus.com/docs/administration/copilot) for more information.
                 """))
 

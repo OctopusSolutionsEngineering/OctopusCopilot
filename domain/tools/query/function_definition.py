@@ -62,7 +62,7 @@ class FunctionDefinitions:
         Get the fallback tool
         :return: The OpenAI tools
         """
-        return FunctionDefinitions([self.fallback])
+        return self.fallback
 
     def get_callback_function(self, function_name):
         """
