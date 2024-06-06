@@ -28,7 +28,7 @@ def get_dashboard_wrapper(original_query, github_user, api_key, url):
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
         dashboard = get_dashboard(space_id, api_key, url)
-        response = get_dashboard_response(dashboard)
+        response = get_dashboard_response(actual_space_name, dashboard)
 
         return CopilotResponse("\n\n".join(filter(lambda x: x, [response, warnings])))
 

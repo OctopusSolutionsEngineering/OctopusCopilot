@@ -18,8 +18,8 @@ def get_octopus_project_names_response(space_name, projects):
     return f"I found {len(projects)} projects in the space \"{space_name.strip()}\":\n* " + "\n* ".join(projects)
 
 
-def get_dashboard_response(dashboard):
-    table = ""
+def get_dashboard_response(space_name, dashboard):
+    table = f"{space_name}\n\n"
     for project_group in dashboard["ProjectGroups"]:
 
         table += f"| {project_group['Name']} "
