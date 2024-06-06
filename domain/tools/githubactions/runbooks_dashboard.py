@@ -4,7 +4,7 @@ from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import sanitize_name_fuzzy, sanitize_space
 from domain.transformers.chat_responses import get_runbook_dashboard_response
 from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_from_name, get_runbooks_dashboard, \
-    get_project, get_tenant
+    get_project, get_tenant, get_runbook_fuzzy
 
 
 def get_runbook_dashboard_wrapper(original_query, github_user, api_key, url):
@@ -44,7 +44,9 @@ def get_runbook_dashboard_wrapper(original_query, github_user, api_key, url):
         if not sanitized_runbook_names:
             return CopilotResponse("Please specify a runbook name in the query.")
 
-        dashboard = get_runbooks_dashboard(space_id, api_key, url)
+        runbook = get_runbook_fuzzy(space_id, project['Id'], sanitized_runbook_names[0], api_key, url)
+
+        dashboard = get_runbooks_dashboard(space_id, runbook['Id'], api_key, url)
         response = get_runbook_dashboard_response(dashboard, lambda x: get_tenant(space_id, x, api_key, url)["Name"])
 
         return CopilotResponse("\n\n".join(filter(lambda x: x, [response, warnings])))
