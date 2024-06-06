@@ -847,6 +847,68 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
     return task["ActivityLogs"]
 
 
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_runbook_deployment_logs(space_name, project_name, runbook_name, environment_name, tenant_name, release_version,
+                                api_key,
+                                octopus_url):
+    """
+    Returns a logs for a deployment to an environment.
+    :param space_name: The name of the space.
+    :param project_name: The name of the project
+    :param environment_name: The name of the environment
+    :param tenant_name: The name of the tenant
+    :param release_version: The name of the release
+    :param steps: The steps to limit the logs to
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
+    :return: The deployment progression raw JSON
+    """
+    ensure_string_not_empty(space_name, 'space_name must be a non-empty string (get_deployment_logs).')
+    ensure_string_not_empty(project_name, 'project_name must be a non-empty string (get_deployment_logs).')
+    ensure_string_not_empty(octopus_url, 'octopus_url must be the Octopus Url (get_deployment_logs).')
+    ensure_string_not_empty(api_key, 'api_key must be the Octopus Api key (get_deployment_logs).')
+
+    space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, octopus_url)
+
+    project = get_project(space_id, project_name, api_key, octopus_url)
+
+    runbook = get_runbook_fuzzy(space_id, project["Id"], runbook_name, api_key, octopus_url)
+
+    environment = None
+    if environment_name:
+        environment = get_environment_fuzzy(space_id, environment_name, api_key, octopus_url)
+
+    tenant = None
+    if tenant_name:
+        tenant = get_tenant_fuzzy(space_id, tenant_name, api_key, octopus_url)
+
+    # Find deployment count
+    query = dict(skip=0, project=project['Id'], runbook=runbook["Id"], spaces=space_id,
+                 includeSystem="false", environment=environment["Id"])
+
+    if environment:
+        query["environment"] = environment["Id"]
+
+    if tenant:
+        query["tenant"] = tenant["Id"]
+
+    api = build_url(octopus_url, f"bff/tasks/list", query)
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    runs = json.loads(resp.data.decode("utf-8")).get("Items")
+
+    if not runs:
+        return ""
+
+    task_id = runs[0]["Id"] if runs else None
+
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Tasks/{task_id}/details")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    task = json.loads(resp.data.decode("utf-8"))
+
+    return task["ActivityLogs"]
+
+
 def activity_logs_to_string(activity_logs, sanitized_steps):
     if not activity_logs:
         return ""
