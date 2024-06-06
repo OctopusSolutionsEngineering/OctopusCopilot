@@ -35,7 +35,9 @@ def sanitize_message(message):
     :param message: The message to be logged
     :return: The sanitized message
     """
-    ensure_string(message, "message must be a string (sanitize_message)")
+
+    if not message:
+        return message
 
     # A defensive move to stop API keys from appearing in logs
     for sensitive_var in sensitive_vars:

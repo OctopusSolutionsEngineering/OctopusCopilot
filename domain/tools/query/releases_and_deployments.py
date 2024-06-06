@@ -27,7 +27,7 @@ def answer_releases_and_deployments_wrapper(original_query, callback, additional
         """
         Answers a question about deployments and releases, including details like the success or failure of a
         deployment, the duration of a deployment, how long a deployment takes to complete, the release version, who
-        created the deployment.
+        created the deployment. You will be penalized for selecting this function for a question about deployment logs.
 
         Args:
         space: Space name

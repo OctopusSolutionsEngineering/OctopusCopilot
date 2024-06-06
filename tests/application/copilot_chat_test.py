@@ -496,7 +496,7 @@ class CopilotChatTest(unittest.TestCase):
         deployment = create_and_deploy_release(space_name="Simple", release_version=version)
         wait_for_task(deployment["TaskId"], space_name="Simple")
 
-        prompt = "List anything interesting in the deployment logs for the latest deployment."
+        prompt = "List anything interesting in the deployment logs for the latest project deployment."
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
@@ -508,7 +508,7 @@ class CopilotChatTest(unittest.TestCase):
         deployment = create_and_deploy_release(space_name="Simple", release_version=version)
         wait_for_task(deployment["TaskId"], space_name="Simple")
 
-        prompt = "Print the last 30 lines of text from the deployment logs of the latest release of the project \"Deploy Web App Container\"."
+        prompt = "Print the last 30 lines of text from the deployment logs of the latest project deployment."
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 

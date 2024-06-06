@@ -1042,12 +1042,6 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                 answer_project_variables_wrapper(query, variable_query_callback, log_query)),
             FunctionDefinition(
                 answer_project_variables_usage_wrapper(query, variable_query_callback, log_query)),
-            FunctionDefinition(
-                answer_releases_and_deployments_wrapper(
-                    query,
-                    releases_query_callback,
-                    releases_query_messages,
-                    log_query)),
             FunctionDefinition(answer_project_deployment_logs_wrapper(query, logs_callback, log_query)),
             FunctionDefinition(answer_runbook_run_logs_wrapper(
                 query,
@@ -1057,6 +1051,12 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                     url,
                     log_query),
                 log_query)),
+            FunctionDefinition(
+                answer_releases_and_deployments_wrapper(
+                    query,
+                    releases_query_callback,
+                    releases_query_messages,
+                    log_query)),
             FunctionDefinition(answer_machines_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(answer_certificates_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(clean_up_all_records),
