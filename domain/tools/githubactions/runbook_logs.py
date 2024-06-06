@@ -12,9 +12,8 @@ from infrastructure.octopus import get_runbook_deployment_logs, \
 from infrastructure.openai import llm_message_query
 
 
-def get_runbook_dashboard_wrapper(github_user, api_key, url, log_query):
+def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
     def runbook_logs_callback(original_query, messages, space, project, runbook, environments, channel, tenants,
-                              release,
                               steps, lines):
 
         space_id, actual_space_name, warnings = lookup_space(url, api_key, github_user, original_query, space)
@@ -45,7 +44,6 @@ def get_runbook_dashboard_wrapper(github_user, api_key, url, log_query):
                                                 sanitized_runbook_names[0],
                                                 sanitized_environment_names[0],
                                                 sanitized_tenant_names[0] if sanitized_tenant_names else None,
-                                                release,
                                                 api_key,
                                                 url),
             "Deployment logs")

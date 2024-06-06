@@ -310,7 +310,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_get_runbook_dashboard(self):
         publish_runbook("Simple", "Runbook Project", "Backup Database")
         space_id, space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
-        run_published_runbook_fuzzy(
+        deployment = run_published_runbook_fuzzy(
             space_id,
             "Runbook Project",
             "Backup Database",
@@ -318,14 +318,32 @@ class CopilotChatTest(unittest.TestCase):
             "",
             Octopus_Api_Key,
             Octopus_Url)
-        time.sleep(1)
+        wait_for_task(deployment["TaskId"], space_name="Simple")
         prompt = "Get the runbook dashboard for runbook \"Backup Database\" in the \"Runbook Project\" project."
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("🔵" in response_text or "🟡" in response_text or "🟢" in response_text
                         or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
-        print(response_text)
+
+    # @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    # def test_get_runbook_logs(self):
+    #     publish_runbook("Simple", "Runbook Project", "Backup Database")
+    #     space_id, space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+    #     deployment = run_published_runbook_fuzzy(
+    #         space_id,
+    #         "Runbook Project",
+    #         "Backup Database",
+    #         "Development",
+    #         "",
+    #         Octopus_Api_Key,
+    #         Octopus_Url)
+    #     wait_for_task(deployment["TaskId"], space_name="Simple")
+    #     prompt = "Get the logs from the run of runbook \"Backup Database\" in the \"Runbook Project\" project."
+    #     response = copilot_handler_internal(build_request(prompt))
+    #     response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+    #
+    #     self.assertTrue("Hello World" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment_fuzzy(self):
