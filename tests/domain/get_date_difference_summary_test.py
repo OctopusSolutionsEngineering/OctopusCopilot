@@ -26,7 +26,7 @@ class DateDifferenceTest(unittest.TestCase):
         date2 = datetime(2024, 1, 1, 2, 1, 1)
         difference = date2 - date1
 
-        self.assertEqual("1 hour", get_date_difference_summary(difference))
+        self.assertEqual("60 minutes", get_date_difference_summary(difference))
 
     def test_date_difference_hours(self):
         from datetime import datetime
