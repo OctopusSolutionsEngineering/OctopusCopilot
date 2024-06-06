@@ -38,6 +38,7 @@ from domain.security.security import call_admin_function, is_admin_user
 from domain.tools.githubactions.dashboard import get_dashboard_wrapper
 from domain.tools.githubactions.provide_help import provide_help_wrapper
 from domain.tools.githubactions.run_runbook import run_runbook_wrapper, run_runbook_confirm_callback_wrapper
+from domain.tools.githubactions.runbooks_dashboard import get_runbook_dashboard_wrapper
 from domain.tools.query.certificates_query import answer_certificates_wrapper
 from domain.tools.query.function_call import FunctionCall
 from domain.tools.query.function_definition import FunctionDefinitions, FunctionDefinition
@@ -1054,6 +1055,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             FunctionDefinition(get_default_value),
             FunctionDefinition(remove_default_value),
             FunctionDefinition(get_dashboard_wrapper(query, get_github_user_from_form(), api_key, url)),
+            FunctionDefinition(get_runbook_dashboard_wrapper(query, get_github_user_from_form(), api_key, url)),
             *help_functions,
             FunctionDefinition(
                 test_confirmation(query),

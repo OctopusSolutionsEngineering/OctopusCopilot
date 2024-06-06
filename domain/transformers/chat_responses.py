@@ -71,3 +71,62 @@ def get_dashboard_response(dashboard):
             table += "|\n"
         table += "|\n\n"
     return table
+
+
+def get_runbook_dashboard_response(dashboard, get_tenant):
+    table = ""
+
+    tenants = []
+    for environment in dashboard["RunbookRuns"]:
+        runs = dashboard["RunbookRuns"][environment]
+        for run in runs:
+            tenant = "Untenanted" if not run['TenantId'] else run['TenantId']
+            if tenant not in tenants:
+                tenants.append(tenant)
+
+    table += f"| Tenant "
+    for environment in dashboard["RunbookRuns"]:
+        environment_reference = next(filter(lambda x: x["Id"] == environment, dashboard["Environments"]), None)
+        table += f"| {environment_reference['Name']} "
+
+    table += "|\n"
+
+    for tenant in tenants:
+        for environment in dashboard["RunbookRuns"]:
+            runs = dashboard["RunbookRuns"][environment]
+            for run in runs:
+                if run['TenantId'] == tenant or (not run['TenantId'] and tenant == "Untenanted"):
+                    table += f"| {run['TenantId']} "
+                    icon = get_state_icon(run['State'], run['HasWarningsOrErrors'])
+                    table += f"| {icon} "
+                    table += "|\n"
+
+    return table
+
+
+def get_state_icon(state, has_warnings):
+    if state == "Executing":
+        return "🔵"
+
+    if state == "Success":
+        if has_warnings:
+            return "🟡"
+        else:
+            return "🟢"
+
+    elif state == "Failed":
+        return "🔴"
+
+    if state == "Canceled":
+        return "⚪"
+
+    elif state == "TimedOut":
+        return "🔴"
+
+    elif state == "Cancelling":
+        return "🔴"
+
+    elif state == "Queued":
+        return "🟣"
+
+    return "⚪"

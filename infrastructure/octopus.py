@@ -954,6 +954,15 @@ def get_tenant_fuzzy(space_id, tenant_name, api_key, octopus_url):
     return tenant
 
 
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_tenant(space_id, tenant_id, api_key, octopus_url):
+    base_url = f"api/{quote_safe(space_id)}/Tenants/{quote_safe(tenant_id)}"
+    api = build_url(octopus_url, base_url)
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()
+
+
 @logging_wrapper
 def get_tenant_cached(space_id, tenant_name, api_key, octopus_url):
     if not tenant_cache.get(octopus_url):

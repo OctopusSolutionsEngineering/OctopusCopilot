@@ -291,35 +291,22 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies queries answered by documentation
         """
 
-        query1 = "How do I review the DORA metrics for my space?"
-        self.assertEqual(llm_tool_query(query1, build_mock_test_tools(query1)).name, "provide_help_and_instructions")
+        docs_tools = ["provide_help_and_instructions", "how_do_i"]
+        queries = ["How do I review deployment frequency metrics?",
+                   "How do I enable Azure AD?",
+                   "How do I create a new azure target?",
+                   "How do I integrate with ServiceNow?",
+                   "How do I use lifecycles",
+                   "How do I add a Worker?",
+                   "How do I setup a polling Tentacle?",
+                   "How do I review the DORA metrics for my space?",
+                   "How do I use Community Step templates?",
+                   "How do I enable Config-as-code for a project?", ]
 
-        query2 = "How do I use Community Step templates?"
-        self.assertEqual(llm_tool_query(query2, build_mock_test_tools(query2)).name, "provide_help_and_instructions")
-
-        query3 = "How do I review deployment frequency metrics?"
-        self.assertEqual(llm_tool_query(query3, build_mock_test_tools(query3)).name, "provide_help_and_instructions")
-
-        query4 = "How do I enable Azure AD?"
-        self.assertEqual(llm_tool_query(query4, build_mock_test_tools(query4)).name, "provide_help_and_instructions")
-
-        query5 = "How do I create a new azure target?"
-        self.assertEqual(llm_tool_query(query5, build_mock_test_tools(query5)).name, "provide_help_and_instructions")
-
-        query6 = "How do I integrate with ServiceNow?"
-        self.assertEqual(llm_tool_query(query6, build_mock_test_tools(query6)).name, "provide_help_and_instructions")
-
-        query7 = "How do I setup a polling Tentacle?"
-        self.assertEqual(llm_tool_query(query7, build_mock_test_tools(query7)).name, "provide_help_and_instructions")
-
-        query8 = "How do I add a Worker?"
-        self.assertEqual(llm_tool_query(query8, build_mock_test_tools(query8)).name, "provide_help_and_instructions")
-
-        query9 = "How do I enable Config-as-code for a project?"
-        self.assertEqual(llm_tool_query(query9, build_mock_test_tools(query9)).name, "provide_help_and_instructions")
-
-        query10 = "How do I use lifecycles"
-        self.assertEqual(llm_tool_query(query10, build_mock_test_tools(query10)).name, "provide_help_and_instructions")
+        for query in queries:
+            query_result = llm_tool_query(query, build_mock_test_tools(query))
+            self.assertIn(query_result.name, docs_tools, query + " " + query_result.name)
+            print(query_result.name)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_prompt(self):

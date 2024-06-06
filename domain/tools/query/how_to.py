@@ -20,22 +20,28 @@ def how_to_wrapper(query, callback, logging):
     """
 
     def how_do_i(keywords=None, **kwargs):
-        """Answers questions about how to do something in Octopus Deploy. Questions like:
-        * How do I do X?
-        * How can I enable X?
-        * How do I add X?
-        * How do I remove X?
-        * How do I configure X?
-        * How do I find X?
-        * How do I use X?
-        * How do I create X?
-        * How do I disable X?
-        * How do I setup X?
-        * How do I enable X?
+        """Answers a question about how to do something. Use this function when the query is asking a general question.
+Questions can look like those in the following list:
+* How do I integrate with something?
+* How do I do something?
+* How can I enable something?
+* How do I add something?
+* How do I remove something?
+* How do I configure something?
+* How do I find something?
+* How do I use something?
+* How do I create something?
+* How do I disable something?
+* How do I setup something?
+* How do I setup a thing?
+* How do I set up something?
+* How do I enable something?
+* How do I enable something in something?
+* How do I enable something for something?
 
-        Args:
-        keywords: The keywords extracted from the query
-        """
+Args:
+keywords: The keywords extracted from the query
+"""
 
         return provide_help_and_instructions(keywords, **kwargs)
 
@@ -64,4 +70,4 @@ def how_to_wrapper(query, callback, logging):
         # This is just a passthrough to the original callback
         return callback(query, sanitize_list(keywords))
 
-    return provide_help_and_instructions, how_do_i
+    return how_do_i, provide_help_and_instructions
