@@ -11,8 +11,13 @@ def get_octopus_resource(uri, headers):
 
 
 def get_by_name(uri, headers, name):
-    resources = get_octopus_resource(uri)
+    resources = get_octopus_resource(uri, headers)
     return next((x for x in resources if x['Name'] == name), None)
+
+
+def get_item_by_name(uri, headers, name):
+    resources = get_octopus_resource(uri, headers)
+    return next((x for x in resources['Items'] if x['Name'] == name), None)
 
 
 def deploy_release(octopus_server_uri, octopus_api_key, space_name, project_name, release_version, environment_name):

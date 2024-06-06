@@ -1045,7 +1045,7 @@ def get_runbook_fuzzy(space_id, project_id, runbook_name, api_key, octopus_url):
 
 @logging_wrapper
 def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environment_name, tenant_name, my_api_key,
-                                my_octopus_api, log_query):
+                                my_octopus_api, log_query=None):
     """
     Runs a published runbook
     """

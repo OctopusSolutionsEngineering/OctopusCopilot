@@ -76,6 +76,7 @@ def get_dashboard_response(dashboard):
 def get_runbook_dashboard_response(dashboard, get_tenant):
     table = ""
 
+    # Find the tenants
     tenants = []
     for environment in dashboard["RunbookRuns"]:
         runs = dashboard["RunbookRuns"][environment]
@@ -84,13 +85,20 @@ def get_runbook_dashboard_response(dashboard, get_tenant):
             if tenant not in tenants:
                 tenants.append(tenant)
 
+    # Bild the header row
     table += f"| Tenant "
     for environment in dashboard["RunbookRuns"]:
         environment_reference = next(filter(lambda x: x["Id"] == environment, dashboard["Environments"]), None)
         table += f"| {environment_reference['Name']} "
-
     table += "|\n"
 
+    # Build the header separator
+    table += f"|-"
+    for environment in dashboard["RunbookRuns"]:
+        table += f"|-"
+    table += "|\n"
+
+    # Build the execution rows
     for tenant in tenants:
         for environment in dashboard["RunbookRuns"]:
             runs = dashboard["RunbookRuns"][environment]

@@ -16,10 +16,12 @@ from testcontainers.core.waiting_utils import wait_for_logs
 from domain.transformers.clean_response import strip_before_first_curly_bracket
 from domain.transformers.sse_transformers import convert_from_sse_response
 from function_app import copilot_handler_internal, health_internal
+from infrastructure.octopus import run_published_runbook_fuzzy, get_space_id_and_name_from_name
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release, wait_for_task
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.octopus_infrastructure_test import run_terraform
+from tests.infrastructure.publish_runbook import publish_runbook
 
 
 class CopilotChatTest(unittest.TestCase):
@@ -303,6 +305,27 @@ class CopilotChatTest(unittest.TestCase):
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue(version in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_get_runbook_dashboard(self):
+        publish_runbook("Simple", "Runbook Project", "Backup Database")
+        space_id, space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+        run_published_runbook_fuzzy(
+            space_id,
+            "Runbook Project",
+            "Backup Database",
+            "Development",
+            "",
+            Octopus_Api_Key,
+            Octopus_Url)
+        time.sleep(1)
+        prompt = "Get the runbook dashboard for runbook \"Backup Database\" in the \"Runbook Project\" project."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        self.assertTrue("🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+                        or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
+        print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment_fuzzy(self):
