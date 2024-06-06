@@ -854,6 +854,7 @@ def get_runbook_deployment_logs(space_name, project_name, runbook_name, environm
     Returns a logs for a deployment to an environment.
     :param space_name: The name of the space.
     :param project_name: The name of the project
+    :param runbook_name: The name of the runbook
     :param environment_name: The name of the environment
     :param tenant_name: The name of the tenant
     :param api_key: The Octopus API key

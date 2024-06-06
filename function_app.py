@@ -1047,6 +1047,14 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                     releases_query_messages,
                     log_query)),
             FunctionDefinition(answer_project_deployment_logs_wrapper(query, logs_callback, log_query)),
+            # FunctionDefinition(answer_runbook_run_logs_wrapper(
+            #     query,
+            #     get_runbook_dashboard_wrapper(
+            #         query,
+            #         get_github_user_from_form(),
+            #         api_key,
+            #         url),
+            #     log_query)),
             FunctionDefinition(answer_machines_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(answer_certificates_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(clean_up_all_records),

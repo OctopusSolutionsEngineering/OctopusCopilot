@@ -1,7 +1,7 @@
 from domain.messages.deployment_logs import build_plain_text_prompt
 
 
-def answer_project_deployment_logs_wrapper(query, callback, logging):
+def answer_runbook_run_logs_wrapper(query, callback, logging):
     """
     A wrapper's job is to return a function with the signature used by the LLM to extract entities from the query. The
     parameters of the wrapper are captured by the returned function without altering the signature of the function.
@@ -19,14 +19,15 @@ def answer_project_deployment_logs_wrapper(query, callback, logging):
     context is implementation specific.
     """
 
-    def answer_project_deployment_logs(space=None, project=None, environment=None, channel=None, tenant=None,
-                                       release=None, steps=None, lines=None, **kwargs):
-        """Answers a query about the contents of the deployment logs. Use this function when the prompt asks anything
-        about deployment or project logs.
+    def answer_runbook_run_logs(space=None, project=None, runbook=None, environment=None, channel=None, tenant=None,
+                                release=None, steps=None, lines=None, **kwargs):
+        """Answers a query about the contents of deployment logs for a runbook run. 
+        Use this function when the prompt asks anything about runbook logs.
 
         Args:
         space: Space name
         project: project names
+        runbook: runbook names
         environment: variable names
         channel: channel name
         tenant: tenant name
@@ -45,6 +46,6 @@ def answer_project_deployment_logs_wrapper(query, callback, logging):
         messages = build_plain_text_prompt()
 
         # This is just a passthrough to the original callback
-        return callback(query, messages, space, project, environment, channel, tenant, release, steps, lines)
+        return callback(query, messages, space, project, runbook, environment, channel, tenant, release, steps, lines)
 
-    return answer_project_deployment_logs
+    return answer_runbook_run_logs
