@@ -86,7 +86,7 @@ def get_runbook_dashboard_response(dashboard, get_tenant):
                 tenants.append(tenant)
 
     # Bild the header row
-    table += f"| Tenant "
+    table += f"| "
     for environment in dashboard["RunbookRuns"]:
         environment_reference = next(filter(lambda x: x["Id"] == environment, dashboard["Environments"]), None)
         table += f"| {environment_reference['Name']} "
