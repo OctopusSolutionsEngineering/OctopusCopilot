@@ -29,7 +29,7 @@ def run_runbook_confirm_callback_wrapper(url, api_key, log_query):
                                                    log_query)
 
             return CopilotResponse(
-                f"[Runbook Run]({url}/app#/{space_id}/projects/{project_id}/operations/runbooks/{response['RunbookId']}/snapshots/{response['RunbookSnapshotId']}/runs/{response['Id']})")
+                f"{runbook_name}\n\n[Runbook Run]({url}/app#/{space_id}/projects/{project_id}/operations/runbooks/{response['RunbookId']}/snapshots/{response['RunbookSnapshotId']}/runs/{response['Id']})")
         except RunbookNotPublished as e:
             return CopilotResponse(f"The runbook {runbook_name} must be published")
 

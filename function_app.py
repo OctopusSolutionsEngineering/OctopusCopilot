@@ -77,10 +77,11 @@ app = func.FunctionApp()
 logger = configure_logging(__name__)
 
 GUEST_API_KEY = "API-GUEST"
-LOGIN_MESSAGE = (f"To continue chatting please [log in](https://github.com/login/oauth/authorize?"
-                 + f"client_id={os.environ.get('GITHUB_CLIENT_ID')}"
-                 + f"&redirect_url={urllib.parse.quote(os.environ.get('GITHUB_CLIENT_REDIRECT'))}"
-                 + "&scope=user&allow_signup=false)")
+LOGIN_MESSAGE = (
+            f"To continue chatting please click the link below:\n\n[log in](https://github.com/login/oauth/authorize?"
+            + f"client_id={os.environ.get('GITHUB_CLIENT_ID')}"
+            + f"&redirect_url={urllib.parse.quote(os.environ.get('GITHUB_CLIENT_REDIRECT'))}"
+            + "&scope=user&allow_signup=false)")
 
 
 @app.function_name(name="api_key_cleanup")
