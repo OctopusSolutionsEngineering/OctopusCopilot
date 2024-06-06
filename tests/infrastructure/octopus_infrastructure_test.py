@@ -20,9 +20,11 @@ from domain.transformers.deployments_from_dashboard import get_deployments_from_
 from domain.versions.octopus_version import octopus_version_at_least
 from infrastructure.octopus import get_project_progression, get_raw_deployment_process, get_octopus_project_names_base, \
     get_current_user, create_limited_api_key, get_deployment_status_base, get_dashboard, get_deployment_logs, \
-    get_item_fuzzy, get_space_id_and_name_from_name, activity_logs_to_string, get_version
-from tests.infrastructure.create_and_deploy_release import create_and_deploy_release
+    get_item_fuzzy, get_space_id_and_name_from_name, activity_logs_to_string, get_version, run_published_runbook_fuzzy, \
+    get_runbook_deployment_logs
+from tests.infrastructure.create_and_deploy_release import create_and_deploy_release, wait_for_task
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
+from tests.infrastructure.publish_runbook import publish_runbook
 
 logger = configure_logging(__name__)
 
@@ -163,9 +165,8 @@ class LiveRequests(unittest.TestCase):
         Tests that we return the details of a deployment
         """
 
-        create_and_deploy_release(space_name="Simple")
-
-        time.sleep(30)
+        deployment = create_and_deploy_release(space_name="Simple")
+        wait_for_task(deployment["TaskId"], space_name="Simple")
 
         activity_logs = get_deployment_logs("Simple",
                                             "Deploy Web App Container",
@@ -178,6 +179,34 @@ class LiveRequests(unittest.TestCase):
         logs = activity_logs_to_string(activity_logs, None)
 
         self.assertTrue("The deployment completed successfully" in logs)
+
+    @retry(AssertionError, tries=3, delay=2)
+    def test_get_runbook_logs(self):
+        """
+        Tests that we return the details of a deployment
+        """
+        space_id, space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+        publish_runbook("Simple", "Runbook Project", "Backup Database")
+        task = run_published_runbook_fuzzy(space_id,
+                                           "Runbook Project",
+                                           "Backup Database",
+                                           "Development",
+                                           None,
+                                           Octopus_Api_Key,
+                                           Octopus_Url)
+        wait_for_task(task["TaskId"], space_name="Simple")
+
+        activity_logs = get_runbook_deployment_logs("Simple",
+                                                    "Runbook Project",
+                                                    "Test Runbook",
+                                                    "Development",
+                                                    None,
+                                                    Octopus_Api_Key,
+                                                    Octopus_Url)
+
+        logs = activity_logs_to_string(activity_logs, None)
+
+        self.assertTrue("Hello world" in logs)
 
     def test_get_no_environment(self):
         """

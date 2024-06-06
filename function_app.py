@@ -48,6 +48,7 @@ from domain.tools.query.logs import answer_project_deployment_logs_wrapper
 from domain.tools.query.project_variables import answer_project_variables_wrapper, \
     answer_project_variables_usage_wrapper
 from domain.tools.query.releases_and_deployments import answer_releases_and_deployments_wrapper
+from domain.tools.query.runbook_logs import answer_runbook_run_logs_wrapper
 from domain.tools.query.step_features import answer_step_features_wrapper
 from domain.tools.query.targets_query import answer_machines_wrapper
 from domain.transformers.deployments_from_dashboard import get_deployments_from_dashboard
@@ -1047,14 +1048,14 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                     releases_query_messages,
                     log_query)),
             FunctionDefinition(answer_project_deployment_logs_wrapper(query, logs_callback, log_query)),
-            # FunctionDefinition(answer_runbook_run_logs_wrapper(
-            #     query,
-            #     get_runbook_dashboard_wrapper(
-            #         query,
-            #         get_github_user_from_form(),
-            #         api_key,
-            #         url),
-            #     log_query)),
+            FunctionDefinition(answer_runbook_run_logs_wrapper(
+                query,
+                get_runbook_dashboard_wrapper(
+                    query,
+                    get_github_user_from_form(),
+                    api_key,
+                    url),
+                log_query)),
             FunctionDefinition(answer_machines_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(answer_certificates_wrapper(query, resource_specific_callback, log_query)),
             FunctionDefinition(clean_up_all_records),
