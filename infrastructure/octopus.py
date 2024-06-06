@@ -770,7 +770,6 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
     :param environment_name: The name of the environment
     :param tenant_name: The name of the tenant
     :param release_version: The name of the release
-    :param steps: The steps to limit the logs to
     :param api_key: The Octopus API key
     :param octopus_url: The Octopus URL
     :return: The deployment progression raw JSON
@@ -793,14 +792,14 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
         tenant = get_tenant_fuzzy(space_id, tenant_name, api_key, octopus_url)
 
     # Find deployment count
-    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Deployments", dict(take=0, projects=project['Id']))
-    resp_json = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key))).json()
-    total_results = resp_json["TotalResults"]
-    skip = max(0, total_results - 30)
+    # api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Deployments", dict(take=0, projects=project['Id']))
+    # resp_json = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key))).json()
+    # total_results = resp_json["TotalResults"]
+    # skip = max(0, total_results - 30)
 
     # Get the latest deployments
     api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Deployments",
-                    dict(take=100, skip=skip, projects=project['Id']))
+                    dict(take=100, skip=0, projects=project['Id']))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     deployments = json.loads(resp.data.decode("utf-8")).get("Items")
@@ -849,8 +848,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_runbook_deployment_logs(space_name, project_name, runbook_name, environment_name, tenant_name, release_version,
-                                api_key,
+def get_runbook_deployment_logs(space_name, project_name, runbook_name, environment_name, tenant_name, api_key,
                                 octopus_url):
     """
     Returns a logs for a deployment to an environment.
@@ -858,8 +856,6 @@ def get_runbook_deployment_logs(space_name, project_name, runbook_name, environm
     :param project_name: The name of the project
     :param environment_name: The name of the environment
     :param tenant_name: The name of the tenant
-    :param release_version: The name of the release
-    :param steps: The steps to limit the logs to
     :param api_key: The Octopus API key
     :param octopus_url: The Octopus URL
     :return: The deployment progression raw JSON
