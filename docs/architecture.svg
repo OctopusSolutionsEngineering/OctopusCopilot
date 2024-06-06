@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
-<svg width="80cm" height="31cm" viewBox="-224 8 1585 613" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg width="80cm" height="29cm" viewBox="-224 59 1585 562" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <g id="Background">
     <g>
       <rect style="fill: #e6194b; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #800000" x="700" y="280" width="200" height="100" rx="0" ry="0"/>
@@ -83,9 +83,6 @@
     </g>
     <text font-size="12.8" style="fill: #1e90ff; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="630" y="325.5">
       <tspan x="630" y="325.5"></tspan>
-    </text>
-    <text font-size="12.8" style="fill: #1e90ff; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="420" y="20">
-      <tspan x="420" y="20">Octopus Extension for GitHub Copilot</tspan>
     </text>
     <g>
       <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" x1="700" y1="330" x2="316.036" y2="330"/>
