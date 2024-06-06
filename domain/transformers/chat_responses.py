@@ -80,7 +80,7 @@ def get_dashboard_response(space_name, dashboard):
 
 
 def get_runbook_dashboard_response(project, runbook, dashboard, get_tenant):
-    dt = datetime.now()
+    dt = datetime.now(pytz.utc)
 
     table = f"{project['Name']} / {runbook['Name']}\n\n"
 
