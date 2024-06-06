@@ -1,3 +1,9 @@
+from datetime import datetime
+
+from domain.date.date_difference import get_date_difference_summary
+from domain.date.parse_dates import parse_unknown_format_date
+
+
 def get_octopus_project_names_response(space_name, projects):
     """
     Provides a conversational response to the list of projects
@@ -74,6 +80,8 @@ def get_dashboard_response(space_name, dashboard):
 
 
 def get_runbook_dashboard_response(project, runbook, dashboard, get_tenant):
+    dt = datetime.now()
+
     table = f"{project['Name']} / {runbook['Name']}\n\n"
 
     # Find the tenants
@@ -105,8 +113,9 @@ def get_runbook_dashboard_response(project, runbook, dashboard, get_tenant):
             for run in runs:
                 if run['TenantId'] == tenant or (not run['TenantId'] and tenant == "Untenanted"):
                     table += f"| {'Untenanted' if not run['TenantId'] else get_tenant(run['TenantId'])} "
+                    created = parse_unknown_format_date(run["Created"])
                     icon = get_state_icon(run['State'], run['HasWarningsOrErrors'])
-                    table += f"| {icon} "
+                    table += f"| {icon} {get_date_difference_summary(dt - created)} ago"
                     table += "|\n"
 
     return table
