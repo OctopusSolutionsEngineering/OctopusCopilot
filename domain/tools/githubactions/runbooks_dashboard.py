@@ -48,7 +48,8 @@ def get_runbook_dashboard_wrapper(original_query, github_user, api_key, url):
         runbook = get_runbook_fuzzy(space_id, project['Id'], sanitized_runbook_names[0], api_key, url)
 
         dashboard = get_runbooks_dashboard(space_id, runbook['Id'], api_key, url)
-        response = get_runbook_dashboard_response(dashboard, lambda x: get_tenant(space_id, x, api_key, url)["Name"])
+        response = get_runbook_dashboard_response(project, runbook, dashboard,
+                                                  lambda x: get_tenant(space_id, x, api_key, url)["Name"])
 
         return CopilotResponse("\n\n".join(filter(lambda x: x, [response, warnings])))
 

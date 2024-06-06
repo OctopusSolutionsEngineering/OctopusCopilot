@@ -73,8 +73,8 @@ def get_dashboard_response(dashboard):
     return table
 
 
-def get_runbook_dashboard_response(dashboard, get_tenant):
-    table = ""
+def get_runbook_dashboard_response(project, runbook, dashboard, get_tenant):
+    table = f"{project['Name']} / {runbook['Name']}\n\n"
 
     # Find the tenants
     tenants = []
