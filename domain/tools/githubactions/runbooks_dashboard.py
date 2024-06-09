@@ -7,16 +7,9 @@ from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_f
     get_project, get_tenant, get_runbook_fuzzy
 
 
-def get_runbook_dashboard_wrapper(original_query, github_user, api_key, url):
-    def get_runbook_dashboard_tool(space_name: None, project_name: None, runbook_name: None):
-        """Display the runbook dashboard
-
-            Args:
-                space_name: The name of the space containing the projects.
-                project_name: The name of the project containing the runbook.
-                runbook_name: The name of the runbook.
-        """
-
+def get_runbook_dashboard_callback(github_user):
+    def get_runbook_dashboard_implementation(original_query, api_key, url, space_name, project_name,
+                                             runbook_name):
         sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
                                               sanitize_space(original_query, space_name))
 
@@ -53,4 +46,4 @@ def get_runbook_dashboard_wrapper(original_query, github_user, api_key, url):
 
         return CopilotResponse("\n\n".join(filter(lambda x: x, [response, warnings])))
 
-    return get_runbook_dashboard_tool
+    return get_runbook_dashboard_implementation

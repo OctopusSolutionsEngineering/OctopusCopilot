@@ -35,12 +35,13 @@ from domain.sanitizers.sanitized_list import get_item_or_none, \
     none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_names_fuzzy, sanitize_tenants, \
     update_query, sanitize_space, sanitize_name_fuzzy, sanitize_log_steps, sanitize_log_lines
 from domain.security.security import call_admin_function, is_admin_user
-from domain.tools.githubactions.dashboard import get_dashboard_wrapper
+from domain.tools.githubactions.dashboard import get_dashboard_callback
 from domain.tools.githubactions.provide_help import provide_help_wrapper
 from domain.tools.githubactions.run_runbook import run_runbook_wrapper, run_runbook_confirm_callback_wrapper
 from domain.tools.githubactions.runbook_logs import get_runbook_logs_wrapper
-from domain.tools.githubactions.runbooks_dashboard import get_runbook_dashboard_wrapper
+from domain.tools.githubactions.runbooks_dashboard import get_runbook_dashboard_callback
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
+from domain.tools.wrapper.dashboard_wrapper import get_dashboard_wrapper
 from domain.tools.wrapper.function_call import FunctionCall
 from domain.tools.wrapper.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
@@ -50,6 +51,7 @@ from domain.tools.wrapper.project_variables import answer_project_variables_wrap
     answer_project_variables_usage_wrapper
 from domain.tools.wrapper.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.tools.wrapper.runbook_logs import answer_runbook_run_logs_wrapper
+from domain.tools.wrapper.runbooks_dashboard_wrapper import get_runbook_dashboard_wrapper
 from domain.tools.wrapper.step_features import answer_step_features_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.transformers.deployments_from_dashboard import get_deployments_from_dashboard
@@ -342,7 +344,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
         # Define some tools that the LLM can call
         def general_query_callback(*args, **kwargs):
             """
-            Answers a general wrapper about an Octopus space
+            Answers a general query about an Octopus space
             """
             body = json.loads(get_context())
             return llm_message_query(build_hcl_prompt(),
@@ -352,7 +354,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
         def logs_query_callback(original_query, messages, *args, **kwargs):
             """
-            Answers a general wrapper about a logs
+            Answers a general query about a logs
             """
             body = json.loads(get_context())
             return llm_message_query(messages,
@@ -1066,8 +1068,16 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
             FunctionDefinition(remove_default_value),
-            FunctionDefinition(get_dashboard_wrapper(query, get_github_user_from_form(), api_key, url)),
-            FunctionDefinition(get_runbook_dashboard_wrapper(query, get_github_user_from_form(), api_key, url)),
+            FunctionDefinition(get_dashboard_wrapper(
+                query,
+                api_key,
+                url,
+                get_dashboard_callback(get_github_user_from_form()))),
+            FunctionDefinition(get_runbook_dashboard_wrapper(
+                query,
+                api_key,
+                url,
+                get_runbook_dashboard_callback(get_github_user_from_form()))),
             *help_functions,
             FunctionDefinition(
                 test_confirmation(query),

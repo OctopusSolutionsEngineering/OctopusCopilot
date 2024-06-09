@@ -25,7 +25,7 @@ def answer_certificates_wrapper(original_query, callback, logging=None):
                             accounts=None, certificates=None,
                             workerpools=None, machinepolicies=None, tagsets=None,
                             steps=None, **kwargs):
-        """Answers a general wrapper about certificates in an Octopus space.
+        """Answers a general query about certificates in an Octopus space.
 Args:
 space: Space name
 projects: project names
@@ -43,7 +43,7 @@ steps: step names"""
         if logging:
             logging("Enter:", "answer_targets")
 
-        # Build a few shot sample wrapper with a chain-of-thought example to help the LLM understand the relationships
+        # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
         # between projects, deployment processes, and variables.
 
         few_shot = """

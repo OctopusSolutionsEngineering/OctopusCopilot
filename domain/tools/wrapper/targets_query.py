@@ -24,7 +24,7 @@ def answer_machines_wrapper(original_query, callback, logging=None):
                         accounts=None, certificates=None,
                         workerpools=None, machinepolicies=None, tagsets=None,
                         steps=None, **kwargs):
-        """Answers a general wrapper about a machines, targets, agents, or machine policies in an Octopus space.
+        """Answers a general query about a machines, targets, agents, or machine policies in an Octopus space.
 Args:
 space: Space name
 projects: project names

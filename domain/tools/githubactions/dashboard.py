@@ -5,15 +5,8 @@ from domain.transformers.chat_responses import get_dashboard_response
 from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_from_name, get_dashboard
 
 
-def get_dashboard_wrapper(original_query, github_user, api_key, url):
-    def get_dashboard_tool(space_name: None):
-        """Display the dashboard
-
-            Args:
-                space_name: The name of the space containing the projects.
-                If this value is not defined, the default value will be used.
-        """
-
+def get_dashboard_callback(github_user):
+    def get_dashboard_callback_implementation(original_query, api_key, url, space_name):
         sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
                                               sanitize_space(original_query, space_name))
 
@@ -32,4 +25,4 @@ def get_dashboard_wrapper(original_query, github_user, api_key, url):
 
         return CopilotResponse("\n\n".join(filter(lambda x: x, [response, warnings])))
 
-    return get_dashboard_tool
+    return get_dashboard_callback_implementation
