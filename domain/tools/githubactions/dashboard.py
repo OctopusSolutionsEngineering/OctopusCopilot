@@ -13,16 +13,17 @@ def get_dashboard_callback(github_user):
         space_name = get_default_argument(github_user,
                                           sanitized_space["matched"] if sanitized_space else None, "Space")
 
-        warnings = ""
+        warnings = []
 
         if not space_name:
             space_name = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The query did not specify a space so the so the space named {space_name} was assumed."
+            warnings.append(f"The query did not specify a space so the so the space named {space_name} was assumed.")
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
         dashboard = get_dashboard(space_id, api_key, url)
-        response = get_dashboard_response(actual_space_name, dashboard)
+        response = [get_dashboard_response(actual_space_name, dashboard)]
+        response.extend(warnings)
 
-        return CopilotResponse("\n\n".join(filter(lambda x: x, [response, warnings])))
+        return CopilotResponse("\n\n".join(response))
 
     return get_dashboard_callback_implementation
