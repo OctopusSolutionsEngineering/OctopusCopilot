@@ -13,7 +13,7 @@ class MockRequests(unittest.TestCase):
     Integration tests verifying calls to the OpenAI service.
 
     These tests should mostly be focused on ensuring tools are correctly matched to queries by having the correct
-    function comments, and that the correct entities are extracted from the query.
+    function comments, and that the correct entities are extracted from the wrapper.
 
     Tests can also submit mock data to verify the response. Be aware that LLMs are non-deterministic, so it can be hard
     to verify the response.
@@ -35,7 +35,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_project_question(self):
         """
-        Tests that the llm correctly identifies the project name in the query
+        Tests that the llm correctly identifies the project name in the wrapper
         """
 
         query = "What does the project \"Deploy WebApp\" do?"
@@ -48,7 +48,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_project_group_question(self):
         """
-        Tests that the llm correctly identifies the project group name in the query
+        Tests that the llm correctly identifies the project group name in the wrapper
         """
 
         query = "What is the description of the \"Azure Apps\" project group?"
@@ -61,7 +61,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_runbook_question(self):
         """
-        Tests that the llm correctly identifies the runbook name in the query
+        Tests that the llm correctly identifies the runbook name in the wrapper
         """
 
         query = "What is the description of the \"Backup Database\" runbook defined in the \"Runbook Project\" project."
@@ -74,7 +74,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_tenant_question(self):
         """
-        Tests that the llm correctly identifies the tenant name in the query
+        Tests that the llm correctly identifies the tenant name in the wrapper
         """
 
         query = "Describe the \"Team A\" tenant."
@@ -87,7 +87,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_feed_question(self):
         """
-        Tests that the llm correctly identifies the feed name in the query
+        Tests that the llm correctly identifies the feed name in the wrapper
         """
 
         query = "Does the \"Helm\" feed have a password?."
@@ -100,7 +100,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_account_question(self):
         """
-        Tests that the llm correctly identifies the feed name in the query
+        Tests that the llm correctly identifies the feed name in the wrapper
         """
 
         query = "What is the access key of the \"AWS Account\" account?."
@@ -114,7 +114,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_variable_set_question(self):
         """
-        Tests that the llm correctly identifies the library variable set name in the query
+        Tests that the llm correctly identifies the library variable set name in the wrapper
         """
 
         query = "List the variables belonging to the \"Database Settings\" library variable set."
@@ -127,7 +127,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_worker_pool_question(self):
         """
-        Tests that the llm correctly identifies the worker pool name in the query
+        Tests that the llm correctly identifies the worker pool name in the wrapper
         """
 
         query = "What is the description of the \"Docker\" worker pool?"
@@ -140,7 +140,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_certificate_question(self):
         """
-        Tests that the llm correctly identifies the certificate name in the query
+        Tests that the llm correctly identifies the certificate name in the wrapper
         """
 
         query = "What is the note of the \"Kind CA\" certificate?"
@@ -153,7 +153,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_tagset_question(self):
         """
-        Tests that the llm correctly identifies the tagset name in the query
+        Tests that the llm correctly identifies the tagset name in the wrapper
         """
 
         query = "List the tags associated with the \"region\" tag set?"
@@ -166,7 +166,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_lifecycle_question(self):
         """
-        Tests that the llm correctly identifies the lifecycle name in the query
+        Tests that the llm correctly identifies the lifecycle name in the wrapper
         """
 
         query = "What environments are in the \"Simple\" lifecycle?"
@@ -179,7 +179,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_git_creds_question(self):
         """
-        Tests that the llm correctly identifies the git credentials name in the query
+        Tests that the llm correctly identifies the git credentials name in the wrapper
         """
 
         query = "What is the username for the git credentials called \"GitHub Credentials\"?"
@@ -192,7 +192,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_machine_policy_question(self):
         """
-        Tests that the llm correctly identifies the machine policy name in the query
+        Tests that the llm correctly identifies the machine policy name in the wrapper
         """
 
         query = "Show the powershell health check script for the \"Windows VM Policy\" machine policy."
@@ -205,7 +205,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_environment_question(self):
         """
-        Tests that the llm correctly identifies the environment in the query
+        Tests that the llm correctly identifies the environment in the wrapper
         """
 
         query = "List the variables scoped to the \"Development\" environment in the project \"Deploy WebApp\"."
@@ -219,9 +219,9 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_unknown_arguments(self):
         """
-        Sometimes unknown arguments are passed to functions. The query below has, in the past, passed an argument called
+        Sometimes unknown arguments are passed to functions. The wrapper below has, in the past, passed an argument called
         "type" to the answer_general_query function. This behaviour is not consistent, but happens enough that any function
-        should have an **kwargs argument to handle these cases. This test ensures that a query that has been shown to
+        should have an **kwargs argument to handle these cases. This test ensures that a wrapper that has been shown to
         pass unknown arguments in the past does not break the function.
         """
 
@@ -249,7 +249,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_project_step_question(self):
         """
-        Tests that the llm identifies the step name in the query
+        Tests that the llm identifies the step name in the wrapper
         """
 
         query = "What do does the step \"Manual Intervention\" in the \"Project1\" do?"
@@ -262,7 +262,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_date_question(self):
         """
-        Tests that the llm identifies the step name in the query
+        Tests that the llm identifies the step name in the wrapper
         """
 
         query = "Find deployments after \"1st Jan 2024\" and before \"2nd Mar 2024\"?"
@@ -276,7 +276,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_machine_question(self):
         """
-        Tests that the llm identifies the machine name in the query
+        Tests that the llm identifies the machine name in the wrapper
         """
 
         query = "Show the details of the machine \"Cloud Region target\"?"

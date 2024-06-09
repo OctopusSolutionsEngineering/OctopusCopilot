@@ -39,12 +39,12 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
     """
 
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_octoterra_space).')
-    ensure_string_not_empty(query, 'query must be a non-empty string (get_octoterra_space).')
+    ensure_string_not_empty(query, 'wrapper must be a non-empty string (get_octoterra_space).')
     ensure_string_not_empty(api_key, 'api_key must be a non-empty string (get_octoterra_space).')
     ensure_string_not_empty(octopus_url, 'octopus_url must be a non-empty string (get_octoterra_space).')
 
     # We want to restrict the size of the exported Terraform configuration as much as possible,
-    # so we make heavy use of the options to exclude resources unless they were mentioned in the query.
+    # so we make heavy use of the options to exclude resources unless they were mentioned in the wrapper.
     sanitized_project_names = sanitize_projects(project_names)
     sanitized_tenant_names = sanitize_tenants(tenant_names)
     sanitized_target_names = sanitize_targets(target_names)
@@ -160,7 +160,7 @@ def get_octoterra_space(query, space_id, project_names, runbook_names, target_na
         "excludeProjectVariablesExcept": exclude_projectvariables_except,
         "limitAttributeLength": 100,
         # This setting ensures that any project, tenant, runbook, or target names are valid.
-        # If not, the assumption is made that the LLM incorrectly identified the resource in the query,
+        # If not, the assumption is made that the LLM incorrectly identified the resource in the wrapper,
         # and the results must not be limited by that incorrect assumption.
         "ignoreInvalidExcludeExcept": True,
         "excludeTerraformVariables": True,

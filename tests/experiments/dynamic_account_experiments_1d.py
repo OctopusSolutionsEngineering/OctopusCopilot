@@ -3,8 +3,8 @@ import unittest
 
 from domain.context.octopus_context import collect_llm_context
 from domain.sanitizers.sanitize_strings import remove_double_whitespace, remove_empty_lines
-from domain.tools.query.function_definition import FunctionDefinition, FunctionDefinitions
-from domain.tools.query.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.wrapper.function_definition import FunctionDefinition, FunctionDefinitions
+from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from infrastructure.octopus import get_accounts, get_space_id_and_name_from_name
 from infrastructure.openai import llm_tool_query
 
@@ -76,7 +76,7 @@ class DynamicAccountExperiments(unittest.TestCase):
         for name, id, description, type in test_cases:
 
             with self.subTest(f"{name} - {id} - {description}"):
-                # Create a query that should generate the same result as the test case
+                # Create a wrapper that should generate the same result as the test case
                 query = (
                         f"List the name, ID, description of the account \"{name}\" "
                         + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space."

@@ -3,7 +3,7 @@ from domain.messages.general import build_hcl_prompt
 
 def answer_project_variables_usage_wrapper(original_query, callback, logging=None):
     """
-    A wrapper's job is to return a function with the signature used by the LLM to extract entities from the query. The
+    A wrapper's job is to return a function with the signature used by the LLM to extract entities from the wrapper. The
     parameters of the wrapper are captured by the returned function without altering the signature of the function.
 
     The purpose of the wrapped function is to take the entities passed in by the LLM, generate the messages passed
@@ -31,7 +31,7 @@ def answer_project_variables_usage_wrapper(original_query, callback, logging=Non
         if logging:
             logging("Enter:", "answer_project_variables_usage")
 
-        # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
+        # Build a few shot sample wrapper with a chain-of-thought example to help the LLM understand the relationships
         # between projects, deployment processes, and variables.
 
         few_shot = """
@@ -117,7 +117,7 @@ resource "octopusdeploy_variable" "azure_account" {{
 }}
 ###
 Answer:
-The resource with the labels "octopusdeploy_project" and "test_project" has an attribute called "name" with the value "My Project". This name matches the project name in the query. Therefore, this is the project we base the answer on.
+The resource with the labels "octopusdeploy_project" and "test_project" has an attribute called "name" with the value "My Project". This name matches the project name in the wrapper. Therefore, this is the project we base the answer on.
 The resource with the labels "octopusdeploy_deployment_process" "test_project_deployment_process" has an attribute called "project_id" that matches the labels of the project called "My Project". Therefore, this deployment process belongs to the project \"My Project\"".
 
 The resource with the labels "octopusdeploy_variable" "project_variable" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "Variable.Test". The deployment process belonging to the "My Project" project has a "step" block with an "action" block with the attribute "name" set to "My Sample Step" and another attribute including the string "Variable.Test". Therefore, the variable "Variable.Test" is used by the step "My Sample Step".
@@ -208,7 +208,7 @@ resource "octopusdeploy_variable" "secondprojectvariable" {{
 ###
 Answer:
 
-The resource with the labels "octopusdeploy_project" and "test_project" has an attribute called "name" with the value "My Project". This name matches the project name in the query. Therefore, this is the project we base the answer on.
+The resource with the labels "octopusdeploy_project" and "test_project" has an attribute called "name" with the value "My Project". This name matches the project name in the wrapper. Therefore, this is the project we base the answer on.
 The resource with the labels "octopusdeploy_variable" "project_variable" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "Variable.Test". Therefore, the variable "Variable.Test" is defined in the project "My Project".
 The resource with the labels "octopusdeploy_variable" "secret_variable" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "SecretVariable". Therefore, the variable "SecretVariable" is defined in the project "My Project".
 The resource with the labels "octopusdeploy_variable" "azure_account" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "Azure.Account". Therefore, the variable "Azure.Account" is defined in the project "My Project".

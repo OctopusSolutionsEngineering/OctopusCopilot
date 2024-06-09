@@ -14,15 +14,15 @@ from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, none_if_falesy_or_all, \
     get_item_or_none, sanitize_names_fuzzy, sanitize_projects, sanitize_tenants, sanitize_space, sanitize_name_fuzzy, \
     sanitize_log_steps, sanitize_log_lines
-from domain.tools.query.certificates_query import answer_certificates_wrapper
-from domain.tools.query.function_definition import FunctionDefinitions, FunctionDefinition
-from domain.tools.query.general_query import answer_general_query_wrapper, AnswerGeneralQuery
-from domain.tools.query.how_to import how_to_wrapper
-from domain.tools.query.project_logs import answer_project_deployment_logs_wrapper
-from domain.tools.query.project_variables import answer_project_variables_wrapper, \
+from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
+from domain.tools.wrapper.function_definition import FunctionDefinitions, FunctionDefinition
+from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.wrapper.how_to import how_to_wrapper
+from domain.tools.wrapper.project_logs import answer_project_deployment_logs_wrapper
+from domain.tools.wrapper.project_variables import answer_project_variables_wrapper, \
     answer_project_variables_usage_wrapper
-from domain.tools.query.releases_and_deployments import answer_releases_and_deployments_wrapper
-from domain.tools.query.targets_query import answer_machines_wrapper
+from domain.tools.wrapper.releases_and_deployments import answer_releases_and_deployments_wrapper
+from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.transformers.chat_responses import get_octopus_project_names_response
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from infrastructure.github import search_repo
@@ -41,7 +41,7 @@ def init_argparse():
         usage='%(prog)s [OPTION] [FILE]...',
         description='Query the Octopus Copilot agent'
     )
-    parser.add_argument('--query', action='store')
+    parser.add_argument('--wrapper', action='store')
     return parser.parse_known_args()
 
 

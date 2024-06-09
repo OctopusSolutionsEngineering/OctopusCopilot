@@ -3,8 +3,8 @@ import unittest
 
 from domain.context.octopus_context import collect_llm_context
 from domain.messages.general import build_hcl_prompt
-from domain.tools.query.function_definition import FunctionDefinition, FunctionDefinitions
-from domain.tools.query.targets_query import answer_machines_wrapper
+from domain.tools.wrapper.function_definition import FunctionDefinition, FunctionDefinitions
+from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from infrastructure.octopus import get_machines, get_environments, get_space_id_and_name_from_name
 from infrastructure.openai import llm_tool_query
 
@@ -91,7 +91,7 @@ class DynamicMachineEnvironmentExperiments(unittest.TestCase):
                 continue
 
             with self.subTest(f"{name} - {','.join(map(lambda m: m[0], machines))}"):
-                # Create a query that should generate the same result as the test case
+                # Create a wrapper that should generate the same result as the test case
                 query = (f"What are the unique names and IDs of all machines "
                          + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space "
                          + f"belonging to the \"{name}\" environment?")

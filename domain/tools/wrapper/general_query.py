@@ -9,7 +9,7 @@ from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_runbook
 
 def answer_general_query_wrapper(query, callback, logging=None):
     """
-    A wrapper's job is to return a function with the signature used by the LLM to extract entities from the query. The
+    A wrapper's job is to return a function with the signature used by the LLM to extract entities from the wrapper. The
     parameters of the wrapper are captured by the returned function without altering the signature of the function.
 
     The purpose of the wrapped function is to take the entities passed in by the LLM, generate the messages passed
@@ -32,7 +32,7 @@ def answer_general_query_wrapper(query, callback, logging=None):
                              worker_pools=None, machine_policies=None, tag_sets=None, project_groups=None,
                              channels=None,
                              releases=None, steps=None, variables=None, git_credentials=None, dates=None, **kwargs):
-        """A query about the configuration or state of an Octopus space.
+        """A wrapper about the configuration or state of an Octopus space.
 Args:
 space: Space name
 projects: project names
@@ -54,12 +54,12 @@ releases: release versions
 steps: step names
 variables: variable names
 git_credentials: git credential names
-dates: any dates in the query"""
+dates: any dates in the wrapper"""
 
         if logging:
             logging("Enter:", "answer_general_query")
 
-        # This function acts as a way to extract the names of resources that are important to an Octopus query. The
+        # This function acts as a way to extract the names of resources that are important to an Octopus wrapper. The
         # resource names map to resources into the API that need to be queried and exposed for context to answer
         # a general question. So the only thing this function does is make another request to the LLM after
         # extracting the relevant entities from the Octopus API.

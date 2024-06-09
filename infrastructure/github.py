@@ -24,9 +24,9 @@ def get_github_auth_headers(get_token):
 
 def build_github_url(path, query):
     """
-    Create a URL from the GitHub API URL, additional path, and query params
+    Create a URL from the GitHub API URL, additional path, and wrapper params
     :param path: The additional path
-    :param query: Additional query params
+    :param query: Additional wrapper params
     :return: The URL combining all the inputs
     """
 

@@ -6,7 +6,7 @@ from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_environ
 def answer_releases_and_deployments_wrapper(original_query, callback, additional_messages=None,
                                             logging=None):
     """
-    A wrapper's job is to return a function with the signature used by the LLM to extract entities from the query. The
+    A wrapper's job is to return a function with the signature used by the LLM to extract entities from the wrapper. The
     parameters of the wrapper are captured by the returned function without altering the signature of the function.
 
     The purpose of the wrapped function is to take the entities passed in by the LLM, generate the messages passed
@@ -35,11 +35,11 @@ def answer_releases_and_deployments_wrapper(original_query, callback, additional
         environments: variable names
         channels: chanel names
         releases: release versions
-        dates: the dates in the query
+        dates: the dates in the wrapper
         tenants: tenant names
         """
 
-        # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
+        # Build a few shot sample wrapper with a chain-of-thought example to help the LLM understand the relationships
         # between projects, releases, deployments, and environments.
 
         # Then use a tree-of-thought prompt to get a consensus answer:
@@ -107,11 +107,11 @@ resource "octopusdeploy_channel" "thechannelresource" {{
 ###
 
 Answer:
-The HCL resource with the labels "octopusdeploy_space" and "octopus_space_demo_space" has an attribute called "name" with the value "Demo" an an "id" attribute of "Spaces-345". This name matches the space name in the query. Therefore, we must find deployments with the "SpaceId" of "Spaces-345".
-The HCL resource with the labels "octopusdeploy_environment" and "theenvironmentresource" has an attribute called "name" with the value "MyEnvironment" an an "id" attribute of "Environments-96789". This name matches the environment name in the query. Therefore, we must find deployments with the "EnvironmentId" of "Environments-96789".
-The HCL resource with the labels "octopusdeploy_project" and "theprojectresource" has an attribute called "name" with the value "My Project" and "id" attribute of "Projects-91234". This name matches the project name in the query. Therefore, we must find deployments with the "ProjectId" of "Projects-91234".
-The HCL resource with the labels "octopusdeploy_tenant" and "thetennatresource" has an attribute called "name" with the value "My Tenant" and an "id" attribute of "Tenants-9234". This name matches the tenant name in the query. Therefore, we must find deployments with the "TenantId" of "Tenants-9234".
-The HCL resource with the labels "octopusdeploy_channel" and "thechannelresource" has an attribute called "name" with the value "MyChannel" and an "id" attribute of "Channels-97001". This name matches the channel name in the query. Therefore, we must find deployments with the "ChannelId" of "Channels-97001"
+The HCL resource with the labels "octopusdeploy_space" and "octopus_space_demo_space" has an attribute called "name" with the value "Demo" an an "id" attribute of "Spaces-345". This name matches the space name in the wrapper. Therefore, we must find deployments with the "SpaceId" of "Spaces-345".
+The HCL resource with the labels "octopusdeploy_environment" and "theenvironmentresource" has an attribute called "name" with the value "MyEnvironment" an an "id" attribute of "Environments-96789". This name matches the environment name in the wrapper. Therefore, we must find deployments with the "EnvironmentId" of "Environments-96789".
+The HCL resource with the labels "octopusdeploy_project" and "theprojectresource" has an attribute called "name" with the value "My Project" and "id" attribute of "Projects-91234". This name matches the project name in the wrapper. Therefore, we must find deployments with the "ProjectId" of "Projects-91234".
+The HCL resource with the labels "octopusdeploy_tenant" and "thetennatresource" has an attribute called "name" with the value "My Tenant" and an "id" attribute of "Tenants-9234". This name matches the tenant name in the wrapper. Therefore, we must find deployments with the "TenantId" of "Tenants-9234".
+The HCL resource with the labels "octopusdeploy_channel" and "thechannelresource" has an attribute called "name" with the value "MyChannel" and an "id" attribute of "Channels-97001". This name matches the channel name in the wrapper. Therefore, we must find deployments with the "ChannelId" of "Channels-97001"
 We filter the JSON array of called "Deployments" for a deployment with a "ProjectId" attribute with the value of "Projects-91234", an "EnvironmentId" attribute with the value of "Environments-96789", a "TenantId" attribute with the value of "Tenants-9234", a "ChannelId" attribute with the value of "Channels-97001", and a "SpaceId" attribute with the value of "Spaces-345".
 The deployment with the highest "Created" attribute is the latest deployment.
 The release version is found in the deployment "ReleaseVersion" attribute.

@@ -40,18 +40,18 @@ from domain.tools.githubactions.provide_help import provide_help_wrapper
 from domain.tools.githubactions.run_runbook import run_runbook_wrapper, run_runbook_confirm_callback_wrapper
 from domain.tools.githubactions.runbook_logs import get_runbook_logs_wrapper
 from domain.tools.githubactions.runbooks_dashboard import get_runbook_dashboard_wrapper
-from domain.tools.query.certificates_query import answer_certificates_wrapper
-from domain.tools.query.function_call import FunctionCall
-from domain.tools.query.function_definition import FunctionDefinitions, FunctionDefinition
-from domain.tools.query.general_query import answer_general_query_wrapper, AnswerGeneralQuery
-from domain.tools.query.how_to import how_to_wrapper
-from domain.tools.query.project_logs import answer_project_deployment_logs_wrapper
-from domain.tools.query.project_variables import answer_project_variables_wrapper, \
+from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
+from domain.tools.wrapper.function_call import FunctionCall
+from domain.tools.wrapper.function_definition import FunctionDefinitions, FunctionDefinition
+from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.wrapper.how_to import how_to_wrapper
+from domain.tools.wrapper.project_logs import answer_project_deployment_logs_wrapper
+from domain.tools.wrapper.project_variables import answer_project_variables_wrapper, \
     answer_project_variables_usage_wrapper
-from domain.tools.query.releases_and_deployments import answer_releases_and_deployments_wrapper
-from domain.tools.query.runbook_logs import answer_runbook_run_logs_wrapper
-from domain.tools.query.step_features import answer_step_features_wrapper
-from domain.tools.query.targets_query import answer_machines_wrapper
+from domain.tools.wrapper.releases_and_deployments import answer_releases_and_deployments_wrapper
+from domain.tools.wrapper.runbook_logs import answer_runbook_run_logs_wrapper
+from domain.tools.wrapper.step_features import answer_step_features_wrapper
+from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.transformers.deployments_from_dashboard import get_deployments_from_dashboard
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from domain.transformers.minify_hcl import minify_hcl
@@ -78,10 +78,10 @@ logger = configure_logging(__name__)
 
 GUEST_API_KEY = "API-GUEST"
 LOGIN_MESSAGE = (
-            f"To continue chatting please click the link below:\n\n[log in](https://github.com/login/oauth/authorize?"
-            + f"client_id={os.environ.get('GITHUB_CLIENT_ID')}"
-            + f"&redirect_url={urllib.parse.quote(os.environ.get('GITHUB_CLIENT_REDIRECT'))}"
-            + "&scope=user&allow_signup=false)")
+        f"To continue chatting please click the link below:\n\n[log in](https://github.com/login/oauth/authorize?"
+        + f"client_id={os.environ.get('GITHUB_CLIENT_ID')}"
+        + f"&redirect_url={urllib.parse.quote(os.environ.get('GITHUB_CLIENT_REDIRECT'))}"
+        + "&scope=user&allow_signup=false)")
 
 
 @app.function_name(name="api_key_cleanup")
@@ -162,7 +162,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
     identify the GitHub user and persist their details, while the chat half uses the supplied GitHub tokens to
     identify the user. We trust that the user IDs are the same and so can exchange information between the two halves.
 
-    Note that we never ask the user for their ID - we always get the ID from a query to the GitHub API.
+    Note that we never ask the user for their ID - we always get the ID from a wrapper to the GitHub API.
     :param req: The HTTP request
     :return: The HTML form
     """
@@ -192,7 +192,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
                                            os.environ.get("ENCRYPTION_SALT"))
 
         # Normally the session information would be persisted in a cookie. I could not get Azure functions to pass
-        # through a cookie. So we pass it as a query param.
+        # through a cookie. So we pass it as a wrapper param.
         return func.HttpResponse(status_code=301,
                                  headers={
                                      "Location": f"{base_request_url(req)}/api/octopus?state=" + session_json})
@@ -279,12 +279,12 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="query_parse", auth_level=func.AuthLevel.ANONYMOUS)
 def query_parse(req: func.HttpRequest) -> func.HttpResponse:
     """
-    A function handler that parses a query for Octopus entities
+    A function handler that parses a wrapper for Octopus entities
     :param req: The HTTP request
     :return: The HTML form
     """
     try:
-        # Extract the query from the question
+        # Extract the wrapper from the question
         query = extract_query(req)
 
         if not query.strip():
@@ -293,7 +293,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
                 convert_to_sse_response("Ask a question like \"What are the projects in the space called Default?\""),
                 headers=get_sse_headers())
 
-        # A function that ignores the query and the messages and returns the body.
+        # A function that ignores the wrapper and the messages and returns the body.
         # The body contains all the extracted entities that must be returned from the Octopus API.
         def return_body_callback(tool_query, body, messages):
             return body
@@ -321,13 +321,13 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
     :return: The HTML form
     """
 
-    # This function is called after the query has already been processed for the relevant entities and the HCL, JSON,
-    # or logs context has been generated. The query is then sent back to this function where we determine which
-    # function the LLM will call. The function may alter the query to provide few-shot examples, or may just pass the
-    # query through as is.
+    # This function is called after the wrapper has already been processed for the relevant entities and the HCL, JSON,
+    # or logs context has been generated. The wrapper is then sent back to this function where we determine which
+    # function the LLM will call. The function may alter the wrapper to provide few-shot examples, or may just pass the
+    # wrapper through as is.
 
     try:
-        # Extract the query from the question
+        # Extract the wrapper from the question
         query = extract_query(req)
 
         if not query.strip():
@@ -342,7 +342,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
         # Define some tools that the LLM can call
         def general_query_callback(*args, **kwargs):
             """
-            Answers a general query about an Octopus space
+            Answers a general wrapper about an Octopus space
             """
             body = json.loads(get_context())
             return llm_message_query(build_hcl_prompt(),
@@ -352,7 +352,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
         def logs_query_callback(original_query, messages, *args, **kwargs):
             """
-            Answers a general query about a logs
+            Answers a general wrapper about a logs
             """
             body = json.loads(get_context())
             return llm_message_query(messages,
@@ -361,7 +361,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
         def project_variables_usage_callback(original_query, messages, *args, **kwargs):
             """
-            A function that passes the updated query through to the LLM
+            A function that passes the updated wrapper through to the LLM
             """
             body = json.loads(get_context())
             return llm_message_query(messages,
@@ -370,7 +370,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
         def releases_and_deployments_callback(original_query, messages, *args, **kwargs):
             """
-            A function that passes the updated query through to the LLM
+            A function that passes the updated wrapper through to the LLM
             """
             body = json.loads(get_context())
             return llm_message_query(messages,
@@ -379,7 +379,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
         def resource_specific_callback(original_query, messages, *args, **kwargs):
             """
-            A function that passes the updated query through to the LLM
+            A function that passes the updated wrapper through to the LLM
             """
             body = json.loads(get_context())
             return llm_message_query(messages,
@@ -392,7 +392,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
             Note that this function involves some inefficiency when called from the Chrome
             extension, as the extension will first attempt to find any resource names,
-            build the context, and then pass the query back to the agent with the context.
+            build the context, and then pass the wrapper back to the agent with the context.
             However, this callback ignores the context.
             """
             results = search_repo("OctopusDeploy/docs", "markdown", keywords)
@@ -423,8 +423,8 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                 FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
             ])
 
-        # Call the appropriate tool. This may be a straight pass through of the query and context,
-        # or may update the query with additional examples.
+        # Call the appropriate tool. This may be a straight pass through of the wrapper and context,
+        # or may update the wrapper with additional examples.
         result = llm_tool_query(query, get_tools(query), log_query).call_function()
 
         # Streaming the result could remove some timeouts. Sadly, this is yet to be implemented with
@@ -437,8 +437,9 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(NO_FUNCTION_RESPONSE, status_code=400)
     except OpenAITokenLengthExceeded as e:
         handle_error(e)
-        return func.HttpResponse("The query and context exceeded the context window size. This error has been logged.",
-                                 status_code=500)
+        return func.HttpResponse(
+            "The wrapper and context exceeded the context window size. This error has been logged.",
+            status_code=500)
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("An exception was raised. See the logs for more details.",
@@ -454,7 +455,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
 def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
     """
-    A function handler that processes a query from the test form. This function accommodates the limitations
+    A function handler that processes a wrapper from the test form. This function accommodates the limitations
     of browser based SSE requests, namely that the request is a GET (so no request body). The Copilot
     requests on the other hand initiate an SSE stream with a POST that has a body.
     :param req: The HTTP request
@@ -604,7 +605,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         if not space:
             space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
+            warnings = f"The wrapper did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -663,7 +664,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         if not space:
             space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
+            warnings = f"The wrapper did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -707,8 +708,8 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         additional_information = ""
         if not projects:
             additional_information = (
-                    "\nThe query did not specify a project so the response may reference a subset of all the projects in a space."
-                    + "\nTo see more detailed information, specify a project name in the query.")
+                    "\nThe wrapper did not specify a project so the response may reference a subset of all the projects in a space."
+                    + "\nTo see more detailed information, specify a project name in the wrapper.")
 
         return CopilotResponse("\n".join(filter(lambda x: x, [chat_response, warnings, additional_information])))
 
@@ -760,7 +761,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         if not space:
             space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
+            warnings = f"The wrapper did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -786,7 +787,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         # We need some additional JSON data to answer this question
         if query_project:
-            # When the query limits the results to certain projects, we
+            # When the wrapper limits the results to certain projects, we
             # can dive deeper and return a larger collection of deployments
             deployments = timing_wrapper(lambda: get_deployments_for_project(space_id,
                                                                              query_project,
@@ -798,7 +799,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                                                                              max_deployments), "Deployments")
             context["json"] = json.dumps(deployments, indent=2)
         else:
-            # When the query is more general, we rely on the deployment information
+            # When the wrapper is more general, we rely on the deployment information
             # returned to supply the dashboard. The results are broad, but not deep.
             context["json"] = get_deployments_from_dashboard(space_id, api_key, url)
 
@@ -832,8 +833,8 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         additional_information = ""
         if not query_project:
             additional_information = (
-                    "\nThe query did not specify a project so the response is limited to the latest deployments for all projects."
-                    + "\nTo see more detailed information, specify a project name in the query.")
+                    "\nThe wrapper did not specify a project so the response is limited to the latest deployments for all projects."
+                    + "\nTo see more detailed information, specify a project name in the wrapper.")
 
         return CopilotResponse("\n".join(filter(lambda x: x, [chat_response, warnings, additional_information])))
 
@@ -851,18 +852,18 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         if not space:
             space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings.append(f"The query did not specify a space so the so the space named {space} was assumed.")
+            warnings.append(f"The wrapper did not specify a space so the so the space named {space} was assumed.")
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
-        # The project from the query
+        # The project from the wrapper
         original_sanitized_projects = sanitize_projects(projects)
 
         # The closest project match
         sanitized_projects = sanitize_names_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
                                                   original_sanitized_projects)
 
-        # If we had a project in the query but nothing matched, it means there were no projects in the space
+        # If we had a project in the wrapper but nothing matched, it means there were no projects in the space
         # (or no projects that the user had access to).
         if original_sanitized_projects and len(sanitized_projects) == 0:
             return CopilotResponse("The space has no projects.")
@@ -873,7 +874,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                                        "Project")
 
         if not project:
-            return CopilotResponse("Please specify a project name in the query.")
+            return CopilotResponse("Please specify a project name in the wrapper.")
 
         environment = get_default_argument(get_github_user_from_form(),
                                            get_item_or_none(sanitize_environments(original_query, environments), 0),
@@ -945,7 +946,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         if not space:
             space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
+            warnings = f"The wrapper did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -1015,7 +1016,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         """
         Builds a set of tools configured for use with HTTP requests (i.e. API key
         and URL extracted from an HTTP request body).
-        :param: query The query sent to the LLM
+        :param: wrapper The wrapper sent to the LLM
         :return: The OpenAI tools
         """
 

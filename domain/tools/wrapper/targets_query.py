@@ -3,7 +3,7 @@ from domain.messages.general import build_hcl_prompt
 
 def answer_machines_wrapper(original_query, callback, logging=None):
     """
-    A wrapper's job is to return a function with the signature used by the LLM to extract entities from the query. The
+    A wrapper's job is to return a function with the signature used by the LLM to extract entities from the wrapper. The
     parameters of the wrapper are captured by the returned function without altering the signature of the function.
 
     The purpose of the wrapped function is to take the entities passed in by the LLM, generate the messages passed
@@ -24,7 +24,7 @@ def answer_machines_wrapper(original_query, callback, logging=None):
                         accounts=None, certificates=None,
                         workerpools=None, machinepolicies=None, tagsets=None,
                         steps=None, **kwargs):
-        """Answers a general query about a machines, targets, agents, or machine policies in an Octopus space.
+        """Answers a general wrapper about a machines, targets, agents, or machine policies in an Octopus space.
 Args:
 space: Space name
 projects: project names
@@ -42,7 +42,7 @@ steps: step names"""
         if logging:
             logging("Enter:", "answer_machines")
 
-        # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
+        # Build a few shot sample wrapper with a chain-of-thought example to help the LLM understand the relationships
         # between projects, deployment processes, and variables.
 
         few_shot = """

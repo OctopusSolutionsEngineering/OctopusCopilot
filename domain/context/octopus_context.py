@@ -27,15 +27,15 @@ def collect_llm_context(original_query, messages, context, space_id, project_nam
     The LLM messages are also tailored here to guide the LLM in how it processes the context.
 
     :param space_id: The Octopus space name
-    :param project_names: The project names found in the query
-    :param runbook_names: The runbook names found in the query
-    :param target_names: The target names found in the query
-    :param tenant_names: The tenant names found in the query
-    :param library_variable_sets: The library variable set names found in the query
+    :param project_names: The project names found in the wrapper
+    :param runbook_names: The runbook names found in the wrapper
+    :param target_names: The target names found in the wrapper
+    :param tenant_names: The tenant names found in the wrapper
+    :param library_variable_sets: The library variable set names found in the wrapper
     :param api_key: The Octopus API key
     :param octopus_url: The Octopus URL
     :param log_query: A function used to log debug and error messages
-    :return: The query result
+    :return: The wrapper result
     """
 
     ensure_string_starts_with(space_id, 'Spaces-',

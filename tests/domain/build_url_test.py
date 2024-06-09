@@ -9,15 +9,15 @@ class BuildUrl(unittest.TestCase):
         self.assertEqual('https://example.org/path?partialname=value', url)
 
     def test_url(self):
-        url = build_url('https://example.org', '/path', {'query': 'value', 'query&2': 'value2'})
+        url = build_url('https://example.org', '/path', {'wrapper': 'value', 'wrapper&2': 'value2'})
         self.assertEqual('https://example.org/path?query=value&query%262=value2', url)
 
     def test_url_slash(self):
-        url = build_url('https://example.org/', '/path', {'query': 'value', 'query&2': 'value2'})
+        url = build_url('https://example.org/', '/path', {'wrapper': 'value', 'wrapper&2': 'value2'})
         self.assertEqual('https://example.org/path?query=value&query%262=value2', url)
 
     def test_url_no_path(self):
-        url = build_url('https://example.org/', None, {'query': 'value', 'query&2': 'value2'})
+        url = build_url('https://example.org/', None, {'wrapper': 'value', 'wrapper&2': 'value2'})
         self.assertEqual('https://example.org?query=value&query%262=value2', url)
 
     def test_url_no_query(self):
@@ -26,4 +26,4 @@ class BuildUrl(unittest.TestCase):
 
     def test_empty_url(self):
         with self.assertRaises(ValueError):
-            build_url('', '/path', {'query': 'value'})
+            build_url('', '/path', {'wrapper': 'value'})

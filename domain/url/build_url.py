@@ -5,10 +5,10 @@ from domain.validation.argument_validation import ensure_string_not_empty
 
 def build_url(base_url, path, query=None):
     """
-    Create a URL from the Octopus URL, additional path, and query params
+    Create a URL from the Octopus URL, additional path, and wrapper params
     :param base_url: The Octopus URL
     :param path: The additional path
-    :param query: Additional query params
+    :param query: Additional wrapper params
     :return: The URL combining all the inputs
     """
 

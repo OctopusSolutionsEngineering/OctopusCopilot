@@ -5,8 +5,8 @@ import unittest
 from domain.config.openai import max_context
 from domain.context.octopus_context import collect_llm_context
 from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list, sanitize_environments, sanitize_tenants
-from domain.tools.query.function_definition import FunctionDefinition, FunctionDefinitions
-from domain.tools.query.releases_and_deployments import answer_releases_and_deployments_wrapper
+from domain.tools.wrapper.function_definition import FunctionDefinition, FunctionDefinitions
+from domain.tools.wrapper.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.transformers.deployments_from_progression import get_deployment_progression
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from infrastructure.octopus import get_projects, get_environments, get_project_channel, get_lifecycle, \
@@ -177,7 +177,7 @@ class DynamicDeploymentExperiments(unittest.TestCase):
         # Loop through each case
         for project, channel, environment, deployment in test_cases:
             with self.subTest(f"{project} - {environment} - {channel}"):
-                # Create a query that should generate the same result as the test case
+                # Create a wrapper that should generate the same result as the test case
                 query = (f"What is the release version of the latest deployment of the \"{project}\" project "
                          + f"to the \"{environment}\" environment "
                          + f"in the \"{channel}\" channel "
@@ -199,7 +199,7 @@ class DynamicDeploymentExperiments(unittest.TestCase):
         # Loop through each case
         for project, channel, environment, deployment in test_cases:
             with self.subTest(f"{project} - {environment} - {channel}"):
-                # Create a query that should generate the same result as the test case
+                # Create a wrapper that should generate the same result as the test case
                 query = (f"What is the release version of the second last deployment of the \"{project}\" project "
                          + f"to the \"{environment}\" environment "
                          + f"in the \"{channel}\" channel "

@@ -27,7 +27,7 @@ def get_runbook_dashboard_wrapper(original_query, github_user, api_key, url):
 
         if not space_name:
             space_name = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The query did not specify a space so the so the space named {space_name} was assumed."
+            warnings = f"The wrapper did not specify a space so the so the space named {space_name} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
 
@@ -35,7 +35,7 @@ def get_runbook_dashboard_wrapper(original_query, github_user, api_key, url):
                                                                       space_id, project_name)
 
         if not sanitized_project_names:
-            return CopilotResponse("Please specify a project name in the query.")
+            return CopilotResponse("Please specify a project name in the wrapper.")
 
         project = get_project(space_id, sanitized_project_names[0], api_key, url)
 
@@ -43,7 +43,7 @@ def get_runbook_dashboard_wrapper(original_query, github_user, api_key, url):
                                                   runbook_name)
 
         if not sanitized_runbook_names:
-            return CopilotResponse("Please specify a runbook name in the query.")
+            return CopilotResponse("Please specify a runbook name in the wrapper.")
 
         runbook = get_runbook_fuzzy(space_id, project['Id'], sanitized_runbook_names[0], api_key, url)
 

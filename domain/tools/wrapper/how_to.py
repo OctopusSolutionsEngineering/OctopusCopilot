@@ -3,7 +3,7 @@ from domain.sanitizers.sanitized_list import sanitize_list
 
 def how_to_wrapper(query, callback, logging):
     """
-    A wrapper's job is to return a function with the signature used by the LLM to extract entities from the query. The
+    A wrapper's job is to return a function with the signature used by the LLM to extract entities from the wrapper. The
     parameters of the wrapper are captured by the returned function without altering the signature of the function.
 
     The purpose of the wrapped function is to take the entities passed in by the LLM, generate the messages passed
@@ -20,7 +20,7 @@ def how_to_wrapper(query, callback, logging):
     """
 
     def how_do_i(keywords=None, **kwargs):
-        """Answers a question about how to do something. Use this function when the query is asking a general question.
+        """Answers a question about how to do something. Use this function when the wrapper is asking a general question.
 Questions can look like those in the following list:
 * How do I integrate with something?
 * How do I do something?
@@ -40,7 +40,7 @@ Questions can look like those in the following list:
 * How do I enable something for something?
 
 Args:
-keywords: The keywords extracted from the query
+keywords: The keywords extracted from the wrapper
 """
 
         return provide_help_and_instructions(keywords, **kwargs)
@@ -57,7 +57,7 @@ keywords: The keywords extracted from the query
         these metrics.
 
         Args:
-        keywords: The keywords extracted from the query
+        keywords: The keywords extracted from the wrapper
         """
 
         if logging:

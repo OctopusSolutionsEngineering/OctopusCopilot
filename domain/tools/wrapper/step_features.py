@@ -8,7 +8,7 @@ from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_runbook
 
 def answer_step_features_wrapper(query, callback, logging=None):
     """
-    A wrapper's job is to return a function with the signature used by the LLM to extract entities from the query. The
+    A wrapper's job is to return a function with the signature used by the LLM to extract entities from the wrapper. The
     parameters of the wrapper are captured by the returned function without altering the signature of the function.
 
     The purpose of the wrapped function is to take the entities passed in by the LLM, generate the messages passed
@@ -31,7 +31,7 @@ def answer_step_features_wrapper(query, callback, logging=None):
                              worker_pools=None, machine_policies=None, tag_sets=None, project_groups=None,
                              channels=None, releases=None, steps=None, variables=None, git_credentials=None, dates=None,
                              **kwargs):
-        """A query about step features like retries.
+        """A wrapper about step features like retries.
 Args:
 space: Space name
 projects: project names

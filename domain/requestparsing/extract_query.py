@@ -59,13 +59,13 @@ def extract_confirmation_state_and_id(req: func.HttpRequest):
 def extract_query(req: func.HttpRequest):
     """
     Traditional web based SSE only supports GET requests, so testing the integration from a HTML form
-    means making a GET request with the query as a parameter. Copilot makes POST requests with the
-    query in the body. This functon extracts the query for both HTML forms and Copilot requests.
+    means making a GET request with the wrapper as a parameter. Copilot makes POST requests with the
+    wrapper in the body. This functon extracts the wrapper for both HTML forms and Copilot requests.
     :param req: The HTTP request
-    :return: The query
+    :return: The wrapper
     """
 
-    # This is the query from a HTML form
+    # This is the wrapper from a HTML form
     query = req.params.get("message")
 
     if query:

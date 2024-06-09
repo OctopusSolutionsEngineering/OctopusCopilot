@@ -12,7 +12,7 @@ from domain.exceptions.openai_error import OpenAIContentFilter, OpenAITokenLengt
 from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
-from domain.tools.query.function_call import FunctionCall
+from domain.tools.wrapper.function_call import FunctionCall
 from domain.validation.argument_validation import ensure_string_not_empty, ensure_not_falsy
 
 NO_FUNCTION_RESPONSE = ("Sorry, I did not understand that request. View the documentation at "
@@ -58,14 +58,14 @@ def handle_openai_exception(exception):
 def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None):
     """
     This is the handler that responds to a chat request.
-    :param log_query: The function used to log the query
-    :param query: The pain text query
+    :param log_query: The function used to log the wrapper
+    :param query: The pain text wrapper
     :param functions: The set of tools used by OpenAI
     :param extra_prompt_messages: Additional messages to pass to the LLM
-    :return: The result of the function, defined by the set of tools, that was called in response to the query
+    :return: The result of the function, defined by the set of tools, that was called in response to the wrapper
     """
 
-    ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_tools_execution).')
+    ensure_string_not_empty(query, 'wrapper must be a non-empty string (handle_copilot_tools_execution).')
     ensure_not_falsy(query, 'llm_tools must not be None (handle_copilot_tools_execution).')
 
     tools = functions.get_tools()

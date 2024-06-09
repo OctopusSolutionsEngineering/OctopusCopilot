@@ -4,7 +4,7 @@ from domain.query.query_inspector import exclude_all_environments
 
 def answer_certificates_wrapper(original_query, callback, logging=None):
     """
-    A wrapper's job is to return a function with the signature used by the LLM to extract entities from the query. The
+    A wrapper's job is to return a function with the signature used by the LLM to extract entities from the wrapper. The
     parameters of the wrapper are captured by the returned function without altering the signature of the function.
 
     The purpose of the wrapped function is to take the entities passed in by the LLM, generate the messages passed
@@ -25,7 +25,7 @@ def answer_certificates_wrapper(original_query, callback, logging=None):
                             accounts=None, certificates=None,
                             workerpools=None, machinepolicies=None, tagsets=None,
                             steps=None, **kwargs):
-        """Answers a general query about certificates in an Octopus space.
+        """Answers a general wrapper about certificates in an Octopus space.
 Args:
 space: Space name
 projects: project names
@@ -43,7 +43,7 @@ steps: step names"""
         if logging:
             logging("Enter:", "answer_targets")
 
-        # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
+        # Build a few shot sample wrapper with a chain-of-thought example to help the LLM understand the relationships
         # between projects, deployment processes, and variables.
 
         few_shot = """
@@ -222,7 +222,7 @@ The targets that belong to the "Demo" space are:
         # Certificates are scoped the named environments or unscoped. However, the context will appear the same
         # for an unscoped certificate and a scoped certificate that does not have the associated environments in the
         # context - both certificates will have empty environments array.
-        # So if the query mentioned environments, include the environments in the context.
+        # So if the wrapper mentioned environments, include the environments in the context.
         include_environments = ["<all>"] if not exclude_all_environments(original_query, environments) else []
 
         return callback(original_query, messages, space, projects, runbooks, targets,

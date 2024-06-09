@@ -2,8 +2,8 @@ import os
 import unittest
 
 from domain.context.octopus_context import collect_llm_context
-from domain.tools.query.function_definition import FunctionDefinition, FunctionDefinitions
-from domain.tools.query.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.wrapper.function_definition import FunctionDefinition, FunctionDefinitions
+from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from infrastructure.octopus import get_environments, get_accounts, get_space_id_and_name_from_name
 from infrastructure.openai import llm_tool_query
 
@@ -92,7 +92,7 @@ class DynamicAccountsEnvironmentExperiments(unittest.TestCase):
                 continue
 
             with self.subTest(f"{name} - {','.join(map(lambda m: m[0], accounts))}"):
-                # Create a query that should generate the same result as the test case
+                # Create a wrapper that should generate the same result as the test case
                 query = (
                         f"List the unique names and IDs of all account "
                         + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space "

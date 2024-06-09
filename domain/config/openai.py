@@ -13,13 +13,13 @@ max_deployments = 10
 # Another issue here is the Azure event driven scaling.
 # As noted at https://learn.microsoft.com/en-us/azure/azure-functions/event-driven-scaling?tabs=azure-cli#understanding-scaling-behaviors
 # HTTP triggers will scale out once per second. We may be in a position of having HTTP requests queued behind a
-# long-running query.
+# long-running wrapper.
 llm_timeout = 30
 
 # Testing revealed that the LLM struggles to extract meaningful values from large blobs of log outputs. For example,
-# this query fails:
+# this wrapper fails:
 # find any CVEs in the deployment logs for the latest deployment of the project "Octopus Copilot Function" to the "Production" environment in the "Octopus Copilot" space in the last 400 lines
-# But this query succeeds:
+# But this wrapper succeeds:
 # find any CVEs in the deployment logs for the latest deployment of the project "Octopus Copilot Function" to the "Production" environment in the "Octopus Copilot" space in the last 300 lines
 # Obviously lines of text is a rough measurements, as it is more likely the LLM is struggling with a token count, not a line count.
 # But this value is a guide to prompt users to limit the log output when large blobs are detected.

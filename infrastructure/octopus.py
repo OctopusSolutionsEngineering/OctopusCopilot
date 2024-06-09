@@ -69,7 +69,7 @@ def get_space_first_project_and_environment(space_id, api_key, url):
 @logging_wrapper
 def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
     """
-    Gets a space ID and actual space name from a name extracted from a query.
+    Gets a space ID and actual space name from a name extracted from a wrapper.
     Note that we are quite lenient here in terms of whitespace and capitalisation.
     :param space_name: The name of the space
     :param my_octopus_api: The Octopus URL

@@ -21,7 +21,7 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
                                                                       space_id, project)
 
         if not sanitized_project_names:
-            return CopilotResponse("Please specify a project name in the query.")
+            return CopilotResponse("Please specify a project name in the wrapper.")
 
         project = get_project(space_id, sanitized_project_names[0], api_key, url)
 
@@ -29,13 +29,13 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
                                                   runbook)
 
         if not sanitized_runbook_names:
-            return CopilotResponse("Please specify a runbook name in the query.")
+            return CopilotResponse("Please specify a runbook name in the wrapper.")
 
         sanitized_environment_names = lookup_environments(url, api_key, github_user, original_query, space_id,
                                                           environments)
 
         if not sanitized_environment_names:
-            return CopilotResponse("Please specify an environment name in the query.")
+            return CopilotResponse("Please specify an environment name in the wrapper.")
 
         sanitized_tenant_names = lookup_tenants(url, api_key, github_user, original_query, space_id, tenants)
 
