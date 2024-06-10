@@ -180,7 +180,7 @@
             if (!response.ok) {
                 if (response.status === 400) {
 
-                    const response_body = response.json()
+                    const response_body = await response.json()
 
                     if (response_body.error === "octopus_too_old") {
                         octopus_too_old.style.display = 'block'
