@@ -13,7 +13,7 @@ def answer_step_features_wrapper(query, callback, logging=None):
                              worker_pools=None, machine_policies=None, tag_sets=None, project_groups=None,
                              channels=None, releases=None, steps=None, variables=None, git_credentials=None, dates=None,
                              **kwargs):
-        """A wrapper about step features like retries.
+        """A query about step features like retries.
 Args:
 space: Space name
 projects: project names

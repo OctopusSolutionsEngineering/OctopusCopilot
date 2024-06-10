@@ -14,7 +14,7 @@ def answer_general_query_wrapper(query, callback, logging=None):
                              worker_pools=None, machine_policies=None, tag_sets=None, project_groups=None,
                              channels=None,
                              releases=None, steps=None, variables=None, git_credentials=None, dates=None, **kwargs):
-        """A wrapper about the configuration or state of an Octopus space.
+        """A query about the configuration or state of an Octopus space.
 Args:
 space: Space name
 projects: project names

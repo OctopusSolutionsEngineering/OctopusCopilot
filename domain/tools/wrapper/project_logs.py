@@ -4,7 +4,7 @@ from domain.messages.deployment_logs import build_plain_text_prompt
 def answer_project_deployment_logs_wrapper(query, callback, logging):
     def answer_project_deployment_logs(space=None, project=None, environment=None, channel=None, tenant=None,
                                        release=None, steps=None, lines=None, **kwargs):
-        """Answers a wrapper about the contents of the deployment logs of a project to an environment.
+        """Answers a query about the contents of the deployment logs of a project to an environment.
         Use this function when the prompt asks anything about deployment or project logs. Some example prompts are:
         * Print the last 30 lines of text from the deployment logs of the latest project deployment to the "Production" environment.
         * Summarize the deployment logs of the latest deployment.
