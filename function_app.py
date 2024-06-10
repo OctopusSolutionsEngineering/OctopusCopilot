@@ -36,7 +36,10 @@ from domain.sanitizers.sanitized_list import get_item_or_none, \
     update_query, sanitize_space, sanitize_name_fuzzy, sanitize_log_steps, sanitize_log_lines
 from domain.security.security import call_admin_function, is_admin_user
 from domain.tools.githubactions.dashboard import get_dashboard_callback
+from domain.tools.githubactions.general_query import general_query_callback
+from domain.tools.githubactions.how_to import how_to_callback
 from domain.tools.githubactions.provide_help import provide_help_wrapper
+from domain.tools.githubactions.resource_specific_callback import resource_specific_callback
 from domain.tools.githubactions.run_runbook import run_runbook_wrapper, run_runbook_confirm_callback_wrapper
 from domain.tools.githubactions.runbook_logs import get_runbook_logs_wrapper
 from domain.tools.githubactions.runbooks_dashboard import get_runbook_dashboard_callback
@@ -594,65 +597,6 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         """
         return CopilotResponse("The confirmation callback was successfully executed")
 
-    def general_query_callback(original_query, body, messages):
-        api_key, url = get_api_key_and_url()
-
-        sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
-                                              sanitize_space(original_query, body["space_name"]))
-
-        space = get_default_argument(get_github_user_from_form(),
-                                     sanitized_space["matched"] if sanitized_space else None, "Space")
-
-        warnings = ""
-
-        if not space:
-            space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
-
-        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
-
-        sanitized_projects = sanitize_names_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
-                                                  sanitize_projects(body["project_names"]))
-
-        project_names = get_default_argument(get_github_user_from_form(),
-                                             [project["matched"] for project in sanitized_projects], "Project")
-        environment_names = get_default_argument(get_github_user_from_form(),
-                                                 sanitize_environments(original_query, body["environment_names"]),
-                                                 "Environment")
-
-        processed_query = update_query(original_query, sanitized_projects)
-
-        context = {"input": processed_query}
-
-        response = collect_llm_context(processed_query,
-                                       messages,
-                                       context,
-                                       space_id,
-                                       project_names,
-                                       body['runbook_names'],
-                                       body['target_names'],
-                                       body['tenant_names'],
-                                       body['library_variable_sets'],
-                                       environment_names,
-                                       body['feed_names'],
-                                       body['account_names'],
-                                       body['certificate_names'],
-                                       body['lifecycle_names'],
-                                       body['workerpool_names'],
-                                       body['machinepolicy_names'],
-                                       body['tagset_names'],
-                                       body['projectgroup_names'],
-                                       body['channel_names'],
-                                       body['release_versions'],
-                                       body['step_names'],
-                                       body['variable_names'],
-                                       body['dates'],
-                                       api_key,
-                                       url,
-                                       log_query)
-
-        return CopilotResponse(response="\n".join(filter(lambda x: x, [response, warnings])))
-
     def variable_query_callback(original_query, messages, space, projects, variables):
         api_key, url = get_api_key_and_url()
 
@@ -926,94 +870,6 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         return CopilotResponse("\n\n".join(response))
 
-    def resource_specific_callback(original_query, messages, space, projects, runbooks, targets,
-                                   tenants, environments, accounts, certificates, workerpools, machinepolicies, tagsets,
-                                   steps):
-        """
-        Resource specific queries are typically used to give the LLM context about the relationship between space
-        level scopes such as environments and tenants, and how those scopes apply to resources like targets,
-        certificates, accounts etc.
-
-        While the tool functions are resource specific, this callback is generic.
-        """
-        api_key, url = get_api_key_and_url()
-
-        sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
-                                              sanitize_space(original_query, space))
-
-        space = get_default_argument(get_github_user_from_form(),
-                                     sanitized_space["matched"] if sanitized_space else None, "Space")
-
-        warnings = ""
-
-        if not space:
-            space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
-
-        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
-
-        sanitized_projects = sanitize_names_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
-                                                  sanitize_projects(projects))
-
-        project = get_default_argument(get_github_user_from_form(),
-                                       get_item_or_none([project["matched"] for project in sanitized_projects],
-                                                        0),
-                                       "Project")
-        environment = get_default_argument(get_github_user_from_form(),
-                                           get_item_or_none(sanitize_environments(original_query, environments), 0),
-                                           "Environment")
-        tenant = get_default_argument(get_github_user_from_form(),
-                                      get_item_or_none(sanitize_tenants(tenants), 0), "Tenant")
-
-        processed_query = update_query(original_query, sanitized_projects)
-
-        context = {"input": processed_query}
-
-        response = collect_llm_context(processed_query,
-                                       messages,
-                                       context,
-                                       space_id,
-                                       project,
-                                       runbooks,
-                                       targets,
-                                       tenant,
-                                       None,
-                                       environment,
-                                       None,
-                                       accounts,
-                                       certificates,
-                                       None,
-                                       workerpools,
-                                       machinepolicies,
-                                       tagsets,
-                                       None,
-                                       None,
-                                       None,
-                                       steps,
-                                       None,
-                                       None,
-                                       api_key,
-                                       url,
-                                       log_query)
-
-        return CopilotResponse("\n\n".join(filter(lambda x: x, [response, warnings])))
-
-    def how_to_callback(original_query, keywords):
-        try:
-            results = search_repo("OctopusDeploy/docs", "markdown", keywords, get_github_token())
-        except GitHubRequestFailed as e:
-            # Fallback to an unauthenticated search
-            results = search_repo("OctopusDeploy/docs", "markdown", keywords)
-
-        text = get_docs_context(results)
-        messages = docs_prompt(text)
-
-        context = {"input": original_query}
-
-        chat_response = llm_message_query(messages, context, log_query)
-
-        return CopilotResponse(chat_response)
-
     def build_form_tools(query):
         """
         Builds a set of tools configured for use with HTTP requests (i.e. API key
@@ -1032,16 +888,25 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             log_query)]
 
         # A bunch of functions that search the docs
-        docs_functions = [FunctionDefinition(tool) for tool in how_to_wrapper(query, how_to_callback, log_query)]
+        docs_functions = [FunctionDefinition(tool) for tool in
+                          how_to_wrapper(query, how_to_callback(get_github_token(), log_query), log_query)]
 
         return FunctionDefinitions([
             FunctionDefinition(
                 answer_general_query_wrapper(
                     query,
-                    general_query_callback,
+                    general_query_callback(get_github_user_from_form(),
+                                           api_key,
+                                           url,
+                                           log_query),
                     log_query),
                 schema=AnswerGeneralQuery),
-            FunctionDefinition(answer_step_features_wrapper(query, general_query_callback, log_query)),
+            FunctionDefinition(answer_step_features_wrapper(
+                query, general_query_callback(get_github_user_from_form(),
+                                              api_key,
+                                              url,
+                                              log_query),
+                log_query)),
             FunctionDefinition(
                 answer_project_variables_wrapper(query, variable_query_callback, log_query)),
             FunctionDefinition(
@@ -1061,8 +926,17 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                     releases_query_callback,
                     releases_query_messages,
                     log_query)),
-            FunctionDefinition(answer_machines_wrapper(query, resource_specific_callback, log_query)),
-            FunctionDefinition(answer_certificates_wrapper(query, resource_specific_callback, log_query)),
+            FunctionDefinition(answer_machines_wrapper(query, resource_specific_callback(get_github_user_from_form(),
+                                                                                         api_key,
+                                                                                         url,
+                                                                                         log_query),
+                                                       log_query)),
+            FunctionDefinition(
+                answer_certificates_wrapper(query, resource_specific_callback(get_github_user_from_form(),
+                                                                              api_key,
+                                                                              url,
+                                                                              log_query),
+                                            log_query)),
             FunctionDefinition(clean_up_all_records),
             FunctionDefinition(logout),
             FunctionDefinition(set_default_value),
@@ -1094,7 +968,12 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                 is_enabled=is_admin_user(get_github_user_from_form(), get_admin_users()))],
             fallback=FunctionDefinitions(docs_functions),
             invalid=FunctionDefinition(
-                answer_general_query_wrapper(query, general_query_callback, log_query),
+                answer_general_query_wrapper(query,
+                                             general_query_callback(get_github_user_from_form(),
+                                                                    api_key,
+                                                                    url,
+                                                                    log_query),
+                                             log_query),
                 schema=AnswerGeneralQuery)
         )
 
