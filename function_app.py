@@ -8,11 +8,10 @@ from azure.core.exceptions import HttpResponseError
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.octopus import min_octopus_version
-from domain.config.openai import max_deployments, max_log_lines
+from domain.config.openai import max_deployments
 from domain.config.users import get_admin_users
 from domain.context.github_docs import get_docs_context
-from domain.context.octopus_context import collect_llm_context, llm_message_query, max_chars
-from domain.converters.string_to_int import string_to_int
+from domain.context.octopus_context import collect_llm_context, llm_message_query
 from domain.defaults.defaults import get_default_argument, get_default_argument_list
 from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
@@ -33,9 +32,10 @@ from domain.requestparsing.extract_query import extract_query, extract_confirmat
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import get_item_or_none, \
     none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_names_fuzzy, sanitize_tenants, \
-    update_query, sanitize_space, sanitize_name_fuzzy, sanitize_log_steps, sanitize_log_lines
+    update_query, sanitize_space, sanitize_name_fuzzy
 from domain.security.security import call_admin_function, is_admin_user
 from domain.tools.githubactions.dashboard import get_dashboard_callback
+from domain.tools.githubactions.deployment_logs import logs_callback
 from domain.tools.githubactions.general_query import general_query_callback
 from domain.tools.githubactions.how_to import how_to_callback
 from domain.tools.githubactions.provide_help import provide_help_wrapper
@@ -70,9 +70,8 @@ from infrastructure.callbacks import save_callback, load_callback, delete_callba
 from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
-    create_limited_api_key, get_deployment_logs, get_space_id_and_name_from_name, get_projects_generator, \
-    get_spaces_generator, activity_logs_to_string, \
-    get_version
+    create_limited_api_key, get_space_id_and_name_from_name, get_projects_generator, \
+    get_spaces_generator, get_version
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
 from infrastructure.users import get_users_details, delete_old_user_details, \
     save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
@@ -784,92 +783,6 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         return CopilotResponse("\n".join(filter(lambda x: x, [chat_response, warnings, additional_information])))
 
-    def logs_callback(original_query, messages, space, projects, environments, channel, tenants, release, steps, lines):
-
-        api_key, url = get_api_key_and_url()
-
-        sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
-                                              sanitize_space(original_query, space))
-
-        space = get_default_argument(get_github_user_from_form(),
-                                     sanitized_space["matched"] if sanitized_space else None, "Space")
-
-        warnings = []
-
-        if not space:
-            space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings.append(f"The query did not specify a space so the so the space named {space} was assumed.")
-
-        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
-
-        # The project from the wrapper
-        original_sanitized_projects = sanitize_projects(projects)
-
-        # The closest project match
-        sanitized_projects = sanitize_names_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
-                                                  original_sanitized_projects)
-
-        # If we had a project in the wrapper but nothing matched, it means there were no projects in the space
-        # (or no projects that the user had access to).
-        if original_sanitized_projects and len(sanitized_projects) == 0:
-            return CopilotResponse("The space has no projects.")
-
-        project = get_default_argument(get_github_user_from_form(),
-                                       get_item_or_none([project["matched"] for project in sanitized_projects],
-                                                        0),
-                                       "Project")
-
-        if not project:
-            return CopilotResponse("Please specify a project name in the wrapper.")
-
-        environment = get_default_argument(get_github_user_from_form(),
-                                           get_item_or_none(sanitize_environments(original_query, environments), 0),
-                                           "Environment")
-        tenant = get_default_argument(get_github_user_from_form(),
-                                      get_item_or_none(sanitize_tenants(tenants), 0), "Tenant")
-
-        activity_logs = timing_wrapper(
-            lambda: get_deployment_logs(space, project, environment, tenant, release, api_key, url),
-            "Deployment logs")
-
-        sanitized_steps = sanitize_log_steps(steps, original_query, activity_logs)
-
-        logs = activity_logs_to_string(activity_logs, sanitized_steps)
-
-        # Get the end of the logs if we have exceeded our context limit
-        logs = logs[-max_chars:]
-
-        # return the last n lines of the logs
-        log_lines = sanitize_log_lines(string_to_int(lines), original_query)
-        if log_lines and log_lines > 0:
-            logs = "\n".join(logs.split("\n")[-log_lines:])
-
-        if len(logs.split("\n")) > max_log_lines:
-            warnings.append(f"The logs exceed {max_log_lines} lines. "
-                            + "This may impact the extension's ability to process them. "
-                            + "Consider reducing the number of lines requested "
-                            + f"e.g. `Show the last 100 lines from the deployment logs for the latest deployment of project \"{project}\".` "
-                            + f"or `Show me the the deployment logs for step 2 for the latest deployment of project \"{project}\".`")
-
-        log_query("logs_callback", f"""
-            Space: {space}
-            Project Names: {project}
-            Tenant Names: {tenant}
-            Environment Names: {environments}
-            Release Version: {release}
-            Channel Names: {channel}
-            Steps: {sanitized_steps}
-            Lines: {log_lines}""")
-
-        processed_query = update_query(original_query, sanitized_projects)
-
-        context = {"input": processed_query, "context": logs}
-
-        response = [llm_message_query(messages, context, log_query)]
-        response.extend(warnings)
-
-        return CopilotResponse("\n\n".join(response))
-
     def build_form_tools(query):
         """
         Builds a set of tools configured for use with HTTP requests (i.e. API key
@@ -911,7 +824,12 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                 answer_project_variables_wrapper(query, variable_query_callback, log_query)),
             FunctionDefinition(
                 answer_project_variables_usage_wrapper(query, variable_query_callback, log_query)),
-            FunctionDefinition(answer_project_deployment_logs_wrapper(query, logs_callback, log_query)),
+            FunctionDefinition(answer_project_deployment_logs_wrapper(query,
+                                                                      logs_callback(get_github_user_from_form(),
+                                                                                    api_key,
+                                                                                    url,
+                                                                                    log_query),
+                                                                      log_query)),
             FunctionDefinition(answer_runbook_run_logs_wrapper(
                 query,
                 get_runbook_logs_wrapper(
