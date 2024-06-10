@@ -7,11 +7,11 @@ from infrastructure.users import save_default_values, delete_default_values, get
 def default_value_callbacks(github_user):
     def set_default_value(default_name, default_value):
         """Save a default value for a space, query_project, environment, or channel
-    
+
             Args:
                 default_name: The name of the default value. For example, "Environment", "Project", "Space", "Channel",
                 or "Tenant"
-    
+
                 default_value: The default value
         """
 
@@ -33,7 +33,7 @@ def default_value_callbacks(github_user):
 
     def get_default_value(default_name):
         """Save a default value for a space, query_project, environment, or channel
-    
+
             Args:
                 default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
         """
