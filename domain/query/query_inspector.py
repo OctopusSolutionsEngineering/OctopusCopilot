@@ -11,21 +11,10 @@ def exclude_all_targets(query, entity_list):
 
     ensure_string(query, 'wrapper must be a string (exclude_all_targets).')
 
-    return True if (not entity_list
-                    and "target" not in query.lower()
-                    and "machine" not in query.lower()
-                    and "agent" not in query.lower()
-                    and "listening" not in query.lower()
-                    and "ssh" not in query.lower()
-                    and "cloud region" not in query.lower()
-                    and "cloudregion" not in query.lower()
-                    and "kubernetes" not in query.lower()
-                    and "ecs" not in query.lower()
-                    and "web app" not in query.lower()
-                    and "webapp" not in query.lower()
-                    and "service fabric" not in query.lower()
-                    and "servicefabric" not in query.lower()
-                    and "polling" not in query.lower()) else False
+    target_types = ["target", "machine", "agent", "listening", "ssh", "cloud region", "cloudregion", "kubernetes",
+                    "ecs", "web app", "webapp", "service fabric", "servicefabric", "polling"]
+
+    return not any(filter(lambda x: x in query.lower(), target_types)) and not entity_list
 
 
 def exclude_all_runbooks(query, entity_list):

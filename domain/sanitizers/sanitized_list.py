@@ -181,17 +181,20 @@ def sanitize_log_steps(input_list, input_query, logs):
     if not logs:
         return []
 
+    # Early exit if there is nothing to process
+    sanitized_steps = force_to_list(input_list)
+    if not sanitized_steps:
+        return []
+
     for log_item in logs:
-        if log_item["Children"] and len(log_item["Children"]) != 0:
-            sanitized_steps = force_to_list(input_list)
-            if sanitized_steps and len(sanitized_steps) != 0:
-                # These are the name of the top level log items
-                step_names = [child_log_item["Name"] for child_log_item in log_item["Children"]]
-                # Valid steps names are either ints (less than the number of steps)
-                # or something that is at least an 80% match for a step name
-                valid_steps = [step for step in sanitized_steps if
-                               step_index_is_valid(step, input_query) or step_name_is_fuzzy_match(step, step_names)]
-                return valid_steps
+        if log_item.get("Children") and len(log_item["Children"]) != 0:
+            # These are the name of the top level log items
+            step_names = [child_log_item["Name"] for child_log_item in log_item["Children"]]
+            # Valid steps names are either ints (less than the number of steps)
+            # or something that is at least an 80% match for a step name
+            valid_steps = [step for step in sanitized_steps if
+                           step_index_is_valid(step, input_query) or step_name_is_fuzzy_match(step, step_names)]
+            return valid_steps
 
     return []
 

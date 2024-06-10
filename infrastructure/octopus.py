@@ -924,26 +924,43 @@ def get_logs(log_item, depth, steps=None):
     logs += "\n".join(list(map(lambda e: e["MessageText"], log_item["LogElements"])))
 
     # limit the result to either step indexes or names
-    if depth == 1:
-        if steps and len(steps) != 0:
-            step_ints = [step for step in steps if string_to_int(step)]
-            # Find the logs by index
-            found_index = step_ints and len(step_ints) != 0 and len(
-                [step_int for step_int in step_ints if log_item["Name"].startswith("Step " + step_int)]) != 0
-            # Find the logs by name
-            found_name = len([step for step in steps if fuzz.ratio(normalize_log_step_name(step),
-                                                                   normalize_log_step_name(
-                                                                       log_item["Name"])) > 80]) != 0
-
-            # If none match, don't dig deeper
-            if not found_index and not found_name:
-                return logs
+    if depth == 1 and not filter_logs(log_item, steps):
+        return logs
 
     if log_item["Children"]:
         for child in log_item["Children"]:
             logs += "\n" + get_logs(child, depth + 1, steps)
 
     return logs
+
+
+def filter_logs(log_item, steps):
+    """
+    Determines if the current step should be included in the logs
+    :param log_item: The current log item to be serialized to a string
+    :param steps: The list of steps to filter the logs by
+    :return: True if the current step should be included in the logs, False otherwise
+    """
+    step_name_match_ratio = 80
+
+    if not steps or len(steps) == 0:
+        return True
+
+    step_ints = [step for step in steps if string_to_int(step)]
+    # Find the logs by index
+    found_index = step_ints and len(step_ints) != 0 and any(
+        filter(lambda step_int: log_item["Name"].startswith("Step " + step_int), step_ints))
+
+    # Find the logs by name
+    found_name = any(filter(lambda step: fuzz.ratio(normalize_log_step_name(step),
+                                                    normalize_log_step_name(log_item["Name"])) >= step_name_match_ratio,
+                            steps))
+
+    # If none match, don't dig deeper
+    if not found_index and not found_name:
+        return False
+
+    return True
 
 
 def handle_response(callback):
@@ -982,7 +999,16 @@ def get_environment_fuzzy(space_id, environment_name, api_key, octopus_url):
 
 
 @logging_wrapper
-def get_environment_cached(space_id, environment_name, api_key, octopus_url):
+def get_environments_fuzzy_cached(space_id, environment_names, api_key, octopus_url):
+    if not environment_names:
+        return []
+
+    return list(map(lambda env: get_environment_fuzzy_cached(space_id, env, api_key, octopus_url),
+                    environment_names))
+
+
+@logging_wrapper
+def get_environment_fuzzy_cached(space_id, environment_name, api_key, octopus_url):
     if not environment_cache.get(octopus_url):
         environment_cache[octopus_url] = {}
 
@@ -1024,7 +1050,14 @@ def get_tenant(space_id, tenant_id, api_key, octopus_url):
 
 
 @logging_wrapper
-def get_tenant_cached(space_id, tenant_name, api_key, octopus_url):
+def get_tenants_fuzzy_cached(space_id, tenant_names, api_key, octopus_url):
+    return list(
+        map(lambda tenant: get_tenant_fuzzy_cached(space_id, tenant, api_key, octopus_url),
+            tenant_names)) if tenant_names else []
+
+
+@logging_wrapper
+def get_tenant_fuzzy_cached(space_id, tenant_name, api_key, octopus_url):
     if not tenant_cache.get(octopus_url):
         tenant_cache[octopus_url] = {}
 

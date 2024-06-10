@@ -5,7 +5,19 @@ from domain.sanitizers.sanitized_list import get_key_or_none, sanitize_list
 from domain.sanitizers.url_remover import strip_markdown_urls
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.octopus import get_project_releases, get_release_deployments, get_task, get_project, \
-    get_channel_cached, get_tenant_cached, get_environment_cached
+    get_channel_cached, get_tenants_fuzzy_cached, get_environments_fuzzy_cached
+
+
+def deployment_created_between(deployment, dates):
+    if dates and isinstance(dates, list) and len(dates) == 2:
+        created = parse_unknown_format_date(deployment["Created"])
+        date1 = parse_unknown_format_date(dates[0])
+        date2 = parse_unknown_format_date(dates[1])
+
+        if created < min(date1, date2) or created > max(date1, date2):
+            return False
+
+    return True
 
 
 def get_deployments_for_project(space_id, project_name, environment_names, tenant_names, api_key, octopus_url, dates,
@@ -36,12 +48,9 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
     environment_names = sanitize_list(environment_names)
     tenant_names = sanitize_list(tenant_names)
 
-    # Convert the environment names to environment ids
-    environments = list(map(lambda env: get_environment_cached(space_id, env, api_key, octopus_url),
-                            environment_names)) if environment_names else []
-    tenants = list(
-        map(lambda tenant: get_tenant_cached(space_id, tenant, api_key, octopus_url),
-            tenant_names)) if tenant_names else []
+    # Convert the environment and tenant names to IDs
+    environments = get_environments_fuzzy_cached(space_id, environment_names, api_key, octopus_url)
+    tenants = get_tenants_fuzzy_cached(space_id, tenant_names, api_key, octopus_url)
 
     # Get the deployments associated with the releases, filtered to the environments
     deployments = []
@@ -58,13 +67,8 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
                 continue
 
             # If there were two dates, treat them as a range, and exclude anything outside the range
-            if dates and isinstance(dates, list) and len(dates) == 2:
-                created = parse_unknown_format_date(deployment["Created"])
-                date1 = parse_unknown_format_date(dates[0])
-                date2 = parse_unknown_format_date(dates[1])
-
-                if created < min(date1, date2) or created > max(date1, date2):
-                    continue
+            if not deployment_created_between(deployment, dates):
+                continue
 
             task = get_task(space_id, deployment["TaskId"], api_key, octopus_url) if deployment.get(
                 "TaskId") else None
