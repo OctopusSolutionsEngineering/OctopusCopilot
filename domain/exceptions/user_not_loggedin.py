@@ -17,6 +17,7 @@ class OctopusVersionInvalid(Exception):
     Represents an octopus instance that is too old
     """
 
-    def __init__(self, version):
+    def __init__(self, version, required_version):
         self.version = version
+        self.required_version = required_version
         super().__init__(f'{version} is to old')

@@ -233,7 +233,7 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         octopus_version = get_version(body['url'])
 
         if not octopus_version_at_least(octopus_version, min_octopus_version):
-            raise OctopusVersionInvalid(octopus_version)
+            raise OctopusVersionInvalid(octopus_version, min_octopus_version)
 
         # Extract the GitHub user from the client side session
         user_id = extract_session_blob(req.params.get("state"),
@@ -260,7 +260,10 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
     except OctopusVersionInvalid as e:
         handle_error(e)
         return func.HttpResponse(
-            json.dumps({"error": "octopus_too_old", "message": f"Octopus version is too old ({e.version})"}),
+            json.dumps({"error": "octopus_too_old",
+                        "octopus_version": e.version,
+                        "required_version": e.required_version,
+                        "message": f"Octopus version is too old ({e.version}). Requires at least {e.required_version}"}),
             status_code=400)
     except (OctopusRequestFailed, OctopusApiKeyInvalid, ValueError) as e:
         handle_error(e)
