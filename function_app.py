@@ -1,18 +1,15 @@
 import json
 import os
 import urllib.parse
-import uuid
 
 from azure.core.exceptions import HttpResponseError
 
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.octopus import min_octopus_version
-from domain.config.openai import max_deployments
 from domain.config.users import get_admin_users
 from domain.context.github_docs import get_docs_context
-from domain.context.octopus_context import collect_llm_context, llm_message_query
-from domain.defaults.defaults import get_default_argument, get_default_argument_list
+from domain.context.octopus_context import llm_message_query
 from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
@@ -27,22 +24,22 @@ from domain.logging.query_loggin import log_query
 from domain.messages.docs_messages import docs_prompt
 from domain.messages.general import build_hcl_prompt
 from domain.messages.test_message import build_test_prompt
-from domain.performance.timing import timing_wrapper
 from domain.requestparsing.extract_query import extract_query, extract_confirmation_state_and_id
 from domain.response.copilot_response import CopilotResponse
-from domain.sanitizers.sanitized_list import get_item_or_none, \
-    none_if_falesy_or_all, sanitize_projects, sanitize_environments, sanitize_names_fuzzy, sanitize_tenants, \
-    update_query, sanitize_space, sanitize_name_fuzzy
-from domain.security.security import call_admin_function, is_admin_user
+from domain.security.security import is_admin_user
 from domain.tools.githubactions.dashboard import get_dashboard_callback
+from domain.tools.githubactions.default_values import default_value_callbacks
 from domain.tools.githubactions.deployment_logs import logs_callback
 from domain.tools.githubactions.general_query import general_query_callback
 from domain.tools.githubactions.how_to import how_to_callback
+from domain.tools.githubactions.logout import logout
 from domain.tools.githubactions.provide_help import provide_help_wrapper
+from domain.tools.githubactions.releases import releases_query_callback, releases_query_messages
 from domain.tools.githubactions.resource_specific_callback import resource_specific_callback
 from domain.tools.githubactions.run_runbook import run_runbook_wrapper, run_runbook_confirm_callback_wrapper
 from domain.tools.githubactions.runbook_logs import get_runbook_logs_wrapper
 from domain.tools.githubactions.runbooks_dashboard import get_runbook_dashboard_callback
+from domain.tools.githubactions.variables import variable_query_callback
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
 from domain.tools.wrapper.dashboard_wrapper import get_dashboard_wrapper
 from domain.tools.wrapper.function_call import FunctionCall
@@ -57,25 +54,20 @@ from domain.tools.wrapper.runbook_logs import answer_runbook_run_logs_wrapper
 from domain.tools.wrapper.runbooks_dashboard_wrapper import get_runbook_dashboard_wrapper
 from domain.tools.wrapper.step_features import answer_step_features_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
-from domain.transformers.deployments_from_dashboard import get_deployments_from_dashboard
-from domain.transformers.deployments_from_release import get_deployments_for_project
 from domain.transformers.minify_hcl import minify_hcl
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
 from domain.url.url_builder import base_request_url
-from domain.validation.default_value_validation import validate_default_value_name
 from domain.versions.octopus_version import octopus_version_at_least
-from infrastructure.callbacks import save_callback, load_callback, delete_callback, delete_old_callbacks
+from infrastructure.callbacks import load_callback, delete_callback, delete_old_callbacks
 from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
-    create_limited_api_key, get_space_id_and_name_from_name, get_projects_generator, \
-    get_spaces_generator, get_version
+    create_limited_api_key, get_version
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
 from infrastructure.users import get_users_details, delete_old_user_details, \
-    save_users_octopus_url_from_login, delete_all_user_details, save_default_values, \
-    get_default_values, database_connection_test, delete_default_values, delete_user_details
+    save_users_octopus_url_from_login, database_connection_test
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
@@ -483,22 +475,6 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
     def get_github_user_from_form():
         return get_github_user(get_github_token())
 
-    def clean_up_all_records():
-        """Cleans up, or deletes, all user records
-        """
-        call_admin_function(get_github_user_from_form(),
-                            get_admin_users(),
-                            lambda: delete_all_user_details(get_functions_connection_string()))
-        return CopilotResponse(f"Deleted all records")
-
-    def logout():
-        """Logs out or signs out the user
-        """
-
-        delete_user_details(get_github_user_from_form(), get_functions_connection_string())
-
-        return CopilotResponse(f"Sign out successful")
-
     def get_api_key_and_url():
         try:
             # First try to get the details from the headers
@@ -543,246 +519,6 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             logger.info("Encryption password must have changed because the api key could not be decrypted")
             raise OctopusApiKeyInvalid()
 
-    def set_default_value(default_name, default_value):
-        """Save a default value for a space, query_project, environment, or channel
-
-            Args:
-                default_name: The name of the default value. For example, "Environment", "Project", "Space", "Channel",
-                or "Tenant"
-
-                default_value: The default value
-        """
-
-        try:
-            validate_default_value_name(default_name)
-        except ValueError as e:
-            return CopilotResponse(e.args[0])
-
-        save_default_values(get_github_user_from_form(), default_name.casefold(), default_value,
-                            get_functions_connection_string())
-        return CopilotResponse(f"Saved default value \"{default_value}\" for \"{default_name.casefold()}\"")
-
-    def remove_default_value():
-        """Removes, clears, or deletes a default value for a space, query_project, environment, or channel
-        """
-
-        delete_default_values(get_github_user_from_form(), get_functions_connection_string())
-        return CopilotResponse(f"Deleted default values")
-
-    def get_default_value(default_name):
-        """Save a default value for a space, query_project, environment, or channel
-
-            Args:
-                default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
-        """
-        name = str(default_name).casefold()
-        value = get_default_values(get_github_user_from_form(), name, get_functions_connection_string())
-        return CopilotResponse(f"The default value for \"{name}\" is \"{value}\"")
-
-    def test_confirmation(original_query):
-        def test_confirmation_callback():
-            """Test a confirmation prompt
-                    """
-            callback_id = str(uuid.uuid4())
-            save_callback(get_github_user_from_form(), test_confirmation_callback.__name__, callback_id, json.dumps({}),
-                          original_query, get_functions_connection_string())
-            return CopilotResponse("This is an example of a mutating actions", "Do you want to continue?",
-                                   "This can not be undone", callback_id)
-
-        return test_confirmation_callback
-
-    def test_confirmation_callback():
-        """Test a confirmation prompt
-        """
-        return CopilotResponse("The confirmation callback was successfully executed")
-
-    def variable_query_callback(original_query, messages, space, projects, variables):
-        api_key, url = get_api_key_and_url()
-
-        sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
-                                              sanitize_space(original_query, space))
-
-        space = get_default_argument(get_github_user_from_form(),
-                                     sanitized_space["matched"] if sanitized_space else None, "Space")
-
-        warnings = ""
-
-        if not space:
-            space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
-
-        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
-
-        sanitized_projects = sanitize_names_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
-                                                  sanitize_projects(projects))
-
-        projects = get_default_argument(get_github_user_from_form(),
-                                        [project["matched"] for project in sanitized_projects], "Project")
-
-        processed_query = update_query(original_query, sanitized_projects)
-
-        context = {"input": processed_query}
-
-        chat_response = collect_llm_context(processed_query,
-                                            messages,
-                                            context,
-                                            space_id,
-                                            projects,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            ["<all>"] if none_if_falesy_or_all(variables) else variables,
-                                            None,
-                                            api_key,
-                                            url,
-                                            log_query)
-
-        additional_information = ""
-        if not projects:
-            additional_information = (
-                    "\nThe wrapper did not specify a project so the response may reference a subset of all the projects in a space."
-                    + "\nTo see more detailed information, specify a project name in the wrapper.")
-
-        return CopilotResponse("\n".join(filter(lambda x: x, [chat_response, warnings, additional_information])))
-
-    def releases_query_messages(original_query, space, projects, environments, channels, releases):
-        """
-        Provide some additional context about the default projects and environments that were used
-        to build the list of releases.
-        """
-        query_project = get_default_argument(get_github_user_from_form(),
-                                             get_item_or_none(projects, 0),
-                                             "Project")
-        query_environments = get_default_argument(get_github_user_from_form(),
-                                                  get_item_or_none(environments, 0),
-                                                  "Environment")
-
-        additional_messages = []
-
-        # Let the LLM know which query_project and environment to find the details for
-        # if we used the default value.
-        if not projects and query_project:
-            additional_messages.append(
-                ("user", f"The question relates to the project \"{query_project}\""))
-
-        if not environments and query_environments:
-            if isinstance(query_environments, str):
-                additional_messages.append(
-                    ("user", f"The question relates to the environment \"{query_environments}\""))
-            else:
-                additional_messages.append(
-                    ("user",
-                     f"The question relates to the environments \"{','.join(query_environments)}\""))
-
-        return additional_messages
-
-    def releases_query_callback(original_query, messages, space, projects, environments, channels, releases, tenants,
-                                dates):
-        api_key, url = get_api_key_and_url()
-
-        sanitized_environments = sanitize_environments(original_query, environments)
-        sanitized_tenants = sanitize_tenants(tenants)
-
-        sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
-                                              sanitize_space(original_query, space))
-
-        space = get_default_argument(get_github_user_from_form(),
-                                     sanitized_space["matched"] if sanitized_space else None, "Space")
-
-        warnings = ""
-
-        if not space:
-            space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
-
-        space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
-
-        sanitized_projects = sanitize_names_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
-                                                  sanitize_projects(projects))
-
-        query_project = get_default_argument(get_github_user_from_form(),
-                                             get_item_or_none(
-                                                 [project["matched"] for project in sanitized_projects], 0),
-                                             "Project")
-
-        query_environments = get_default_argument_list(get_github_user_from_form(),
-                                                       sanitized_environments,
-                                                       "Environment")
-
-        query_tenants = get_default_argument_list(get_github_user_from_form(),
-                                                  sanitized_tenants,
-                                                  "Tenant")
-
-        processed_query = update_query(original_query, sanitized_projects)
-
-        context = {"input": processed_query}
-
-        # We need some additional JSON data to answer this question
-        if query_project:
-            # When the wrapper limits the results to certain projects, we
-            # can dive deeper and return a larger collection of deployments
-            deployments = timing_wrapper(lambda: get_deployments_for_project(space_id,
-                                                                             query_project,
-                                                                             query_environments,
-                                                                             query_tenants,
-                                                                             api_key,
-                                                                             url,
-                                                                             dates,
-                                                                             max_deployments), "Deployments")
-            context["json"] = json.dumps(deployments, indent=2)
-        else:
-            # When the wrapper is more general, we rely on the deployment information
-            # returned to supply the dashboard. The results are broad, but not deep.
-            context["json"] = get_deployments_from_dashboard(space_id, api_key, url)
-
-        chat_response = collect_llm_context(processed_query,
-                                            messages,
-                                            context,
-                                            space_id,
-                                            query_project,
-                                            None,
-                                            None,
-                                            query_tenants,
-                                            None,
-                                            ["<all>"] if not query_environments else query_environments,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            None,
-                                            channels,
-                                            releases,
-                                            None,
-                                            None,
-                                            dates,
-                                            api_key,
-                                            url,
-                                            log_query)
-
-        additional_information = ""
-        if not query_project:
-            additional_information = (
-                    "\nThe wrapper did not specify a project so the response is limited to the latest deployments for all projects."
-                    + "\nTo see more detailed information, specify a project name in the wrapper.")
-
-        return CopilotResponse("\n".join(filter(lambda x: x, [chat_response, warnings, additional_information])))
-
     def build_form_tools(query):
         """
         Builds a set of tools configured for use with HTTP requests (i.e. API key
@@ -804,6 +540,9 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         docs_functions = [FunctionDefinition(tool) for tool in
                           how_to_wrapper(query, how_to_callback(get_github_token(), log_query), log_query)]
 
+        # Functions related to the default values
+        set_default_value, remove_default_value, get_default_value = default_value_callbacks(get_github_token())
+
         return FunctionDefinitions([
             FunctionDefinition(
                 answer_general_query_wrapper(
@@ -821,9 +560,19 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                                               log_query),
                 log_query)),
             FunctionDefinition(
-                answer_project_variables_wrapper(query, variable_query_callback, log_query)),
+                answer_project_variables_wrapper(query,
+                                                 variable_query_callback(get_github_user_from_form(),
+                                                                         api_key,
+                                                                         url,
+                                                                         log_query),
+                                                 log_query)),
             FunctionDefinition(
-                answer_project_variables_usage_wrapper(query, variable_query_callback, log_query)),
+                answer_project_variables_usage_wrapper(query,
+                                                       variable_query_callback(get_github_user_from_form(),
+                                                                               api_key,
+                                                                               url,
+                                                                               log_query),
+                                                       log_query)),
             FunctionDefinition(answer_project_deployment_logs_wrapper(query,
                                                                       logs_callback(get_github_user_from_form(),
                                                                                     api_key,
@@ -841,8 +590,11 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
             FunctionDefinition(
                 answer_releases_and_deployments_wrapper(
                     query,
-                    releases_query_callback,
-                    releases_query_messages,
+                    releases_query_callback(get_github_user_from_form(),
+                                            api_key,
+                                            url,
+                                            log_query),
+                    releases_query_messages(get_github_user_from_form()),
                     log_query)),
             FunctionDefinition(answer_machines_wrapper(query, resource_specific_callback(get_github_user_from_form(),
                                                                                          api_key,
@@ -855,8 +607,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                                                                               url,
                                                                               log_query),
                                             log_query)),
-            FunctionDefinition(clean_up_all_records),
-            FunctionDefinition(logout),
+            FunctionDefinition(logout(get_github_user_from_form(), get_functions_connection_string())),
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
             FunctionDefinition(remove_default_value),
@@ -871,10 +622,6 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
                 url,
                 get_runbook_dashboard_callback(get_github_user_from_form()))),
             *help_functions,
-            FunctionDefinition(
-                test_confirmation(query),
-                callback=test_confirmation_callback,
-                is_enabled=is_admin_user(get_github_user_from_form(), get_admin_users())),
             FunctionDefinition(run_runbook_wrapper(
                 url,
                 api_key,
