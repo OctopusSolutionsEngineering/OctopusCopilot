@@ -20,7 +20,7 @@ def get_runbook_dashboard_callback(github_user):
 
         if not space_name:
             space_name = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The wrapper did not specify a space so the so the space named {space_name} was assumed."
+            warnings = f"The query did not specify a space so the so the space named {space_name} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
 

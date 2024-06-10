@@ -607,7 +607,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         if not space:
             space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The wrapper did not specify a space so the so the space named {space} was assumed."
+            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -666,7 +666,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         if not space:
             space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The wrapper did not specify a space so the so the space named {space} was assumed."
+            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -763,7 +763,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         if not space:
             space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The wrapper did not specify a space so the so the space named {space} was assumed."
+            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -854,7 +854,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         if not space:
             space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings.append(f"The wrapper did not specify a space so the so the space named {space} was assumed.")
+            warnings.append(f"The query did not specify a space so the so the space named {space} was assumed.")
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -948,7 +948,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
         if not space:
             space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The wrapper did not specify a space so the so the space named {space} was assumed."
+            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 

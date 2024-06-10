@@ -118,7 +118,7 @@ class CopilotChatNoDefaultsTest(unittest.TestCase):
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue(
-            "The wrapper did not specify a space so the so the space named Default was assumed" in response_text,
+            "The query did not specify a space so the so the space named Default was assumed" in response_text,
             "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
@@ -131,7 +131,7 @@ class CopilotChatNoDefaultsTest(unittest.TestCase):
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue(
-            "The wrapper did not specify a space so the so the space named Default was assumed" not in response_text,
+            "The query did not specify a space so the so the space named Default was assumed" not in response_text,
             "Response was " + response_text)
 
 
