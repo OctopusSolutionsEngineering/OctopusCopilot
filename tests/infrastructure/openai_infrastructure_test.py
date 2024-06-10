@@ -269,9 +269,9 @@ class MockRequests(unittest.TestCase):
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
-        self.assertEqual(function.name, "answer_general_query")
-        self.assertTrue(body["dates"][0] == '2024-01-01T00:00:00+00:00')
-        self.assertTrue(body["dates"][1] == '2024-03-02T00:00:00+00:00')
+        self.assertEqual(function.name, "answer_general_query", body)
+        self.assertTrue(body["dates"][0] == '2024-01-01T00:00:00+00:00', body)
+        self.assertTrue(body["dates"][1] == '2024-03-02T00:00:00+00:00', body)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_machine_question(self):

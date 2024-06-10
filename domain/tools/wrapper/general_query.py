@@ -36,7 +36,7 @@ releases: release versions
 steps: step names
 variables: variable names
 git_credentials: git credential names
-dates: any dates in the wrapper"""
+dates: any dates in the query"""
 
         if logging:
             logging("Enter:", "answer_general_query")
