@@ -147,7 +147,7 @@ class MockRequests(unittest.TestCase):
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
-        self.assertEqual(function.name, "answer_general_wrapper")
+        self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Kind CA" in body["certificate_names"], "body")
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -269,7 +269,7 @@ class MockRequests(unittest.TestCase):
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
-        self.assertEqual(function.name, "answer_general_wrapper")
+        self.assertEqual(function.name, "answer_general_query")
         self.assertTrue(body["dates"][0] == '2024-01-01T00:00:00+00:00')
         self.assertTrue(body["dates"][1] == '2024-03-02T00:00:00+00:00')
 
