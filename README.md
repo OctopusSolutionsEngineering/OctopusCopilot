@@ -76,15 +76,16 @@ Tests are found in the `tests` directory.
 The most public way to contribute to this project is to build new "tools" (a fancy way of saying functions) that
 OpenAI can use. To do this:
 
-1. Create a new nested function under the `copilot_handler()` function in `function_app.py`. Make sure the function
+1. Create a new wrapper function in `domain/tools/wrapper`. Make sure the wrapper returns a function that
    includes the appropriate comments that OpenAI can read to understand the purpose of the function and the arguments.
-2. Add the function to the set of tools in the `build_form_tools()` function in `function_app.py`.
-3. Typically, any new function requires calling the Octopus API. Functions for querying the Octopus API are defined in
+2. Create a new callback function in `domain/tools/githubactions`. This
+3. Add the function to the set of tools in the `build_form_tools()` function in `function_app.py`.
+4. Typically, any new function requires calling the Octopus API. Functions for querying the Octopus API are defined in
    the `infrastructure/octopus.py` file.
-4. Update the Terraform module in the `tests/terraform/space_population` folder to create a sample space which has the
+5. Update the Terraform module in the `tests/terraform/space_population` folder to create a sample space which has the
    data your new function will query. This Terraform module is used to populate a sample Octopus instance used as part
    of the tests.
-5. Create a new test case un `tests/live/octopus_test.py`. This test class has been configured to create a fresh
+6. Create a new test case un `tests/live/octopus_test.py`. This test class has been configured to create a fresh
    instance of Octopus using TestContainers populated with the Terraform module created in step 4.
 
 # Local testing

@@ -6,14 +6,14 @@ entities that may be provided by the prompt. For example, the prompt:
 
 Run the runbook "My Runbook" in project "My Project" in space "My Space"
 
-exposes the entities "My Runbook", "My Project", and "My Space". The function signature should include these entities:
+Exposes the entities "My Runbook", "My Project", and "My Space". The function signature should include these entities:
 
 def run_runbook(space, project, runbook):
     pass
 
 However, to respond to this function call, we need much more information. At a minimum we need details like the Octopus
 server URL, API key. We may also have logging functions that need to be customized depending on whether the function
-is called as part of a test or not. And there may be platform specific details, such as the GitHub user name.
+is called as part of a test or not. And there may be platform specific details, such as the GitHub username.
 
 In order to present Open AI with a function signature that includes only the entities, while also capturing additional
 arguments that must be known by the system, we use a wrapper function. The wrapper function signature defines all the
@@ -42,6 +42,7 @@ def run_runbook_wrapper(octopus_url, octopus_api_key, logging, callback):
             project: The name of the project
             runbook: The name of the runbook
         "" "
+        # The callback gets the combined arguments from the wrapper and the function called by Open AI
         return callback(octopus_url, octopus_api_key, logging, space, project, runbook)
 
     return run_runbook
