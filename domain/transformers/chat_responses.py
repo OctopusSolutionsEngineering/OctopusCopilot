@@ -26,20 +26,41 @@ def get_octopus_project_names_response(space_name, projects):
     return f"I found {len(projects)} projects in the space \"{space_name.strip()}\":\n* " + "\n* ".join(projects)
 
 
+def build_markdown_table_row(columns):
+    """
+    Builds a markdown table row
+    :param columns: The columns
+    :return: The markdown table row
+    """
+    return f"| {' | '.join(columns)} |\n"
+
+
+def build_markdown_table_header_separator(count):
+    """
+    Builds a markdown table header separator
+    :param count: The number of columns
+    :return: The markdown table header separator
+    """
+    columns = ["|"] * (count + 1)
+    return "-".join(columns) + "\n"
+
+
+def get_env_name(dashboard, environment_id):
+    environment = next(filter(lambda e: e["Id"] == environment_id, dashboard["Environments"]), None)
+    if not environment:
+        return None
+    return environment["Name"]
+
+
 def get_dashboard_response(space_name, dashboard):
     table = f"{space_name}\n\n"
+
     for project_group in dashboard["ProjectGroups"]:
 
-        table += f"| {project_group['Name']} "
-        for environment in project_group["EnvironmentIds"]:
-            environment_name = list(filter(lambda e: e["Id"] == environment, dashboard["Environments"]))
-            table += f"| {environment_name[0]['Name']} "
-
-        table += "|\n"
-
-        environments = len(project_group["EnvironmentIds"])
-        columns = ["|"] * (environments + 2)
-        table += "-".join(columns) + "\n"
+        environment_names = list(map(lambda e: get_env_name(dashboard, e), project_group["EnvironmentIds"]))
+        columns = [project_group['Name'], *environment_names]
+        table += build_markdown_table_row(columns)
+        table += build_markdown_table_header_separator(len(columns))
 
         projects = list(filter(lambda p: p["ProjectGroupId"] == project_group["Id"], dashboard["Projects"]))
 
@@ -53,25 +74,7 @@ def get_dashboard_response(space_name, dashboard):
 
                 if len(deployment) > 0:
                     last_deployment = deployment[0]
-                    icon = "⚪"
-                    if last_deployment['State'] == "Executing":
-                        icon = "🔵"
-                    elif last_deployment['State'] == "Success":
-                        if last_deployment['HasWarningsOrErrors']:
-                            icon = "🟡"
-                        else:
-                            icon = "🟢"
-                    elif last_deployment['State'] == "Failed":
-                        icon = "🔴"
-                    elif last_deployment['State'] == "Canceled":
-                        icon = "⚪"
-                    elif last_deployment['State'] == "TimedOut":
-                        icon = "🔴"
-                    elif last_deployment['State'] == "Cancelling":
-                        icon = "🔴"
-                    elif last_deployment['State'] == "Queued":
-                        icon = "🟣"
-
+                    icon = get_state_icon(last_deployment['State'], last_deployment['HasWarningsOrErrors'])
                     table += f"| {icon} {last_deployment['ReleaseVersion']}"
                 else:
                     table += f"|  "
@@ -81,12 +84,15 @@ def get_dashboard_response(space_name, dashboard):
     return table
 
 
-def get_runbook_dashboard_response(project, runbook, dashboard, get_tenant):
-    dt = datetime.now(pytz.utc)
+def build_runbook_run_columns(run, now, get_tenant):
+    tenant_name = 'Untenanted' if not run['TenantId'] else get_tenant(run['TenantId'])
+    created = parse_unknown_format_date(run["Created"])
+    difference = get_date_difference_summary(now - created)
+    icon = get_state_icon(run['State'], run['HasWarningsOrErrors'])
+    return [tenant_name, icon + " " + difference + " ago"]
 
-    table = f"{project['Name']} / {runbook['Name']}\n\n"
 
-    # Find the tenants
+def get_tenants(dashboard):
     tenants = []
     for environment in dashboard["RunbookRuns"]:
         runs = dashboard["RunbookRuns"][environment]
@@ -94,31 +100,30 @@ def get_runbook_dashboard_response(project, runbook, dashboard, get_tenant):
             tenant = "Untenanted" if not run['TenantId'] else run['TenantId']
             if tenant not in tenants:
                 tenants.append(tenant)
+    return tenants
 
-    # Bild the header row
-    table += f"| "
-    for environment in dashboard["RunbookRuns"]:
-        environment_reference = next(filter(lambda x: x["Id"] == environment, dashboard["Environments"]), None)
-        table += f"| {environment_reference['Name']} "
-    table += "|\n"
 
-    # Build the header separator
-    table += f"|-"
-    for environment in dashboard["RunbookRuns"]:
-        table += f"|-"
-    table += "|\n"
+def get_runbook_dashboard_response(project, runbook, dashboard, get_tenant):
+    dt = datetime.now(pytz.utc)
+
+    table = f"{project['Name']} / {runbook['Name']}\n\n"
+
+    tenants = get_tenants(dashboard)
+
+    environment_ids = list(map(lambda x: x, dashboard["RunbookRuns"]))
+    environment_names = list(map(lambda e: get_env_name(dashboard, e), environment_ids))
+    columns = ["", *environment_names]
+    table += build_markdown_table_row(columns)
+    table += build_markdown_table_header_separator(len(columns))
 
     # Build the execution rows
     for tenant in tenants:
-        for environment in dashboard["RunbookRuns"]:
-            runs = dashboard["RunbookRuns"][environment]
+        for environment in environment_ids:
+            runs = list(
+                filter(lambda run: run['TenantId'] == tenant or (not run['TenantId'] and tenant == "Untenanted"),
+                       dashboard["RunbookRuns"][environment]))
             for run in runs:
-                if run['TenantId'] == tenant or (not run['TenantId'] and tenant == "Untenanted"):
-                    table += f"| {'Untenanted' if not run['TenantId'] else get_tenant(run['TenantId'])} "
-                    created = parse_unknown_format_date(run["Created"])
-                    icon = get_state_icon(run['State'], run['HasWarningsOrErrors'])
-                    table += f"| {icon} {get_date_difference_summary(dt - created)} ago"
-                    table += "|\n"
+                table += build_markdown_table_row(build_runbook_run_columns(run, dt, get_tenant))
 
     return table
 

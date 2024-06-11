@@ -693,7 +693,9 @@ def get_task(space_id, task_id, api_key, octopus_url):
     :return: The deployment progression raw JSON
     """
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_task).')
-    ensure_string_not_empty(task_id, 'task_id must be a non-empty string (get_task).')
+
+    if not task_id:
+        return None
 
     api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Tasks/{quote_safe(task_id)}")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))

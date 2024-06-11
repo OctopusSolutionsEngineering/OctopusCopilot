@@ -56,8 +56,9 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
     deployments = []
     for release in releases["Items"]:
         release_deployments = get_release_deployments(space_id, release["Id"], api_key,
-                                                      octopus_url)
-        for deployment in release_deployments["Items"]:
+                                                      octopus_url)["Items"]
+
+        for deployment in release_deployments:
             # Keep the deployment if it matches the environment, or if there were no environments
             if not list_empty_or_match(environments, lambda x: x["Id"], deployment["EnvironmentId"]):
                 continue
@@ -70,8 +71,7 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
             if not deployment_created_between(deployment, dates):
                 continue
 
-            task = get_task(space_id, deployment["TaskId"], api_key, octopus_url) if deployment.get(
-                "TaskId") else None
+            task = get_task(space_id, deployment.get("TaskId"), api_key, octopus_url)
 
             channel = get_channel_cached(space_id, deployment["ChannelId"], api_key, octopus_url)
 
@@ -85,12 +85,12 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
                 "TenantId": deployment["TenantId"],
                 "TenantName": get_key_or_none(
                     next(filter(lambda tenant: tenant["Id"] == deployment["TenantId"], tenants), None),
-                    "Name") if tenants else None,
+                    "Name"),
                 "ReleaseId": deployment["ReleaseId"],
                 "EnvironmentId": deployment["EnvironmentId"],
                 "EnvironmentName": get_key_or_none(
                     next(filter(lambda env: env["Id"] == deployment["EnvironmentId"], environments), None),
-                    "Name") if environments else None,
+                    "Name"),
                 "ChannelId": deployment["ChannelId"],
                 "ChannelName": channel["Name"],
                 "Created": deployment["Created"],
@@ -102,9 +102,6 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
             })
 
             if len(deployments) >= max_results:
-                break
+                return {"Deployments": deployments}
 
-        if len(deployments) >= max_results:
-            break
-
-    return {"Deployments": deployments[:max_results]}
+    return {"Deployments": deployments}
