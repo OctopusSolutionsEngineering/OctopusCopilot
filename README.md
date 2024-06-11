@@ -60,14 +60,12 @@ in [Design a DDD-oriented microservice](https://learn.microsoft.com/en-us/dotnet
 It is not a strict implementation of the patterns described in that post, but follows it as closely as possible.
 
 The application layer is found in the root of the project. These files expose the public surface area of the
-application,
-be it a CLI interface or a web API.
+application, be it a CLI interface or a web API.
 
 The domain layer is found in the `domain` directory. This includes all the business logic.
 
 The infrastructure layer is found in the `infrastructure` directory. This includes all the external integrations with
-databases,
-logging platforms, and external APIs.
+databases, logging platforms, and external APIs.
 
 Tests are found in the `tests` directory.
 
@@ -91,7 +89,8 @@ OpenAI can use. To do this:
 # Local testing
 
 You can also optionally create a new tool and update the `build_tools()` function in the `main.py` file. The CLI
-interface is mostly used for quick testing and is not expected to maintain a complete selection of tools.
+interface is mostly used for quick testing and is not expected to maintain a complete selection of tools. It is also
+used to demonstrate how this application can be extended beyond platforms like Copilot.
 
 To run the command line you need to set the following environment variables:
 
