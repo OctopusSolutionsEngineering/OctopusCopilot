@@ -13,10 +13,12 @@ from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
+from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_environments, lookup_tenants, \
+    lookup_runbooks
 from domain.transformers.clean_response import strip_before_first_curly_bracket
 from domain.transformers.sse_transformers import convert_from_sse_response
 from function_app import copilot_handler_internal, health_internal
-from infrastructure.octopus import run_published_runbook_fuzzy, get_space_id_and_name_from_name
+from infrastructure.octopus import run_published_runbook_fuzzy, get_space_id_and_name_from_name, get_project
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release, wait_for_task
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
@@ -113,6 +115,56 @@ class CopilotChatTest(unittest.TestCase):
 
     def test_health(self):
         health_internal()
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_space_lookup(self):
+        prompt = "List the variable names defined in the project \"Deploy Web App Container\" in space \"Simpleish\"."
+        space_id, actual_space_name, warnings = lookup_space(Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish")
+
+        self.assertEqual(actual_space_name, "Simple", "Space name was " + actual_space_name)
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_project_lookup(self):
+        prompt = "List the variable names defined in the project \"Deploy Web App Containerish\" in space \"Simpleish\"."
+        space_id, actual_space_name, warnings = lookup_space(Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish")
+        sanitized_project_names, sanitized_projects = lookup_projects(Octopus_Url, Octopus_Api_Key, None, prompt,
+                                                                      space_id, "Deploy Web App Containerish")
+
+        self.assertEqual(sanitized_project_names[0], "Deploy Web App Container",
+                         "Project name was " + sanitized_project_names[0])
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_environment_lookup(self):
+        prompt = "List the variable names defined in the project \"Deploy Web App Containerish\" in space \"Simpleish\" in environment \"Developmentish\"."
+        space_id, actual_space_name, warnings = lookup_space(Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish")
+        sanitized_environment_names = lookup_environments(Octopus_Url, Octopus_Api_Key, None, prompt,
+                                                          space_id, "Developmentish")
+
+        self.assertEqual(sanitized_environment_names[0], "Development",
+                         "Environment name was " + sanitized_environment_names[0])
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_tenant_lookup(self):
+        prompt = "List the variable names defined in the project \"Deploy Web App Containerish\" in space \"Simpleish\" in environment \"Developmentish\" scoped to Tenant \"Marketingish\"."
+        space_id, actual_space_name, warnings = lookup_space(Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish")
+        sanitized_tenant_names = lookup_tenants(Octopus_Url, Octopus_Api_Key, None, prompt,
+                                                space_id, "Marketingish")
+
+        self.assertEqual(sanitized_tenant_names[0], "Marketing",
+                         "Tenant name was " + sanitized_tenant_names[0])
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_runbook_lookup(self):
+        prompt = "List the variable names defined in the project \"Deploy Web App Containerish\" in space \"Simpleish\" in environment \"Developmentish\" scoped to Tenant \"Marketingish\" and runbook \"Backup Databaseish\"."
+        space_id, actual_space_name, warnings = lookup_space(Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish")
+        sanitized_project_names, sanitized_projects = lookup_projects(Octopus_Url, Octopus_Api_Key, None, prompt,
+                                                                      space_id, "Runbook Projectish")
+        project = get_project(space_id, sanitized_project_names[0], Octopus_Api_Key, Octopus_Url)
+        sanitized_runbook_names = lookup_runbooks(Octopus_Url, Octopus_Api_Key, None, prompt,
+                                                  space_id, project["Id"], "Backup Databaseish")
+
+        self.assertEqual(sanitized_runbook_names[0], "Backup Database",
+                         "Runbook name was " + sanitized_runbook_names[0])
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_variables(self):
