@@ -59,13 +59,14 @@ class CopilotChatNoDefaultsTest(unittest.TestCase):
                 "ADMIN_USERNAME", "admin").with_env("ADMIN_PASSWORD", "Password01!").with_env(
                 "OCTOPUS_SERVER_BASE64_LICENSE", os.environ["LICENSE"])
             cls.octopus.start()
-            wait_for_logs(cls.octopus, "Web server is ready to process requests")
+            wait_for_logs(cls.octopus, "Web server is ready to process requests", timeout=300)
 
             output = run_terraform("../terraform/simple/space_creation", Octopus_Url, Octopus_Api_Key)
             run_terraform("../terraform/simple/space_population", Octopus_Url, Octopus_Api_Key,
                           json.loads(output)["octopus_space_id"]["value"])
             run_terraform("../terraform/empty/space_creation", Octopus_Url, Octopus_Api_Key)
         except Exception as e:
+            print(e)
             cls.tearDownClass()
 
     @classmethod
