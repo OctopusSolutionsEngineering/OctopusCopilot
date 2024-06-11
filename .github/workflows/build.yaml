@@ -99,7 +99,7 @@ jobs:
         run: |
           pip install pytest coverage setuptools
           PYTHONPATH=$(pwd) coverage run -m pytest --junitxml=results.xml
-          coverage html
+          coverage html --omit="./domain/sanitizers/stringlifier/*"
         env:
           # These are the connection details to Azure OpenAI
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
