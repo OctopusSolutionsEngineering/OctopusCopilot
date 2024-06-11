@@ -2,15 +2,11 @@ import json
 import os
 import urllib.parse
 
-from azure.core.exceptions import HttpResponseError
-
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.octopus import min_octopus_version
-from domain.config.users import get_admin_users
 from domain.context.github_docs import get_docs_context
 from domain.context.octopus_context import llm_message_query
-from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
 from domain.exceptions.openai_error import OpenAIContentFilter, OpenAITokenLengthExceeded
@@ -25,23 +21,9 @@ from domain.messages.docs_messages import docs_prompt
 from domain.messages.general import build_hcl_prompt
 from domain.messages.test_message import build_test_prompt
 from domain.requestparsing.extract_query import extract_query, extract_confirmation_state_and_id
+from domain.requests.github.copilot_request_context import get_github_user_from_form, build_form_tools
 from domain.response.copilot_response import CopilotResponse
-from domain.security.security import is_admin_user
-from domain.tools.githubactions.dashboard import get_dashboard_callback
-from domain.tools.githubactions.default_values import default_value_callbacks
-from domain.tools.githubactions.deployment_logs import logs_callback
-from domain.tools.githubactions.general_query import general_query_callback
-from domain.tools.githubactions.how_to import how_to_callback
-from domain.tools.githubactions.logout import logout
-from domain.tools.githubactions.provide_help import provide_help_wrapper
-from domain.tools.githubactions.releases import releases_query_callback, releases_query_messages
-from domain.tools.githubactions.resource_specific_callback import resource_specific_callback
-from domain.tools.githubactions.run_runbook import run_runbook_wrapper, run_runbook_confirm_callback_wrapper
-from domain.tools.githubactions.runbook_logs import get_runbook_logs_wrapper
-from domain.tools.githubactions.runbooks_dashboard import get_runbook_dashboard_callback
-from domain.tools.githubactions.variables import variable_query_callback
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
-from domain.tools.wrapper.dashboard_wrapper import get_dashboard_wrapper
 from domain.tools.wrapper.function_call import FunctionCall
 from domain.tools.wrapper.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
@@ -50,9 +32,6 @@ from domain.tools.wrapper.project_logs import answer_project_deployment_logs_wra
 from domain.tools.wrapper.project_variables import answer_project_variables_wrapper, \
     answer_project_variables_usage_wrapper
 from domain.tools.wrapper.releases_and_deployments import answer_releases_and_deployments_wrapper
-from domain.tools.wrapper.runbook_logs import answer_runbook_run_logs_wrapper
-from domain.tools.wrapper.runbooks_dashboard_wrapper import get_runbook_dashboard_wrapper
-from domain.tools.wrapper.step_features import answer_step_features_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.transformers.minify_hcl import minify_hcl
 from domain.transformers.sse_transformers import convert_to_sse_response
@@ -66,7 +45,7 @@ from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, \
     create_limited_api_key, get_version
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
-from infrastructure.users import get_users_details, delete_old_user_details, \
+from infrastructure.users import delete_old_user_details, \
     save_users_octopus_url_from_login, database_connection_test
 
 app = func.FunctionApp()
@@ -461,230 +440,28 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
     :return: A conversational string with the projects found in the space
     """
 
-    def get_apikey_and_server():
-        """
-        When testing we supply the octopus details directly. This removes the need to use a GitHub token, as GitHub
-        tokens have radiatively small rate limits. Load tests will pass these headers in to simulate a chat without
-        triggering GitHub API rate limits
-        :return:
-        """
-        api_key = req.headers.get("X-Octopus-ApiKey")
-        server = req.headers.get("X-Octopus-Server")
-        return api_key, server
-
-    def get_github_token():
-        return req.headers.get("X-GitHub-Token")
-
-    def get_github_user_from_form():
-        return get_github_user(get_github_token())
-
-    def get_api_key_and_url():
-        try:
-            # First try to get the details from the headers
-            api_key, server = get_apikey_and_server()
-
-            if api_key and server:
-                return api_key, server
-
-            # Then get the details saved for a user
-            github_username = get_github_user_from_form()
-
-            if not github_username:
-                raise UserNotLoggedIn()
-
-            try:
-                github_user = get_users_details(github_username, get_functions_connection_string())
-
-                # We need to configure the Octopus details first because we need to know the service account id
-                # before attempting to generate an ID token.
-                if "OctopusUrl" not in github_user or "OctopusApiKey" not in github_user or "EncryptionTag" not in github_user or "EncryptionNonce" not in github_user:
-                    logger.info("No OctopusUrl, OctopusApiKey, EncryptionTag, or EncryptionNonce")
-                    raise UserNotConfigured()
-
-            except HttpResponseError as e:
-                # assume any exception means the user must log in
-                raise UserNotConfigured()
-
-            tag = github_user["EncryptionTag"]
-            nonce = github_user["EncryptionNonce"]
-            api_key = github_user["OctopusApiKey"]
-
-            decrypted_api_key = decrypt_eax(
-                generate_password(os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")),
-                api_key,
-                tag,
-                nonce,
-                os.environ.get("ENCRYPTION_SALT"))
-
-            return decrypted_api_key, github_user["OctopusUrl"]
-
-        except ValueError as e:
-            logger.info("Encryption password must have changed because the api key could not be decrypted")
-            raise OctopusApiKeyInvalid()
-
-    def build_form_tools(query):
-        """
-        Builds a set of tools configured for use with HTTP requests (i.e. API key
-        and URL extracted from an HTTP request body).
-        :param: wrapper The wrapper sent to the LLM
-        :return: The OpenAI tools
-        """
-
-        api_key, url = get_api_key_and_url()
-
-        # A bunch of functions that do the same thing
-        help_functions = [FunctionDefinition(tool) for tool in provide_help_wrapper(
-            get_github_user_from_form(),
-            url,
-            api_key,
-            log_query)]
-
-        # A bunch of functions that search the docs
-        docs_functions = [FunctionDefinition(tool) for tool in
-                          how_to_wrapper(query, how_to_callback(get_github_token(), log_query), log_query)]
-
-        # Functions related to the default values
-        set_default_value, remove_default_value, get_default_value = default_value_callbacks(get_github_token())
-
-        return FunctionDefinitions([
-            FunctionDefinition(
-                answer_general_query_wrapper(
-                    query,
-                    general_query_callback(get_github_user_from_form(),
-                                           api_key,
-                                           url,
-                                           log_query),
-                    log_query),
-                schema=AnswerGeneralQuery),
-            FunctionDefinition(answer_step_features_wrapper(
-                query, general_query_callback(get_github_user_from_form(),
-                                              api_key,
-                                              url,
-                                              log_query),
-                log_query)),
-            FunctionDefinition(
-                answer_project_variables_wrapper(query,
-                                                 variable_query_callback(get_github_user_from_form(),
-                                                                         api_key,
-                                                                         url,
-                                                                         log_query),
-                                                 log_query)),
-            FunctionDefinition(
-                answer_project_variables_usage_wrapper(query,
-                                                       variable_query_callback(get_github_user_from_form(),
-                                                                               api_key,
-                                                                               url,
-                                                                               log_query),
-                                                       log_query)),
-            FunctionDefinition(answer_project_deployment_logs_wrapper(query,
-                                                                      logs_callback(get_github_user_from_form(),
-                                                                                    api_key,
-                                                                                    url,
-                                                                                    log_query),
-                                                                      log_query)),
-            FunctionDefinition(answer_runbook_run_logs_wrapper(
-                query,
-                get_runbook_logs_wrapper(
-                    get_github_user_from_form(),
-                    api_key,
-                    url,
-                    log_query),
-                log_query)),
-            FunctionDefinition(
-                answer_releases_and_deployments_wrapper(
-                    query,
-                    releases_query_callback(get_github_user_from_form(),
-                                            api_key,
-                                            url,
-                                            log_query),
-                    releases_query_messages(get_github_user_from_form()),
-                    log_query)),
-            FunctionDefinition(answer_machines_wrapper(query, resource_specific_callback(get_github_user_from_form(),
-                                                                                         api_key,
-                                                                                         url,
-                                                                                         log_query),
-                                                       log_query)),
-            FunctionDefinition(
-                answer_certificates_wrapper(query, resource_specific_callback(get_github_user_from_form(),
-                                                                              api_key,
-                                                                              url,
-                                                                              log_query),
-                                            log_query)),
-            FunctionDefinition(logout(get_github_user_from_form(), get_functions_connection_string())),
-            FunctionDefinition(set_default_value),
-            FunctionDefinition(get_default_value),
-            FunctionDefinition(remove_default_value),
-            FunctionDefinition(get_dashboard_wrapper(
-                query,
-                api_key,
-                url,
-                get_dashboard_callback(get_github_user_from_form()))),
-            FunctionDefinition(get_runbook_dashboard_wrapper(
-                query,
-                api_key,
-                url,
-                get_runbook_dashboard_callback(get_github_user_from_form()))),
-            *help_functions,
-            FunctionDefinition(run_runbook_wrapper(
-                url,
-                api_key,
-                get_github_user_from_form(),
-                query,
-                get_functions_connection_string(),
-                log_query),
-                callback=run_runbook_confirm_callback_wrapper(url, api_key, log_query),
-                is_enabled=is_admin_user(get_github_user_from_form(), get_admin_users()))],
-            fallback=FunctionDefinitions(docs_functions),
-            invalid=FunctionDefinition(
-                answer_general_query_wrapper(query,
-                                             general_query_callback(get_github_user_from_form(),
-                                                                    api_key,
-                                                                    url,
-                                                                    log_query),
-                                             log_query),
-                schema=AnswerGeneralQuery)
-        )
-
     try:
         result = execute_callback(
             req,
             build_form_tools,
-            get_github_user_from_form()) or execute_function(req, build_form_tools)
+            get_github_user_from_form(req)) or execute_function(req, build_form_tools)
 
         return func.HttpResponse(
             convert_to_sse_response(result.response, result.prompt_title, result.prompt_message, result.prompt_id),
             headers=get_sse_headers())
 
     except UserNotLoggedIn as e:
-        return func.HttpResponse(convert_to_sse_response("Your GitHub token is invalid."),
-                                 headers=get_sse_headers())
+        return handle_user_not_logged_in(e)
     except OctopusRequestFailed as e:
-        handle_error(e)
-        return func.HttpResponse(convert_to_sse_response(
-            "The request to the Octopus API failed. "
-            + "Either your API key is invalid, does not have the required permissions, or there was an issue contacting the server."),
-            headers=get_sse_headers())
+        return handle_octopus_request_failed(e)
     except GitHubRequestFailed as e:
-        handle_error(e)
-        return func.HttpResponse(
-            convert_to_sse_response("The request to the GitHub API failed. "
-                                    + "Your GitHub token is likely to be invalid."),
-            headers=get_sse_headers())
+        return handle_github_request_failed(e)
     except NotAuthorized as e:
-        return func.HttpResponse(convert_to_sse_response("You are not authorized."),
-                                 headers=get_sse_headers())
+        return handle_not_authorized(e)
     except SpaceNotFound as e:
-        return func.HttpResponse(
-            convert_to_sse_response(f"The space \"{e.space_name}\" was not found. "
-                                    + "Either the space does not exist or the API key does not "
-                                    + "have permissions to access it."),
-            headers=get_sse_headers())
+        return handle_space_not_found(e)
     except ResourceNotFound as e:
-        return func.HttpResponse(
-            convert_to_sse_response(f"The {e.resource_type} \"{e.resource_name}\" was not found. "
-                                    + "Either the resource does not exist or the API key does not "
-                                    + "have permissions to access it."),
-            headers=get_sse_headers())
+        return handle_resource_not_found(e)
     except (UserNotConfigured, OctopusApiKeyInvalid) as e:
         # This exception means there is no Octopus instance configured for the GitHub user making the request.
         # The Octopus instance is supplied via a chat message.
@@ -692,12 +469,62 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
     except ValueError as e:
         # Assume this is the error "Azure has not provided the response due to a content filter being triggered"
         # from azure_openai.py in langchain.
-        return func.HttpResponse(convert_to_sse_response(NO_FUNCTION_RESPONSE), headers=get_sse_headers())
+        handle_value_error(e)
     except Exception as e:
-        handle_error(e)
-        return func.HttpResponse(convert_to_sse_response(
-            "An unexpected error was thrown. This error has been logged. I'm sorry for the inconvenience."),
-            headers=get_sse_headers())
+        return handle_exception(e)
+
+
+def handle_value_error(e):
+    return func.HttpResponse(convert_to_sse_response(NO_FUNCTION_RESPONSE), headers=get_sse_headers())
+
+
+def handle_exception(e):
+    handle_error(e)
+    return func.HttpResponse(convert_to_sse_response(
+        "An unexpected error was thrown. This error has been logged. I'm sorry for the inconvenience."),
+        headers=get_sse_headers())
+
+
+def handle_resource_not_found(e):
+    return func.HttpResponse(
+        convert_to_sse_response(f"The {e.resource_type} \"{e.resource_name}\" was not found. "
+                                + "Either the resource does not exist or the API key does not "
+                                + "have permissions to access it."),
+        headers=get_sse_headers())
+
+
+def handle_space_not_found(e):
+    return func.HttpResponse(
+        convert_to_sse_response(f"The space \"{e.space_name}\" was not found. "
+                                + "Either the space does not exist or the API key does not "
+                                + "have permissions to access it."),
+        headers=get_sse_headers())
+
+
+def handle_not_authorized(e):
+    return func.HttpResponse(convert_to_sse_response("You are not authorized."),
+                             headers=get_sse_headers())
+
+
+def handle_github_request_failed(e):
+    handle_error(e)
+    return func.HttpResponse(
+        convert_to_sse_response("The request to the GitHub API failed. "
+                                + "Your GitHub token is likely to be invalid."),
+        headers=get_sse_headers())
+
+
+def handle_user_not_logged_in(e):
+    return func.HttpResponse(convert_to_sse_response("Your GitHub token is invalid."),
+                             headers=get_sse_headers())
+
+
+def handle_octopus_request_failed(e):
+    handle_error(e)
+    return func.HttpResponse(convert_to_sse_response(
+        "The request to the Octopus API failed. "
+        + "Either your API key is invalid, does not have the required permissions, or there was an issue contacting the server."),
+        headers=get_sse_headers())
 
 
 def get_sse_headers():
@@ -743,7 +570,7 @@ def execute_callback(req, build_form_tools, github_user):
                 parsed_args = json.loads(arguments)
 
             if function_name:
-                functions = build_form_tools(query)
+                functions = build_form_tools(query, req)
                 result = FunctionCall(functions.get_callback_function(function_name),
                                       function_name,
                                       parsed_args).call_function()
@@ -758,7 +585,7 @@ def execute_callback(req, build_form_tools, github_user):
 def execute_function(req, build_form_tools):
     query = extract_query(req)
 
-    functions = build_form_tools(query)
+    functions = build_form_tools(query, req)
 
     logger.info("Query: " + (query or "None"))
 
