@@ -107,7 +107,7 @@ def get_project_dashboard_response(space_name, project_name, dashboard):
                     created = parse_unknown_format_date(deployment["Created"])
                     difference = get_date_difference_summary(now - created)
                     icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
-                    table += f"| {icon} {deployment['ReleaseVersion']} {difference} ago"
+                    table += f"| {icon} {deployment['ReleaseVersion']} 🕗 {difference} ago"
             else:
                 table += "| ⨂ "
     table += "|  "
@@ -169,7 +169,7 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                     created = parse_unknown_format_date(deployment["Created"])
                     difference = get_date_difference_summary(now - created)
                     channel = get_channel_cached(space_id, deployment["ChannelId"], api_key, url)
-                    columns.append(f"{icon} {deployment['ReleaseVersion']} {channel['Name']} {difference} ago")
+                    columns.append(f"{icon} {deployment['ReleaseVersion']} ⤲ {channel['Name']} 🕗 {difference} ago")
                     found = True
                     break
 
