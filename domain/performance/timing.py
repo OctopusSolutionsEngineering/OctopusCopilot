@@ -15,7 +15,7 @@ def timing_wrapper(callback, identifier):
     :param identifier: A name used to identify the callback logic
     :return: The return value of the callback
     """
-    ensure_not_falsy(identifier, 'callback must not be None (timing_wrapper).')
+    ensure_not_falsy(callback, 'callback must not be None (timing_wrapper).')
     ensure_string_not_empty(identifier, 'identifier must not be empty (timing_wrapper).')
 
     try:
