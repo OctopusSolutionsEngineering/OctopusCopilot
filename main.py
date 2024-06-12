@@ -108,7 +108,7 @@ def build_tools(tool_query):
         FunctionDefinition(get_project_dashboard_wrapper(tool_query,
                                                          get_api_key(),
                                                          get_octopus_api(),
-                                                         get_project_dashboard_callback(None))),
+                                                         get_project_dashboard_callback(None), log_query)),
         FunctionDefinition(answer_project_variables_usage_wrapper(tool_query,
                                                                   variable_query_cli_callback(get_api_key(),
                                                                                               get_octopus_api(),
