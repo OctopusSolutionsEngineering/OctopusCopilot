@@ -7,7 +7,7 @@ from infrastructure.octopus import get_spaces_generator, get_project, get_projec
 
 def get_project_dashboard_callback(github_user, log_query=None):
     def get_project_dashboard_callback_implementation(original_query, api_key, url, space_name, project_name):
-        space_id, actual_space_name, warnings = lookup_space(url, api_key, github_user, original_query, space_name)
+        space_id, space_name, warnings = lookup_space(url, api_key, github_user, original_query, space_name)
         sanitized_project_names, sanitized_projects = lookup_projects(url, api_key, github_user, original_query,
                                                                       space_id, project_name)
 
