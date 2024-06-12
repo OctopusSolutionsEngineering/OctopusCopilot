@@ -6,7 +6,7 @@ from infrastructure.users import save_default_values, get_default_values, \
     database_connection_test, delete_default_values, enable_feature_flag_for_user, is_feature_flagged_for_user, \
     disable_feature_flag_for_user, enable_feature_flag_for_group, is_feature_flagged_for_group, \
     disable_feature_flag_for_group, enable_feature_flag_for_all, is_feature_flagged_for_all, \
-    disable_feature_flag_for_all
+    disable_feature_flag_for_all, delete_user_details
 
 connection_string = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
 
@@ -37,8 +37,10 @@ class UsersTest(unittest.TestCase):
         self.assertTrue(is_feature_flagged_for_group("testgroupfeature", "testgroup", connection_string))
         self.assertFalse(is_feature_flagged_for_group("testgroupfeature", "anothergroup", connection_string))
 
-        self.assertTrue(is_feature_enabled_for_github_user("testgroupfeature", "testuser", ["testgroup"], connection_string))
-        self.assertFalse(is_feature_enabled_for_github_user("testgroupfeature", "testuser", ["anothergroup"], connection_string))
+        self.assertTrue(
+            is_feature_enabled_for_github_user("testgroupfeature", "testuser", ["testgroup"], connection_string))
+        self.assertFalse(
+            is_feature_enabled_for_github_user("testgroupfeature", "testuser", ["anothergroup"], connection_string))
 
         disable_feature_flag_for_group("testgroupfeature", "testgroup", connection_string)
         self.assertFalse(is_feature_flagged_for_group("testgroupfeature", "testgroup", connection_string))
@@ -48,7 +50,8 @@ class UsersTest(unittest.TestCase):
     def test_feature_flag_global(self):
         enable_feature_flag_for_all("testallfeature", connection_string)
         self.assertTrue(is_feature_flagged_for_all("testallfeature", connection_string))
-        self.assertTrue(is_feature_enabled_for_github_user("testallfeature", "testuser", ["testgroup"], connection_string))
+        self.assertTrue(
+            is_feature_enabled_for_github_user("testallfeature", "testuser", ["testgroup"], connection_string))
 
         disable_feature_flag_for_all("testallfeature", connection_string)
         self.assertFalse(is_feature_flagged_for_all("testallfeature", connection_string))
@@ -84,9 +87,24 @@ class UsersTest(unittest.TestCase):
         delete_all_user_details(connection_string)
 
         with self.assertRaises(Exception):
-            get_users_details("test", connection_string)
+            get_users_details("12345", connection_string)
 
         self.assertEqual(0, delete_old_user_details(connection_string))
+
+    def test_logout(self):
+        save_users_octopus_url_from_login("12345", "https://test.com", "API-ABCDEFG", "password", "salt",
+                                          connection_string)
+        user = get_users_details("12345", connection_string)
+
+        self.assertTrue(user['OctopusUrl'])
+        self.assertTrue(user['OctopusApiKey'])
+        self.assertTrue(user['EncryptionTag'])
+        self.assertTrue(user['EncryptionNonce'])
+
+        delete_user_details("12345", connection_string)
+
+        with self.assertRaises(Exception):
+            get_users_details("12345", connection_string)
 
     def test_login_invalid_api(self):
         with self.assertRaises(ValueError):
