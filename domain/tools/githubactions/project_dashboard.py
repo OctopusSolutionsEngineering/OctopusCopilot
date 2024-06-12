@@ -1,7 +1,7 @@
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects
 from domain.response.copilot_response import CopilotResponse
 from domain.transformers.chat_responses import get_project_dashboard_response, get_project_tenant_progression_response
-from infrastructure.octopus import get_spaces_generator, get_project, get_project_progression, \
+from infrastructure.octopus import get_project, get_project_progression, \
     get_project_tenant_dashboard
 
 
@@ -13,12 +13,6 @@ def get_project_dashboard_callback(github_user, log_query=None):
 
         if not sanitized_project_names:
             return CopilotResponse("Please specify a project name in the wrapper.")
-
-        warnings = []
-
-        if not space_name:
-            space_name = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings.append(f"The query did not specify a space so the so the space named {space_name} was assumed.")
 
         if log_query:
             log_query("get_project_dashboard_callback_implementation", f"""
