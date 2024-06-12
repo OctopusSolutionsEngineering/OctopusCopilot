@@ -1,9 +1,10 @@
-def get_runbook_dashboard_wrapper(original_query, api_key, url, callback, log_query):
-    def get_runbook_dashboard_tool(space_name=None, project_name=None, runbook_name=None, **kwargs):
-        """Display the runbook dashboard. Example prompts include:
+def show_runbook_dashboard_wrapper(original_query, api_key, url, callback, log_query):
+    def show_runbook_dashboard(space_name=None, project_name=None, runbook_name=None, **kwargs):
+        """Displays or shows the runbook dashboard. Example prompts include:
         * Show the dashboard for the runbook "My Runbook" in project "My Project"
+        * Display the dashboard for the runbook "My Runbook" in project "My Project"
         * Show the dashboard for the runbook "My Runbook" in the project "My Project" in the space called "My Space"
-        * Runbook dashboard for runbook "My Runbook" in "My Project" in "My Space
+        * Runbook dashboard for runbook "My Runbook" in "My Project" in "My Space"
         * Runbook dashboard for "My Runbook"
 
             Args:
@@ -18,4 +19,4 @@ def get_runbook_dashboard_wrapper(original_query, api_key, url, callback, log_qu
 
         return callback(original_query, api_key, url, space_name, project_name, runbook_name)
 
-    return get_runbook_dashboard_tool
+    return show_runbook_dashboard

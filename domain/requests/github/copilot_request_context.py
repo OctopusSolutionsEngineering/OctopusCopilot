@@ -4,13 +4,11 @@ import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
 from domain.config.database import get_functions_connection_string
-from domain.config.users import get_admin_users
 from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
-from domain.security.security import is_admin_user
 from domain.tools.githubactions.dashboard import get_dashboard_callback
 from domain.tools.githubactions.default_values import default_value_callbacks
 from domain.tools.githubactions.deployment_logs import logs_callback
@@ -26,17 +24,17 @@ from domain.tools.githubactions.runbook_logs import get_runbook_logs_wrapper
 from domain.tools.githubactions.runbooks_dashboard import get_runbook_dashboard_callback
 from domain.tools.githubactions.variables import variable_query_callback
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
-from domain.tools.wrapper.dashboard_wrapper import get_dashboard_wrapper
+from domain.tools.wrapper.dashboard_wrapper import show_space_dashboard_wrapper
 from domain.tools.wrapper.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from domain.tools.wrapper.how_to import how_to_wrapper
-from domain.tools.wrapper.project_dashboard_wrapper import get_project_dashboard_wrapper
+from domain.tools.wrapper.project_dashboard_wrapper import show_project_dashboard_wrapper
 from domain.tools.wrapper.project_logs import answer_project_deployment_logs_wrapper
 from domain.tools.wrapper.project_variables import answer_project_variables_wrapper, \
     answer_project_variables_usage_wrapper
 from domain.tools.wrapper.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.tools.wrapper.runbook_logs import answer_runbook_run_logs_wrapper
-from domain.tools.wrapper.runbooks_dashboard_wrapper import get_runbook_dashboard_wrapper
+from domain.tools.wrapper.runbooks_dashboard_wrapper import show_runbook_dashboard_wrapper
 from domain.tools.wrapper.step_features import answer_step_features_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from infrastructure.github import get_github_user
@@ -134,7 +132,29 @@ def build_form_tools(query, req: func.HttpRequest):
     # Functions related to the default values
     set_default_value, remove_default_value, get_default_value = default_value_callbacks(get_github_token(req))
 
+    # The order of the tools can make a difference. The dashboard tools are supplied first, as this
+    # appears to give them a higher precedence.
+    # This behaviour is undocumented as far as I can tell - I only found out through trial and error.
     return FunctionDefinitions([
+        FunctionDefinition(show_space_dashboard_wrapper(
+            query,
+            api_key,
+            url,
+            get_dashboard_callback(get_github_user_from_form(req), log_query),
+            log_query)),
+        FunctionDefinition(show_runbook_dashboard_wrapper(
+            query,
+            api_key,
+            url,
+            get_runbook_dashboard_callback(get_github_user_from_form(req)),
+            log_query)),
+        FunctionDefinition(show_project_dashboard_wrapper(query,
+                                                          api_key,
+                                                          url,
+                                                          get_project_dashboard_callback(
+                                                              get_github_user_from_form(req),
+                                                              log_query),
+                                                          log_query)),
         FunctionDefinition(
             answer_general_query_wrapper(
                 query,
@@ -202,25 +222,6 @@ def build_form_tools(query, req: func.HttpRequest):
         FunctionDefinition(set_default_value),
         FunctionDefinition(get_default_value),
         FunctionDefinition(remove_default_value),
-        FunctionDefinition(get_dashboard_wrapper(
-            query,
-            api_key,
-            url,
-            get_dashboard_callback(get_github_user_from_form(req), log_query),
-            log_query)),
-        FunctionDefinition(get_runbook_dashboard_wrapper(
-            query,
-            api_key,
-            url,
-            get_runbook_dashboard_callback(get_github_user_from_form(req)),
-            log_query)),
-        FunctionDefinition(get_project_dashboard_wrapper(query,
-                                                         api_key,
-                                                         url,
-                                                         get_project_dashboard_callback(
-                                                             get_github_user_from_form(req),
-                                                             log_query),
-                                                         log_query)),
         *help_functions,
         FunctionDefinition(run_runbook_wrapper(
             url,
@@ -229,8 +230,7 @@ def build_form_tools(query, req: func.HttpRequest):
             query,
             get_functions_connection_string(),
             log_query),
-            callback=run_runbook_confirm_callback_wrapper(url, api_key, log_query),
-            is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users()))],
+            callback=run_runbook_confirm_callback_wrapper(url, api_key, log_query))],
         fallback=FunctionDefinitions(docs_functions),
         invalid=FunctionDefinition(
             answer_general_query_wrapper(query,

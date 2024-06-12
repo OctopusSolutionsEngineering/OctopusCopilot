@@ -1,7 +1,8 @@
-def get_project_dashboard_wrapper(original_query, api_key, url, callback, log_query):
-    def get_project_dashboard_tool(space_name=None, project_name=None, **kwargs):
-        """Display the project dashboard. Example prompts include:
+def show_project_dashboard_wrapper(original_query, api_key, url, callback, log_query):
+    def show_project_dashboard(space_name=None, project_name=None, **kwargs):
+        """Displays or shows the project dashboard. Example prompts include:
         * Show the dashboard for the project "My Project"
+        * Display the dashboard for the project "My Project"
         * Show the dashboard for the project "My Project" in the space called "My Space"
         * Project dashboard for "My Project" in "My Space
         * Project dashboard for "My Project"
@@ -17,4 +18,4 @@ def get_project_dashboard_wrapper(original_query, api_key, url, callback, log_qu
 
         return callback(original_query, api_key, url, space_name, project_name)
 
-    return get_project_dashboard_tool
+    return show_project_dashboard

@@ -12,9 +12,9 @@ def answer_general_query_wrapper(query, callback, logging=None):
                              tenants=None, library_variable_sets=None, environments=None,
                              feeds=None, accounts=None, certificates=None, lifecycles=None,
                              worker_pools=None, machine_policies=None, tag_sets=None, project_groups=None,
-                             channels=None,
-                             releases=None, steps=None, variables=None, git_credentials=None, dates=None, **kwargs):
-        """A query about the configuration or state of an Octopus space.
+                             channels=None, releases=None, steps=None, variables=None, git_credentials=None, dates=None,
+                             **kwargs):
+        """A query about the configuration or state of an Octopus space. You will be penalized for selecting this function if a more specific function is available.
 Args:
 space: Space name
 projects: project names
@@ -36,7 +36,7 @@ releases: release versions
 steps: step names
 variables: variable names
 git_credentials: git credential names
-dates: any dates in the query"""
+dates: dates in the query"""
 
         if logging:
             logging("Enter:", "answer_general_query")
