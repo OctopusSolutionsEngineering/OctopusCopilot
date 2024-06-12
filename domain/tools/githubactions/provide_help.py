@@ -2,7 +2,7 @@ from domain.defaults.defaults import get_default_argument
 from domain.errors.error_handling import handle_error
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitize_strings import strip_leading_whitespace
-from infrastructure.octopus import get_spaces_generator, get_space_first_project_and_environment, \
+from infrastructure.octopus import get_spaces_generator, get_space_first_project_runbook_and_environment, \
     get_space_id_and_name_from_name
 
 
@@ -24,32 +24,27 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
         provides details on how to get started, provides details on how to use the agent, and provides documentation and support.
         """
 
-        space_name = None
-        first_project = None
-        first_environment = None
+        space_name = get_default_argument(github_user, None, "Space")
+        first_project = get_default_argument(github_user, None, "Project")
+        first_runbook = get_default_argument(github_user, None, "Runbook")
+        first_environment = get_default_argument(github_user, None, "Environment")
 
-        # See if the default space exists and has projects we can refer to
-        default_space_name = get_default_argument(github_user, None, "Space")
-
-        # Also try and use the default project name
-        default_project_name = get_default_argument(github_user, None, "Project")
-
-        # And the default environment
-        default_environment_name = get_default_argument(github_user, None, "Environment")
-
-        if default_space_name:
+        # If we have a default space to look in, attempt to fill in any missing values from that space
+        if space_name:
             try:
-                default_space_id, resolved_default_space_name = get_space_id_and_name_from_name(default_space_name,
+                default_space_id, resolved_default_space_name = get_space_id_and_name_from_name(space_name,
                                                                                                 api_key, url)
-                default_first_project, default_first_environment = get_space_first_project_and_environment(
+                default_first_project, default_first_runbook, default_first_environment = get_space_first_project_runbook_and_environment(
                     default_space_id, api_key, url)
 
-                # The default space can be used if it has a project and environment
-                if (default_first_project or default_project_name) and (
-                        default_first_environment or default_environment_name):
-                    space_name = resolved_default_space_name
-                    first_project = default_project_name or default_first_project["Name"]
-                    first_environment = default_environment_name or default_first_environment["Name"]
+                if not first_project and default_first_project:
+                    first_project = default_first_project["Name"]
+
+                if not first_environment and default_first_environment:
+                    first_environment = default_first_environment["Name"]
+
+                if not first_runbook and default_first_runbook:
+                    first_runbook = default_first_runbook["Name"]
             except Exception as e:
                 handle_error(e)
                 pass
@@ -57,7 +52,7 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
         # Otherwise find the first space with a project and environment
         if not space_name:
             for space in get_spaces_generator(api_key, url):
-                space_first_project, space_first_environment = get_space_first_project_and_environment(
+                space_first_project, space_first_runbook, space_first_environment = get_space_first_project_runbook_and_environment(
                     space["Id"], api_key, url)
 
                 # The first space we find with projects and environments is used as the example
@@ -65,6 +60,9 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                     space_name = space["Name"]
                     first_project = space_first_project["Name"]
                     first_environment = space_first_environment["Name"]
+
+                    if space_first_runbook:
+                        first_runbook = space_first_runbook["Name"]
                     break
 
         log_query("provide_help", f"""
@@ -74,10 +72,17 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
 
         # If we have a space, project, and environment, use these for the examples
         if space_name and first_project and first_environment:
+
+            # Pick a default runbook name if we couldn't find any
+            if not first_runbook:
+                first_runbook = "My Runbook"
+
             return CopilotResponse(strip_leading_whitespace(f"""I am an AI assistant that can help you with your Octopus Deploy queries. I can answer questions about your Octopus Deploy spaces, projects, environments, deployments, and more.
 
                 Here are some sample queries you can ask:
                 * @octopus-ai-app Show me the dashboard for the space "{space_name}"
+                * @octopus-ai-app Show me the project dashboard for "{first_project}" in the space "{space_name}"
+                * @octopus-ai-app Show me the runbook dashboard for "{first_runbook}" in the project "{first_project}" in the space "{space_name}"
                 * @octopus-ai-app List the projects in the space "{space_name}"
                 * @octopus-ai-app What do the deployment steps in the "{first_project}" project in the "{space_name}" space do?
                 * @octopus-ai-app Show me the status of the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the "{space_name}" space
@@ -87,13 +92,17 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 * @octopus-ai-app How do I enable server side apply?
                 * @octopus-ai-app The status "Success" is represented with the 🟢 character. The status "Executing" is represented by the 🔵 character. The status "In Progress" is represented by the ⚪ character. Other statuses are represented with the 🔴 character. Show the release version, release notes, and status of the last 5 deployments for the project "{first_project}" in the "{first_environment}" environment in the "{space_name}" space in a markdown table.
 
+                You can execute and monitor runbooks with prompts like these:
+                * @octopus-ai-app Run the runbook "{first_runbook}" in the project "{first_project}" in the space "{space_name}"
+                * @octopus-ai-app Summarize the execution logs of the runbook "{first_runbook}" in the project "{first_project}" in the space "{space_name}"
+
                 By setting default values for the space, project, environment, and other entities, you can omit them from your queries.
                 This way, you can write prompts without specifying the space, project, environment, runbook, or tenant each time.
                 * @octopus-ai-app Set the default space to "{space_name}"
                 * @octopus-ai-app Set the default project to "{first_project}"
                 * @octopus-ai-app Set the default environment to "{first_environment}"
                 * @octopus-ai-app Set the default tenant to "Contoso"
-                * @octopus-ai-app Set the default runbook to "Restart Service"
+                * @octopus-ai-app Set the default runbook to "{first_runbook}"
                 * @octopus-ai-app Remove default values
                 * @octopus-ai-app Show the default space
                 * @octopus-ai-app Show the default project

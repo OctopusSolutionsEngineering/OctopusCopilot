@@ -529,6 +529,11 @@ class CopilotChatTest(unittest.TestCase):
 
             self.assertTrue("Here are some sample queries you can ask" in response_text,
                             "Response was " + response_text)
+            # The project, environment, runbook, and space name must be included in the sample queries
+            self.assertTrue("Simple" in response_text, "Response was " + response_text)
+            self.assertTrue("Deploy Web App Container" in response_text, "Response was " + response_text)
+            self.assertTrue("Backup Database" in response_text, "Response was " + response_text)
+            self.assertTrue("Development" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_docs(self):

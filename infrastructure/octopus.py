@@ -55,15 +55,31 @@ def get_octopus_headers(my_api_key):
 
 
 @logging_wrapper
-def get_space_first_project_and_environment(space_id, api_key, url):
+def get_space_first_project_runbook_and_environment(space_id, api_key, url):
+    """
+    Attempt to return a sensible combination of environment, project, and runbook. This is often used to provide sample
+    queries that are able to be run by copying and pasting. There is no guarantee that the three entities (project,
+    runbook, and environment) are actually configured to use each other, just that the names are valid.
+    :param space_id: The space ID
+    :param api_key: The API key
+    :param url: The Octopus URL
+    :return: The first combination of project, runbook, and environment
+    """
+    space_first_runbook = next(get_all_runbooks_generator(space_id, api_key, url), None)
     space_first_project = next(get_projects_generator(space_id, api_key, url), None)
     space_first_environment = next(get_environments_generator(space_id, api_key, url), None)
 
-    # The first space we find with projects and environments is used as the example
-    if space_first_project and space_first_environment:
-        return space_first_project, space_first_environment
+    # If there was a runbook, return the runbook, the project it was associated with, and an environment
+    if space_first_runbook:
+        project = get_project(space_id, space_first_runbook["ProjectId"], api_key, url)
+        return project, space_first_runbook, space_first_environment
 
-    return None, None
+    # Otherwise return the project and environment
+    if space_first_project and space_first_environment:
+        return space_first_project, None, space_first_environment
+
+    # return nothing
+    return None, None, None
 
 
 @logging_wrapper
@@ -609,6 +625,32 @@ def get_runbooks_generator(space_id, project_id, api_key, octopus_url):
 
     while True:
         batch_runbooks = get_runbooks_batch(skip, take, space_id, project_id, api_key, octopus_url)
+
+        for tenant in batch_runbooks:
+            yield tenant
+
+        if len(batch_runbooks) != take:
+            break
+
+        skip += take
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_all_runbooks_batch(skip, take, space_id, api_key, octopus_url):
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Runbooks",
+                    dict(take=take, skip=skip))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()["Items"]
+
+
+@logging_wrapper
+def get_all_runbooks_generator(space_id, api_key, octopus_url):
+    skip = 0
+    take = 30
+
+    while True:
+        batch_runbooks = get_all_runbooks_batch(skip, take, space_id, api_key, octopus_url)
 
         for tenant in batch_runbooks:
             yield tenant
