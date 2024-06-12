@@ -48,7 +48,7 @@ def logs_callback(github_user, api_key, url, log_query):
                                        "Project")
 
         if not project:
-            return CopilotResponse("Please specify a project name in the wrapper.")
+            return CopilotResponse("Please specify a project name in the query.")
 
         environment = get_default_argument(github_user,
                                            get_item_or_none(sanitize_environments(original_query, environments), 0),

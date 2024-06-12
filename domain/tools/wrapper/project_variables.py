@@ -100,7 +100,7 @@ resource "octopusdeploy_variable" "azure_account" {{
 }}
 ###
 Answer:
-The resource with the labels "octopusdeploy_project" and "test_project" has an attribute called "name" with the value "My Project". This name matches the project name in the wrapper. Therefore, this is the project we base the answer on.
+The resource with the labels "octopusdeploy_project" and "test_project" has an attribute called "name" with the value "My Project". This name matches the project name in the query. Therefore, this is the project we base the answer on.
 The resource with the labels "octopusdeploy_deployment_process" "test_project_deployment_process" has an attribute called "project_id" that matches the labels of the project called "My Project". Therefore, this deployment process belongs to the project \"My Project\"".
 
 The resource with the labels "octopusdeploy_variable" "project_variable" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "Variable.Test". The deployment process belonging to the "My Project" project has a "step" block with an "action" block with the attribute "name" set to "My Sample Step" and another attribute including the string "Variable.Test". Therefore, the variable "Variable.Test" is used by the step "My Sample Step".
@@ -191,7 +191,7 @@ resource "octopusdeploy_variable" "secondprojectvariable" {{
 ###
 Answer:
 
-The resource with the labels "octopusdeploy_project" and "test_project" has an attribute called "name" with the value "My Project". This name matches the project name in the wrapper. Therefore, this is the project we base the answer on.
+The resource with the labels "octopusdeploy_project" and "test_project" has an attribute called "name" with the value "My Project". This name matches the project name in the query. Therefore, this is the project we base the answer on.
 The resource with the labels "octopusdeploy_variable" "project_variable" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "Variable.Test". Therefore, the variable "Variable.Test" is defined in the project "My Project".
 The resource with the labels "octopusdeploy_variable" "secret_variable" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "SecretVariable". Therefore, the variable "SecretVariable" is defined in the project "My Project".
 The resource with the labels "octopusdeploy_variable" "azure_account" has an attribute called "owner_id" that matches the labels of the project called "My Project" and an attribute called "name" with the value "Azure.Account". Therefore, the variable "Azure.Account" is defined in the project "My Project".

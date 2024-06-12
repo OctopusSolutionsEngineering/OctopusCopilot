@@ -12,7 +12,7 @@ def get_project_dashboard_callback(github_user, log_query=None):
                                                                       space_id, project_name)
 
         if not sanitized_project_names:
-            return CopilotResponse("Please specify a project name in the wrapper.")
+            return CopilotResponse("Please specify a project name in the query.")
 
         if log_query:
             log_query("get_project_dashboard_callback_implementation", f"""

@@ -28,7 +28,7 @@ def get_runbook_dashboard_callback(github_user):
                                                                       space_id, project_name)
 
         if not sanitized_project_names:
-            return CopilotResponse("Please specify a project name in the wrapper.")
+            return CopilotResponse("Please specify a project name in the query.")
 
         project = get_project(space_id, sanitized_project_names[0], api_key, url)
 
@@ -36,7 +36,7 @@ def get_runbook_dashboard_callback(github_user):
                                                   runbook_name)
 
         if not sanitized_runbook_names:
-            return CopilotResponse("Please specify a runbook name in the wrapper.")
+            return CopilotResponse("Please specify a runbook name in the query.")
 
         runbook = get_runbook_fuzzy(space_id, project['Id'], sanitized_runbook_names[0], api_key, url)
 

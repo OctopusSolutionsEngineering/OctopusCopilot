@@ -138,7 +138,7 @@ def releases_query_callback(github_user, api_key, url, log_query):
         if not query_project:
             additional_information = (
                     "\nThe wrapper did not specify a project so the response is limited to the latest deployments for all projects."
-                    + "\nTo see more detailed information, specify a project name in the wrapper.")
+                    + "\nTo see more detailed information, specify a project name in the query.")
 
         return CopilotResponse("\n".join(filter(lambda x: x, [chat_response, warnings, additional_information])))
 

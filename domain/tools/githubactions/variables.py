@@ -63,7 +63,7 @@ def variable_query_callback(github_user, api_key, url, log_query):
         if not projects:
             additional_information = (
                     "\nThe wrapper did not specify a project so the response may reference a subset of all the projects in a space."
-                    + "\nTo see more detailed information, specify a project name in the wrapper.")
+                    + "\nTo see more detailed information, specify a project name in the query.")
 
         return CopilotResponse("\n".join(filter(lambda x: x, [chat_response, warnings, additional_information])))
 
