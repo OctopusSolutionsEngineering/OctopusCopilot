@@ -137,7 +137,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
     identify the GitHub user and persist their details, while the chat half uses the supplied GitHub tokens to
     identify the user. We trust that the user IDs are the same and so can exchange information between the two halves.
 
-    Note that we never ask the user for their ID - we always get the ID from a wrapper to the GitHub API.
+    Note that we never ask the user for their ID - we always get the ID from a query to the GitHub API.
     :param req: The HTTP request
     :return: The HTML form
     """
@@ -167,7 +167,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
                                            os.environ.get("ENCRYPTION_SALT"))
 
         # Normally the session information would be persisted in a cookie. I could not get Azure functions to pass
-        # through a cookie. So we pass it as a wrapper param.
+        # through a cookie. So we pass it as a query param.
         return func.HttpResponse(status_code=301,
                                  headers={
                                      "Location": f"{base_request_url(req)}/api/octopus?state=" + session_json})
@@ -257,12 +257,12 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="query_parse", auth_level=func.AuthLevel.ANONYMOUS)
 def query_parse(req: func.HttpRequest) -> func.HttpResponse:
     """
-    A function handler that parses a wrapper for Octopus entities
+    A function handler that parses a query for Octopus entities
     :param req: The HTTP request
     :return: The HTML form
     """
     try:
-        # Extract the wrapper from the question
+        # Extract the query from the question
         query = extract_query(req)
 
         if not query.strip():
@@ -271,7 +271,7 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
                 convert_to_sse_response("Ask a question like \"What are the projects in the space called Default?\""),
                 headers=get_sse_headers())
 
-        # A function that ignores the wrapper and the messages and returns the body.
+        # A function that ignores the query and the messages and returns the body.
         # The body contains all the extracted entities that must be returned from the Octopus API.
         def return_body_callback(tool_query, body, messages):
             return body
@@ -299,13 +299,13 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
     :return: The HTML form
     """
 
-    # This function is called after the wrapper has already been processed for the relevant entities and the HCL, JSON,
-    # or logs context has been generated. The wrapper is then sent back to this function where we determine which
-    # function the LLM will call. The function may alter the wrapper to provide few-shot examples, or may just pass the
-    # wrapper through as is.
+    # This function is called after the query has already been processed for the relevant entities and the HCL, JSON,
+    # or logs context has been generated. The query is then sent back to this function where we determine which
+    # function the LLM will call. The function may alter the query to provide few-shot examples, or may just pass the
+    # query through as is.
 
     try:
-        # Extract the wrapper from the question
+        # Extract the query from the question
         query = extract_query(req)
 
         if not query.strip():
@@ -339,7 +339,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
         def project_variables_usage_callback(original_query, messages, *args, **kwargs):
             """
-            A function that passes the updated wrapper through to the LLM
+            A function that passes the updated query through to the LLM
             """
             body = json.loads(get_context())
             return llm_message_query(messages,
@@ -348,7 +348,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
         def releases_and_deployments_callback(original_query, messages, *args, **kwargs):
             """
-            A function that passes the updated wrapper through to the LLM
+            A function that passes the updated query through to the LLM
             """
             body = json.loads(get_context())
             return llm_message_query(messages,
@@ -357,7 +357,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
         def resource_specific_callback(original_query, messages, *args, **kwargs):
             """
-            A function that passes the updated wrapper through to the LLM
+            A function that passes the updated query through to the LLM
             """
             body = json.loads(get_context())
             return llm_message_query(messages,
@@ -370,7 +370,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
 
             Note that this function involves some inefficiency when called from the Chrome
             extension, as the extension will first attempt to find any resource names,
-            build the context, and then pass the wrapper back to the agent with the context.
+            build the context, and then pass the query back to the agent with the context.
             However, this callback ignores the context.
             """
             results = search_repo("OctopusDeploy/docs", "markdown", keywords)
@@ -401,8 +401,8 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                 FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
             ])
 
-        # Call the appropriate tool. This may be a straight pass through of the wrapper and context,
-        # or may update the wrapper with additional examples.
+        # Call the appropriate tool. This may be a straight pass through of the query and context,
+        # or may update the query with additional examples.
         result = llm_tool_query(query, get_tools(query), log_query).call_function()
 
         # Streaming the result could remove some timeouts. Sadly, this is yet to be implemented with
@@ -433,7 +433,7 @@ def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
 
 def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
     """
-    A function handler that processes a wrapper from the test form. This function accommodates the limitations
+    A function handler that processes a query from the test form. This function accommodates the limitations
     of browser based SSE requests, namely that the request is a GET (so no request body). The Copilot
     requests on the other hand initiate an SSE stream with a POST that has a body.
     :param req: The HTTP request

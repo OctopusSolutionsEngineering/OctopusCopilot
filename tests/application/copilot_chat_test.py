@@ -28,7 +28,7 @@ from tests.infrastructure.publish_runbook import publish_runbook
 
 class CopilotChatTest(unittest.TestCase):
     """
-    End-to-end tests that verify the complete wrapper query including:
+    End-to-end tests that verify the complete query including:
     * Persisting user details such as Octopus URL and API key
     * Querying the Octopus API to build context
     * Passing the context and query to OpenAI to generate a response
