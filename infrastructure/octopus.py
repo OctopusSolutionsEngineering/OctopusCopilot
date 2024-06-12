@@ -185,29 +185,6 @@ def get_dashboard(space_id, my_api_key, my_octopus_api):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_project_progression(space_id, project_id, my_api_key, my_octopus_api):
-    """
-    The base function used to get the project deployment progression
-    :param space_id: The id of the Octopus space containing the projects
-    :param project_id: The id of the project
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
-    :return: The project progression
-    """
-
-    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_project_progression).')
-    ensure_string_not_empty(space_id, 'project_id must be a non-empty string (get_project_progression).')
-    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_project_progression).')
-    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_project_progression).')
-
-    api = build_url(my_octopus_api, f"api/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/progression")
-    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
-
-    return resp.json()
-
-
-@retry(HTTPError, tries=3, delay=2)
-@logging_wrapper
 def get_project_tenant_dashboard(space_id, project_id, my_api_key, my_octopus_api):
     """
     The base function used to get the tenanted dashboard for a project

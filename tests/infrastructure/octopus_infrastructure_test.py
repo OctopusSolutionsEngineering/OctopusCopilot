@@ -287,9 +287,7 @@ class LiveRequests(unittest.TestCase):
 
         create_and_deploy_release(space_name="Simple")
 
-        json_response = get_project_progression("Simple", "Deploy Web App Container", Octopus_Api_Key, Octopus_Url)
-
-        deployment_json = json.loads(json_response)
+        deployment_json = get_project_progression("Simple", "Deploy Web App Container", Octopus_Api_Key, Octopus_Url)
 
         # Test the response by verifying the expected resources exist
         self.assertTrue(deployment_json.get("Releases")[0].get("Deployments"))
