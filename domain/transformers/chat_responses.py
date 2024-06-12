@@ -82,7 +82,7 @@ def get_dashboard_response(space_name, dashboard):
                     icon = get_state_icon(last_deployment['State'], last_deployment['HasWarningsOrErrors'])
                     table += f"| {icon} {last_deployment['ReleaseVersion']}"
                 else:
-                    table += f"|  "
+                    table += f"| ⨂ "
 
             table += "|\n"
         table += "|\n\n"
@@ -107,8 +107,7 @@ def get_project_dashboard_response(space_name, project_name, dashboard):
                     icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
                     table += f"| {icon} {deployment['ReleaseVersion']} {difference} ago"
             else:
-                table += "|  "
-        table += "|  "
+                table += "| ⨂ "
     table += "|  "
     return table
 
@@ -148,12 +147,18 @@ def get_project_tenant_progression_response(space_name, project_name, dashboard)
 
         columns = []
         for environment in environments:
+            found = False
             for deployment in dashboard["Items"]:
                 if deployment["TenantId"] == tenant["Id"] and deployment["EnvironmentId"] == environment["Id"]:
                     icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
                     created = parse_unknown_format_date(deployment["Created"])
                     difference = get_date_difference_summary(now - created)
                     columns.append(f"{icon} {deployment['ReleaseVersion']} {difference} ago")
+                    found = True
+                    break
+
+            if not found:
+                columns.append('⨂')
 
         if columns:
             table += build_markdown_table_row(columns)
