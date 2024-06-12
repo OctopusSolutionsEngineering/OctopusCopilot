@@ -1,6 +1,9 @@
 def get_dashboard_wrapper(original_query, api_key, url, callback, logging):
     def get_dashboard_tool(space_name=None, **kwargs):
-        """Display the dashboard
+        """Display the dashboard. Example prompts include:
+        * Show the dashboard
+        * Show the dashboard for the space called "My Space"
+        * Dashboard for "My Space"
 
             Args:
                 space_name: The name of the space containing the projects.

@@ -1,6 +1,10 @@
 def get_project_dashboard_wrapper(original_query, api_key, url, callback, log_query):
     def get_project_dashboard_tool(space_name=None, project_name=None, **kwargs):
-        """Display the project dashboard. Use this function when the prompt talks about a project and a dashboard.
+        """Display the project dashboard. Example prompts include:
+        * Show the dashboard for the project "My Project"
+        * Show the dashboard for the project "My Project" in the space called "My Space"
+        * Project dashboard for "My Project" in "My Space
+        * Project dashboard for "My Project"
 
             Args:
                 space_name: The optional space name
