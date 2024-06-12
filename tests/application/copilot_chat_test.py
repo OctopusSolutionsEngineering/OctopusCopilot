@@ -18,6 +18,7 @@ from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_
 from domain.transformers.clean_response import strip_before_first_curly_bracket
 from domain.transformers.sse_transformers import convert_from_sse_response
 from function_app import copilot_handler_internal, health_internal
+from infrastructure.github import get_github_user
 from infrastructure.octopus import run_published_runbook_fuzzy, get_space_id_and_name_from_name, get_project
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release, wait_for_task
@@ -44,21 +45,22 @@ class CopilotChatTest(unittest.TestCase):
     def setUpClass(cls):
         # Simulate the result of a user login and saving their Octopus details
         try:
-            save_users_octopus_url_from_login(os.environ["TEST_GH_USER"],
+            github_user = get_github_user(os.environ["TEST_GH_USER"])
+            save_users_octopus_url_from_login(github_user,
                                               Octopus_Url,
                                               Octopus_Api_Key,
                                               os.environ["ENCRYPTION_PASSWORD"],
                                               os.environ["ENCRYPTION_SALT"],
                                               os.environ["AzureWebJobsStorage"])
-            save_default_values(os.environ["TEST_GH_USER"],
+            save_default_values(github_user,
                                 "space",
                                 "Simple",
                                 os.environ["AzureWebJobsStorage"])
-            save_default_values(os.environ["TEST_GH_USER"],
+            save_default_values(github_user,
                                 "project",
                                 "Deploy Web App Container",
                                 os.environ["AzureWebJobsStorage"])
-            save_default_values(os.environ["TEST_GH_USER"],
+            save_default_values(github_user,
                                 "environment",
                                 "Development",
                                 os.environ["AzureWebJobsStorage"])
@@ -115,6 +117,30 @@ class CopilotChatTest(unittest.TestCase):
 
     def test_health(self):
         health_internal()
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_default_space(self):
+        prompt = "Get default space."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        self.assertTrue("Simple" in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_default_project(self):
+        prompt = "Get default project."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        self.assertTrue("Deploy Web App Container" in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_default_environment(self):
+        prompt = "Get default environment."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        self.assertTrue("Development" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_space_lookup(self):

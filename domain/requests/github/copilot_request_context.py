@@ -130,7 +130,7 @@ def build_form_tools(query, req: func.HttpRequest):
                       how_to_wrapper(query, how_to_callback(get_github_token(req), log_query), log_query)]
 
     # Functions related to the default values
-    set_default_value, remove_default_value, get_default_value = default_value_callbacks(get_github_token(req))
+    set_default_value, remove_default_value, get_default_value = default_value_callbacks(get_github_user_from_form(req))
 
     # The order of the tools can make a difference. The dashboard tools are supplied first, as this
     # appears to give them a higher precedence.

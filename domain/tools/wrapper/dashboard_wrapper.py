@@ -2,6 +2,7 @@ def show_space_dashboard_wrapper(original_query, api_key, url, callback, logging
     def show_space_dashboard(space_name=None, **kwargs):
         """Displays or shows the space dashboard. Example prompts include:
         * Show the dashboard
+        * Show dashboard
         * Show the dashboard for the space called "My Space"
         * Display the dashboard for the space called "My Space"
         * Show the dashboard for space "My Space"
