@@ -179,7 +179,7 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
         if columns:
             table += build_markdown_table_row(columns)
         else:
-            table += "No deployments"
+            table += "\nNo deployments"
 
         table += "\n\n"
     return table
