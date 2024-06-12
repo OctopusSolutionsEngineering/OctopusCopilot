@@ -561,6 +561,22 @@ class CopilotChatTest(unittest.TestCase):
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_project_dashboard_default_space(self):
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        deployment = create_and_deploy_release(space_name="Simple", release_version=version)
+        wait_for_task(deployment["TaskId"], space_name="Simple")
+        prompt = "Show the project dashboard for \"Deploy Web App Container\"."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
+        self.assertTrue(
+            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
+        self.assertTrue("Simple / Deploy Web App Container" in response_text, "Response was " + response_text)
+        print(response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_tenant_project_dashboard(self):
         # Create a release in the Mainline channel against a tenant
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
