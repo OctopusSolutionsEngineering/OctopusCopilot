@@ -116,7 +116,8 @@ jobs:
           # This is the test user that is used to simulate a login
           TEST_GH_USER: "160104"
           # This is the GitHub token passed to the chat tests
-          GH_TEST_TOKEN: ${{ secrets.GH_TEST_TOKEN }}
+          # GH_TEST_TOKEN: ${{ secrets.GH_TEST_TOKEN }}
+          GH_TEST_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # This is the encryption salt used when saving encrypted values to Azure Storage
           ENCRYPTION_PASSWORD: password
           # This is the encryption salt used when saving encrypted values to Azure Storage
