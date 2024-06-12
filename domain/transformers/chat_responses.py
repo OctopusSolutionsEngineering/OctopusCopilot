@@ -84,8 +84,8 @@ def get_dashboard_response(space_name, dashboard):
                 else:
                     table += f"| ⨂ "
 
-            table += "|\n"
-        table += "|\n\n"
+            table += "|\n\n"
+            
     return table
 
 
