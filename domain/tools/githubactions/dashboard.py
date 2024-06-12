@@ -5,7 +5,7 @@ from domain.transformers.chat_responses import get_dashboard_response
 from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_from_name, get_dashboard
 
 
-def get_dashboard_callback(github_user):
+def get_dashboard_callback(github_user, log_query=None):
     def get_dashboard_callback_implementation(original_query, api_key, url, space_name):
         sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
                                               sanitize_space(original_query, space_name))
@@ -18,6 +18,10 @@ def get_dashboard_callback(github_user):
         if not space_name:
             space_name = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
             warnings.append(f"The query did not specify a space so the so the space named {space_name} was assumed.")
+
+        if log_query:
+            log_query("get_dashboard_callback_implementation", f"""
+                Space: {space_name}""")
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
         dashboard = get_dashboard(space_id, api_key, url)

@@ -5,7 +5,7 @@ from infrastructure.octopus import get_spaces_generator, get_project, get_projec
     get_project_tenant_dashboard
 
 
-def get_project_dashboard_callback(github_user):
+def get_project_dashboard_callback(github_user, log_query=None):
     def get_project_dashboard_callback_implementation(original_query, api_key, url, space_name, project_name):
         space_id, actual_space_name, warnings = lookup_space(url, api_key, github_user, original_query, space_name)
         sanitized_project_names, sanitized_projects = lookup_projects(url, api_key, github_user, original_query,
@@ -19,6 +19,11 @@ def get_project_dashboard_callback(github_user):
         if not space_name:
             space_name = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
             warnings.append(f"The query did not specify a space so the so the space named {space_name} was assumed.")
+
+        if log_query:
+            log_query("get_project_dashboard_callback_implementation", f"""
+                Space: {space_name}
+                Project Names: {sanitized_project_names[0]}""")
 
         project = get_project(space_id, sanitized_project_names[0], api_key, url)
 

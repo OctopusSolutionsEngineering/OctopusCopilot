@@ -206,7 +206,7 @@ def build_form_tools(query, req: func.HttpRequest):
             query,
             api_key,
             url,
-            get_dashboard_callback(get_github_user_from_form(req)))),
+            get_dashboard_callback(get_github_user_from_form(req), log_query))),
         FunctionDefinition(get_runbook_dashboard_wrapper(
             query,
             api_key,
@@ -216,7 +216,8 @@ def build_form_tools(query, req: func.HttpRequest):
                                                          api_key,
                                                          url,
                                                          get_project_dashboard_callback(
-                                                             get_github_user_from_form(req)))),
+                                                             get_github_user_from_form(req),
+                                                             log_query))),
         *help_functions,
         FunctionDefinition(run_runbook_wrapper(
             url,
