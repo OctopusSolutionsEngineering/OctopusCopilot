@@ -32,6 +32,8 @@ def build_markdown_table_row(columns):
     :param columns: The columns
     :return: The markdown table row
     """
+    if not columns:
+        return ""
     return f"| {' | '.join(columns)} |\n"
 
 
@@ -41,6 +43,9 @@ def build_markdown_table_header_separator(count):
     :param count: The number of columns
     :return: The markdown table header separator
     """
+    if count == 0:
+        return ""
+
     columns = ["|"] * (count + 1)
     return "-".join(columns) + "\n"
 
@@ -81,6 +86,79 @@ def get_dashboard_response(space_name, dashboard):
 
             table += "|\n"
         table += "|\n\n"
+    return table
+
+
+def get_project_dashboard_response(space_name, project_name, dashboard):
+    now = datetime.now(pytz.utc)
+
+    table = f"{space_name} / {project_name}\n\n"
+
+    environment_names = list(map(lambda e: e["Name"], dashboard["Environments"]))
+    table += build_markdown_table_row(environment_names)
+    table += build_markdown_table_header_separator(len(environment_names))
+
+    for environment in dashboard["Environments"]:
+        for release in dashboard["Releases"]:
+            if environment["Id"] in release["Deployments"]:
+                for deployment in release["Deployments"][environment["Id"]]:
+                    created = parse_unknown_format_date(deployment["Created"])
+                    difference = get_date_difference_summary(now - created)
+                    icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
+                    table += f"| {icon} {deployment['ReleaseVersion']} {difference} ago"
+            else:
+                table += "|  "
+        table += "|  "
+    table += "|  "
+    return table
+
+
+def get_tenant_environments(tenant):
+    environments_ids = []
+    for project_environment in tenant["ProjectEnvironments"]:
+        for environment in tenant["ProjectEnvironments"][project_environment]:
+            if environment not in environments_ids:
+                environments_ids.append(environment)
+    return environments_ids
+
+
+def get_tenant_environment_details(environments_ids, dashboard):
+    environments = []
+    for environment in environments_ids:
+        environment_name = get_env_name(dashboard, environment)
+        # Sometimes tenants will list environments that have no reference
+        if environment_name:
+            environments.append({"Name": environment_name, "Id": environment})
+
+    return environments
+
+
+def get_project_tenant_progression_response(space_name, project_name, dashboard):
+    now = datetime.now(pytz.utc)
+
+    table = f"{space_name} / {project_name}\n\n"
+
+    for tenant in dashboard["Tenants"]:
+        table += f"{tenant['Name']}\n"
+        environments_ids = get_tenant_environments(tenant)
+        environments = get_tenant_environment_details(environments_ids, dashboard)
+        environment_names = list(map(lambda e: e["Name"], environments))
+        table += build_markdown_table_row(environment_names)
+        table += build_markdown_table_header_separator(len(environments))
+
+        columns = []
+        for environment in environments:
+            for deployment in dashboard["Items"]:
+                if deployment["TenantId"] == tenant["Id"] and deployment["EnvironmentId"] == environment["Id"]:
+                    icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
+                    created = parse_unknown_format_date(deployment["Created"])
+                    difference = get_date_difference_summary(now - created)
+                    columns.append(f"{icon} {deployment['ReleaseVersion']} {difference} ago")
+
+        if columns:
+            table += build_markdown_table_row(columns)
+        else:
+            table += "No deployments\n"
     return table
 
 

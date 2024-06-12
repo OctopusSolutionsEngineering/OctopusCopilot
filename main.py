@@ -11,10 +11,12 @@ from domain.tools.cli.logs import logs_cli_callback
 from domain.tools.cli.releases_query_cli import releases_query_cli_callback
 from domain.tools.cli.resource_specific import resource_specific_cli_callback
 from domain.tools.cli.variable_query_cli import variable_query_cli_callback
+from domain.tools.githubactions.project_dashboard import get_project_dashboard_callback
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
 from domain.tools.wrapper.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from domain.tools.wrapper.how_to import how_to_wrapper
+from domain.tools.wrapper.project_dashboard_wrapper import get_project_dashboard_wrapper
 from domain.tools.wrapper.project_logs import answer_project_deployment_logs_wrapper
 from domain.tools.wrapper.project_variables import answer_project_variables_wrapper, \
     answer_project_variables_usage_wrapper
@@ -103,6 +105,10 @@ def build_tools(tool_query):
                                                                                         get_default_argument,
                                                                                         log_query),
                                                             log_query)),
+        FunctionDefinition(get_project_dashboard_wrapper(tool_query,
+                                                         get_api_key(),
+                                                         get_octopus_api(),
+                                                         get_project_dashboard_callback(None))),
         FunctionDefinition(answer_project_variables_usage_wrapper(tool_query,
                                                                   variable_query_cli_callback(get_api_key(),
                                                                                               get_octopus_api(),

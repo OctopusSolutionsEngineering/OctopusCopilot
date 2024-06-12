@@ -17,6 +17,7 @@ from domain.tools.githubactions.deployment_logs import logs_callback
 from domain.tools.githubactions.general_query import general_query_callback
 from domain.tools.githubactions.how_to import how_to_callback
 from domain.tools.githubactions.logout import logout
+from domain.tools.githubactions.project_dashboard import get_project_dashboard_callback
 from domain.tools.githubactions.provide_help import provide_help_wrapper
 from domain.tools.githubactions.releases import releases_query_callback, releases_query_messages
 from domain.tools.githubactions.resource_specific_callback import resource_specific_callback
@@ -29,6 +30,7 @@ from domain.tools.wrapper.dashboard_wrapper import get_dashboard_wrapper
 from domain.tools.wrapper.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from domain.tools.wrapper.how_to import how_to_wrapper
+from domain.tools.wrapper.project_dashboard_wrapper import get_project_dashboard_wrapper
 from domain.tools.wrapper.project_logs import answer_project_deployment_logs_wrapper
 from domain.tools.wrapper.project_variables import answer_project_variables_wrapper, \
     answer_project_variables_usage_wrapper
@@ -210,6 +212,11 @@ def build_form_tools(query, req: func.HttpRequest):
             api_key,
             url,
             get_runbook_dashboard_callback(get_github_user_from_form(req)))),
+        FunctionDefinition(get_project_dashboard_wrapper(query,
+                                                         api_key,
+                                                         url,
+                                                         get_project_dashboard_callback(
+                                                             get_github_user_from_form(req)))),
         *help_functions,
         FunctionDefinition(run_runbook_wrapper(
             url,

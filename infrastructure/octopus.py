@@ -71,7 +71,7 @@ def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
     """
     Gets a space ID and actual space name from a name extracted from a wrapper.
     Note that we are quite lenient here in terms of whitespace and capitalisation.
-    :param space_name: The name of the space
+    :param space_name: The name or id of the space
     :param my_octopus_api: The Octopus URL
     :param my_api_key: The Octopus API key
     :return: The space ID and actual name
@@ -81,6 +81,11 @@ def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
     ensure_string_not_empty(my_octopus_api,
                             'my_octopus_api must be the Octopus Url (get_space_id_and_name_from_name).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_space_id_and_name_from_name).')
+
+    # Early exit if an ID was supplied
+    if space_name.startswith("Spaces-"):
+        space = get_space(space_name, my_api_key, my_octopus_api)
+        return space["Id"], space["Name"]
 
     api = build_url(my_octopus_api, "api/spaces", dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
@@ -173,6 +178,54 @@ def get_dashboard(space_id, my_api_key, my_octopus_api):
 
     api = build_url(my_octopus_api, f"api/{quote_safe(space_id)}/Dashboard",
                     dict(highestLatestVersionPerProjectAndEnvironment="true"))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
+
+    return resp.json()
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_project_progression(space_id, project_id, my_api_key, my_octopus_api):
+    """
+    The base function used to get the project deployment progression
+    :param space_id: The id of the Octopus space containing the projects
+    :param project_id: The id of the project
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus URL
+    :return: The project progression
+    """
+
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_project_progression).')
+    ensure_string_not_empty(space_id, 'project_id must be a non-empty string (get_project_progression).')
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_project_progression).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_project_progression).')
+
+    api = build_url(my_octopus_api, f"api/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/progression")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
+
+    return resp.json()
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_project_tenant_dashboard(space_id, project_id, my_api_key, my_octopus_api):
+    """
+    The base function used to get the tenanted dashboard for a project
+    :param space_id: The id of the Octopus space containing the projects
+    :param project_id: The id of the project
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus URL
+    :return: The project tenanted dashboard
+    """
+
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_project_progression).')
+    ensure_string_not_empty(space_id, 'project_id must be a non-empty string (get_project_progression).')
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_project_progression).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_project_progression).')
+
+    api = build_url(my_octopus_api,
+                    f"bff/spaces/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/tenanted-dashboard",
+                    dict(showAll="true", skip=0, take=30))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     return resp.json()
@@ -485,7 +538,7 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
     api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Projects/{quote_safe(project['Id'])}/Progression")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
-    return resp.data.decode("utf-8")
+    return resp.json()
 
 
 @retry(HTTPError, tries=3, delay=2)
@@ -591,6 +644,28 @@ def get_runbooks_generator(space_id, project_id, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
+def get_space(space_id, api_key, octopus_url):
+    """
+    Returns a space resource from the id
+    :param space_id: The ID of the space.
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
+    :return: The space resource
+    """
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_space).')
+    ensure_string_not_empty(octopus_url,
+                            'octopus_url must be the Octopus Url (get_space).')
+    ensure_string_not_empty(api_key, 'api_key must be the Octopus Api key (get_space).')
+
+    base_url = f"api/Spaces/{quote_safe(space_id)}"
+
+    api = build_url(octopus_url, base_url)
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_project(space_id, project_name, api_key, octopus_url):
     """
     Returns a project resource from the name
@@ -602,6 +677,13 @@ def get_project(space_id, project_name, api_key, octopus_url):
     """
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_project).')
     ensure_string_not_empty(project_name, 'project_name must be a non-empty string (get_project).')
+
+    # Early exit when a project ID is used
+    if project_name.startswith("Projects-"):
+        base_url = f"api/{quote_safe(space_id)}/Projects/{quote_safe(project_name)}"
+        api = build_url(octopus_url, base_url)
+        resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+        return resp.json()
 
     base_url = f"api/{quote_safe(space_id)}/Projects"
 
