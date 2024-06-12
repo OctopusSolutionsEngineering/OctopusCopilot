@@ -114,22 +114,22 @@ def get_project_dashboard_response(space_name, project_name, dashboard):
     return table
 
 
-def get_tenant_environments(tenant, project):
-    environments_ids = set()
+def get_tenant_environments(tenant, dashboard, project_id):
+    environments_ids = []
 
-    for project_environment in project["EnvironmentIds"]:
+    for project_environment in dashboard["Environments"]:
         if tenant.get("Id"):
             # Tenants have a subset of environments they are associated with.
             # We retain the environment order of the project, and then check to see if
             # the project environment is associated with the tenant
-            if project_environment in tenant.get("ProjectEnvironments", {}).get(project["Id"], []):
+            if project_environment["Id"] in tenant.get("ProjectEnvironments", {}).get(project_id, []):
                 # Add the project environment to the list
-                environments_ids.add(project_environment)
+                environments_ids.append(project_environment["Id"])
         else:
             # Untenanted deployments just use project environments
-            environments_ids.add(project_environment)
+            environments_ids.append(project_environment["Id"])
 
-    return list(environments_ids)
+    return environments_ids
 
 
 def get_tenant_environment_details(environments_ids, dashboard):
@@ -143,14 +143,14 @@ def get_tenant_environment_details(environments_ids, dashboard):
     return environments
 
 
-def get_project_tenant_progression_response(space_id, space_name, project_name, dashboard, api_key, url):
+def get_project_tenant_progression_response(space_id, space_name, project_name, project_id, dashboard, api_key, url):
     now = datetime.now(pytz.utc)
 
     table = f"{space_name} / {project_name}\n\n"
 
     for tenant in dashboard["Tenants"]:
         table += f"{tenant['Name']}\n"
-        environments_ids = get_tenant_environments(tenant, dashboard["Projects"][0])
+        environments_ids = get_tenant_environments(tenant, dashboard, project_id)
         environments = get_tenant_environment_details(environments_ids, dashboard)
         environment_names = list(map(lambda e: e["Name"], environments))
         table += build_markdown_table_row(environment_names)
