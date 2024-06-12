@@ -113,13 +113,22 @@ def get_project_dashboard_response(space_name, project_name, dashboard):
     return table
 
 
-def get_tenant_environments(tenant):
-    environments_ids = []
-    for project_environment in tenant["ProjectEnvironments"]:
-        for environment in tenant["ProjectEnvironments"][project_environment]:
-            if environment not in environments_ids:
-                environments_ids.append(environment)
-    return environments_ids
+def get_tenant_environments(tenant, project):
+    environments_ids = set()
+
+    for project_environment in project["EnvironmentIds"]:
+        if tenant.get("Id"):
+            # Tenants have a subset of environments they are associated with.
+            # We retain the environment order of the project, and then check to see if
+            # the project environment is associated with the tenant
+            if project_environment in tenant.get("ProjectEnvironments", {}).get(project["Id"], []):
+                # Add the project environment to the list
+                environments_ids.add(project_environment)
+        else:
+            # Untenanted deployments just use project environments
+            environments_ids.add(project_environment)
+
+    return list(environments_ids)
 
 
 def get_tenant_environment_details(environments_ids, dashboard):
@@ -140,7 +149,7 @@ def get_project_tenant_progression_response(space_name, project_name, dashboard)
 
     for tenant in dashboard["Tenants"]:
         table += f"{tenant['Name']}\n"
-        environments_ids = get_tenant_environments(tenant)
+        environments_ids = get_tenant_environments(tenant, dashboard["Projects"][0])
         environments = get_tenant_environment_details(environments_ids, dashboard)
         environment_names = list(map(lambda e: e["Name"], environments))
         table += build_markdown_table_row(environment_names)
@@ -150,7 +159,11 @@ def get_project_tenant_progression_response(space_name, project_name, dashboard)
         for environment in environments:
             found = False
             for deployment in dashboard["Items"]:
-                if deployment["TenantId"] == tenant["Id"] and deployment["EnvironmentId"] == environment["Id"]:
+                # Note None == None, so the untenanted deployment will satisfy this condition because
+                # the tenant has no ID and neither does the deployment
+                tenanted = deployment.get("TenantId") == tenant.get("Id")
+                environment_match = deployment.get("EnvironmentId") == environment.get("Id")
+                if environment_match and tenanted:
                     icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
                     created = parse_unknown_format_date(deployment["Created"])
                     difference = get_date_difference_summary(now - created)
@@ -164,7 +177,7 @@ def get_project_tenant_progression_response(space_name, project_name, dashboard)
         if columns:
             table += build_markdown_table_row(columns)
         else:
-            table += "No deployments\n"
+            table += "No deployments\n\n"
     return table
 
 

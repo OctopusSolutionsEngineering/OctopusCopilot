@@ -549,7 +549,7 @@ class CopilotChatTest(unittest.TestCase):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         deployment = create_and_deploy_release(space_name="Simple", release_version=version)
         wait_for_task(deployment["TaskId"], space_name="Simple")
-        prompt = "Show the dashboard for project \"Deploy Web App Container\" for space \"Simpleish\"."
+        prompt = "Show the project dashboard for \"Deploy Web App Container\" for space \"Simpleish\"."
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
@@ -558,6 +558,36 @@ class CopilotChatTest(unittest.TestCase):
             "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         self.assertTrue("Simple / Deploy Web App Container" in response_text, "Response was " + response_text)
+        print(response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_tenant_project_dashboard(self):
+        # Create a release in the Mainline channel against a tenant
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        deployment = create_and_deploy_release(space_name="Simple", channel_name="Mainline",
+                                               project_name="Deploy AWS Lambda",
+                                               tenant_name="Marketing", release_version=version)
+        # Create another release without a tenant to ensure the wrapper is actually doing a search and not
+        # returning the first version it finds
+        untenanted_version = str(uuid.uuid4())
+        untenanted_deployment = create_and_deploy_release(space_name="Simple", project_name="Deploy AWS Lambda",
+                                                          release_version=untenanted_version)
+
+        wait_for_task(deployment["TaskId"], space_name="Simple")
+        wait_for_task(untenanted_deployment["TaskId"], space_name="Simple")
+
+        prompt = (
+            "Show the project dashboard for \"Deploy AWS Lambda\" for space \"Simple\"?")
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        self.assertTrue(
+            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
+        self.assertTrue("Simple / Deploy AWS Lambda" in response_text, "Response was " + response_text)
+        self.assertTrue("Marketing" in response_text, "Response was " + response_text)
+        self.assertTrue(version in response_text, "Response was " + response_text)
+        self.assertTrue(untenanted_version in response_text, "Response was " + response_text)
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
