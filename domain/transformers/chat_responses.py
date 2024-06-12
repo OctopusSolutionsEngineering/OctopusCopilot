@@ -4,6 +4,7 @@ import pytz
 
 from domain.date.date_difference import get_date_difference_summary
 from domain.date.parse_dates import parse_unknown_format_date
+from infrastructure.octopus import get_channel_cached
 
 
 def get_octopus_project_names_response(space_name, projects):
@@ -142,7 +143,7 @@ def get_tenant_environment_details(environments_ids, dashboard):
     return environments
 
 
-def get_project_tenant_progression_response(space_name, project_name, dashboard):
+def get_project_tenant_progression_response(space_id, space_name, project_name, dashboard, api_key, url):
     now = datetime.now(pytz.utc)
 
     table = f"{space_name} / {project_name}\n\n"
@@ -167,7 +168,8 @@ def get_project_tenant_progression_response(space_name, project_name, dashboard)
                     icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
                     created = parse_unknown_format_date(deployment["Created"])
                     difference = get_date_difference_summary(now - created)
-                    columns.append(f"{icon} {deployment['ReleaseVersion']} {difference} ago")
+                    channel = get_channel_cached(space_id, deployment["ChannelId"], api_key, url)
+                    columns.append(f"{icon} {deployment['ReleaseVersion']} {channel['Name']} {difference} ago")
                     found = True
                     break
 

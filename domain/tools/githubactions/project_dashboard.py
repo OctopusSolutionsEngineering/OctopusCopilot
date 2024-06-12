@@ -47,4 +47,5 @@ def get_dashboard(space_id, space_name, project, api_key, url):
 
 def get_tenanted_dashboard(space_id, space_name, project, api_key, url):
     progression = get_project_tenant_dashboard(space_id, project["Id"], api_key, url)
-    return get_project_tenant_progression_response(space_name, project["Name"], progression["Dashboard"])
+    return get_project_tenant_progression_response(space_id, space_name, project["Name"], progression["Dashboard"],
+                                                   api_key, url)
