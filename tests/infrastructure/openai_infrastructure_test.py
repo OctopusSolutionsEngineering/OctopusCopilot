@@ -299,9 +299,9 @@ class MockRequests(unittest.TestCase):
                    "How do I use lifecycles",
                    "How do I add a Worker?",
                    "How do I setup a polling Tentacle?",
-                   "How do I review the DORA metrics for my space?",
+                   "How do I review the DORA metrics?",
                    "How do I use Community Step templates?",
-                   "How do I enable Config-as-code for a project?", ]
+                   "How do I enable Config-as-code?", ]
 
         for query in queries:
             query_result = llm_tool_query(query, build_mock_test_tools(query))
