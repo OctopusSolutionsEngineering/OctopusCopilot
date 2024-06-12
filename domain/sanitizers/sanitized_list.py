@@ -13,7 +13,7 @@ def sanitize_space(query, input_list):
     input_list = sanitize_list(input_list, "(?i)Any|all|\\*|Space|Space\\s*[0-9A-Z]|My\\s*Space|current|this")
 
     # The LLM will sometimes return the space name of "default" when no specific space is mentioned
-    # If the wrapper does not contain "default" or "Default", we ignore the name default.
+    # If the query does not contain "default" or "Default", we ignore the name default.
     if not query or "default" not in query.casefold():
         input_list = sanitize_list(input_list, "(?i)default")
 
@@ -29,10 +29,10 @@ def sanitize_projects(input_list):
 
 def update_query(original_query, sanitized_projects):
     """
-    Replace resource names in the original wrapper with those found by fuzzy matching.
-    :param original_query: The original wrapper
+    Replace resource names in the original query with those found by fuzzy matching.
+    :param original_query: The original query
     :param sanitized_projects: The output of the sanitize_projects_fuzzy function
-    :return: The wrapper with misnamed resources replaced with their fuzzy matches
+    :return: The query with misnamed resources replaced with their fuzzy matches
     """
     return reduce(
         lambda new_query, name_map: new_query.replace(name_map["original"], name_map["matched"]),
@@ -42,7 +42,7 @@ def update_query(original_query, sanitized_projects):
 def sanitize_names_fuzzy(names_generator, projects):
     """
     Match the list of resources to the closest project names that exist in the space. This allows
-    for minor typos in the wrapper. This version uses a generator to avoid loading all the resources
+    for minor typos in the query. This version uses a generator to avoid loading all the resources
     if there is an exact match withing the earlier batch requests.
     :param projects: The list of project names to match
     :param names_generator: The list of resource names from the space
@@ -56,7 +56,7 @@ def sanitize_names_fuzzy(names_generator, projects):
 def sanitize_name_fuzzy(names_generator, name):
     """
     Match the resource to the closest project names that exist in the space. This allows
-    for minor typos in the wrapper. This version uses a generator to avoid loading all the resources
+    for minor typos in the query. This version uses a generator to avoid loading all the resources
     if there is an exact match withing the earlier batch requests.
     :param name: The resource name
     :param names_generator: The list of resource names from the space
@@ -129,8 +129,8 @@ def sanitize_certificates(input_list):
 
 def sanitize_environments(input_query, input_list):
     list = sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Environment\\s*[0-9A-Z]|My\\s*Environment|env\\d")
-    # The LLM will sometimes return environment names that were never mentioned in the wrapper. I suspect the
-    # names comes from the few-shot examples. Every environment needs to be mentioned in the wrapper.
+    # The LLM will sometimes return environment names that were never mentioned in the query. I suspect the
+    # names comes from the few-shot examples. Every environment needs to be mentioned in the query.
     return [env for env in list if env in input_query]
 
 
@@ -158,10 +158,10 @@ def sanitize_dates(input_list):
 
 def sanitize_log_lines(lines, input_query):
     """
-    return the lines count if the integer actually appeared in the input wrapper
-    :param lines: The lines reported to be in the wrapper
-    :param input_query: The actual wrapper
-    :return: The number of lines to return or None if the number was not in the wrapper
+    return the lines count if the integer actually appeared in the input query
+    :param lines: The lines reported to be in the query
+    :param input_query: The actual query
+    :return: The number of lines to return or None if the number was not in the query
     """
     return lines if str(lines) in input_query else None
 
@@ -174,7 +174,7 @@ def sanitize_log_steps(input_list, input_query, logs):
     However, the values returned by the LLM for step names can be a bit off. This function only returns ints or
     step names that are at least an 80% match with the step names in the logs.
     :param input_list: The list of steps to include in the logs
-    :param input_query The original wrapper
+    :param input_query The original query
     :param logs: The log output
     :return: The list of steps that are either ints or steps names that closely match actual logged output
     """
@@ -202,9 +202,9 @@ def sanitize_log_steps(input_list, input_query, logs):
 def step_index_is_valid(step, input_query):
     """
     The LLM has a habit of inventing a value here. So we check if the step is an integer and that the original
-    wrapper included that integer.
+    query included that integer.
     :param step: The step name or index
-    :param input_query: The original wrapper
+    :param input_query: The original query
     :return:
     """
     return string_to_int(step) and step in input_query

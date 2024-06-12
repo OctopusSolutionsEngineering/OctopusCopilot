@@ -78,7 +78,7 @@ class DynamicTenantExperiments(unittest.TestCase):
             tags_sanitized = sanitize_list(tags)
 
             with self.subTest(f"{name} - {id} - {description} - {','.join(tags_sanitized)}"):
-                # Create a wrapper that should generate the same result as the test case
+                # Create a query that should generate the same result as the test case
                 query = (f"List the ID, description, and tenants tags of the tenant \"{name}\" "
                          + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space. "
                          + "Print the description without modification in a code block.")

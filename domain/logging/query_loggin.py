@@ -10,7 +10,7 @@ logger = configure_logging(__name__)
 
 def log_query(message, query, strip_leading_whitespace=True):
     """
-    Logs a wrapper to an external source
+    Logs a query to an external source
     :param message: The message prefix
     :param query: The message
     """

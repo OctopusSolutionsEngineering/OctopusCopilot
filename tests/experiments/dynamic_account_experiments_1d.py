@@ -76,7 +76,7 @@ class DynamicAccountExperiments(unittest.TestCase):
         for name, id, description, type in test_cases:
 
             with self.subTest(f"{name} - {id} - {description}"):
-                # Create a wrapper that should generate the same result as the test case
+                # Create a query that should generate the same result as the test case
                 query = (
                         f"List the name, ID, description of the account \"{name}\" "
                         + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space."

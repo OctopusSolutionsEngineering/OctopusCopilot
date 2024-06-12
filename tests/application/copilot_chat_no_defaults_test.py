@@ -21,7 +21,7 @@ from tests.infrastructure.octopus_infrastructure_test import run_terraform
 
 class CopilotChatNoDefaultsTest(unittest.TestCase):
     """
-    End-to-end tests that verify the complete wrapper workflow, but without setting any default values.
+    End-to-end tests that verify the complete query workflow, but without setting any default values.
     """
 
     @classmethod

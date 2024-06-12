@@ -30,14 +30,14 @@ def logs_callback(github_user, api_key, url, log_query):
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
-        # The project from the wrapper
+        # The project from the query
         original_sanitized_projects = sanitize_projects(projects)
 
         # The closest project match
         sanitized_projects = sanitize_names_fuzzy(lambda: get_projects_generator(space_id, api_key, url),
                                                   original_sanitized_projects)
 
-        # If we had a project in the wrapper but nothing matched, it means there were no projects in the space
+        # If we had a project in the query but nothing matched, it means there were no projects in the space
         # (or no projects that the user had access to).
         if original_sanitized_projects and len(sanitized_projects) == 0:
             return CopilotResponse("The space has no projects.")

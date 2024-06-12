@@ -18,11 +18,11 @@ def answer_releases_and_deployments_wrapper(original_query, callback, additional
         environments: variable names
         channels: chanel names
         releases: release versions
-        dates: the dates in the wrapper
+        dates: the dates in the query
         tenants: tenant names
         """
 
-        # Build a few shot sample wrapper with a chain-of-thought example to help the LLM understand the relationships
+        # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
         # between projects, releases, deployments, and environments.
 
         # Then use a tree-of-thought prompt to get a consensus answer:

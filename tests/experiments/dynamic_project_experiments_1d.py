@@ -77,7 +77,7 @@ class DynamicProjectExperiments(unittest.TestCase):
         # Loop through each case
         for name, id, description, template in test_cases:
             with self.subTest(f"{name} - {id} - {description} - {template}"):
-                # Create a wrapper that should generate the same result as the test case
+                # Create a query that should generate the same result as the test case
                 query = (f"What is the ID, description, and versioning strategy template of the project \"{name}\" "
                          + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space. "
                          + "Print the description without modification in a code block.")

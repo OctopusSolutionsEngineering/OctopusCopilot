@@ -13,7 +13,7 @@ class MockRequests(unittest.TestCase):
     Integration tests verifying calls to the OpenAI service.
 
     These tests should mostly be focused on ensuring tools are correctly matched to queries by having the correct
-    function comments, and that the correct entities are extracted from the wrapper.
+    function comments, and that the correct entities are extracted from the query.
 
     Tests can also submit mock data to verify the response. Be aware that LLMs are non-deterministic, so it can be hard
     to verify the response.
@@ -205,7 +205,7 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_environment_question(self):
         """
-        Tests that the llm correctly identifies the environment in the wrapper
+        Tests that the llm correctly identifies the environment in the query
         """
 
         query = "List the variables scoped to the \"Development\" environment in the project \"Deploy WebApp\"."
@@ -219,9 +219,9 @@ class MockRequests(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_unknown_arguments(self):
         """
-        Sometimes unknown arguments are passed to functions. The wrapper below has, in the past, passed an argument called
+        Sometimes unknown arguments are passed to functions. The query below has, in the past, passed an argument called
         "type" to the answer_general_query function. This behaviour is not consistent, but happens enough that any function
-        should have an **kwargs argument to handle these cases. This test ensures that a wrapper that has been shown to
+        should have an **kwargs argument to handle these cases. This test ensures that a query that has been shown to
         pass unknown arguments in the past does not break the function.
         """
 

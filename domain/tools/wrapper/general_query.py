@@ -41,7 +41,7 @@ dates: dates in the query"""
         if logging:
             logging("Enter:", "answer_general_query")
 
-        # This function acts as a way to extract the names of resources that are important to an Octopus wrapper. The
+        # This function acts as a way to extract the names of resources that are important to an Octopus query. The
         # resource names map to resources into the API that need to be queried and exposed for context to answer
         # a general question. So the only thing this function does is make another request to the LLM after
         # extracting the relevant entities from the Octopus API.

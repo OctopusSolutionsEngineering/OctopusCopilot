@@ -3,7 +3,7 @@ from domain.sanitizers.sanitized_list import sanitize_list
 
 def how_to_wrapper(query, callback, logging):
     def how_do_i(keywords=None, **kwargs):
-        """Answers a question about how to do something. Use this function when the wrapper is asking a general question.
+        """Answers a question about how to do something. Use this function when the query is asking a general question.
 Questions can look like those in the following list:
 * How do I integrate with something?
 * How do I do something?
@@ -23,7 +23,7 @@ Questions can look like those in the following list:
 * How do I enable something for something?
 
 Args:
-keywords: The keywords extracted from the wrapper
+keywords: The keywords extracted from the query
 """
 
         return provide_help_and_instructions(keywords, **kwargs)
@@ -40,7 +40,7 @@ keywords: The keywords extracted from the wrapper
         these metrics.
 
         Args:
-        keywords: The keywords extracted from the wrapper
+        keywords: The keywords extracted from the query
         """
 
         if logging:

@@ -76,7 +76,7 @@ class DynamicTenantExperiments(unittest.TestCase):
         for name, id, uri, type in test_cases:
 
             with self.subTest(f"{name} - {id} - {uri}"):
-                # Create a wrapper that should generate the same result as the test case
+                # Create a query that should generate the same result as the test case
                 query = (f"List the ID, feed type, and URI of the feed \"{name}\" "
                          + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space.")
 

@@ -416,7 +416,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
     except OpenAITokenLengthExceeded as e:
         handle_error(e)
         return func.HttpResponse(
-            "The wrapper and context exceeded the context window size. This error has been logged.",
+            "The query and context exceeded the context window size. This error has been logged.",
             status_code=500)
     except Exception as e:
         handle_error(e)

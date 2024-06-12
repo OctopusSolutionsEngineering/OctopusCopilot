@@ -205,7 +205,7 @@ The targets that belong to the "Demo" space are:
         # Certificates are scoped the named environments or unscoped. However, the context will appear the same
         # for an unscoped certificate and a scoped certificate that does not have the associated environments in the
         # context - both certificates will have empty environments array.
-        # So if the wrapper mentioned environments, include the environments in the context.
+        # So if the query mentioned environments, include the environments in the context.
         include_environments = ["<all>"] if not exclude_all_environments(original_query, environments) else []
 
         return callback(original_query, messages, space, projects, runbooks, targets,

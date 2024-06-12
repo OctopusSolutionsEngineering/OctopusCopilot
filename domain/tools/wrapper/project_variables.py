@@ -14,7 +14,7 @@ def answer_project_variables_usage_wrapper(original_query, callback, logging=Non
         if logging:
             logging("Enter:", "answer_project_variables_usage")
 
-        # Build a few shot sample wrapper with a chain-of-thought example to help the LLM understand the relationships
+        # Build a few shot sample query with a chain-of-thought example to help the LLM understand the relationships
         # between projects, deployment processes, and variables.
 
         few_shot = """

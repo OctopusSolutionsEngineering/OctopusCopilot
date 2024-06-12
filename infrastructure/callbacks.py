@@ -22,7 +22,7 @@ def save_callback(github_user, function_name, callback_id, arguments, query, con
     ensure_string_not_empty(github_user,
                             'github_user must be the github user ID of the confirmation callback (save_callback).')
     ensure_string_not_empty(query,
-                            'wrapper must be the original wrapper (save_callback).')
+                            'query must be the original query (save_callback).')
 
     table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
     table_client = table_service_client.create_table_if_not_exists("callback")

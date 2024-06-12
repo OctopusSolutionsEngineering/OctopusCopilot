@@ -112,7 +112,7 @@ def build_form_tools(query, req: func.HttpRequest):
     """
     Builds a set of tools configured for use with HTTP requests (i.e. API key
     and URL extracted from an HTTP request body).
-    :param: wrapper The wrapper sent to the LLM
+    :param: query The wrapper sent to the LLM
     :return: The OpenAI tools
     """
 

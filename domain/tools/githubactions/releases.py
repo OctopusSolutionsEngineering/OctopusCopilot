@@ -91,7 +91,7 @@ def releases_query_callback(github_user, api_key, url, log_query):
 
         # We need some additional JSON data to answer this question
         if query_project:
-            # When the wrapper limits the results to certain projects, we
+            # When the query limits the results to certain projects, we
             # can dive deeper and return a larger collection of deployments
             deployments = timing_wrapper(lambda: get_deployments_for_project(space_id,
                                                                              query_project,
@@ -103,7 +103,7 @@ def releases_query_callback(github_user, api_key, url, log_query):
                                                                              max_deployments), "Deployments")
             context["json"] = json.dumps(deployments, indent=2)
         else:
-            # When the wrapper is more general, we rely on the deployment information
+            # When the query is more general, we rely on the deployment information
             # returned to supply the dashboard. The results are broad, but not deep.
             context["json"] = get_deployments_from_dashboard(space_id, api_key, url)
 
@@ -137,7 +137,7 @@ def releases_query_callback(github_user, api_key, url, log_query):
         additional_information = ""
         if not query_project:
             additional_information = (
-                    "\nThe wrapper did not specify a project so the response is limited to the latest deployments for all projects."
+                    "\nThe query did not specify a project so the response is limited to the latest deployments for all projects."
                     + "\nTo see more detailed information, specify a project name in the query.")
 
         return CopilotResponse("\n".join(filter(lambda x: x, [chat_response, warnings, additional_information])))

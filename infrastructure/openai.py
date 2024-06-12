@@ -58,14 +58,14 @@ def handle_openai_exception(exception):
 def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None):
     """
     This is the handler that responds to a chat request.
-    :param log_query: The function used to log the wrapper
-    :param query: The pain text wrapper
+    :param log_query: The function used to log the query
+    :param query: The pain text query
     :param functions: The set of tools used by OpenAI
     :param extra_prompt_messages: Additional messages to pass to the LLM
-    :return: The result of the function, defined by the set of tools, that was called in response to the wrapper
+    :return: The result of the function, defined by the set of tools, that was called in response to the query
     """
 
-    ensure_string_not_empty(query, 'wrapper must be a non-empty string (handle_copilot_tools_execution).')
+    ensure_string_not_empty(query, 'query must be a non-empty string (handle_copilot_tools_execution).')
     ensure_not_falsy(query, 'llm_tools must not be None (handle_copilot_tools_execution).')
 
     tools = functions.get_tools()

@@ -28,16 +28,16 @@ from tests.infrastructure.publish_runbook import publish_runbook
 
 class CopilotChatTest(unittest.TestCase):
     """
-    End-to-end tests that verify the complete wrapper workflow including:
+    End-to-end tests that verify the complete wrapper query including:
     * Persisting user details such as Octopus URL and API key
     * Querying the Octopus API to build context
-    * Passing the context and wrapper to OpenAI to generate a response
+    * Passing the context and query to OpenAI to generate a response
 
     These tests are against a space with a small number of resources. They verify that basic context is successfully
     passed to the LLM and that the responses are valid.
 
     The answers provided by LLMs degrade with more complex contexts, so these tests are not exhaustive. But they do
-    serve to validate the wrapper workflow at a low level.
+    serve to validate the query workflow at a low level.
     """
 
     @classmethod
@@ -266,8 +266,8 @@ class CopilotChatTest(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_list_tenants(self):
         """
-        This wrapper was an example where the name of the space was being set to "Space", and where the
-        wrapper was being answered by answer_project_variables_callback. The comment in
+        This query was an example where the name of the space was being set to "Space", and where the
+        query was being answered by answer_project_variables_callback. The comment in
         answer_project_variables_callback was updated to reflect the fact that it has nothing to do with tenants.
         """
         prompt = "List the unique tenant names in the space, sorted in alphabetical order. Display the answer in a markdown table."
@@ -431,7 +431,7 @@ class CopilotChatTest(unittest.TestCase):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         create_and_deploy_release(space_name="Simple", channel_name="Mainline", project_name="Deploy AWS Lambda",
                                   tenant_name="Marketing", release_version=version)
-        # Create another release without a tenant to ensure the wrapper is actually doing a search and not
+        # Create another release without a tenant to ensure the query is actually doing a search and not
         # returning the first version it finds
         create_and_deploy_release(space_name="Simple", project_name="Deploy AWS Lambda",
                                   release_version=str(uuid.uuid4()))
@@ -448,7 +448,7 @@ class CopilotChatTest(unittest.TestCase):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         create_and_deploy_release(space_name="Simple", channel_name="Mainline", project_name="Deploy AWS Lambda",
                                   tenant_name="Marketing", release_version=version)
-        # Create another release without a tenant to ensure the wrapper is actually doing a search and not
+        # Create another release without a tenant to ensure the query is actually doing a search and not
         # returning the first version it finds
         create_and_deploy_release(space_name="Simple", project_name="Deploy AWS Lambda",
                                   release_version=str(uuid.uuid4()))
@@ -583,7 +583,7 @@ class CopilotChatTest(unittest.TestCase):
         deployment = create_and_deploy_release(space_name="Simple", channel_name="Mainline",
                                                project_name="Deploy AWS Lambda",
                                                tenant_name="Marketing", release_version=version)
-        # Create another release without a tenant to ensure the wrapper is actually doing a search and not
+        # Create another release without a tenant to ensure the query is actually doing a search and not
         # returning the first version it finds
         untenanted_version = str(uuid.uuid4())
         untenanted_deployment = create_and_deploy_release(space_name="Simple", project_name="Deploy AWS Lambda",
@@ -681,7 +681,7 @@ def build_request(message):
 
 def build_test_request(message):
     """
-    Builds a request that directly embeds the API key and server, removing the need to wrapper the GitHub API.
+    Builds a request that directly embeds the API key and server, removing the need to query the GitHub API.
     :param message:
     :return:
     """

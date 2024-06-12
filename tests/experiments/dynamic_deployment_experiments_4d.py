@@ -177,7 +177,7 @@ class DynamicDeploymentExperiments(unittest.TestCase):
         # Loop through each case
         for project, channel, environment, deployment in test_cases:
             with self.subTest(f"{project} - {environment} - {channel}"):
-                # Create a wrapper that should generate the same result as the test case
+                # Create a query that should generate the same result as the test case
                 query = (f"What is the release version of the latest deployment of the \"{project}\" project "
                          + f"to the \"{environment}\" environment "
                          + f"in the \"{channel}\" channel "
@@ -199,7 +199,7 @@ class DynamicDeploymentExperiments(unittest.TestCase):
         # Loop through each case
         for project, channel, environment, deployment in test_cases:
             with self.subTest(f"{project} - {environment} - {channel}"):
-                # Create a wrapper that should generate the same result as the test case
+                # Create a query that should generate the same result as the test case
                 query = (f"What is the release version of the second last deployment of the \"{project}\" project "
                          + f"to the \"{environment}\" environment "
                          + f"in the \"{channel}\" channel "
