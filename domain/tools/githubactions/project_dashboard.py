@@ -23,9 +23,9 @@ def get_project_dashboard_callback(github_user, log_query=None):
 
         response = []
         if project["TenantedDeploymentMode"] == "Untenanted":
-            response.append(get_dashboard(space_id, actual_space_name, project, api_key, url))
+            response.append(get_dashboard(space_id, space_name, project, api_key, url))
         else:
-            response.append(get_tenanted_dashboard(space_id, actual_space_name, project, api_key, url))
+            response.append(get_tenanted_dashboard(space_id, space_name, project, api_key, url))
 
         response.extend(warnings)
 
