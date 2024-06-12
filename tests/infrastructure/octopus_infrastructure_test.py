@@ -21,7 +21,9 @@ from domain.versions.octopus_version import octopus_version_at_least
 from infrastructure.octopus import get_project_progression, get_raw_deployment_process, get_octopus_project_names_base, \
     get_current_user, create_limited_api_key, get_deployment_status_base, get_dashboard, get_deployment_logs, \
     get_item_fuzzy, get_space_id_and_name_from_name, activity_logs_to_string, get_version, run_published_runbook_fuzzy, \
-    get_runbook_deployment_logs
+    get_runbook_deployment_logs, get_projects, get_tenants, get_feeds, get_accounts, get_machines, get_certificates, \
+    get_environments, get_project_channel, get_lifecycle, get_tenant, get_tenant_fuzzy, get_project_fuzzy, \
+    get_environment
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release, wait_for_task
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.publish_runbook import publish_runbook
@@ -29,7 +31,7 @@ from tests.infrastructure.publish_runbook import publish_runbook
 logger = configure_logging(__name__)
 
 
-class LiveRequests(unittest.TestCase):
+class OctopusAPIRequests(unittest.TestCase):
     """
     Integration tests that verify queries made to the Octopus API continue to work as expected. These tests spin up
     an Octopus instance using the latest version of the Docker image to ensure the tests are always up to date.
@@ -265,6 +267,98 @@ class LiveRequests(unittest.TestCase):
 
         # Make sure something was returned. We aren't trying to validate the Markdown tables here though.
         self.assertTrue(dashboard)
+
+    def test_get_all_projects(self):
+        space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+
+        projects = get_projects(space_id, Octopus_Api_Key, Octopus_Url)
+
+        self.assertTrue(any(filter(lambda x: x["Name"] == "Deploy Web App Container", projects)))
+
+    def test_get_projects_fuzzy(self):
+        space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+
+        project = get_project_fuzzy(space_id, "Deploy Web App Containerish", Octopus_Api_Key, Octopus_Url)
+        self.assertEqual(project["Name"], "Deploy Web App Container")
+
+        project = get_project_fuzzy(space_id, "Deploy Web App Container", Octopus_Api_Key, Octopus_Url)
+        self.assertEqual(project["Name"], "Deploy Web App Container")
+
+    def test_get_all_tenants(self):
+        space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+
+        tenants = get_tenants(Octopus_Api_Key, Octopus_Url, space_id)
+
+        self.assertTrue(any(filter(lambda x: x["Name"] == "Marketing", tenants)))
+
+        tenant = get_tenant(space_id, next(filter(lambda x: x["Name"] == "Marketing", tenants))["Id"], Octopus_Api_Key,
+                            Octopus_Url)
+
+        self.assertEqual(tenant["Name"], "Marketing")
+
+    def test_get_tenant_fuzzy(self):
+        space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+
+        tenant = get_tenant_fuzzy(space_id, "Marketing", Octopus_Api_Key, Octopus_Url)
+        self.assertEqual(tenant["Name"], "Marketing")
+
+        tenant = get_tenant_fuzzy(space_id, "Marketingish", Octopus_Api_Key, Octopus_Url)
+        self.assertEqual(tenant["Name"], "Marketing")
+
+    def test_get_all_feeds(self):
+        space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+
+        feeds = get_feeds(Octopus_Api_Key, Octopus_Url, space_id)
+
+        self.assertTrue(any(filter(lambda x: x["Name"] == "Helm", feeds)))
+
+    def test_get_all_accounts(self):
+        space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+
+        accounts = get_accounts(Octopus_Api_Key, Octopus_Url, space_id)
+
+        self.assertTrue(any(filter(lambda x: x["Name"] == "AWS Account", accounts)))
+
+    def test_get_all_machines(self):
+        space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+
+        machines = get_machines(Octopus_Api_Key, Octopus_Url, space_id)
+
+        self.assertTrue(any(filter(lambda x: x["Name"] == "Cloud Region Target", machines)))
+
+    def test_get_all_certificates(self):
+        space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+
+        certificates = get_certificates(Octopus_Api_Key, Octopus_Url, space_id)
+
+        self.assertTrue(any(filter(lambda x: x["Name"] == "Kind CA", certificates)))
+
+    def test_get_all_environments(self):
+        space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+
+        environments = get_environments(Octopus_Api_Key, Octopus_Url, space_id)
+        self.assertTrue(any(filter(lambda x: x["Name"] == "Development", environments)))
+
+        environment = get_environment(space_id, next(filter(lambda x: x["Name"] == "Development", environments))["Id"],
+                                      Octopus_Api_Key, Octopus_Url)
+        self.assertEqual(environment["Name"], "Development")
+
+    def test_get_lifecycles(self):
+        space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+        projects = get_projects(space_id, Octopus_Api_Key, Octopus_Url)
+        project = next(filter(lambda x: x["Name"] == "Deploy AWS Lambda", projects))
+        lifecycle = get_lifecycle(Octopus_Api_Key, Octopus_Url, space_id, project["LifecycleId"])
+
+        self.assertTrue(lifecycle["Name"] == "Application")
+
+    def test_get_all_project_channels(self):
+        space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+        projects = get_projects(space_id, Octopus_Api_Key, Octopus_Url)
+        project = next(filter(lambda x: x["Name"] == "Deploy AWS Lambda", projects))
+
+        channels = get_project_channel(Octopus_Api_Key, Octopus_Url, space_id, project["Id"])
+
+        self.assertTrue(any(filter(lambda x: x["Name"] == "Mainline", channels)))
 
     def test_get_dashboard_preconditions(self):
         """
