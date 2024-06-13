@@ -15,6 +15,7 @@ from domain.config.octopus import min_octopus_version
 from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
+from domain.sanitizers.sanitized_list import sanitize_log_steps
 from domain.transformers.chat_responses import get_dashboard_response
 from domain.transformers.deployments_from_dashboard import get_deployments_from_dashboard
 from domain.versions.octopus_version import octopus_version_at_least
@@ -385,6 +386,33 @@ class OctopusAPIRequests(unittest.TestCase):
 
         # Test the response by verifying the expected resources exist
         self.assertTrue(deployment_json.get("Releases")[0].get("Deployments"))
+
+    def test_log_filtering(self):
+        """
+        Tests that we return the details of a deployments and releases
+        """
+
+        deployment = create_and_deploy_release(space_name="Simple")
+        wait_for_task(deployment["TaskId"], space_name="Simple")
+
+        activity_logs = get_deployment_logs("Simple", "Deploy Web App Container", "Development", None, "latest",
+                                            Octopus_Api_Key, Octopus_Url)
+
+        # Limit to the first step
+        sanitized_logs = sanitize_log_steps(["Configure the load balancer"],
+                                            "Get the logs from step \"Configure the load balancer\" from the latest deployment",
+                                            activity_logs)
+        logs1 = activity_logs_to_string(activity_logs, sanitized_logs)
+        self.assertTrue("Step One" in logs1)
+        self.assertTrue("Step Two" not in logs1)
+
+        # Limit to the second step
+        sanitized_logs = sanitize_log_steps(["Retry this step"],
+                                            "Get the logs from step \"Retry this step\" from the latest deployment",
+                                            activity_logs)
+        logs2 = activity_logs_to_string(activity_logs, sanitized_logs)
+        self.assertTrue("Step One" not in logs2)
+        self.assertTrue("Step Two" in logs2)
 
     def test_get_project_progression_preconditions(self):
         """

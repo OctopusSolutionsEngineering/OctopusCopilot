@@ -20,13 +20,13 @@ resource "octopusdeploy_deployment_process" "deployment_process_project1" {
         "Octopus.Action.RunOnServer"         = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax"       = "Bash"
-        "Octopus.Action.Script.ScriptBody"   = "echo \"Hi there\""
+        "Octopus.Action.Script.ScriptBody"   = "echo \"Hi there from Step One\""
       }
-      environments          = []
+      environments = []
       excluded_environments = []
-      channels              = []
-      tenant_tags           = []
-      features              = []
+      channels = []
+      tenant_tags = []
+      features = []
     }
 
     properties = {}
@@ -52,13 +52,13 @@ resource "octopusdeploy_deployment_process" "deployment_process_project1" {
         "Octopus.Action.RunOnServer"         = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax"       = "Bash"
-        "Octopus.Action.Script.ScriptBody"   = "echo \"Hi there\""
+        "Octopus.Action.Script.ScriptBody"   = "echo \"Hi there from Step Two\""
       }
-      environments          = []
+      environments = []
       excluded_environments = []
-      channels              = []
-      tenant_tags           = []
-      features              = []
+      channels = []
+      tenant_tags = []
+      features = []
     }
 
     properties = {}
@@ -87,11 +87,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_project1" {
         "Octopus.Action.Script.ScriptBody"      = "echo \"Hi there\""
         "Octopus.Action.AutoRetry.MaximumCount" = "3"
       }
-      environments          = []
+      environments = []
       excluded_environments = []
-      channels              = []
-      tenant_tags           = []
-      features              = []
+      channels = []
+      tenant_tags = []
+      features = []
     }
 
     properties = {}
@@ -119,7 +119,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project1" {
         "Octopus.Action.IISWebSite.ApplicationPoolName"                             = "octopub"
         "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"                 = "v4.0"
         "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.IISWebSite.Bindings"                                        = jsonencode([
+        "Octopus.Action.IISWebSite.Bindings" = jsonencode([
           {
             "host"                = ""
             "thumbprint"          = null
@@ -144,10 +144,10 @@ resource "octopusdeploy_deployment_process" "deployment_process_project1" {
         "Octopus.Action.IISWebSite.EnableBasicAuthentication"                      = "False"
         "Octopus.Action.AutoRetry.MaximumCount"                                    = "3"
       }
-      environments          = []
+      environments = []
       excluded_environments = []
-      channels              = []
-      tenant_tags           = []
+      channels = []
+      tenant_tags = []
 
       primary_package {
         package_id           = "MyWebSite"
