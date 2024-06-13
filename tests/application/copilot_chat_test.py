@@ -16,7 +16,7 @@ from testcontainers.core.waiting_utils import wait_for_logs
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_environments, lookup_tenants, \
     lookup_runbooks
 from domain.transformers.clean_response import strip_before_first_curly_bracket
-from domain.transformers.sse_transformers import convert_from_sse_response
+from domain.transformers.sse_transformers import convert_from_sse_response, get_confirmation_id
 from function_app import copilot_handler_internal, health_internal
 from infrastructure.octopus import run_published_runbook_fuzzy, get_space_id_and_name_from_name, get_project
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
@@ -545,6 +545,31 @@ class CopilotChatTest(unittest.TestCase):
                             "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_runbook_run(self):
+        prompt = "Run runbook \"Backup Database\" in the \"Runbook Project\" project"
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode('utf8'))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {"messages": [{
+            "role": "user",
+            "content": "",
+            "copilot_references": None,
+            "copilot_confirmations": [
+                {
+                    "state": "accepted",
+                    "confirmation": {
+                        "id": confirmation_id
+                    }
+                }
+            ]
+        }]}
+
+        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
+        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
+        self.assertTrue("Backup Database" in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         create_and_deploy_release(space_name="Simple", release_version=version)
@@ -702,6 +727,17 @@ def build_request(message):
                 }
             ]
         }).encode('utf8'),
+        url='/api/form_handler',
+        params=None,
+        headers={
+            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"]
+        })
+
+
+def build_confirmation_request(body):
+    return func.HttpRequest(
+        method='POST',
+        body=json.dumps(body).encode('utf8'),
         url='/api/form_handler',
         params=None,
         headers={

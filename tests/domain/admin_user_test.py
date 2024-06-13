@@ -1,10 +1,17 @@
 import unittest
 
 from domain.exceptions.not_authorized import NotAuthorized
-from domain.security.security import call_admin_function
+from domain.security.security import call_admin_function, is_admin_user
 
 
 class AdminUser(unittest.TestCase):
+    def test_is_admin_user(self):
+        self.assertTrue(is_admin_user('123', "[123]"))
+        self.assertTrue(is_admin_user(123, "[123]"))
+        self.assertTrue(is_admin_user(123, "[\"123\"]"))
+        self.assertFalse(is_admin_user('123', "[1234]"))
+        self.assertFalse(is_admin_user('123', "[\"1234\"]"))
+
     def test_is_admin_user(self):
         call_admin_function('123', "[123]", lambda: print("success"))
 

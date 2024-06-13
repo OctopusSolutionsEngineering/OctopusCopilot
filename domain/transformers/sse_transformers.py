@@ -48,3 +48,15 @@ def convert_from_sse_response(sse_response):
                     filter(lambda line: line.strip(), sse_response.split("\n")))
     content_responses = filter(lambda response: "content" in response["choices"][0]["delta"], responses)
     return "\n".join(map(lambda line: line["choices"][0]["delta"]["content"].strip(), content_responses))
+
+
+def get_confirmation_id(sse_response):
+    """
+    Get the confirmation id from an SSE response.
+    :param sse_response: The SSE response to get the confirmation id from.
+    :return: The confirmation id.
+    """
+    responses = map(lambda line: json.loads(line.replace("data: ", "")),
+                    filter(lambda line: line.strip(), sse_response.split("\n")))
+    confirmation_responses = filter(lambda response: "copilot_confirmation" in response, responses)
+    return next(map(lambda response: response["copilot_confirmation"]["confirmation"]["id"], confirmation_responses))
