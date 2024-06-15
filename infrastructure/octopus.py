@@ -287,26 +287,6 @@ def get_projects(space_id, my_api_key, my_octopus_api):
 
 
 @logging_wrapper
-@retry(HTTPError, tries=3, delay=2)
-def get_tenants(space_id, my_api_key, my_octopus_api):
-    """
-    Returns the tenants in a space
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
-    :return: The list of tenants
-    """
-    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_tenants).')
-    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_tenants).')
-    ensure_string_not_empty(space_id, 'space_id must be the space ID (get_tenants).')
-
-    api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Tenants", query=dict(take=TAKE_ALL))
-    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
-
-    json = resp.json()
-    return json["Items"]
-
-
-@logging_wrapper
 def get_feeds(my_api_key, my_octopus_api, space_id):
     """
     Returns the feeds in a space
@@ -809,14 +789,14 @@ def get_task(space_id, task_id, api_key, octopus_url):
 def get_project_progression_from_ids(space_id, project_id, api_key, octopus_url):
     """
     Returns a deployment progression for a project.
-    :param space_name: The name of the space.
-    :param project_name: The name of the project
+    :param space_id: The ID of the space.
+    :param project_id: The ID of the project
     :param api_key: The Octopus API key
     :param octopus_url: The Octopus URL
     :return: The deployment progression raw JSON
     """
-    ensure_string_not_empty(space_id, 'space_name must be a non-empty string (get_project_progression).')
-    ensure_string_not_empty(project_id, 'project_name must be a non-empty string (get_project_progression).')
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_project_progression_from_ids).')
+    ensure_string_not_empty(project_id, 'project_id must be a non-empty string (get_project_progression_from_ids).')
 
     api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/Progression")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
