@@ -101,13 +101,14 @@ def logs_callback(github_user, api_key, url, log_query):
             Steps: {sanitized_steps}
             Lines: {log_lines}""")
 
+        # This will show the entities that were selected after fuzzy matching and loading defaults
         debug_text.extend(get_params_message(github_user, False, logs_callback_implementation.__name__,
                                              original_query=original_query,
                                              space=space,
-                                             projects=projects,
-                                             environments=environments,
+                                             projects=project,
+                                             environments=environment,
                                              channel=channel,
-                                             tenants=tenants,
+                                             tenants=tenant,
                                              release=release,
                                              steps=sanitized_steps,
                                              lines=log_lines))
