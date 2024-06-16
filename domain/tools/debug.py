@@ -4,7 +4,7 @@ from domain.defaults.defaults import get_default_argument
 from domain.sanitizers.sanitize_strings import to_lower_case_or_none
 
 
-def get_params_message(github_user, True, start, function_name, **kwargs):
+def get_params_message(github_user, start, function_name, **kwargs):
     # Debug mode shows the entities extracted from the query
     debug = get_default_argument(github_user, None, "Debug")
     if not to_lower_case_or_none(debug) == "true":
