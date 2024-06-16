@@ -9,9 +9,30 @@ from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_f
 
 def general_query_callback(github_user, api_key, url, log_query):
     def general_query_callback_implementation(original_query, body, messages):
-        debug_text = get_params_message(github_user, True, general_query_callback_implementation.__name__,
+        debug_text = get_params_message(github_user,
+                                        True,
+                                        general_query_callback_implementation.__name__,
                                         original_query=original_query,
-                                        body=body)
+                                        space_name=body["space_name"],
+                                        project_names=body["project_names"],
+                                        runbook_names=body['runbook_names'],
+                                        target_names=body['target_names'],
+                                        tenant_names=body['tenant_names'],
+                                        library_variable_sets=body['library_variable_sets'],
+                                        environment_names=body["environment_names"],
+                                        feed_names=body['feed_names'],
+                                        account_names=body['account_names'],
+                                        certificate_names=body['certificate_names'],
+                                        lifecycle_names=body['lifecycle_names'],
+                                        workerpool_names=body['workerpool_names'],
+                                        machinepolicy_names=body['machinepolicy_names'],
+                                        tagset_names=body['tagset_names'],
+                                        projectgroup_names=body['projectgroup_names'],
+                                        channel_names=body['channel_names'],
+                                        release_versions=body['release_versions'],
+                                        step_names=body['step_names'],
+                                        variable_names=body['variable_names'],
+                                        dates=body['dates'])
 
         sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
                                               sanitize_space(original_query, body["space_name"]))
@@ -67,9 +88,30 @@ def general_query_callback(github_user, api_key, url, log_query):
                                         url,
                                         log_query)]
 
-        debug_text.extend(get_params_message(github_user, False, general_query_callback_implementation.__name__,
-                                             original_query=original_query,
-                                             body=body))
+        debug_text.extend(get_params_message(github_user,
+                                             False,
+                                             general_query_callback_implementation.__name__,
+                                             original_query=processed_query,
+                                             space_name=actual_space_name,
+                                             project_names=project_names,
+                                             runbook_names=body['runbook_names'],
+                                             target_names=body['target_names'],
+                                             tenant_names=body['tenant_names'],
+                                             library_variable_sets=body['library_variable_sets'],
+                                             environment_names=environment_names,
+                                             feed_names=body['feed_names'],
+                                             account_names=body['account_names'],
+                                             certificate_names=body['certificate_names'],
+                                             lifecycle_names=body['lifecycle_names'],
+                                             workerpool_names=body['workerpool_names'],
+                                             machinepolicy_names=body['machinepolicy_names'],
+                                             tagset_names=body['tagset_names'],
+                                             projectgroup_names=body['projectgroup_names'],
+                                             channel_names=body['channel_names'],
+                                             release_versions=body['release_versions'],
+                                             step_names=body['step_names'],
+                                             variable_names=body['variable_names'],
+                                             dates=body['dates']))
 
         response.extend(warnings)
         response.extend(debug_text)
