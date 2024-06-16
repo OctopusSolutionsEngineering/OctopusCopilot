@@ -12,7 +12,7 @@ from infrastructure.octopus import run_published_runbook_fuzzy, get_project, get
 
 def run_runbook_confirm_callback_wrapper(github_user, url, api_key, log_query):
     def run_runbook_confirm_callback(space_id, project_name, project_id, runbook_name, environment_name, tenant_name):
-        debug_text = get_params_message(github_user,
+        debug_text = get_params_message(github_user, True,
                                         run_runbook_confirm_callback.__name__,
                                         space_id=space_id,
                                         project_name=project_name,

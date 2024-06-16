@@ -9,7 +9,7 @@ from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_f
 
 def general_query_callback(github_user, api_key, url, log_query):
     def general_query_callback_implementation(original_query, body, messages):
-        debug_text = get_params_message(github_user, general_query_callback_implementation.__name__,
+        debug_text = get_params_message(github_user, True, general_query_callback_implementation.__name__,
                                         original_query=original_query,
                                         body=body)
 
@@ -66,6 +66,10 @@ def general_query_callback(github_user, api_key, url, log_query):
                                         api_key,
                                         url,
                                         log_query)]
+
+        debug_text.extend(get_params_message(github_user, False, general_query_callback_implementation.__name__,
+                                             original_query=original_query,
+                                             body=body))
 
         response.extend(warnings)
         response.extend(debug_text)

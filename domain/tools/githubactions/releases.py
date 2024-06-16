@@ -52,7 +52,7 @@ def releases_query_callback(github_user, api_key, url, log_query):
     def releases_query_callback_implementation(original_query, messages, space, projects, environments, channels,
                                                releases, tenants, dates):
 
-        debug_text = get_params_message(github_user,
+        debug_text = get_params_message(github_user, True,
                                         releases_query_callback_implementation.__name__,
                                         original_query=original_query,
                                         space=space,
@@ -117,6 +117,17 @@ def releases_query_callback(github_user, api_key, url, log_query):
             # When the query is more general, we rely on the deployment information
             # returned to supply the dashboard. The results are broad, but not deep.
             context["json"] = get_deployments_from_dashboard(space_id, api_key, url)
+
+        debug_text.extend(get_params_message(github_user, False,
+                                             releases_query_callback_implementation.__name__,
+                                             original_query=processed_query,
+                                             space=actual_space_name,
+                                             projects=query_project,
+                                             environments=["<all>"] if not query_environments else query_environments,
+                                             channels=channels,
+                                             releases=releases,
+                                             tenants=query_tenants,
+                                             dates=dates))
 
         chat_response = [collect_llm_context(processed_query,
                                              messages,

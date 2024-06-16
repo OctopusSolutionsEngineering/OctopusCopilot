@@ -9,7 +9,7 @@ from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_f
 
 def variable_query_callback(github_user, api_key, url, log_query):
     def variable_query_callback_implementation(original_query, messages, space, projects, variables):
-        debug_text = get_params_message(github_user,
+        debug_text = get_params_message(github_user, True,
                                         variable_query_callback_implementation.__name__,
                                         original_query=original_query,
                                         space=space,
@@ -39,6 +39,13 @@ def variable_query_callback(github_user, api_key, url, log_query):
         processed_query = update_query(original_query, sanitized_projects)
 
         context = {"input": processed_query}
+
+        debug_text.extend(get_params_message(github_user, True,
+                                             variable_query_callback_implementation.__name__,
+                                             original_query=processed_query,
+                                             space=actual_space_name,
+                                             projects=projects,
+                                             variables=["<all>"] if none_if_falesy_or_all(variables) else variables))
 
         chat_response = [collect_llm_context(processed_query,
                                              messages,

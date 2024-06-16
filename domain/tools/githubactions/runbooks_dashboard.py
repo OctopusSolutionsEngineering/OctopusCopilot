@@ -11,7 +11,7 @@ from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_f
 def get_runbook_dashboard_callback(github_user):
     def get_runbook_dashboard_implementation(original_query, api_key, url, space_name, project_name,
                                              runbook_name):
-        debug_text = get_params_message(github_user,
+        debug_text = get_params_message(github_user, True,
                                         get_runbook_dashboard_implementation.__name__,
                                         original_query=original_query,
                                         space_name=space_name,
@@ -47,6 +47,13 @@ def get_runbook_dashboard_callback(github_user):
             return CopilotResponse("Please specify a runbook name in the query.")
 
         runbook = get_runbook_fuzzy(space_id, project['Id'], sanitized_runbook_names[0], api_key, url)
+
+        debug_text.extend(get_params_message(github_user, False,
+                                             get_runbook_dashboard_implementation.__name__,
+                                             original_query=original_query,
+                                             space_name=space_name,
+                                             project_name=sanitized_project_names[0],
+                                             runbook_name=sanitized_runbook_names[0]))
 
         dashboard = get_runbooks_dashboard(space_id, runbook['Id'], api_key, url)
         response = [get_runbook_dashboard_response(project, runbook, dashboard,

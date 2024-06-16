@@ -17,7 +17,7 @@ def logs_callback(github_user, api_key, url, log_query):
     def logs_callback_implementation(original_query, messages, space, projects, environments, channel, tenants, release,
                                      steps, lines):
 
-        debug_text = get_params_message(github_user, logs_callback_implementation.__name__,
+        debug_text = get_params_message(github_user, True, logs_callback_implementation.__name__,
                                         original_query=original_query,
                                         space=space,
                                         projects=projects,
@@ -100,6 +100,17 @@ def logs_callback(github_user, api_key, url, log_query):
             Channel Names: {channel}
             Steps: {sanitized_steps}
             Lines: {log_lines}""")
+
+        debug_text.extend(get_params_message(github_user, False, logs_callback_implementation.__name__,
+                                             original_query=original_query,
+                                             space=space,
+                                             projects=projects,
+                                             environments=environments,
+                                             channel=channel,
+                                             tenants=tenants,
+                                             release=release,
+                                             steps=sanitized_steps,
+                                             lines=log_lines))
 
         processed_query = update_query(original_query, sanitized_projects)
 

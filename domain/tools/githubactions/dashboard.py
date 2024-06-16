@@ -8,7 +8,7 @@ from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_f
 
 def get_dashboard_callback(github_user, log_query=None):
     def get_dashboard_callback_implementation(original_query, api_key, url, space_name):
-        debug_text = get_params_message(github_user, get_dashboard_callback_implementation.__name__,
+        debug_text = get_params_message(github_user, True, get_dashboard_callback_implementation.__name__,
                                         original_query=original_query,
                                         space_name=space_name)
 
@@ -27,6 +27,10 @@ def get_dashboard_callback(github_user, log_query=None):
         if log_query:
             log_query("get_dashboard_callback_implementation", f"""
                 Space: {space_name}""")
+
+        debug_text.extend(get_params_message(github_user, False, get_dashboard_callback_implementation.__name__,
+                                             original_query=original_query,
+                                             space_name=space_name))
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
         dashboard = get_dashboard(space_id, api_key, url)

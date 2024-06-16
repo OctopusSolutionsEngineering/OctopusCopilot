@@ -9,7 +9,7 @@ from infrastructure.openai import llm_message_query
 
 def how_to_callback(github_token, github_user, log_query):
     def how_to_callback_implementation(original_query, keywords):
-        debug_text = get_params_message(github_user, how_to_callback_implementation.__name__,
+        debug_text = get_params_message(github_user, True, how_to_callback_implementation.__name__,
                                         original_query=original_query,
                                         keywords=keywords)
 

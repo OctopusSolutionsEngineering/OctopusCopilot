@@ -19,7 +19,7 @@ def resource_specific_callback(github_user, api_key, url, log_query):
         While the tool functions are resource specific, this callback is generic.
         """
 
-        debug_text = get_params_message(github_user,
+        debug_text = get_params_message(github_user, True,
                                         resource_specific_callback_implementation.__name__,
                                         original_query=original_query,
                                         space=space,
@@ -65,6 +65,22 @@ def resource_specific_callback(github_user, api_key, url, log_query):
         processed_query = update_query(original_query, sanitized_projects)
 
         context = {"input": processed_query}
+
+        debug_text.extend(get_params_message(github_user, False,
+                                             resource_specific_callback_implementation.__name__,
+                                             original_query=processed_query,
+                                             space=actual_space_name,
+                                             projects=project,
+                                             runbooks=runbooks,
+                                             targets=targets,
+                                             tenants=tenant,
+                                             environments=environment,
+                                             accounts=accounts,
+                                             certificates=certificates,
+                                             workerpools=workerpools,
+                                             machinepolicies=machinepolicies,
+                                             tagsets=tagsets,
+                                             steps=steps))
 
         response = [collect_llm_context(processed_query,
                                         messages,

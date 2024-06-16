@@ -8,7 +8,7 @@ from infrastructure.octopus import get_project, get_project_progression, \
 
 def get_project_dashboard_callback(github_user, log_query=None):
     def get_project_dashboard_callback_implementation(original_query, api_key, url, space_name, project_name):
-        debug_text = get_params_message(github_user,
+        debug_text = get_params_message(github_user, True,
                                         get_project_dashboard_callback_implementation.__name__,
                                         original_query=original_query,
                                         space_name=space_name,
@@ -24,6 +24,12 @@ def get_project_dashboard_callback(github_user, log_query=None):
             log_query("get_project_dashboard_callback_implementation", f"""
                 Space: {space_name}
                 Project Names: {sanitized_project_names[0]}""")
+
+        debug_text.extend(get_params_message(github_user, False,
+                                             get_project_dashboard_callback_implementation.__name__,
+                                             original_query=original_query,
+                                             space_name=space_name,
+                                             project_name=sanitized_project_names[0]))
 
         project = get_project(space_id, sanitized_project_names[0], api_key, url)
 

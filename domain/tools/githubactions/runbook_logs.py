@@ -17,7 +17,7 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
     def runbook_logs_implementation(original_query, messages, space, project, runbook, environments, tenants,
                                     steps, lines):
 
-        debug_text = get_params_message(github_user, runbook_logs_implementation.__name__,
+        debug_text = get_params_message(github_user, True, runbook_logs_implementation.__name__,
                                         original_query=original_query,
                                         space=space,
                                         project=project,
@@ -61,6 +61,16 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
             "Deployment logs")
 
         sanitized_steps = sanitize_log_steps(steps, original_query, activity_logs)
+
+        debug_text.extend(get_params_message(github_user, False, runbook_logs_implementation.__name__,
+                                             original_query=original_query,
+                                             space=actual_space_name,
+                                             project=sanitized_project_names[0],
+                                             runbook=sanitized_runbook_names[0],
+                                             environments=sanitized_environment_names[0],
+                                             tenants=sanitized_tenant_names[0] if sanitized_tenant_names else None,
+                                             steps=sanitized_steps,
+                                             lines=lines))
 
         logs = activity_logs_to_string(activity_logs, sanitized_steps)
 
