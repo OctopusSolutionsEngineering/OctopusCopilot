@@ -4,10 +4,10 @@ from domain.converters.string_to_int import string_to_int
 from domain.defaults.defaults import get_default_argument
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
-from domain.sanitizers.sanitize_strings import to_lower_case_or_none
 from domain.sanitizers.sanitized_list import sanitize_name_fuzzy, sanitize_space, sanitize_projects, \
     sanitize_names_fuzzy, get_item_or_none, sanitize_environments, sanitize_tenants, sanitize_log_steps, \
     sanitize_log_lines, update_query
+from domain.tools.debug import get_params_message
 from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_from_name, get_projects_generator, \
     get_deployment_logs, activity_logs_to_string
 from infrastructure.openai import llm_message_query
@@ -16,6 +16,17 @@ from infrastructure.openai import llm_message_query
 def logs_callback(github_user, api_key, url, log_query):
     def logs_callback_implementation(original_query, messages, space, projects, environments, channel, tenants, release,
                                      steps, lines):
+
+        debug_text = get_params_message(github_user, logs_callback_implementation.__name__,
+                                        original_query=original_query,
+                                        space=space,
+                                        projects=projects,
+                                        environments=environments,
+                                        channel=channel,
+                                        tenants=tenants,
+                                        release=release,
+                                        steps=steps,
+                                        lines=lines)
 
         sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
                                               sanitize_space(original_query, space))
@@ -93,22 +104,6 @@ def logs_callback(github_user, api_key, url, log_query):
         processed_query = update_query(original_query, sanitized_projects)
 
         context = {"input": processed_query, "context": logs}
-
-        # Debug mode shows the entities extracted from the query
-        debug_text = []
-        debug = get_default_argument(github_user, None, "Debug")
-        if to_lower_case_or_none(debug) == "true":
-            debug_text.append(logs_callback_implementation.__name__
-                              + " was called with the following parameters:"
-                              + f"\n* Original Query: {original_query}"
-                              + f"\n* Space: {space}"
-                              + f"\n* Projects: {projects}"
-                              + f"\n* Environments: {environments}"
-                              + f"\n* Channels: {channel}"
-                              + f"\n* Releases: {release}"
-                              + f"\n* Tenants: {tenants}"
-                              + f"\n* Steps: {steps}"
-                              + f"\n* Lines: {lines}")
 
         response = [llm_message_query(messages, context, log_query)]
         response.extend(warnings)

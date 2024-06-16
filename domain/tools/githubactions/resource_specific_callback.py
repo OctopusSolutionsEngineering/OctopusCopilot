@@ -1,9 +1,9 @@
 from domain.context.octopus_context import collect_llm_context
 from domain.defaults.defaults import get_default_argument
 from domain.response.copilot_response import CopilotResponse
-from domain.sanitizers.sanitize_strings import to_lower_case_or_none
 from domain.sanitizers.sanitized_list import sanitize_name_fuzzy, sanitize_space, sanitize_names_fuzzy, \
     sanitize_projects, get_item_or_none, sanitize_environments, sanitize_tenants, update_query
+from domain.tools.debug import get_params_message
 from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_from_name, get_projects_generator
 
 
@@ -18,6 +18,22 @@ def resource_specific_callback(github_user, api_key, url, log_query):
 
         While the tool functions are resource specific, this callback is generic.
         """
+
+        debug_text = get_params_message(github_user,
+                                        resource_specific_callback_implementation.__name__,
+                                        original_query=original_query,
+                                        space=space,
+                                        projects=projects,
+                                        runbooks=runbooks,
+                                        targets=targets,
+                                        tenants=tenants,
+                                        environments=environments,
+                                        accounts=accounts,
+                                        certificates=certificates,
+                                        workerpools=workerpools,
+                                        machinepolicies=machinepolicies,
+                                        tagsets=tagsets,
+                                        steps=steps)
 
         sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
                                               sanitize_space(original_query, space))
@@ -76,26 +92,6 @@ def resource_specific_callback(github_user, api_key, url, log_query):
                                         api_key,
                                         url,
                                         log_query)]
-
-        # Debug mode shows the entities extracted from the query
-        debug_text = []
-        debug = get_default_argument(github_user, None, "Debug")
-        if to_lower_case_or_none(debug) == "true":
-            debug_text.append(resource_specific_callback_implementation.__name__
-                              + " was called with the following parameters:"
-                              + f"\n* Original Query: {original_query}"
-                              + f"\n* Space: {space}"
-                              + f"\n* Projects: {projects}"
-                              + f"\n* Runbooks: {runbooks}"
-                              + f"\n* Targets: {targets}"
-                              + f"\n* Tenants: {tenants}"
-                              + f"\n* Environments: {environments}"
-                              + f"\n* Accounts: {accounts}"
-                              + f"\n* Certificates: {certificates}"
-                              + f"\n* Workerpools: {workerpools}"
-                              + f"\n* Machinepolicies: {machinepolicies}"
-                              + f"\n* Tagsets: {tagsets}"
-                              + f"\n* Steps: {steps}")
 
         response.extend(warnings)
         response.extend(debug_text)

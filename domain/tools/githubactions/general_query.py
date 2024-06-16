@@ -1,14 +1,18 @@
 from domain.context.octopus_context import collect_llm_context
 from domain.defaults.defaults import get_default_argument
 from domain.response.copilot_response import CopilotResponse
-from domain.sanitizers.sanitize_strings import to_lower_case_or_none
 from domain.sanitizers.sanitized_list import sanitize_name_fuzzy, sanitize_names_fuzzy, sanitize_space, \
     sanitize_projects, sanitize_environments, update_query
+from domain.tools.debug import get_params_message
 from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_from_name, get_projects_generator
 
 
 def general_query_callback(github_user, api_key, url, log_query):
     def general_query_callback_implementation(original_query, body, messages):
+        debug_text = get_params_message(github_user, general_query_callback_implementation.__name__,
+                                        original_query=original_query,
+                                        body=body)
+
         sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
                                               sanitize_space(original_query, body["space_name"]))
 
@@ -62,15 +66,6 @@ def general_query_callback(github_user, api_key, url, log_query):
                                         api_key,
                                         url,
                                         log_query)]
-
-        # Debug mode shows the entities extracted from the query
-        debug_text = []
-        debug = get_default_argument(github_user, None, "Debug")
-        if to_lower_case_or_none(debug) == "true":
-            debug_text.append(general_query_callback_implementation.__name__
-                              + " was called with the following parameters:"
-                              + f"\n* Original Query: {original_query}"
-                              + f"\n* Body: {body}")
 
         response.extend(warnings)
         response.extend(debug_text)

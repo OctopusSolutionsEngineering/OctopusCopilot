@@ -1,14 +1,13 @@
 from domain.config.openai import max_log_lines
 from domain.context.octopus_context import max_chars
 from domain.converters.string_to_int import string_to_int
-from domain.defaults.defaults import get_default_argument
 from domain.lookup.octopus_lookups import lookup_runbooks, lookup_projects, lookup_tenants, lookup_environments, \
     lookup_space
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
-from domain.sanitizers.sanitize_strings import to_lower_case_or_none
 from domain.sanitizers.sanitized_list import sanitize_log_steps, \
     sanitize_log_lines, update_query
+from domain.tools.debug import get_params_message
 from infrastructure.octopus import get_runbook_deployment_logs, \
     activity_logs_to_string, get_project
 from infrastructure.openai import llm_message_query
@@ -17,6 +16,16 @@ from infrastructure.openai import llm_message_query
 def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
     def runbook_logs_implementation(original_query, messages, space, project, runbook, environments, tenants,
                                     steps, lines):
+
+        debug_text = get_params_message(github_user, runbook_logs_implementation.__name__,
+                                        original_query=original_query,
+                                        space=space,
+                                        project=project,
+                                        runbook=runbook,
+                                        environments=environments,
+                                        tenants=tenants,
+                                        steps=steps,
+                                        lines=lines)
 
         space_id, actual_space_name, warnings = lookup_space(url, api_key, github_user, original_query, space)
         sanitized_project_names, sanitized_projects = lookup_projects(url, api_key, github_user, original_query,
@@ -85,21 +94,6 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
         context = {"input": processed_query, "context": logs}
 
         response = [llm_message_query(messages, context, log_query)]
-
-        # Debug mode shows the entities extracted from the query
-        debug_text = []
-        debug = get_default_argument(github_user, None, "Debug")
-        if to_lower_case_or_none(debug) == "true":
-            debug_text.append(runbook_logs_implementation.__name__
-                              + " was called with the following parameters:"
-                              + f"\n* Original Query: {original_query}"
-                              + f"\n* Space: {space}"
-                              + f"\n* Project Names: {project}"
-                              + f"\n* Runbook Names: {runbook}"
-                              + f"\n* Tenant Names: {tenants}"
-                              + f"\n* Environment Names: {environments}"
-                              + f"\n* Steps: {steps}"
-                              + f"\n* Lines: {lines}")
 
         response.extend(warnings)
         response.extend(debug_text)

@@ -1,36 +1,31 @@
 import json
 import uuid
 
-from domain.defaults.defaults import get_default_argument
 from domain.exceptions.runbook_not_published import RunbookNotPublished
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_environments, lookup_tenants, \
     lookup_runbooks
 from domain.response.copilot_response import CopilotResponse
-from domain.sanitizers.sanitize_strings import to_lower_case_or_none
+from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
 from infrastructure.octopus import run_published_runbook_fuzzy, get_project, get_runbook_fuzzy, get_environment
 
 
 def run_runbook_confirm_callback_wrapper(github_user, url, api_key, log_query):
     def run_runbook_confirm_callback(space_id, project_name, project_id, runbook_name, environment_name, tenant_name):
+        debug_text = get_params_message(github_user,
+                                        run_runbook_confirm_callback.__name__,
+                                        space_id=space_id,
+                                        project_name=project_name,
+                                        runbook_name=runbook_name,
+                                        environment_name=environment_name,
+                                        tenant_name=tenant_name)
+
         log_query("run_runbook_confirm_callback", f"""
             Space: {space_id}
             Project Names: {project_name}
             Runbook Names: {runbook_name}
             Tenant Names: {tenant_name}
             Environment Names: {environment_name}""")
-
-        # Debug mode shows the entities extracted from the query
-        debug_text = []
-        debug = get_default_argument(github_user, None, "Debug")
-        if to_lower_case_or_none(debug) == "true":
-            debug_text.append(run_runbook_confirm_callback.__name__
-                              + " was called with the following parameters:"
-                              + f"\n* Space: {space_id}"
-                              + f"\n* Project Names: {project_name}"
-                              + f"\n* Runbook Names: {runbook_name}"
-                              + f"\n* Tenant Names: {tenant_name}"
-                              + f"\n* Environment Names: {environment_name}")
 
         response_text = []
 

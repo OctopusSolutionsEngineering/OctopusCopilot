@@ -1,14 +1,21 @@
 from domain.context.octopus_context import collect_llm_context
 from domain.defaults.defaults import get_default_argument
 from domain.response.copilot_response import CopilotResponse
-from domain.sanitizers.sanitize_strings import to_lower_case_or_none
 from domain.sanitizers.sanitized_list import sanitize_name_fuzzy, sanitize_space, sanitize_names_fuzzy, \
     sanitize_projects, update_query, none_if_falesy_or_all
+from domain.tools.debug import get_params_message
 from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_from_name, get_projects_generator
 
 
 def variable_query_callback(github_user, api_key, url, log_query):
     def variable_query_callback_implementation(original_query, messages, space, projects, variables):
+        debug_text = get_params_message(github_user,
+                                        variable_query_callback_implementation.__name__,
+                                        original_query=original_query,
+                                        space=space,
+                                        projects=projects,
+                                        variables=variables)
+
         sanitized_space = sanitize_name_fuzzy(lambda: get_spaces_generator(api_key, url),
                                               sanitize_space(original_query, space))
 
@@ -65,17 +72,6 @@ def variable_query_callback(github_user, api_key, url, log_query):
             additional_information.append(
                 "\nThe query did not specify a project so the response may reference a subset of all the projects in a space."
                 + "\nTo see more detailed information, specify a project name in the query.")
-
-        # Debug mode shows the entities extracted from the query
-        debug_text = []
-        debug = get_default_argument(github_user, None, "Debug")
-        if to_lower_case_or_none(debug) == "true":
-            debug_text.append(variable_query_callback_implementation.__name__
-                              + " was called with the following parameters:"
-                              + f"\n* Original Query: {original_query}"
-                              + f"\n* Space: {space}"
-                              + f"\n* Projects: {projects}"
-                              + f"\n* Variables: {variables}")
 
         chat_response.extend(warnings)
         chat_response.extend(additional_information)
