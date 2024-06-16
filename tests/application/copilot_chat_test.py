@@ -704,7 +704,7 @@ class CopilotChatTest(unittest.TestCase):
 
         try:
             response_json = json.loads(strip_before_first_curly_bracket(response_text))
-        except:
+        except Exception as e:
             print(response_text)
 
         self.assertTrue(next(filter(lambda step: step["name"] == "Run a Script 2", response_json["steps"]))["retries"])
