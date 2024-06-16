@@ -84,6 +84,6 @@ def variable_query_callback(github_user, api_key, url, log_query):
         chat_response.extend(additional_information)
         chat_response.extend(debug_text)
 
-        return CopilotResponse("\n".join(chat_response))
+        return CopilotResponse("\n\n".join(chat_response))
 
     return variable_query_callback_implementation
