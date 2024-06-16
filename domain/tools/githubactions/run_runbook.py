@@ -1,6 +1,7 @@
 import json
 import uuid
 
+from domain.defaults.defaults import get_default_argument
 from domain.exceptions.runbook_not_published import RunbookNotPublished
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_environments, lookup_tenants, \
     lookup_runbooks
@@ -9,7 +10,7 @@ from infrastructure.callbacks import save_callback
 from infrastructure.octopus import run_published_runbook_fuzzy, get_project, get_runbook_fuzzy, get_environment
 
 
-def run_runbook_confirm_callback_wrapper(url, api_key, log_query):
+def run_runbook_confirm_callback_wrapper(github_user, url, api_key, log_query):
     def run_runbook_confirm_callback(space_id, project_name, project_id, runbook_name, environment_name, tenant_name):
         log_query("run_runbook_confirm_callback", f"""
             Space: {space_id}
@@ -17,6 +18,20 @@ def run_runbook_confirm_callback_wrapper(url, api_key, log_query):
             Runbook Names: {runbook_name}
             Tenant Names: {tenant_name}
             Environment Names: {environment_name}""")
+
+        # Debug mode shows the entities extracted from the query
+        debug_text = []
+        debug = get_default_argument(github_user, "False", "Debug")
+        if debug.casefold() == "true":
+            debug_text.append(run_runbook_confirm_callback.__name__
+                              + " was called with the following parameters:"
+                              + f"\nSpace: {space_id}"
+                              + f"\nProject Names: {project_name}"
+                              + f"\nRunbook Names: {runbook_name}"
+                              + f"\nTenant Names: {tenant_name}"
+                              + f"\nEnvironment Names: {environment_name}")
+
+        response_text = []
 
         try:
             response = run_published_runbook_fuzzy(space_id,
@@ -28,10 +43,13 @@ def run_runbook_confirm_callback_wrapper(url, api_key, log_query):
                                                    url,
                                                    log_query)
 
-            return CopilotResponse(
+            response_text.append(
                 f"{runbook_name}\n\n[Runbook Run]({url}/app#/{space_id}/projects/{project_id}/operations/runbooks/{response['RunbookId']}/snapshots/{response['RunbookSnapshotId']}/runs/{response['Id']})")
         except RunbookNotPublished as e:
-            return CopilotResponse(f"The runbook {runbook_name} must be published")
+            response_text.append(f"The runbook {runbook_name} must be published")
+
+        response_text.extend(debug_text)
+        return CopilotResponse("\n\n".join(response_text))
 
     return run_runbook_confirm_callback
 
@@ -91,11 +109,11 @@ def run_runbook_wrapper(url, api_key, github_user, original_query, connection_st
         }
 
         log_query("run_runbook", f"""
-Space: {arguments["space_id"]}
-Project Names: {arguments["project_name"]}
-Runbook Names: {arguments["runbook_name"]}
-Tenant Names: {arguments["tenant_name"]}
-Environment Names: {arguments["environment_name"]}""")
+            Space: {arguments["space_id"]}
+            Project Names: {arguments["project_name"]}
+            Runbook Names: {arguments["runbook_name"]}
+            Tenant Names: {arguments["tenant_name"]}
+            Environment Names: {arguments["environment_name"]}""")
 
         save_callback(github_user,
                       run_runbook.__name__,

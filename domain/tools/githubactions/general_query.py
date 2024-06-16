@@ -14,11 +14,11 @@ def general_query_callback(github_user, api_key, url, log_query):
         space = get_default_argument(github_user,
                                      sanitized_space["matched"] if sanitized_space else None, "Space")
 
-        warnings = ""
+        warnings = []
 
         if not space:
             space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The query did not specify a space so the so the space named {space} was assumed."
+            warnings.append(f"The query did not specify a space so the so the space named {space} was assumed.")
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
@@ -35,33 +35,44 @@ def general_query_callback(github_user, api_key, url, log_query):
 
         context = {"input": processed_query}
 
-        response = collect_llm_context(processed_query,
-                                       messages,
-                                       context,
-                                       space_id,
-                                       project_names,
-                                       body['runbook_names'],
-                                       body['target_names'],
-                                       body['tenant_names'],
-                                       body['library_variable_sets'],
-                                       environment_names,
-                                       body['feed_names'],
-                                       body['account_names'],
-                                       body['certificate_names'],
-                                       body['lifecycle_names'],
-                                       body['workerpool_names'],
-                                       body['machinepolicy_names'],
-                                       body['tagset_names'],
-                                       body['projectgroup_names'],
-                                       body['channel_names'],
-                                       body['release_versions'],
-                                       body['step_names'],
-                                       body['variable_names'],
-                                       body['dates'],
-                                       api_key,
-                                       url,
-                                       log_query)
+        response = [collect_llm_context(processed_query,
+                                        messages,
+                                        context,
+                                        space_id,
+                                        project_names,
+                                        body['runbook_names'],
+                                        body['target_names'],
+                                        body['tenant_names'],
+                                        body['library_variable_sets'],
+                                        environment_names,
+                                        body['feed_names'],
+                                        body['account_names'],
+                                        body['certificate_names'],
+                                        body['lifecycle_names'],
+                                        body['workerpool_names'],
+                                        body['machinepolicy_names'],
+                                        body['tagset_names'],
+                                        body['projectgroup_names'],
+                                        body['channel_names'],
+                                        body['release_versions'],
+                                        body['step_names'],
+                                        body['variable_names'],
+                                        body['dates'],
+                                        api_key,
+                                        url,
+                                        log_query)]
 
-        return CopilotResponse(response="\n".join(filter(lambda x: x, [response, warnings])))
+        # Debug mode shows the entities extracted from the query
+        debug_text = []
+        debug = get_default_argument(github_user, "False", "Debug")
+        if debug.casefold() == "true":
+            debug_text.append(general_query_callback_implementation.__name__
+                              + " was called with the following parameters:"
+                              + f"\nOriginal Query: {original_query}"
+                              + f"\nBody: {body}")
+
+        response.extend(warnings)
+        response.extend(debug_text)
+        return CopilotResponse(response="\n\n".join(response))
 
     return general_query_callback_implementation

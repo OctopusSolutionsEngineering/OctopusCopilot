@@ -1,3 +1,4 @@
+from domain.defaults.defaults import get_default_argument
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects
 from domain.response.copilot_response import CopilotResponse
 from domain.transformers.chat_responses import get_project_dashboard_response, get_project_tenant_progression_response
@@ -27,7 +28,18 @@ def get_project_dashboard_callback(github_user, log_query=None):
         else:
             response.append(get_tenanted_dashboard(space_id, space_name, project, api_key, url))
 
+        # Debug mode shows the entities extracted from the query
+        debug_text = []
+        debug = get_default_argument(github_user, "False", "Debug")
+        if debug.casefold() == "true":
+            debug_text.append(get_project_dashboard_callback_implementation.__name__
+                              + " was called with the following parameters:"
+                              + f"\nOriginal Query: {original_query}"
+                              + f"\nSpace: {space_name}"
+                              + f"\nProject: {project_name}")
+
         response.extend(warnings)
+        response.extend(debug_text)
 
         return CopilotResponse("\n\n".join(response))
 

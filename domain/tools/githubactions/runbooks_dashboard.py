@@ -16,11 +16,11 @@ def get_runbook_dashboard_callback(github_user):
         space_name = get_default_argument(github_user,
                                           sanitized_space["matched"] if sanitized_space else None, "Space")
 
-        warnings = ""
+        warnings = []
 
         if not space_name:
             space_name = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get("Name")
-            warnings = f"The query did not specify a space so the so the space named {space_name} was assumed."
+            warnings.append(f"The query did not specify a space so the so the space named {space_name} was assumed.")
 
         space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
 
@@ -41,9 +41,23 @@ def get_runbook_dashboard_callback(github_user):
         runbook = get_runbook_fuzzy(space_id, project['Id'], sanitized_runbook_names[0], api_key, url)
 
         dashboard = get_runbooks_dashboard(space_id, runbook['Id'], api_key, url)
-        response = get_runbook_dashboard_response(project, runbook, dashboard,
-                                                  lambda x: get_tenant(space_id, x, api_key, url)["Name"])
+        response = [get_runbook_dashboard_response(project, runbook, dashboard,
+                                                   lambda x: get_tenant(space_id, x, api_key, url)["Name"])]
 
-        return CopilotResponse("\n\n".join(filter(lambda x: x, [response, warnings])))
+        # Debug mode shows the entities extracted from the query
+        debug_text = []
+        debug = get_default_argument(github_user, "False", "Debug")
+        if debug.casefold() == "true":
+            debug_text.append(get_runbook_dashboard_implementation.__name__
+                              + " was called with the following parameters:"
+                              + f"\nOriginal Query: {original_query}"
+                              + f"\nSpace: {space_name}"
+                              + f"\nProject: {project_name}"
+                              + f"\nRunbook: {runbook_name}")
+
+        response.extend(warnings)
+        response.extend(debug_text)
+
+        return CopilotResponse("\n\n".join(response))
 
     return get_runbook_dashboard_implementation

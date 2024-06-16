@@ -26,7 +26,18 @@ def get_dashboard_callback(github_user, log_query=None):
         space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
         dashboard = get_dashboard(space_id, api_key, url)
         response = [get_dashboard_response(actual_space_name, dashboard)]
+
+        # Debug mode shows the entities extracted from the query
+        debug_text = []
+        debug = get_default_argument(github_user, "False", "Debug")
+        if debug.casefold() == "true":
+            debug_text.append(get_dashboard_callback_implementation.__name__
+                              + " was called with the following parameters:"
+                              + f"\nOriginal Query: {original_query}"
+                              + f"\nSpace: {space_name}")
+
         response.extend(warnings)
+        response.extend(debug_text)
 
         return CopilotResponse("\n\n".join(response))
 

@@ -1,6 +1,7 @@
 from domain.config.openai import max_log_lines
 from domain.context.octopus_context import max_chars
 from domain.converters.string_to_int import string_to_int
+from domain.defaults.defaults import get_default_argument
 from domain.lookup.octopus_lookups import lookup_runbooks, lookup_projects, lookup_tenants, lookup_environments, \
     lookup_space
 from domain.performance.timing import timing_wrapper
@@ -13,8 +14,8 @@ from infrastructure.openai import llm_message_query
 
 
 def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
-    def runbook_logs_callback(original_query, messages, space, project, runbook, environments, tenants,
-                              steps, lines):
+    def runbook_logs_implementation(original_query, messages, space, project, runbook, environments, tenants,
+                                    steps, lines):
 
         space_id, actual_space_name, warnings = lookup_space(url, api_key, github_user, original_query, space)
         sanitized_project_names, sanitized_projects = lookup_projects(url, api_key, github_user, original_query,
@@ -83,8 +84,25 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
         context = {"input": processed_query, "context": logs}
 
         response = [llm_message_query(messages, context, log_query)]
+
+        # Debug mode shows the entities extracted from the query
+        debug_text = []
+        debug = get_default_argument(github_user, "False", "Debug")
+        if debug.casefold() == "true":
+            debug_text.append(runbook_logs_implementation.__name__
+                              + " was called with the following parameters:"
+                              + f"\nOriginal Query: {original_query}"
+                              + f"\nSpace: {space}"
+                              + f"\nProject Names: {project}"
+                              + f"\nRunbook Names: {runbook}"
+                              + f"\nTenant Names: {tenants}"
+                              + f"\nEnvironment Names: {environments}"
+                              + f"\nSteps: {steps}"
+                              + f"\nLines: {lines}")
+
         response.extend(warnings)
+        response.extend(debug_text)
 
         return CopilotResponse("\n\n".join(response))
 
-    return runbook_logs_callback
+    return runbook_logs_implementation

@@ -127,7 +127,9 @@ def build_form_tools(query, req: func.HttpRequest):
 
     # A bunch of functions that search the docs
     docs_functions = [FunctionDefinition(tool) for tool in
-                      how_to_wrapper(query, how_to_callback(get_github_token(req), log_query), log_query)]
+                      how_to_wrapper(query,
+                                     how_to_callback(get_github_token(req), get_github_user_from_form(req), log_query),
+                                     log_query)]
 
     # Functions related to the default values
     set_default_value, remove_default_value, get_default_value = default_value_callbacks(get_github_user_from_form(req))
@@ -230,7 +232,7 @@ def build_form_tools(query, req: func.HttpRequest):
             query,
             get_functions_connection_string(),
             log_query),
-            callback=run_runbook_confirm_callback_wrapper(url, api_key, log_query))],
+            callback=run_runbook_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query))],
         fallback=FunctionDefinitions(docs_functions),
         invalid=FunctionDefinition(
             answer_general_query_wrapper(query,
