@@ -49,8 +49,7 @@ def releases_query_messages(github_user):
 
 def releases_query_callback(github_user, api_key, url, log_query):
     def releases_query_callback_implementation(original_query, messages, space, projects, environments, channels,
-                                               releases, tenants,
-                                               dates):
+                                               releases, tenants, dates):
 
         sanitized_environments = sanitize_environments(original_query, environments)
         sanitized_tenants = sanitize_tenants(tenants)
@@ -140,6 +139,22 @@ def releases_query_callback(github_user, api_key, url, log_query):
                     "\nThe query did not specify a project so the response is limited to the latest deployments for all projects."
                     + "\nTo see more detailed information, specify a project name in the query.")
 
-        return CopilotResponse("\n".join(filter(lambda x: x, [chat_response, warnings, additional_information])))
+        # Debug mode shows the entities extracted from the query
+        debug_text = ""
+        debug = get_default_argument(github_user, "False", "Debug")
+        if debug.casefold() == "true":
+            additional_information = (releases_query_callback_implementation.__name__
+                                      + " was called with the following parameters:"
+                                      + f"\nOriginal Query: {original_query}"
+                                      + f"\nSpace: {space}"
+                                      + f"\nProjects: {projects}"
+                                      + f"\nEnvironments: {environments}"
+                                      + f"\nChannels: {channels}"
+                                      + f"\nReleases: {releases}"
+                                      + f"\nTenants: {tenants}"
+                                      + f"\nDates: {dates}")
+
+        return CopilotResponse(
+            "\n\n".join(filter(lambda x: x, [chat_response, warnings, additional_information, debug_text])))
 
     return releases_query_callback_implementation

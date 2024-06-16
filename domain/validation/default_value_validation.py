@@ -4,7 +4,7 @@ def validate_default_value_name(default_name):
     :param default_name: The name to validate
     """
     name = str(default_name).casefold()
-    valid_names = ["environment", "project", "space", "channel", "tenant", "runbook"]
+    valid_names = ["debug", "environment", "project", "space", "channel", "tenant", "runbook"]
     if name not in valid_names:
         raise ValueError(f"Invalid default name \"{default_name}\". "
                          + "The default name must be one of " + ",".join(valid_names))
