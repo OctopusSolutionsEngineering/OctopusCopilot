@@ -28,8 +28,8 @@ def how_to_callback(github_token, github_user, log_query):
         if debug.casefold() == "true":
             debug_text.append(how_to_callback_implementation.__name__
                               + " was called with the following parameters:"
-                              + f"\nOriginal Query: {original_query}"
-                              + f"\nKeywords: {keywords}")
+                              + f"\n* Original Query: {original_query}"
+                              + f"\n* Keywords: {keywords}")
 
         chat_response.extend(debug_text)
 

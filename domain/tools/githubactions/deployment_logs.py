@@ -99,15 +99,15 @@ def logs_callback(github_user, api_key, url, log_query):
         if debug.casefold() == "true":
             debug_text.append(logs_callback_implementation.__name__
                               + " was called with the following parameters:"
-                              + f"\nOriginal Query: {original_query}"
-                              + f"\nSpace: {space}"
-                              + f"\nProjects: {projects}"
-                              + f"\nEnvironments: {environments}"
-                              + f"\nChannels: {channel}"
-                              + f"\nReleases: {release}"
-                              + f"\nTenants: {tenants}"
-                              + f"\nSteps: {steps}"
-                              + f"\nLines: {lines}")
+                              + f"\n* Original Query: {original_query}"
+                              + f"\n* Space: {space}"
+                              + f"\n* Projects: {projects}"
+                              + f"\n* Environments: {environments}"
+                              + f"\n* Channels: {channel}"
+                              + f"\n* Releases: {release}"
+                              + f"\n* Tenants: {tenants}"
+                              + f"\n* Steps: {steps}"
+                              + f"\n* Lines: {lines}")
 
         response = [llm_message_query(messages, context, log_query)]
         response.extend(warnings)

@@ -68,8 +68,8 @@ def general_query_callback(github_user, api_key, url, log_query):
         if debug.casefold() == "true":
             debug_text.append(general_query_callback_implementation.__name__
                               + " was called with the following parameters:"
-                              + f"\nOriginal Query: {original_query}"
-                              + f"\nBody: {body}")
+                              + f"\n* Original Query: {original_query}"
+                              + f"\n* Body: {body}")
 
         response.extend(warnings)
         response.extend(debug_text)

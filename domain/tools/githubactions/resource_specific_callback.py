@@ -82,19 +82,19 @@ def resource_specific_callback(github_user, api_key, url, log_query):
         if debug.casefold() == "true":
             debug_text.append(resource_specific_callback_implementation.__name__
                               + " was called with the following parameters:"
-                              + f"\nOriginal Query: {original_query}"
-                              + f"\nSpace: {space}"
-                              + f"\nProjects: {projects}"
-                              + f"\nRunbooks: {runbooks}"
-                              + f"\nTargets: {targets}"
-                              + f"\nTenants: {tenants}"
-                              + f"\nEnvironments: {environments}"
-                              + f"\nAccounts: {accounts}"
-                              + f"\nCertificates: {certificates}"
-                              + f"\nWorkerpools: {workerpools}"
-                              + f"\nMachinepolicies: {machinepolicies}"
-                              + f"\nTagsets: {tagsets}"
-                              + f"\nSteps: {steps}")
+                              + f"\n* Original Query: {original_query}"
+                              + f"\n* Space: {space}"
+                              + f"\n* Projects: {projects}"
+                              + f"\n* Runbooks: {runbooks}"
+                              + f"\n* Targets: {targets}"
+                              + f"\n* Tenants: {tenants}"
+                              + f"\n* Environments: {environments}"
+                              + f"\n* Accounts: {accounts}"
+                              + f"\n* Certificates: {certificates}"
+                              + f"\n* Workerpools: {workerpools}"
+                              + f"\n* Machinepolicies: {machinepolicies}"
+                              + f"\n* Tagsets: {tagsets}"
+                              + f"\n* Steps: {steps}")
 
         response.extend(warnings)
         response.extend(debug_text)

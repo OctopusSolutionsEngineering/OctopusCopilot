@@ -33,8 +33,8 @@ def get_dashboard_callback(github_user, log_query=None):
         if debug.casefold() == "true":
             debug_text.append(get_dashboard_callback_implementation.__name__
                               + " was called with the following parameters:"
-                              + f"\nOriginal Query: {original_query}"
-                              + f"\nSpace: {space_name}")
+                              + f"\n* Original Query: {original_query}"
+                              + f"\n* Space: {space_name}")
 
         response.extend(warnings)
         response.extend(debug_text)

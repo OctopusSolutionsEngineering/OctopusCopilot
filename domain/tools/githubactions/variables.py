@@ -71,10 +71,10 @@ def variable_query_callback(github_user, api_key, url, log_query):
         if debug.casefold() == "true":
             debug_text.append(variable_query_callback_implementation.__name__
                               + " was called with the following parameters:"
-                              + f"\nOriginal Query: {original_query}"
-                              + f"\nSpace: {space}"
-                              + f"\nProjects: {projects}"
-                              + f"\nVariables: {variables}")
+                              + f"\n* Original Query: {original_query}"
+                              + f"\n* Space: {space}"
+                              + f"\n* Projects: {projects}"
+                              + f"\n* Variables: {variables}")
 
         chat_response.extend(warnings)
         chat_response.extend(additional_information)

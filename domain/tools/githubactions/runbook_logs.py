@@ -91,14 +91,14 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
         if debug.casefold() == "true":
             debug_text.append(runbook_logs_implementation.__name__
                               + " was called with the following parameters:"
-                              + f"\nOriginal Query: {original_query}"
-                              + f"\nSpace: {space}"
-                              + f"\nProject Names: {project}"
-                              + f"\nRunbook Names: {runbook}"
-                              + f"\nTenant Names: {tenants}"
-                              + f"\nEnvironment Names: {environments}"
-                              + f"\nSteps: {steps}"
-                              + f"\nLines: {lines}")
+                              + f"\n* Original Query: {original_query}"
+                              + f"\n* Space: {space}"
+                              + f"\n* Project Names: {project}"
+                              + f"\n* Runbook Names: {runbook}"
+                              + f"\n* Tenant Names: {tenants}"
+                              + f"\n* Environment Names: {environments}"
+                              + f"\n* Steps: {steps}"
+                              + f"\n* Lines: {lines}")
 
         response.extend(warnings)
         response.extend(debug_text)

@@ -25,11 +25,11 @@ def run_runbook_confirm_callback_wrapper(github_user, url, api_key, log_query):
         if debug.casefold() == "true":
             debug_text.append(run_runbook_confirm_callback.__name__
                               + " was called with the following parameters:"
-                              + f"\nSpace: {space_id}"
-                              + f"\nProject Names: {project_name}"
-                              + f"\nRunbook Names: {runbook_name}"
-                              + f"\nTenant Names: {tenant_name}"
-                              + f"\nEnvironment Names: {environment_name}")
+                              + f"\n* Space: {space_id}"
+                              + f"\n* Project Names: {project_name}"
+                              + f"\n* Runbook Names: {runbook_name}"
+                              + f"\n* Tenant Names: {tenant_name}"
+                              + f"\n* Environment Names: {environment_name}")
 
         response_text = []
 

@@ -145,14 +145,14 @@ def releases_query_callback(github_user, api_key, url, log_query):
         if debug.casefold() == "true":
             additional_information = (releases_query_callback_implementation.__name__
                                       + " was called with the following parameters:"
-                                      + f"\nOriginal Query: {original_query}"
-                                      + f"\nSpace: {space}"
-                                      + f"\nProjects: {projects}"
-                                      + f"\nEnvironments: {environments}"
-                                      + f"\nChannels: {channels}"
-                                      + f"\nReleases: {releases}"
-                                      + f"\nTenants: {tenants}"
-                                      + f"\nDates: {dates}")
+                                      + f"\n* Original Query: {original_query}"
+                                      + f"\n* Space: {space}"
+                                      + f"\n* Projects: {projects}"
+                                      + f"\n* Environments: {environments}"
+                                      + f"\n* Channels: {channels}"
+                                      + f"\n* Releases: {releases}"
+                                      + f"\n* Tenants: {tenants}"
+                                      + f"\n* Dates: {dates}")
 
         return CopilotResponse(
             "\n\n".join(filter(lambda x: x, [chat_response, warnings, additional_information, debug_text])))
