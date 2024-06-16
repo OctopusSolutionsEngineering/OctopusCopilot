@@ -64,7 +64,7 @@ def general_query_callback(github_user, api_key, url, log_query):
 
         # Debug mode shows the entities extracted from the query
         debug_text = []
-        debug = get_default_argument(github_user, "False", "Debug")
+        debug = get_default_argument(github_user, None, "Debug")
         if debug.casefold() == "true":
             debug_text.append(general_query_callback_implementation.__name__
                               + " was called with the following parameters:"

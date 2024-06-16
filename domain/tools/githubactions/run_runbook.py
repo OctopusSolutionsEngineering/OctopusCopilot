@@ -21,7 +21,7 @@ def run_runbook_confirm_callback_wrapper(github_user, url, api_key, log_query):
 
         # Debug mode shows the entities extracted from the query
         debug_text = []
-        debug = get_default_argument(github_user, "False", "Debug")
+        debug = get_default_argument(github_user, None, "Debug")
         if debug.casefold() == "true":
             debug_text.append(run_runbook_confirm_callback.__name__
                               + " was called with the following parameters:"

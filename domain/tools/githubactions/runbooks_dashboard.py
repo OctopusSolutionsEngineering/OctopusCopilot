@@ -46,7 +46,7 @@ def get_runbook_dashboard_callback(github_user):
 
         # Debug mode shows the entities extracted from the query
         debug_text = []
-        debug = get_default_argument(github_user, "False", "Debug")
+        debug = get_default_argument(github_user, None, "Debug")
         if debug.casefold() == "true":
             debug_text.append(get_runbook_dashboard_implementation.__name__
                               + " was called with the following parameters:"
