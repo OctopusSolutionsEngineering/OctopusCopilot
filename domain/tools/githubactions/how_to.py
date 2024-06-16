@@ -3,6 +3,7 @@ from domain.defaults.defaults import get_default_argument
 from domain.exceptions.request_failed import GitHubRequestFailed
 from domain.messages.docs_messages import docs_prompt
 from domain.response.copilot_response import CopilotResponse
+from domain.sanitizers.sanitize_strings import to_lower_case_or_none
 from infrastructure.github import search_repo
 from infrastructure.openai import llm_message_query
 
@@ -25,7 +26,7 @@ def how_to_callback(github_token, github_user, log_query):
         # Debug mode shows the entities extracted from the query
         debug_text = []
         debug = get_default_argument(github_user, None, "Debug")
-        if debug.casefold() == "true":
+        if to_lower_case_or_none(debug) == "true":
             debug_text.append(how_to_callback_implementation.__name__
                               + " was called with the following parameters:"
                               + f"\n* Original Query: {original_query}"

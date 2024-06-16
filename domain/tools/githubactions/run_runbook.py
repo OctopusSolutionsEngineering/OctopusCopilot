@@ -6,6 +6,7 @@ from domain.exceptions.runbook_not_published import RunbookNotPublished
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_environments, lookup_tenants, \
     lookup_runbooks
 from domain.response.copilot_response import CopilotResponse
+from domain.sanitizers.sanitize_strings import to_lower_case_or_none
 from infrastructure.callbacks import save_callback
 from infrastructure.octopus import run_published_runbook_fuzzy, get_project, get_runbook_fuzzy, get_environment
 
@@ -22,7 +23,7 @@ def run_runbook_confirm_callback_wrapper(github_user, url, api_key, log_query):
         # Debug mode shows the entities extracted from the query
         debug_text = []
         debug = get_default_argument(github_user, None, "Debug")
-        if debug.casefold() == "true":
+        if to_lower_case_or_none(debug) == "true":
             debug_text.append(run_runbook_confirm_callback.__name__
                               + " was called with the following parameters:"
                               + f"\n* Space: {space_id}"

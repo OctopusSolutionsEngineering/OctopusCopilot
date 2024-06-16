@@ -1,5 +1,6 @@
 from domain.defaults.defaults import get_default_argument
 from domain.response.copilot_response import CopilotResponse
+from domain.sanitizers.sanitize_strings import to_lower_case_or_none
 from domain.sanitizers.sanitized_list import sanitize_name_fuzzy, sanitize_space
 from domain.transformers.chat_responses import get_dashboard_response
 from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_from_name, get_dashboard
@@ -30,7 +31,7 @@ def get_dashboard_callback(github_user, log_query=None):
         # Debug mode shows the entities extracted from the query
         debug_text = []
         debug = get_default_argument(github_user, None, "Debug")
-        if debug.casefold() == "true":
+        if to_lower_case_or_none(debug) == "true":
             debug_text.append(get_dashboard_callback_implementation.__name__
                               + " was called with the following parameters:"
                               + f"\n* Original Query: {original_query}"

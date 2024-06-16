@@ -5,6 +5,7 @@ from domain.context.octopus_context import collect_llm_context
 from domain.defaults.defaults import get_default_argument, get_default_argument_list
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
+from domain.sanitizers.sanitize_strings import to_lower_case_or_none
 from domain.sanitizers.sanitized_list import sanitize_environments, sanitize_tenants, sanitize_name_fuzzy, \
     sanitize_space, sanitize_names_fuzzy, sanitize_projects, get_item_or_none, update_query
 from domain.transformers.deployments_from_dashboard import get_deployments_from_dashboard
@@ -142,7 +143,7 @@ def releases_query_callback(github_user, api_key, url, log_query):
         # Debug mode shows the entities extracted from the query
         debug_text = ""
         debug = get_default_argument(github_user, None, "Debug")
-        if debug.casefold() == "true":
+        if to_lower_case_or_none(debug) == "true":
             additional_information = (releases_query_callback_implementation.__name__
                                       + " was called with the following parameters:"
                                       + f"\n* Original Query: {original_query}"

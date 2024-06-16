@@ -1,6 +1,7 @@
 from domain.context.octopus_context import collect_llm_context
 from domain.defaults.defaults import get_default_argument
 from domain.response.copilot_response import CopilotResponse
+from domain.sanitizers.sanitize_strings import to_lower_case_or_none
 from domain.sanitizers.sanitized_list import sanitize_name_fuzzy, sanitize_space, sanitize_names_fuzzy, \
     sanitize_projects, get_item_or_none, sanitize_environments, sanitize_tenants, update_query
 from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_from_name, get_projects_generator
@@ -79,7 +80,7 @@ def resource_specific_callback(github_user, api_key, url, log_query):
         # Debug mode shows the entities extracted from the query
         debug_text = []
         debug = get_default_argument(github_user, None, "Debug")
-        if debug.casefold() == "true":
+        if to_lower_case_or_none(debug) == "true":
             debug_text.append(resource_specific_callback_implementation.__name__
                               + " was called with the following parameters:"
                               + f"\n* Original Query: {original_query}"

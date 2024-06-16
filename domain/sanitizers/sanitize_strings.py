@@ -19,3 +19,7 @@ def replace_with_empty_string(input_string, pattern):
 
 def strip_leading_whitespace(input_string):
     return '\n'.join([line.lstrip(' \t') for line in input_string.splitlines()])
+
+
+def to_lower_case_or_none(s):
+    return s.lower() if s is not None else None

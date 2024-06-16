@@ -6,6 +6,7 @@ from domain.lookup.octopus_lookups import lookup_runbooks, lookup_projects, look
     lookup_space
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
+from domain.sanitizers.sanitize_strings import to_lower_case_or_none
 from domain.sanitizers.sanitized_list import sanitize_log_steps, \
     sanitize_log_lines, update_query
 from infrastructure.octopus import get_runbook_deployment_logs, \
@@ -88,7 +89,7 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
         # Debug mode shows the entities extracted from the query
         debug_text = []
         debug = get_default_argument(github_user, None, "Debug")
-        if debug.casefold() == "true":
+        if to_lower_case_or_none(debug) == "true":
             debug_text.append(runbook_logs_implementation.__name__
                               + " was called with the following parameters:"
                               + f"\n* Original Query: {original_query}"
