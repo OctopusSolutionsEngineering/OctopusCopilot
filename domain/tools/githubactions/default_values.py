@@ -14,13 +14,18 @@ def default_value_callbacks(github_user):
 
                 default_value: The default value
         """
+        if not default_name or not default_name.strip():
+            return CopilotResponse("The default name cannot be empty")
+
+        if not default_value or not default_value.strip():
+            return CopilotResponse("The default value cannot be empty")
 
         try:
             validate_default_value_name(default_name)
         except ValueError as e:
             return CopilotResponse(e.args[0])
 
-        save_default_values(github_user, default_name.casefold(), str(default_value),
+        save_default_values(github_user, default_name.casefold(), str(default_value).strip(),
                             get_functions_connection_string())
         return CopilotResponse(f"Saved default value \"{default_value}\" for \"{default_name.casefold()}\"")
 
@@ -37,6 +42,9 @@ def default_value_callbacks(github_user):
             Args:
                 default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
         """
+        if not default_name or not default_name.strip():
+            return CopilotResponse("The default name cannot be empty")
+
         name = str(default_name).casefold()
         value = get_default_values(github_user, name, get_functions_connection_string())
         return CopilotResponse(f"The default value for \"{name}\" is \"{value}\"")
