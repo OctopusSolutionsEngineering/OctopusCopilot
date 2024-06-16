@@ -20,7 +20,7 @@ def default_value_callbacks(github_user):
         except ValueError as e:
             return CopilotResponse(e.args[0])
 
-        save_default_values(github_user, default_name.casefold(), default_value,
+        save_default_values(github_user, default_name.casefold(), str(default_value),
                             get_functions_connection_string())
         return CopilotResponse(f"Saved default value \"{default_value}\" for \"{default_name.casefold()}\"")
 
