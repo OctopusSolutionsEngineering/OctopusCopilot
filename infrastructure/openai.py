@@ -22,12 +22,16 @@ NO_FUNCTION_RESPONSE = ("Sorry, I did not understand that request. View the docu
 
 @retry(RateLimitError, tries=3, delay=5)
 def llm_message_query(message_prompt, context, log_query=None):
+    # We can use a specific deployment to answer a query, or fallback to the default
+    deployment = os.environ.get("OPENAI_API_DEPLOYMENT_QUERY") or os.environ["OPENAI_API_DEPLOYMENT"]
+    version = os.environ.get("OPENAI_API_DEPLOYMENT_QUERY_VERSION") or "2024-02-01"
+
     llm = AzureChatOpenAI(
         temperature=0,
-        azure_deployment=os.environ["OPENAI_API_DEPLOYMENT"],
+        azure_deployment=deployment,
         openai_api_key=os.environ["OPENAI_API_KEY"],
         azure_endpoint=os.environ["OPENAI_ENDPOINT"],
-        api_version="2024-02-01",
+        api_version=version,
         request_timeout=llm_timeout
     )
 
@@ -73,12 +77,17 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
     # Version comes from https://github.com/openai/openai-python/issues/926#issuecomment-1839426482
     # Note that for function calling you need 3.5-turbo-16k
     # https://github.com/openai/openai-python/issues/926#issuecomment-1920037903
+
+    # We can use a specific deployment to select a tool, or fallback to the default
+    deployment = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS") or os.environ["OPENAI_API_DEPLOYMENT"]
+    version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-02-01"
+
     agent = OpenAIFunctionsAgent.from_llm_and_tools(
         llm=AzureChatOpenAIWithTooling(temperature=0,
-                                       azure_deployment=os.environ["OPENAI_API_DEPLOYMENT"],
+                                       azure_deployment=deployment,
                                        openai_api_key=os.environ["OPENAI_API_KEY"],
                                        azure_endpoint=os.environ["OPENAI_ENDPOINT"],
-                                       api_version="2024-02-01"),
+                                       api_version=version),
         tools=tools,
         extra_prompt_messages=extra_prompt_messages
     )

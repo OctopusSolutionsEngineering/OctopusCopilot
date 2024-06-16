@@ -225,7 +225,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_step(self):
-        prompt = "What does the step \"Run a Script\" do in the project \"Deploy Web App Container\" in space \"Simple\"."
+        prompt = "What does the step \"Run a Script 2\" do in the project \"Deploy Web App Container\" in space \"Simple\"."
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
@@ -501,7 +501,7 @@ class CopilotChatTest(unittest.TestCase):
         deployment = create_and_deploy_release(space_name="Simple", release_version=version + "-hotfix-timeouts-iss253")
         wait_for_task(deployment["TaskId"], space_name="Simple")
 
-        prompt = "When was the last deployment hotfix successfully applied?"
+        prompt = "Show the release version and time of the last successful hotfix deployment."
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
@@ -698,13 +698,16 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_find_retries(self):
-        prompt = "What project steps have retries enabled? Provide the response as a JSON object like {\"steps\": [{\"name\": \"Step 1\", \"retries\": false}, {\"name\": \"Step 2\", \"retries\": true}]}."
+        prompt = "What project steps have retries enabled? Provide the response as a literal JSON object like {\"steps\": [{\"name\": \"Step 1\", \"retries\": false}, {\"name\": \"Step 2\", \"retries\": true}]} with no markdown formatting."
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
-        response_json = json.loads(strip_before_first_curly_bracket(response_text))
+        try:
+            response_json = json.loads(strip_before_first_curly_bracket(response_text))
+        except:
+            print(response_text)
 
-        self.assertTrue(next(filter(lambda step: step["name"] == "Run a Script 2", response_json["steps"]))["retries"]),
+        self.assertTrue(next(filter(lambda step: step["name"] == "Run a Script 2", response_json["steps"]))["retries"])
         self.assertTrue(next(filter(lambda step: step["name"] == "Deploy to IIS", response_json["steps"]))["retries"])
         self.assertFalse(
             next(filter(lambda step: step["name"] == "Configure the load balancer", response_json["steps"]))["retries"])
