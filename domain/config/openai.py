@@ -16,11 +16,11 @@ max_deployments = 10
 # long-running query.
 llm_timeout = 30
 
-# Testing revealed that the LLM struggles to extract meaningful values from large blobs of log outputs. For example,
+# Testing revealed that the GPT 3.5 LLM struggles to extract meaningful values from large blobs of log outputs. For example,
 # this query fails:
 # find any CVEs in the deployment logs for the latest deployment of the project "Octopus Copilot Function" to the "Production" environment in the "Octopus Copilot" space in the last 400 lines
 # But this query succeeds:
 # find any CVEs in the deployment logs for the latest deployment of the project "Octopus Copilot Function" to the "Production" environment in the "Octopus Copilot" space in the last 300 lines
-# Obviously lines of text is a rough measurements, as it is more likely the LLM is struggling with a token count, not a line count.
-# But this value is a guide to prompt users to limit the log output when large blobs are detected.
-max_log_lines = 250
+# A max_log_lines limit of 250 is appropriate for GPT 3.5.
+# The GPT-4o was better though. We set a much higher limit before displaying a warning.
+max_log_lines = 1000
