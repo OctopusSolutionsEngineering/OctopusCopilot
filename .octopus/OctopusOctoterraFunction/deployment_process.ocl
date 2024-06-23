@@ -17,8 +17,17 @@ step "deploy-with-cli" {
                 WORKERIP=$(curl --silent ifconfig.net/)
                 
                 # Clear any existing rule
-                az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker"
-                az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --slot "staging"
+                EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
+                if [[ $EXISTING -eq "1" ]]
+                then
+                  az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker"
+                fi
+                
+                EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --slot "staging" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
+                if [[ $EXISTING -eq "1" ]]
+                then
+                  az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --slot "staging"
+                fi
                 
                 # Allow this worker access
                 az functionapp config access-restriction add -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --action Allow --ip-address ${WORKERIP} --priority 500
@@ -161,8 +170,17 @@ step "remove-worker-access" {
             Octopus.Action.Azure.AccountId = "#{Octopus.Azure.Account}"
             Octopus.Action.Script.ScriptBody = <<-EOT
                 # Clear any existing rule
-                az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker"
-                az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --slot "staging"
+                EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
+                if [[ $EXISTING -eq "1" ]]
+                then
+                  az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker"
+                fi
+                
+                EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --slot "staging" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
+                if [[ $EXISTING -eq "1" ]]
+                then
+                  az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --slot "staging"
+                fi
                 
                 EOT
             Octopus.Action.Script.ScriptSource = "Inline"
