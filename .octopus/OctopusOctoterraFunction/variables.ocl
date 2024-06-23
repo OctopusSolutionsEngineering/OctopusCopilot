@@ -1,0 +1,17 @@
+variable "Azure.Function.Name[OLD]" {
+    value "octoterraproduction" {}
+}
+
+variable "Empty" {
+    value {}
+}
+
+variable "Octopus.Azure.Account[OLD]" {
+    type = "AzureAccount"
+
+    value "azure-solutions-engineering" {}
+}
+
+variable "OctopusPrintVariables" {
+    value "False" {}
+}
