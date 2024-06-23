@@ -14,7 +14,9 @@
 name: Python Build
 'on':
   workflow_dispatch: { }
-  push: { }
+  push:
+    paths-ignore:
+      - '.octopus/**'
   schedule:
     - cron: '0 0 * * *'
 jobs:
