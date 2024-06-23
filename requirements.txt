@@ -4,7 +4,7 @@
 
 azure-functions
 langchain==0.2.3
-langchain-community==0.2.4
+langchain-community==0.2.5
 langchain-core==0.2.5
 langchain-openai==0.1.8
 openai==1.33.0
@@ -38,7 +38,7 @@ torch==2.2.2+cpu; sys_platform == 'linux' or sys_platform == 'windows'
 # Cpu only builds are not available for macOS
 # https://github.com/python-poetry/poetry/issues/7597
 torch==2.2.2; sys_platform == 'darwin'
-tqdm==4.66.2
+tqdm==4.66.3
 # https://stackoverflow.com/a/67910697/157605
 # Download this file with pip, oherwise the function will try to download it fresh each time.
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
