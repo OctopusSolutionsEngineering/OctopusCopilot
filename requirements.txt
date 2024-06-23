@@ -3,9 +3,9 @@
 # Manually managing azure-functions-worker may cause unexpected issues
 
 azure-functions
-langchain==0.2.3
+langchain==0.2.5
 langchain-community==0.2.5
-langchain-core==0.2.5
+langchain-core==0.2.7
 langchain-openai==0.1.8
 openai==1.33.0
 testcontainers==4.6.0
