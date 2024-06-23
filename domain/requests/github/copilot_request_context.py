@@ -22,6 +22,7 @@ from domain.tools.githubactions.resource_specific_callback import resource_speci
 from domain.tools.githubactions.run_runbook import run_runbook_wrapper, run_runbook_confirm_callback_wrapper
 from domain.tools.githubactions.runbook_logs import get_runbook_logs_wrapper
 from domain.tools.githubactions.runbooks_dashboard import get_runbook_dashboard_callback
+from domain.tools.githubactions.task_summary import get_task_summary_callback
 from domain.tools.githubactions.variables import variable_query_callback
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
 from domain.tools.wrapper.dashboard_wrapper import show_space_dashboard_wrapper
@@ -37,6 +38,7 @@ from domain.tools.wrapper.runbook_logs import answer_runbook_run_logs_wrapper
 from domain.tools.wrapper.runbooks_dashboard_wrapper import show_runbook_dashboard_wrapper
 from domain.tools.wrapper.step_features import answer_step_features_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
+from domain.tools.wrapper.task_summary_wrapper import show_task_summary_wrapper
 from infrastructure.github import get_github_user
 from infrastructure.users import get_users_details
 
@@ -192,6 +194,12 @@ def build_form_tools(query, req: func.HttpRequest):
                                                                                 url,
                                                                                 log_query),
                                                                   log_query)),
+        FunctionDefinition(show_task_summary_wrapper(query,
+                                                     get_task_summary_callback(get_github_user_from_form(req),
+                                                                               api_key,
+                                                                               url,
+                                                                               log_query),
+                                                     log_query)),
         FunctionDefinition(answer_runbook_run_logs_wrapper(
             query,
             get_runbook_logs_wrapper(
