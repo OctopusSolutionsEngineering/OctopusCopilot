@@ -1,0 +1,327 @@
+step "deploy-with-cli" {
+    name = "Deploy with CLI"
+
+    action {
+        action_type = "Octopus.AzurePowerShell"
+        environments = ["production"]
+        notes = "Deploy the application using the Azure Functions CLI"
+        properties = {
+            Octopus.Action.Azure.AccountId = "#{Octopus.Azure.Account}"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                pushd Azure.Functions.Cli.linux-x64
+                chmod +x func
+                chmod +x gozip
+                popd
+                
+                # Grant access to this dynamic worker
+                WORKERIP=$(curl --silent ifconfig.net/)
+                
+                # Clear any existing rule
+                az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker"
+                az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --slot "staging"
+                
+                # Allow this worker access
+                az functionapp config access-restriction add -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --action Allow --ip-address ${WORKERIP} --priority 500
+                az functionapp config access-restriction add -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --action Allow --ip-address ${WORKERIP} --priority 500 --slot "staging"
+                
+                
+                # Disable autoswap
+                az functionapp deployment slot auto-swap \
+                	-g "#{Azure.ResourceGroup.Name}" \
+                    -n "#{Azure.Function.Name}" \
+                    --slot staging \
+                    --disable
+                
+                # See https://stackoverflow.com/a/74619020/157605 for why WEBSITE_OVERRIDE_STICKY_DIAGNOSTICS_SETTINGS
+                # is set to "0"
+                
+                cat >appsettings.json <<EOL
+                [
+                	{
+                      "name": "WEBSITE_OVERRIDE_STICKY_DIAGNOSTICS_SETTINGS",
+                      "value": "0",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "OPENAI_API_KEY",
+                      "value": "#{Azure.US.OpenAI.Key}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "OPENAI_ENDPOINT",
+                      "value": "#{Azure.US.OpenAI.Endpoint}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "OPENAI_API_DEPLOYMENT",
+                      "value": "#{Azure.US.OpenAI.Deployment}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "OPENAI_API_DEPLOYMENT_FUNCTIONS",
+                      "value": "#{Azure.US.OpenAI.Deployment.Functions}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "OPENAI_API_DEPLOYMENT_QUERY",
+                      "value": "#{Azure.US.OpenAI.Deployment.Query}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "APPLICATION_USERS_ADMIN",
+                      "value": "#{Application.Users.Admin}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "SLACK_WEBHOOK_URL",
+                      "value": "#{Slack.Webhook.Url}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "ENCRYPTION_SALT",
+                      "value": "#{Encryption.Salt}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "ENCRYPTION_PASSWORD",
+                      "value": "#{Encryption.Password}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "GITHUB_CLIENT_ID",
+                      "value": "#{GitHub.App.ClientId}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "GITHUB_CLIENT_REDIRECT",
+                      "value": "#{GitHub.Oauth.Redirect}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "GITHUB_CLIENT_SECRET",
+                      "value": "#{GitHub.App.ClientSecret}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "APPLICATION_OCTOTERRA_URL",
+                      "value": "#{Application.Octoterra.Url}",
+                      "slotSetting": false
+                   } 
+                ] 
+                EOL
+                
+                az functionapp config appsettings set -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --settings @appsettings.json 2>&1
+                
+                cd OctopusCopilot
+                ../Azure.Functions.Cli.linux-x64/func azure functionapp publish "#{Azure.Function.Name}" --python --slot staging
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool = "hosted-ubuntu"
+
+        container {
+            feed = "docker-hub"
+            image = "octopuslabs/azure-workertools"
+        }
+
+        packages "Azure.Functions.Cli.linux-x64" {
+            acquisition_location = "Server"
+            feed = "octopus-server-built-in"
+            package_id = "Azure.Functions.Cli.linux-x64"
+            properties = {
+                Extract = "True"
+                Purpose = ""
+                SelectionMode = "immediate"
+            }
+        }
+
+        packages "OctopusCopilot" {
+            acquisition_location = "Server"
+            feed = "octopus-server-built-in"
+            package_id = "OctopusCopilot"
+            properties = {
+                Extract = "True"
+                Purpose = ""
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "smoke-test-health-endpoint" {
+    name = "Smoke Test Health Staging Endpoint"
+
+    action {
+        environments = ["production"]
+        properties = {
+            ExpectedCode = "200"
+            Octopus.Action.Template.Id = "ActionTemplates-1741"
+            Octopus.Action.Template.Version = "18"
+            SecurityProtocol = "Tls12"
+            TimeoutSeconds = "60"
+            Uri = "#{Application.Staging.HealthCheck}"
+            UseWindowsAuth = "False"
+        }
+        worker_pool = "hosted-ubuntu"
+    }
+}
+
+step "run-an-azure-script" {
+    name = "Slot Swap"
+
+    action {
+        action_type = "Octopus.AzurePowerShell"
+        environments = ["production"]
+        properties = {
+            Octopus.Action.Azure.AccountId = "#{Octopus.Azure.Account}"
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                az webapp deployment slot swap \
+                	-g "#{Azure.ResourceGroup.Name}" \
+                    -n "#{Azure.Function.Name}" \
+                    --slot staging \
+                    --target-slot production
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool_variable = ""
+
+        container {
+            feed = "docker-hub"
+            image = "octopusdeploy/worker-tools:6.1.1-ubuntu.22.04"
+        }
+    }
+}
+
+step "smoke-test-health-production-endpoint" {
+    name = "Smoke Test Health Production Endpoint"
+
+    action {
+        environments = ["production"]
+        properties = {
+            ExpectedCode = "200"
+            Octopus.Action.Template.Id = "ActionTemplates-1741"
+            Octopus.Action.Template.Version = "18"
+            SecurityProtocol = "Tls12"
+            TimeoutSeconds = "60"
+            Uri = "#{Application.Production.HealthCheck}"
+            UseWindowsAuth = "False"
+        }
+        worker_pool = "hosted-ubuntu"
+    }
+}
+
+step "security-scan" {
+    name = "Scan for Security Vulnerabilities"
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                echo "Pulling Trivy Docker Image"
+                echo "##octopus[stdout-verbose]"
+                docker pull aquasec/trivy
+                echo "##octopus[stdout-default]"
+                
+                TIMESTAMP=$(date +%s%3N)
+                SUCCESS=0
+                for x in $(find . -name bom.json -type f -print); do
+                    echo "Scanning ${x}"
+                
+                    # Delete any existing report file
+                    if [[ -f "$PWD/depscan-bom.json" ]]; then
+                      rm "$PWD/depscan-bom.json"
+                    fi
+                
+                    # Generate the report, capturing the output, and ensuring $? is set to the exit code
+                    OUTPUT=$(bash -c "docker run --rm -v \"$PWD/${x}:/app/${x}\" aquasec/trivy sbom \"/app/${x}\"; exit \$?" 2>&1)
+                
+                    # Success is set to 1 if the exit code is not zero
+                    if [[ $? -ne 0 ]]; then
+                        SUCCESS=1
+                    fi
+                
+                    # Print the output stripped of ANSI colour codes
+                    echo -e "${OUTPUT}" | sed 's/\x1b\[[0-9;]*m//g'
+                done
+                
+                # Cleanup
+                for i in {1..10}
+                do
+                    chmod -R +rw bundle &> /dev/null
+                    rm -rf bundle &> /dev/null
+                    if [[ $? == 0 ]]; then break; fi
+                    echo "Attempting to clean up files"
+                    sleep 1
+                done
+                
+                set_octopusvariable "VerificationResult" $SUCCESS
+                
+                if [[ $SUCCESS -ne 0 ]]; then
+                  >&2 echo "Critical vulnerabilities were detected"
+                fi
+                
+                exit 0
+                
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+        }
+        worker_pool = "hosted-ubuntu"
+
+        packages "OctopusCopilot" {
+            acquisition_location = "Server"
+            feed = "octopus-server-built-in"
+            package_id = "OctopusCopilot"
+            properties = {
+                Extract = "True"
+                Purpose = ""
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "remove-worker-access" {
+    condition = "Always"
+    name = "Remove worker access"
+
+    action {
+        action_type = "Octopus.AzurePowerShell"
+        environments = ["production"]
+        notes = "Deploy the application using the Azure Functions CLI"
+        properties = {
+            Octopus.Action.AutoRetry.MaximumCount = "3"
+            Octopus.Action.Azure.AccountId = "#{Octopus.Azure.Account}"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                # Clear any existing rule
+                
+                EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
+                if [[ $EXISTING -eq "1" ]]
+                then
+                  az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker"
+                fi
+                
+                EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --slot "staging" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
+                if [[ $EXISTING -eq "1" ]]
+                then
+                  az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --slot "staging"
+                fi
+                
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool = "hosted-ubuntu"
+
+        container {
+            feed = "docker-hub"
+            image = "octopuslabs/azure-workertools"
+        }
+    }
+}

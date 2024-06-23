@@ -1,0 +1,45 @@
+variable "Application.Octoterra.Url[OLD]" {
+    value "https://octoterraproduction.azurewebsites.net" {}
+}
+
+variable "Application.Production.HealthCheck[OLD]" {
+    value "https://octopuscopilotproduction.azurewebsites.net/api/health" {}
+}
+
+variable "Application.Staging.HealthCheck[OLD]" {
+    value "https://octopuscopilotproduction-staging.azurewebsites.net/api/health" {}
+}
+
+variable "Application.Users.Admin" {
+    value "[160104]" {}
+}
+
+variable "Azure.Function.Name[OLD]" {
+    value "octopuscopilotproduction" {}
+}
+
+variable "Azure.ResourceGroup.Name[OLD]" {
+    value "OctopusCopilot" {}
+}
+
+variable "GitHub.Oauth.ClientId[OLD]" {
+    value "982539418ce22f8d6ca7" {}
+}
+
+variable "Octopus.Azure.Account[OLD]" {
+    type = "AzureAccount"
+
+    value "azure-solutions-engineering" {}
+}
+
+variable "OctopusPrintVariables" {
+    value "False" {}
+}
+
+variable "Slack.Webhook.Url" {
+    value "https://hooks.slack.com/services/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" {}
+}
+
+variable "SystemVariable" {
+    value "octoterra" {}
+}
