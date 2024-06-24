@@ -1,9 +1,14 @@
 from urllib.parse import urlparse, urlencode, urlunsplit
 
+from expiring_dict import ExpiringDict
+
 from domain.exceptions.request_failed import GitHubRequestFailed
 from infrastructure.http_pool import http
 
-token_lookup_cache = {}
+# Token user lookup cache that expires in 15 minutes.
+# This is really only for tests as Azure functions are going to launch a new instance for each request,
+# and the cache will be empty.
+token_lookup_cache = ExpiringDict(60 * 15)
 
 
 def get_github_auth_headers(get_token):
