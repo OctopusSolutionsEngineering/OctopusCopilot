@@ -83,6 +83,7 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 * @octopus-ai-app Show me the dashboard for the space "{space_name}"
                 * @octopus-ai-app Show me the project dashboard for "{first_project}" in the space "{space_name}"
                 * @octopus-ai-app Show me the runbook dashboard for "{first_runbook}" in the project "{first_project}" in the space "{space_name}"
+                * @octopus-ai-app Show me the task summary for release "1.4.3" of the project "{first_project}" in the "{first_environment}" environment in the space "{space_name}"
                 * @octopus-ai-app List the projects in the space "{space_name}"
                 * @octopus-ai-app What do the deployment steps in the "{first_project}" project in the "{space_name}" space do?
                 * @octopus-ai-app Show me the status of the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the "{space_name}" space
