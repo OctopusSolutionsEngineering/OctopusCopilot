@@ -1,7 +1,14 @@
 from urllib.parse import urlparse, urlencode, urlunsplit
 
+from expiring_dict import ExpiringDict
+
 from domain.exceptions.request_failed import GitHubRequestFailed
 from infrastructure.http_pool import http
+
+# Token user lookup cache that expires in 15 minutes.
+# This is really only for tests as Azure functions are going to launch a new instance for each request,
+# and the cache will be empty.
+token_lookup_cache = ExpiringDict(60 * 15)
 
 
 def get_github_auth_headers(get_token):
@@ -45,6 +52,11 @@ def get_github_user(get_token):
     if get_token is None:
         return None
 
+    # Copilot appears to send a new token every request, but this does cut down the number of API requests
+    # used when running tests against a long-lived token.
+    if get_token in token_lookup_cache:
+        return str(token_lookup_cache[get_token]["id"])
+
     api = build_github_url("user", "")
 
     resp = http.request("GET", api, headers=get_github_auth_headers(get_token))
@@ -53,6 +65,9 @@ def get_github_user(get_token):
         raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
 
     json = resp.json()
+
+    # Cache the user lookup result
+    token_lookup_cache[get_token] = json
 
     return str(json["id"])
 
