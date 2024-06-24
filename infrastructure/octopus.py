@@ -1020,7 +1020,7 @@ def get_summary(log_item, depth):
 
 
 def get_activity_log_state_icon(state):
-    if state == "Executing":
+    if state == "Running":
         return "🔵"
 
     if state == "SuccessWithWarning":
