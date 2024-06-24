@@ -293,7 +293,7 @@ def get_github_state_icon(state):
         return "🔴"
 
     elif state == "cancelled":
-        return "🔴"
+        return "⚪"
 
     elif state == "queued" or state == "pending" or state == "waiting" or state == "requested" or state == "stale":
         return "🟣"

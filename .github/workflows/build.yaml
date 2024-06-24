@@ -254,6 +254,24 @@ jobs:
           packages: OctopusCopilot:${{ steps.determine_version.outputs.semVer }}
           release_number: ${{ steps.determine_version.outputs.semVer }}+sha${{ steps.determine_version.outputs.ShortSha }}.run${{ github.run_number }}.attempt${{ github.run_attempt }}
           git_ref: main
+          release_notes: |
+            GitHub Owner: OctopusSolutionsEngineering
+            GitHub Repo: OctopusCopilot
+            GitHub Workflow: build.yaml
+            GitHub Sha: ${{ github.sha }}
+            GitHub Run: ${{ github.run_number }}
+            GitHub Attempt: ${{ github.run_attempt }}
+
+            Here are the notes for the packages
+            #{each package in Octopus.Release.Package}
+            - #{package.PackageId} #{package.Version}
+            #{each commit in package.Commits}
+                - [#{commit.CommitId}](#{commit.LinkUrl}) - #{commit.Comment}
+            #{/each}
+            #{each workItem in package.WorkItems}
+                - [#{workItem.Id}](#{workItem.LinkUrl}) - #{workItem.Description}
+            #{/each}
+            #{/each}
 permissions:
   id-token: write
   checks: write
