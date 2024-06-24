@@ -604,7 +604,7 @@ class CopilotChatTest(unittest.TestCase):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         deployment = create_and_deploy_release(space_name="Simple", release_version=version)
         wait_for_task(deployment["TaskId"], space_name="Simple")
-        prompt = "Show the task summary for the deployment of project \"Deploy Web App Container\" for space \"Simpleish\"."
+        prompt = f"Show the task summary for release {version} of project \"Deploy Web App Container\" for space \"Simpleish\"."
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
