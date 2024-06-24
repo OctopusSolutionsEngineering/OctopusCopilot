@@ -39,8 +39,9 @@ resource "octopusdeploy_project" "project_project1" {
   is_version_controlled                = false
   lifecycle_id                         = "${octopusdeploy_lifecycle.lifecycle_application.id}"
   project_group_id                     = "${octopusdeploy_project_group.project_group_test.id}"
-  included_library_variable_sets       = []
+  included_library_variable_sets = []
   tenanted_deployment_participation    = "Untenanted"
+  description                          = "GitHub Owner: OctopusSolutionsEngineering\nGitHub Repo: OctopusCopilot\nGitHub Workflow: build.yaml"
 
   connectivity_policy {
     allow_deployments_to_no_targets = true
@@ -55,7 +56,6 @@ resource "octopusdeploy_project" "project_project1" {
   lifecycle {
     ignore_changes = []
   }
-  description = "${var.project_project1_description_prefix}${var.project_project1_description}${var.project_project1_description_suffix}"
 }
 
 resource "octopusdeploy_variable" "variable_1" {

@@ -20,7 +20,8 @@ pycryptodome==3.20.0
 pydantic==2.7.3
 presidio-analyzer==2.2.354
 presidio-anonymizer==2.2.354
-requests==2.32.3
+# Watch for updates to this dependency, as they can break test containers
+requests==2.31.0
 pyjwt==2.8.0
 aiohttp==3.9.5
 python-dateutil==2.9.0.post0

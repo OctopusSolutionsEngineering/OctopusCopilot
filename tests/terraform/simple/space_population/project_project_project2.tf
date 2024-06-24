@@ -39,7 +39,7 @@ resource "octopusdeploy_project" "project_project2" {
   is_version_controlled                = false
   lifecycle_id                         = "${octopusdeploy_lifecycle.lifecycle_application.id}"
   project_group_id                     = "${data.octopusdeploy_project_groups.project_group_default_project_group.project_groups[0].id}"
-  included_library_variable_sets       = []
+  included_library_variable_sets = []
   tenanted_deployment_participation    = "TenantedOrUntenanted"
 
   connectivity_policy {
@@ -55,5 +55,6 @@ resource "octopusdeploy_project" "project_project2" {
   lifecycle {
     ignore_changes = []
   }
-  description = "${var.project_project2_description_prefix}${var.project_project2_description}${var.project_project2_description_suffix}"
+  # Validates that invalid metadata doesn't crash the agent
+  description = "GitHub Owner: Nope\nGitHub Repo: DoesNotExist\nGitHub Workflow: blah.yaml"
 }

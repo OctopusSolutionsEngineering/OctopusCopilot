@@ -582,6 +582,7 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue(
             "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
+        print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard_fuzzy_space(self):

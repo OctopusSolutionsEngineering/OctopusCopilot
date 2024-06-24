@@ -177,6 +177,37 @@ def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
     return actual_space_name, projects
 
 
+@logging_wrapper
+def get_project_github_workflow(space_id, project_id, my_api_key, my_octopus_api):
+    """
+    Extracts the GitHub owner, repo, and workflow from the project description.
+    :param space_id: The space id hosting the project
+    :param project_id: The project ID
+    :param my_api_key: The octopus API key
+    :param my_octopus_api: The Octopus url
+    :return: The owner, repo, and workflow ID (if found)
+    """
+    project = get_project(space_id, project_id, my_api_key, my_octopus_api)
+    description = project["Description"].split("\n") if project["Description"] else []
+    owner = next(
+        map(
+            lambda x: x[len("github owner:"):].strip(),
+            filter(lambda x: x.casefold().startswith("github owner:"), description)),
+        None)
+    repo = next(
+        map(
+            lambda x: x[len("github repo:"):].strip(),
+            filter(lambda x: x.casefold().startswith("github repo:"), description)),
+        None)
+    workflow = next(
+        map(
+            lambda x: x[len("github workflow:"):].strip(),
+            filter(lambda x: x.casefold().startswith("github workflow:"), description)),
+        None)
+
+    return {"ProjectId": project_id, "Owner": owner, "Repo": repo, "Workflow": workflow}
+
+
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_dashboard(space_id, my_api_key, my_octopus_api):

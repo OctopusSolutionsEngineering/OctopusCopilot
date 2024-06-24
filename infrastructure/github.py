@@ -3,6 +3,8 @@ from urllib.parse import urlparse, urlencode, urlunsplit
 from expiring_dict import ExpiringDict
 
 from domain.exceptions.request_failed import GitHubRequestFailed
+from domain.sanitizers.url_sanitizer import quote_safe
+from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http
 
 # Token user lookup cache that expires in 15 minutes.
@@ -87,3 +89,31 @@ def search_repo(repo, language, keywords, get_token=None):
         raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
 
     return resp.json()
+
+
+def get_workflow_run(owner, repo, workflow_id, get_token):
+    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_workflow_run).')
+    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_workflow_run).')
+    ensure_string_not_empty(workflow_id, 'workflow_id must be a non-empty string (get_workflow_run).')
+    ensure_string_not_empty(get_token, 'get_token must be a non-empty string (get_workflow_run).')
+
+    api = build_github_url(
+        f"repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/workflows/{quote_safe(workflow_id)}/runs",
+        {"per_page": 1})
+    resp = http.request("GET", api, headers=get_github_auth_headers(get_token))
+
+    if resp.status != 200:
+        raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+
+    return resp.json()
+
+
+def try_get_workflow_run(owner, repo, workflow_id, get_token):
+    """
+    Wraps a call to get_workflow_run, but returns an empty object if there was an exception.
+    Useful when you want to silently ignore errors.
+    """
+    try:
+        return get_workflow_run(owner, repo, workflow_id, get_token)
+    except Exception as e:
+        return {}

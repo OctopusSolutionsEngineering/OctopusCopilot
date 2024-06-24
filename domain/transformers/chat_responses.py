@@ -58,12 +58,19 @@ def get_env_name(dashboard, environment_id):
     return environment["Name"]
 
 
-def get_dashboard_response(space_name, dashboard):
+def get_dashboard_response(space_name, dashboard, github_actions_status=None):
     table = f"{space_name}\n\n"
 
     for project_group in dashboard["ProjectGroups"]:
 
-        environment_names = list(map(lambda e: get_env_name(dashboard, e), project_group["EnvironmentIds"]))
+        environment_names = []
+
+        # If any projects have associated GitHub workflows, add the column to the start of the table
+        if github_actions_status:
+            environment_names.append('GitHub')
+
+        environment_names.extend(list(map(lambda e: get_env_name(dashboard, e), project_group["EnvironmentIds"])))
+
         columns = [project_group['Name'], *environment_names]
         table += build_markdown_table_row(columns)
         table += build_markdown_table_header_separator(len(columns))
@@ -73,6 +80,15 @@ def get_dashboard_response(space_name, dashboard):
         for project in projects:
             table += f"| {project['Name']} "
 
+            # Get the GitHub Actions workflow status
+            if github_actions_status:
+                status = next(filter(lambda x: x["ProjectId"] == project["Id"], github_actions_status), None)
+                if status:
+                    table += f"| {get_github_state_icon(status['Status'])} {status['Name']} {status['Sha'][:7]}"
+                else:
+                    table += "| ⨂ "
+
+            # Get the deployment status
             for environment in project_group["EnvironmentIds"]:
                 deployment = list(
                     filter(lambda d: d["ProjectId"] == project["Id"] and d["EnvironmentId"] == environment,
@@ -252,6 +268,33 @@ def get_state_icon(state, has_warnings):
         return "🔴"
 
     elif state == "Queued":
+        return "🟣"
+
+    return "⚪"
+
+
+def get_github_state_icon(state):
+    # The complete list: completed, action_required, cancelled, failure, neutral, skipped, stale, success,
+    # timed_out, in_progress, queued, requested, waiting, pending
+    if state == "in_progress":
+        return "🔵"
+
+    if state == "completed" or state == "success":
+        return "🟢"
+
+    elif state == "failure":
+        return "🔴"
+
+    if state == "cancelled":
+        return "⚪"
+
+    elif state == "timed_out":
+        return "🔴"
+
+    elif state == "cancelled":
+        return "🔴"
+
+    elif state == "queued" or state == "pending" or state == "waiting" or state == "requested" or state == "stale":
         return "🟣"
 
     return "⚪"
