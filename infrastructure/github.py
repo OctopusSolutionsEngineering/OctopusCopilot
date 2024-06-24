@@ -92,6 +92,9 @@ def search_repo(repo, language, keywords, get_token=None):
 
 
 def get_workflow_run(owner, repo, workflow_id, get_token):
+    """
+    https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#list-workflow-runs-for-a-workflow
+    """
     ensure_string_not_empty(owner, 'owner must be a non-empty string (get_workflow_run).')
     ensure_string_not_empty(repo, 'repo must be a non-empty string (get_workflow_run).')
     ensure_string_not_empty(workflow_id, 'workflow_id must be a non-empty string (get_workflow_run).')
