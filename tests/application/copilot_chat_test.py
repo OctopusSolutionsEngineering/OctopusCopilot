@@ -612,6 +612,8 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue(
             "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
+        self.assertTrue(f"Deploy Deploy Web App Container release {version} to Development" in response_text,
+                        response_text)
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
