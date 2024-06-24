@@ -1010,7 +1010,7 @@ def get_summary(log_item, depth):
 
     icon = get_activity_log_state_icon(log_item['Status'])
 
-    logs = f"{' ' * (depth * 2)}{icon} {log_item['Name']}\n"
+    logs = f"{'&ensp;' * depth}{icon} {log_item['Name']}\n"
 
     if depth < 2 and log_item["Children"]:
         for child in log_item["Children"]:
