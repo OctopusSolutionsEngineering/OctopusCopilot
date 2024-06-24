@@ -58,7 +58,7 @@ def get_env_name(dashboard, environment_id):
     return environment["Name"]
 
 
-def get_dashboard_response(space_name, dashboard, github_actions_status=None):
+def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_actions_status=None):
     table = f"{space_name}\n\n"
 
     for project_group in dashboard["ProjectGroups"]:
@@ -84,7 +84,7 @@ def get_dashboard_response(space_name, dashboard, github_actions_status=None):
             if github_actions_status:
                 status = next(filter(lambda x: x["ProjectId"] == project["Id"], github_actions_status), None)
                 if status:
-                    table += f"| {get_github_state_icon(status['Status'])} [{status['Name']} {status['Sha'][:7]}]({status['Url']})"
+                    table += f"| {get_github_state_icon(status['Status'])} [{status.get('Name')} {status.get('ShortSha')}]({status.get('Url')})"
                 else:
                     table += "| ⨂ "
 
@@ -97,7 +97,8 @@ def get_dashboard_response(space_name, dashboard, github_actions_status=None):
                 if len(deployment) > 0:
                     last_deployment = deployment[0]
                     icon = get_state_icon(last_deployment['State'], last_deployment['HasWarningsOrErrors'])
-                    table += f"| {icon} {last_deployment['ReleaseVersion']}"
+                    url = f"{octopus_url}/app#/{space_id}/projects/{last_deployment['ProjectId']}/deployments/releases/{last_deployment['ReleaseVersion']}/deployments/{last_deployment['DeploymentId']}"
+                    table += f"| {icon} [{last_deployment['ReleaseVersion']}]({url})"
                 else:
                     table += f"| ⨂ "
 

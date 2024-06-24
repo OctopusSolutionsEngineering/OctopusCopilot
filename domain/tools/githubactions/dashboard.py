@@ -59,7 +59,7 @@ def get_dashboard_callback(github_token, github_user, log_query=None):
             logger.error(e)
             github_actions_status = None
 
-        response = [get_dashboard_response(actual_space_name, dashboard, github_actions_status)]
+        response = [get_dashboard_response(url, space_id, actual_space_name, dashboard, github_actions_status)]
 
         response.extend(warnings)
         response.extend(debug_text)
@@ -77,12 +77,13 @@ async def get_workflow_status(project_id, owner, repo, workflow, github_token):
             return {"ProjectId": project_id,
                     "Status": first_workflow.get("status"),
                     "Sha": first_workflow.get("head_sha"),
+                    "ShortSha": first_workflow.get("head_sha")[:7],
                     "Name": first_workflow.get("name"),
                     "Url": first_workflow.get("html_url")}
     except Exception as e:
         # Silent fail, and fall back to returning blank result
         pass
-    return {"ProjectId": project_id, "Status": "", "Sha": "", "Name": ""}
+    return {"ProjectId": project_id, "Status": "", "Sha": "", "Name": "", "Url": "", "ShortSha": ""}
 
 
 async def get_all_workflow_status(filtered_github_actions, github_token):

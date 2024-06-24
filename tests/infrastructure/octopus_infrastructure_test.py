@@ -264,7 +264,7 @@ class OctopusAPIRequests(unittest.TestCase):
         space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
 
         dashboard_json = get_dashboard(space_id, Octopus_Api_Key, Octopus_Url)
-        dashboard = get_dashboard_response(actual_space_name, dashboard_json)
+        dashboard = get_dashboard_response(Octopus_Url, space_id, actual_space_name, dashboard_json)
 
         # Make sure something was returned. We aren't trying to validate the Markdown tables here though.
         self.assertTrue(dashboard)
