@@ -55,7 +55,7 @@ def get_github_user(get_token):
     # Copilot appears to send a new token every request, but this does cut down the number of API requests
     # used when running tests against a long-lived token.
     if get_token in token_lookup_cache:
-        return token_lookup_cache[get_token]
+        return str(token_lookup_cache[get_token]["id"])
 
     api = build_github_url("user", "")
 
