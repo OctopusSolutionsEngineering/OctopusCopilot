@@ -3,6 +3,8 @@ from urllib.parse import urlparse, urlencode, urlunsplit
 from domain.exceptions.request_failed import GitHubRequestFailed
 from infrastructure.http_pool import http
 
+token_lookup_cache = {}
+
 
 def get_github_auth_headers(get_token):
     """
@@ -45,6 +47,11 @@ def get_github_user(get_token):
     if get_token is None:
         return None
 
+    # Copilot appears to send a new token every request, but this does cut down the number of API requests
+    # used when running tests against a long-lived token.
+    if get_token in token_lookup_cache:
+        return token_lookup_cache[get_token]
+
     api = build_github_url("user", "")
 
     resp = http.request("GET", api, headers=get_github_auth_headers(get_token))
@@ -53,6 +60,9 @@ def get_github_user(get_token):
         raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
 
     json = resp.json()
+
+    # Cache the user lookup result
+    token_lookup_cache[get_token] = json
 
     return str(json["id"])
 
