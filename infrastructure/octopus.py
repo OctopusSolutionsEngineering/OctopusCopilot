@@ -912,7 +912,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
 
         # If the release is not found, exit
         if not release:
-            return ""
+            return None
 
         # Find the specific deployment
         specific_deployment = list(filter(lambda d: d["ReleaseId"] == release["Id"], deployments))
@@ -920,7 +920,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
             task_id = specific_deployment[0]["TaskId"]
 
     if not task_id:
-        return ""
+        return None
 
     api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Tasks/{task_id}/details")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
