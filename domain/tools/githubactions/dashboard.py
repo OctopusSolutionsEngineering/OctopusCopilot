@@ -47,8 +47,11 @@ def get_dashboard_callback(github_token, github_user, log_query=None):
             github_actions = map(
                 lambda x: get_project_github_workflow(space_id, x["Id"], api_key, url),
                 dashboard["Projects"])
+
+            # Limit the results to projects that have the correct metadata
             filtered_github_actions = filter(lambda x: x["Owner"] and x["Repo"] and x["Workflow"], github_actions)
 
+            # Call the GitHub API to get the workflow status
             github_actions_status = asyncio.run(get_all_workflow_status(filtered_github_actions, github_token))
         except Exception as e:
             # We make every attempt to allow the requests to the GitHub API to fail. But if there was an unexpected
@@ -74,7 +77,8 @@ async def get_workflow_status(project_id, owner, repo, workflow, github_token):
             return {"ProjectId": project_id,
                     "Status": first_workflow.get("status"),
                     "Sha": first_workflow.get("head_sha"),
-                    "Name": first_workflow.get("name")}
+                    "Name": first_workflow.get("name"),
+                    "Url": first_workflow.get("html_url")}
     except Exception as e:
         # Silent fail, and fall back to returning blank result
         pass

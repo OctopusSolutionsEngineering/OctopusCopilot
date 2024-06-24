@@ -84,7 +84,7 @@ def get_dashboard_response(space_name, dashboard, github_actions_status=None):
             if github_actions_status:
                 status = next(filter(lambda x: x["ProjectId"] == project["Id"], github_actions_status), None)
                 if status:
-                    table += f"| {get_github_state_icon(status['Status'])} {status['Name']} {status['Sha'][:7]}"
+                    table += f"| {get_github_state_icon(status['Status'])} [{status['Name']} {status['Sha'][:7]}]({status['Url']})"
                 else:
                     table += "| ⨂ "
 
