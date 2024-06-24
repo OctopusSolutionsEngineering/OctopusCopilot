@@ -1,5 +1,7 @@
+import asyncio
 from urllib.parse import urlparse, urlencode, urlunsplit
 
+import aiohttp
 from expiring_dict import ExpiringDict
 
 from domain.exceptions.request_failed import GitHubRequestFailed
@@ -11,6 +13,9 @@ from infrastructure.http_pool import http
 # This is really only for tests as Azure functions are going to launch a new instance for each request,
 # and the cache will be empty.
 token_lookup_cache = ExpiringDict(60 * 15)
+
+# Semaphore to limit the number of concurrent requests to GitHub
+sem = asyncio.Semaphore(10)
 
 
 def get_github_auth_headers(get_token):
@@ -91,8 +96,9 @@ def search_repo(repo, language, keywords, get_token=None):
     return resp.json()
 
 
-def get_workflow_run(owner, repo, workflow_id, get_token):
+async def get_workflow_run_async(owner, repo, workflow_id, get_token):
     """
+    Async function to get workflow run
     https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#list-workflow-runs-for-a-workflow
     """
     ensure_string_not_empty(owner, 'owner must be a non-empty string (get_workflow_run).')
@@ -103,20 +109,8 @@ def get_workflow_run(owner, repo, workflow_id, get_token):
     api = build_github_url(
         f"repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/workflows/{quote_safe(workflow_id)}/runs",
         {"per_page": 1})
-    resp = http.request("GET", api, headers=get_github_auth_headers(get_token))
 
-    if resp.status != 200:
-        raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
-
-    return resp.json()
-
-
-def try_get_workflow_run(owner, repo, workflow_id, get_token):
-    """
-    Wraps a call to get_workflow_run, but returns an empty object if there was an exception.
-    Useful when you want to silently ignore errors.
-    """
-    try:
-        return get_workflow_run(owner, repo, workflow_id, get_token)
-    except Exception as e:
-        return {}
+    async with sem:
+        async with aiohttp.ClientSession(headers=get_github_auth_headers(get_token)) as session:
+            async with session.get(str(api)) as response:
+                return await response.json()
