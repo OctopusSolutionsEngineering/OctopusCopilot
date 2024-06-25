@@ -59,6 +59,7 @@ def get_env_name(dashboard, environment_id):
 
 
 def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_actions_status=None):
+    now = datetime.now(pytz.utc)
     table = f"{space_name}\n\n"
 
     for project_group in dashboard["ProjectGroups"]:
@@ -97,9 +98,16 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
 
                 if len(deployment) > 0:
                     last_deployment = deployment[0]
+
+                    created = parse_unknown_format_date(last_deployment["Created"])
+                    difference = get_date_difference_summary(now - created)
+
                     icon = get_state_icon(last_deployment['State'], last_deployment['HasWarningsOrErrors'])
                     url = f"{octopus_url}/app#/{space_id}/projects/{last_deployment['ProjectId']}/deployments/releases/{last_deployment['ReleaseVersion']}/deployments/{last_deployment['DeploymentId']}"
-                    table += f"| {icon} [{last_deployment['ReleaseVersion']}]({url})"
+
+                    messages = [f"{icon} [{last_deployment['ReleaseVersion']}]({url})", f"🕗 {difference} ago"]
+
+                    table += f"| {'<br/>'.join(messages)}"
                 else:
                     table += f"| ⨂ "
 
