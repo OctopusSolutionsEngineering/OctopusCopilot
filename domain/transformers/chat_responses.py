@@ -130,10 +130,9 @@ def get_project_dashboard_response(space_name, project_name, dashboard, release_
                         lambda x: x["ReleaseId"] == release["Release"]["Id"] and x.get('ShortSha') and x.get('Url'),
                         release_workflow_runs or [])
 
-                    workflow_report = next(
-                        map(lambda
-                                x: f" {get_github_state_icon(x.get('Status'))} [{x.get('ShortSha')}]({x.get('Url')})",
-                            matching_releases), "")
+                    workflow_report = next(map(
+                        lambda x: f" {get_github_state_icon(x.get('Status'))} [{x.get('ShortSha')}]({x.get('Url')})",
+                        matching_releases), "")
 
                     table += f"| {icon} {deployment['ReleaseVersion']} 🕗 {difference} ago{workflow_report}"
             else:
@@ -285,28 +284,28 @@ def get_state_icon(state, has_warnings):
     return "⚪"
 
 
-def get_github_state_icon(state):
+def get_github_state_icon(status, conclusion):
     # The complete list: completed, action_required, cancelled, failure, neutral, skipped, stale, success,
     # timed_out, in_progress, queued, requested, waiting, pending
-    if state == "in_progress":
+    if status == "in_progress":
         return "🔵"
 
-    if state == "completed" or state == "success":
+    elif status == "queued" or status == "pending" or status == "waiting" or status == "requested" or status == "stale":
+        return "🟣"
+
+    if conclusion == "success":
         return "🟢"
 
-    elif state == "failure":
+    elif conclusion == "failure":
         return "🔴"
 
-    if state == "cancelled":
+    if conclusion == "cancelled":
         return "⚪"
 
-    elif state == "timed_out":
+    elif conclusion == "timed_out":
         return "🔴"
 
-    elif state == "cancelled":
+    elif conclusion == "cancelled":
         return "⚪"
-
-    elif state == "queued" or state == "pending" or state == "waiting" or state == "requested" or state == "stale":
-        return "🟣"
 
     return "⚪"
