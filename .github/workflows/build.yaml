@@ -261,6 +261,7 @@ jobs:
             * GitHub Sha: ${{ github.sha }}
             * GitHub Run: ${{ github.run_number }}
             * GitHub Attempt: ${{ github.run_attempt }}
+            * GitHub Run ID: ${{ github.run_id }}
 
             Here are the notes for the packages
             #{each package in Octopus.Release.Package}

@@ -36,7 +36,7 @@ def get_github_auth_headers(get_token):
     return headers
 
 
-def build_github_url(path, query):
+def build_github_url(path, query=None):
     """
     Create a URL from the GitHub API URL, additional path, and query params
     :param path: The additional path
@@ -96,7 +96,7 @@ def search_repo(repo, language, keywords, get_token=None):
     return resp.json()
 
 
-async def get_workflow_run_async(owner, repo, workflow_id, get_token):
+async def get_latest_workflow_run_async(owner, repo, workflow_id, get_token):
     """
     Async function to get workflow run
     https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#list-workflow-runs-for-a-workflow
@@ -109,6 +109,24 @@ async def get_workflow_run_async(owner, repo, workflow_id, get_token):
     api = build_github_url(
         f"repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/workflows/{quote_safe(workflow_id)}/runs",
         {"per_page": 1})
+
+    async with sem:
+        async with aiohttp.ClientSession(headers=get_github_auth_headers(get_token)) as session:
+            async with session.get(str(api)) as response:
+                return await response.json()
+
+
+async def get_workflow_run_async(owner, repo, run_id, get_token):
+    """
+    Async function to get workflow run
+    https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#get-a-workflow-run
+    """
+    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_workflow_run).')
+    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_workflow_run).')
+    ensure_string_not_empty(run_id, 'run_id must be a non-empty string (get_workflow_run).')
+    ensure_string_not_empty(get_token, 'get_token must be a non-empty string (get_workflow_run).')
+
+    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/runs/{quote_safe(run_id)}")
 
     async with sem:
         async with aiohttp.ClientSession(headers=get_github_auth_headers(get_token)) as session:

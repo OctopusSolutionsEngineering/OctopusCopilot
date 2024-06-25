@@ -6,7 +6,7 @@ from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import sanitize_name_fuzzy, sanitize_space
 from domain.tools.debug import get_params_message
 from domain.transformers.chat_responses import get_dashboard_response
-from infrastructure.github import get_workflow_run_async
+from infrastructure.github import get_latest_workflow_run_async
 from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_from_name, get_dashboard, \
     get_project_github_workflow
 
@@ -71,7 +71,7 @@ def get_dashboard_callback(github_token, github_user, log_query=None):
 
 async def get_workflow_status(project_id, owner, repo, workflow, github_token):
     try:
-        workflow = await get_workflow_run_async(owner, repo, workflow, github_token)
+        workflow = await get_latest_workflow_run_async(owner, repo, workflow, github_token)
         if workflow.get("workflow_runs", []):
             first_workflow = workflow["workflow_runs"][0]
             return {"ProjectId": project_id,

@@ -77,21 +77,19 @@ async def get_release_workflow_runs(release_workflows, github_token):
     Return the status of the workflow runs for each release.
     """
     return await asyncio.gather(
-        *[get_workflow_status(x["ReleaseId"], x["Owner"], x["Repo"], x["Workflow"], github_token) for x in
+        *[get_workflow_status(x["ReleaseId"], x["Owner"], x["Repo"], x["RunId"], github_token) for x in
           release_workflows])
 
 
-async def get_workflow_status(release_id, owner, repo, workflow, github_token):
+async def get_workflow_status(release_id, owner, repo, run_id, github_token):
     try:
-        workflow = await get_workflow_run_async(owner, repo, workflow, github_token)
-        if workflow.get("workflow_runs", []):
-            first_workflow = workflow["workflow_runs"][0]
-            return {"ReleaseId": release_id,
-                    "Status": first_workflow.get("status"),
-                    "Sha": first_workflow.get("head_sha"),
-                    "ShortSha": first_workflow.get("head_sha")[:7],
-                    "Name": first_workflow.get("name"),
-                    "Url": first_workflow.get("html_url")}
+        workflow = await get_workflow_run_async(owner, repo, run_id, github_token)
+        return {"ReleaseId": release_id,
+                "Status": workflow.get("status"),
+                "Sha": workflow.get("head_sha"),
+                "ShortSha": workflow.get("head_sha")[:7],
+                "Name": workflow.get("name"),
+                "Url": workflow.get("html_url")}
     except Exception as e:
         # Silent fail, and fall back to returning blank result
         pass
