@@ -109,7 +109,8 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
     return table
 
 
-def get_project_dashboard_response(space_name, project_name, dashboard, release_workflow_runs=None):
+def get_project_dashboard_response(space_name, project_name, dashboard, release_workflow_runs=None,
+                                   deployment_highlights=None):
     now = datetime.now(pytz.utc)
 
     table = f"{space_name} / {project_name}\n\n"
@@ -126,17 +127,24 @@ def get_project_dashboard_response(space_name, project_name, dashboard, release_
                     difference = get_date_difference_summary(now - created)
                     icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
 
+                    optional_details = []
+
                     # Find the associated github workflow and build a link
                     matching_releases = filter(
                         lambda x: x["ReleaseId"] == release["Release"]["Id"] and x.get('ShortSha') and x.get('Url'),
                         release_workflow_runs or [])
 
-                    workflow_report = next(map(
-                        lambda x: f" {get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
+                    optional_details.extend(map(
+                        lambda x: f"{get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
                                   + f"[{x.get('Name')} {x.get('ShortSha')}]({x.get('Url')})",
-                        matching_releases), "")
+                        matching_releases))
 
-                    table += f"| {icon} {deployment['ReleaseVersion']} 🕗 {difference} ago{workflow_report}"
+                    # Find any highlights in the logs
+                    optional_details.extend(map(lambda x: x['Highlights'],
+                                                filter(lambda x: x["DeploymentId"] == deployment["DeploymentId"],
+                                                       deployment_highlights or [])))
+
+                    table += f"| {icon} {deployment['ReleaseVersion']}<br/>🕗 {difference} ago{'<br/>'.join(optional_details)}"
             else:
                 table += "| ⨂ "
     table += "|  "

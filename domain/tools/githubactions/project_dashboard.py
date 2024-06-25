@@ -7,7 +7,7 @@ from domain.tools.debug import get_params_message
 from domain.transformers.chat_responses import get_project_dashboard_response, get_project_tenant_progression_response
 from infrastructure.github import get_workflow_run_async
 from infrastructure.octopus import get_project, get_project_progression, \
-    get_project_tenant_dashboard, get_release_github_workflow_async
+    get_project_tenant_dashboard, get_release_github_workflow_async, get_task_details_async, activity_logs_to_string
 
 logger = configure_logging(__name__)
 
@@ -63,7 +63,14 @@ def get_dashboard(space_id, space_name, project, api_key, url, github_token):
         logger.error(e)
         release_workflow_runs = None
 
-    return get_project_dashboard_response(space_name, project["Name"], progression, release_workflow_runs)
+    try:
+        deployment_highlights = asyncio.run(get_dashboard_deployment_highlights(space_id, progression, api_key, url))
+    except Exception as e:
+        logger.error(e)
+        deployment_highlights = None
+
+    return get_project_dashboard_response(space_name, project["Name"], progression, release_workflow_runs,
+                                          deployment_highlights)
 
 
 async def get_tenanted_dashboard_release_workflows(space_id, progression, api_key, url):
@@ -75,6 +82,22 @@ async def get_tenanted_dashboard_release_workflows(space_id, progression, api_ke
           progression["Items"]])
 
 
+async def get_tenanted_dashboard_deployment_highlights(space_id, progression, api_key, url):
+    """
+    Returns the deployment log highlights associated with deployments
+    """
+
+    async def map_deployment_to_highlights(deployment_id, task_id):
+        task = await get_task_details_async(space_id, task_id, api_key, url)
+        highlights = activity_logs_to_string(task["ActivityLogs"], categories=["Highlight"], join_string="<br/>",
+                                             include_name=False)
+        return {"DeploymentId": deployment_id, "Highlights": highlights}
+
+    return await asyncio.gather(
+        *[map_deployment_to_highlights(x["DeploymentId"], x["TaskId"]) for x in
+          progression["Items"]])
+
+
 async def get_dashboard_release_workflows(space_id, progression, api_key, url):
     """
     Return the details of the associated GitHub workflow from the release notes of each release.
@@ -82,6 +105,29 @@ async def get_dashboard_release_workflows(space_id, progression, api_key, url):
     return await asyncio.gather(
         *[get_release_github_workflow_async(space_id, x["Release"]["Id"], api_key, url) for x in
           progression["Releases"]])
+
+
+async def get_dashboard_deployment_highlights(space_id, progression, api_key, url):
+    """
+    Returns the deployment log highlights associated with deployments
+    """
+
+    async def map_deployment_to_highlights(deployment_id, task_id):
+        task = await get_task_details_async(space_id, task_id, api_key, url)
+        highlights = activity_logs_to_string(task["ActivityLogs"], categories=["Highlight"], join_string="<br/>",
+                                             include_name=False)
+        return {"DeploymentId": deployment_id, "Highlights": highlights}
+
+    deployment_highlights = []
+    for environment in progression["Environments"]:
+        for release in progression["Releases"]:
+            if environment["Id"] in release["Deployments"]:
+                deployments = release["Deployments"][environment["Id"]]
+                for deployment in deployments:
+                    deployment_highlights.append(
+                        map_deployment_to_highlights(deployment["DeploymentId"], deployment["TaskId"]))
+
+    return await asyncio.gather(*deployment_highlights)
 
 
 async def get_release_workflow_runs(release_workflows, github_token):

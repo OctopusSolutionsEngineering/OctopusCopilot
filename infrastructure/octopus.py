@@ -18,7 +18,7 @@ from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.query.query_inspector import release_is_latest
-from domain.sanitizers.sanitized_list import get_item_fuzzy, normalize_log_step_name
+from domain.sanitizers.sanitized_list import get_item_fuzzy, normalize_log_step_name, flatten_list
 from domain.sanitizers.url_sanitizer import quote_safe
 from domain.url.build_url import build_url
 from domain.validation.argument_validation import ensure_string_not_empty
@@ -847,7 +847,7 @@ def get_release_deployments(space_id, release_id, api_key, octopus_url):
 @logging_wrapper
 def get_task(space_id, task_id, api_key, octopus_url):
     """
-    Returns the deployments of a release.
+    Returns the task.
     :param space_id: The ID of the space.
     :param task_id: The task ID
     :param api_key: The Octopus API key
@@ -863,6 +863,30 @@ def get_task(space_id, task_id, api_key, octopus_url):
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     return resp.json()
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+async def get_task_details_async(space_id, task_id, api_key, octopus_url):
+    """
+    Returns the task.
+    :param space_id: The ID of the space.
+    :param task_id: The task ID
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
+    :return: The deployment progression raw JSON
+    """
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_task).')
+
+    if not task_id:
+        return None
+
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Tasks/{quote_safe(task_id)}/details")
+
+    async with sem:
+        async with aiohttp.ClientSession(headers=get_octopus_headers(api_key)) as session:
+            async with session.get(str(api)) as response:
+                return await response.json()
 
 
 @retry(HTTPError, tries=3, delay=2)
@@ -1128,21 +1152,27 @@ def get_activity_log_state_icon(state):
     return "⚪"
 
 
-def activity_logs_to_string(activity_logs, sanitized_steps):
+def activity_logs_to_string(activity_logs, sanitized_steps=None, categories=None, join_string="\n", include_name=True):
     if not activity_logs:
         return ""
 
-    logs = "\n".join(list(map(lambda i: get_logs(i, 0, sanitized_steps), activity_logs)))
+    logs = flatten_list(get_logs(i, 0, sanitized_steps, categories, include_name) for i in activity_logs)
+    return join_string.join(logs)
 
-    return logs
 
-
-def get_logs(log_item, depth, steps=None):
+def get_logs(log_item, depth, steps=None, categories=None, include_name=True):
     if depth == 0 and len(log_item["LogElements"]) == 0 and len(log_item["Children"]) == 0:
         return f"No logs found (status: {log_item['Status']})."
 
-    logs = log_item["Name"] + "\n"
-    logs += "\n".join(list(map(lambda e: e["MessageText"], log_item["LogElements"])))
+    filtered_logs = filter(lambda x: x["Category"] in categories, log_item["LogElements"]) if categories else log_item[
+        "LogElements"]
+
+    logs = []
+
+    if include_name:
+        logs.append(log_item["Name"])
+
+    logs.extend(list(map(lambda e: e["MessageText"], filtered_logs)))
 
     # limit the result to either step indexes or names
     if depth == 1 and not filter_logs(log_item, steps):
@@ -1150,7 +1180,7 @@ def get_logs(log_item, depth, steps=None):
 
     if log_item["Children"]:
         for child in log_item["Children"]:
-            logs += "\n" + get_logs(child, depth + 1, steps)
+            logs.extend(get_logs(child, depth + 1, steps, categories, include_name))
 
     return logs
 
