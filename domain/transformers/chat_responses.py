@@ -89,7 +89,7 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
                                + f"[{status.get('Name')} {status.get('ShortSha')}]({status.get('Url')})"]
 
                     if status.get("CreatedAt"):
-                        message.append(f"🕗 {get_date_difference_summary(now - status.get("CreatedAt"))} ago")
+                        message.append(f"🕗 {get_date_difference_summary(now - status.get('CreatedAt'))} ago")
 
                     table += f"| {'<br/>'.join(message)}"
                 else:
