@@ -285,27 +285,30 @@ def get_state_icon(state, has_warnings):
 
 
 def get_github_state_icon(status, conclusion):
-    # The complete list: completed, action_required, cancelled, failure, neutral, skipped, stale, success,
-    # timed_out, in_progress, queued, requested, waiting, pending
+    # https://github.com/github/rest-api-description/issues/1634
+    # Value of the status property can be one of: “queued”, “in_progress”, or “completed”.
+    # When it’s “completed,” it makes sense to check if it finished successfully.
+    # We need a value of the conclusion property.
+    # Can be one of the “success”, “failure”, “neutral”, “cancelled”, “skipped”, “timed_out”, or “action_required”.
+
     if status == "in_progress":
         return "🔵"
 
-    elif status == "queued" or status == "pending" or status == "waiting" or status == "requested" or status == "stale":
+    elif status == "queued":
         return "🟣"
+
+    # status of completed is assumed from this point down, and we're displaying the conclusion
 
     if conclusion == "success":
         return "🟢"
 
-    elif conclusion == "failure":
+    elif conclusion == "failure" or conclusion == "timed_out":
         return "🔴"
 
-    if conclusion == "cancelled":
-        return "⚪"
+    elif conclusion == "action_required":
+        return "🟠"
 
-    elif conclusion == "timed_out":
-        return "🔴"
-
-    elif conclusion == "cancelled":
+    elif conclusion == "cancelled" or conclusion == "neutral" or conclusion == "skipped":
         return "⚪"
 
     return "⚪"
