@@ -84,7 +84,7 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
             if github_actions_status:
                 status = next(filter(lambda x: x["ProjectId"] == project["Id"], github_actions_status), None)
                 if status:
-                    table += f"| {get_github_state_icon(status['Status'])} [{status.get('Name')} {status.get('ShortSha')}]({status.get('Url')})"
+                    table += f"| {get_github_state_icon(status['Status'], status['Conclusion'])} [{status.get('Name')} {status.get('ShortSha')}]({status.get('Url')})"
                 else:
                     table += "| ⨂ "
 
@@ -131,7 +131,8 @@ def get_project_dashboard_response(space_name, project_name, dashboard, release_
                         release_workflow_runs or [])
 
                     workflow_report = next(map(
-                        lambda x: f" {get_github_state_icon(x.get('Status'))} [{x.get('ShortSha')}]({x.get('Url')})",
+                        lambda
+                            x: f" {get_github_state_icon(x.get('Status'), x.get('Conclusion'))} [{x.get('ShortSha')}]({x.get('Url')})",
                         matching_releases), "")
 
                     table += f"| {icon} {deployment['ReleaseVersion']} 🕗 {difference} ago{workflow_report}"

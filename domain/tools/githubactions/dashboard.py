@@ -76,6 +76,7 @@ async def get_workflow_status(project_id, owner, repo, workflow, github_token):
             first_workflow = workflow["workflow_runs"][0]
             return {"ProjectId": project_id,
                     "Status": first_workflow.get("status"),
+                    "Conclusion": first_workflow.get("conclusion"),
                     "Sha": first_workflow.get("head_sha"),
                     "ShortSha": first_workflow.get("head_sha")[:7],
                     "Name": first_workflow.get("name"),
