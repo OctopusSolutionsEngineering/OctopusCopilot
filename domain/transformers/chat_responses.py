@@ -84,7 +84,8 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
             if github_actions_status:
                 status = next(filter(lambda x: x["ProjectId"] == project["Id"], github_actions_status), None)
                 if status:
-                    table += f"| {get_github_state_icon(status['Status'], status['Conclusion'])} [{status.get('Name')} {status.get('ShortSha')}]({status.get('Url')})"
+                    table += (f"| {get_github_state_icon(status.get('Status'), status.get('Conclusion'))} "
+                              + f"[{status.get('Name')} {status.get('ShortSha')}]({status.get('Url')})")
                 else:
                     table += "| ⨂ "
 
