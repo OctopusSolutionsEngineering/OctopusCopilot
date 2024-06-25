@@ -206,12 +206,12 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                         release_workflow_runs or [])
 
                     workflow_report = next(map(
-                        lambda x: f" {get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
+                        lambda x: f"<br/>{get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
                                   + f"[{x.get('Name')} {x.get('ShortSha')}]({x.get('Url')})",
                         matching_releases), "")
 
                     columns.append(
-                        f"{icon} {deployment['ReleaseVersion']} ⤲ {channel['Name']} 🕗 {difference} ago{workflow_report}")
+                        f"{icon} {deployment['ReleaseVersion']}<br/>⤲ {channel['Name']}<br/>🕗 {difference} ago{workflow_report}")
                     found = True
                     break
 
