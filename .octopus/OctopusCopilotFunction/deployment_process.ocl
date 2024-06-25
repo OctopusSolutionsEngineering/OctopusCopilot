@@ -272,9 +272,11 @@ step "security-scan" {
                 
                 set_octopusvariable "VerificationResult" $SUCCESS
                 
-                if [[ $SUCCESS -ne 0 ]]; then
-                  >&2 echo "Critical vulnerabilities were detected"
-                fi
+                CRITICAL=$(jq '[.[] | .Vulnerabilities[]? | select(.Severity == "HIGH")] | length' depscan-bom.json)
+                HIGH=$(jq '[.[] | .Vulnerabilities[]? | select(.Severity == "HIGH")] | length' depscan-bom.json)
+                
+                write_highlight "${CRITICAL} critical vulnerabilities"
+                write_highlight "${HIGH} critical vulnerabilities"
                 
                 exit 0
                 
