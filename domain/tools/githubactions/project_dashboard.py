@@ -1,5 +1,6 @@
 import asyncio
 
+from domain.logging.app_logging import configure_logging
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
@@ -8,8 +9,10 @@ from infrastructure.github import get_workflow_run_async
 from infrastructure.octopus import get_project, get_project_progression, \
     get_project_tenant_dashboard, get_release_github_workflow_async
 
+logger = configure_logging(__name__)
 
-def get_project_dashboard_callback(github_user, log_query=None):
+
+def get_project_dashboard_callback(github_user, github_token, log_query=None):
     def get_project_dashboard_callback_implementation(original_query, api_key, url, space_name, project_name):
         debug_text = get_params_message(github_user, True,
                                         get_project_dashboard_callback_implementation.__name__,
@@ -38,7 +41,7 @@ def get_project_dashboard_callback(github_user, log_query=None):
 
         response = []
         if project["TenantedDeploymentMode"] == "Untenanted":
-            response.append(get_dashboard(space_id, space_name, project, api_key, url))
+            response.append(get_dashboard(space_id, space_name, project, api_key, url, github_token))
         else:
             response.append(get_tenanted_dashboard(space_id, space_name, project, api_key, url))
 
@@ -50,14 +53,14 @@ def get_project_dashboard_callback(github_user, log_query=None):
     return get_project_dashboard_callback_implementation
 
 
-def get_dashboard(space_id, space_name, project, api_key, url):
+def get_dashboard(space_id, space_name, project, api_key, url, github_token):
     progression = get_project_progression(space_id, project["Id"], api_key, url)
 
     try:
         release_workflows = asyncio.run(get_dashboard_release_workflows(space_id, progression, api_key, url))
-        release_workflow_runs = asyncio.run(get_release_workflow_runs(release_workflows, api_key))
+        release_workflow_runs = asyncio.run(get_release_workflow_runs(release_workflows, github_token))
     except Exception as e:
-        # Silent fail if we can't get the release notes or the workflow details
+        logger.error(e)
         release_workflow_runs = None
 
     return get_project_dashboard_response(space_name, project["Name"], progression, release_workflow_runs)
@@ -93,7 +96,7 @@ async def get_workflow_status(release_id, owner, repo, run_id, github_token):
                 "Url": workflow.get("html_url")}
     except Exception as e:
         # Silent fail, and fall back to returning blank result
-        pass
+        logger.error(e)
     return {"ReleaseId": release_id, "Status": "", "Sha": "", "Name": "", "Url": "", "ShortSha": ""}
 
 

@@ -157,6 +157,7 @@ def build_form_tools(query, req: func.HttpRequest):
                                                           url,
                                                           get_project_dashboard_callback(
                                                               get_github_user_from_form(req),
+                                                              get_github_token(req),
                                                               log_query),
                                                           log_query)),
         FunctionDefinition(
