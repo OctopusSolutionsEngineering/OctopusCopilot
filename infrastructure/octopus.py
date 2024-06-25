@@ -251,8 +251,8 @@ async def get_release_github_workflow_async(space_id, release_id, my_api_key, my
         None)
     run_id = next(
         map(
-            lambda x: re.sub(f"{metadata_prefix}github run id:", "", x, flags=re.IGNORECASE).strip(),
-            filter(lambda x: re.match(f"{metadata_prefix}github run id:", x, flags=re.IGNORECASE), description)),
+            lambda x: re.sub(f"{metadata_prefix}github run\\s?id:", "", x, flags=re.IGNORECASE).strip(),
+            filter(lambda x: re.match(f"{metadata_prefix}github run\\s?id:", x, flags=re.IGNORECASE), description)),
         None)
 
     return {"ReleaseId": release_id, "Owner": owner, "Repo": repo, "Workflow": workflow, "Sha": sha, "RunId": run_id}

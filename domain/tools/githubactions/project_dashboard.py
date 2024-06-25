@@ -86,6 +86,7 @@ async def get_workflow_status(release_id, owner, repo, run_id, github_token):
         workflow = await get_workflow_run_async(owner, repo, run_id, github_token)
         return {"ReleaseId": release_id,
                 "Status": workflow.get("status"),
+                "Conclusion": workflow.get("conclusion"),
                 "Sha": workflow.get("head_sha"),
                 "ShortSha": workflow.get("head_sha")[:7],
                 "Name": workflow.get("name"),

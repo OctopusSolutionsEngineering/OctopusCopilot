@@ -608,7 +608,8 @@ class CopilotChatTest(unittest.TestCase):
         * GitHub Workflow: build.yaml
         * GitHub Sha: fba6924ff1099794bc716bcdec12e451fd811d96
         * GitHub Run: 1401
-        * GitHub Attempt: 1"""
+        * GitHub Attempt: 1
+        * GitHub Run Id: 9656530979"""
         deployment = create_and_deploy_release(space_name="Simple", release_version=version, release_notes=notes)
         wait_for_task(deployment["TaskId"], space_name="Simple")
         prompt = f"Show the task summary for release {version} of project \"Deploy Web App Container\" for space \"Simpleish\"."
@@ -631,7 +632,8 @@ class CopilotChatTest(unittest.TestCase):
                 * GitHub Workflow: build.yaml
                 * GitHub Sha: fba6924ff1099794bc716bcdec12e451fd811d96
                 * GitHub Run: 1401
-                * GitHub Attempt: 1"""
+                * GitHub Attempt: 1
+                * GitHub Run Id: 9656530979"""
         deployment = create_and_deploy_release(space_name="Simple", release_version=version, release_notes=notes)
         wait_for_task(deployment["TaskId"], space_name="Simple")
         prompt = "Show the project dashboard for \"Deploy Web App Container\" for space \"Simpleish\"."
