@@ -1,5 +1,6 @@
 import asyncio
 
+from domain.date.parse_dates import parse_unknown_format_date
 from domain.logging.app_logging import configure_logging
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects
 from domain.response.copilot_response import CopilotResponse
@@ -144,6 +145,7 @@ async def get_workflow_status(release_id, owner, repo, run_id, github_token):
         workflow = await get_workflow_run_async(owner, repo, run_id, github_token)
         return {"ReleaseId": release_id,
                 "Status": workflow.get("status"),
+                "CreatedAt": parse_unknown_format_date(workflow.get("created_at")),
                 "Conclusion": workflow.get("conclusion"),
                 "Sha": workflow.get("head_sha"),
                 "ShortSha": workflow.get("head_sha")[:7],

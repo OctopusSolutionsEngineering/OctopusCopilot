@@ -85,8 +85,13 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
             if github_actions_status:
                 status = next(filter(lambda x: x["ProjectId"] == project["Id"], github_actions_status), None)
                 if status:
-                    table += (f"| {get_github_state_icon(status.get('Status'), status.get('Conclusion'))} "
-                              + f"[{status.get('Name')} {status.get('ShortSha')}]({status.get('Url')})")
+                    message = [f"| {get_github_state_icon(status.get('Status'), status.get('Conclusion'))} "
+                               + f"[{status.get('Name')} {status.get('ShortSha')}]({status.get('Url')})"]
+
+                    if status.get("CreatedAt"):
+                        message.append(f"🕗 {get_date_difference_summary(now - status.get("CreatedAt"))} ago")
+
+                    table += f"| {'<br/>'.join(message)}"
                 else:
                     table += "| ⨂ "
 
