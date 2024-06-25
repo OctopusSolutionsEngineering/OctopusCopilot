@@ -127,24 +127,24 @@ def get_project_dashboard_response(space_name, project_name, dashboard, release_
                     difference = get_date_difference_summary(now - created)
                     icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
 
-                    optional_details = []
+                    messages = [f"{icon} {deployment['ReleaseVersion']}", f"🕗 {difference} ago"]
 
                     # Find the associated github workflow and build a link
                     matching_releases = filter(
                         lambda x: x["ReleaseId"] == release["Release"]["Id"] and x.get('ShortSha') and x.get('Url'),
                         release_workflow_runs or [])
 
-                    optional_details.extend(map(
+                    messages.extend(map(
                         lambda x: f"{get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
                                   + f"[{x.get('Name')} {x.get('ShortSha')}]({x.get('Url')})",
                         matching_releases))
 
                     # Find any highlights in the logs
-                    optional_details.extend(map(lambda x: x['Highlights'],
-                                                filter(lambda x: x["DeploymentId"] == deployment["DeploymentId"],
-                                                       deployment_highlights or [])))
+                    messages.extend(map(lambda x: x['Highlights'],
+                                        filter(lambda x: x["DeploymentId"] == deployment["DeploymentId"],
+                                               deployment_highlights or [])))
 
-                    table += f"| {icon} {deployment['ReleaseVersion']}<br/>🕗 {difference} ago{'<br/>'.join(optional_details)}"
+                    table += f"| {'<br/>'.join(messages)}"
             else:
                 table += "| ⨂ "
     table += "|  "
