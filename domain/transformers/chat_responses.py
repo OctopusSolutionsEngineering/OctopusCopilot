@@ -133,7 +133,7 @@ def get_project_dashboard_response(space_name, project_name, dashboard, release_
 
                     workflow_report = next(map(
                         lambda x: f" {get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
-                                  + f"[{x.get('ShortSha')}]({x.get('Url')})",
+                                  + f"[{x.get('Name')} {x.get('ShortSha')}]({x.get('Url')})",
                         matching_releases), "")
 
                     table += f"| {icon} {deployment['ReleaseVersion']} 🕗 {difference} ago{workflow_report}"
@@ -207,7 +207,7 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
 
                     workflow_report = next(map(
                         lambda x: f" {get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
-                                  + f"[{x.get('ShortSha')}]({x.get('Url')})",
+                                  + f"[{x.get('Name')} {x.get('ShortSha')}]({x.get('Url')})",
                         matching_releases), "")
 
                     columns.append(
