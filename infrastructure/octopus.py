@@ -1,6 +1,9 @@
+import asyncio
 import datetime
 import json
+import re
 
+import aiohttp
 import pytz
 from fuzzywuzzy import fuzz
 from retry import retry
@@ -25,6 +28,12 @@ logger = configure_logging()
 channel_cache = {}
 tenant_cache = {}
 environment_cache = {}
+
+# Semaphore to limit the number of concurrent requests to GitHub
+sem = asyncio.Semaphore(10)
+
+# metadata prefix string, used with a regex match
+metadata_prefix = "(\\s*(\\*|-)\\s*)?"
 
 
 def logging_wrapper(func):
@@ -191,21 +200,57 @@ def get_project_github_workflow(space_id, project_id, my_api_key, my_octopus_api
     description = project["Description"].split("\n") if project["Description"] else []
     owner = next(
         map(
-            lambda x: x[len("github owner:"):].strip(),
-            filter(lambda x: x.casefold().startswith("github owner:"), description)),
+            lambda x: re.sub(f"{metadata_prefix}github owner:", "", x, flags=re.IGNORECASE).strip(),
+            filter(lambda x: re.match(f"{metadata_prefix}github owner:", x, flags=re.IGNORECASE), description)),
         None)
     repo = next(
         map(
-            lambda x: x[len("github repo:"):].strip(),
-            filter(lambda x: x.casefold().startswith("github repo:"), description)),
+            lambda x: re.sub(f"{metadata_prefix}github repo:", "", x, flags=re.IGNORECASE).strip(),
+            filter(lambda x: re.match(f"{metadata_prefix}github repo:", x, flags=re.IGNORECASE), description)),
         None)
     workflow = next(
         map(
-            lambda x: x[len("github workflow:"):].strip(),
-            filter(lambda x: x.casefold().startswith("github workflow:"), description)),
+            lambda x: re.sub(f"{metadata_prefix}github workflow:", "", x, flags=re.IGNORECASE).strip(),
+            filter(lambda x: re.match(f"{metadata_prefix}github workflow:", x, flags=re.IGNORECASE), description)),
         None)
 
     return {"ProjectId": project_id, "Owner": owner, "Repo": repo, "Workflow": workflow}
+
+
+@logging_wrapper
+async def get_release_github_workflow_async(space_id, release_id, my_api_key, my_octopus_api):
+    """
+    Extracts the GitHub owner, repo, and workflow from the release notes.
+    :param space_id: The space id hosting the project
+    :param release_id: The release ID
+    :param my_api_key: The octopus API key
+    :param my_octopus_api: The Octopus url
+    :return: The owner, repo, and workflow ID (if found)
+    """
+    release = await get_release_async(space_id, release_id, my_api_key, my_octopus_api)
+    description = release["ReleaseNotes"].split("\n") if release["ReleaseNotes"] else []
+    owner = next(
+        map(
+            lambda x: re.sub(f"{metadata_prefix}github owner:", "", x, flags=re.IGNORECASE).strip(),
+            filter(lambda x: re.match(f"{metadata_prefix}github owner:", x, flags=re.IGNORECASE), description)),
+        None)
+    repo = next(
+        map(
+            lambda x: re.sub(f"{metadata_prefix}?github repo:", "", x, flags=re.IGNORECASE).strip(),
+            filter(lambda x: re.match(f"{metadata_prefix}github repo:", x, flags=re.IGNORECASE), description)),
+        None)
+    workflow = next(
+        map(
+            lambda x: re.sub(f"{metadata_prefix}github workflow:", "", x, flags=re.IGNORECASE).strip(),
+            filter(lambda x: re.match(f"{metadata_prefix}github workflow:", x, flags=re.IGNORECASE), description)),
+        None)
+    sha = next(
+        map(
+            lambda x: re.sub(f"{metadata_prefix}github sha:", "", x, flags=re.IGNORECASE).strip(),
+            filter(lambda x: re.match(f"{metadata_prefix}github sha:", x, flags=re.IGNORECASE), description)),
+        None)
+
+    return {"ReleaseId": release_id, "Owner": owner, "Repo": repo, "Workflow": workflow, "Sha": sha}
 
 
 @retry(HTTPError, tries=3, delay=2)
@@ -1358,3 +1403,17 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
         lambda: http.request("POST", api, json=runbook_run, headers=get_octopus_headers(my_api_key)))
 
     return response.json()
+
+
+async def get_release_async(space_id, release_id, api_key, octopus_url):
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_release_async).')
+    ensure_string_not_empty(release_id, 'release_id must be a non-empty string (get_release_async).')
+    ensure_string_not_empty(api_key, 'api_key must be a non-empty string (get_release_async).')
+    ensure_string_not_empty(octopus_url, 'octopus_url must be a non-empty string (get_release_async).')
+
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Releases/{quote_safe(release_id)}")
+
+    async with sem:
+        async with aiohttp.ClientSession(headers=get_octopus_headers(api_key)) as session:
+            async with session.get(str(api)) as response:
+                return await response.json()

@@ -255,12 +255,12 @@ jobs:
           release_number: ${{ steps.determine_version.outputs.semVer }}+sha${{ steps.determine_version.outputs.ShortSha }}.run${{ github.run_number }}.attempt${{ github.run_attempt }}
           git_ref: main
           release_notes: |
-            GitHub Owner: OctopusSolutionsEngineering
-            GitHub Repo: OctopusCopilot
-            GitHub Workflow: build.yaml
-            GitHub Sha: ${{ github.sha }}
-            GitHub Run: ${{ github.run_number }}
-            GitHub Attempt: ${{ github.run_attempt }}
+            * GitHub Owner: OctopusSolutionsEngineering
+            * GitHub Repo: OctopusCopilot
+            * GitHub Workflow: build.yaml
+            * GitHub Sha: ${{ github.sha }}
+            * GitHub Run: ${{ github.run_number }}
+            * GitHub Attempt: ${{ github.run_attempt }}
 
             Here are the notes for the packages
             #{each package in Octopus.Release.Package}
