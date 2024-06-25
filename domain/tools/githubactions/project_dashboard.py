@@ -43,7 +43,7 @@ def get_project_dashboard_callback(github_user, github_token, log_query=None):
         if project["TenantedDeploymentMode"] == "Untenanted":
             response.append(get_dashboard(space_id, space_name, project, api_key, url, github_token))
         else:
-            response.append(get_tenanted_dashboard(space_id, space_name, project, api_key, url))
+            response.append(get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_token))
 
         response.extend(warnings)
         response.extend(debug_text)
@@ -64,6 +64,15 @@ def get_dashboard(space_id, space_name, project, api_key, url, github_token):
         release_workflow_runs = None
 
     return get_project_dashboard_response(space_name, project["Name"], progression, release_workflow_runs)
+
+
+async def get_tenanted_dashboard_release_workflows(space_id, progression, api_key, url):
+    """
+    Return the details of the associated GitHub workflow from the release notes of each release.
+    """
+    return await asyncio.gather(
+        *[get_release_github_workflow_async(space_id, x["ReleaseId"], api_key, url) for x in
+          progression["Items"]])
 
 
 async def get_dashboard_release_workflows(space_id, progression, api_key, url):
@@ -100,8 +109,21 @@ async def get_workflow_status(release_id, owner, repo, run_id, github_token):
     return {"ReleaseId": release_id, "Status": "", "Sha": "", "Name": "", "Url": "", "ShortSha": ""}
 
 
-def get_tenanted_dashboard(space_id, space_name, project, api_key, url):
+def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_token):
     progression = get_project_tenant_dashboard(space_id, project["Id"], api_key, url)
-    return get_project_tenant_progression_response(space_id, space_name, project["Name"], project["Id"],
+
+    try:
+        release_workflows = asyncio.run(
+            get_tenanted_dashboard_release_workflows(space_id, progression["Dashboard"], api_key, url))
+        release_workflow_runs = asyncio.run(get_release_workflow_runs(release_workflows, github_token))
+    except Exception as e:
+        logger.error(e)
+        release_workflow_runs = None
+
+    return get_project_tenant_progression_response(space_id,
+                                                   space_name,
+                                                   project["Name"],
+                                                   project["Id"],
                                                    progression["Dashboard"],
+                                                   release_workflow_runs,
                                                    api_key, url)

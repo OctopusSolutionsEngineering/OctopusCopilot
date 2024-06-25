@@ -172,7 +172,8 @@ def get_tenant_environment_details(environments_ids, dashboard):
     return environments
 
 
-def get_project_tenant_progression_response(space_id, space_name, project_name, project_id, dashboard, api_key, url):
+def get_project_tenant_progression_response(space_id, space_name, project_name, project_id, dashboard,
+                                            release_workflow_runs, api_key, url):
     now = datetime.now(pytz.utc)
 
     table = f"{space_name} / {project_name}\n\n"
@@ -198,7 +199,19 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                     created = parse_unknown_format_date(deployment["Created"])
                     difference = get_date_difference_summary(now - created)
                     channel = get_channel_cached(space_id, deployment["ChannelId"], api_key, url)
-                    columns.append(f"{icon} {deployment['ReleaseVersion']} ⤲ {channel['Name']} 🕗 {difference} ago")
+
+                    # Find the associated github workflow and build a link
+                    matching_releases = filter(
+                        lambda x: x["ReleaseId"] == deployment["ReleaseId"] and x.get('ShortSha') and x.get('Url'),
+                        release_workflow_runs or [])
+
+                    workflow_report = next(map(
+                        lambda x: f" {get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
+                                  + f"[{x.get('ShortSha')}]({x.get('Url')})",
+                        matching_releases), "")
+
+                    columns.append(
+                        f"{icon} {deployment['ReleaseVersion']} ⤲ {channel['Name']} 🕗 {difference} ago{workflow_report}")
                     found = True
                     break
 
