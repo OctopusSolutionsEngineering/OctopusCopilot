@@ -28,6 +28,7 @@ python-dateutil==2.9.0.post0
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.25.1
 expiring-dict==1.1.0
+html-sanitizer==2.4.4
 
 
 # Required for stringlifier

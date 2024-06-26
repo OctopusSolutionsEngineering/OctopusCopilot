@@ -58,9 +58,11 @@ def get_dashboard_callback(github_token, github_user, log_query=None):
             # We make every attempt to allow the requests to the GitHub API to fail. But if there was an unexpected
             # exception, silently fail
             logger.error(e)
+            github_actions = None
             github_actions_status = None
 
-        response = [get_dashboard_response(url, space_id, actual_space_name, dashboard, github_actions_status)]
+        response = [
+            get_dashboard_response(url, space_id, actual_space_name, dashboard, github_actions, github_actions_status)]
 
         response.extend(warnings)
         response.extend(debug_text)

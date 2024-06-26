@@ -59,7 +59,8 @@ def get_env_name(dashboard, environment_id):
     return environment["Name"]
 
 
-def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_actions_status=None):
+def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_actions=None,
+                           github_actions_status=None):
     now = datetime.now(pytz.utc)
     table = f"{space_name}\n\n"
 
@@ -68,8 +69,8 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
         environment_names = []
 
         # If any projects have associated GitHub workflows, add the column to the start of the table
-        if github_actions_status:
-            environment_names.append('GitHub')
+        if github_actions_status and github_actions:
+            environment_names.append(f'[GitHub](https://github.com/{github_actions["Owner"]}/{github_actions["Repo"]})')
 
         environment_names.extend(list(map(lambda e: get_env_name(dashboard, e), project_group["EnvironmentIds"])))
 
@@ -127,11 +128,15 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
 
 
 def get_project_dashboard_response(octopus_url, space_id, space_name, project_name, dashboard,
+                                   github_action=None,
                                    release_workflow_runs=None,
                                    deployment_highlights=None):
     now = datetime.now(pytz.utc)
 
-    table = f"{space_name} / {project_name}\n\n"
+    table = f"## {space_name} / {project_name}\n\n"
+
+    if github_action:
+        table += f'[GitHub Repo](https://github.com/{github_action["Owner"]}/{github_action["Repo"]})\n'
 
     environment_names = list(map(lambda e: e["Name"], dashboard["Environments"]))
     table += build_markdown_table_row(environment_names)
@@ -202,13 +207,16 @@ def get_tenant_environment_details(environments_ids, dashboard):
 
 
 def get_project_tenant_progression_response(space_id, space_name, project_name, project_id, dashboard,
-                                            release_workflow_runs, deployment_highlights, api_key, url):
+                                            github_action, release_workflow_runs, deployment_highlights, api_key, url):
     now = datetime.now(pytz.utc)
 
-    table = f"{space_name} / {project_name}\n\n"
+    table = f"## {space_name} / {project_name}\n\n"
+
+    if github_action:
+        table += f'[GitHub Repo](https://github.com/{github_action["Owner"]}/{github_action["Repo"]})\n'
 
     for tenant in dashboard["Tenants"]:
-        table += f"{tenant['Name']}\n"
+        table += f"# {tenant['Name']}\n"
         environments_ids = get_tenant_environments(tenant, dashboard, project_id)
         environments = get_tenant_environment_details(environments_ids, dashboard)
         environment_names = list(map(lambda e: e["Name"], environments))

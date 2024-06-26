@@ -1,5 +1,7 @@
 import asyncio
 
+from html_sanitizer import Sanitizer
+
 from domain.date.parse_dates import parse_unknown_format_date
 from domain.logging.app_logging import configure_logging
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects
@@ -8,7 +10,8 @@ from domain.tools.debug import get_params_message
 from domain.transformers.chat_responses import get_project_dashboard_response, get_project_tenant_progression_response
 from infrastructure.github import get_workflow_run_async
 from infrastructure.octopus import get_project, get_project_progression, \
-    get_project_tenant_dashboard, get_release_github_workflow_async, get_task_details_async, activity_logs_to_string
+    get_project_tenant_dashboard, get_release_github_workflow_async, get_task_details_async, activity_logs_to_string, \
+    get_project_github_workflow
 
 logger = configure_logging(__name__)
 
@@ -58,10 +61,12 @@ def get_dashboard(space_id, space_name, project, api_key, url, github_token):
     progression = get_project_progression(space_id, project["Id"], api_key, url)
 
     try:
+        github_action = get_project_github_workflow(space_id, project["Id"], api_key, url)
         release_workflows = asyncio.run(get_dashboard_release_workflows(space_id, progression, api_key, url))
         release_workflow_runs = asyncio.run(get_release_workflow_runs(release_workflows, github_token))
     except Exception as e:
         logger.error(e)
+        github_action = None
         release_workflow_runs = None
 
     try:
@@ -71,7 +76,7 @@ def get_dashboard(space_id, space_name, project, api_key, url, github_token):
         deployment_highlights = None
 
     return get_project_dashboard_response(url, space_id, space_name, project["Name"], progression,
-                                          release_workflow_runs,
+                                          github_action, release_workflow_runs,
                                           deployment_highlights)
 
 
@@ -118,7 +123,8 @@ async def get_dashboard_deployment_highlights(space_id, progression, api_key, ur
         task = await get_task_details_async(space_id, task_id, api_key, url)
         highlights = activity_logs_to_string(task["ActivityLogs"], categories=["Highlight"], join_string="<br/>",
                                              include_name=False)
-        return {"DeploymentId": deployment_id, "Highlights": highlights}
+        sanitized_highlights = Sanitizer().sanitize(highlights)
+        return {"DeploymentId": deployment_id, "Highlights": sanitized_highlights}
 
     deployment_highlights = []
     for environment in progression["Environments"]:
@@ -162,12 +168,14 @@ def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_t
     progression = get_project_tenant_dashboard(space_id, project["Id"], api_key, url)
 
     try:
+        github_action = get_project_github_workflow(space_id, project["Id"], api_key, url)
         release_workflows = asyncio.run(
             get_tenanted_dashboard_release_workflows(space_id, progression["Dashboard"], api_key, url))
         release_workflow_runs = asyncio.run(get_release_workflow_runs(release_workflows, github_token))
     except Exception as e:
         logger.error(e)
         release_workflow_runs = None
+        github_action = None
 
     try:
         deployment_highlights = asyncio.run(
@@ -182,6 +190,7 @@ def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_t
                                                    project["Id"],
                                                    progression["Dashboard"],
                                                    release_workflow_runs,
+                                                   github_action,
                                                    deployment_highlights,
                                                    api_key,
                                                    url)
