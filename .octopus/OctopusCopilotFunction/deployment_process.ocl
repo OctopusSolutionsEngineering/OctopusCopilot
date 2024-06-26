@@ -259,7 +259,7 @@ step "security-scan" {
                     CRITICAL=$(jq '[.Results[] | .Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' depscan-bom.json)
                     HIGH=$(jq '[.Results[] | .Vulnerabilities[]? | select(.Severity == "HIGH")] | length' depscan-bom.json)
                 
-                    if [[ "#{Octopus.Environment.Name}" -eq "Security" ]]
+                    if [[ "#{Octopus.Environment.Name}" == "Security" ]]
                     then
                       write_highlight "🟥 ${CRITICAL} critical vulnerabilities"
                       write_highlight "🟧 ${HIGH} high vulnerabilities"
