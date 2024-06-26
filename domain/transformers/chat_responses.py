@@ -143,9 +143,9 @@ def get_project_dashboard_response(space_name, project_name, dashboard, release_
                     messages = [f"{icon} {deployment['ReleaseVersion']}", f"🕗 {difference} ago"]
 
                     # Find the associated github workflow and build a link
-                    matching_releases = filter(
+                    matching_releases = next(filter(
                         lambda x: x["ReleaseId"] == release["Release"]["Id"] and x.get('ShortSha') and x.get('Url'),
-                        release_workflow_runs or [])
+                        release_workflow_runs or []))
 
                     messages.extend(map(
                         lambda x: f"{get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
@@ -224,12 +224,12 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                     messages = [f"{icon} {deployment['ReleaseVersion']}", f"🔀 {channel['Name']}", f"🕗 {difference} ago"]
 
                     # Find the associated github workflow and build a link
-                    matching_releases = filter(
+                    matching_releases = next(filter(
                         lambda x: x["ReleaseId"] == deployment["ReleaseId"] and x.get('ShortSha') and x.get('Url'),
-                        release_workflow_runs or [])
+                        release_workflow_runs or []))
 
                     messages.extend(map(
-                        lambda x: f"<br/>{get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
+                        lambda x: f"{get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
                                   + f"[{x.get('Name')} {x.get('ShortSha')}]({x.get('Url')})",
                         matching_releases))
 
