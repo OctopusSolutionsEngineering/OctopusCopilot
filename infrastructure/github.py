@@ -174,4 +174,7 @@ async def get_open_issues_async(owner, repo, get_token):
                 if response.status != 200:
                     body = await response.text()
                     raise GitHubRequestFailed(f"Request failed with " + body)
-                return await response.json()
+                issues = await response.json()
+                # We don't want to show pull requests in the issues list, because every pull request is an issue
+                # https://docs.github.com/en/rest/using-the-rest-api/issue-event-types?apiVersion=2022-11-28
+                return list(filter(lambda x: "pull_request" not in x, issues))
