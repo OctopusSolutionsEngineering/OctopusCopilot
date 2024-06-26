@@ -185,7 +185,8 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
         message.append(
             f"🐛 [{issues.get('Count')} issue{'s' if issues.get('Count') != 1 else ''}](https://github.com/{github_repo['Owner']}/{github_repo['Repo']}/issues)")
 
-    table += '<br/>'.join(message)
+    if message:
+        table += '<br/>'.join(message) + "\n\n"
 
     environment_names = list(map(lambda e: e["Name"], dashboard["Environments"]))
     table += build_markdown_table_row(environment_names)
@@ -289,7 +290,8 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
         message.append(
             f"🐛 [{issues.get('Count')} issue{'s' if issues.get('Count') != 1 else ''}](https://github.com/{github_repo['Owner']}/{github_repo['Repo']}/issues)")
 
-    table += '<br/>'.join(message)
+    if message:
+        table += '<br/>'.join(message) + "\n\n"
 
     for tenant in dashboard["Tenants"]:
         table += f"# {tenant['Name']}\n"
