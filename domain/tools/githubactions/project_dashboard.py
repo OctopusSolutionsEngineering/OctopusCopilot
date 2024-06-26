@@ -97,8 +97,8 @@ def get_dashboard(space_id, space_name, project, api_key, url, github_token):
         deployment_highlights = None
 
     return get_project_dashboard_response(url, space_id, space_name, project["Name"], project["Id"], progression,
-                                          github_action, github_actions_status, release_workflow_runs,
-                                          pull_requests, issues, deployment_highlights)
+                                          github_action, github_actions_status,
+                                          pull_requests, issues, release_workflow_runs, deployment_highlights)
 
 
 async def get_tenanted_dashboard_release_workflows(space_id, progression, api_key, url):
