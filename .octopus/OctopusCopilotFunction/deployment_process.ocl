@@ -257,7 +257,7 @@ step "security-scan" {
                     new_octopusartifact $PWD/depscan-bom.json
                 
                     CRITICAL=$(jq '[.[] | .Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' depscan-bom.json)
-                    HIGH=$(jq '[.[] | .Vulnerabilities[]? | select(.Severity == "HIGH")] | length' depscan-bom.json)
+                    HIGH=$(jq '[.[] | .Results[] | .Vulnerabilities[]? | select(.Severity == "HIGH")] | length' depscan-bom.json)
                 
                     write_highlight "${CRITICAL} critical vulnerabilities"
                     write_highlight "${HIGH} critical vulnerabilities"
