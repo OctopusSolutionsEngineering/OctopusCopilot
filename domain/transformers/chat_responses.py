@@ -221,7 +221,7 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                     difference = get_date_difference_summary(now - created)
                     channel = get_channel_cached(space_id, deployment["ChannelId"], api_key, url)
 
-                    messages = [f"{icon} {deployment['ReleaseVersion']}", f"⤲ {channel['Name']}", f"🕗 {difference} ago"]
+                    messages = [f"{icon} {deployment['ReleaseVersion']}", f"🔀 {channel['Name']}", f"🕗 {difference} ago"]
 
                     # Find the associated github workflow and build a link
                     matching_releases = filter(
