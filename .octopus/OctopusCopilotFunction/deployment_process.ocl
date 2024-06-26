@@ -260,7 +260,7 @@ step "security-scan" {
                     HIGH=$(jq '[.Results[] | .Vulnerabilities[]? | select(.Severity == "HIGH")] | length' depscan-bom.json)
                 
                     write_highlight "${CRITICAL} critical vulnerabilities"
-                    write_highlight "${HIGH} critical vulnerabilities"
+                    write_highlight "${HIGH} high vulnerabilities"
                 
                     # Success is set to 1 if the exit code is not zero
                     if [[ $? -ne 0 ]]; then
