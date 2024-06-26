@@ -249,7 +249,18 @@ step "security-scan" {
                     fi
                 
                     # Generate the report, capturing the output, and ensuring $? is set to the exit code
-                    OUTPUT=$(bash -c "docker run --rm -v \"$PWD/${x}:/app/${x}\" aquasec/trivy sbom \"/app/${x}\"; exit \$?" 2>&1)
+                    OUTPUT=$(bash -c "docker run --rm -v \"$PWD/${x}:/app/${x}\" aquasec/trivy sbom -q \"/app/${x}\"; exit \$?" 2>&1)
+                
+                    # Run again to generate the JSON output (https://github.com/aquasecurity/trivy/issues/268)
+                    docker run --rm -v "$PWD:/app" aquasec/trivy sbom -q -f json -o /app/depscan-bom.json "/app/${x}"
+                
+                    new_octopusartifact $PWD/depscan-bom.json
+                
+                    CRITICAL=$(jq '[.Results[] | .Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' depscan-bom.json)
+                    HIGH=$(jq '[.Results[] | .Vulnerabilities[]? | select(.Severity == "HIGH")] | length' depscan-bom.json)
+                
+                    write_highlight "${CRITICAL} critical vulnerabilities"
+                    write_highlight "${HIGH} high vulnerabilities"
                 
                     # Success is set to 1 if the exit code is not zero
                     if [[ $? -ne 0 ]]; then
@@ -271,12 +282,6 @@ step "security-scan" {
                 done
                 
                 set_octopusvariable "VerificationResult" $SUCCESS
-                
-                CRITICAL=$(jq '[.[] | .Vulnerabilities[]? | select(.Severity == "HIGH")] | length' depscan-bom.json)
-                HIGH=$(jq '[.[] | .Vulnerabilities[]? | select(.Severity == "HIGH")] | length' depscan-bom.json)
-                
-                write_highlight "${CRITICAL} critical vulnerabilities"
-                write_highlight "${HIGH} critical vulnerabilities"
                 
                 exit 0
                 
