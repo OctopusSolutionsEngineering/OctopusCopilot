@@ -70,7 +70,8 @@ def get_dashboard(space_id, space_name, project, api_key, url, github_token):
         logger.error(e)
         deployment_highlights = None
 
-    return get_project_dashboard_response(space_name, project["Name"], progression, release_workflow_runs,
+    return get_project_dashboard_response(url, space_id, space_name, project["Name"], progression,
+                                          release_workflow_runs,
                                           deployment_highlights)
 
 

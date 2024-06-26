@@ -109,9 +109,12 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
                     difference = get_date_difference_summary(now - created)
 
                     icon = get_state_icon(last_deployment['State'], last_deployment['HasWarningsOrErrors'])
-                    url = f"{octopus_url}/app#/{space_id}/projects/{last_deployment['ProjectId']}/deployments/releases/{last_deployment['ReleaseVersion']}/deployments/{last_deployment['DeploymentId']}"
+                    url = build_deployment_url(octopus_url, space_id, last_deployment['ProjectId'],
+                                               last_deployment['ReleaseVersion'], last_deployment['DeploymentId'])
 
-                    messages = [f"{icon} [{last_deployment['ReleaseVersion']}]({url})", f"🕗 {difference} ago"]
+                    messages = [
+                        f"{icon} [{last_deployment['ReleaseVersion']}]({url})",
+                        f"🕗 {difference} ago"]
 
                     table += f"| {'<br/>'.join(messages)}"
                 else:
@@ -123,7 +126,8 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
     return table
 
 
-def get_project_dashboard_response(space_name, project_name, dashboard, release_workflow_runs=None,
+def get_project_dashboard_response(octopus_url, space_id, space_name, project_name, dashboard,
+                                   release_workflow_runs=None,
                                    deployment_highlights=None):
     now = datetime.now(pytz.utc)
 
@@ -141,7 +145,10 @@ def get_project_dashboard_response(space_name, project_name, dashboard, release_
                     difference = get_date_difference_summary(now - created)
                     icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
 
-                    messages = [f"{icon} {deployment['ReleaseVersion']}", f"🕗 {difference} ago"]
+                    release_url = build_deployment_url(octopus_url, space_id, deployment['ProjectId'],
+                                                       deployment['ReleaseVersion'], deployment['DeploymentId'])
+
+                    messages = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})", f"🕗 {difference} ago"]
 
                     # Find the associated github workflow and build a link
                     matching_releases = yield_first(filter(
@@ -222,7 +229,11 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                     difference = get_date_difference_summary(now - created)
                     channel = get_channel_cached(space_id, deployment["ChannelId"], api_key, url)
 
-                    messages = [f"{icon} {deployment['ReleaseVersion']}", f"🔀 {channel['Name']}", f"🕗 {difference} ago"]
+                    release_url = build_deployment_url(url, space_id, deployment['ProjectId'],
+                                                       deployment['ReleaseVersion'], deployment['DeploymentId'])
+
+                    messages = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})", f"🔀 {channel['Name']}",
+                                f"🕗 {difference} ago"]
 
                     # Find the associated github workflow and build a link
                     matching_releases = yield_first(filter(
@@ -355,3 +366,7 @@ def get_github_state_icon(status, conclusion):
         return "⚪"
 
     return "⚪"
+
+
+def build_deployment_url(octopus_url, space_id, project_id, release_version, deployment_id):
+    return f"{octopus_url}/app#/{space_id}/projects/{project_id}/deployments/releases/{release_version}/deployments/{deployment_id}"
