@@ -60,7 +60,7 @@ def get_env_name(dashboard, environment_id):
 
 
 def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_actions=None,
-                           github_actions_status=None):
+                           github_actions_status=None, pull_requests=None, issues=None):
     now = datetime.now(pytz.utc)
     table = f"{space_name}\n\n"
 
@@ -69,8 +69,8 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
         environment_names = []
 
         # If any projects have associated GitHub workflows, add the column to the start of the table
-        if github_actions_status and github_actions:
-            environment_names.append(f'[GitHub](https://github.com/{github_actions["Owner"]}/{github_actions["Repo"]})')
+        if github_actions_status:
+            environment_names.append('GitHub')
 
         environment_names.extend(list(map(lambda e: get_env_name(dashboard, e), project_group["EnvironmentIds"])))
 
@@ -83,19 +83,39 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
         for project in projects:
             table += f"| {project['Name']} "
 
+            # Find the github repo details
+            github_repo = next(filter(lambda x: x["ProjectId"] == project["Id"], github_actions), None)
+
             # Get the GitHub Actions workflow status
+            github_messages = []
             if github_actions_status:
-                status = next(filter(lambda x: x["ProjectId"] == project["Id"], github_actions_status), None)
+                status = next(filter(lambda x: x["ProjectId"] == project["Id"] and x["Status"], github_actions_status),
+                              None)
                 if status:
-                    message = [f"{get_github_state_icon(status.get('Status'), status.get('Conclusion'))} "
-                               + f"[{status.get('Name')} {status.get('ShortSha')}]({status.get('Url')})"]
+                    github_messages.append(f"{get_github_state_icon(status.get('Status'), status.get('Conclusion'))} "
+                                           + f"[{status.get('Name')} {status.get('ShortSha')}]({status.get('Url')})")
 
                     if status.get("CreatedAt"):
-                        message.append(f"🕗 {get_date_difference_summary(now - status.get('CreatedAt'))} ago")
+                        github_messages.append(f"🕗 {get_date_difference_summary(now - status.get('CreatedAt'))} ago")
 
-                    table += f"| {'<br/>'.join(message)}"
-                else:
-                    table += "| ⨂ "
+            # Get the count of PRs
+            if pull_requests and github_repo:
+                status = next(filter(lambda x: x["ProjectId"] == project["Id"], pull_requests), None)
+                if status:
+                    github_messages.append(
+                        f"🔁 [{status.get('Count')}](https://github.com/{github_repo['Owner']}/{github_repo['Repo']}/pulls)")
+
+            # Get the count of issues
+            if issues and github_repo:
+                status = next(filter(lambda x: x["ProjectId"] == project["Id"], issues), None)
+                if status:
+                    github_messages.append(
+                        f"🐛 [{status.get('Count')}](https://github.com/{github_repo['Owner']}/{github_repo['Repo']}/issues)")
+
+            if github_messages:
+                table += f"| {'<br/>'.join(github_messages)}"
+            else:
+                table += f"| ⨂ "
 
             # Get the deployment status
             for environment in project_group["EnvironmentIds"]:
