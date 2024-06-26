@@ -315,6 +315,12 @@ def flatten_list(deployments):
     return [item for sublist in deployments for item in sublist]
 
 
+def yield_first(iterable):
+    for item in iterable or []:
+        yield item
+        return
+
+
 def get_item_fuzzy(items, name):
     """
     Get an item, first using an exact match, then case-insensitive match, then the closest match. Uses lazy evaluation.

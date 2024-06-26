@@ -4,6 +4,7 @@ import pytz
 
 from domain.date.date_difference import get_date_difference_summary
 from domain.date.parse_dates import parse_unknown_format_date
+from domain.sanitizers.sanitized_list import yield_first
 from infrastructure.octopus import get_channel_cached
 
 
@@ -143,7 +144,7 @@ def get_project_dashboard_response(space_name, project_name, dashboard, release_
                     messages = [f"{icon} {deployment['ReleaseVersion']}", f"🕗 {difference} ago"]
 
                     # Find the associated github workflow and build a link
-                    matching_releases = next(filter(
+                    matching_releases = yield_first(filter(
                         lambda x: x["ReleaseId"] == release["Release"]["Id"] and x.get('ShortSha') and x.get('Url'),
                         release_workflow_runs or []))
 
@@ -224,7 +225,7 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                     messages = [f"{icon} {deployment['ReleaseVersion']}", f"🔀 {channel['Name']}", f"🕗 {difference} ago"]
 
                     # Find the associated github workflow and build a link
-                    matching_releases = next(filter(
+                    matching_releases = yield_first(filter(
                         lambda x: x["ReleaseId"] == deployment["ReleaseId"] and x.get('ShortSha') and x.get('Url'),
                         release_workflow_runs or []))
 
