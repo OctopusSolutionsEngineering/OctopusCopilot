@@ -9,7 +9,7 @@ from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
 from domain.tools.githubactions.dashboard import get_all_workflow_status
 from domain.transformers.chat_responses import get_project_dashboard_response, get_project_tenant_progression_response
-from infrastructure.github import get_workflow_run_async
+from infrastructure.github import get_workflow_run_async, get_open_pull_requests_async, get_open_issues_async
 from infrastructure.octopus import get_project, get_project_progression, \
     get_project_tenant_dashboard, get_release_github_workflow_async, get_task_details_async, activity_logs_to_string, \
     get_project_github_workflow
@@ -72,15 +72,33 @@ def get_dashboard(space_id, space_name, project, api_key, url, github_token):
         release_workflow_runs = None
         github_actions_status = None
 
+    # Get details about pull requests
+    try:
+        project_prs = asyncio.run(
+            get_open_pull_requests_async(github_action["Owner"], github_action["Repo"], github_token))
+        pull_requests = {"ProjectId": project["Id"], "Count": len(project_prs)}
+    except Exception as e:
+        logger.error(e)
+        pull_requests = {"ProjectId": project["Id"], "Count": 0}
+
+    # Get details about issues
+    try:
+        project_issues = asyncio.run(
+            get_open_issues_async(github_action["Owner"], github_action["Repo"], github_token))
+        issues = {"ProjectId": project["Id"], "Count": len(project_issues)}
+    except Exception as e:
+        logger.error(e)
+        issues = {"ProjectId": project["Id"], "Count": 0}
+
     try:
         deployment_highlights = asyncio.run(get_dashboard_deployment_highlights(space_id, progression, api_key, url))
     except Exception as e:
         logger.error(e)
         deployment_highlights = None
 
-    return get_project_dashboard_response(url, space_id, space_name, project["Name"], progression,
+    return get_project_dashboard_response(url, space_id, space_name, project["Name"], project["Id"], progression,
                                           github_action, github_actions_status, release_workflow_runs,
-                                          deployment_highlights)
+                                          pull_requests, issues, deployment_highlights)
 
 
 async def get_tenanted_dashboard_release_workflows(space_id, progression, api_key, url):
@@ -182,6 +200,24 @@ def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_t
         github_action = None
         github_actions_status = None
 
+    # Get details about pull requests
+    try:
+        project_prs = asyncio.run(
+            get_open_pull_requests_async(github_action["Owner"], github_action["Repo"], github_token))
+        pull_requests = {"ProjectId": project["Id"], "Count": len(project_prs)}
+    except Exception as e:
+        logger.error(e)
+        pull_requests = {"ProjectId": project["Id"], "Count": 0}
+
+    # Get details about issues
+    try:
+        project_issues = asyncio.run(
+            get_open_issues_async(github_action["Owner"], github_action["Repo"], github_token))
+        issues = {"ProjectId": project["Id"], "Count": len(project_issues)}
+    except Exception as e:
+        logger.error(e)
+        issues = {"ProjectId": project["Id"], "Count": 0}
+
     try:
         deployment_highlights = asyncio.run(
             get_tenanted_dashboard_deployment_highlights(space_id, progression["Dashboard"], api_key, url))
@@ -194,9 +230,11 @@ def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_t
                                                    project["Name"],
                                                    project["Id"],
                                                    progression["Dashboard"],
-                                                   release_workflow_runs,
                                                    github_action,
                                                    github_actions_status,
+                                                   release_workflow_runs,
+                                                   pull_requests,
+                                                   issues,
                                                    deployment_highlights,
                                                    api_key,
                                                    url)
