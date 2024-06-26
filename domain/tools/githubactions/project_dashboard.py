@@ -91,7 +91,7 @@ def get_dashboard(space_id, space_name, project, api_key, url, github_token):
         issues = {"ProjectId": project["Id"], "Count": 0}
 
     try:
-        deployment_highlights = asyncio.run(get_dashboard_deployment_highlights(space_id, progression, api_key, url))
+        deployment_highlights = asyncio.run(get_dashboard_deployment_highlights(space_id, progression, api_key, url, 5))
     except Exception as e:
         logger.error(e)
         deployment_highlights = None
@@ -135,7 +135,7 @@ async def get_dashboard_release_workflows(space_id, progression, api_key, url):
           progression["Releases"]])
 
 
-async def get_dashboard_deployment_highlights(space_id, progression, api_key, url):
+async def get_dashboard_deployment_highlights(space_id, progression, api_key, url, limit=0):
     """
     Returns the deployment log highlights associated with deployments
     """
@@ -144,6 +144,9 @@ async def get_dashboard_deployment_highlights(space_id, progression, api_key, ur
         task = await get_task_details_async(space_id, task_id, api_key, url)
         highlights = activity_logs_to_string(task["ActivityLogs"], categories=["Highlight"], join_string="<br/>",
                                              include_name=False)
+        if limit != 0:
+            highlights = "\n".join(highlights.split("\n")[:limit])
+
         sanitized_highlights = Sanitizer().sanitize(highlights)
         return {"DeploymentId": deployment_id, "Highlights": sanitized_highlights}
 
