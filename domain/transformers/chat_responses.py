@@ -162,7 +162,7 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
     message.extend(build_repo_link(github_repo))
     message.extend(get_project_workflow_status(github_actions_statuses, project_id))
     message.extend(build_pr_response(pull_requests, github_repo))
-    message.extend(build_issue_response(pull_requests, github_repo))
+    message.extend(build_issue_response(issues, github_repo))
 
     if message:
         table += '<br/>'.join(message) + "\n\n"
@@ -246,7 +246,7 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
     message.extend(build_repo_link(github_repo))
     message.extend(get_project_workflow_status(github_actions_statuses, project_id))
     message.extend(build_pr_response(pull_requests, github_repo))
-    message.extend(build_issue_response(pull_requests, github_repo))
+    message.extend(build_issue_response(issues, github_repo))
 
     if message:
         table += '<br/>'.join(message) + "\n\n"
