@@ -129,6 +129,7 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
 
 def get_project_dashboard_response(octopus_url, space_id, space_name, project_name, dashboard,
                                    github_action=None,
+                                   github_actions_status=None,
                                    release_workflow_runs=None,
                                    deployment_highlights=None):
     now = datetime.now(pytz.utc)
@@ -136,7 +137,17 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
     table = f"## {space_name} / {project_name}\n\n"
 
     if github_action:
-        table += f'[GitHub Repo](https://github.com/{github_action["Owner"]}/{github_action["Repo"]})\n'
+        table += f'[GitHub Repo](https://github.com/{github_action["Owner"]}/{github_action["Repo"]})<br/>'
+
+    if github_actions_status:
+        message = [
+            f"{get_github_state_icon(github_actions_status.get('Status'), github_actions_status.get('Conclusion'))} "
+            + f"[{github_actions_status.get('Name')} {github_actions_status.get('ShortSha')}]({github_actions_status.get('Url')})"]
+
+        if github_actions_status.get("CreatedAt"):
+            message.append(f"🕗 {get_date_difference_summary(now - github_actions_status.get('CreatedAt'))} ago")
+
+        table += '<br/>'.join(message)
 
     environment_names = list(map(lambda e: e["Name"], dashboard["Environments"]))
     table += build_markdown_table_row(environment_names)
@@ -207,13 +218,24 @@ def get_tenant_environment_details(environments_ids, dashboard):
 
 
 def get_project_tenant_progression_response(space_id, space_name, project_name, project_id, dashboard,
-                                            github_action, release_workflow_runs, deployment_highlights, api_key, url):
+                                            github_action, github_actions_status, release_workflow_runs,
+                                            deployment_highlights, api_key, url):
     now = datetime.now(pytz.utc)
 
     table = f"## {space_name} / {project_name}\n\n"
 
     if github_action:
         table += f'[GitHub Repo](https://github.com/{github_action["Owner"]}/{github_action["Repo"]})\n'
+
+    if github_actions_status:
+        message = [
+            f"{get_github_state_icon(github_actions_status.get('Status'), github_actions_status.get('Conclusion'))} "
+            + f"[{github_actions_status.get('Name')} {github_actions_status.get('ShortSha')}]({github_actions_status.get('Url')})"]
+
+        if github_actions_status.get("CreatedAt"):
+            message.append(f"🕗 {get_date_difference_summary(now - github_actions_status.get('CreatedAt'))} ago")
+
+        table += '<br/>'.join(message)
 
     for tenant in dashboard["Tenants"]:
         table += f"# {tenant['Name']}\n"

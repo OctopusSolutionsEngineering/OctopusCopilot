@@ -7,6 +7,7 @@ from domain.logging.app_logging import configure_logging
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
+from domain.tools.githubactions.dashboard import get_all_workflow_status
 from domain.transformers.chat_responses import get_project_dashboard_response, get_project_tenant_progression_response
 from infrastructure.github import get_workflow_run_async
 from infrastructure.octopus import get_project, get_project_progression, \
@@ -62,12 +63,14 @@ def get_dashboard(space_id, space_name, project, api_key, url, github_token):
 
     try:
         github_action = get_project_github_workflow(space_id, project["Id"], api_key, url)
+        github_actions_status = asyncio.run(get_all_workflow_status([github_action], github_token))
         release_workflows = asyncio.run(get_dashboard_release_workflows(space_id, progression, api_key, url))
         release_workflow_runs = asyncio.run(get_release_workflow_runs(release_workflows, github_token))
     except Exception as e:
         logger.error(e)
         github_action = None
         release_workflow_runs = None
+        github_actions_status = None
 
     try:
         deployment_highlights = asyncio.run(get_dashboard_deployment_highlights(space_id, progression, api_key, url))
@@ -76,7 +79,7 @@ def get_dashboard(space_id, space_name, project, api_key, url, github_token):
         deployment_highlights = None
 
     return get_project_dashboard_response(url, space_id, space_name, project["Name"], progression,
-                                          github_action, release_workflow_runs,
+                                          github_action, github_actions_status, release_workflow_runs,
                                           deployment_highlights)
 
 
@@ -169,6 +172,7 @@ def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_t
 
     try:
         github_action = get_project_github_workflow(space_id, project["Id"], api_key, url)
+        github_actions_status = asyncio.run(get_all_workflow_status([github_action], github_token))
         release_workflows = asyncio.run(
             get_tenanted_dashboard_release_workflows(space_id, progression["Dashboard"], api_key, url))
         release_workflow_runs = asyncio.run(get_release_workflow_runs(release_workflows, github_token))
@@ -176,6 +180,7 @@ def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_t
         logger.error(e)
         release_workflow_runs = None
         github_action = None
+        github_actions_status = None
 
     try:
         deployment_highlights = asyncio.run(
@@ -191,6 +196,7 @@ def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_t
                                                    progression["Dashboard"],
                                                    release_workflow_runs,
                                                    github_action,
+                                                   github_actions_status,
                                                    deployment_highlights,
                                                    api_key,
                                                    url)

@@ -91,7 +91,13 @@ async def get_workflow_status(project_id, owner, repo, workflow, github_token):
     return {"ProjectId": project_id, "Status": "", "Sha": "", "Name": "", "Url": "", "ShortSha": "", "Conclusion": ""}
 
 
-async def get_all_workflow_status(filtered_github_actions, github_token):
+async def get_all_workflow_status(github_actions, github_token):
+    if not github_actions:
+        return []
+
+    filtered_github_actions = filter(
+        lambda x: x and x.get("Owner") and x.get("Repo") and x.get("Workflow") and x.get("ProjectId"), github_actions)
+
     return await asyncio.gather(
         *[get_workflow_status(x["ProjectId"], x["Owner"], x["Repo"], x["Workflow"], github_token) for x in
           filtered_github_actions])
