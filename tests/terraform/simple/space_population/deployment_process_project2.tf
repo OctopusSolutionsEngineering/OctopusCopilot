@@ -18,15 +18,15 @@ resource "octopusdeploy_deployment_process" "deployment_process_project2" {
       worker_pool_id                     = ""
       properties = {
         "Octopus.Action.Script.Syntax"       = "Bash"
-        "Octopus.Action.Script.ScriptBody"   = "echo \"hi\""
+        "Octopus.Action.Script.ScriptBody"   = "echo \"Hi there from Step One\"\nwrite_highlight \"This is a highlight\""
         "Octopus.Action.RunOnServer"         = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
       }
-      environments          = []
+      environments = []
       excluded_environments = []
-      channels              = []
-      tenant_tags           = []
-      features              = []
+      channels = []
+      tenant_tags = []
+      features = []
     }
 
     properties = {}

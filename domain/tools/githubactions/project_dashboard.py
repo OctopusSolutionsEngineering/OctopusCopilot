@@ -168,10 +168,19 @@ def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_t
         logger.error(e)
         release_workflow_runs = None
 
+    try:
+        deployment_highlights = asyncio.run(
+            get_tenanted_dashboard_deployment_highlights(space_id, progression["Dashboard"], api_key, url))
+    except Exception as e:
+        logger.error(e)
+        deployment_highlights = None
+
     return get_project_tenant_progression_response(space_id,
                                                    space_name,
                                                    project["Name"],
                                                    project["Id"],
                                                    progression["Dashboard"],
                                                    release_workflow_runs,
-                                                   api_key, url)
+                                                   deployment_highlights,
+                                                   api_key,
+                                                   url)

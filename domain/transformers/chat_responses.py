@@ -194,7 +194,7 @@ def get_tenant_environment_details(environments_ids, dashboard):
 
 
 def get_project_tenant_progression_response(space_id, space_name, project_name, project_id, dashboard,
-                                            release_workflow_runs, api_key, url):
+                                            release_workflow_runs, deployment_highlights, api_key, url):
     now = datetime.now(pytz.utc)
 
     table = f"{space_name} / {project_name}\n\n"
@@ -221,18 +221,24 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                     difference = get_date_difference_summary(now - created)
                     channel = get_channel_cached(space_id, deployment["ChannelId"], api_key, url)
 
+                    messages = [f"{icon} {deployment['ReleaseVersion']}", f"⤲ {channel['Name']}", f"🕗 {difference} ago"]
+
                     # Find the associated github workflow and build a link
                     matching_releases = filter(
                         lambda x: x["ReleaseId"] == deployment["ReleaseId"] and x.get('ShortSha') and x.get('Url'),
                         release_workflow_runs or [])
 
-                    workflow_report = next(map(
+                    messages.extend(map(
                         lambda x: f"<br/>{get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
                                   + f"[{x.get('Name')} {x.get('ShortSha')}]({x.get('Url')})",
-                        matching_releases), "")
+                        matching_releases))
 
-                    columns.append(
-                        f"{icon} {deployment['ReleaseVersion']}<br/>⤲ {channel['Name']}<br/>🕗 {difference} ago{workflow_report}")
+                    # Find any highlights in the logs
+                    messages.extend(map(lambda x: x['Highlights'],
+                                        filter(lambda x: x["DeploymentId"] == deployment["DeploymentId"],
+                                               deployment_highlights or [])))
+
+                    columns.append("<br/>".join(messages))
                     found = True
                     break
 
