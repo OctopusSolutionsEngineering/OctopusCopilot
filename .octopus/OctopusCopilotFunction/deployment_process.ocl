@@ -249,10 +249,10 @@ step "security-scan" {
                     fi
                 
                     # Generate the report, capturing the output, and ensuring $? is set to the exit code
-                    OUTPUT=$(bash -c "docker run --rm -v \"$PWD/${x}:/app/${x}\" aquasec/trivy sbom \"/app/${x}\"; exit \$?" 2>&1)
+                    OUTPUT=$(bash -c "docker run --rm -v \"$PWD/${x}:/app/${x}\" aquasec/trivy sbom -q \"/app/${x}\"; exit \$?" 2>&1)
                 
                     # Run again to generate the JSON output (https://github.com/aquasecurity/trivy/issues/268)
-                    docker run --rm -v "$PWD:/app" aquasec/trivy sbom -f json -o depscan-bom.json "/app/${x}"
+                    docker run --rm -v "$PWD:/app" aquasec/trivy sbom -q -f json -o depscan-bom.json "/app/${x}"
                 
                     CRITICAL=$(jq '[.[] | .Vulnerabilities[]? | select(.Severity == "HIGH")] | length' depscan-bom.json)
                     HIGH=$(jq '[.[] | .Vulnerabilities[]? | select(.Severity == "HIGH")] | length' depscan-bom.json)
