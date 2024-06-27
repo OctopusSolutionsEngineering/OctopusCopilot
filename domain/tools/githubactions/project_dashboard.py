@@ -2,6 +2,7 @@ import asyncio
 
 from html_sanitizer import Sanitizer
 
+from domain.config.octopus import max_highlight_links_on_dashboard
 from domain.date.parse_dates import parse_unknown_format_date
 from domain.logging.app_logging import configure_logging
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects
@@ -91,7 +92,8 @@ def get_dashboard(space_id, space_name, project, api_key, url, github_token):
         issues = {"ProjectId": project["Id"], "Count": 0}
 
     try:
-        deployment_highlights = asyncio.run(get_dashboard_deployment_highlights(space_id, progression, api_key, url, 5))
+        deployment_highlights = asyncio.run(
+            get_dashboard_deployment_highlights(space_id, progression, api_key, url, max_highlight_links_on_dashboard))
     except Exception as e:
         logger.error(e)
         deployment_highlights = None

@@ -1,5 +1,6 @@
 import asyncio
 
+from domain.config.octopus import max_projects_for_github_links
 from domain.date.parse_dates import parse_unknown_format_date
 from domain.defaults.defaults import get_default_argument
 from domain.logging.app_logging import configure_logging
@@ -47,7 +48,7 @@ def get_dashboard_callback(github_token, github_user, log_query=None):
         try:
             github_actions = list(map(
                 lambda x: get_project_github_workflow(space_id, x["Id"], api_key, url),
-                dashboard["Projects"]))
+                dashboard["Projects"])) if len(dashboard["Projects"]) <= max_projects_for_github_links else []
         except Exception as e:
             logger.error(e)
             github_actions = None
