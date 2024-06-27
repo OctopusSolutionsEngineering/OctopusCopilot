@@ -442,7 +442,7 @@ def build_issue_response(issues, github_repo):
 def build_repo_link(github_repo):
     message = []
     if github_repo:
-        message.append(f'🗎 [GitHub Repo](https://github.com/{github_repo["Owner"]}/{github_repo["Repo"]})')
+        message.append(f'📑 [GitHub Repo](https://github.com/{github_repo["Owner"]}/{github_repo["Repo"]})')
     return message
 
 
