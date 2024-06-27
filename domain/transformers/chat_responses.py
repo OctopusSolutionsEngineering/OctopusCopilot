@@ -62,7 +62,7 @@ def get_env_name(dashboard, environment_id):
 def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_actions=None,
                            github_actions_status=None, pull_requests=None, issues=None):
     now = datetime.now(pytz.utc)
-    table = f"{space_name}\n\n"
+    table = f"# {space_name}\n\n"
 
     for project_group in dashboard["ProjectGroups"]:
 
