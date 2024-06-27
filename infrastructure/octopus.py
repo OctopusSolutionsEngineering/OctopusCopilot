@@ -845,6 +845,26 @@ def get_release_deployments(space_id, release_id, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
+def get_release(space_id, release_id, api_key, octopus_url):
+    """
+    Returns the  release.
+    :param space_id: The ID of the space.
+    :param release_id: The release ID
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
+    :return: The deployment progression raw JSON
+    """
+    ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_release_deployments).')
+    ensure_string_not_empty(release_id, 'release_id must be a non-empty string (get_release_deployments).')
+
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Releases/{quote_safe(release_id)}")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+
+    return resp.json()
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_task(space_id, task_id, api_key, octopus_url):
     """
     Returns the task.
@@ -1004,7 +1024,8 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
     if release_is_latest(release_version):
         if deployments:
             task_id = deployments[0]["TaskId"]
-            actual_release_version = deployments[0]["ReleaseVersion"]
+            release = get_release(space_id, deployments[0]["ReleaseId"], api_key, octopus_url)
+            actual_release_version = release["Version"]
     else:
         # We need to match the release version to a release, and the release to a deployment
 

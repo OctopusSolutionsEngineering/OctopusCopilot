@@ -4,13 +4,16 @@ from html_sanitizer import Sanitizer
 
 from domain.config.octopus import max_highlight_links_on_dashboard, max_release_for_github_links
 from domain.date.parse_dates import parse_unknown_format_date
+from domain.exceptions.none_on_exception import none_on_exception
 from domain.logging.app_logging import configure_logging
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects
 from domain.response.copilot_response import CopilotResponse
+from domain.sanitizers.sanitized_list import flatten_list
 from domain.tools.debug import get_params_message
 from domain.tools.githubactions.dashboard import get_all_workflow_status
 from domain.transformers.chat_responses import get_project_dashboard_response, get_project_tenant_progression_response
-from infrastructure.github import get_workflow_run_async, get_open_pull_requests_async, get_open_issues_async
+from infrastructure.github import get_workflow_run_async, get_open_pull_requests_async, get_open_issues_async, \
+    get_workflow_artifacts_async
 from infrastructure.octopus import get_project, get_project_progression, \
     get_project_tenant_dashboard, get_release_github_workflow_async, get_task_details_async, activity_logs_to_string, \
     get_project_github_workflow
@@ -62,16 +65,15 @@ def get_project_dashboard_callback(github_user, github_token, log_query=None):
 def get_dashboard(space_id, space_name, project, api_key, url, github_token):
     progression = get_project_progression(space_id, project["Id"], api_key, url)
 
-    try:
-        github_action = get_project_github_workflow(space_id, project["Id"], api_key, url)
-        github_actions_status = asyncio.run(get_all_workflow_status([github_action], github_token))
-        release_workflows = asyncio.run(get_dashboard_release_workflows(space_id, progression, api_key, url))
-        release_workflow_runs = asyncio.run(get_release_workflow_runs(release_workflows, github_token))
-    except Exception as e:
-        logger.error(e)
-        github_action = None
-        release_workflow_runs = None
-        github_actions_status = None
+    github_action = none_on_exception(lambda: get_project_github_workflow(space_id, project["Id"], api_key, url))
+    github_actions_status = none_on_exception(
+        lambda: asyncio.run(get_all_workflow_status([github_action], github_token)))
+    release_workflows = none_on_exception(
+        lambda: asyncio.run(get_dashboard_release_workflows(space_id, progression, api_key, url)))
+    release_workflow_runs = none_on_exception(
+        lambda: asyncio.run(get_release_workflow_runs(release_workflows, github_token)))
+    release_workflow_artifacts = none_on_exception(
+        lambda: asyncio.run(get_release_workflow_artifacts(release_workflows, github_token)))
 
     # Get details about pull requests
     try:
@@ -100,7 +102,8 @@ def get_dashboard(space_id, space_name, project, api_key, url, github_token):
 
     return get_project_dashboard_response(url, space_id, space_name, project["Name"], project["Id"], progression,
                                           github_action, github_actions_status,
-                                          pull_requests, issues, release_workflow_runs, deployment_highlights)
+                                          pull_requests, issues, release_workflow_runs, release_workflow_artifacts,
+                                          deployment_highlights)
 
 
 async def get_tenanted_dashboard_release_workflows(space_id, progression, api_key, url):
@@ -170,7 +173,7 @@ async def get_release_workflow_runs(release_workflows, github_token):
     """
     return await asyncio.gather(
         *[get_workflow_status(x["ReleaseId"], x["Owner"], x["Repo"], x["RunId"], github_token) for x in
-          release_workflows])
+          release_workflows]) if release_workflows else []
 
 
 async def get_workflow_status(release_id, owner, repo, run_id, github_token):
@@ -187,23 +190,44 @@ async def get_workflow_status(release_id, owner, repo, run_id, github_token):
     except Exception as e:
         # Silent fail, and fall back to returning blank result
         logger.error(e)
-    return {"ReleaseId": release_id, "Status": "", "Sha": "", "Name": "", "Url": "", "ShortSha": ""}
+    return None
+
+
+async def get_release_workflow_artifacts(release_workflows, github_token):
+    """
+    Return the status of the workflow runs for each release.
+    """
+    return flatten_list(await asyncio.gather(
+        *[get_workflow_artifacts(x["ReleaseId"], x["Owner"], x["Repo"], x["RunId"], github_token) for x in
+          release_workflows]) if release_workflows else [])
+
+
+async def get_workflow_artifacts(release_id, owner, repo, run_id, github_token):
+    try:
+        artifacts = await get_workflow_artifacts_async(owner, repo, run_id, github_token)
+        return list(
+            map(lambda x: {"ReleaseId": release_id, "Name": x.get("name"), "Url": x.get("archive_download_url")},
+                artifacts["artifacts"]))
+    except Exception as e:
+        # Silent fail, and fall back to returning blank result
+        logger.error(e)
+    return []
 
 
 def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_token):
     progression = get_project_tenant_dashboard(space_id, project["Id"], api_key, url)
 
-    try:
-        github_action = get_project_github_workflow(space_id, project["Id"], api_key, url)
-        github_actions_status = asyncio.run(get_all_workflow_status([github_action], github_token))
-        release_workflows = asyncio.run(
-            get_tenanted_dashboard_release_workflows(space_id, progression["Dashboard"], api_key, url))
-        release_workflow_runs = asyncio.run(get_release_workflow_runs(release_workflows, github_token))
-    except Exception as e:
-        logger.error(e)
-        release_workflow_runs = None
-        github_action = None
-        github_actions_status = None
+    # We tolerate API requests failing, so we can still return a response with as much information
+    # as we could successfully retrieve
+    github_action = none_on_exception(lambda: get_project_github_workflow(space_id, project["Id"], api_key, url))
+    github_actions_status = none_on_exception(
+        lambda: asyncio.run(get_all_workflow_status([github_action], github_token)))
+    release_workflows = none_on_exception(lambda: asyncio.run(
+        get_tenanted_dashboard_release_workflows(space_id, progression["Dashboard"], api_key, url)))
+    release_workflow_runs = none_on_exception(
+        lambda: asyncio.run(get_release_workflow_runs(release_workflows, github_token)))
+    release_workflow_artifacts = none_on_exception(
+        lambda: asyncio.run(get_release_workflow_artifacts(release_workflows, github_token)))
 
     # Get details about pull requests
     try:
@@ -238,6 +262,7 @@ def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_t
                                                    github_action,
                                                    github_actions_status,
                                                    release_workflow_runs,
+                                                   release_workflow_artifacts,
                                                    pull_requests,
                                                    issues,
                                                    deployment_highlights,

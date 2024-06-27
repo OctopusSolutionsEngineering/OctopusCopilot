@@ -105,7 +105,7 @@ async def get_workflow_status(project_id, owner, repo, workflow, github_token):
     except Exception as e:
         # Silent fail, and fall back to returning blank result
         pass
-    return {"ProjectId": project_id, "Status": "", "Sha": "", "Name": "", "Url": "", "ShortSha": "", "Conclusion": ""}
+    return None
 
 
 async def get_all_workflow_status(github_actions, github_token):

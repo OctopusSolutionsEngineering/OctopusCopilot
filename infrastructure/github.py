@@ -137,6 +137,27 @@ async def get_workflow_run_async(owner, repo, run_id, get_token):
                 return await response.json()
 
 
+async def get_workflow_artifacts_async(owner, repo, run_id, get_token):
+    """
+    Async function to get workflow run artifacts
+    https://docs.github.com/en/rest/actions/artifacts?apiVersion=2022-11-28#list-workflow-run-artifacts
+    """
+    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_workflow_run).')
+    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_workflow_run).')
+    ensure_string_not_empty(run_id, 'run_id must be a non-empty string (get_workflow_run).')
+    ensure_string_not_empty(get_token, 'get_token must be a non-empty string (get_workflow_run).')
+
+    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/runs/{quote_safe(run_id)}/artifacts")
+
+    async with sem:
+        async with aiohttp.ClientSession(headers=get_github_auth_headers(get_token)) as session:
+            async with session.get(str(api)) as response:
+                if response.status != 200:
+                    body = await response.text()
+                    raise GitHubRequestFailed(f"Request failed with " + body)
+                return await response.json()
+
+
 async def get_open_pull_requests_async(owner, repo, get_token):
     """
     Async function to get open pull requests run

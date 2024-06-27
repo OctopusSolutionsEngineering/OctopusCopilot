@@ -137,6 +137,7 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
                                    pull_requests=None,
                                    issues=None,
                                    release_workflow_runs=None,
+                                   release_workflow_artifacts=None,
                                    deployment_highlights=None):
     now = datetime.now(pytz.utc)
 
@@ -169,19 +170,13 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
                     messages = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})", f"🕗 {difference} ago"]
 
                     # Find the associated github workflow and build a link
-                    matching_releases = yield_first(filter(
-                        lambda x: x["ReleaseId"] == release["Release"]["Id"] and x.get('ShortSha') and x.get('Url'),
-                        release_workflow_runs or []))
+                    messages.extend(get_workflow_link(release_workflow_runs, release["Release"]["Id"]))
 
-                    messages.extend(map(
-                        lambda x: f"{get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
-                                  + f"[{x.get('Name')} {x.get('ShortSha')}]({x.get('Url')})",
-                        matching_releases))
+                    # Find the associated github workflow and show any artifacts
+                    messages.extend(get_artifact_links(release_workflow_artifacts, deployment["ReleaseId"]))
 
                     # Find any highlights in the logs
-                    messages.extend(map(lambda x: x['Highlights'],
-                                        filter(lambda x: x["DeploymentId"] == deployment["DeploymentId"],
-                                               deployment_highlights or [])))
+                    message.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
 
                     table += f"| {'<br/>'.join(messages)}"
             else:
@@ -221,6 +216,7 @@ def get_tenant_environment_details(environments_ids, dashboard):
 
 def get_project_tenant_progression_response(space_id, space_name, project_name, project_id, dashboard,
                                             github_repo, github_actions_statuses, release_workflow_runs,
+                                            release_workflow_artifacts,
                                             pull_requests, issues, deployment_highlights, api_key, url):
     now = datetime.now(pytz.utc)
 
@@ -264,19 +260,13 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                                 f"🕗 {difference} ago"]
 
                     # Find the associated github workflow and build a link
-                    matching_releases = yield_first(filter(
-                        lambda x: x["ReleaseId"] == deployment["ReleaseId"] and x.get('ShortSha') and x.get('Url'),
-                        release_workflow_runs or []))
+                    messages.extend(get_workflow_link(release_workflow_runs, deployment["ReleaseId"]))
 
-                    messages.extend(map(
-                        lambda x: f"{get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
-                                  + f"[{x.get('Name')} {x.get('ShortSha')}]({x.get('Url')})",
-                        matching_releases))
+                    # Find the associated github workflow and show any artifacts
+                    messages.extend(get_artifact_links(release_workflow_artifacts, deployment["ReleaseId"]))
 
                     # Find any highlights in the logs
-                    messages.extend(map(lambda x: x['Highlights'],
-                                        filter(lambda x: x["DeploymentId"] == deployment["DeploymentId"],
-                                               deployment_highlights or [])))
+                    messages.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
 
                     columns.append("<br/>".join(messages))
                     found = True
@@ -405,7 +395,7 @@ def get_project_workflow_status(github_actions_statuses, project_id):
     message = []
     if github_actions_statuses:
         github_actions_status = next(
-            filter(lambda x: x["ProjectId"] == project_id and x["Status"], github_actions_statuses), None)
+            filter(lambda x: x and x["ProjectId"] == project_id and x["Status"], github_actions_statuses), None)
 
         if github_actions_status:
             message.append(
@@ -454,3 +444,30 @@ def build_repo_link(github_repo):
     if github_repo:
         message.append(f'🗎 [GitHub Repo](https://github.com/{github_repo["Owner"]}/{github_repo["Repo"]})')
     return message
+
+
+def get_workflow_link(release_workflow_runs, release_id):
+    matching_releases = yield_first(filter(
+        lambda x: x and x.get("ReleaseId") == release_id,
+        release_workflow_runs or []))
+
+    return list(map(
+        lambda x: f"{get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
+                  + f"[{x.get('Name')} {x.get('ShortSha')}]({x.get('Url')})",
+        matching_releases))
+
+
+def get_artifact_links(release_workflow_artifacts, release_id):
+    matching_artifacts = list(filter(
+        lambda x: x and x.get("ReleaseId") == release_id,
+        release_workflow_artifacts or []))
+
+    return list(map(
+        lambda x: f"💾 [{x.get('Name')}]({x.get('Url')})",
+        matching_artifacts))
+
+
+def get_highlights(deployment_highlights, deployment_id):
+    return list(map(lambda x: x['Highlights'],
+                    filter(lambda x: x and x["DeploymentId"] == deployment_id,
+                           deployment_highlights or [])))
