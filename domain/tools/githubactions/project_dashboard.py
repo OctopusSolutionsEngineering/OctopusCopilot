@@ -110,9 +110,13 @@ async def get_tenanted_dashboard_release_workflows(space_id, progression, api_ke
     """
     Return the details of the associated GitHub workflow from the release notes of each release.
     """
+    unique_list = list(
+        next(item for item in progression["Releases"] if item["ReleaseId"] == release_id) for release_id in
+        set(item["ReleaseId"] for item in progression["Items"]))
+
     return await asyncio.gather(
         *[get_release_github_workflow_async(space_id, x["ReleaseId"], api_key, url) for x in
-          progression["Items"]]) if len(progression["Items"]) <= max_release_for_github_links else []
+          unique_list]) if len(unique_list) <= max_release_for_github_links else []
 
 
 async def get_tenanted_dashboard_deployment_highlights(space_id, progression, api_key, url):
@@ -135,9 +139,14 @@ async def get_dashboard_release_workflows(space_id, progression, api_key, url):
     """
     Return the details of the associated GitHub workflow from the release notes of each release.
     """
+    # Process each release only once
+    unique_list = list(
+        next(item for item in progression["Releases"] if item["Release"]["Id"] == release_id) for release_id in
+        set(item["Release"]["Id"] for item in progression["Releases"]))
+
     return await asyncio.gather(
         *[get_release_github_workflow_async(space_id, x["Release"]["Id"], api_key, url) for x in
-          progression["Releases"]]) if len(progression["Releases"]) <= max_release_for_github_links else []
+          unique_list]) if len(unique_list) <= max_release_for_github_links else []
 
 
 async def get_dashboard_deployment_highlights(space_id, progression, api_key, url, limit=0):
