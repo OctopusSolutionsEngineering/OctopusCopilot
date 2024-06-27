@@ -738,6 +738,19 @@ class CopilotChatTest(unittest.TestCase):
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_github_task_summary_combined_repo_format(self):
+        # Combine the owner and repo into a single string
+        prompt = "Get the summary for the workflow \"build.yaml\" in the repo \"OctopusSolutionsEngineering/OctopusCopilot\"."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        # The response should have formatted the text as a code block
+        self.assertTrue(
+            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
+        print(response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_count_projects(self):
         prompt = "How many projects are there in this space?"
         response = copilot_handler_internal(build_request(prompt))
