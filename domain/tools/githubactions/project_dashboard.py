@@ -111,7 +111,7 @@ async def get_tenanted_dashboard_release_workflows(space_id, progression, api_ke
     Return the details of the associated GitHub workflow from the release notes of each release.
     """
     unique_list = list(
-        next(item for item in progression["Releases"] if item["ReleaseId"] == release_id) for release_id in
+        next(item for item in progression["Items"] if item["ReleaseId"] == release_id) for release_id in
         set(item["ReleaseId"] for item in progression["Items"]))
 
     return await asyncio.gather(
