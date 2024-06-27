@@ -3,6 +3,7 @@ import asyncio
 from domain.config.octopus import max_projects_for_github_links
 from domain.date.parse_dates import parse_unknown_format_date
 from domain.defaults.defaults import get_default_argument
+from domain.exceptions.none_on_exception import none_on_exception
 from domain.logging.app_logging import configure_logging
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import sanitize_name_fuzzy, sanitize_space
@@ -44,38 +45,15 @@ def get_dashboard_callback(github_token, github_user, log_query=None):
         space_id, actual_space_name = get_space_id_and_name_from_name(space_name, api_key, url)
         dashboard = get_dashboard(space_id, api_key, url)
 
-        # Get details about the project github repo
-        try:
-            github_actions = list(map(
+        # Get the dashboard GitHub data
+        github_actions = none_on_exception(
+            lambda: list(map(
                 lambda x: get_project_github_workflow(space_id, x["Id"], api_key, url),
-                dashboard["Projects"])) if len(dashboard["Projects"]) <= max_projects_for_github_links else []
-        except Exception as e:
-            logger.error(e)
-            github_actions = None
-
-        # Attempt to get additional metadata about github action
-        try:
-            # Call the GitHub API to get the workflow status
-            github_actions_status = asyncio.run(get_all_workflow_status(github_actions, github_token))
-        except Exception as e:
-            # We make every attempt to allow the requests to the GitHub API to fail. But if there was an unexpected
-            # exception, silently fail
-            logger.error(e)
-            github_actions_status = None
-
-        # Get details about pull requests
-        try:
-            pull_requests = asyncio.run(get_all_prs(github_actions, github_token))
-        except Exception as e:
-            logger.error(e)
-            pull_requests = None
-
-        # Get details about issues
-        try:
-            issues = asyncio.run(get_all_issues(github_actions, github_token))
-        except Exception as e:
-            logger.error(e)
-            issues = None
+                dashboard["Projects"])) if len(dashboard["Projects"]) <= max_projects_for_github_links else [])
+        github_actions_status = none_on_exception(
+            lambda: asyncio.run(get_all_workflow_status(github_actions, github_token)))
+        pull_requests = none_on_exception(lambda: asyncio.run(get_all_prs(github_actions, github_token)))
+        issues = none_on_exception(lambda: asyncio.run(get_all_issues(github_actions, github_token)))
 
         response = [
             get_dashboard_response(url, space_id, actual_space_name, dashboard, github_actions, github_actions_status,

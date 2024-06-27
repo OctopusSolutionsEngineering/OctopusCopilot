@@ -7,7 +7,7 @@ def return_two():
     return "hi", 1
 
 
-class NormalizeStepName(unittest.TestCase):
+class TestNoneOnException(unittest.TestCase):
     def test_none_on_exception(self):
         self.assertIsNone(none_on_exception(lambda: None.blah()))
         self.assertEqual(none_on_exception(lambda: 1), 1)
