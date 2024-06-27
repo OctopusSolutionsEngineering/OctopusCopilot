@@ -2,7 +2,7 @@ import asyncio
 
 from html_sanitizer import Sanitizer
 
-from domain.config.octopus import max_highlight_links_on_dashboard
+from domain.config.octopus import max_highlight_links_on_dashboard, max_release_for_github_links
 from domain.date.parse_dates import parse_unknown_format_date
 from domain.logging.app_logging import configure_logging
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects
@@ -109,7 +109,7 @@ async def get_tenanted_dashboard_release_workflows(space_id, progression, api_ke
     """
     return await asyncio.gather(
         *[get_release_github_workflow_async(space_id, x["ReleaseId"], api_key, url) for x in
-          progression["Items"]])
+          progression["Items"]]) if len(progression["Items"]) <= max_release_for_github_links else []
 
 
 async def get_tenanted_dashboard_deployment_highlights(space_id, progression, api_key, url):
@@ -134,7 +134,7 @@ async def get_dashboard_release_workflows(space_id, progression, api_key, url):
     """
     return await asyncio.gather(
         *[get_release_github_workflow_async(space_id, x["Release"]["Id"], api_key, url) for x in
-          progression["Releases"]])
+          progression["Releases"]]) if len(progression["Releases"]) <= max_release_for_github_links else []
 
 
 async def get_dashboard_deployment_highlights(space_id, progression, api_key, url, limit=0):
