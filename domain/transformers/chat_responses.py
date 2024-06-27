@@ -89,29 +89,10 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
 
             # Get the GitHub Actions workflow status
             github_messages = []
-            if github_actions_status:
-                status = next(filter(lambda x: x["ProjectId"] == project["Id"] and x["Status"], github_actions_status),
-                              None)
-                if status:
-                    github_messages.append(f"{get_github_state_icon(status.get('Status'), status.get('Conclusion'))} "
-                                           + f"[{status.get('Name')} {status.get('ShortSha')}]({status.get('Url')})")
-
-                    if status.get("CreatedAt"):
-                        github_messages.append(f"🕗 {get_date_difference_summary(now - status.get('CreatedAt'))} ago")
-
-            # Get the count of PRs
-            if pull_requests and github_repo:
-                status = next(filter(lambda x: x["ProjectId"] == project["Id"], pull_requests), None)
-                if status:
-                    github_messages.append(
-                        f"🔁 [{status.get('Count')} PR{'s' if status.get('Count') != 1 else ''}](https://github.com/{github_repo['Owner']}/{github_repo['Repo']}/pulls)")
-
-            # Get the count of issues
-            if issues and github_repo:
-                status = next(filter(lambda x: x["ProjectId"] == project["Id"], issues), None)
-                if status:
-                    github_messages.append(
-                        f"🐛 [{status.get('Count')} issue{'s' if status.get('Count') != 1 else ''}](https://github.com/{github_repo['Owner']}/{github_repo['Repo']}/issues)")
+            github_messages.extend(build_repo_link(github_repo))
+            github_messages.extend(get_project_workflow_status(github_actions_status, project["Id"]))
+            github_messages.extend(build_pr_response_for_project(pull_requests, project["Id"], github_repo))
+            github_messages.extend(build_issue_response_for_project(issues, project["Id"], github_repo))
 
             if github_messages:
                 table += f"| {'<br/>'.join(github_messages)}"
@@ -434,12 +415,28 @@ def get_project_workflow_status(github_actions_statuses, project_id):
     return message
 
 
+def build_pr_response_for_project(pull_requests, project_id, github_repo):
+    if not pull_requests:
+        return []
+
+    status = next(filter(lambda x: x["ProjectId"] == project_id, pull_requests), None)
+    return build_pr_response(status, github_repo)
+
+
 def build_pr_response(pull_requests, github_repo):
     message = []
     if pull_requests and github_repo:
         message.append(
             f"🔁 [{pull_requests.get('Count')} PR{'s' if pull_requests.get('Count') != 1 else ''}](https://github.com/{github_repo['Owner']}/{github_repo['Repo']}/pulls)")
     return message
+
+
+def build_issue_response_for_project(issues, project_id, github_repo):
+    if not issues:
+        return []
+
+    status = next(filter(lambda x: x["ProjectId"] == project_id, issues), None)
+    return build_issue_response(status, github_repo)
 
 
 def build_issue_response(issues, github_repo):
