@@ -1000,9 +1000,11 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
         deployments = list(filter(lambda d: d["TenantId"] == tenant["Id"], deployments))
 
     task_id = None
+    actual_release_version = None
     if release_is_latest(release_version):
         if deployments:
             task_id = deployments[0]["TaskId"]
+            actual_release_version = deployments[0]["ReleaseVersion"]
     else:
         # We need to match the release version to a release, and the release to a deployment
 
@@ -1017,21 +1019,22 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
 
         # If the release is not found, exit
         if not release:
-            return None
+            return None, None
 
         # Find the specific deployment
+        actual_release_version = release["Version"]
         specific_deployment = list(filter(lambda d: d["ReleaseId"] == release["Id"], deployments))
         if specific_deployment:
             task_id = specific_deployment[0]["TaskId"]
 
     if not task_id:
-        return None
+        return None, None
 
     api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Tasks/{task_id}/details")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     task = json.loads(resp.data.decode("utf-8"))
 
-    return task["ActivityLogs"]
+    return task["ActivityLogs"], actual_release_version
 
 
 @retry(HTTPError, tries=3, delay=2)

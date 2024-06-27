@@ -7,13 +7,14 @@ def get_task_summary_cli_callback(api_key, url, get_default_argument, log_query=
                                                  environment_name, tenant_name, release_version):
         space_name = get_default_argument(space_name, 'Space')
 
-        activity_logs = get_deployment_logs(space_name,
-                                            get_item_or_none(sanitize_list(project_name), 0),
-                                            get_item_or_none(sanitize_list(environment_name), 0),
-                                            get_item_or_none(sanitize_list(tenant_name), 0),
-                                            release_version,
-                                            api_key,
-                                            url)
+        activity_logs, actual_release_version = get_deployment_logs(space_name,
+                                                                    get_item_or_none(sanitize_list(project_name), 0),
+                                                                    get_item_or_none(sanitize_list(environment_name),
+                                                                                     0),
+                                                                    get_item_or_none(sanitize_list(tenant_name), 0),
+                                                                    release_version,
+                                                                    api_key,
+                                                                    url)
 
         return activity_logs_to_summary(activity_logs)
 

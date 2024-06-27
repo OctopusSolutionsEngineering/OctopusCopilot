@@ -39,17 +39,7 @@ def get_task_summary_callback(github_user, api_key, url, log_query=None):
                 Environment Name: {sanitized_environment_names}
                 Tenant Name: {sanitized_tenant_names}""")
 
-        debug_text.extend(get_params_message(github_user,
-                                             False,
-                                             get_task_summary_callback_implementation.__name__,
-                                             original_query=original_query,
-                                             space_name=space_name,
-                                             project_name=sanitized_project_names,
-                                             environment_name=sanitized_environment_names,
-                                             tenant_name=sanitized_tenant_names,
-                                             release_version=release_version))
-
-        activity_logs = timing_wrapper(
+        activity_logs, actual_release_version = timing_wrapper(
             lambda: get_deployment_logs(
                 space_name,
                 sanitized_project_names[0],
@@ -59,6 +49,16 @@ def get_task_summary_callback(github_user, api_key, url, log_query=None):
                 api_key,
                 url),
             "Deployment logs")
+
+        debug_text.extend(get_params_message(github_user,
+                                             False,
+                                             get_task_summary_callback_implementation.__name__,
+                                             original_query=original_query,
+                                             space_name=space_name,
+                                             project_name=sanitized_project_names,
+                                             environment_name=sanitized_environment_names,
+                                             tenant_name=sanitized_tenant_names,
+                                             release_version=actual_release_version))
 
         response = [activity_logs_to_summary(activity_logs)]
         response.extend(warnings)
