@@ -2,7 +2,7 @@ import asyncio
 
 from html_sanitizer import Sanitizer
 
-from domain.config.octopus import max_highlight_links_on_dashboard, max_release_for_github_links
+from domain.config.octopus import max_highlight_links_on_dashboard, max_release_for_github_links, max_github_artifacts
 from domain.date.parse_dates import parse_unknown_format_date
 from domain.exceptions.none_on_exception import none_on_exception
 from domain.logging.app_logging import configure_logging
@@ -217,7 +217,7 @@ async def get_workflow_artifacts(release_id, owner, repo, run_id, github_token):
         return list(
             map(lambda x: {"ReleaseId": release_id, "Name": x.get("name"),
                            "Url": f"https://github.com/{owner}/{repo}/actions/runs/{run_id}/artifacts/{x.get('id')}"},
-                artifacts["artifacts"]))
+                artifacts["artifacts"]))[:max_github_artifacts]
     except Exception as e:
         # Silent fail, and fall back to returning blank result
         logger.error(e)
