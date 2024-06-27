@@ -7,4 +7,15 @@ def quote_safe(string):
     :param string: The string to be quoted
     :return: The URL quoted string
     """
-    return urllib.parse.quote(string, safe='')
+    if not string:
+        return ""
+
+    if isinstance(string, str):
+        return urllib.parse.quote(string, safe='')
+
+    if isinstance(string, (int, float, complex, bool)):
+        return str(string)
+
+    # If something other than a string or number is passed, assume something
+    # unsafe was passed in, and return an empty string
+    return ""

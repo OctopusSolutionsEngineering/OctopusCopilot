@@ -209,7 +209,8 @@ async def get_run_jobs_async(owner, repo, run_id, github_token):
     ensure_string_not_empty(owner, 'owner must be a non-empty string (get_open_issues_async).')
     ensure_string_not_empty(repo, 'repo must be a non-empty string (get_open_issues_async).')
     ensure_string_not_empty(github_token, 'github_token must be a non-empty string (get_open_issues_async).')
-    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/runs/{quote_safe(run_id)}/jobs")
+
+    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/runs/{quote_safe(run_id)}/jobs")
 
     async with sem:
         async with aiohttp.ClientSession(headers=get_github_auth_headers(github_token)) as session:

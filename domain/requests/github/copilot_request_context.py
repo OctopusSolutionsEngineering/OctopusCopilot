@@ -13,6 +13,7 @@ from domain.tools.githubactions.dashboard import get_dashboard_callback
 from domain.tools.githubactions.default_values import default_value_callbacks
 from domain.tools.githubactions.deployment_logs import logs_callback
 from domain.tools.githubactions.general_query import general_query_callback
+from domain.tools.githubactions.github_job_summary import get_job_summary_callback
 from domain.tools.githubactions.how_to import how_to_callback
 from domain.tools.githubactions.logout import logout
 from domain.tools.githubactions.project_dashboard import get_project_dashboard_callback
@@ -28,6 +29,7 @@ from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
 from domain.tools.wrapper.dashboard_wrapper import show_space_dashboard_wrapper
 from domain.tools.wrapper.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.wrapper.github_job_summary_wrapper import show_github_job_summary_wrapper
 from domain.tools.wrapper.how_to import how_to_wrapper
 from domain.tools.wrapper.project_dashboard_wrapper import show_project_dashboard_wrapper
 from domain.tools.wrapper.project_logs import answer_project_deployment_logs_wrapper
@@ -241,7 +243,13 @@ def build_form_tools(query, req: func.HttpRequest):
             query,
             get_functions_connection_string(),
             log_query),
-            callback=run_runbook_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query))],
+            callback=run_runbook_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query)),
+        FunctionDefinition(
+            show_github_job_summary_wrapper(query,
+                                            get_job_summary_callback(get_github_user_from_form(req),
+                                                                     get_github_token(req)),
+                                            log_query)),
+    ],
         fallback=FunctionDefinitions(docs_functions),
         invalid=FunctionDefinition(
             answer_general_query_wrapper(query,
