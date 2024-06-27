@@ -3,7 +3,7 @@ from domain.lookup.octopus_lookups import lookup_projects, lookup_runbooks
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import sanitize_name_fuzzy, sanitize_space
 from domain.tools.debug import get_params_message
-from domain.transformers.chat_responses import get_runbook_dashboard_response
+from domain.view.markdown.markdown_dashboards import get_runbook_dashboard_response
 from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_from_name, get_runbooks_dashboard, \
     get_project, get_tenant, get_runbook_fuzzy
 

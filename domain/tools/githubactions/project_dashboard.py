@@ -11,7 +11,8 @@ from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import flatten_list
 from domain.tools.debug import get_params_message
 from domain.tools.githubactions.dashboard import get_all_workflow_status
-from domain.transformers.chat_responses import get_project_dashboard_response, get_project_tenant_progression_response
+from domain.view.markdown.markdown_dashboards import get_project_dashboard_response, \
+    get_project_tenant_progression_response
 from infrastructure.github import get_workflow_run_async, get_open_pull_requests_async, get_open_issues_async, \
     get_workflow_artifacts_async
 from infrastructure.octopus import get_project, get_project_progression, \

@@ -3,7 +3,8 @@ from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import get_item_or_none
 from domain.tools.debug import get_params_message
-from infrastructure.octopus import get_deployment_logs, activity_logs_to_summary
+from domain.view.markdown.octopus_task_summary import activity_logs_to_summary
+from infrastructure.octopus import get_deployment_logs
 
 
 def get_task_summary_callback(github_user, api_key, url, log_query=None):

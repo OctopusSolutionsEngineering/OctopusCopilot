@@ -1,7 +1,7 @@
 import json
 import unittest
 
-from domain.transformers.chat_responses import get_runbook_dashboard_response
+from domain.view.markdown.markdown_dashboards import get_runbook_dashboard_response
 
 sample_json = """{
   "Environments": [

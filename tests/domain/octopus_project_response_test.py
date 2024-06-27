@@ -1,6 +1,6 @@
 import unittest
 
-from domain.transformers.chat_responses import get_octopus_project_names_response
+from domain.view.markdown.markdown_dashboards import get_octopus_project_names_response
 
 
 class EnsureTests(unittest.TestCase):

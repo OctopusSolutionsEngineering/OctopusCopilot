@@ -1,5 +1,6 @@
 from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list
-from infrastructure.octopus import get_deployment_logs, activity_logs_to_summary
+from domain.view.markdown.octopus_task_summary import activity_logs_to_summary
+from infrastructure.octopus import get_deployment_logs
 
 
 def get_task_summary_cli_callback(api_key, url, get_default_argument, log_query=None):

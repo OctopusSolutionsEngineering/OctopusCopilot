@@ -199,3 +199,22 @@ async def get_open_issues_async(owner, repo, get_token):
                 # We don't want to show pull requests in the issues list, because every pull request is an issue
                 # https://docs.github.com/en/rest/using-the-rest-api/issue-event-types?apiVersion=2022-11-28
                 return list(filter(lambda x: "pull_request" not in x, issues))
+
+
+async def get_run_jobs_async(owner, repo, run_id, github_token):
+    """
+    Async function to get open issues run
+    https://docs.github.com/en/rest/actions/workflow-jobs?apiVersion=2022-11-28#list-jobs-for-a-workflow-run
+    """
+    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_open_issues_async).')
+    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_open_issues_async).')
+    ensure_string_not_empty(github_token, 'github_token must be a non-empty string (get_open_issues_async).')
+    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/runs/{quote_safe(run_id)}/jobs")
+
+    async with sem:
+        async with aiohttp.ClientSession(headers=get_github_auth_headers(github_token)) as session:
+            async with session.get(str(api)) as response:
+                if response.status != 200:
+                    body = await response.text()
+                    raise GitHubRequestFailed(f"Request failed with " + body)
+                return await response.json()

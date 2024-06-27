@@ -16,9 +16,9 @@ from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.sanitizers.sanitized_list import sanitize_log_steps
-from domain.transformers.chat_responses import get_dashboard_response
 from domain.transformers.deployments_from_dashboard import get_deployments_from_dashboard
 from domain.versions.octopus_version import octopus_version_at_least
+from domain.view.markdown.markdown_dashboards import get_dashboard_response
 from infrastructure.octopus import get_project_progression, get_raw_deployment_process, get_octopus_project_names_base, \
     get_current_user, create_limited_api_key, get_deployment_status_base, get_dashboard, get_deployment_logs, \
     get_item_fuzzy, get_space_id_and_name_from_name, activity_logs_to_string, get_version, run_published_runbook_fuzzy, \

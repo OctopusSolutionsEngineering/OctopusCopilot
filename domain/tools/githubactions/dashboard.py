@@ -8,7 +8,7 @@ from domain.logging.app_logging import configure_logging
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import sanitize_name_fuzzy, sanitize_space
 from domain.tools.debug import get_params_message
-from domain.transformers.chat_responses import get_dashboard_response
+from domain.view.markdown.markdown_dashboards import get_dashboard_response
 from infrastructure.github import get_latest_workflow_run_async, get_open_pull_requests_async, get_open_issues_async
 from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_from_name, get_dashboard, \
     get_project_github_workflow

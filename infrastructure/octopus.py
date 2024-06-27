@@ -196,6 +196,11 @@ def get_project_github_workflow(space_id, project_id, my_api_key, my_octopus_api
     :param my_octopus_api: The Octopus url
     :return: The owner, repo, and workflow ID (if found)
     """
+    ensure_string_not_empty(space_id, 'space_id must not be empty (get_project_github_workflow).')
+    ensure_string_not_empty(project_id, 'project_id must not be empty (get_project_github_workflow).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must not be empty (get_project_github_workflow).')
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must not be empty (get_project_github_workflow).')
+
     project = get_project(space_id, project_id, my_api_key, my_octopus_api)
     description = project["Description"].split("\n") if project["Description"] else []
     owner = next(
@@ -1117,63 +1122,6 @@ def get_runbook_deployment_logs(space_name, project_name, runbook_name, environm
     task = json.loads(resp.data.decode("utf-8"))
 
     return task["ActivityLogs"]
-
-
-def activity_logs_to_summary(activity_logs):
-    """
-    Builds a task summary response from the activity logs
-    :param activity_logs: The deployment activity logs
-    :return: The text based summary of the logs
-    """
-    if not activity_logs:
-        return ""
-
-    logs = "\n".join(list(map(lambda i: get_summary(i, 0), activity_logs)))
-
-    return logs
-
-
-def get_summary(log_item, depth):
-    if depth == 0 and len(log_item["Children"]) == 0:
-        return f"No logs found (status: {log_item['Status']})."
-
-    icon = get_activity_log_state_icon(log_item['Status'])
-
-    logs = f"{'&ensp;' * depth}{icon} {log_item['Name']}\n"
-
-    if depth < 2 and log_item["Children"]:
-        for child in log_item["Children"]:
-            logs += "\n" + get_summary(child, depth + 1)
-
-    return logs
-
-
-def get_activity_log_state_icon(state):
-    if state == "Running":
-        return "🔵"
-
-    if state == "SuccessWithWarning":
-        return "🟡"
-
-    if state == "Success":
-        return "🟢"
-
-    elif state == "Failed":
-        return "🔴"
-
-    if state == "Canceled":
-        return "⚪"
-
-    elif state == "TimedOut":
-        return "🔴"
-
-    elif state == "Cancelling":
-        return "🔴"
-
-    elif state == "Queued":
-        return "🟣"
-
-    return "⚪"
 
 
 def activity_logs_to_string(activity_logs, sanitized_steps=None, categories=None, join_string="\n", include_name=True):
