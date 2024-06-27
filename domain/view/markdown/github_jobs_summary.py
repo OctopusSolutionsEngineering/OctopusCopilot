@@ -17,4 +17,4 @@ def github_jobs_to_summary(jobs):
         for step in job.get("steps", []):
             icon = get_github_state_icon(step.get("status"), step.get("conclusion"))
             messages.append(f"&ensp;{icon} {step.get('name')}")
-    return "\n".join(messages)
+    return "\n\n".join(messages)
