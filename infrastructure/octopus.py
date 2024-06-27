@@ -1162,7 +1162,7 @@ def activity_logs_to_string(activity_logs, sanitized_steps=None, categories=None
 
 def get_logs(log_item, depth, steps=None, categories=None, include_name=True):
     if depth == 0 and len(log_item["LogElements"]) == 0 and len(log_item["Children"]) == 0:
-        return f"No logs found (status: {log_item['Status']})."
+        return [f"No logs found (status: {log_item['Status']})."]
 
     filtered_logs = filter(lambda x: x["Category"] in categories, log_item["LogElements"]) if categories else log_item[
         "LogElements"]
