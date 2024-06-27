@@ -89,16 +89,17 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
                 None) if github_actions else None
 
             # Get the GitHub Actions workflow status
-            github_messages = []
-            github_messages.extend(build_repo_link(github_repo))
-            github_messages.extend(get_project_workflow_status(github_actions_status, project["Id"]))
-            github_messages.extend(build_pr_response_for_project(pull_requests, project["Id"], github_repo))
-            github_messages.extend(build_issue_response_for_project(issues, project["Id"], github_repo))
+            if github_actions_status:
+                github_messages = []
+                github_messages.extend(build_repo_link(github_repo))
+                github_messages.extend(get_project_workflow_status(github_actions_status, project["Id"]))
+                github_messages.extend(build_pr_response_for_project(pull_requests, project["Id"], github_repo))
+                github_messages.extend(build_issue_response_for_project(issues, project["Id"], github_repo))
 
-            if github_messages:
-                table += f"| {'<br/>'.join(github_messages)}"
-            else:
-                table += f"| ⨂ "
+                if github_messages:
+                    table += f"| {'<br/>'.join(github_messages)}"
+                else:
+                    table += f"| ⨂ "
 
             # Get the deployment status
             for environment in project_group["EnvironmentIds"]:
