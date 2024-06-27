@@ -215,7 +215,9 @@ async def get_workflow_artifacts(release_id, owner, repo, run_id, github_token):
     try:
         artifacts = await get_workflow_artifacts_async(owner, repo, run_id, github_token)
         return list(
-            map(lambda x: {"ReleaseId": release_id, "Name": x.get("name"), "Url": x.get("archive_download_url")},
+            # Url based on https://docs.github.com/en/rest/actions/artifacts?apiVersion=2022-11-28#download-an-artifact
+            map(lambda x: {"ReleaseId": release_id, "Name": x.get("name"),
+                           "Url": f"https://{owner}/{repo}/actions/artifacts/{x.get("id")}/zip"},
                 artifacts["artifacts"]))
     except Exception as e:
         # Silent fail, and fall back to returning blank result
