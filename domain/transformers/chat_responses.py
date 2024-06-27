@@ -138,7 +138,7 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
                                    deployment_highlights=None):
     now = datetime.now(pytz.utc)
 
-    table = f"## {space_name} / {project_name}\n\n"
+    table = f"# {space_name} / {project_name}\n\n"
 
     message = []
     message.extend(build_repo_link(github_repo))
@@ -222,7 +222,7 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                                             pull_requests, issues, deployment_highlights, api_key, url):
     now = datetime.now(pytz.utc)
 
-    table = f"## {space_name} / {project_name}\n\n"
+    table = f"# {space_name} / {project_name}\n\n"
 
     message = []
     message.extend(build_repo_link(github_repo))
@@ -234,7 +234,7 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
         table += '<br/>'.join(message) + "\n\n"
 
     for tenant in dashboard["Tenants"]:
-        table += f"# {tenant['Name']}\n"
+        table += f"## {tenant['Name']}\n"
         environments_ids = get_tenant_environments(tenant, dashboard, project_id)
         environments = get_tenant_environment_details(environments_ids, dashboard)
         environment_names = list(map(lambda e: e["Name"], environments))
