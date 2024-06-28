@@ -239,7 +239,8 @@ def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_t
     # Get details about pull requests
     try:
         project_prs = asyncio.run(
-            get_open_pull_requests_async(github_action["Owner"], github_action["Repo"], github_token))
+            get_open_pull_requests_async(github_action["Owner"], github_action["Repo"],
+                                         github_token)) if github_action else []
         pull_requests = {"ProjectId": project["Id"], "Count": len(project_prs)}
     except Exception as e:
         logger.error(e)
@@ -248,7 +249,7 @@ def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_t
     # Get details about issues
     try:
         project_issues = asyncio.run(
-            get_open_issues_async(github_action["Owner"], github_action["Repo"], github_token))
+            get_open_issues_async(github_action["Owner"], github_action["Repo"], github_token)) if github_action else []
         issues = {"ProjectId": project["Id"], "Count": len(project_issues)}
     except Exception as e:
         logger.error(e)

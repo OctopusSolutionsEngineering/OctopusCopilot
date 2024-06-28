@@ -220,7 +220,10 @@ def get_project_github_workflow(space_id, project_id, my_api_key, my_octopus_api
             filter(lambda x: re.match(f"{metadata_prefix}github workflow:", x, flags=re.IGNORECASE), description)),
         None)
 
-    return {"ProjectId": project_id, "Owner": owner, "Repo": repo, "Workflow": workflow}
+    if owner and repo and workflow:
+        return {"ProjectId": project_id, "Owner": owner, "Repo": repo, "Workflow": workflow}
+
+    return None
 
 
 @logging_wrapper
