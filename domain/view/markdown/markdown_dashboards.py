@@ -2,6 +2,7 @@ from datetime import datetime
 
 import pytz
 
+from domain.config.octopus import max_github_artifacts
 from domain.date.date_difference import get_date_difference_summary
 from domain.date.parse_dates import parse_unknown_format_date
 from domain.sanitizers.sanitized_list import yield_first
@@ -138,7 +139,6 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
                                    pull_requests=None,
                                    issues=None,
                                    release_workflow_runs=None,
-                                   release_workflow_artifacts=None,
                                    deployment_highlights=None):
     now = datetime.now(pytz.utc)
 
@@ -174,9 +174,6 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
 
                     # Find the associated github workflow and build a link
                     messages.extend(get_workflow_link(release_workflow_runs, release["Release"]["Id"]))
-
-                    # Find the associated github workflow and show any artifacts
-                    messages.extend(get_artifact_links(release_workflow_artifacts, deployment["ReleaseId"]))
 
                     # Find any highlights in the logs
                     message.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
@@ -219,7 +216,6 @@ def get_tenant_environment_details(environments_ids, dashboard):
 
 def get_project_tenant_progression_response(space_id, space_name, project_name, project_id, dashboard,
                                             github_repo, github_actions_statuses, release_workflow_runs,
-                                            release_workflow_artifacts,
                                             pull_requests, issues, deployment_highlights, api_key, url):
     now = datetime.now(pytz.utc)
 
@@ -264,9 +260,6 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
 
                     # Find the associated github workflow and build a link
                     messages.extend(get_workflow_link(release_workflow_runs, deployment["ReleaseId"]))
-
-                    # Find the associated github workflow and show any artifacts
-                    messages.extend(get_artifact_links(release_workflow_artifacts, deployment["ReleaseId"]))
 
                     # Find any highlights in the logs
                     messages.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
@@ -396,10 +389,16 @@ def get_workflow_link(release_workflow_runs, release_id):
         lambda x: x and x.get("ReleaseId") == release_id,
         release_workflow_runs or []))
 
-    return list(map(
-        lambda x: f"{get_github_state_icon(x.get('Status'), x.get('Conclusion'))} "
-                  + f"[{x.get('Name')} {x.get('ShortSha')}]({x.get('Url')})",
-        matching_releases))
+    messages = []
+    for release in matching_releases:
+        messages.append(
+            f"{get_github_state_icon(release.get('Status'), release.get('Conclusion'))} "
+            + f"[{release.get('Name')} {release.get('ShortSha')}]({release.get('Url')})")
+
+        for artifact in release.get("Artifacts", [])[:max_github_artifacts]:
+            messages.append(f"💾 [{artifact.get('Name')}]({artifact.get('Url')})")
+
+    return messages
 
 
 def get_artifact_links(release_workflow_artifacts, release_id):
