@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import json
 import re
+from urllib.parse import urlparse
 
 import aiohttp
 import pytz
@@ -225,7 +226,7 @@ def get_project_github_workflow(space_id, project_id, my_api_key, my_octopus_api
 @logging_wrapper
 async def get_release_github_workflow_async(space_id, release_id, my_api_key, my_octopus_api):
     """
-    Extracts the GitHub owner, repo, and workflow from the release notes.
+    Extracts the GitHub owner, repo, and run id from the build information
     :param space_id: The space id hosting the project
     :param release_id: The release ID
     :param my_api_key: The octopus API key
@@ -233,6 +234,32 @@ async def get_release_github_workflow_async(space_id, release_id, my_api_key, my
     :return: The owner, repo, and workflow ID (if found)
     """
     release = await get_release_async(space_id, release_id, my_api_key, my_octopus_api)
+    # First get runs from build information, and then fall back to release notes
+    return get_release_github_workflow_from_buildinfo(release_id, release) or get_release_github_workflow_from_desc(
+        release_id, release)
+
+
+def get_release_github_workflow_from_buildinfo(release_id, release):
+    # Get the build url and the package ID
+    urls = filter(lambda x: x.get("BuildUrl"),
+                  map(lambda x: {"BuildUrl": x.get("BuildUrl"), "PackageId": x.get("PackageId")},
+                      release.get("BuildInformation", [])))
+    # Keep the package ID and those with a build URL that matches the known github runs url
+    workflows = filter(lambda x: x.get("Match"),
+                       map(lambda x: {"PackageId": x.get("PackageId"),
+                                      "Match": re.match(
+                                          "/(?P<Owner>[^/]+)/(?P<Repo>[^/]+)/actions/runs/(?P<RunId>[^/]+)",
+                                          urlparse(x.get("BuildUrl")).path)}, urls))
+    # Extract all the useful values and return them in a map
+    return list(
+        map(lambda x: {"ReleaseId": release_id,
+                       "PackageId": x.get("PackageId"),
+                       "Owner": x["Match"].group("Owner"),
+                       "Repo": x["Match"].group("Repo"),
+                       "RunId": x["Match"].group("RunId")}, workflows))
+
+
+def get_release_github_workflow_from_desc(release_id, release):
     description = release["ReleaseNotes"].split("\n") if release["ReleaseNotes"] else []
     owner = next(
         map(
@@ -244,23 +271,17 @@ async def get_release_github_workflow_async(space_id, release_id, my_api_key, my
             lambda x: re.sub(f"{metadata_prefix}?github repo:", "", x, flags=re.IGNORECASE).strip(),
             filter(lambda x: re.match(f"{metadata_prefix}github repo:", x, flags=re.IGNORECASE), description)),
         None)
-    workflow = next(
-        map(
-            lambda x: re.sub(f"{metadata_prefix}github workflow:", "", x, flags=re.IGNORECASE).strip(),
-            filter(lambda x: re.match(f"{metadata_prefix}github workflow:", x, flags=re.IGNORECASE), description)),
-        None)
-    sha = next(
-        map(
-            lambda x: re.sub(f"{metadata_prefix}github sha:", "", x, flags=re.IGNORECASE).strip(),
-            filter(lambda x: re.match(f"{metadata_prefix}github sha:", x, flags=re.IGNORECASE), description)),
-        None)
     run_id = next(
         map(
             lambda x: re.sub(f"{metadata_prefix}github run\\s?id:", "", x, flags=re.IGNORECASE).strip(),
             filter(lambda x: re.match(f"{metadata_prefix}github run\\s?id:", x, flags=re.IGNORECASE), description)),
         None)
 
-    return {"ReleaseId": release_id, "Owner": owner, "Repo": repo, "Workflow": workflow, "Sha": sha, "RunId": run_id}
+    if owner and repo and run_id:
+        return [
+            {"ReleaseId": release_id, "Owner": owner, "Repo": repo, "RunId": run_id}]
+
+    return []
 
 
 @retry(HTTPError, tries=3, delay=2)

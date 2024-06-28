@@ -109,9 +109,11 @@ async def get_tenanted_dashboard_release_workflows(space_id, progression, api_ke
     """
     unique_release_ids = set(item["ReleaseId"] for item in progression["Items"])
 
-    return await asyncio.gather(
+    runs = await asyncio.gather(
         *[get_release_github_workflow_async(space_id, x, api_key, url) for x in
           unique_release_ids]) if len(unique_release_ids) <= max_release_for_github_links else []
+
+    return flatten_list(runs)
 
 
 async def get_tenanted_dashboard_deployment_highlights(space_id, progression, api_key, url):
@@ -137,9 +139,11 @@ async def get_dashboard_release_workflows(space_id, progression, api_key, url):
     # Process each release only once
     unique_release_ids = set(item["Release"]["Id"] for item in progression["Releases"])
 
-    return await asyncio.gather(
+    runs = await asyncio.gather(
         *[get_release_github_workflow_async(space_id, x, api_key, url) for x in
           unique_release_ids]) if len(unique_release_ids) <= max_release_for_github_links else []
+
+    return flatten_list(runs)
 
 
 async def get_dashboard_deployment_highlights(space_id, progression, api_key, url, limit=0):
@@ -250,12 +254,8 @@ def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_t
         logger.error(e)
         issues = {"ProjectId": project["Id"], "Count": 0}
 
-    try:
-        deployment_highlights = asyncio.run(
-            get_tenanted_dashboard_deployment_highlights(space_id, progression["Dashboard"], api_key, url))
-    except Exception as e:
-        logger.error(e)
-        deployment_highlights = None
+    deployment_highlights = none_on_exception(lambda x: asyncio.run(
+        get_tenanted_dashboard_deployment_highlights(space_id, progression["Dashboard"], api_key, url)))
 
     return get_project_tenant_progression_response(space_id,
                                                    space_name,
