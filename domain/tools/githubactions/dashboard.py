@@ -46,13 +46,13 @@ def get_dashboard_callback(github_token, github_user, log_query=None):
         dashboard = get_dashboard(space_id, api_key, url)
 
         # Get the dashboard GitHub data
+        projects = dashboard["Projects"]
         github_actions = none_on_exception(
             lambda: list(
                 filter(lambda x: x,
                        map(
                            lambda x: get_project_github_workflow(space_id, x["Id"], api_key, url),
-                           dashboard["Projects"])))) if len(
-            dashboard["Projects"]) <= max_projects_for_github_links else []
+                           projects)))) if len(projects) <= max_projects_for_github_links else []
         github_actions_status = none_on_exception(
             lambda: asyncio.run(get_all_workflow_status(github_actions, github_token)))
         pull_requests = none_on_exception(lambda: asyncio.run(get_all_prs(github_actions, github_token)))
