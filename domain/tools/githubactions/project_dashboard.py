@@ -234,7 +234,7 @@ def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_t
         logger.error(e)
         issues = {"ProjectId": project["Id"], "Count": 0}
 
-    deployment_highlights = none_on_exception(lambda x: asyncio.run(
+    deployment_highlights = none_on_exception(lambda: asyncio.run(
         get_tenanted_dashboard_deployment_highlights(space_id, progression["Dashboard"], api_key, url)))
 
     return get_project_tenant_progression_response(space_id,
