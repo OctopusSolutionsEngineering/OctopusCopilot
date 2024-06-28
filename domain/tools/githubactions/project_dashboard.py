@@ -94,12 +94,8 @@ def get_dashboard(space_id, space_name, project, api_key, url, github_token):
         logger.error(e)
         issues = {"ProjectId": project["Id"], "Count": 0}
 
-    try:
-        deployment_highlights = asyncio.run(
-            get_dashboard_deployment_highlights(space_id, progression, api_key, url, max_highlight_links_on_dashboard))
-    except Exception as e:
-        logger.error(e)
-        deployment_highlights = None
+    deployment_highlights = none_on_exception(lambda: asyncio.run(
+        get_dashboard_deployment_highlights(space_id, progression, api_key, url, max_highlight_links_on_dashboard)))
 
     return get_project_dashboard_response(url, space_id, space_name, project["Name"], project["Id"], progression,
                                           github_action, github_actions_status,

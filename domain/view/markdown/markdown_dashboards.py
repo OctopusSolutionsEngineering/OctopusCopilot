@@ -160,7 +160,9 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
     for environment in dashboard["Environments"]:
         for release in dashboard["Releases"]:
             if environment["Id"] in release["Deployments"]:
-                for deployment in release["Deployments"][environment["Id"]]:
+                # Get the latest deployment for the release. Redeploying a release can result in many
+                # deployments for an environment and a release.
+                for deployment in yield_first(release["Deployments"][environment["Id"]]):
                     created = parse_unknown_format_date(deployment["Created"])
                     difference = get_date_difference_summary(now - created)
                     icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
