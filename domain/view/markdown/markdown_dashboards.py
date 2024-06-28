@@ -87,7 +87,7 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
 
             # Find the github repo details
             github_repo = next(
-                filter(lambda x: x["ProjectId"] == project["Id"] and x["Repo"] and x["Owner"], github_actions),
+                filter(lambda x: x and x["ProjectId"] == project["Id"] and x["Repo"] and x["Owner"], github_actions),
                 None) if github_actions else None
 
             # Get the GitHub Actions workflow status
