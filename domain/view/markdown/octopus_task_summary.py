@@ -18,7 +18,7 @@ def get_summary(log_item, depth):
 
     filtered_logs = get_highlights(log_item)
 
-    messages.extend(list(map(lambda e: f"{'&ensp;' * (depth + 1)}{e["MessageText"]}", filtered_logs)))
+    messages.extend(list(map(lambda e: f"{'&ensp;' * (depth + 1)}{e['MessageText']}", filtered_logs)))
 
     logs = "\n".join(messages)
 
