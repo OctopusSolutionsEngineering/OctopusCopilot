@@ -645,6 +645,7 @@ class CopilotChatTest(unittest.TestCase):
             "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         self.assertTrue("Simple / Deploy Web App Container" in response_text, "Response was " + response_text)
+        self.assertTrue("This is a highlight" in response_text, "Response was " + response_text)
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
@@ -698,6 +699,7 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue("Marketing" in response_text, "Response was " + response_text)
         self.assertTrue(version in response_text, "Response was " + response_text)
         self.assertTrue(untenanted_version in response_text, "Response was " + response_text)
+        self.assertTrue("This is a highlight" in response_text, "Response was " + response_text)
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
