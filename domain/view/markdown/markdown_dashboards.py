@@ -144,14 +144,14 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
 
     table = f"# {space_name} / {project_name}\n\n"
 
-    message = []
-    message.extend(build_repo_link(github_repo))
-    message.extend(get_project_workflow_status(github_actions_statuses, project_id))
-    message.extend(build_pr_response(pull_requests, github_repo))
-    message.extend(build_issue_response(issues, github_repo))
+    github_details = []
+    github_details.extend(build_repo_link(github_repo))
+    github_details.extend(get_project_workflow_status(github_actions_statuses, project_id))
+    github_details.extend(build_pr_response(pull_requests, github_repo))
+    github_details.extend(build_issue_response(issues, github_repo))
 
-    if message:
-        table += '<br/>'.join(message) + "\n\n"
+    if github_details:
+        table += '<br/>'.join(github_details) + "\n\n"
 
     environment_names = list(map(lambda e: e["Name"], dashboard["Environments"]))
     table += build_markdown_table_row(environment_names)
@@ -170,15 +170,15 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
                     release_url = build_deployment_url(octopus_url, space_id, deployment['ProjectId'],
                                                        deployment['ReleaseVersion'], deployment['DeploymentId'])
 
-                    messages = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})", f"🕗 {difference} ago"]
+                    release_details = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})", f"🕗 {difference} ago"]
 
                     # Find the associated github workflow and build a link
-                    messages.extend(get_workflow_link(release_workflow_runs, release["Release"]["Id"]))
+                    release_details.extend(get_workflow_link(release_workflow_runs, release["Release"]["Id"]))
 
                     # Find any highlights in the logs
-                    message.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
+                    release_details.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
 
-                    table += f"| {'<br/>'.join(messages)}"
+                    table += f"| {'<br/>'.join(release_details)}"
             else:
                 table += "| ⨂ "
     table += "|  "
