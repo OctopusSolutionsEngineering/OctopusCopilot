@@ -741,6 +741,16 @@ class CopilotChatTest(unittest.TestCase):
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_github_logs(self):
+        prompt = "Summarise the logs from the workflow \"build.yaml\" from owner \"OctopusSolutionsEngineering\" and repo \"OctopusCopilot\"."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        # We don't actually know what will be printed, but it shouldn't be an apology
+        self.assertTrue("sorry" not in response_text)
+        print(response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_github_task_summary_combined_repo_format(self):
         # Combine the owner and repo into a single string
         prompt = "Get the summary for the workflow \"build.yaml\" in the repo \"OctopusSolutionsEngineering/OctopusCopilot\"."

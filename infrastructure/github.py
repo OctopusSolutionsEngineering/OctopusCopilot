@@ -1,4 +1,7 @@
 import asyncio
+import os
+import tempfile
+import zipfile
 from urllib.parse import urlparse, urlencode, urlunsplit
 
 import aiohttp
@@ -135,6 +138,44 @@ async def get_workflow_run_async(owner, repo, run_id, get_token):
                     body = await response.text()
                     raise GitHubRequestFailed(f"Request failed with " + body)
                 return await response.json()
+
+
+async def get_workflow_run_logs_async(owner, repo, run_id, github_token):
+    """
+    Async function to get workflow run logs
+    https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#download-workflow-run-logs
+    """
+    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_workflow_run_logs_async).')
+    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_workflow_run_logs_async).')
+    ensure_string_not_empty(run_id, 'run_id must be a non-empty string (get_workflow_run_logs_async).')
+    ensure_string_not_empty(github_token, 'github_token must be a non-empty string (get_workflow_run_logs_async).')
+
+    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/runs/{quote_safe(run_id)}/logs")
+
+    async with sem:
+        async with aiohttp.ClientSession(headers=get_github_auth_headers(github_token)) as session:
+            async with session.get(str(api)) as response:
+                try:
+                    with tempfile.NamedTemporaryFile(delete=True, suffix=".zip") as tf:
+                        while True:
+                            chunk = await response.content.read(1024)  # 1 KiB at a time
+                            if not chunk:
+                                break
+                            tf.write(chunk)
+                        with tempfile.TemporaryDirectory(delete=True) as temp_dir:
+                            with zipfile.ZipFile(tf, 'r') as zip_ref:
+                                zip_ref.extractall(temp_dir)
+
+                            logs = ""
+                            for file in os.listdir(temp_dir):
+                                # We're only interested in the top level files
+                                if os.path.isfile(os.path.join(temp_dir, file)):
+                                    with open(os.path.join(temp_dir, file), 'r') as f:
+                                        logs += f.read() + "\n"
+
+                            return logs
+                except Exception as e:
+                    raise GitHubRequestFailed(f"Request failed with " + str(e))
 
 
 async def get_workflow_artifacts_async(owner, repo, run_id, get_token):
