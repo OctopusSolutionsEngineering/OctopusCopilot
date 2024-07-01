@@ -1,3 +1,9 @@
+from datetime import datetime
+
+import pytz
+
+from domain.date.date_difference import get_date_difference_summary
+from domain.date.parse_dates import parse_unknown_format_date
 from domain.view.markdown.markdown_icons import get_activity_log_state_icon
 
 
@@ -8,13 +14,23 @@ def get_highlights(log_item):
     return filtered_logs
 
 
-def get_summary(log_item, depth):
+def get_summary(log_item, depth, step=None):
     if depth == 0 and len(log_item["Children"]) == 0:
         return f"No logs found (status: {log_item['Status']})."
 
     icon = get_activity_log_state_icon(log_item['Status'])
 
-    messages = [f"{'&ensp;' * depth}{icon} {log_item['Name']}"]
+    now = datetime.now(pytz.utc)
+    created = parse_unknown_format_date(step.get("Started"))
+    completed = parse_unknown_format_date(step.get("Ended"))
+    if completed and created:
+        difference = f" (🕗 Took {get_date_difference_summary(completed - created)})"
+    elif created:
+        difference = f" (🕗 Started {get_date_difference_summary(now - created)} ago)"
+    else:
+        difference = ""
+
+    messages = [f"{'&ensp;' * depth}{icon} {log_item['Name']}{difference}"]
 
     filtered_logs = get_highlights(log_item)
 
