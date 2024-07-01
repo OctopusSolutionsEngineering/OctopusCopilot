@@ -184,6 +184,10 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
                     # Find any highlights in the logs
                     release_details.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
 
+                    # Find any artifacts in
+                    release_details.extend(
+                        get_artifacts(deployment_highlights, octopus_url, deployment["DeploymentId"]))
+
                     table += f"| {'<br/>'.join(release_details)}"
             else:
                 table += "| ⨂ "
@@ -275,6 +279,9 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
 
                     # Find any highlights in the logs
                     release_details.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
+
+                    # Find any artifacts in
+                    release_details.extend(get_artifacts(deployment_highlights, url, deployment["DeploymentId"]))
 
                     columns.append("<br/>".join(release_details))
                     found = True
@@ -449,3 +456,10 @@ def get_running(deployment_highlights, deployment_id):
     return flatten_list(list(map(lambda x: x['Running'],
                                  filter(lambda x: x and x["DeploymentId"] == deployment_id,
                                         deployment_highlights or []))))
+
+
+def get_artifacts(deployment_highlights, url, deployment_id):
+    artifacts = flatten_list(list(map(lambda x: x['Artifacts']['Items'],
+                                      filter(lambda x: x and x["DeploymentId"] == deployment_id,
+                                             deployment_highlights or []))))
+    return list(map(lambda a: f"💾 [{a['Filename']}]({url}{a['Links']['Content']})", artifacts))

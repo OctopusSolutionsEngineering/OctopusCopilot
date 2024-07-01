@@ -18,7 +18,7 @@ from infrastructure.github import get_workflow_run_async, get_open_pull_requests
     get_workflow_artifacts_async, get_run_jobs_async
 from infrastructure.octopus import get_project, get_project_progression, \
     get_project_tenant_dashboard, get_release_github_workflow_async, get_task_details_async, activity_logs_to_string, \
-    get_project_github_workflow
+    get_project_github_workflow, get_artifacts
 
 logger = configure_logging(__name__)
 
@@ -156,12 +156,14 @@ async def get_dashboard_deployment_highlights(space_id, progression, api_key, ur
         highlights = activity_logs_to_string(task["ActivityLogs"], categories=["Highlight"], join_string="<br/>",
                                              include_name=False)
         running = activity_logs_to_running(task["ActivityLogs"])
+        artifacts = get_artifacts(space_id, task["Task"]["Id"], api_key, url)
 
         if limit != 0:
             highlights = "\n".join(highlights.split("\n")[:limit])
 
         sanitized_highlights = Sanitizer().sanitize(highlights)
-        return {"DeploymentId": deployment_id, "Highlights": sanitized_highlights, "Running": running}
+        return {"DeploymentId": deployment_id, "Highlights": sanitized_highlights, "Running": running,
+                "Artifacts": artifacts}
 
     deployment_highlights = []
     for environment in progression["Environments"]:
