@@ -350,10 +350,7 @@ def get_project_workflow_status(github_actions_statuses, project_id):
         if github_actions_status:
             message.append(
                 f"{get_github_state_icon(github_actions_status.get('Status'), github_actions_status.get('Conclusion'))} "
-                + f"[{github_actions_status.get('Name')} {github_actions_status.get('ShortSha')}]({github_actions_status.get('Url')})")
-
-            if github_actions_status.get("CreatedAt"):
-                message.append(f"🕗 {get_date_difference_summary(now - github_actions_status.get('CreatedAt'))} ago")
+                + f"[{github_actions_status.get('Name')} {github_actions_status.get('ShortSha')}]({github_actions_status.get('Url')}) (🕗 {get_date_difference_summary(now - github_actions_status.get('CreatedAt'))} ago)")
 
             # Print any jobs currently running
             if github_actions_status.get("Jobs"):
