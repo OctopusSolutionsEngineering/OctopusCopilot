@@ -89,7 +89,7 @@ async def get_workflow_status(project_id, owner, repo, workflow, github_token):
                     "Name": first_workflow.get("name"),
                     "Url": first_workflow.get("html_url"),
                     "Artifacts": list(map(lambda x: {"Name": x.get("name"),
-                                                     "Url": f"https://github.com/{owner}/{repo}/actions/runs/{first_workflow.get("id")}/artifacts/{x.get('id')}"},
+                                                     "Url": f"https://github.com/{owner}/{repo}/actions/runs/{first_workflow.get('id')}/artifacts/{x.get('id')}"},
                                           artifacts["artifacts"])),
                     "Jobs": jobs}
     except Exception as e:
