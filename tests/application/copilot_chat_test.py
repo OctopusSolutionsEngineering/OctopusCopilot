@@ -718,6 +718,7 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue(version in response_text, "Response was " + response_text)
         self.assertTrue(untenanted_version in response_text, "Response was " + response_text)
         self.assertTrue("This is a highlight" in response_text, "Response was " + response_text)
+        self.assertTrue("file.txt" in response_text, "Response was " + response_text)
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)

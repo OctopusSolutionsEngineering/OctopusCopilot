@@ -115,20 +115,12 @@ async def get_tenanted_dashboard_release_workflows(space_id, progression, api_ke
     return flatten_list(runs)
 
 
-async def get_tenanted_dashboard_deployment_highlights(space_id, progression, api_key, url):
+async def get_tenanted_dashboard_deployment_highlights(space_id, progression, api_key, url, limit=0):
     """
     Returns the deployment log highlights associated with deployments
     """
-
-    async def map_deployment_to_highlights(deployment_id, task_id):
-        task = await get_task_details_async(space_id, task_id, api_key, url)
-        highlights = activity_logs_to_string(task["ActivityLogs"], categories=["Highlight"], join_string="<br/>",
-                                             include_name=False)
-        running = activity_logs_to_running(task["ActivityLogs"])
-        return {"DeploymentId": deployment_id, "Highlights": highlights, "Running": running}
-
     return await asyncio.gather(
-        *[map_deployment_to_highlights(x["DeploymentId"], x["TaskId"]) for x in
+        *[map_deployment_to_highlights(space_id, api_key, url, limit, x["DeploymentId"], x["TaskId"]) for x in
           progression["Items"]])
 
 
@@ -151,20 +143,6 @@ async def get_dashboard_deployment_highlights(space_id, progression, api_key, ur
     Returns the deployment log highlights associated with deployments
     """
 
-    async def map_deployment_to_highlights(deployment_id, task_id):
-        task = await get_task_details_async(space_id, task_id, api_key, url)
-        highlights = activity_logs_to_string(task["ActivityLogs"], categories=["Highlight"], join_string="<br/>",
-                                             include_name=False)
-        running = activity_logs_to_running(task["ActivityLogs"])
-        artifacts = get_artifacts(space_id, task["Task"]["Id"], api_key, url)
-
-        if limit != 0:
-            highlights = "\n".join(highlights.split("\n")[:limit])
-
-        sanitized_highlights = Sanitizer().sanitize(highlights)
-        return {"DeploymentId": deployment_id, "Highlights": sanitized_highlights, "Running": running,
-                "Artifacts": artifacts}
-
     deployment_highlights = []
     for environment in progression["Environments"]:
         for release in progression["Releases"]:
@@ -172,9 +150,25 @@ async def get_dashboard_deployment_highlights(space_id, progression, api_key, ur
                 deployments = release["Deployments"][environment["Id"]]
                 for deployment in deployments:
                     deployment_highlights.append(
-                        map_deployment_to_highlights(deployment["DeploymentId"], deployment["TaskId"]))
+                        map_deployment_to_highlights(space_id, api_key, url, limit, deployment["DeploymentId"],
+                                                     deployment["TaskId"]))
 
     return await asyncio.gather(*deployment_highlights)
+
+
+async def map_deployment_to_highlights(space_id, api_key, url, limit, deployment_id, task_id):
+    task = await get_task_details_async(space_id, task_id, api_key, url)
+    highlights = activity_logs_to_string(task["ActivityLogs"], categories=["Highlight"], join_string="<br/>",
+                                         include_name=False)
+    running = activity_logs_to_running(task["ActivityLogs"])
+    artifacts = get_artifacts(space_id, task["Task"]["Id"], api_key, url)
+
+    if limit != 0:
+        highlights = "\n".join(highlights.split("\n")[:limit])
+
+    sanitized_highlights = Sanitizer().sanitize(highlights)
+    return {"DeploymentId": deployment_id, "Highlights": sanitized_highlights, "Running": running,
+            "Artifacts": artifacts}
 
 
 async def get_release_workflow_runs(release_workflows, github_token):
@@ -244,7 +238,8 @@ def get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_t
         issues = {"ProjectId": project["Id"], "Count": 0}
 
     deployment_highlights = none_on_exception(lambda: asyncio.run(
-        get_tenanted_dashboard_deployment_highlights(space_id, progression["Dashboard"], api_key, url)))
+        get_tenanted_dashboard_deployment_highlights(space_id, progression["Dashboard"], api_key, url,
+                                                     max_highlight_links_on_dashboard)))
 
     return get_project_tenant_progression_response(space_id,
                                                    space_name,
