@@ -199,8 +199,7 @@ async def get_workflow_status(release_id, owner, repo, run_id, github_token):
                 "ShortSha": workflow.get("head_sha")[:7],
                 "Name": workflow.get("name"),
                 "Url": workflow.get("html_url"),
-                "Artifacts": list(map(lambda x: {"ReleaseId": release_id,
-                                                 "Name": x.get("name"),
+                "Artifacts": list(map(lambda x: {"Name": x.get("name"),
                                                  "Url": f"https://github.com/{owner}/{repo}/actions/runs/{run_id}/artifacts/{x.get('id')}"},
                                       artifacts["artifacts"])),
                 "Jobs": jobs}

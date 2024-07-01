@@ -9,7 +9,8 @@ from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import sanitize_name_fuzzy, sanitize_space
 from domain.tools.debug import get_params_message
 from domain.view.markdown.markdown_dashboards import get_dashboard_response
-from infrastructure.github import get_latest_workflow_run_async, get_open_pull_requests_async, get_open_issues_async
+from infrastructure.github import get_latest_workflow_run_async, get_open_pull_requests_async, get_open_issues_async, \
+    get_workflow_artifacts_async, get_run_jobs_async
 from infrastructure.octopus import get_spaces_generator, get_space_id_and_name_from_name, get_dashboard, \
     get_project_github_workflow
 
@@ -75,6 +76,10 @@ async def get_workflow_status(project_id, owner, repo, workflow, github_token):
         workflow = await get_latest_workflow_run_async(owner, repo, workflow, github_token)
         if workflow.get("workflow_runs", []):
             first_workflow = workflow["workflow_runs"][0]
+            artifacts, jobs = await asyncio.gather(
+                get_workflow_artifacts_async(owner, repo, first_workflow.get("id"), github_token),
+                get_run_jobs_async(owner, repo, first_workflow.get("id"), github_token)
+            )
             return {"ProjectId": project_id,
                     "Status": first_workflow.get("status"),
                     "CreatedAt": parse_unknown_format_date(first_workflow.get("created_at")),
@@ -82,7 +87,11 @@ async def get_workflow_status(project_id, owner, repo, workflow, github_token):
                     "Sha": first_workflow.get("head_sha"),
                     "ShortSha": first_workflow.get("head_sha")[:7],
                     "Name": first_workflow.get("name"),
-                    "Url": first_workflow.get("html_url")}
+                    "Url": first_workflow.get("html_url"),
+                    "Artifacts": list(map(lambda x: {"Name": x.get("name"),
+                                                     "Url": f"https://github.com/{owner}/{repo}/actions/runs/{first_workflow.get("id")}/artifacts/{x.get('id')}"},
+                                          artifacts["artifacts"])),
+                    "Jobs": jobs}
     except Exception as e:
         # Silent fail, and fall back to returning blank result
         pass

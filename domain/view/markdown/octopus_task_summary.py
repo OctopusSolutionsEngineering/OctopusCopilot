@@ -21,8 +21,8 @@ def get_summary(log_item, depth, step=None):
     icon = get_activity_log_state_icon(log_item['Status'])
 
     now = datetime.now(pytz.utc)
-    created = parse_unknown_format_date(step.get("Started"))
-    completed = parse_unknown_format_date(step.get("Ended"))
+    created = parse_unknown_format_date(log_item.get("Started"))
+    completed = parse_unknown_format_date(log_item.get("Ended"))
     if completed and created:
         difference = f" (🕗 Took {get_date_difference_summary(completed - created)})"
     elif created:
