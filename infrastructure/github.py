@@ -162,7 +162,7 @@ async def get_workflow_run_logs_async(owner, repo, run_id, github_token):
                             if not chunk:
                                 break
                             tf.write(chunk)
-                        with tempfile.TemporaryDirectory(delete=True) as temp_dir:
+                        with tempfile.TemporaryDirectory() as temp_dir:
                             with zipfile.ZipFile(tf, 'r') as zip_ref:
                                 zip_ref.extractall(temp_dir)
 

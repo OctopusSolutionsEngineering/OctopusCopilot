@@ -637,9 +637,16 @@ class CopilotChatTest(unittest.TestCase):
                 * GitHub Run: 1401
                 * GitHub Attempt: 1
                 * GitHub Run Id: 9656530979"""
-        deployment = create_and_deploy_release(space_name="Simple", release_version=version, release_notes=notes)
-        wait_for_task(deployment["TaskId"], space_name="Simple")
         prompt = "Show the project dashboard for \"Deploy Web App Container\" for space \"Simpleish\"."
+        deployment = create_and_deploy_release(space_name="Simple", release_version=version, release_notes=notes)
+
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        self.assertTrue("Configure the load balancer" in response_text, "Response was " + response_text)
+        print(response_text)
+
+        wait_for_task(deployment["TaskId"], space_name="Simple")
+
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
@@ -678,6 +685,9 @@ class CopilotChatTest(unittest.TestCase):
     def test_tenant_project_dashboard(self):
         # Create a release in the Mainline channel against a tenant
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        prompt = (
+            "Show the project dashboard for \"Deploy AWS Lambda\" for space \"Simple\"?")
+
         deployment = create_and_deploy_release(space_name="Simple", channel_name="Mainline",
                                                project_name="Deploy AWS Lambda",
                                                tenant_name="Marketing", release_version=version)
@@ -687,11 +697,14 @@ class CopilotChatTest(unittest.TestCase):
         untenanted_deployment = create_and_deploy_release(space_name="Simple", project_name="Deploy AWS Lambda",
                                                           release_version=untenanted_version)
 
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        self.assertTrue("Run a Script" in response_text, "Response was " + response_text)
+        print(response_text)
+
         wait_for_task(deployment["TaskId"], space_name="Simple")
         wait_for_task(untenanted_deployment["TaskId"], space_name="Simple")
 
-        prompt = (
-            "Show the project dashboard for \"Deploy AWS Lambda\" for space \"Simple\"?")
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
