@@ -20,13 +20,17 @@ def get_summary(log_item, depth, step=None):
 
     icon = get_activity_log_state_icon(log_item['Status'])
 
-    now = datetime.now(pytz.utc)
-    created = parse_unknown_format_date(log_item.get("Started"))
-    completed = parse_unknown_format_date(log_item.get("Ended"))
-    if completed and created:
-        difference = f" (🕗 Took {get_date_difference_summary(completed - created)})"
-    elif created:
-        difference = f" (🕗 Started {get_date_difference_summary(now - created)} ago)"
+    # Show the duration on the top level task
+    if depth == 1:
+        now = datetime.now(pytz.utc)
+        created = parse_unknown_format_date(log_item.get("Started"))
+        completed = parse_unknown_format_date(log_item.get("Ended"))
+        if completed and created:
+            difference = f" (🕗 Took {get_date_difference_summary(completed - created)})"
+        elif created:
+            difference = f" (🕗 Started {get_date_difference_summary(now - created)} ago)"
+        else:
+            difference = ""
     else:
         difference = ""
 
