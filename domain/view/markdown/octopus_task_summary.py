@@ -19,9 +19,9 @@ def get_summary(log_item, depth, url=None, artifacts=None, step=None):
         created = parse_unknown_format_date(log_item.get("Started"))
         completed = parse_unknown_format_date(log_item.get("Ended"))
         if completed and created:
-            difference = f" (🕗 Took {get_date_difference_summary(completed - created)})"
+            difference = f" (🕗 {get_date_difference_summary(completed - created)})"
         elif created:
-            difference = f" (🕗 Started {get_date_difference_summary(now - created)} ago)"
+            difference = f" (⟲ {get_date_difference_summary(now - created)} ago)"
         else:
             difference = ""
     else:

@@ -176,7 +176,7 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
                     release_details.extend(
                         map(lambda x: '&ensp;' + x, get_running(deployment_highlights, deployment["DeploymentId"])))
 
-                    release_details.append(f"🕗 {difference} ago")
+                    release_details.append(f"⟲ {difference} ago")
 
                     # Find the associated github workflow and build a link
                     release_details.extend(get_workflow_link(release_workflow_runs, release["Release"]["Id"]))
@@ -272,7 +272,7 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                         map(lambda x: '&ensp;' + x, get_running(deployment_highlights, deployment["DeploymentId"])))
 
                     release_details.extend([f"🔀 {channel['Name']}",
-                                            f"🕗 {difference} ago"])
+                                            f"⟲ {difference} ago"])
 
                     # Find the associated github workflow and build a link
                     release_details.extend(get_workflow_link(release_workflow_runs, deployment["ReleaseId"]))
