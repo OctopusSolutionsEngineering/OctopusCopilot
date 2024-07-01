@@ -5,7 +5,7 @@ import pytz
 from domain.config.octopus import max_github_artifacts
 from domain.date.date_difference import get_date_difference_summary
 from domain.date.parse_dates import parse_unknown_format_date
-from domain.sanitizers.sanitized_list import yield_first
+from domain.sanitizers.sanitized_list import yield_first, flatten_list
 from domain.view.markdown.markdown_icons import get_github_state_icon, get_state_icon
 from infrastructure.octopus import get_channel_cached
 
@@ -172,6 +172,10 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
 
                     release_details = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})", f"🕗 {difference} ago"]
 
+                    # Find any running steps
+                    release_details.extend(
+                        map(lambda x: '&ensp;' + x, get_running(deployment_highlights, deployment["DeploymentId"])))
+
                     # Find the associated github workflow and build a link
                     release_details.extend(get_workflow_link(release_workflow_runs, release["Release"]["Id"]))
 
@@ -255,16 +259,21 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                     release_url = build_deployment_url(url, space_id, deployment['ProjectId'],
                                                        deployment['ReleaseVersion'], deployment['DeploymentId'])
 
-                    messages = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})", f"🔀 {channel['Name']}",
-                                f"🕗 {difference} ago"]
+                    release_details = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})",
+                                       f"🔀 {channel['Name']}",
+                                       f"🕗 {difference} ago"]
+
+                    # Find any running steps
+                    release_details.extend(
+                        map(lambda x: '&ensp;' + x, get_running(deployment_highlights, deployment["DeploymentId"])))
 
                     # Find the associated github workflow and build a link
-                    messages.extend(get_workflow_link(release_workflow_runs, deployment["ReleaseId"]))
+                    release_details.extend(get_workflow_link(release_workflow_runs, deployment["ReleaseId"]))
 
                     # Find any highlights in the logs
-                    messages.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
+                    release_details.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
 
-                    columns.append("<br/>".join(messages))
+                    columns.append("<br/>".join(release_details))
                     found = True
                     break
 
@@ -415,3 +424,9 @@ def get_highlights(deployment_highlights, deployment_id):
     return list(map(lambda x: x['Highlights'],
                     filter(lambda x: x and x["DeploymentId"] == deployment_id,
                            deployment_highlights or [])))
+
+
+def get_running(deployment_highlights, deployment_id):
+    return flatten_list(list(map(lambda x: x['Running'],
+                                 filter(lambda x: x and x["DeploymentId"] == deployment_id,
+                                        deployment_highlights or []))))

@@ -13,6 +13,7 @@ from domain.tools.debug import get_params_message
 from domain.tools.githubactions.dashboard import get_all_workflow_status
 from domain.view.markdown.markdown_dashboards import get_project_dashboard_response, \
     get_project_tenant_progression_response
+from domain.view.markdown.octopus_task_running import activity_logs_to_running
 from infrastructure.github import get_workflow_run_async, get_open_pull_requests_async, get_open_issues_async, \
     get_workflow_artifacts_async
 from infrastructure.octopus import get_project, get_project_progression, \
@@ -123,7 +124,8 @@ async def get_tenanted_dashboard_deployment_highlights(space_id, progression, ap
         task = await get_task_details_async(space_id, task_id, api_key, url)
         highlights = activity_logs_to_string(task["ActivityLogs"], categories=["Highlight"], join_string="<br/>",
                                              include_name=False)
-        return {"DeploymentId": deployment_id, "Highlights": highlights}
+        running = activity_logs_to_running(task["ActivityLogs"])
+        return {"DeploymentId": deployment_id, "Highlights": highlights, "Running": running}
 
     return await asyncio.gather(
         *[map_deployment_to_highlights(x["DeploymentId"], x["TaskId"]) for x in
@@ -153,11 +155,13 @@ async def get_dashboard_deployment_highlights(space_id, progression, api_key, ur
         task = await get_task_details_async(space_id, task_id, api_key, url)
         highlights = activity_logs_to_string(task["ActivityLogs"], categories=["Highlight"], join_string="<br/>",
                                              include_name=False)
+        running = activity_logs_to_running(task["ActivityLogs"])
+
         if limit != 0:
             highlights = "\n".join(highlights.split("\n")[:limit])
 
         sanitized_highlights = Sanitizer().sanitize(highlights)
-        return {"DeploymentId": deployment_id, "Highlights": sanitized_highlights}
+        return {"DeploymentId": deployment_id, "Highlights": sanitized_highlights, "Running": running}
 
     deployment_highlights = []
     for environment in progression["Environments"]:
