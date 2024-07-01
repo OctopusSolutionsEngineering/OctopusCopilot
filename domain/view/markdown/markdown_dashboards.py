@@ -259,13 +259,14 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                     release_url = build_deployment_url(url, space_id, deployment['ProjectId'],
                                                        deployment['ReleaseVersion'], deployment['DeploymentId'])
 
-                    release_details = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})",
-                                       f"🔀 {channel['Name']}",
-                                       f"🕗 {difference} ago"]
+                    release_details = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})"]
 
                     # Find any running steps
                     release_details.extend(
                         map(lambda x: '&ensp;' + x, get_running(deployment_highlights, deployment["DeploymentId"])))
+
+                    release_details.extend([f"🔀 {channel['Name']}",
+                                            f"🕗 {difference} ago"])
 
                     # Find the associated github workflow and build a link
                     release_details.extend(get_workflow_link(release_workflow_runs, deployment["ReleaseId"]))
