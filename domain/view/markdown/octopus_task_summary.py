@@ -13,7 +13,7 @@ def get_summary(log_item, depth):
 
     messages.extend(list(map(lambda e: f"{'&ensp;' * (depth + 1)}{e['MessageText']}", filtered_logs)))
 
-    logs = "\n".join(messages)
+    logs = "\n\n".join(messages)
 
     if depth < 2 and log_item["Children"]:
         for child in log_item["Children"]:
