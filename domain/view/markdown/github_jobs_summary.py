@@ -25,6 +25,6 @@ def github_jobs_to_summary(jobs):
         for step in job.get("steps", []):
             icon = get_github_state_icon(step.get("status"), step.get("conclusion"))
             created = parse_unknown_format_date(step.get("started_at"))
-            difference = f" (🕗 Started {get_date_difference_summary(now - created)})" if created else ""
+            difference = f" (🕗 Started {get_date_difference_summary(now - created)} ago)" if created else ""
             messages.append(f"&ensp;{icon} {step.get('name')}{difference}")
     return "\n\n".join(messages)
