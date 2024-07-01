@@ -170,11 +170,13 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
                     release_url = build_deployment_url(octopus_url, space_id, deployment['ProjectId'],
                                                        deployment['ReleaseVersion'], deployment['DeploymentId'])
 
-                    release_details = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})", f"🕗 {difference} ago"]
+                    release_details = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})"]
 
                     # Find any running steps
                     release_details.extend(
                         map(lambda x: '&ensp;' + x, get_running(deployment_highlights, deployment["DeploymentId"])))
+
+                    release_details.append(f"🕗 {difference} ago")
 
                     # Find the associated github workflow and build a link
                     release_details.extend(get_workflow_link(release_workflow_runs, release["Release"]["Id"]))
