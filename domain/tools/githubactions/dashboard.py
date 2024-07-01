@@ -77,8 +77,8 @@ async def get_workflow_status(project_id, owner, repo, workflow, github_token):
         if workflow.get("workflow_runs", []):
             first_workflow = workflow["workflow_runs"][0]
             artifacts, jobs = await asyncio.gather(
-                get_workflow_artifacts_async(owner, repo, first_workflow.get("id"), github_token),
-                get_run_jobs_async(owner, repo, first_workflow.get("id"), github_token)
+                get_workflow_artifacts_async(owner, repo, str(first_workflow.get("id")), github_token),
+                get_run_jobs_async(owner, repo, str(first_workflow.get("id")), github_token)
             )
             return {"ProjectId": project_id,
                     "Status": first_workflow.get("status"),
@@ -93,8 +93,7 @@ async def get_workflow_status(project_id, owner, repo, workflow, github_token):
                                           artifacts["artifacts"])),
                     "Jobs": jobs}
     except Exception as e:
-        # Silent fail, and fall back to returning blank result
-        pass
+        logger.error(e)
     return None
 
 
