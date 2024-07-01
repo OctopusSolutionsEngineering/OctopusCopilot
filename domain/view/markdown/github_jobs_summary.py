@@ -27,9 +27,9 @@ def github_jobs_to_summary(jobs):
             created = parse_unknown_format_date(step.get("started_at"))
             completed = parse_unknown_format_date(step.get("completed_at"))
             if completed and created:
-                difference = f" (🕗 Took {get_date_difference_summary(completed - created)})"
+                difference = f" (🕗 {get_date_difference_summary(completed - created)})"
             elif created:
-                difference = f" (🕗 Started {get_date_difference_summary(now - created)} ago)"
+                difference = f" (⟲ {get_date_difference_summary(now - created)} ago)"
             else:
                 difference = ""
             messages.append(f"&ensp;{icon} {step.get('name')}{difference}")

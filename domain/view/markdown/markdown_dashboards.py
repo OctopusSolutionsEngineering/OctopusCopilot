@@ -372,9 +372,9 @@ def build_job_status(job):
     created = parse_unknown_format_date(job.get("started_at"))
     completed = parse_unknown_format_date(job.get("completed_at"))
     if completed and created:
-        difference = f" (🕗 Took {get_date_difference_summary(completed - created)})"
+        difference = f" (🕗 {get_date_difference_summary(completed - created)})"
     elif created:
-        difference = f" (🕗 Started {get_date_difference_summary(now - created)} ago)"
+        difference = f" (⟲ {get_date_difference_summary(now - created)} ago)"
     else:
         difference = ""
     return f"{get_github_state_icon(job.get('status'), job.get('conclusion'))} {job.get('name')}{difference}"

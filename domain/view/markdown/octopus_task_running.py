@@ -25,9 +25,9 @@ def activity_logs_to_running(log_item):
             created = parse_unknown_format_date(step.get("Started"))
             completed = parse_unknown_format_date(step.get("Ended"))
             if completed and created:
-                difference = f" (🕗 Took {get_date_difference_summary(completed - created)})"
+                difference = f" (🕗 {get_date_difference_summary(completed - created)})"
             elif created:
-                difference = f" (🕗 Started {get_date_difference_summary(now - created)} ago)"
+                difference = f" (⟲ {get_date_difference_summary(now - created)} ago)"
             else:
                 difference = ""
 
