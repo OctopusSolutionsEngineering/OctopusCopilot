@@ -10,12 +10,13 @@ def logs_cli_callback(api_key, url, get_default_argument, logging):
                                      steps, lines):
         space = get_default_argument(space, 'Space')
 
-        activity_logs, actual_release_version = get_deployment_logs(space, get_item_or_none(sanitize_list(projects), 0),
-                                                                    get_item_or_none(sanitize_list(environments), 0),
-                                                                    get_item_or_none(sanitize_list(tenants), 0),
-                                                                    release,
-                                                                    api_key,
-                                                                    url)
+        _, activity_logs, actual_release_version = get_deployment_logs(space,
+                                                                       get_item_or_none(sanitize_list(projects), 0),
+                                                                       get_item_or_none(sanitize_list(environments), 0),
+                                                                       get_item_or_none(sanitize_list(tenants), 0),
+                                                                       release,
+                                                                       api_key,
+                                                                       url)
 
         sanitized_steps = sanitize_log_steps(steps, original_query, activity_logs)
 

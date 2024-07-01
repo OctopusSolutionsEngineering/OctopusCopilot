@@ -4,7 +4,7 @@ from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import get_item_or_none
 from domain.tools.debug import get_params_message
 from domain.view.markdown.octopus_task_summary import activity_logs_to_summary
-from infrastructure.octopus import get_deployment_logs
+from infrastructure.octopus import get_deployment_logs, get_artifacts
 
 
 def get_task_summary_callback(github_user, api_key, url, log_query=None):
@@ -40,7 +40,7 @@ def get_task_summary_callback(github_user, api_key, url, log_query=None):
                 Environment Name: {sanitized_environment_names}
                 Tenant Name: {sanitized_tenant_names}""")
 
-        activity_logs, actual_release_version = timing_wrapper(
+        task, activity_logs, actual_release_version = timing_wrapper(
             lambda: get_deployment_logs(
                 space_name,
                 sanitized_project_names[0],
@@ -50,6 +50,8 @@ def get_task_summary_callback(github_user, api_key, url, log_query=None):
                 api_key,
                 url),
             "Deployment logs")
+
+        artifacts = timing_wrapper(lambda: get_artifacts(space_id, task["Id"], api_key, url), "Artifacts")
 
         debug_text.extend(get_params_message(github_user,
                                              False,
@@ -61,7 +63,7 @@ def get_task_summary_callback(github_user, api_key, url, log_query=None):
                                              tenant_name=sanitized_tenant_names,
                                              release_version=actual_release_version))
 
-        response = [activity_logs_to_summary(activity_logs)]
+        response = [activity_logs_to_summary(activity_logs, url, artifacts)]
         response.extend(warnings)
         response.extend(debug_text)
 

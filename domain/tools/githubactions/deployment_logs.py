@@ -68,7 +68,7 @@ def logs_callback(github_user, api_key, url, log_query):
         tenant = get_default_argument(github_user,
                                       get_item_or_none(sanitize_tenants(tenants), 0), "Tenant")
 
-        activity_logs, actual_release_version = timing_wrapper(
+        _, activity_logs, actual_release_version = timing_wrapper(
             lambda: get_deployment_logs(space, project, environment, tenant, release, api_key, url),
             "Deployment logs")
 

@@ -171,13 +171,13 @@ class OctopusAPIRequests(unittest.TestCase):
         deployment = create_and_deploy_release(space_name="Simple")
         wait_for_task(deployment["TaskId"], space_name="Simple")
 
-        activity_logs, actual_release_version = get_deployment_logs("Simple",
-                                                                    "Deploy Web App Container",
-                                                                    "Development",
-                                                                    None,
-                                                                    "latest",
-                                                                    Octopus_Api_Key,
-                                                                    Octopus_Url)
+        _, activity_logs, actual_release_version = get_deployment_logs("Simple",
+                                                                       "Deploy Web App Container",
+                                                                       "Development",
+                                                                       None,
+                                                                       "latest",
+                                                                       Octopus_Api_Key,
+                                                                       Octopus_Url)
 
         logs = activity_logs_to_string(activity_logs, None)
 
@@ -395,9 +395,10 @@ class OctopusAPIRequests(unittest.TestCase):
         deployment = create_and_deploy_release(space_name="Simple")
         wait_for_task(deployment["TaskId"], space_name="Simple")
 
-        activity_logs, actual_release_version = get_deployment_logs("Simple", "Deploy Web App Container", "Development",
-                                                                    None, "latest",
-                                                                    Octopus_Api_Key, Octopus_Url)
+        _, activity_logs, actual_release_version = get_deployment_logs("Simple", "Deploy Web App Container",
+                                                                       "Development",
+                                                                       None, "latest",
+                                                                       Octopus_Api_Key, Octopus_Url)
 
         # Limit to the first step
         sanitized_logs = sanitize_log_steps(["Configure the load balancer"],

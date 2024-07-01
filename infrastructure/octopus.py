@@ -1084,7 +1084,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     task = json.loads(resp.data.decode("utf-8"))
 
-    return task["ActivityLogs"], actual_release_version
+    return task["Task"], task["ActivityLogs"], actual_release_version
 
 
 @retry(HTTPError, tries=3, delay=2)
@@ -1448,3 +1448,52 @@ async def get_release_async(space_id, release_id, api_key, octopus_url):
         async with aiohttp.ClientSession(headers=get_octopus_headers(api_key)) as session:
             async with session.get(str(api)) as response:
                 return await response.json()
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_artifacts(space_id, server_task, api_key, octopus_url):
+    """
+    Example JSON response:
+
+    {
+      "ItemType": "Artifact",
+      "TotalResults": 1,
+      "ItemsPerPage": 2147483647,
+      "NumberOfPages": 1,
+      "LastPageNumber": 0,
+      "Items": [
+        {
+          "Id": "Artifacts-20909",
+          "SpaceId": "Spaces-2328",
+          "Filename": "depscan-bom.json",
+          "Source": null,
+          "ServerTaskId": "ServerTasks-1026286",
+          "Created": "2024-07-01T01:34:25.016+00:00",
+          "LogCorrelationId": "ServerTasks-1026286_DE6PC89RYP/260eebeeae6e4a499a31e72e2a946c32/6625ae643de84ee696546178ced3ecaa",
+          "Links": {
+            "Self": "/api/Spaces-2328/artifacts/Artifacts-20909",
+            "Content": "/api/Spaces-2328/artifacts/Artifacts-20909/content"
+          }
+        }
+      ],
+      "Links": {
+        "Self": "/api/Spaces-2328/artifacts?skip=0&take=2147483647&regarding=ServerTasks-1026286&order=asc",
+        "Template": "/api/Spaces-2328/artifacts{?skip,take,regarding,ids,partialName,order}",
+        "Page.All": "/api/Spaces-2328/artifacts?skip=0&take=2147483647&regarding=ServerTasks-1026286&order=asc",
+        "Page.Current": "/api/Spaces-2328/artifacts?skip=0&take=2147483647&regarding=ServerTasks-1026286&order=asc",
+        "Page.Last": "/api/Spaces-2328/artifacts?skip=0&take=2147483647&regarding=ServerTasks-1026286&order=asc"
+      }
+    }
+
+    :param space_id: The space ID
+    :param server_task: The server task ID
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus server URL
+    :return:
+    """
+    base_url = f"api/{quote_safe(space_id)}/artifacts"
+    api = build_url(octopus_url, base_url, dict(regarding=server_task, take=TAKE_ALL))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+
+    return resp.json()
