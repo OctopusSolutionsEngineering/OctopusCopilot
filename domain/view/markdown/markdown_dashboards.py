@@ -351,7 +351,26 @@ def get_project_workflow_status(github_actions_statuses, project_id):
 
             if github_actions_status.get("CreatedAt"):
                 message.append(f"🕗 {get_date_difference_summary(now - github_actions_status.get('CreatedAt'))} ago")
+
+            # Print any jobs currently running
+            if github_actions_status.get("Jobs"):
+                for job in github_actions_status.get("Jobs").get("jobs"):
+                    if job.get("status") == "in_progress":
+                        message.append("&ensp;" + build_job_status(job))
     return message
+
+
+def build_job_status(job):
+    now = datetime.now(pytz.utc)
+    created = parse_unknown_format_date(job.get("started_at"))
+    completed = parse_unknown_format_date(job.get("completed_at"))
+    if completed and created:
+        difference = f" (🕗 Took {get_date_difference_summary(completed - created)})"
+    elif created:
+        difference = f" (🕗 Started {get_date_difference_summary(now - created)} ago)"
+    else:
+        difference = ""
+    return f"{get_github_state_icon(job.get('status'), job.get('conclusion'))} {job.get('name')}{difference}"
 
 
 def build_pr_response_for_project(pull_requests, project_id, github_repo):

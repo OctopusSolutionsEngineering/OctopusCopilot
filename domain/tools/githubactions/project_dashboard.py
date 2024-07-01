@@ -15,7 +15,7 @@ from domain.view.markdown.markdown_dashboards import get_project_dashboard_respo
     get_project_tenant_progression_response
 from domain.view.markdown.octopus_task_running import activity_logs_to_running
 from infrastructure.github import get_workflow_run_async, get_open_pull_requests_async, get_open_issues_async, \
-    get_workflow_artifacts_async
+    get_workflow_artifacts_async, get_run_jobs_async
 from infrastructure.octopus import get_project, get_project_progression, \
     get_project_tenant_dashboard, get_release_github_workflow_async, get_task_details_async, activity_logs_to_string, \
     get_project_github_workflow
@@ -186,8 +186,11 @@ async def get_release_workflow_runs(release_workflows, github_token):
 
 async def get_workflow_status(release_id, owner, repo, run_id, github_token):
     try:
-        workflow = await get_workflow_run_async(owner, repo, run_id, github_token)
-        artifacts = await get_workflow_artifacts_async(owner, repo, run_id, github_token)
+        workflow, artifacts, jobs = await asyncio.gather(
+            get_workflow_run_async(owner, repo, run_id, github_token),
+            get_workflow_artifacts_async(owner, repo, run_id, github_token),
+            get_run_jobs_async(owner, repo, run_id, github_token)
+        )
         return {"ReleaseId": release_id,
                 "Status": workflow.get("status"),
                 "CreatedAt": parse_unknown_format_date(workflow.get("created_at")),
@@ -199,7 +202,8 @@ async def get_workflow_status(release_id, owner, repo, run_id, github_token):
                 "Artifacts": list(map(lambda x: {"ReleaseId": release_id,
                                                  "Name": x.get("name"),
                                                  "Url": f"https://github.com/{owner}/{repo}/actions/runs/{run_id}/artifacts/{x.get('id')}"},
-                                      artifacts["artifacts"]))}
+                                      artifacts["artifacts"])),
+                "Jobs": jobs}
     except Exception as e:
         # Silent fail, and fall back to returning blank result
         logger.error(e)
