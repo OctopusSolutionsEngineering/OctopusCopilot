@@ -1,6 +1,6 @@
 terraform {
   required_providers {
-    octopusdeploy = { source = "OctopusDeployLabs/octopusdeploy", version = "0.20.0" }
+    octopusdeploy = { source = "OctopusDeployLabs/octopusdeploy", version = "0.21.5" }
   }
 }
 
@@ -31,8 +31,8 @@ variable "octopus_space_id" {
 }
 
 resource "octopusdeploy_user_role" "copilotrole" {
-  can_be_deleted            = true
-  description               = "A read only role used by the copilot service account."
+  can_be_deleted = true
+  description    = "A read only role used by the copilot service account."
   granted_space_permissions = [
     "AccountView", "ActionTemplateView", "ArtifactView", "CertificateView", "DeploymentView", "EnvironmentView",
     "EventView", "FeedView", "GitCredentialView", "InsightsReportView", "InterruptionView", "LibraryVariableSetView",
@@ -40,8 +40,8 @@ resource "octopusdeploy_user_role" "copilotrole" {
     "ReleaseView", "RunbookRunView", "RunbookView", "SubscriptionView", "TaskView", "TeamView", "TenantView",
     "TriggerView", "VariableView", "VariableViewUnscoped", "WorkerView"
   ]
-  granted_system_permissions    = []
-  name                          = "Copilot"
+  granted_system_permissions = []
+  name = "Copilot"
   space_permission_descriptions = []
 }
 
@@ -54,7 +54,7 @@ resource "octopusdeploy_user" "copilot" {
 }
 
 resource "octopusdeploy_team" "copilot" {
-  name  = "Copilot"
+  name = "Copilot"
   users = [octopusdeploy_user.copilot.id]
   user_role {
     space_id     = var.octopus_space_id

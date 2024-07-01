@@ -31,7 +31,7 @@ def get_summary(log_item, depth, url=None, artifacts=None, step=None):
 
     # Link artifacts
     if artifacts and url:
-        messages.extend(map(lambda a: f"{'&ensp;' * (depth + 1)}💾 [{a['Filename']}]({url}{a['Content']})",
+        messages.extend(map(lambda a: f"{'&ensp;' * (depth + 1)}💾 [{a['Filename']}]({url}{a['Links']['Content']})",
                             filter(lambda x: x["LogCorrelationId"] == log_item["Id"], artifacts["Items"])))
 
     # Show highlights
