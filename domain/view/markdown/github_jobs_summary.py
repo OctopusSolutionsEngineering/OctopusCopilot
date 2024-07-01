@@ -1,3 +1,9 @@
+from datetime import datetime
+
+import pytz
+
+from domain.date.date_difference import get_date_difference_summary
+from domain.date.parse_dates import parse_unknown_format_date
 from domain.view.markdown.markdown_icons import get_github_state_icon
 
 
@@ -10,11 +16,15 @@ def github_jobs_to_summary(jobs):
     if not jobs:
         return ""
 
+    now = datetime.now(pytz.utc)
+
     messages = []
     for job in jobs.get("jobs", []):
         icon = get_github_state_icon(job.get("status"), job.get("conclusion"))
         messages.append(f"{icon} {job.get('name')}")
         for step in job.get("steps", []):
             icon = get_github_state_icon(step.get("status"), step.get("conclusion"))
-            messages.append(f"&ensp;{icon} {step.get('name')}")
+            created = parse_unknown_format_date(step.get("started_at"))
+            difference = f" Started {get_date_difference_summary(now - created)}" if created else ""
+            messages.append(f"&ensp;{icon} {step.get('name')}{difference}")
     return "\n\n".join(messages)

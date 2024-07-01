@@ -22,7 +22,7 @@ def answer_project_deployment_logs_wrapper(query, callback, logging):
         """
 
         if logging:
-            logging("Enter:", "answer_logs_usage")
+            logging("Enter:", "answer_project_deployment_logs")
 
         for key, value in kwargs.items():
             if logging:

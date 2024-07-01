@@ -103,11 +103,12 @@ class CopilotChatNoDefaultsTest(unittest.TestCase):
         wait_for_task(deployment["TaskId"], space_name="Simple")
 
         # Use fuzzy matching for project and space
-        prompt = "Print the last 30 lines from the logs of the latest deployment of the project called \"Deploy Web App Container blah\" to the \"Development\" environment in the \"Simpleish\" space."
+        prompt = "Print the last 30 lines from the logs of the latest deployment of the project called \"Deploy Web App Container blah\" to the \"Development\" environment in the space called \"Simpleish\"."
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("the space has no projects" not in response_text.casefold(), "Response was " + response_text)
+        print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):

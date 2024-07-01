@@ -17,10 +17,15 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
         """
         return provide_help()
 
+    def what_can_i_ask():
+        """Responds to questions like "What questions can I ask?"
+        """
+        return provide_help()
+
     def provide_help():
         """Provide help and example queries, answers questions about what the agent does,
         responds to greetings, responds to a prompt like "hello" or "hi",
-        answers questions like "What do you do?" or "How do I get started?" or "how can I use this?" or "What questions can I ask?",,
+        answers questions like "What do you do?" or "How do I get started?" or "how can I use this?" or "What questions can I ask?",
         provides details on how to get started, provides details on how to use the agent, and provides documentation and support.
         """
 
@@ -120,4 +125,4 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
         return CopilotResponse(
             "See the [documentation](https://octopus.com/docs/administration/copilot) for more information.")
 
-    return provide_help, say_hello, what_do_you_do
+    return provide_help, say_hello, what_do_you_do, what_can_i_ask

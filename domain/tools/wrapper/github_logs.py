@@ -4,7 +4,7 @@ from domain.messages.github_logs import build_github_logs_prompt
 def answer_github_logs_wrapper(query, callback, logging):
     def answer_github_logs(owner=None, repo=None, workflow=None, steps=None, lines=None, **kwargs):
         """Answers a query about the logs of a github workflow run.
-        Use this function when the prompt asks anything about github logs. Some example prompts are:
+        Use this function when the prompt asks anything about logs for github, repos, or workflows. Some example prompts are:
         * Print the last 30 lines of text from the logs of the "build.yaml" workflow in the "MyOrganisation/MyRepo" repository.
         * Print the last 30 lines of text from the logs of the "build.yaml" workflow in the "MyOrganisation" organisation and "MyRepo" repository.
         * Summarize the deployment logs of the latest logs of the "build.yaml" workflow in the "MyOrganisation/MyRepo" repository.
@@ -12,7 +12,7 @@ def answer_github_logs_wrapper(query, callback, logging):
 
         Args:
         owner: GitHub owner
-        repo: github repo
+        repo: GitHub repo
         workflow: GitHub workflow filename or ID
         steps: the step names or indexes to get logs from
         lines: the number of lines from the log file to return
