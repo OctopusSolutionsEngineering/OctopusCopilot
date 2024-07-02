@@ -121,7 +121,7 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
 
                     messages = [
                         f"{icon} [{last_deployment['ReleaseVersion']}]({url})",
-                        f"🕗 {difference} ago"]
+                        f"⟲ {difference} ago"]
 
                     table += f"| {'<br/>'.join(messages)}"
                 else:
@@ -178,15 +178,15 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
 
                     release_details.append(f"⟲ {difference} ago")
 
-                    # Find the associated github workflow and build a link
-                    release_details.extend(get_workflow_link(release_workflow_runs, release["Release"]["Id"]))
-
                     # Find any highlights in the logs
                     release_details.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
 
                     # Find any artifacts in
                     release_details.extend(
                         get_artifacts(deployment_highlights, octopus_url, deployment["DeploymentId"]))
+
+                    # Find the associated github workflow and build a link
+                    release_details.extend(get_workflow_link(release_workflow_runs, release["Release"]["Id"]))
 
                     table += f"| {'<br/>'.join(release_details)}"
             else:
@@ -274,14 +274,14 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                     release_details.extend([f"🔀 {channel['Name']}",
                                             f"⟲ {difference} ago"])
 
-                    # Find the associated github workflow and build a link
-                    release_details.extend(get_workflow_link(release_workflow_runs, deployment["ReleaseId"]))
-
                     # Find any highlights in the logs
                     release_details.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
 
                     # Find any artifacts in
                     release_details.extend(get_artifacts(deployment_highlights, url, deployment["DeploymentId"]))
+
+                    # Find the associated github workflow and build a link
+                    release_details.extend(get_workflow_link(release_workflow_runs, deployment["ReleaseId"]))
 
                     columns.append("<br/>".join(release_details))
                     found = True
@@ -357,7 +357,8 @@ def get_project_workflow_status(github_actions_statuses, project_id):
         if github_actions_status:
             message.append(
                 f"{get_github_state_icon(github_actions_status.get('Status'), github_actions_status.get('Conclusion'))} "
-                + f"[{github_actions_status.get('Name')} {github_actions_status.get('ShortSha')}]({github_actions_status.get('Url')}) (🕗 {get_date_difference_summary(now - github_actions_status.get('CreatedAt'))} ago)")
+                + f"[{github_actions_status.get('Name')} {github_actions_status.get('ShortSha')}]({github_actions_status.get('Url')}) "
+                + f"(⟲ {get_date_difference_summary(now - github_actions_status.get('CreatedAt'))} ago)")
 
             # Print any jobs currently running
             if github_actions_status.get("Jobs"):
@@ -448,7 +449,7 @@ def get_artifact_links(release_workflow_artifacts, release_id):
 
 def get_highlights(deployment_highlights, deployment_id):
     return list(map(lambda x: x['Highlights'],
-                    filter(lambda x: x and x["DeploymentId"] == deployment_id,
+                    filter(lambda x: x and x["DeploymentId"] == deployment_id and x['Highlights'],
                            deployment_highlights or [])))
 
 
