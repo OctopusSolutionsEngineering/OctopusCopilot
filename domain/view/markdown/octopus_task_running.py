@@ -22,11 +22,12 @@ def activity_logs_to_running(log_item):
             icon = get_activity_log_state_icon(step['Status'])
 
             now = datetime.now(pytz.utc)
+            # Created will be 0001-01-01T00:00:00 if the task has not started yet
             created = parse_unknown_format_date(step.get("Started"))
             completed = parse_unknown_format_date(step.get("Ended"))
             if completed and created:
                 difference = f" (🕗 {get_date_difference_summary(completed - created)})"
-            elif created and created < now:
+            elif created and created.year != 1:
                 difference = f" (⟲ {get_date_difference_summary(now - created)} ago)"
             else:
                 difference = ""
