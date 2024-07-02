@@ -121,7 +121,7 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
 
                     messages = [
                         f"{icon} [{last_deployment['ReleaseVersion']}]({url})",
-                        f"🕗 {difference} ago"]
+                        f"⟲ {difference} ago"]
 
                     table += f"| {'<br/>'.join(messages)}"
                 else:
