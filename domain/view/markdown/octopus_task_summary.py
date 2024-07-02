@@ -29,15 +29,15 @@ def get_summary(log_item, depth, url=None, artifacts=None, step=None):
 
     messages = [f"{'&ensp;' * depth}{icon} {log_item['Name']}{difference}"]
 
-    # Link artifacts
-    if artifacts and url:
-        messages.extend(map(lambda a: f"{'&ensp;' * (depth + 1)}💾 [{a['Filename']}]({url}{a['Links']['Content']})",
-                            filter(lambda x: x["LogCorrelationId"] == log_item["Id"], artifacts["Items"])))
-
     # Show highlights
     filtered_logs = list(filter(lambda x: x["Category"] == "Highlight", log_item["LogElements"]))
 
     messages.extend(list(map(lambda e: f"{'&ensp;' * (depth + 1)}{e['MessageText']}", filtered_logs)))
+
+    # Link artifacts
+    if artifacts and url:
+        messages.extend(map(lambda a: f"{'&ensp;' * (depth + 1)}💾 [{a['Filename']}]({url}{a['Links']['Content']})",
+                            filter(lambda x: x["LogCorrelationId"] == log_item["Id"], artifacts["Items"])))
 
     logs = "\n\n".join(messages)
 
