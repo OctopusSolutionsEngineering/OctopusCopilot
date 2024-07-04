@@ -52,7 +52,7 @@ class OctopusAPIRequests(unittest.TestCase):
                                          "Server=" + mssql_ip + ",1433;Database=OctopusDeploy;User=sa;Password=Password01!").with_env(
             "ADMIN_API_KEY", Octopus_Api_Key).with_env("DISABLE_DIND", "Y").with_env(
             "ADMIN_USERNAME", "admin").with_env("ADMIN_PASSWORD", "Password01!").with_env(
-            "OCTOPUS_SERVER_BASE64_LICENSE", os.environ["LICENSE"])
+            "OCTOPUS_SERVER_BASE64_LICENSE", os.environ["LICENSE"]).with_env("ENABLE_USAGE", "N")
         cls.octopus.start()
         wait_for_logs(cls.octopus, "Web server is ready to process requests")
 
