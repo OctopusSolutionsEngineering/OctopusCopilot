@@ -26,7 +26,6 @@ class SanitizeTests(unittest.TestCase):
         self.assertEqual('item1', get_item_or_none(['item1'], 0))
         self.assertEqual(None, get_item_or_none(['item1'], 1))
 
-
     def test_is_re_match(self):
         self.assertTrue(is_re_match('item1', 'item[0-9]'))
         self.assertFalse(is_re_match('item1', 'item[a-z]'))
