@@ -299,6 +299,8 @@ def is_re_match(entry, ignored_re):
 
 def get_item_or_none(array, index):
     try:
+        if not array:
+            return None
         return array[index]
     except IndexError:
         return None
