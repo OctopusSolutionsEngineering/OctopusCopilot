@@ -63,6 +63,18 @@ class CopilotChatTest(unittest.TestCase):
                                 "environment",
                                 "Development",
                                 os.environ["AzureWebJobsStorage"])
+            save_default_values(github_user,
+                                "owner",
+                                "OctopusSolutionsEngineering",
+                                os.environ["AzureWebJobsStorage"])
+            save_default_values(github_user,
+                                "repository",
+                                "OctopusCopilot",
+                                os.environ["AzureWebJobsStorage"])
+            save_default_values(github_user,
+                                "workflow",
+                                "build.yaml",
+                                os.environ["AzureWebJobsStorage"])
         except Exception as e:
             print(
                 "The tests will fail because Azurite is not running. Run Azureite with: "
@@ -140,6 +152,14 @@ class CopilotChatTest(unittest.TestCase):
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("Development" in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_default_owner(self):
+        prompt = "Get default owner."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        self.assertTrue("OctopusSolutionsEngineering" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_space_lookup(self):

@@ -1,5 +1,6 @@
 import asyncio
 
+from domain.defaults.defaults import get_default_argument
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import get_item_or_none
@@ -19,12 +20,15 @@ def get_job_summary_callback(github_user, github_token, log_query=None):
                                         workflow=workflow,
                                         run_id=run_id)
 
+        owner = get_default_argument(github_user, owner, "Owner")
         if not owner:
             return CopilotResponse("You must specify a repository owner.")
 
+        repo = get_default_argument(github_user, repo, "Repository")
         if not repo:
             return CopilotResponse("You must specify a repository.")
 
+        workflow = get_default_argument(github_user, workflow, "Workflow")
         if not workflow:
             return CopilotResponse("You must specify a workflow, for example build.yaml or test.yaml.")
 
