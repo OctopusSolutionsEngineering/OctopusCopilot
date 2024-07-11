@@ -6,6 +6,7 @@ from domain.logging.query_loggin import log_query
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import sanitize_list
 from domain.tools.cli.general_query_cli import general_query_cli_callback
+from domain.tools.cli.github_job_summary import get_job_summary_cli_callback
 from domain.tools.cli.how_to import how_to_cli_callback
 from domain.tools.cli.logs import logs_cli_callback
 from domain.tools.cli.releases_query_cli import releases_query_cli_callback
@@ -16,6 +17,7 @@ from domain.tools.githubactions.project_dashboard import get_project_dashboard_c
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
 from domain.tools.wrapper.function_definition import FunctionDefinitions, FunctionDefinition
 from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.wrapper.github_job_summary_wrapper import show_github_job_summary_wrapper
 from domain.tools.wrapper.how_to import how_to_wrapper
 from domain.tools.wrapper.project_dashboard_wrapper import show_project_dashboard_wrapper
 from domain.tools.wrapper.project_logs import answer_project_deployment_logs_wrapper
@@ -57,6 +59,13 @@ def get_github_token():
     :return: The Octopus API key
     """
     return os.environ.get('GH_TEST_TOKEN')
+
+def get_github_user():
+    """
+    A function that extracts the Github token from an environment variable
+    :return: The Octopus API key
+    """
+    return os.environ.get('TEST_GH_USER')
 
 
 def get_octopus_api():
@@ -110,7 +119,8 @@ def build_tools(tool_query):
         FunctionDefinition(show_project_dashboard_wrapper(tool_query,
                                                           get_api_key(),
                                                           get_octopus_api(),
-                                                          get_project_dashboard_callback(None), log_query)),
+                                                          get_project_dashboard_callback(get_github_user(),
+                                                                                    get_github_token()), log_query)),
         FunctionDefinition(answer_project_variables_usage_wrapper(tool_query,
                                                                   variable_query_cli_callback(get_api_key(),
                                                                                               get_octopus_api(),
@@ -146,6 +156,11 @@ def build_tools(tool_query):
                                                        resource_specific_cli_callback(get_api_key(),
                                                                                       get_octopus_api(),
                                                                                       get_default_argument,
+                                                                                      log_query),
+                                                       log_query)),
+        FunctionDefinition(show_github_job_summary_wrapper(tool_query,
+                                                       get_job_summary_cli_callback(get_github_user(),
+                                                                                    get_github_token(),
                                                                                       log_query),
                                                        log_query))],
         fallback=FunctionDefinitions(help_functions)
