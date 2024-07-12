@@ -60,6 +60,7 @@ def get_github_token():
     """
     return os.environ.get('GH_TEST_TOKEN')
 
+
 def get_github_user():
     """
     A function that extracts the Github token from an environment variable
@@ -120,7 +121,8 @@ def build_tools(tool_query):
                                                           get_api_key(),
                                                           get_octopus_api(),
                                                           get_project_dashboard_callback(get_github_user(),
-                                                                                    get_github_token()), log_query)),
+                                                                                         get_github_token()),
+                                                          log_query)),
         FunctionDefinition(answer_project_variables_usage_wrapper(tool_query,
                                                                   variable_query_cli_callback(get_api_key(),
                                                                                               get_octopus_api(),
@@ -159,10 +161,10 @@ def build_tools(tool_query):
                                                                                       log_query),
                                                        log_query)),
         FunctionDefinition(show_github_job_summary_wrapper(tool_query,
-                                                       get_job_summary_cli_callback(get_github_user(),
-                                                                                    get_github_token(),
-                                                                                      log_query),
-                                                       log_query))],
+                                                           get_job_summary_cli_callback(get_github_user(),
+                                                                                        get_github_token(),
+                                                                                        log_query),
+                                                           log_query))],
         fallback=FunctionDefinitions(help_functions)
     )
 
