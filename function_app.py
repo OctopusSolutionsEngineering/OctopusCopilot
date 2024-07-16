@@ -469,7 +469,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
     except ValueError as e:
         # Assume this is the error "Azure has not provided the response due to a content filter being triggered"
         # from azure_openai.py in langchain.
-        handle_value_error(e)
+        return handle_value_error(e)
     except Exception as e:
         return handle_exception(e)
 
