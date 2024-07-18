@@ -10,7 +10,7 @@ def is_admin_user(user, get_admin_users):
     """
     Check if the user is an admin.
     :param user: A function returning the current user
-    :param get_admin_users: A function returning a JSON list of users
+    :param get_admin_users: A json string representing a list of admin users
     :return: The value returned by the callback
     """
 

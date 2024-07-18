@@ -1322,8 +1322,27 @@ def get_tenant_fuzzy_cached(space_id, tenant_name, api_key, octopus_url):
 def get_channel(space_id, channel_id, api_key, octopus_url):
     api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Channels/{quote_safe(channel_id)}")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+
     return resp.json()
 
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_default_channel(space_id, project_id, api_key, octopus_url):
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/Channels")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    channels = resp.json()
+    default_channel = [channel for channel in channels['Items'] if channel['IsDefault']]
+    if len(default_channel) == 0:
+        raise ResourceNotFound("Default Channel", project_id)
+
+    return default_channel[0]
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_release_template(space_id, project_id, channel_id, api_key, octopus_url):
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/deploymentprocesses/deploymentprocess-{quote_safe(project_id)}/template?channel={quote_safe(channel_id)}")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()
 
 @logging_wrapper
 def get_channel_cached(space_id, channel_id, api_key, octopus_url):
@@ -1435,6 +1454,46 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
 
     return response.json()
 
+@logging_wrapper
+def create_release_fuzzy(space_id, project_name, my_api_key,
+                                my_octopus_api, log_query=None):
+    """
+    Creates a release
+    """
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (run_published_runbook_fuzzy).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (run_published_runbook_fuzzy).')
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (run_published_runbook_fuzzy).')
+    ensure_string_not_empty(project_name, 'project_name must be the project (run_published_runbook_fuzzy).')
+
+    project = get_project_fuzzy(space_id, project_name, my_api_key, my_octopus_api)
+
+    base_url = f"api/{quote_safe(space_id)}/releases"
+    api = build_url(my_octopus_api, base_url)
+
+    # Get Channel
+    channel = get_default_channel(space_id, project['Id'], my_api_key, my_octopus_api)
+
+    # Get Template
+    release_template = get_release_template(space_id, project['Id'], channel['Id'], my_api_key, my_octopus_api)
+
+    release_request = {
+        'ChannelId': channel['Id'],
+        'ProjectId': project['Id'],
+        'Version': release_template['NextVersionIncrement'],
+        'VersionControlReference': None,
+        'SelectedPackages': []
+    }
+
+    if log_query:
+        log_query("create_release_fuzzy", f"""
+                    Space: {space_id}
+                    Project Names: {project_name}
+                    Project Id: {project['Id']}""")
+
+    response = handle_response(
+        lambda: http.request("POST", api, json=release_request, headers=get_octopus_headers(my_api_key)))
+
+    return response.json()
 
 async def get_release_async(space_id, release_id, api_key, octopus_url):
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_release_async).')

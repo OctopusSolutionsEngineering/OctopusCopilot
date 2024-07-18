@@ -608,6 +608,31 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue("Backup Database" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_create_release(self):
+        prompt = "Create release in the \"Deploy Web App Container\" project"
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode('utf8'))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {"messages": [{
+            "role": "user",
+            "content": "",
+            "copilot_references": None,
+            "copilot_confirmations": [
+                {
+                    "state": "accepted",
+                    "confirmation": {
+                        "id": confirmation_id
+                    }
+                }
+            ]
+        }]}
+
+        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
+        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
+        self.assertTrue("Deploy Web App Container" in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         create_and_deploy_release(space_name="Simple", release_version=version)

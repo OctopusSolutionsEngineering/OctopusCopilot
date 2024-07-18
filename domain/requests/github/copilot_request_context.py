@@ -4,11 +4,14 @@ import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
 from domain.config.database import get_functions_connection_string
+from domain.config.users import get_admin_users
 from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
+from domain.security.security import is_admin_user
+from domain.tools.githubactions.create_release import create_release_wrapper, create_release_confirm_callback_wrapper
 from domain.tools.githubactions.dashboard import get_dashboard_callback
 from domain.tools.githubactions.default_values import default_value_callbacks
 from domain.tools.githubactions.deployment_logs import logs_callback
@@ -246,6 +249,15 @@ def build_form_tools(query, req: func.HttpRequest):
             get_functions_connection_string(),
             log_query),
             callback=run_runbook_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query)),
+        FunctionDefinition(create_release_wrapper(
+            url,
+            api_key,
+            get_github_user_from_form(req),
+            query,
+            get_functions_connection_string(),
+            log_query),
+            callback=create_release_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query),
+            is_enabled=is_admin_user(get_github_user_from_form(req),get_admin_users())),
         FunctionDefinition(
             show_github_job_summary_wrapper(query,
                                             get_job_summary_callback(get_github_user_from_form(req),
