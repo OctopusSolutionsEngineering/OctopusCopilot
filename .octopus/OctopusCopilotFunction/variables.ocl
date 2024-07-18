@@ -10,10 +10,6 @@ variable "Application.Staging.HealthCheck[OLD]" {
     value "https://octopuscopilotproduction-staging.azurewebsites.net/api/health" {}
 }
 
-variable "Application.Users.Admin" {
-    value "[160104]" {}
-}
-
 variable "Azure.Function.Name[OLD]" {
     value "octopuscopilotproduction" {}
 }
@@ -42,4 +38,8 @@ variable "Slack.Webhook.Url" {
 
 variable "SystemVariable" {
     value "octoterra" {}
+}
+
+variable "Application.Users.Admin" {
+    value "[160104, 1418993]" {}
 }
