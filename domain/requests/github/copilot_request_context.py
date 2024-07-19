@@ -257,7 +257,7 @@ def build_form_tools(query, req: func.HttpRequest):
             get_functions_connection_string(),
             log_query),
             callback=create_release_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query),
-            is_enabled=is_admin_user(get_github_user_from_form(req),get_admin_users())),
+            is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users())),
         FunctionDefinition(
             show_github_job_summary_wrapper(query,
                                             get_job_summary_callback(get_github_user_from_form(req),

@@ -22,13 +22,13 @@ def create_release_confirm_callback_wrapper(github_user, url, api_key, log_query
         response_text = []
 
         response = create_release_fuzzy(space_id,
-                                               project_name,
-                                               api_key,
-                                               url,
-                                               log_query)
+                                        project_name,
+                                        api_key,
+                                        url,
+                                        log_query)
 
         response_text.append(
-            f"\n\n[Release]({url}/app#/{space_id}/projects/{project_id}/deployments/releases/{response['Version']})")
+            f"{project_name}\n\n[Release {response['Version']}]({url}/app#/{space_id}/projects/{project_id}/deployments/releases/{response['Version']})")
 
         response_text.extend(debug_text)
         return CopilotResponse("\n\n".join(response_text))
@@ -72,7 +72,6 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
                       json.dumps(arguments),
                       original_query,
                       connection_string)
-
 
         return CopilotResponse("Create a release",
                                f"Do you want to continue to create a release "

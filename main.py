@@ -63,7 +63,7 @@ def get_github_token():
 
 def get_github_user():
     """
-    A function that extracts the Github token from an environment variable
+    A function that extracts the GitHub token from an environment variable
     :return: The Octopus API key
     """
     return os.environ.get('TEST_GH_USER')
@@ -71,7 +71,7 @@ def get_github_user():
 
 def get_octopus_api():
     """
-    A function that extarcts the Octopus URL from an environment variable
+    A function that extracts the Octopus URL from an environment variable
     :return: The Octopus URL
     """
     return os.environ.get('OCTOPUS_CLI_SERVER')
