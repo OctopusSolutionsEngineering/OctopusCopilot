@@ -1325,6 +1325,7 @@ def get_channel(space_id, channel_id, api_key, octopus_url):
 
     return resp.json()
 
+
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_default_channel(space_id, project_id, api_key, octopus_url):
@@ -1337,12 +1338,15 @@ def get_default_channel(space_id, project_id, api_key, octopus_url):
 
     return default_channel[0]
 
+
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_release_template(space_id, project_id, channel_id, api_key, octopus_url):
-    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/deploymentprocesses/deploymentprocess-{quote_safe(project_id)}/template?channel={quote_safe(channel_id)}")
+    api = build_url(octopus_url,
+                    f"api/{quote_safe(space_id)}/deploymentprocesses/deploymentprocess-{quote_safe(project_id)}/template?channel={quote_safe(channel_id)}")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     return resp.json()
+
 
 @logging_wrapper
 def get_channel_cached(space_id, channel_id, api_key, octopus_url):
@@ -1454,9 +1458,10 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
 
     return response.json()
 
+
 @logging_wrapper
 def create_release_fuzzy(space_id, project_name, my_api_key,
-                                my_octopus_api, log_query=None):
+                         my_octopus_api, log_query=None):
     """
     Creates a release
     """
@@ -1494,6 +1499,7 @@ def create_release_fuzzy(space_id, project_name, my_api_key,
         lambda: http.request("POST", api, json=release_request, headers=get_octopus_headers(my_api_key)))
 
     return response.json()
+
 
 async def get_release_async(space_id, release_id, api_key, octopus_url):
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_release_async).')
