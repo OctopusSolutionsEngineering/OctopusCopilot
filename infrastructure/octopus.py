@@ -1517,7 +1517,7 @@ def create_release_fuzzy(space_id, project_name, my_api_key,
                     Project Names: {project_name}
                     Project Id: {project['Id']}
                     Version: {release_version}
-                    Selected Packages: []""")
+                    Selected Packages: {",".join(map(lambda p: f"{p['ActionName']}:{p['Version']}" + (f" ({p['PackageReferenceName']})" if p['PackageReferenceName'] else ""), release_request['SelectedPackages']))}""")
 
     response = handle_response(
         lambda: http.request("POST", api, json=release_request, headers=get_octopus_headers(my_api_key)))
