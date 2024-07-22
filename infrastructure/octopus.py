@@ -1461,11 +1461,12 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_package(space_id, feed_id, package_id, api_key, octopus_url):
-    base_url = f'api/{quote_safe(space_id)}/feeds/{quote_safe(feed_id)}/packages/versions?packageId={quote_safe(package_id)}&take=1'
-    api = build_url(octopus_url, base_url)
+def get_packages(space_id, feed_id, package_id, api_key, octopus_url, take=1):
+    base_url = f'api/{quote_safe(space_id)}/feeds/{quote_safe(feed_id)}/packages/versions?packageId={quote_safe(package_id)}'
+    api = build_url(octopus_url, base_url, dict(take=take))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    return resp.json()
+    json = resp.json()
+    return json["Items"]
 
 
 @logging_wrapper
@@ -1502,12 +1503,12 @@ def create_release_fuzzy(space_id, project_name, my_api_key,
     }
 
     # Get default package versions
-    for package in release_template['Packages']:
-        default_package = get_package(space_id, project['Id'], package['FeedId'], package['PackageId'], my_api_key, my_octopus_api)
+    for template_package in release_template['Packages']:
+        packages = get_packages(space_id, project['Id'], template_package['FeedId'], template_package['PackageId'], my_api_key, my_octopus_api)
         selected_package = {
-            'ActionName': package['ActionName'],
-            'PackageReferenceName': package['PackageReferenceName'],
-            'Version': default_package['Version']
+            'ActionName': template_package['ActionName'],
+            'PackageReferenceName': template_package['PackageReferenceName'],
+            'Version': packages[0]['Version']
         }
         release_request['SelectedPackages'].append(selected_package)
 
