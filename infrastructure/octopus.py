@@ -1459,16 +1459,25 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
     return response.json()
 
 
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_package(space_id, feed_id, package_id, api_key, octopus_url):
+    base_url = f'api/{quote_safe(space_id)}/feeds/{quote_safe(feed_id)}/packages/versions?packageId={quote_safe(package_id)}&take=1'
+    api = build_url(octopus_url, base_url)
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()
+
+
 @logging_wrapper
 def create_release_fuzzy(space_id, project_name, my_api_key,
                          my_octopus_api, log_query=None):
     """
     Creates a release
     """
-    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (run_published_runbook_fuzzy).')
-    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (run_published_runbook_fuzzy).')
-    ensure_string_not_empty(space_id, 'space_id must be the space ID (run_published_runbook_fuzzy).')
-    ensure_string_not_empty(project_name, 'project_name must be the project (run_published_runbook_fuzzy).')
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (create_release_fuzzy).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (create_release_fuzzy).')
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (create_release_fuzzy).')
+    ensure_string_not_empty(project_name, 'project_name must be the project (create_release_fuzzy).')
 
     project = get_project_fuzzy(space_id, project_name, my_api_key, my_octopus_api)
 
@@ -1481,19 +1490,34 @@ def create_release_fuzzy(space_id, project_name, my_api_key,
     # Get Template
     release_template = get_release_template(space_id, project['Id'], channel['Id'], my_api_key, my_octopus_api)
 
+    release_version = release_template['NextVersionIncrement']
+
+    # Build release request
     release_request = {
         'ChannelId': channel['Id'],
         'ProjectId': project['Id'],
-        'Version': release_template['NextVersionIncrement'],
+        'Version': release_version,
         'VersionControlReference': None,
         'SelectedPackages': []
     }
+
+    # Get default package versions
+    for package in release_template['Packages']:
+        default_package = get_package(space_id, project['Id'], package['FeedId'], package['PackageId'], my_api_key, my_octopus_api)
+        selected_package = {
+            'ActionName': package['ActionName'],
+            'PackageReferenceName': package['PackageReferenceName'],
+            'Version': default_package['Version']
+        }
+        release_request['SelectedPackages'].append(selected_package)
 
     if log_query:
         log_query("create_release_fuzzy", f"""
                     Space: {space_id}
                     Project Names: {project_name}
-                    Project Id: {project['Id']}""")
+                    Project Id: {project['Id']}
+                    Version: {release_version}
+                    Selected Packages: []""")
 
     response = handle_response(
         lambda: http.request("POST", api, json=release_request, headers=get_octopus_headers(my_api_key)))
