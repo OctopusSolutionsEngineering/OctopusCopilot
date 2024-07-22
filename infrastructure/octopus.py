@@ -1462,8 +1462,8 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_packages(space_id, feed_id, package_id, api_key, octopus_url, take=1):
-    base_url = f'api/{quote_safe(space_id)}/feeds/{quote_safe(feed_id)}/packages/versions?packageId={quote_safe(package_id)}'
-    api = build_url(octopus_url, base_url, dict(take=take))
+    base_url = f'api/{quote_safe(space_id)}/feeds/{quote_safe(feed_id)}/packages/versions'
+    api = build_url(octopus_url, base_url, dict(take=take, packageId=quote_safe(package_id)))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     json = resp.json()
     return json["Items"]
@@ -1504,7 +1504,7 @@ def create_release_fuzzy(space_id, project_name, my_api_key,
 
     # Get default package versions
     for template_package in release_template['Packages']:
-        packages = get_packages(space_id, project['Id'], template_package['FeedId'], template_package['PackageId'], my_api_key, my_octopus_api)
+        packages = get_packages(space_id, template_package['FeedId'], template_package['PackageId'], my_api_key, my_octopus_api)
         selected_package = {
             'ActionName': template_package['ActionName'],
             'PackageReferenceName': template_package['PackageReferenceName'],
