@@ -133,8 +133,8 @@ step "deploy-with-cli" {
         worker_pool = "hosted-ubuntu"
 
         container {
-            feed = "docker-hub"
-            image = "octopuslabs/azure-workertools"
+            feed = "ghcr"
+            image = "ghcr.io/octopusdeploylabs/azure-workertools"
         }
 
         packages "Azure.Functions.Cli.linux-x64" {
@@ -202,8 +202,8 @@ step "run-an-azure-script" {
         worker_pool_variable = ""
 
         container {
-            feed = "docker-hub"
-            image = "octopusdeploy/worker-tools:6.1.1-ubuntu.22.04"
+            feed = "ghcr"
+            image = "ghcr.io/octopusdeploylabs/azure-workertools"
         }
     }
 }
@@ -341,8 +341,8 @@ step "remove-worker-access" {
         worker_pool = "hosted-ubuntu"
 
         container {
-            feed = "docker-hub"
-            image = "octopuslabs/azure-workertools"
+            feed = "ghcr"
+            image = "ghcr.io/octopusdeploylabs/azure-workertools"
         }
     }
 }
