@@ -1376,7 +1376,8 @@ def get_database_project_release_template(space_id, project_id, channel_id, api_
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_release_template_and_default_branch_canonical_name(space_id, project, channel_id, git_ref, api_key, octopus_url):
+def get_release_template_and_default_branch_canonical_name(space_id, project, channel_id, git_ref, api_key,
+                                                           octopus_url):
     default_branch_canonical_name = None
     if project['IsVersionControlled']:
         if not git_ref:
@@ -1526,7 +1527,7 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
 
 @logging_wrapper
 def create_release_fuzzy(space_id, project_name, git_ref, release_version, channel_name, my_api_key,
-                          my_octopus_api, log_query=None):
+                         my_octopus_api, log_query=None):
     """
     Creates a release
     """
@@ -1546,7 +1547,8 @@ def create_release_fuzzy(space_id, project_name, git_ref, release_version, chann
     else:
         channel = get_channel_by_name(space_id, project['Id'], channel_name, my_api_key, my_octopus_api)
 
-    release_template, _ = get_release_template_and_default_branch_canonical_name(space_id, project, channel['Id'], git_ref, my_api_key, my_octopus_api)
+    release_template, _ = get_release_template_and_default_branch_canonical_name(space_id, project, channel['Id'],
+                                                                                 git_ref, my_api_key, my_octopus_api)
 
     release_request = {
         'ChannelId': channel['Id'],

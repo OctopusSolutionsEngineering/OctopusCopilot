@@ -118,9 +118,9 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
                       connection_string)
 
         return CopilotResponse("Create a release",
-                               f"Do you want to continue to create a release " +
-                               f"in the project \"{sanitized_project_names[0]}\" with version \"{release_version}\" " +
-                               f"(GitRef \"{git_ref}\") " if git_ref else "" + f"in the space \"{actual_space_name}\"?",
+                               f"Do you want to continue to create a release "
+                               + f"in the project \"{sanitized_project_names[0]}\" with version \"{release_version}\" "
+                               + f"(GitRef \"{git_ref}\") " if git_ref else "" + f"in the space \"{actual_space_name}\"?",
                                "Please confirm the project name, release version, " + "git ref, " if git_ref else "" + "and space name are correct before proceeding.",
                                callback_id)
 
