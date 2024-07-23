@@ -133,8 +133,8 @@ step "deploy-with-cli" {
         worker_pool = "hosted-ubuntu"
 
         container {
-            feed = "docker-hub"
-            image = "octopuslabs/azure-workertools"
+            feed = "ghcr"
+            image = "ghcr.io/octopusdeploylabs/azure-workertools"
         }
 
         packages "Azure.Functions.Cli.linux-x64" {
@@ -202,8 +202,8 @@ step "run-an-azure-script" {
         worker_pool_variable = ""
 
         container {
-            feed = "docker-hub"
-            image = "octopusdeploy/worker-tools:6.1.1-ubuntu.22.04"
+            feed = "ghcr"
+            image = "ghcr.io/octopusdeploylabs/azure-workertools"
         }
     }
 }
@@ -235,7 +235,7 @@ step "security-scan" {
             Octopus.Action.Script.ScriptBody = <<-EOT
                 echo "Pulling Trivy Docker Image"
                 echo "##octopus[stdout-verbose]"
-                docker pull aquasec/trivy
+                docker pull ghcr.io/aquasecurity/trivy
                 echo "##octopus[stdout-default]"
                 
                 TIMESTAMP=$(date +%s%3N)
@@ -249,10 +249,10 @@ step "security-scan" {
                     fi
                 
                     # Generate the report, capturing the output, and ensuring $? is set to the exit code
-                    OUTPUT=$(bash -c "docker run --rm -v \"$PWD/${x}:/app/${x}\" aquasec/trivy sbom -q \"/app/${x}\"; exit \$?" 2>&1)
+                    OUTPUT=$(bash -c "docker run --rm -v \"$PWD/${x}:/app/${x}\" ghcr.io/aquasecurity/trivy sbom -q \"/app/${x}\"; exit \$?" 2>&1)
                 
                     # Run again to generate the JSON output (https://github.com/aquasecurity/trivy/issues/268)
-                    docker run --rm -v "$PWD:/app" aquasec/trivy sbom -q -f json -o /app/depscan-bom.json "/app/${x}"
+                    docker run --rm -v "$PWD:/app" ghcr.io/aquasecurity/trivy sbom -q -f json -o /app/depscan-bom.json "/app/${x}"
                 
                     new_octopusartifact $PWD/depscan-bom.json
                 
@@ -341,8 +341,8 @@ step "remove-worker-access" {
         worker_pool = "hosted-ubuntu"
 
         container {
-            feed = "docker-hub"
-            image = "octopuslabs/azure-workertools"
+            feed = "ghcr"
+            image = "ghcr.io/octopusdeploylabs/azure-workertools"
         }
     }
 }
