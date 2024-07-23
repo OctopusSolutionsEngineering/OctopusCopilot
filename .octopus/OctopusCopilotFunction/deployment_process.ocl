@@ -235,7 +235,7 @@ step "security-scan" {
             Octopus.Action.Script.ScriptBody = <<-EOT
                 echo "Pulling Trivy Docker Image"
                 echo "##octopus[stdout-verbose]"
-                docker pull aquasec/trivy
+                docker pull ghcr.io/aquasecurity/trivy
                 echo "##octopus[stdout-default]"
                 
                 TIMESTAMP=$(date +%s%3N)
@@ -249,10 +249,10 @@ step "security-scan" {
                     fi
                 
                     # Generate the report, capturing the output, and ensuring $? is set to the exit code
-                    OUTPUT=$(bash -c "docker run --rm -v \"$PWD/${x}:/app/${x}\" aquasec/trivy sbom -q \"/app/${x}\"; exit \$?" 2>&1)
+                    OUTPUT=$(bash -c "docker run --rm -v \"$PWD/${x}:/app/${x}\" ghcr.io/aquasecurity/trivy sbom -q \"/app/${x}\"; exit \$?" 2>&1)
                 
                     # Run again to generate the JSON output (https://github.com/aquasecurity/trivy/issues/268)
-                    docker run --rm -v "$PWD:/app" aquasec/trivy sbom -q -f json -o /app/depscan-bom.json "/app/${x}"
+                    docker run --rm -v "$PWD:/app" ghcr.io/aquasecurity/trivy sbom -q -f json -o /app/depscan-bom.json "/app/${x}"
                 
                     new_octopusartifact $PWD/depscan-bom.json
                 
