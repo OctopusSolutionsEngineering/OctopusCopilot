@@ -1397,7 +1397,7 @@ def get_release_template_and_default_branch_canonical_name(space_id, project, ch
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_project_version_controlled_branch(space_id, project_id, api_key, branch_name, octopus_url):
+def get_project_version_controlled_branch(space_id, project_id, branch_name, api_key, octopus_url):
     api = build_url(octopus_url,
                     f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/git/branches/{quote_safe(branch_name)}")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
