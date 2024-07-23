@@ -1384,7 +1384,8 @@ def get_release_template_and_default_branch_canonical_name(space_id, project, ch
             default_branch_name = project['PersistenceSettings']['DefaultBranch']
             default_branch = get_project_version_controlled_branch(space_id, project['Id'], default_branch_name,
                                                                    api_key, octopus_url)
-            default_branch_canonical_name = default_branch['CanonicalName']
+            # Assign default_branch to both variables.
+            default_branch_canonical_name = git_ref = default_branch['CanonicalName']
 
         release_template = get_version_controlled_project_release_template(space_id, project['Id'],
                                                                            channel_id, git_ref,
