@@ -1548,8 +1548,10 @@ def create_release_fuzzy(space_id, project_name, git_ref, release_version, chann
     else:
         channel = get_channel_by_name(space_id, project['Id'], channel_name, my_api_key, my_octopus_api)
 
-    release_template, _ = get_release_template_and_default_branch_canonical_name(space_id, project, channel['Id'],
+    release_template, default_branch_canonical_name = get_release_template_and_default_branch_canonical_name(space_id, project, channel['Id'],
                                                                                  git_ref, my_api_key, my_octopus_api)
+    if not git_ref:
+        git_ref = default_branch_canonical_name
 
     release_request = {
         'ChannelId': channel['Id'],

@@ -20,10 +20,10 @@ def create_release_confirm_callback_wrapper(github_user, url, api_key, log_query
 
         log_query("create_release_confirm_callback", f"""
             Space: {space_id}
-            Project Name: {project_name}""
-            Project Id: {project_id}""
-            GitRef: {git_ref}"
-            Release Version: {release_version}"
+            Project Name: {project_name}
+            Project Id: {project_id}
+            GitRef: {git_ref}
+            Release Version: {release_version}
             Channel Name: {channel_name}""")
 
         response_text = []
@@ -83,6 +83,7 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
 
         if project['IsVersionControlled']:
             if not git_ref:
+                git_ref = default_branch_canonical_name
                 warnings.append(
                     f"The query did not specify a GitRef for the version-controlled project, so the default "
                     f"branch named {default_branch_canonical_name} was assumed.")
@@ -104,10 +105,10 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
 
         log_query("create_release", f"""
             Space: {arguments["space_id"]}
-            Project Name: {arguments["project_name"]}"
-            Project Id: {arguments["project_id"]}"
-            GitRef: {arguments["git_ref"]}"
-            Release Version: {arguments["release_version"]}"
+            Project Name: {arguments["project_name"]}
+            Project Id: {arguments["project_id"]}
+            GitRef: {arguments["git_ref"]}
+            Release Version: {arguments["release_version"]}
             Channel Name: {arguments["channel_name"]}""")
 
         save_callback(github_user,
