@@ -609,7 +609,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_create_release(self):
-        prompt = "Create release in the \"Deploy Web App Container\" project"
+        prompt = "Create release in the \"Deploy Web App Container\" project with version \"1.0.1\" and with channel \"Default\""
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode('utf8'))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)

@@ -43,7 +43,7 @@ def sanitize_names_fuzzy(names_generator, projects):
     """
     Match the list of resources to the closest project names that exist in the space. This allows
     for minor typos in the query. This version uses a generator to avoid loading all the resources
-    if there is an exact match withing the earlier batch requests.
+    if there is an exact match within the earlier batch requests.
     :param projects: The list of project names to match
     :param names_generator: The list of resource names from the space
     :return: A list of the closest matching project names from the space
@@ -57,7 +57,7 @@ def sanitize_name_fuzzy(names_generator, name):
     """
     Match the resource to the closest project names that exist in the space. This allows
     for minor typos in the query. This version uses a generator to avoid loading all the resources
-    if there is an exact match withing the earlier batch requests.
+    if there is an exact match within the earlier batch requests.
     :param name: The resource name
     :param names_generator: The list of resource names from the space
     :return: The closest matching resource names from the space
@@ -355,10 +355,10 @@ def get_item_fuzzy(items, name):
     if case_sensitive_items:
         return case_sensitive_items[0]
 
-    fuzz_match_sored = sorted(fuzz_match, key=lambda x: x["ratio"], reverse=True)
+    fuzz_match_sorted = sorted(fuzz_match, key=lambda x: x["ratio"], reverse=True)
 
-    if len(fuzz_match_sored) != 0:
-        return fuzz_match_sored[0]["item"]
+    if len(fuzz_match_sorted) != 0:
+        return fuzz_match_sorted[0]["item"]
 
     return None
 

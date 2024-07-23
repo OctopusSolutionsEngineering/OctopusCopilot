@@ -1319,6 +1319,14 @@ def get_tenant_fuzzy_cached(space_id, tenant_name, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
+def get_channels(space_id, project_id, api_key, octopus_url):
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/Channels")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_channel(space_id, channel_id, api_key, octopus_url):
     api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Channels/{quote_safe(channel_id)}")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
@@ -1328,10 +1336,19 @@ def get_channel(space_id, channel_id, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
+def get_channel_by_name(space_id, project_id, channel_name, api_key, octopus_url):
+    channels = get_channels(space_id, project_id, api_key, octopus_url)
+    matching_channel = get_item_fuzzy(channels['Items'], channel_name)
+    if matching_channel is None:
+        raise ResourceNotFound("Channel", project_id)
+
+    return matching_channel
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_default_channel(space_id, project_id, api_key, octopus_url):
-    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/Channels")
-    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    channels = resp.json()
+    channels = get_channels(space_id, project_id, api_key, octopus_url)
     default_channel = [channel for channel in channels['Items'] if channel['IsDefault']]
     if len(default_channel) == 0:
         raise ResourceNotFound("Default Channel", project_id)
@@ -1341,9 +1358,47 @@ def get_default_channel(space_id, project_id, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_release_template(space_id, project_id, channel_id, api_key, octopus_url):
+def get_version_controlled_project_release_template(space_id, project_id, channel_id, git_ref, api_key, octopus_url):
+    api = build_url(octopus_url,
+                    f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/{quote_safe(git_ref)}/deploymentprocesses/template?channel={quote_safe(channel_id)}")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_database_project_release_template(space_id, project_id, channel_id, api_key, octopus_url):
     api = build_url(octopus_url,
                     f"api/{quote_safe(space_id)}/deploymentprocesses/deploymentprocess-{quote_safe(project_id)}/template?channel={quote_safe(channel_id)}")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_release_template_and_default_branch_canonical_name(space_id, project, channel_id, git_ref, api_key, octopus_url):
+    default_branch_canonical_name = None
+    if project['IsVersionControlled']:
+        if not git_ref:
+            default_branch_name = project['PersistenceSettings']['DefaultBranch']
+            default_branch = get_project_version_controlled_branch(space_id, project['Id'], default_branch_name,
+                                                                   api_key, octopus_url)
+            default_branch_canonical_name = default_branch['CanonicalName']
+
+        release_template = get_version_controlled_project_release_template(space_id, project['Id'],
+                                                                           channel_id, git_ref,
+                                                                           api_key, octopus_url)
+    else:
+        release_template = get_database_project_release_template(space_id, project['Id'], channel_id, api_key,
+                                                                 octopus_url)
+    return release_template, default_branch_canonical_name
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_project_version_controlled_branch(space_id, project_id, api_key, branch_name, octopus_url):
+    api = build_url(octopus_url,
+                    f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/git/branches/{quote_safe(branch_name)}")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     return resp.json()
 
@@ -1360,6 +1415,16 @@ def get_channel_cached(space_id, channel_id, api_key, octopus_url):
         channel_cache[octopus_url][space_id][channel_id] = get_channel(space_id, channel_id, api_key, octopus_url)
 
     return channel_cache[octopus_url][space_id][channel_id]
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_packages(space_id, feed_id, package_id, api_key, octopus_url, take=1):
+    base_url = f'api/{quote_safe(space_id)}/feeds/{quote_safe(feed_id)}/packages/versions'
+    api = build_url(octopus_url, base_url, dict(take=take, packageId=quote_safe(package_id)))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    json = resp.json()
+    return json["Items"]
 
 
 @retry(HTTPError, tries=3, delay=2)
@@ -1459,19 +1524,9 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
     return response.json()
 
 
-@retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_packages(space_id, feed_id, package_id, api_key, octopus_url, take=1):
-    base_url = f'api/{quote_safe(space_id)}/feeds/{quote_safe(feed_id)}/packages/versions'
-    api = build_url(octopus_url, base_url, dict(take=take, packageId=quote_safe(package_id)))
-    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    json = resp.json()
-    return json["Items"]
-
-
-@logging_wrapper
-def create_release_fuzzy(space_id, project_name, my_api_key,
-                         my_octopus_api, log_query=None):
+def create_release_fuzzy(space_id, project_name, git_ref, release_version, channel_name, my_api_key,
+                          my_octopus_api, log_query=None):
     """
     Creates a release
     """
@@ -1479,32 +1534,35 @@ def create_release_fuzzy(space_id, project_name, my_api_key,
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (create_release_fuzzy).')
     ensure_string_not_empty(space_id, 'space_id must be the space ID (create_release_fuzzy).')
     ensure_string_not_empty(project_name, 'project_name must be the project (create_release_fuzzy).')
+    ensure_string_not_empty(release_version, 'release_version must be the release version (create_release_fuzzy).')
 
     project = get_project_fuzzy(space_id, project_name, my_api_key, my_octopus_api)
 
     base_url = f"api/{quote_safe(space_id)}/releases"
     api = build_url(my_octopus_api, base_url)
 
-    # Get Channel
-    channel = get_default_channel(space_id, project['Id'], my_api_key, my_octopus_api)
+    if not channel_name:
+        channel = get_default_channel(space_id, project['Id'], my_api_key, my_octopus_api)
+    else:
+        channel = get_channel_by_name(space_id, project['Id'], channel_name, my_api_key, my_octopus_api)
 
-    # Get Template
-    release_template = get_release_template(space_id, project['Id'], channel['Id'], my_api_key, my_octopus_api)
+    release_template, _ = get_release_template_and_default_branch_canonical_name(space_id, project, channel['Id'], git_ref, my_api_key, my_octopus_api)
 
-    release_version = release_template['NextVersionIncrement']
-
-    # Build release request
     release_request = {
         'ChannelId': channel['Id'],
         'ProjectId': project['Id'],
         'Version': release_version,
-        'VersionControlReference': None,
+        'VersionControlReference': {},
         'SelectedPackages': []
     }
 
+    if project['IsVersionControlled']:
+        release_request['VersionControlReference']['GitRef'] = git_ref
+
     # Get default package versions
     for template_package in release_template['Packages']:
-        packages = get_packages(space_id, template_package['FeedId'], template_package['PackageId'], my_api_key, my_octopus_api)
+        packages = get_packages(space_id, template_package['FeedId'], template_package['PackageId'], my_api_key,
+                                my_octopus_api)
         selected_package = {
             'ActionName': template_package['ActionName'],
             'PackageReferenceName': template_package['PackageReferenceName'],
@@ -1517,6 +1575,8 @@ def create_release_fuzzy(space_id, project_name, my_api_key,
                     Space: {space_id}
                     Project Names: {project_name}
                     Project Id: {project['Id']}
+                    GitRef: {git_ref}
+                    Channel Id: {channel['Id']}
                     Version: {release_version}
                     Selected Packages: {",".join(map(lambda p: f"{p['ActionName']}:{p['Version']}" + (f" ({p['PackageReferenceName']})" if p['PackageReferenceName'] else ""), release_request['SelectedPackages']))}""")
 
