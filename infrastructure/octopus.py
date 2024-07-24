@@ -1592,6 +1592,7 @@ def create_release_fuzzy(space_id, project_name, git_ref, release_version, chann
 
     return response.json()
 
+
 @logging_wrapper
 def deploy_release_fuzzy(space_id, project_id, release_id, environment_name, tenant_name,
                          my_api_key, my_octopus_api, log_query=None):
@@ -1637,6 +1638,7 @@ def deploy_release_fuzzy(space_id, project_id, release_id, environment_name, ten
         lambda: http.request("POST", api, json=deploy_request, headers=get_octopus_headers(my_api_key)))
 
     return response.json()
+
 
 async def get_release_async(space_id, release_id, api_key, octopus_url):
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_release_async).')
