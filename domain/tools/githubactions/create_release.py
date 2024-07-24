@@ -217,6 +217,7 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
             f"in the space \"{actual_space_name}\"?"]
         prompt_message = ["Please confirm the details below are correct before proceeding:"
                           f"\n* Project: {sanitized_project_names[0]} ({project['Id']})"
+                          f"\n* Channel: {channel_name}"
                           f"\n* Version: {release_version}"]
         if git_ref:
             prompt_message.append(f"\n* GitRef: {git_ref}")
