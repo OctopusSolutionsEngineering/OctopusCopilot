@@ -194,13 +194,13 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
                                         create_release.__name__,
                                         space_name=actual_space_name,
                                         space_id=space_id,
-                                        project_name=sanitized_project_names[0],
+                                        project_name=sanitized_project_names,
                                         project_id=project["Id"],
                                         git_ref=git_ref,
                                         release_version=release_version,
                                         channel_name=channel['Name'],
-                                        environment_name=sanitized_environment_names[0],
-                                        tenant_name=sanitized_tenant_names[0])
+                                        environment_name=sanitized_environment_names,
+                                        tenant_name=sanitized_tenant_names)
         save_callback(github_user,
                       create_release.__name__,
                       callback_id,
