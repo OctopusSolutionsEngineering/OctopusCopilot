@@ -165,7 +165,7 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
             valid = any(filter(lambda x: x == sanitized_environment_names[0], project_environments))
             if not valid:
                 return CopilotResponse(
-                    f"The environment {sanitized_environment_names[0]} is not valid for the project {sanitized_project_names[0]}."
+                    f"The environment \"{sanitized_environment_names[0]}\" is not valid for the project \"{sanitized_project_names[0]}\". "
                     + "Valid environments are " + ", ".join(project_environments) + ".")
 
         callback_id = str(uuid.uuid4())

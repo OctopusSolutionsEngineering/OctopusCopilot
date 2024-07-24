@@ -91,7 +91,7 @@ def run_runbook_wrapper(url, api_key, github_user, original_query, connection_st
         valid = any(filter(lambda x: x == sanitized_environment_names[0], runbook_environments))
         if not valid:
             return CopilotResponse(
-                f"The environment {sanitized_environment_names[0]} is not valid for the runbook {sanitized_runbook_names[0]}."
+                f"The environment \"{sanitized_environment_names[0]}\" is not valid for the runbook \"{sanitized_runbook_names[0]}\". "
                 + "Valid environments are " + ", ".join(runbook_environments) + ".")
 
         callback_id = str(uuid.uuid4())
