@@ -49,7 +49,7 @@ def create_release_confirm_callback_wrapper(github_user, url, api_key, log_query
         response_release_version = response['Version']
         release_id = response['Id']
         response_text.append(
-            f"{project_name}\n\n- [Release {response_release_version}]({url}/app#/{space_id}/projects/{project_id}/deployments/releases/{response_release_version})")
+            f"{project_name}\n\n* [Release {response_release_version}]({url}/app#/{space_id}/projects/{project_id}/deployments/releases/{response_release_version})")
 
         # Only deploy if environment specified
         deployment_id = None
@@ -64,7 +64,7 @@ def create_release_confirm_callback_wrapper(github_user, url, api_key, log_query
                                                    log_query)
 
             response_text.append(
-                f'\n\n- [Deployment of {project_name} release {response_release_version} to {environment_name} {"for " + tenant_name if tenant_name else ""}]({url}/app#/{space_id}/tasks/{deploy_response["TaskId"]})')
+                f'* [Deployment of {project_name} release {response_release_version} to {environment_name} {"for " + tenant_name if tenant_name else ""}]({url}/app#/{space_id}/tasks/{deploy_response["TaskId"]})')
 
         debug_text = get_params_message(github_user, False,
                                         create_release_confirm_callback.__name__,
@@ -194,12 +194,13 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
                                         create_release.__name__,
                                         space_name=space_name,
                                         space_id=space_id,
-                                        project_name=project_name,
+                                        project_name=sanitized_project_names,
                                         project_id=project["Id"],
                                         git_ref=git_ref,
                                         release_version=release_version,
                                         channel_name=channel_name,
-                                        environment_name=environment_name)
+                                        environment_name=environment_name,
+                                        tenant_name=tenant_name)
         save_callback(github_user,
                       create_release.__name__,
                       callback_id,
@@ -212,17 +213,19 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
         response.extend(debug_text)
 
         prompt_title = [
-            f"Do you want to continue to create a release in the project \"{sanitized_project_names[0]}\" with version \"{release_version}\""]
+            f"Do you want to create a release in the project \"{sanitized_project_names[0]}\" with version \"{release_version}\" ",
+            f"in the space \"{actual_space_name}\"?"]
+        prompt_message = ["Please confirm the details below are correct before proceeding:"
+                          f"\n* Project: {sanitized_project_names[0]} ({project['Id']})"
+                          f"\n* Version: {release_version}"]
         if git_ref:
-            prompt_title.append(f"(GitRef \"{git_ref}\") ")
+            prompt_message.append(f"\n* GitRef: {git_ref}")
         if environment_name:
-            prompt_title.append(f"and deploy to the environment \"{sanitized_environment_names[0]}\" ")
+            prompt_message.append(f"\n* Deployment environment: {sanitized_environment_names[0]}")
         if tenant_name:
-            prompt_title.append(f"for tenant \"{sanitized_tenant_names[0]}\" ")
+            prompt_message.append(f"Deployment Tenant: {sanitized_tenant_names[0]}")
 
-        prompt_title.append(f"in the space \"{actual_space_name}\"?")
-        prompt_message = "Please confirm the project name, release version, " + (
-            "git ref, " if git_ref else "") + "and space name are correct before proceeding."
-        return CopilotResponse("\n\n".join(response), "".join(prompt_title), prompt_message, callback_id)
+        prompt_message.append(f"\n* Space: {actual_space_name}")
+        return CopilotResponse("\n\n".join(response), "".join(prompt_title), "".join(prompt_message), callback_id)
 
     return create_release
