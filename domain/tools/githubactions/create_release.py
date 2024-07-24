@@ -168,6 +168,8 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
                     f"The environment \"{sanitized_environment_names[0]}\" is not valid for the project \"{sanitized_project_names[0]}\". "
                     + "Valid environments are " + ", ".join(project_environments) + ".")
 
+            # TODO: Consider adding a check for tenant being connected to this project and deployment environment
+
         callback_id = str(uuid.uuid4())
         arguments = {
             "space_id": space_id,

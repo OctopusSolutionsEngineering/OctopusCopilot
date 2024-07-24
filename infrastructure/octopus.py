@@ -1616,7 +1616,7 @@ def deploy_release_fuzzy(space_id, project_id, release_id, environment_name, ten
     # Get tenant
     tenant = None
     if tenant_name:
-        tenant = get_tenant(space_id, tenant_name, my_api_key, my_octopus_api)
+        tenant = get_tenant_fuzzy(space_id, tenant_name, my_api_key, my_octopus_api)
 
     deploy_request = {
         'EnvironmentId': environment_id,
