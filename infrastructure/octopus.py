@@ -1376,16 +1376,16 @@ def get_database_project_release_template(space_id, project_id, channel_id, api_
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_release_template_and_default_branch_canonical_name(space_id, project, channel_id, git_ref, api_key,
-                                                           octopus_url):
-    default_branch_canonical_name = None
+def get_release_template_and_default_branch(space_id, project, channel_id, git_ref, api_key,
+                                            octopus_url):
+    default_branch = None
     if project['IsVersionControlled']:
         if not git_ref:
             default_branch_name = project['PersistenceSettings']['DefaultBranch']
             default_branch = get_project_version_controlled_branch(space_id, project['Id'], default_branch_name,
                                                                    api_key, octopus_url)
             # Assign default_branch to both variables.
-            default_branch_canonical_name = git_ref = default_branch['CanonicalName']
+            default_branch = git_ref = default_branch['CanonicalName']
 
         release_template = get_version_controlled_project_release_template(space_id, project['Id'],
                                                                            channel_id, git_ref,
@@ -1393,7 +1393,7 @@ def get_release_template_and_default_branch_canonical_name(space_id, project, ch
     else:
         release_template = get_database_project_release_template(space_id, project['Id'], channel_id, api_key,
                                                                  octopus_url)
-    return release_template, default_branch_canonical_name
+    return release_template, default_branch
 
 
 @retry(HTTPError, tries=3, delay=2)
@@ -1548,15 +1548,12 @@ def create_release_fuzzy(space_id, project_name, git_ref, release_version, chann
     else:
         channel = get_channel_by_name(space_id, project['Id'], channel_name, my_api_key, my_octopus_api)
 
-    release_template, default_branch_canonical_name = get_release_template_and_default_branch_canonical_name(space_id,
-                                                                                                             project,
-                                                                                                             channel[
-                                                                                                                 'Id'],
-                                                                                                             git_ref,
-                                                                                                             my_api_key,
-                                                                                                             my_octopus_api)
+    release_template, default_branch = get_release_template_and_default_branch(space_id, project, channel['Id'],
+                                                                               git_ref,
+                                                                               my_api_key,
+                                                                               my_octopus_api)
     if not git_ref:
-        git_ref = default_branch_canonical_name
+        git_ref = default_branch
 
     release_request = {
         'ChannelId': channel['Id'],
@@ -1595,6 +1592,51 @@ def create_release_fuzzy(space_id, project_name, git_ref, release_version, chann
 
     return response.json()
 
+@logging_wrapper
+def deploy_release_fuzzy(space_id, project_id, release_id, environment_name, tenant_name,
+                         my_api_key, my_octopus_api, log_query=None):
+    """
+    Deploys a release
+    """
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (deploy_release_fuzzy).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (deploy_release_fuzzy).')
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (deploy_release_fuzzy).')
+    ensure_string_not_empty(project_id, 'project_id must be the project ID (deploy_release_fuzzy).')
+    ensure_string_not_empty(release_id, 'release_id must be the release ID (deploy_release_fuzzy).')
+    ensure_string_not_empty(environment_name, 'environment_name must be the environment (deploy_release_fuzzy).')
+
+    base_url = f"api/{quote_safe(space_id)}/deployments"
+    api = build_url(my_octopus_api, base_url)
+
+    # Get environment
+    environment = get_environment_fuzzy(space_id, environment_name, my_api_key, my_octopus_api)
+    environment_id = environment['Id']
+
+    # Get tenant
+    tenant = None
+    if tenant_name:
+        tenant = get_tenant(space_id, tenant_name, my_api_key, my_octopus_api)
+
+    deploy_request = {
+        'EnvironmentId': environment_id,
+        'ProjectId': project_id,
+        'ReleaseId': release_id,
+        'TenantId': tenant['Id'] if tenant_name else None,
+        'Priority': 'LifecycleDefault'
+    }
+
+    if log_query:
+        log_query("deploy_release_fuzzy", f"""
+                    Space: {space_id}
+                    Project Id: {project_id}
+                    Release Id: {release_id}
+                    Environment Id: {environment_id}
+                    Tenant ID: {tenant['Id'] if tenant_name else None}""")
+
+    response = handle_response(
+        lambda: http.request("POST", api, json=deploy_request, headers=get_octopus_headers(my_api_key)))
+
+    return response.json()
 
 async def get_release_async(space_id, release_id, api_key, octopus_url):
     ensure_string_not_empty(space_id, 'space_id must be a non-empty string (get_release_async).')
