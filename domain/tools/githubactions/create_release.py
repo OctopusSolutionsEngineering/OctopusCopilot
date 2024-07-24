@@ -87,7 +87,7 @@ def create_release_confirm_callback_wrapper(github_user, url, api_key, log_query
 
 def create_release_wrapper(url, api_key, github_user, original_query, connection_string, log_query):
     def create_release(space_name=None, project_name=None, git_ref=None, release_version=None, channel_name=None,
-                       environment_name=None, tenant_name=None):
+                       environment_name=None, tenant_name=None, **kwargs):
         """
         Create a release in Octopus Deploy.
 
@@ -100,6 +100,10 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
         environment_name: The (optional) name of the environment to deploy to.
         tenant_name: The (optional) name of the tenant to deploy to.
         """
+        for key, value in kwargs.items():
+            if log_query:
+                log_query(f"Unexpected Key: {key}", "Value: {value}")
+
         debug_text = get_params_message(github_user, True,
                                         create_release.__name__,
                                         space_name=space_name,
@@ -226,7 +230,7 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
         if environment_name:
             prompt_message.append(f"\n* Deployment environment: **{sanitized_environment_names[0]}**")
         if tenant_name:
-            prompt_message.append(f"\nDeployment Tenant: **{sanitized_tenant_names[0]}**")
+            prompt_message.append(f"\n* Deployment Tenant: **{sanitized_tenant_names[0]}**")
 
         prompt_message.append(f"\n* Space: **{actual_space_name}**")
         return CopilotResponse("\n\n".join(response), "".join(prompt_title), "".join(prompt_message), callback_id)

@@ -51,7 +51,7 @@ def run_runbook_confirm_callback_wrapper(github_user, url, api_key, log_query):
 
 
 def run_runbook_wrapper(url, api_key, github_user, original_query, connection_string, log_query):
-    def run_runbook(space_name, project_name, runbook_name, environment_name, tenant_name):
+    def run_runbook(space_name=None, project_name=None, runbook_name=None, environment_name=None, tenant_name=None, **kwargs):
         """
         Runs a published runbook in Octopus Deploy.
 
@@ -62,6 +62,10 @@ def run_runbook_wrapper(url, api_key, github_user, original_query, connection_st
         environment_name: The name of the environment
         tenant_name: The optional name of the tenant
         """
+
+        for key, value in kwargs.items():
+            if log_query:
+                log_query(f"Unexpected Key: {key}", "Value: {value}")
 
         space_id, actual_space_name, warnings = lookup_space(url, api_key, github_user, original_query, space_name)
         sanitized_project_names, sanitized_projects = lookup_projects(url, api_key, github_user, original_query,
