@@ -192,15 +192,15 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
 
         debug_text = get_params_message(github_user, False,
                                         create_release.__name__,
-                                        space_name=space_name,
+                                        space_name=actual_space_name,
                                         space_id=space_id,
-                                        project_name=sanitized_project_names,
+                                        project_name=sanitized_project_names[0],
                                         project_id=project["Id"],
                                         git_ref=git_ref,
                                         release_version=release_version,
-                                        channel_name=channel_name,
-                                        environment_name=environment_name,
-                                        tenant_name=tenant_name)
+                                        channel_name=channel['Name'],
+                                        environment_name=sanitized_environment_names[0],
+                                        tenant_name=sanitized_tenant_names[0])
         save_callback(github_user,
                       create_release.__name__,
                       callback_id,
@@ -216,17 +216,17 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
             f"Do you want to create a release in the project \"{sanitized_project_names[0]}\" with version \"{release_version}\" ",
             f"in the space \"{actual_space_name}\"?"]
         prompt_message = ["Please confirm the details below are correct before proceeding:"
-                          f"\n* Project: {sanitized_project_names[0]} ({project['Id']})"
-                          f"\n* Channel: {channel_name}"
-                          f"\n* Version: {release_version}"]
+                          f"\n* Project: **{sanitized_project_names[0]}**"
+                          f"\n* Channel: **{channel['Name']}**"
+                          f"\n* Version: **{release_version}**"]
         if git_ref:
-            prompt_message.append(f"\n* GitRef: {git_ref}")
+            prompt_message.append(f"\n* GitRef: **{git_ref}**")
         if environment_name:
-            prompt_message.append(f"\n* Deployment environment: {sanitized_environment_names[0]}")
+            prompt_message.append(f"\n* Deployment environment: **{sanitized_environment_names[0]}**")
         if tenant_name:
-            prompt_message.append(f"Deployment Tenant: {sanitized_tenant_names[0]}")
+            prompt_message.append(f"Deployment Tenant: **{sanitized_tenant_names[0]}**")
 
-        prompt_message.append(f"\n* Space: {actual_space_name}")
+        prompt_message.append(f"\n* Space: **{actual_space_name}**")
         return CopilotResponse("\n\n".join(response), "".join(prompt_title), "".join(prompt_message), callback_id)
 
     return create_release
