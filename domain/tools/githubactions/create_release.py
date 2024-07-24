@@ -224,7 +224,7 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
         if environment_name:
             prompt_message.append(f"\n* Deployment environment: **{sanitized_environment_names[0]}**")
         if tenant_name:
-            prompt_message.append(f"Deployment Tenant: **{sanitized_tenant_names[0]}**")
+            prompt_message.append(f"\nDeployment Tenant: **{sanitized_tenant_names[0]}**")
 
         prompt_message.append(f"\n* Space: **{actual_space_name}**")
         return CopilotResponse("\n\n".join(response), "".join(prompt_title), "".join(prompt_message), callback_id)
