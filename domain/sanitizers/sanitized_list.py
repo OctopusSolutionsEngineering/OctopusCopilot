@@ -395,9 +395,9 @@ def get_item_fuzzy_generator(items_generator, name):
         return {"original": name, "matched": case_insensitive}
 
     # Fall back to the best fuzzy match
-    fuzz_match_sored = sorted(fuzzy_matches, key=lambda x: x["ratio"], reverse=True)
+    fuzz_match_sorted = sorted(fuzzy_matches, key=lambda x: x["ratio"], reverse=True)
 
-    if len(fuzz_match_sored) != 0:
-        return {"original": name, "matched": fuzz_match_sored[0]["item"]}
+    if len(fuzz_match_sorted) != 0:
+        return {"original": name, "matched": fuzz_match_sorted[0]["item"]}
 
     return None
