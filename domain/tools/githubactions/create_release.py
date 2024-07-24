@@ -55,13 +55,13 @@ def create_release_confirm_callback_wrapper(github_user, url, api_key, log_query
         deployment_id = None
         if environment_name:
             deploy_response = deploy_release_fuzzy(space_id,
-                                            project_id,
-                                            release_id,
-                                            environment_name,
-                                            tenant_name,
-                                            api_key,
-                                            url,
-                                            log_query)
+                                                   project_id,
+                                                   release_id,
+                                                   environment_name,
+                                                   tenant_name,
+                                                   api_key,
+                                                   url,
+                                                   log_query)
 
             response_text.append(
                 f'\n\n- [Deployment of {project_name} release {response_release_version} to {environment_name} {"for " + tenant_name if tenant_name else ""}]({url}/app#/{space_id}/tasks/{deploy_response["TaskId"]})')
@@ -157,7 +157,9 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
                 lifecycle_id = project['LifecycleId']
 
             lifecycle = get_lifecycle(api_key, url, space_id, lifecycle_id)
-            lifecycle_environments = [target for phase in lifecycle['Phases'] for target in (phase["AutomaticDeploymentTargets"] + phase["OptionalDeploymentTargets"]) if target]
+            lifecycle_environments = [target for phase in lifecycle['Phases'] for target in
+                                      (phase["AutomaticDeploymentTargets"] + phase["OptionalDeploymentTargets"]) if
+                                      target]
             project_environments = [get_environment(space_id, x, api_key, url)["Name"] for x in
                                     lifecycle_environments]
             valid = any(filter(lambda x: x == sanitized_environment_names[0], project_environments))
