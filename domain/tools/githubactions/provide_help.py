@@ -103,7 +103,7 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 * @octopus-ai-app Summarize the execution logs of the runbook "{first_runbook}" in the project "{first_project}" in the space "{space_name}" in the "{first_environment}" environment
 
                 You can create and optionally deploy a release with prompts like these:
-                * @octopus-ai-app Create a release in the project "{first_project}" with version "1.0.12-hf" and channel "Hotfix in the space "{space_name}" 
+                * @octopus-ai-app Create a release in the project "{first_project}" with version "1.0.12-hf" and channel "Hotfix in the space "{space_name}"
                 * @octopus-ai-app Create a release in the project "{first_project}" in the space "{space_name}" and deploy to the "{first_environment}" environment
 
                 By setting default values for the space, project, environment, and other entities, you can omit them from your queries.
