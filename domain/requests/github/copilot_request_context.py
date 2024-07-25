@@ -257,8 +257,7 @@ def build_form_tools(query, req: func.HttpRequest):
             query,
             get_functions_connection_string(),
             log_query),
-            callback=create_release_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query),
-            is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users())),
+            callback=create_release_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query)),
         FunctionDefinition(deploy_release_wrapper(
             url,
             api_key,
@@ -266,8 +265,7 @@ def build_form_tools(query, req: func.HttpRequest):
             query,
             get_functions_connection_string(),
             log_query),
-            callback=deploy_release_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query),
-            is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users())),
+            callback=deploy_release_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query)),
         FunctionDefinition(
             show_github_job_summary_wrapper(query,
                                             get_job_summary_callback(get_github_user_from_form(req),
