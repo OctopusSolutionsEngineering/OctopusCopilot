@@ -5,9 +5,7 @@ from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
-from infrastructure.octopus import get_project, create_release_fuzzy, \
-    get_project_version_controlled_branch, get_default_channel, \
-    get_version_controlled_project_release_template, get_channel_by_name, \
+from infrastructure.octopus import get_project, create_release_fuzzy, get_default_channel, get_channel_by_name, \
     get_release_template_and_default_branch, get_environment, get_lifecycle, deploy_release_fuzzy
 
 
@@ -218,18 +216,16 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
         response.extend(warnings)
         response.extend(debug_text)
 
-        prompt_title = [
-            f"Do you want to create a release in the project \"{sanitized_project_names[0]}\" with version \"{release_version}\" ",
-            f"in the space \"{actual_space_name}\"?"]
+        prompt_title = ["Do you want to create a release?"]
         prompt_message = ["Please confirm the details below are correct before proceeding:"
                           f"\n* Project: **{sanitized_project_names[0]}**"
                           f"\n* Channel: **{channel['Name']}**"
                           f"\n* Version: **{release_version}**"]
         if git_ref:
             prompt_message.append(f"\n* GitRef: **{git_ref}**")
-        if environment_name:
+        if sanitized_environment_names:
             prompt_message.append(f"\n* Deployment environment: **{sanitized_environment_names[0]}**")
-        if tenant_name:
+        if sanitized_tenant_names:
             prompt_message.append(f"\n* Deployment Tenant: **{sanitized_tenant_names[0]}**")
 
         prompt_message.append(f"\n* Space: **{actual_space_name}**")

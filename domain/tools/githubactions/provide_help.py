@@ -102,9 +102,11 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 * @octopus-ai-app Run the runbook "{first_runbook}" in the project "{first_project}" in the space "{space_name}" in the "{first_environment}" environment
                 * @octopus-ai-app Summarize the execution logs of the runbook "{first_runbook}" in the project "{first_project}" in the space "{space_name}" in the "{first_environment}" environment
 
-                You can create and optionally deploy a release with prompts like these:
+                You can create and deploy a release with prompts like these:
                 * @octopus-ai-app Create a release in the project "{first_project}" with version "1.0.12-hf" and channel "Hotfix in the space "{space_name}"
                 * @octopus-ai-app Create a release in the project "{first_project}" in the space "{space_name}" and deploy to the "{first_environment}" environment
+                * @octopus-ai-app Deploy release version "1.0.1" of project "{first_project}" in the space "{space_name}" to the "{first_environment}" environment
+                * @octopus-ai-app Deploy release version "2.0.8" of project "{first_project}" in the space "{space_name}" to the environment "{first_environment}" for tenant "Contoso"
 
                 By setting default values for the space, project, environment, and other entities, you can omit them from your queries.
                 This way, you can write prompts without specifying the space, project, environment, runbook, or tenant each time.

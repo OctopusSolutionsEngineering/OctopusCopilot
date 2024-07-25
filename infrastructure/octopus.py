@@ -1358,6 +1358,20 @@ def get_default_channel(space_id, project_id, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
+def get_release_fuzzy(space_id, project_id, release_version, api_key, octopus_url):
+    base_url = f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/releases"
+    api = build_url(octopus_url, base_url, dict(searchByVersion=release_version))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    releases = resp.json()
+    matching_releases = [release for release in releases['Items'] if release['Version'] == release_version]
+    if len(matching_releases) == 0:
+        raise ResourceNotFound("Release", release_version)
+
+    return matching_releases[0]
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_version_controlled_project_release_template(space_id, project_id, channel_id, git_ref, api_key, octopus_url):
     api = build_url(octopus_url,
                     f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/{quote_safe(git_ref)}/deploymentprocesses/template?channel={quote_safe(channel_id)}")

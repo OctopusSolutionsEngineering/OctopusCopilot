@@ -21,6 +21,7 @@ from function_app import copilot_handler_internal, health_internal
 from infrastructure.octopus import run_published_runbook_fuzzy, get_space_id_and_name_from_name, get_project
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release, wait_for_task
+from tests.infrastructure.create_release import create_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.octopus_infrastructure_test import run_terraform
 from tests.infrastructure.publish_runbook import publish_runbook
@@ -660,6 +661,36 @@ class CopilotChatTest(unittest.TestCase):
         run_response = copilot_handler_internal(build_confirmation_request(confirmation))
         response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
         self.assertTrue(f"Deployment of {project_name} release {version} to {deploy_environment}" in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_deploy_release(self):
+        project_name = "Deploy Web App Container"
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        deploy_environment = "Development"
+        release = create_release(space_name="Simple", release_version=version)
+        prompt = f"Deploy release version \"{release['Version']}\" for project \"{project_name}\" to the \"{deploy_environment}\" environment"
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode('utf8'))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {"messages": [{
+            "role": "user",
+            "content": "",
+            "copilot_references": None,
+            "copilot_confirmations": [
+                {
+                    "state": "accepted",
+                    "confirmation": {
+                        "id": confirmation_id
+                    }
+                }
+            ]
+        }]}
+
+        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
+        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
+        self.assertTrue(f"Deployment of {project_name} release {version} to {deploy_environment}" in response_text,
+                        "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):
