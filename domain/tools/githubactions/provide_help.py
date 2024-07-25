@@ -102,19 +102,30 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 * @octopus-ai-app Run the runbook "{first_runbook}" in the project "{first_project}" in the space "{space_name}" in the "{first_environment}" environment
                 * @octopus-ai-app Summarize the execution logs of the runbook "{first_runbook}" in the project "{first_project}" in the space "{space_name}" in the "{first_environment}" environment
 
+                You can create and optionally deploy a release with prompts like these:
+                * @octopus-ai-app Create a release in the project "{first_project}" with version "1.0.12-hf" and channel "Hotfix in the space "{space_name}" 
+                * @octopus-ai-app Create a release in the project "{first_project}" in the space "{space_name}" and deploy to the "{first_environment}" environment
+
                 By setting default values for the space, project, environment, and other entities, you can omit them from your queries.
                 This way, you can write prompts without specifying the space, project, environment, runbook, or tenant each time.
+                You can also set defaults for GitHub options like owner, repository and workflow.
                 * @octopus-ai-app Set the default space to "{space_name}"
                 * @octopus-ai-app Set the default project to "{first_project}"
                 * @octopus-ai-app Set the default environment to "{first_environment}"
                 * @octopus-ai-app Set the default tenant to "Contoso"
                 * @octopus-ai-app Set the default runbook to "{first_runbook}"
+                * @octopus-ai-app Set the default owner to "{github_user}"
+                * @octopus-ai-app Set the default repository to "my_repository"
+                * @octopus-ai-app Set the default workflow to "build.yaml"
                 * @octopus-ai-app Remove default values
                 * @octopus-ai-app Show the default space
                 * @octopus-ai-app Show the default project
                 * @octopus-ai-app Show the default environment
                 * @octopus-ai-app Show the default tenant
                 * @octopus-ai-app Show the default runbook
+                * @octopus-ai-app Show the default owner
+                * @octopus-ai-app Show the default repository
+                * @octopus-ai-app Show the default workflow
 
                 Logout of your session with:
                 * @octopus-ai-app logout
