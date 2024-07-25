@@ -666,8 +666,8 @@ class CopilotChatTest(unittest.TestCase):
     def test_deploy_release(self):
         project_name = "Deploy Web App Container"
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        release = create_release(space_name="Simple", project_name=project_name, release_version=version)
         deploy_environment = "Development"
-        release = create_release(space_name="Simple", release_version=version)
         prompt = f"Deploy release version \"{release['Version']}\" for project \"{project_name}\" to the \"{deploy_environment}\" environment"
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode('utf8'))
@@ -690,6 +690,37 @@ class CopilotChatTest(unittest.TestCase):
         run_response = copilot_handler_internal(build_confirmation_request(confirmation))
         response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
         self.assertTrue(f"Deployment of {project_name} release {version} to {deploy_environment}" in response_text,
+                        "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_deploy_release_to_tenant(self):
+        project_name = "Deploy AWS Lambda"
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        release = create_release(space_name="Simple", project_name=project_name, release_version=version)
+        deploy_environment = "Development"
+        tenant_name = "Marketing"
+        prompt = f"Deploy release version \"{release['Version']}\" for project \"{project_name}\" to the \"{deploy_environment}\" environment for tenant \"{tenant_name}\""
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode('utf8'))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {"messages": [{
+            "role": "user",
+            "content": "",
+            "copilot_references": None,
+            "copilot_confirmations": [
+                {
+                    "state": "accepted",
+                    "confirmation": {
+                        "id": confirmation_id
+                    }
+                }
+            ]
+        }]}
+
+        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
+        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
+        self.assertTrue(f"Deployment of {project_name} release {version} to {deploy_environment} for {tenant_name}" in response_text,
                         "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
