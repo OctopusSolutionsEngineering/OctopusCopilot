@@ -114,7 +114,7 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 * @octopus-ai-app Set the default environment to "{first_environment}"
                 * @octopus-ai-app Set the default tenant to "Contoso"
                 * @octopus-ai-app Set the default runbook to "{first_runbook}"
-                * @octopus-ai-app Set the default owner to "{github_user}"
+                * @octopus-ai-app Set the default owner to "my_organisation"
                 * @octopus-ai-app Set the default repository to "my_repository"
                 * @octopus-ai-app Set the default workflow to "build.yaml"
                 * @octopus-ai-app Remove default values
