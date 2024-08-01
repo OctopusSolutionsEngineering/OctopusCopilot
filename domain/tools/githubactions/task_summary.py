@@ -75,7 +75,8 @@ def get_task_summary_callback(github_user, api_key, url, log_query=None):
             responsible_user = first_interruption["ResponsibleUserId"]
             response.append(f"⚠️ **{first_interruption['Title']}**")
             if responsible_user is None:
-                response.append("This task is waiting for manual intervention and **must be assigned** before proceeding.")
+                response.append("This task is waiting for manual intervention and **must be assigned** before "
+                                "proceeding.")
             else:
                 response.append("This task is waiting for **manual intervention**.")
             response.append(f"\n\n* [View task]({url}/app#/{space_id}/tasks/{task['Id']})")
