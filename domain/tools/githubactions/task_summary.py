@@ -77,7 +77,7 @@ def get_task_summary_callback(github_user, api_key, url, log_query=None):
             response.extend(f'This task is waiting for **manual intervention**{"." if responsible_user is None else " and must be assigned before proceeding."}')
             response.extend(f'\n\n* [View task]({url}/app#/{space_id}/tasks/{task["Id"]}')
 
-        response.extend(activity_logs_to_summary(activity_logs, url, artifacts))
+        response.append(activity_logs_to_summary(activity_logs, url, artifacts))
         response.extend(warnings)
         response.extend(debug_text)
 
