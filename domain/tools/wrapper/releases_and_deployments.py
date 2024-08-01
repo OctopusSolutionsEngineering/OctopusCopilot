@@ -43,7 +43,8 @@ JSON: ###
             "ChannelId": "Channels-97001",
             "Created": "2024-03-13T04:07:59.537+00:00",
             "TaskState": "Success",
-            "TaskDuration": "2 minutes"
+            "TaskDuration": "2 minutes",
+            "HasPendingInterruptions": false
         }},
         {{
             "SpaceId": "Spaces-345",
@@ -56,7 +57,8 @@ JSON: ###
             "ReleaseVersion": "1.2.3-mybranch",
             "Created": "2024-03-13T04:07:59.537+00:00",
             "TaskState": "Success",
-            "TaskDuration": "2 minutes"
+            "TaskDuration": "2 minutes",
+            "HasPendingInterruptions": false
           }}
     ]
 }}
@@ -99,8 +101,87 @@ We filter the JSON array of called "Deployments" for a deployment with a "Projec
 The deployment with the highest "Created" attribute is the latest deployment.
 The release version is found in the deployment "ReleaseVersion" attribute.
 Therefore, the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "1.2.3-mybranch".
+The "HasPendingInterruptions" attribute has a value of "false" meaning this task has no pending interruptions and the "TaskState" attribute has a value of "Success".
 
-The release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "1.2.3-mybranch"
+The release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "1.2.3-mybranch" and has a Task State of "Success"
+
+Question: How is the deployment to the "Test" environment for the project "My Project" doing?
+JSON: ###
+{{
+    "Deployments": [
+        {{
+            "SpaceId": "Spaces-581",
+            "ReleaseVersion": "3.0.8",
+            "ProjectId": "Projects-12895",
+            "TenantId": "Tenants-8745",
+            "ReleaseId": "Releases-27845",
+            "EnvironmentId": "Environments-89147",
+            "DeploymentId": "Deployments-22356",
+            "ChannelId": "Channels-85896",
+            "Created": "2024-03-13T04:07:59.537+00:00",
+            "TaskState": "Executing",
+            "TaskDuration": "22 minutes",
+            "HasPendingInterruptions": false
+        }},
+        {{
+            "SpaceId": "Spaces-581",
+            "ProjectId": "Projects-12895",
+            "EnvironmentId": "Environments-78155",
+            "ReleaseId": "Releases-27845",
+            "DeploymentId": "Deployments-32423",
+            "TenantId": "Tenants-8745",
+            "ChannelId": "Channels-85896",
+            "ReleaseVersion": "3.0.9-hotfix",
+            "Created": "2024-03-14T04:07:59.537+00:00",
+            "TaskState": "Success",
+            "TaskDuration": "15 minutes",
+            "HasPendingInterruptions": true
+          }}
+    ]
+}}
+###
+HCL: ###
+resource "octopusdeploy_space" "octopus_space_demo_space" {{
+  id                          = "Spaces-581"
+  description                 = "A demonstration space"
+  name                        = "Demo"
+}}
+resource "octopusdeploy_environment" "theenvironmentresource" {{
+  id                           = "Environments-89147"
+  name                         = "MyEnvironment"
+  space_id                     = "${{octopusdeploy_space.octopus_space_demo_space.id}}"
+}}
+resource "octopusdeploy_project" "theprojectresource" {{
+    id = "Projects-12895"
+    name = "My Project"
+    space_id = "${{octopusdeploy_space.octopus_space_demo_space.id}}"
+}}
+resource "octopusdeploy_tenant" "thetennatresource" {{
+  id = "Tenants-8745"
+  name = "My Tenant"
+  space_id = "${{octopusdeploy_space.octopus_space_demo_space.id}}"
+}}
+resource "octopusdeploy_channel" "thechannelresource" {{
+  id = "Channels-85896"
+  name = "MyChannel"
+  space_id = "${{octopusdeploy_space.octopus_space_demo_space.id}}"
+}}
+###
+
+Answer:
+The HCL resource with the labels "octopusdeploy_space" and "octopus_space_demo_space" has an attribute called "name" with the value "Demo" an an "id" attribute of "Spaces-581". This name matches the space name in the query. Therefore, we must find deployments with the "SpaceId" of "Spaces-581".
+The HCL resource with the labels "octopusdeploy_environment" and "theenvironmentresource" has an attribute called "name" with the value "MyEnvironment" an an "id" attribute of "Environments-89147". This name matches the environment name in the query. Therefore, we must find deployments with the "EnvironmentId" of "Environments-89147".
+The HCL resource with the labels "octopusdeploy_project" and "theprojectresource" has an attribute called "name" with the value "My Project" and "id" attribute of "Projects-12895". This name matches the project name in the query. Therefore, we must find deployments with the "ProjectId" of "Projects-12895".
+The HCL resource with the labels "octopusdeploy_tenant" and "thetennatresource" has an attribute called "name" with the value "My Tenant" and an "id" attribute of "Tenants-8745". This name matches the tenant name in the query. Therefore, we must find deployments with the "TenantId" of "Tenants-8745".
+The HCL resource with the labels "octopusdeploy_channel" and "thechannelresource" has an attribute called "name" with the value "MyChannel" and an "id" attribute of "Channels-85896". This name matches the channel name in the query. Therefore, we must find deployments with the "ChannelId" of "Channels-85896"
+We filter the JSON array of called "Deployments" for a deployment with a "ProjectId" attribute with the value of "Projects-12895", an "EnvironmentId" attribute with the value of "Environments-89147", a "TenantId" attribute with the value of "Tenants-8745", a "ChannelId" attribute with the value of "Channels-85896", and a "SpaceId" attribute with the value of "Spaces-581".
+The deployment with the highest "Created" attribute is the latest deployment.
+The release version is found in the deployment "ReleaseVersion" attribute.
+Therefore, the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "3.0.9-hotfix".
+The "HasPendingInterruptions" attribute has a value of "true" meaning this task has a state of "Awaiting Manual intervention", even though the "TaskState" attribute has a value of "Executing".
+
+The release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment is "3.0.9-hotfix" with a Task State of "Awaiting Manual intervention".
+
 """
 
         if logging:

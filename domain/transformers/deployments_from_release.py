@@ -99,6 +99,7 @@ def get_deployments_for_project(space_id, project_name, environment_names, tenan
                 # Urls in markdown often resulted in the LLM not returning any results
                 "ReleaseNotes": strip_markdown_urls(release["ReleaseNotes"]),
                 "DeployedBy": deployment["DeployedBy"],
+                "HasPendingInterruptions": task["HasPendingInterruptions"] if task else None,
             })
 
             if len(deployments) >= max_results:
