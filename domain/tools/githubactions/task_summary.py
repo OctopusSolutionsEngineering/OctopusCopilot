@@ -4,7 +4,7 @@ from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import get_item_or_none
 from domain.tools.debug import get_params_message
 from domain.view.markdown.octopus_task_summary import activity_logs_to_summary
-from infrastructure.octopus import get_deployment_logs, get_artifacts
+from infrastructure.octopus import get_deployment_logs, get_artifacts, get_task_interruptions
 
 
 def get_task_summary_callback(github_user, api_key, url, log_query=None):
@@ -63,7 +63,21 @@ def get_task_summary_callback(github_user, api_key, url, log_query=None):
                                              tenant_name=sanitized_tenant_names,
                                              release_version=actual_release_version))
 
-        response = [activity_logs_to_summary(activity_logs, url, artifacts)]
+        response = []
+        interruptions = None
+
+        # Check for interruptions
+        if task['HasPendingInterruptions']:
+            interruptions = get_task_interruptions(space_id, task['Id'], api_key, url)
+
+        if interruptions is not None:
+            first_interruption = interruptions[0]
+            responsible_user = first_interruption["ResponsibleUserId"]
+            response.extend(f"⚠️ **{first_interruption['Title']}**")
+            response.extend(f'This task is waiting for **manual intervention**{"." if responsible_user is None else " and must be assigned before proceeding."}')
+            response.extend(f'\n\n* [View task]({url}/app#/{space_id}/tasks/{task["Id"]}?activeTab=taskSummary')
+
+        response.extend(activity_logs_to_summary(activity_logs, url, artifacts))
         response.extend(warnings)
         response.extend(debug_text)
 

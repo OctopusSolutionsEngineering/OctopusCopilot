@@ -1715,3 +1715,26 @@ def get_artifacts(space_id, server_task, api_key, octopus_url):
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
 
     return resp.json()
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_task_interruptions(space_id, server_task, api_key, octopus_url):
+    """
+
+    Get interruptions for a task
+    :param space_id: The space ID
+    :param server_task: The server task ID
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus server URL
+    :return: The interruptions for an Octopus Server task
+    """
+
+    base_url = f"api/{quote_safe(space_id)}/interruptions"
+    api = build_url(octopus_url, base_url, dict(regarding=server_task))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    interruptions = resp.json()
+    if len(interruptions['Items']) == 0:
+        return None
+
+    return interruptions['Items']

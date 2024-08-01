@@ -19,7 +19,7 @@ def get_task_summary_cli_callback(api_key, url, get_default_argument, log_query=
                                                                           release_version,
                                                                           api_key,
                                                                           url)
-
+        # TODO: Add pending interruptions calls
         return activity_logs_to_summary(activity_logs, url)
 
     return get_task_summary_callback_implementation
