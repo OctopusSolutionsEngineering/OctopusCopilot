@@ -75,7 +75,7 @@ def get_task_summary_callback(github_user, api_key, url, log_query=None):
             responsible_user = first_interruption["ResponsibleUserId"]
             response.extend(f"⚠️ **{first_interruption['Title']}**")
             response.extend(f'This task is waiting for **manual intervention**{"." if responsible_user is None else " and must be assigned before proceeding."}')
-            response.extend(f'\n\n* [View task]({url}/app#/{space_id}/tasks/{task["Id"]}?activeTab=taskSummary')
+            response.extend(f'\n\n* [View task]({url}/app#/{space_id}/tasks/{task["Id"]}')
 
         response.extend(activity_logs_to_summary(activity_logs, url, artifacts))
         response.extend(warnings)
