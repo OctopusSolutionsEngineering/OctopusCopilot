@@ -5,6 +5,7 @@ import pytz
 from domain.date.date_difference import get_date_difference_summary
 from domain.date.parse_dates import parse_unknown_format_date
 from domain.view.markdown.markdown_icons import get_activity_log_state_icon
+from domain.sanitizers.sanitize_strings import to_lower_case_or_none
 
 
 def get_summary(log_item, depth, url=None, artifacts=None, step=None):
@@ -21,7 +22,7 @@ def get_summary(log_item, depth, url=None, artifacts=None, step=None):
         status = log_item.get("Status")
         if completed and created:
             difference = f" (🕗 {get_date_difference_summary(completed - created)})"
-        elif created and not status.to_lower_case_or_none() == "pending":
+        elif created and not to_lower_case_or_none(status) == "pending":
             difference = f" (⟲ {get_date_difference_summary(now - created)} ago)"
         else:
             difference = ""
