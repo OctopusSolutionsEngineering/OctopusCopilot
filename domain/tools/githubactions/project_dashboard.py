@@ -18,7 +18,7 @@ from infrastructure.github import get_workflow_run_async, get_open_pull_requests
     get_workflow_artifacts_async, get_run_jobs_async
 from infrastructure.octopus import get_project, get_project_progression, \
     get_project_tenant_dashboard, get_release_github_workflow_async, get_task_details_async, activity_logs_to_string, \
-    get_project_github_workflow, get_artifacts
+    get_project_github_workflow, get_artifacts, get_channels
 
 logger = configure_logging(__name__)
 
@@ -49,10 +49,11 @@ def get_project_dashboard_callback(github_user, github_token, log_query=None):
                                              project_name=sanitized_project_names[0]))
 
         project = get_project(space_id, sanitized_project_names[0], api_key, url)
+        channels = get_channels(space_id, project['Id'], api_key, url)
 
         response = []
         if project["TenantedDeploymentMode"] == "Untenanted":
-            response.append(get_dashboard(space_id, space_name, project, api_key, url, github_token))
+            response.append(get_dashboard(space_id, space_name, project, channels,  api_key, url, github_token))
         else:
             response.append(get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_token))
 
@@ -64,7 +65,7 @@ def get_project_dashboard_callback(github_user, github_token, log_query=None):
     return get_project_dashboard_callback_implementation
 
 
-def get_dashboard(space_id, space_name, project, api_key, url, github_token):
+def get_dashboard(space_id, space_name, project, channels, api_key, url, github_token):
     progression = get_project_progression(space_id, project["Id"], api_key, url)
 
     github_action = none_on_exception(lambda: get_project_github_workflow(space_id, project["Id"], api_key, url))
@@ -97,7 +98,7 @@ def get_dashboard(space_id, space_name, project, api_key, url, github_token):
         get_dashboard_deployment_highlights(space_id, progression, api_key, url, max_highlight_links_on_dashboard)))
 
     return get_project_dashboard_response(url, space_id, space_name, project["Name"], project["Id"], progression,
-                                          github_action, github_actions_status,
+                                          channels, github_action, github_actions_status,
                                           pull_requests, issues, release_workflow_runs,
                                           deployment_highlights)
 
@@ -144,14 +145,15 @@ async def get_dashboard_deployment_highlights(space_id, progression, api_key, ur
     """
 
     deployment_highlights = []
-    for environment in progression["Environments"]:
-        for release in progression["Releases"]:
-            if environment["Id"] in release["Deployments"]:
-                deployments = release["Deployments"][environment["Id"]]
-                for deployment in deployments:
-                    deployment_highlights.append(
-                        map_deployment_to_highlights(space_id, api_key, url, limit, deployment["DeploymentId"],
-                                                     deployment["TaskId"]))
+    for channel_id, environments in progression["ChannelEnvironments"].items():
+        for environment in environments:
+            for release in progression["Releases"]:
+                if release["Channel"]["Id"] == channel_id and environment["Id"] in release["Deployments"]:
+                    deployments = release["Deployments"][environment["Id"]]
+                    for deployment in deployments:
+                        deployment_highlights.append(
+                            map_deployment_to_highlights(space_id, api_key, url, limit, deployment["DeploymentId"],
+                                                         deployment["TaskId"]))
 
     return await asyncio.gather(*deployment_highlights)
 
