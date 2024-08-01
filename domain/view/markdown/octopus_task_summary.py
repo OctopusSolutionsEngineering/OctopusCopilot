@@ -18,9 +18,10 @@ def get_summary(log_item, depth, url=None, artifacts=None, step=None):
         now = datetime.now(pytz.utc)
         created = parse_unknown_format_date(log_item.get("Started"))
         completed = parse_unknown_format_date(log_item.get("Ended"))
+        status = log_item.get("Status")
         if completed and created:
             difference = f" (🕗 {get_date_difference_summary(completed - created)})"
-        elif created:
+        elif created and not status.to_lower_case_or_none() == "pending":
             difference = f" (⟲ {get_date_difference_summary(now - created)} ago)"
         else:
             difference = ""
