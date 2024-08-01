@@ -186,6 +186,7 @@ step "run-an-azure-script" {
         action_type = "Octopus.AzurePowerShell"
         environments = ["production"]
         properties = {
+            Octopus.Action.AutoRetry.MaximumCount = "3"
             Octopus.Action.Azure.AccountId = "#{Octopus.Azure.Account}"
             Octopus.Action.RunOnServer = "true"
             Octopus.Action.Script.ScriptBody = <<-EOT
