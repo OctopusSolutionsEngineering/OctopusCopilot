@@ -154,11 +154,12 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
     if github_details:
         table += '<br/>'.join(github_details) + "\n\n"
 
+    channel_count = len(dashboard["ChannelEnvironments"])
     for channel_id, environments in dashboard["ChannelEnvironments"].items():
         matching_channels = [channel for channel in channels if channel['Id'] == channel_id]
         channel = matching_channels[0]
 
-        if len(dashboard["ChannelEnvironments"]) > 1:
+        if channel_count > 1:
             table += f"### Channel: {channel['Name']}\n\n"
 
         environment_names = list(map(lambda e: e["Name"], environments))
