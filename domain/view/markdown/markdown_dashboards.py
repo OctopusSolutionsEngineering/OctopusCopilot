@@ -152,14 +152,14 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
     github_details.extend(build_issue_response(issues, github_repo))
 
     if github_details:
-        table += '<br/>'.join(github_details) + "\n\n"
+        table += '<br/>'.join(github_details)
 
-    channel_count = len(dashboard["ChannelEnvironments"])
     for channel_id, environments in dashboard["ChannelEnvironments"].items():
+        table += "\n\n"
         matching_channels = [channel for channel in channels if channel['Id'] == channel_id]
         channel = matching_channels[0]
 
-        if channel_count > 1:
+        if len(dashboard["ChannelEnvironments"]) > 1:
             table += f"### Channel: {channel['Name']}\n\n"
 
         environment_names = list(map(lambda e: e["Name"], environments))
@@ -201,7 +201,7 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
                             table += f"| {'<br/>'.join(release_details)}"
                     else:
                         table += "| ⨂ "
-    table += "|  "
+    table += "|  \n\n"
     return table
 
 
