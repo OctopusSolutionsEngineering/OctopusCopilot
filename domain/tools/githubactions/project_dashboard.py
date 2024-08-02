@@ -53,7 +53,7 @@ def get_project_dashboard_callback(github_user, github_token, log_query=None):
 
         response = []
         if project["TenantedDeploymentMode"] == "Untenanted":
-            response.append(get_dashboard(space_id, space_name, project, channels,  api_key, url, github_token))
+            response.append(get_dashboard(space_id, space_name, project, channels, api_key, url, github_token))
         else:
             response.append(get_tenanted_dashboard(space_id, space_name, project, api_key, url, github_token))
 
