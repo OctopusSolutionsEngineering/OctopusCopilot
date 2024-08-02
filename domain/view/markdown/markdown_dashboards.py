@@ -157,7 +157,10 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
     for channel_id, environments in dashboard["ChannelEnvironments"].items():
         matching_channels = [channel for channel in channels if channel['Id'] == channel_id]
         channel = matching_channels[0]
-        table += f"### Channel: {channel['Name']}\n\n"
+
+        if len(dashboard["ChannelEnvironments"]) > 0:
+            table += f"### Channel: {channel['Name']}\n\n"
+
         environment_names = list(map(lambda e: e["Name"], environments))
         table += build_markdown_table_row(environment_names)
         table += build_markdown_table_header_separator(len(environment_names))
