@@ -812,7 +812,6 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue("file.txt" in response_text, "Response was " + response_text)
         print(response_text)
 
-
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_project_dashboard_default_space(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
@@ -825,7 +824,7 @@ class CopilotChatTest(unittest.TestCase):
                             * GitHub Run Id: 9656530979"""
         deployment = create_and_deploy_release(space_name="Simple", release_version=version, release_notes=notes)
         alpha_deployment = create_and_deploy_release(space_name="Simple", channel_name="Alpha",
-                                                      release_version=f"{version}-alpha", release_notes=notes)
+                                                     release_version=f"{version}-alpha", release_notes=notes)
         wait_for_task(deployment["TaskId"], space_name="Simple")
         wait_for_task(alpha_deployment["TaskId"], space_name="Simple")
         prompt = "Show the project dashboard for \"Deploy Web App Container\" for the channel \"Alpha\"."
