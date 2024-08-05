@@ -5,7 +5,7 @@ from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
-from infrastructure.octopus import get_project, create_release_fuzzy, get_channel_by_name, \
+from infrastructure.octopus import get_project, create_release_fuzzy, get_default_channel, get_channel_by_name, \
     get_release_template_and_default_branch, get_environment, get_lifecycle, deploy_release_fuzzy
 
 
@@ -125,14 +125,11 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
         sanitized_environment_names = lookup_environments(url, api_key, github_user, original_query, space_id,
                                                           environment_name)
 
-        channel, channels = get_channel_by_name(space_id, project['Id'], channel_name, api_key, url)
-
-        if not channel:
-            default_channel = [channel for channel in channels if channel['IsDefault']]
-            if len(default_channel) == 0:
-                return CopilotResponse("The default channel couldn't be found to create a release")
-
-            channel = default_channel[0]
+        if not channel_name:
+            channel = get_default_channel(space_id, project['Id'], api_key, url)
+            warnings.append(f"The query did not specify a channel, so the default channel was assumed.")
+        else:
+            channel = get_channel_by_name(space_id, project['Id'], channel_name, api_key, url)
 
         release_template, default_branch = get_release_template_and_default_branch(
             space_id, project, channel['Id'], git_ref, api_key,

@@ -372,7 +372,8 @@ def get_current_user(my_api_key, my_octopus_api):
     api = build_url(my_octopus_api, "/api/users/me")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
-    return resp.json()["Id"]
+    json = resp.json()
+    return json["Id"]
 
 
 @logging_wrapper
@@ -391,7 +392,8 @@ def get_projects(space_id, my_api_key, my_octopus_api):
     api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Projects", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
-    return resp.json()["Items"]
+    json = resp.json()
+    return json["Items"]
 
 
 @logging_wrapper
@@ -409,7 +411,8 @@ def get_feeds(my_api_key, my_octopus_api, space_id):
     api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Feeds", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
-    return resp.json()["Items"]
+    json = resp.json()
+    return json["Items"]
 
 
 @logging_wrapper
@@ -427,7 +430,8 @@ def get_accounts(my_api_key, my_octopus_api, space_id):
     api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Accounts", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
-    return resp.json()["Items"]
+    json = resp.json()
+    return json["Items"]
 
 
 @logging_wrapper
@@ -445,7 +449,8 @@ def get_machines(my_api_key, my_octopus_api, space_id):
     api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Machines", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
-    return resp.json()["Items"]
+    json = resp.json()
+    return json["Items"]
 
 
 @logging_wrapper
@@ -463,7 +468,8 @@ def get_certificates(my_api_key, my_octopus_api, space_id):
     api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Certificates", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
-    return resp.json()["Items"]
+    json = resp.json()
+    return json["Items"]
 
 
 @logging_wrapper
@@ -481,7 +487,8 @@ def get_environments(my_api_key, my_octopus_api, space_id):
     api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Environments", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
-    return resp.json()["Items"]
+    json = resp.json()
+    return json["Items"]
 
 
 @logging_wrapper
@@ -499,7 +506,8 @@ def get_tenants(my_api_key, my_octopus_api, space_id):
     api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Tenants", query=dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
-    return resp.json()["Items"]
+    json = resp.json()
+    return json["Items"]
 
 
 @logging_wrapper
@@ -517,7 +525,8 @@ def get_project_channel(my_api_key, my_octopus_api, space_id, project_id):
     api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/Channels")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
-    return resp.json()["Items"]
+    json = resp.json()
+    return json["Items"]
 
 
 @logging_wrapper
@@ -563,7 +572,8 @@ def create_limited_api_key(user, my_api_key, my_octopus_api):
     api = build_url(my_octopus_api, f"/api/users/{quote_safe(user)}/apikeys")
     resp = handle_response(lambda: http.request("POST", api, json=api_key, headers=get_octopus_headers(my_api_key)))
 
-    return resp.json()["ApiKey"]
+    json = resp.json()
+    return json["ApiKey"]
 
 
 @retry(HTTPError, tries=3, delay=2)
@@ -1312,7 +1322,8 @@ def get_tenant_fuzzy_cached(space_id, tenant_name, api_key, octopus_url):
 def get_channels(space_id, project_id, api_key, octopus_url):
     api = build_url(octopus_url, f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/Channels")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    return resp.json()["Items"]
+    channels = resp.json()
+    return channels['Items']
 
 
 @retry(HTTPError, tries=3, delay=2)
@@ -1329,8 +1340,10 @@ def get_channel(space_id, channel_id, api_key, octopus_url):
 def get_channel_by_name(space_id, project_id, channel_name, api_key, octopus_url):
     channels = get_channels(space_id, project_id, api_key, octopus_url)
     matching_channel = get_item_fuzzy(channels, channel_name)
+    if matching_channel is None:
+        raise ResourceNotFound("Channel", project_id)
 
-    return matching_channel, channels
+    return matching_channel
 
 
 @retry(HTTPError, tries=3, delay=2)
@@ -1545,14 +1558,10 @@ def create_release_fuzzy(space_id, project_name, git_ref, release_version, chann
     base_url = f"api/{quote_safe(space_id)}/releases"
     api = build_url(my_octopus_api, base_url)
 
-    channel, channels = get_channel_by_name(space_id, project['Id'], channel_name, my_api_key, my_octopus_api)
-
-    if not channel:
-        default_channel = [channel for channel in channels if channel['IsDefault']]
-        if len(default_channel) == 0:
-            return ResourceNotFound("Channel", project['Id'])
-
-        channel = default_channel[0]
+    if not channel_name:
+        channel = get_default_channel(space_id, project['Id'], my_api_key, my_octopus_api)
+    else:
+        channel = get_channel_by_name(space_id, project['Id'], channel_name, my_api_key, my_octopus_api)
 
     release_template, default_branch = get_release_template_and_default_branch(space_id, project, channel['Id'],
                                                                                git_ref,
