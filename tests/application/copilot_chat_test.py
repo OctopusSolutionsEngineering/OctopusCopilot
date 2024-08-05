@@ -812,21 +812,23 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue("file.txt" in response_text, "Response was " + response_text)
         print(response_text)
 
+
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_project_dashboard_default_space(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         notes = """* GitHub Owner: OctopusSolutionsEngineering
-                        * GitHub Repo: OctopusCopilot
-                        * GitHub Workflow: build.yaml
-                        * GitHub Sha: fba6924ff1099794bc716bcdec12e451fd811d96
-                        * GitHub Run: 1401
-                        * GitHub Attempt: 1
-                        * GitHub Run Id: 9656530979"""
+                            * GitHub Repo: OctopusCopilot
+                            * GitHub Workflow: build.yaml
+                            * GitHub Sha: fba6924ff1099794bc716bcdec12e451fd811d96
+                            * GitHub Run: 1401
+                            * GitHub Attempt: 1
+                            * GitHub Run Id: 9656530979"""
         deployment = create_and_deploy_release(space_name="Simple", release_version=version, release_notes=notes)
-        hotfix_deployment = create_and_deploy_release(space_name="Simple", channel_name="Hotfix", release_version=f"{version}-hf", release_notes=notes)
+        alpha_deployment = create_and_deploy_release(space_name="Simple", channel_name="Alpha",
+                                                      release_version=f"{version}-alpha", release_notes=notes)
         wait_for_task(deployment["TaskId"], space_name="Simple")
-        wait_for_task(hotfix_deployment["TaskId"], space_name="Simple")
-        prompt = "Show the project dashboard for \"Deploy Web App Container\"."
+        wait_for_task(alpha_deployment["TaskId"], space_name="Simple")
+        prompt = "Show the project dashboard for \"Deploy Web App Container\" for the channel \"Alpha\"."
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
@@ -835,8 +837,8 @@ class CopilotChatTest(unittest.TestCase):
             "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         self.assertTrue("Simple / Deploy Web App Container" in response_text, "Response was " + response_text)
-        self.assertTrue("Channel: Default" in response_text, "Response was " + response_text)
-        self.assertTrue("Channel: Hotfix" in response_text, "Response was " + response_text)
+        self.assertFalse("Channel: Default" in response_text, "Response was " + response_text)
+        self.assertTrue("Channel: Alpha" in response_text, "Response was " + response_text)
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)

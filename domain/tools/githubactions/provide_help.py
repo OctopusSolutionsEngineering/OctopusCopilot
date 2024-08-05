@@ -87,11 +87,13 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 Here are some sample queries you can ask:
                 * @octopus-ai-app Show me the dashboard for the space "{space_name}"
                 * @octopus-ai-app Show me the project dashboard for "{first_project}" in the space "{space_name}"
+                * @octopus-ai-app Show me the project dashboard for "{first_project}" for the channel "Hotfix"
                 * @octopus-ai-app Show me the runbook dashboard for "{first_runbook}" in the project "{first_project}" in the space "{space_name}"
                 * @octopus-ai-app Show me the task summary for release "1.4.3" of the project "{first_project}" in the "{first_environment}" environment in the space "{space_name}"
                 * @octopus-ai-app List the projects in the space "{space_name}"
                 * @octopus-ai-app What do the deployment steps in the "{first_project}" project in the "{space_name}" space do?
                 * @octopus-ai-app Show me the status of the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the "{space_name}" space
+                * @octopus-ai-app How is my deployment for the project "{first_project}" in the "{first_environment}" environment doing?
                 * @octopus-ai-app Show me any non-successful deployments for the "{first_project}" project in the space "{space_name}" for the "{first_environment}" environment in a markdown table. If all deployments are successful, say so.
                 * @octopus-ai-app Summarize the deployment logs for the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the space called "{space_name}"
                 * @octopus-ai-app List any URLs printed in the deployment logs for the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the space called "{space_name}"

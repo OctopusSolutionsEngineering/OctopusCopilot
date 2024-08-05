@@ -157,50 +157,51 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
     for channel_id, environments in dashboard["ChannelEnvironments"].items():
         table += "\n\n"
         matching_channels = [channel for channel in channels if channel['Id'] == channel_id]
-        channel = matching_channels[0]
+        if len(matching_channels) > 0:
+            channel = matching_channels[0]
 
-        if len(dashboard["ChannelEnvironments"]) > 1:
-            table += f"### Channel: {channel['Name']}\n\n"
+            if len(dashboard["ChannelEnvironments"]) > 1:
+                table += f"### Channel: {channel['Name']}\n\n"
 
-        environment_names = list(map(lambda e: e["Name"], environments))
-        table += build_markdown_table_row(environment_names)
-        table += build_markdown_table_header_separator(len(environment_names))
+            environment_names = list(map(lambda e: e["Name"], environments))
+            table += build_markdown_table_row(environment_names)
+            table += build_markdown_table_header_separator(len(environment_names))
 
-        for environment in environments:
-            for release in dashboard["Releases"]:
-                if release["Channel"]["Id"] == channel_id:
-                    if environment["Id"] in release["Deployments"]:
-                        # Get the latest deployment for the release. Redeploying a release can result in many
-                        # deployments for an environment and a release.
-                        for deployment in yield_first(release["Deployments"][environment["Id"]]):
-                            created = parse_unknown_format_date(deployment["Created"])
-                            difference = get_date_difference_summary(now - created)
-                            icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
+            for environment in environments:
+                for release in dashboard["Releases"]:
+                    if release["Channel"]["Id"] == channel_id:
+                        if environment["Id"] in release["Deployments"]:
+                            # Get the latest deployment for the release. Redeploying a release can result in many
+                            # deployments for an environment and a release.
+                            for deployment in yield_first(release["Deployments"][environment["Id"]]):
+                                created = parse_unknown_format_date(deployment["Created"])
+                                difference = get_date_difference_summary(now - created)
+                                icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
 
-                            release_url = build_deployment_url(octopus_url, space_id, deployment['ProjectId'],
-                                                               deployment['ReleaseVersion'], deployment['DeploymentId'])
+                                release_url = build_deployment_url(octopus_url, space_id, deployment['ProjectId'],
+                                                                   deployment['ReleaseVersion'], deployment['DeploymentId'])
 
-                            release_details = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})"]
+                                release_details = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})"]
 
-                            # Find any running steps
-                            release_details.extend(
-                                map(lambda x: '&ensp;' + x, get_running(deployment_highlights, deployment["DeploymentId"])))
+                                # Find any running steps
+                                release_details.extend(
+                                    map(lambda x: '&ensp;' + x, get_running(deployment_highlights, deployment["DeploymentId"])))
 
-                            release_details.append(f"⟲ {difference} ago")
+                                release_details.append(f"⟲ {difference} ago")
 
-                            # Find any highlights in the logs
-                            release_details.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
+                                # Find any highlights in the logs
+                                release_details.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
 
-                            # Find any artifacts in
-                            release_details.extend(
-                                get_artifacts(deployment_highlights, octopus_url, deployment["DeploymentId"]))
+                                # Find any artifacts in
+                                release_details.extend(
+                                    get_artifacts(deployment_highlights, octopus_url, deployment["DeploymentId"]))
 
-                            # Find the associated GitHub workflow and build a link
-                            release_details.extend(get_workflow_link(release_workflow_runs, release["Release"]["Id"]))
+                                # Find the associated GitHub workflow and build a link
+                                release_details.extend(get_workflow_link(release_workflow_runs, release["Release"]["Id"]))
 
-                            table += f"| {'<br/>'.join(release_details)}"
-                    else:
-                        table += "| ⨂ "
+                                table += f"| {'<br/>'.join(release_details)}"
+                        else:
+                            table += "| ⨂ "
     table += "|  \n\n"
     return table
 

@@ -18,18 +18,20 @@ from infrastructure.github import get_workflow_run_async, get_open_pull_requests
     get_workflow_artifacts_async, get_run_jobs_async
 from infrastructure.octopus import get_project, get_project_progression, \
     get_project_tenant_dashboard, get_release_github_workflow_async, get_task_details_async, activity_logs_to_string, \
-    get_project_github_workflow, get_artifacts, get_channels
+    get_project_github_workflow, get_artifacts, get_channel_by_name
 
 logger = configure_logging(__name__)
 
 
 def get_project_dashboard_callback(github_user, github_token, log_query=None):
-    def get_project_dashboard_callback_implementation(original_query, api_key, url, space_name, project_name):
+    def get_project_dashboard_callback_implementation(original_query, api_key, url, space_name, project_name,
+                                                      channel_name):
         debug_text = get_params_message(github_user, True,
                                         get_project_dashboard_callback_implementation.__name__,
                                         original_query=original_query,
                                         space_name=space_name,
-                                        project_name=project_name)
+                                        project_name=project_name,
+                                        channel_name=channel_name)
         space_id, space_name, warnings = lookup_space(url, api_key, github_user, original_query, space_name)
         sanitized_project_names, sanitized_projects = lookup_projects(url, api_key, github_user, original_query,
                                                                       space_id, project_name)
@@ -37,19 +39,27 @@ def get_project_dashboard_callback(github_user, github_token, log_query=None):
         if not sanitized_project_names:
             return CopilotResponse("Please specify a project name in the query.")
 
+        project = get_project(space_id, sanitized_project_names[0], api_key, url)
+
         if log_query:
             log_query("get_project_dashboard_callback_implementation", f"""
                 Space: {space_name}
-                Project Names: {sanitized_project_names[0]}""")
+                Project Names: {sanitized_project_names[0]}
+                Channel Names: {channel_name}""")
 
         debug_text.extend(get_params_message(github_user, False,
                                              get_project_dashboard_callback_implementation.__name__,
                                              original_query=original_query,
                                              space_name=space_name,
-                                             project_name=sanitized_project_names[0]))
+                                             project_name=sanitized_project_names[0],
+                                             channel_name=channel_name))
 
-        project = get_project(space_id, sanitized_project_names[0], api_key, url)
-        channels = get_channels(space_id, project['Id'], api_key, url)
+        matching_channel, channels = get_channel_by_name(space_id, project['Id'], channel_name, api_key, url)
+        if matching_channel is not None:
+            channels = [matching_channel]
+        else:
+            if channel_name:
+                warnings.append(f"Channel {channel_name} not found. Showing all channels")
 
         response = []
         if project["TenantedDeploymentMode"] == "Untenanted":
