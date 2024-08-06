@@ -1,5 +1,6 @@
 from domain.defaults.defaults import get_default_argument
 from domain.errors.error_handling import handle_error
+from domain.exceptions.none_on_exception import default_on_exception
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitize_strings import strip_leading_whitespace
 from infrastructure.octopus import get_spaces_generator, get_space_first_project_runbook_and_environment, \
@@ -39,8 +40,9 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
             try:
                 default_space_id, resolved_default_space_name = get_space_id_and_name_from_name(space_name,
                                                                                                 api_key, url)
-                default_first_project, default_first_runbook, default_first_environment = get_space_first_project_runbook_and_environment(
-                    default_space_id, api_key, url)
+                default_first_project, default_first_runbook, default_first_environment = default_on_exception(
+                    lambda: get_space_first_project_runbook_and_environment(default_space_id, api_key, url),
+                    (None, None, None))
 
                 if not first_project and default_first_project:
                     first_project = default_first_project["Name"]
@@ -57,8 +59,9 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
         # Otherwise find the first space with a project and environment
         if not space_name:
             for space in get_spaces_generator(api_key, url):
-                space_first_project, space_first_runbook, space_first_environment = get_space_first_project_runbook_and_environment(
-                    space["Id"], api_key, url)
+                space_first_project, space_first_runbook, space_first_environment = default_on_exception(
+                    lambda: get_space_first_project_runbook_and_environment(space["Id"], api_key, url),
+                    (None, None, None))
 
                 # The first space we find with projects and environments is used as the example
                 if space_first_project and space_first_environment:

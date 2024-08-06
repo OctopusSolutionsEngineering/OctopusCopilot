@@ -16,3 +16,18 @@ def none_on_exception(function):
     except Exception as e:
         logger.error(e)
         return None
+
+
+def default_on_exception(function, default):
+    """
+    A wrapper function that returns a default instead of throwing an exception
+    :param function: The function to call
+    :param default The value to return if there is an exception
+    :return: The return value of the function, or the default value if an exception was thrown
+    """
+    ensure_not_falsy(function, 'function must not be None (default_on_exception).')
+    try:
+        return function()
+    except Exception as e:
+        logger.error(e)
+        return default
