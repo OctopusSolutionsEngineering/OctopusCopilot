@@ -52,23 +52,25 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                     first_runbook = default_first_runbook["Name"]
             except Exception as e:
                 handle_error(e)
-                pass
 
         # Otherwise find the first space with a project and environment
         if not space_name:
-            for space in get_spaces_generator(api_key, url):
-                space_first_project, space_first_runbook, space_first_environment = get_space_first_project_runbook_and_environment(
-                    space["Id"], api_key, url)
+            try:
+                for space in get_spaces_generator(api_key, url):
+                    space_first_project, space_first_runbook, space_first_environment = get_space_first_project_runbook_and_environment(
+                        space["Id"], api_key, url)
 
-                # The first space we find with projects and environments is used as the example
-                if space_first_project and space_first_environment:
-                    space_name = space["Name"]
-                    first_project = space_first_project["Name"]
-                    first_environment = space_first_environment["Name"]
+                    # The first space we find with projects and environments is used as the example
+                    if space_first_project and space_first_environment:
+                        space_name = space["Name"]
+                        first_project = space_first_project["Name"]
+                        first_environment = space_first_environment["Name"]
 
-                    if space_first_runbook:
-                        first_runbook = space_first_runbook["Name"]
-                    break
+                        if space_first_runbook:
+                            first_runbook = space_first_runbook["Name"]
+                        break
+            except Exception as e:
+                handle_error(e)
 
         log_query("provide_help", f"""
                 Space: {space_name}

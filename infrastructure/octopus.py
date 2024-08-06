@@ -576,6 +576,34 @@ def create_limited_api_key(user, my_api_key, my_octopus_api):
     return json["ApiKey"]
 
 
+@logging_wrapper
+def create_unlimited_api_key(user, my_api_key, my_octopus_api):
+    """
+    This function creates an API key that does not expire.
+    :param user: The current user
+    :param my_api_key: The API key
+    :param my_octopus_api: The Octopus URL
+    :return:
+    """
+
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (create_limited_api_key).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (create_limited_api_key).')
+    ensure_string_not_empty(user, 'user must be the Octopus user ID (create_limited_api_key).')
+
+    tomorrow = datetime.datetime.now(pytz.UTC) + datetime.timedelta(days=1)
+
+    api_key = {
+        'Purpose': "Octopus Copilot temporary API key",
+        'Expires': None
+    }
+
+    api = build_url(my_octopus_api, f"/api/users/{quote_safe(user)}/apikeys")
+    resp = handle_response(lambda: http.request("POST", api, json=api_key, headers=get_octopus_headers(my_api_key)))
+
+    json = resp.json()
+    return json["ApiKey"]
+
+
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_raw_deployment_process(space_name, project_name, api_key, octopus_url):
@@ -1733,6 +1761,26 @@ def get_task_interruptions(space_id, server_task, api_key, octopus_url):
 
     base_url = f"api/{quote_safe(space_id)}/interruptions"
     api = build_url(octopus_url, base_url, dict(regarding=server_task))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    interruptions = resp.json()
+    if len(interruptions['Items']) == 0:
+        return None
+
+    return interruptions['Items']
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_users(api_key, octopus_url):
+    """
+    Get the list of users
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus server URL
+    :return: The users for an Octopus Server task
+    """
+
+    base_url = f"api/users"
+    api = build_url(octopus_url, base_url, dict(take=TAKE_ALL))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     interruptions = resp.json()
     if len(interruptions['Items']) == 0:

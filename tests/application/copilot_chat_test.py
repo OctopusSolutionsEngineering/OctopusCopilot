@@ -535,7 +535,8 @@ class CopilotChatTest(unittest.TestCase):
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_hotfix_deployments(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
-        deployment = create_and_deploy_release(space_name="Simple", release_version=version + "-hotfix-timeouts-iss253")
+        deployment = create_and_deploy_release(space_name="Simple", release_version=version + "-hotfix-timeouts-iss253",
+                                               channel_name="Hotfix")
         wait_for_task(deployment["TaskId"], space_name="Simple")
 
         prompt = "Show the release version and time of the last successful hotfix deployment."
@@ -660,7 +661,8 @@ class CopilotChatTest(unittest.TestCase):
 
         run_response = copilot_handler_internal(build_confirmation_request(confirmation))
         response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
-        self.assertTrue(f"Deployment of {project_name} release {version} to {deploy_environment}" in response_text, "Response was " + response_text)
+        self.assertTrue(f"Deployment of {project_name} release {version} to {deploy_environment}" in response_text,
+                        "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_deploy_release(self):
@@ -720,8 +722,9 @@ class CopilotChatTest(unittest.TestCase):
 
         run_response = copilot_handler_internal(build_confirmation_request(confirmation))
         response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
-        self.assertTrue(f"Deployment of {project_name} release {version} to {deploy_environment} for {tenant_name}" in response_text,
-                        "Response was " + response_text)
+        self.assertTrue(
+            f"Deployment of {project_name} release {version} to {deploy_environment} for {tenant_name}" in response_text,
+            "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):
@@ -823,7 +826,8 @@ class CopilotChatTest(unittest.TestCase):
                         * GitHub Attempt: 1
                         * GitHub Run Id: 9656530979"""
         deployment = create_and_deploy_release(space_name="Simple", release_version=version, release_notes=notes)
-        hotfix_deployment = create_and_deploy_release(space_name="Simple", channel_name="Hotfix", release_version=f"{version}-hf", release_notes=notes)
+        hotfix_deployment = create_and_deploy_release(space_name="Simple", channel_name="Hotfix",
+                                                      release_version=f"{version}-hf", release_notes=notes)
         wait_for_task(deployment["TaskId"], space_name="Simple")
         wait_for_task(hotfix_deployment["TaskId"], space_name="Simple")
         prompt = "Show the project dashboard for \"Deploy Web App Container\"."

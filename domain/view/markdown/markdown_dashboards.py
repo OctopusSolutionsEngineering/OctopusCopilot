@@ -166,9 +166,9 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
         table += build_markdown_table_row(environment_names)
         table += build_markdown_table_header_separator(len(environment_names))
 
-        for environment in environments:
-            for release in dashboard["Releases"]:
-                if release["Channel"]["Id"] == channel_id:
+        for release in dashboard["Releases"]:
+            if release["Channel"]["Id"] == channel_id:
+                for environment in environments:
                     if environment["Id"] in release["Deployments"]:
                         # Get the latest deployment for the release. Redeploying a release can result in many
                         # deployments for an environment and a release.
@@ -184,7 +184,8 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
 
                             # Find any running steps
                             release_details.extend(
-                                map(lambda x: '&ensp;' + x, get_running(deployment_highlights, deployment["DeploymentId"])))
+                                map(lambda x: '&ensp;' + x,
+                                    get_running(deployment_highlights, deployment["DeploymentId"])))
 
                             release_details.append(f"⟲ {difference} ago")
 
@@ -199,9 +200,10 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
                             release_details.extend(get_workflow_link(release_workflow_runs, release["Release"]["Id"]))
 
                             table += f"| {'<br/>'.join(release_details)}"
+
                     else:
                         table += "| ⨂ "
-    table += "|  \n\n"
+                table += "| \n"
     return table
 
 
