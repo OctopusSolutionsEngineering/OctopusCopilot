@@ -203,8 +203,7 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
 
                     else:
                         table += "| ⨂ "
-                table += "\n"
-        table += "|  "
+                table += "| \n"
     return table
 
 
