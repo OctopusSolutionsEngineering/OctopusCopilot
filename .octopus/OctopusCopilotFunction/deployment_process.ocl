@@ -6,6 +6,7 @@ step "deploy-with-cli" {
         environments = ["production"]
         notes = "Deploy the application using the Azure Functions CLI"
         properties = {
+            Octopus.Action.AutoRetry.MaximumCount = "3"
             Octopus.Action.Azure.AccountId = "#{Octopus.Azure.Account}"
             Octopus.Action.Script.ScriptBody = <<-EOT
                 pushd Azure.Functions.Cli.linux-x64
