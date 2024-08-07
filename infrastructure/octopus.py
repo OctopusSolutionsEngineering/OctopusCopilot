@@ -503,7 +503,8 @@ def get_runbook_environments_from_project(space_id, project_id, runbook_id, my_a
     :return: The list of environments
     """
     ensure_string_not_empty(space_id, 'space_id must be the space ID (get_runbook_environments_from_project).')
-    ensure_string_not_empty(space_id, 'project_id must be the project ID (get_runbook_environments_from_project).')
+    ensure_string_not_empty(project_id, 'project_id must be the project ID (get_runbook_environments_from_project).')
+    ensure_string_not_empty(runbook_id, 'runbook_id must be the runbook ID (get_runbook_environments_from_project).')
     ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_runbook_environments_from_project).')
     ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_runbook_environments_from_project).')
 
