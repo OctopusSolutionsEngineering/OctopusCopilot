@@ -52,19 +52,19 @@ def deploy_release_confirm_callback_wrapper(github_user, url, api_key, log_query
                                         log_query)
 
         response_text.append(
-             f'* [Deployment of {project_name} release {release_version} to {environment_name} {"for " + tenant_name if tenant_name else ""}]({url}/app#/{space_id}/tasks/{response["TaskId"]})')
+            f'* [Deployment of {project_name} release {release_version} to {environment_name} {"for " + tenant_name if tenant_name else ""}]({url}/app#/{space_id}/tasks/{response["TaskId"]})')
 
-        debug_text = get_params_message(github_user, False,
-                                        deploy_release_confirm_callback.__name__,
-                                        space_id=space_id,
-                                        project_name=project_name,
-                                        project_id=project_id,
-                                        release_version=release_version,
-                                        release_id=release['Id'],
-                                        environment_name=environment_name,
-                                        environment_id=environment_id,
-                                        tenant_name=tenant_name,
-                                        deployment_id=response['Id'])
+        debug_text.extend(get_params_message(github_user, False,
+                                             deploy_release_confirm_callback.__name__,
+                                             space_id=space_id,
+                                             project_name=project_name,
+                                             project_id=project_id,
+                                             release_version=release_version,
+                                             release_id=release['Id'],
+                                             environment_name=environment_name,
+                                             environment_id=environment_id,
+                                             tenant_name=tenant_name,
+                                             deployment_id=response['Id']))
 
         response_text.extend(debug_text)
         return CopilotResponse("\n\n".join(response_text))

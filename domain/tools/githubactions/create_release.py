@@ -194,17 +194,17 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
             Environment Name: {arguments["environment_name"]}
             Tenant Name: {arguments["tenant_name"]}""")
 
-        debug_text = get_params_message(github_user, False,
-                                        create_release.__name__,
-                                        space_name=actual_space_name,
-                                        space_id=space_id,
-                                        project_name=sanitized_project_names,
-                                        project_id=project["Id"],
-                                        git_ref=git_ref,
-                                        release_version=release_version,
-                                        channel_name=channel['Name'],
-                                        environment_name=sanitized_environment_names,
-                                        tenant_name=sanitized_tenant_names)
+        debug_text.extend(get_params_message(github_user, False,
+                                             create_release.__name__,
+                                             space_name=actual_space_name,
+                                             space_id=space_id,
+                                             project_name=sanitized_project_names,
+                                             project_id=project["Id"],
+                                             git_ref=git_ref,
+                                             release_version=release_version,
+                                             channel_name=channel['Name'],
+                                             environment_name=sanitized_environment_names,
+                                             tenant_name=sanitized_tenant_names))
         save_callback(github_user,
                       create_release.__name__,
                       callback_id,
