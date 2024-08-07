@@ -727,34 +727,16 @@ class CopilotChatTest(unittest.TestCase):
             "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_handle_manual_intervention_approval(self):
+    def test_handle_manual_intervention_none_found(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         space_name = "Simple"
         project_name = "Deploy Web App Container"
         environment_name = "Development"
         prompt = f"Approve \"{version}\" to \"{environment_name}\" for \"{project_name}\" in \"{space_name}\""
         response = copilot_handler_internal(build_request(prompt))
-        sse_response = response.get_body().decode('utf8')
-        confirmation_id = get_confirmation_id(sse_response)
-        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {"messages": [{
-            "role": "user",
-            "content": "",
-            "copilot_references": None,
-            "copilot_confirmations": [
-                {
-                    "state": "accepted",
-                    "confirmation": {
-                        "id": confirmation_id
-                    }
-                }
-            ]
-        }]}
-
-        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
-        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
-        self.assertTrue(f"Manual intervention approved" in response_text, "Response was " + response_text)
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        self.assertTrue(f"No task found for:" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):

@@ -1097,7 +1097,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
 
         # If the release is not found, exit
         if not release:
-            return None, None
+            return None, None, None
 
         # Find the specific deployment
         actual_release_version = release["Version"]
@@ -1106,7 +1106,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
             task_id = specific_deployment[0]["TaskId"]
 
     if not task_id:
-        return None, None
+        return None, None, None
 
     api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Tasks/{task_id}/details")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
@@ -1271,6 +1271,15 @@ def get_environment_fuzzy(space_id, environment_name, api_key, octopus_url):
             raise ResourceNotFound("Environment", environment_name)
 
     return environment
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_team(team_id, api_key, octopus_url):
+    base_url = f"api/teams/{quote_safe(team_id)}"
+    api = build_url(octopus_url, base_url)
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()
 
 
 @logging_wrapper
