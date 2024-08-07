@@ -492,6 +492,29 @@ def get_environments(my_api_key, my_octopus_api, space_id):
 
 
 @logging_wrapper
+def get_runbook_environments_from_project(space_id, project_id, runbook_id, my_api_key, my_octopus_api):
+    """
+    Returns the runbook environments for a specified project
+    :param space_id: The Octopus space id
+    :param project_id: The Octopus project id
+    :param runbook_id: The Octopus runbook id
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus URL
+    :return: The list of environments
+    """
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (get_runbook_environments_from_project).')
+    ensure_string_not_empty(space_id, 'project_id must be the project ID (get_runbook_environments_from_project).')
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_runbook_environments_from_project).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_runbook_environments_from_project).')
+
+    api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/runbooks/{quote_safe(runbook_id)}/environments")
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
+
+    json = resp.json()
+    return json
+
+
+@logging_wrapper
 def get_tenants(my_api_key, my_octopus_api, space_id):
     """
     Returns the environments in a space

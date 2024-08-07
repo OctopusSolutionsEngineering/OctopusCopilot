@@ -7,7 +7,8 @@ from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
-from infrastructure.octopus import run_published_runbook_fuzzy, get_project, get_runbook_fuzzy, get_environment
+from infrastructure.octopus import run_published_runbook_fuzzy, get_project, get_runbook_fuzzy, get_environment, \
+    get_runbook_environments_from_project
 
 
 def run_runbook_confirm_callback_wrapper(github_user, url, api_key, log_query):
@@ -90,9 +91,21 @@ def run_runbook_wrapper(url, api_key, github_user, original_query, connection_st
 
         # Make sure the environment was valid
         runbook = get_runbook_fuzzy(space_id, project["Id"], sanitized_runbook_names[0], api_key, url)
-        runbook_environments = [get_environment(space_id, x, api_key, url)["Name"] for x in
-                                runbook["Environments"]]
-        valid = any(filter(lambda x: x == sanitized_environment_names[0], runbook_environments))
+        match runbook['EnvironmentScope']:
+            case "All":
+                valid = True
+            case "Specified":
+                runbook_environments = [get_environment(space_id, x, api_key, url)["Name"] for x in
+                                        runbook["Environments"]]
+                valid = any(filter(lambda x: x == sanitized_environment_names[0], runbook_environments))
+            case "FromProjectLifecycles":
+                runbook_environments_from_project = get_runbook_environments_from_project(space_id, project['Id'], runbook['Id'], api_key, url)
+                runbook_environments = [get_environment(space_id, x, api_key, url)["Name"] for x in
+                                        runbook_environments_from_project]
+                valid = any(filter(lambda x: x == sanitized_environment_names[0], runbook_environments))
+            case _:
+                valid = False
+
         if not valid:
             return CopilotResponse(
                 f"The environment \"{sanitized_environment_names[0]}\" is not valid for the runbook \"{sanitized_runbook_names[0]}\". "
