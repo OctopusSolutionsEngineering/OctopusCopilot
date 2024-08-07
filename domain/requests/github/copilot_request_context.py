@@ -21,6 +21,8 @@ from domain.tools.githubactions.github_job_summary import get_job_summary_callba
 from domain.tools.githubactions.github_logs import get_github_logs_callback
 from domain.tools.githubactions.how_to import how_to_callback
 from domain.tools.githubactions.logout import logout
+from domain.tools.githubactions.manual_intervention import manual_intervention_wrapper, \
+    manual_intervention_confirm_callback_wrapper
 from domain.tools.githubactions.project_dashboard import get_project_dashboard_callback
 from domain.tools.githubactions.provide_help import provide_help_wrapper
 from domain.tools.githubactions.releases import releases_query_callback, releases_query_messages
@@ -266,6 +268,15 @@ def build_form_tools(query, req: func.HttpRequest):
             get_functions_connection_string(),
             log_query),
             callback=deploy_release_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query)),
+        FunctionDefinition(manual_intervention_wrapper(
+            url,
+            api_key,
+            get_github_user_from_form(req),
+            query,
+            get_functions_connection_string(),
+            log_query),
+            callback=manual_intervention_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query),
+            is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users()),),
         FunctionDefinition(
             show_github_job_summary_wrapper(query,
                                             get_job_summary_callback(get_github_user_from_form(req),
