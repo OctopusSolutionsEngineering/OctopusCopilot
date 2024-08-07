@@ -74,7 +74,6 @@ def manual_intervention_wrapper(url, api_key, github_user, original_query, conne
             if log_query:
                 log_query(f"Unexpected Key: {key}", "Value: {value}")
 
-
         debug_text = get_params_message(github_user, True,
                                         manual_intervention.__name__,
                                         space_name=space_name,
