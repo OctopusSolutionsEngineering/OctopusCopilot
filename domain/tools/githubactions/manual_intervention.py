@@ -196,8 +196,7 @@ def manual_intervention_wrapper(url, api_key, github_user, original_query, conne
             Space: {arguments["space_id"]}
             Project Name: {arguments["project_name"]}
             Project Id: {arguments["project_id"]}
-            Approve: {arguments["approve"]}
-            Reject: {arguments["reject"]}
+            Outcome: {arguments["manual_intervention_outcome"]}
             Version: {arguments["release_version"]}
             Environment Name: {arguments["environment_name"]}
             Deployment Id: {arguments["deployment_id"]}
@@ -208,11 +207,11 @@ def manual_intervention_wrapper(url, api_key, github_user, original_query, conne
                                              space_name=actual_space_name,
                                              space_id=space_id,
                                              project_name=sanitized_project_names,
-                                             project_id=project["Id"],
+                                             project_id=project['Id'],
                                              release_version=release_version,
-                                             approve=approve,
-                                             reject=reject,
-                                             environment_name=sanitized_environment_names))
+                                             manual_intervention_outcome=manual_intervention_outcome,
+                                             environment_name=sanitized_environment_names,
+                                             task_id=task['Id']))
 
         save_callback(github_user,
                       manual_intervention.__name__,
