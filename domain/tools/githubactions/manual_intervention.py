@@ -152,8 +152,9 @@ def manual_intervention_wrapper(url, api_key, github_user, original_query, conne
                 if interruption['Type'] == "ManualIntervention":
                     if not interruption['CanTakeResponsibility']:
                         team_names = [get_team(team_id, api_key, url)["Name"] for team_id in interruption['ResponsibleTeamIds']]
+                        markdown_names = list(map(lambda t: f"* {t}", team_names))
                         response = ["You don't have sufficient permissions to take responsibility for the manual"
-                                    " intervention. The following teams can:\n", "\n* ".join(team_names)]
+                                    " intervention.\n\nThe following teams can:\n", "\n".join(markdown_names)]
                         return CopilotResponse("".join(response))
                     else:
                         if interruption['ResponsibleUserId'] and not interruption['HasResponsibility']:
