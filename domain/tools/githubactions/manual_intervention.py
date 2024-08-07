@@ -187,7 +187,7 @@ def manual_intervention_wrapper(url, api_key, github_user, original_query, conne
             "reject": reject,
             "release_version": release_version,
             "environment_name": sanitized_environment_names[0],
-            "tenant_name": sanitized_environment_names[0],
+            "tenant_name": sanitized_tenant_names[0] if sanitized_tenant_names else None,
             "deployment_id": task['Arguments']['DeploymentId'],
             "task_id": task['Id']
         }
