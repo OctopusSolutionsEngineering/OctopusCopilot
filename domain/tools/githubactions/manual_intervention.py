@@ -4,7 +4,7 @@ import uuid
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_environments, lookup_tenants
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
-from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list
+from domain.sanitizers.sanitized_list import get_item_or_none
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
 from infrastructure.octopus import get_project, get_deployment_logs, get_task_interruptions, get_team
@@ -151,7 +151,7 @@ def manual_intervention_wrapper(url, api_key, github_user, original_query, conne
                 interruption = interruptions[0]
                 if interruption['Type'] == "ManualIntervention":
                     if not interruption['CanTakeResponsibility']:
-                        team_names = [get_team(space_id, team_id, api_key, url)["Name"] for team_id in interruption['ResponsibleTeamIds']]
+                        team_names = [get_team(team_id, api_key, url)["Name"] for team_id in interruption['ResponsibleTeamIds']]
                         response = ["You don't have sufficient permissions to take responsibility for the manual"
                                     " intervention. The following teams can:\n", "\n* ".join(team_names)]
                         return CopilotResponse("".join(response))
