@@ -91,6 +91,7 @@ def run_runbook_wrapper(url, api_key, github_user, original_query, connection_st
 
         # Make sure the environment was valid
         runbook = get_runbook_fuzzy(space_id, project["Id"], sanitized_runbook_names[0], api_key, url)
+        runbook_environments = []
         match runbook['EnvironmentScope']:
             case "All":
                 valid = True
@@ -109,7 +110,7 @@ def run_runbook_wrapper(url, api_key, github_user, original_query, connection_st
         if not valid:
             return CopilotResponse(
                 f"The environment \"{sanitized_environment_names[0]}\" is not valid for the runbook \"{sanitized_runbook_names[0]}\". "
-                + "Valid environments are " + ", ".join(runbook_environments) + ".")
+                + "Valid environments are:" + ", ".join(runbook_environments))
 
         callback_id = str(uuid.uuid4())
         arguments = {
