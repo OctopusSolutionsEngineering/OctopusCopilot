@@ -28,7 +28,7 @@ def manual_intervention_confirm_callback_wrapper(github_user, url, api_key, log_
             Space: {space_id}
             Project Name: {project_name}
             Project Id: {project_id}
-            Outcome: {manual_intervention_outcome}            
+            Outcome: {manual_intervention_outcome}
             Version: {release_version}
             Environment Name: {environment_name}
             Deployment Id: {deployment_id}
