@@ -27,3 +27,56 @@ def is_api_key(api_key):
     pattern = r"API-[A-Z0-9a-z]+"
 
     return re.match(pattern, api_key)
+
+
+def is_task_interruption_valid(space_name, space_id, project_name, release_version, environment_name, tenant_name, task_id,
+                               task_interruptions, teams, url):
+    """
+
+    :param space_name: The Octopus space name
+    :param space_id: The Octopus space id
+    :param project_name: The Octopus project name
+    :param release_version: The Octopus release version
+    :param environment_name: The Octopus environment name
+    :param tenant_name: The Octopus tenant name
+    :param task_id: The Octopus task id
+    :param task_interruptions: The Octopus task interruptions
+    :param teams: The Octopus teams for the space
+    :param url: The Octopus Server url
+    :return: Tuple of: bool value indicating if the octopus task interruption is valid, and an error response if False.
+    """
+    interruption_details = [f"\n* Project: **{project_name}**"
+                            f"\n* Version: **{release_version}**"
+                            f"\n* Environment: **{environment_name}**"]
+    if tenant_name:
+        interruption_details.append(f"\n* Tenant: **{tenant_name}**")
+
+    interruption_details.append(f"\n* Space: **{space_name}**")
+
+    if task_interruptions is None:
+        response = ["⚠️ No interruptions found for:"]
+        response.extend(interruption_details)
+        return False, "".join(response)
+    else:
+        interruption = task_interruptions[0]
+        if interruption['Type'] == "ManualIntervention":
+            if not interruption['CanTakeResponsibility']:
+                team_names = [team["Name"] for team in teams for team["Id"] in
+                              interruption['ResponsibleTeamIds']]
+                markdown_names = list(map(lambda t: f"* {t}", team_names))
+                response = ["🚫 You don't have sufficient permissions to take responsibility for the "
+                            "manual intervention.\n\nThe following teams can:\n", "\n".join(markdown_names)]
+                return False, "".join(response)
+            else:
+                if interruption['ResponsibleUserId'] and not interruption['HasResponsibility']:
+                    response = ["🚫 Another user has already taken responsibility of the manual "
+                                "intervention for:"]
+                    response.extend(interruption_details)
+                    return False, "".join(response)
+        else:
+            response = ["🚫 An incompatible interruption (guided failure) was found for:"]
+            response.extend(interruption_details)
+            response.append(f"\n\n[View task]({url}/app#/{space_id}/tasks/{task_id})")
+            return False, "".join(response)
+
+    return True, None

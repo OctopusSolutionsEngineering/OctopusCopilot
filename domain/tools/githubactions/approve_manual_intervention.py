@@ -6,8 +6,10 @@ from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import get_item_or_none
 from domain.tools.debug import get_params_message
+from domain.validation.octopus_validation import is_task_interruption_valid
 from infrastructure.callbacks import save_callback
-from infrastructure.octopus import get_project, get_deployment_logs, get_task_interruptions, get_team
+from infrastructure.octopus import get_project, get_deployment_logs, get_task_interruptions, \
+    approve_manual_intervention_for_task, get_teams
 
 
 def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_key, log_query):
@@ -32,15 +34,23 @@ def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_k
             Deployment Id: {deployment_id}
             Task Id: {task_id}""")
 
-        response_text = []
+        approval_response, error_message = approve_manual_intervention_for_task(
+            space_id,
+            project_id,
+            release_version,
+            environment_name,
+            task_id,
+            api_key,
+            url)
 
-        # TODO: Actually approve manual intervention
-        # Include taking responsibility for the interruption. Note: the User might already have taken responsibility
-        # which is indicated by HasResponsibility=true
+        if approval_response is None:
+            response = f"Unable to approve manual intervention. Please check and retry\n\n[View task]({url}/app#/{space_id}/tasks/{task_id}"
+            if error_message:
+                response = f"\n\n{error_message}"
+            return CopilotResponse(response)
 
-        server_taskid = ""
-        response_text.append(
-            f"{project_name}\n\nManual intervention approved\n\n[View task]({url}/app#/{space_id}/tasks/{server_taskid})")
+        response_text = [
+            f"{project_name}\n\nManual intervention approved\n\n[View task]({url}/app#/{space_id}/tasks/{approval_response['TaskId']})"]
 
         debug_text.extend(get_params_message(github_user, False,
                                              approve_manual_intervention_confirm_callback.__name__,
@@ -124,45 +134,41 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
 
         if task is None:
             response = ["⚠️ No task found for:"]
-            response.extend(query_details)
+            response.extend(warnings)
+            response.extend(debug_text)
             return CopilotResponse("".join(response))
 
-        interruption = None
-        # Validate interruption
+        interruptions = None
         if task['HasPendingInterruptions']:
             interruptions = get_task_interruptions(space_id, task['Id'], api_key, url)
-            if interruptions is None:
-                response = ["⚠️ No interruptions found for:"]
-                response.extend(query_details)
+
+            teams = get_teams(space_id, api_key, url)
+            valid, error_response = is_task_interruption_valid(actual_space_name,
+                                                               space_id,
+                                                               sanitized_project_names[0],
+                                                               release_version,
+                                                               sanitized_environment_names[0],
+                                                               sanitized_tenant_names[0],
+                                                               task['Id'],
+                                                               interruptions,
+                                                               teams,
+                                                               url)
+            if not valid:
+                response = [error_response]
+                response.extend(warnings)
+                response.extend(debug_text)
                 return CopilotResponse("".join(response))
-            else:
-                interruption = interruptions[0]
-                if interruption['Type'] == "ManualIntervention":
-                    if not interruption['CanTakeResponsibility']:
-                        team_names = [get_team(team_id, api_key, url)["Name"] for team_id in
-                                      interruption['ResponsibleTeamIds']]
-                        markdown_names = list(map(lambda t: f"* {t}", team_names))
-                        response = ["🚫 You don't have sufficient permissions to take responsibility for the "
-                                    "manual intervention.\n\nThe following teams can:\n", "\n".join(markdown_names)]
-                        return CopilotResponse("".join(response))
-                    else:
-                        if interruption['ResponsibleUserId'] and not interruption['HasResponsibility']:
-                            response = ["🚫 Another user has already taken responsibility of the manual "
-                                        "intervention for:"]
-                            response.extend(query_details)
-                            return CopilotResponse("".join(response))
-                else:
-                    response = ["🚫 An incompatible interruption (guided failure) was found for:"]
-                    response.extend(query_details)
-                    response.append(f"\n\n[View task]({url}/app#/{space_id}/tasks/{task['Id']})")
-                    return CopilotResponse("".join(response))
+
         else:
             response = ["⚠️ No pending manual interventions found for:"]
             response.extend(query_details)
+            response.extend(warnings)
+            response.extend(debug_text)
             return CopilotResponse("".join(response))
 
         instructions = None
-        if interruption is not None:
+        if interruptions is not None:
+            interruption = interruptions[0]
             interruption_elements = interruption['Form']['Elements']
             instruction_element = [interruption_element for interruption_element in interruption_elements if
                                    interruption_element['Name'] == "Instructions"]

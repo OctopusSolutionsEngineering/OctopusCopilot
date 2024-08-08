@@ -23,6 +23,7 @@ from domain.sanitizers.sanitized_list import get_item_fuzzy, normalize_log_step_
 from domain.sanitizers.url_sanitizer import quote_safe
 from domain.url.build_url import build_url
 from domain.validation.argument_validation import ensure_string_not_empty
+from domain.validation.octopus_validation import is_task_interruption_valid
 from infrastructure.http_pool import http, TAKE_ALL
 
 logger = configure_logging()
@@ -505,10 +506,13 @@ def get_runbook_environments_from_project(space_id, project_id, runbook_id, my_a
     ensure_string_not_empty(space_id, 'space_id must be the space ID (get_runbook_environments_from_project).')
     ensure_string_not_empty(project_id, 'project_id must be the project ID (get_runbook_environments_from_project).')
     ensure_string_not_empty(runbook_id, 'runbook_id must be the runbook ID (get_runbook_environments_from_project).')
-    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (get_runbook_environments_from_project).')
-    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (get_runbook_environments_from_project).')
+    ensure_string_not_empty(my_octopus_api,
+                            'my_octopus_api must be the Octopus Url (get_runbook_environments_from_project).')
+    ensure_string_not_empty(my_api_key,
+                            'my_api_key must be the Octopus Api key (get_runbook_environments_from_project).')
 
-    api = build_url(my_octopus_api, f"/api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/runbooks/{quote_safe(runbook_id)}/environments")
+    api = build_url(my_octopus_api,
+                    f"/api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/runbooks/{quote_safe(runbook_id)}/environments")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
 
     json = resp.json()
@@ -1306,6 +1310,15 @@ def get_team(team_id, api_key, octopus_url):
     return resp.json()
 
 
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def get_teams(space_id, api_key, octopus_url, include_system_teams=True):
+    base_url = f"api/teams"
+    api = build_url(octopus_url, base_url, dict(spaces=space_id, includeSystem=include_system_teams, take=TAKE_ALL))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    return resp.json()['Items']
+
+
 @logging_wrapper
 def get_environments_fuzzy_cached(space_id, environment_names, api_key, octopus_url):
     if not environment_names:
@@ -1781,25 +1794,113 @@ def get_artifacts(space_id, server_task, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_task_interruptions(space_id, server_task, api_key, octopus_url):
+def get_task_interruptions(space_id, task_id, api_key, octopus_url):
     """
 
     Get interruptions for a task
     :param space_id: The space ID
-    :param server_task: The server task ID
+    :param task_id: The server task ID
     :param api_key: The Octopus API key
     :param octopus_url: The Octopus server URL
     :return: The interruptions for an Octopus Server task
     """
 
     base_url = f"api/{quote_safe(space_id)}/interruptions"
-    api = build_url(octopus_url, base_url, dict(regarding=server_task))
+    api = build_url(octopus_url, base_url, dict(regarding=task_id))
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     interruptions = resp.json()
     if len(interruptions['Items']) == 0:
         return None
 
     return interruptions['Items']
+
+
+@logging_wrapper
+def approve_manual_intervention_for_task(space_id, project_id, release_version, environment_name,
+                                         tenant_name, task_id, my_api_key, my_octopus_api):
+    """
+
+    Approve a manual intervention for a task
+    :param space_id: The Octopus Space
+    :param project_id: The Octopus project
+    :param release_version: The Octopus release version
+    :param environment_name: The Octopus environment
+    :param tenant_name: The Octopus tenant
+    :param task_id: The Octopus task
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus server URL
+    :return:
+    """
+
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (approve_manual_intervention_for_task).')
+    ensure_string_not_empty(project_id, 'project_id must be the project ID (approve_manual_intervention_for_task).')
+    ensure_string_not_empty(release_version,
+                            'release_version must be the release version (approve_manual_intervention_for_task).')
+    ensure_string_not_empty(environment_name,
+                            'environment_name must be the environment name (approve_manual_intervention_for_task).')
+    ensure_string_not_empty(tenant_name,
+                            'tenant_name must be the tenant name (approve_manual_intervention_for_task).')
+    ensure_string_not_empty(task_id, 'task_id must be the task ID (approve_manual_intervention_for_task).')
+    ensure_string_not_empty(my_api_key,
+                            'my_api_key must be the Octopus Api key (approve_manual_intervention_for_task).')
+    ensure_string_not_empty(my_octopus_api,
+                            'my_octopus_api must be the Octopus Url (approve_manual_intervention_for_task).')
+
+    space = get_space(space_id, my_api_key, my_octopus_api)
+    project = get_project(space_id, project_id, my_api_key, my_octopus_api)
+    task = get_task(space_id, task_id, my_api_key, my_octopus_api)
+
+    if task['HasPendingInterruptions']:
+        interruptions = get_task_interruptions(space_id, task['Id'], my_api_key, my_octopus_api)
+
+        teams = get_teams(space_id, my_api_key, my_octopus_api)
+        valid, error_response = is_task_interruption_valid(space['Name'],
+                                                           space_id,
+                                                           project['Name'],
+                                                           release_version,
+                                                           environment_name,
+                                                           tenant_name,
+                                                           task_id,
+                                                           interruptions,
+                                                           teams,
+                                                           my_octopus_api)
+        if not valid:
+            return None, error_response
+
+        interruption = interruptions[0]
+        responsible_user_id = interruption['ResponsibleUserId']
+        if responsible_user_id is None:
+            _ = take_responsibility_for_interruption(space_id, interruption['Id'], my_api_key, my_octopus_api)
+
+        # else we can assume we have taken responsibility already (validation checks this case already)
+        approval_request = {
+            'Instructions': None,
+            'Notes': 'Manual intervention approved by the Octopus extension for GitHub Copilot',
+            'Result': 'Proceed'
+        }
+
+        base_url = f"api/{quote_safe(space_id)}/interruptions/{quote_safe(interruption['Id'])}/submit"
+        api = build_url(my_octopus_api, base_url)
+
+        response = handle_response(
+            lambda: http.request("POST", api, json=approval_request, headers=get_octopus_headers(my_api_key)))
+
+        json = response.json()
+        return json, None
+    else:
+        return None, "⚠️ No pending manual interventions found."
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+def take_responsibility_for_interruption(space_id, interruption_id, api_key, octopus_url):
+    base_url = f"api/{quote_safe(space_id)}/interruptions/{quote_safe(interruption_id)}/responsible"
+    api = build_url(octopus_url, base_url)
+
+    response = handle_response(
+        lambda: http.request("POST", api, headers=get_octopus_headers(api_key)))
+
+    return response.json()
 
 
 @retry(HTTPError, tries=3, delay=2)
