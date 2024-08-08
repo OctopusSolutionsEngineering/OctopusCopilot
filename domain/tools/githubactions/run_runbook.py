@@ -97,13 +97,13 @@ def run_runbook_wrapper(url, api_key, github_user, original_query, connection_st
             case "All":
                 valid = True
             case "Specified":
-                runbook_environments = [get_environment(space_id, x, api_key, url)["Name"] for x in
+                runbook_environments = [get_environment(space_id, environmentId, api_key, url)["Name"] for environmentId in
                                         runbook["Environments"]]
                 valid = any(filter(lambda x: x == sanitized_environment_names[0], runbook_environments))
             case "FromProjectLifecycles":
                 runbook_environments_from_project = get_runbook_environments_from_project(space_id, project['Id'],
                                                                                           runbook['Id'], api_key, url)
-                runbook_environments = [get_environment(space_id, x, api_key, url)["Name"] for x in
+                runbook_environments = [get_environment(space_id, environment['Id'], api_key, url)["Name"] for environment in
                                         runbook_environments_from_project]
                 valid = any(filter(lambda x: x == sanitized_environment_names[0], runbook_environments))
             case _:
