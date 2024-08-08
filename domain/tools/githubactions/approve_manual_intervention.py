@@ -14,7 +14,7 @@ from infrastructure.octopus import get_project, get_deployment_logs, get_task_in
 
 def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_key, log_query):
     def approve_manual_intervention_confirm_callback(space_id, project_name, project_id, release_version,
-                                                     environment_name, deployment_id, task_id):
+                                                     environment_name, tenant_name, deployment_id, task_id):
         debug_text = get_params_message(github_user, True,
                                         approve_manual_intervention_confirm_callback.__name__,
                                         space_id=space_id,
@@ -22,6 +22,7 @@ def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_k
                                         project_id=project_id,
                                         release_version=release_version,
                                         environment_name=environment_name,
+                                        tenant_name=tenant_name,
                                         deployment_id=deployment_id,
                                         task_id=task_id)
 
@@ -31,6 +32,7 @@ def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_k
             Project Id: {project_id}
             Version: {release_version}
             Environment Name: {environment_name}
+            Tenant Name: {tenant_name}
             Deployment Id: {deployment_id}
             Task Id: {task_id}""")
 
@@ -59,7 +61,7 @@ def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_k
                                              project_id=project_id,
                                              release_version=release_version,
                                              environment_name=environment_name,
-                                             task_id=server_taskid))
+                                             task_id=approval_response['TaskId']))
 
         response_text.extend(debug_text)
         return CopilotResponse("\n\n".join(response_text))
@@ -194,6 +196,7 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
             Project Id: {arguments["project_id"]}
             Version: {arguments["release_version"]}
             Environment Name: {arguments["environment_name"]}
+            Tenant Name: {arguments["tenant_name"]}
             Deployment Id: {arguments["deployment_id"]}
             Task Id: {arguments["task_id"]}""")
 
