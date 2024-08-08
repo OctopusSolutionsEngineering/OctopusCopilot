@@ -11,6 +11,8 @@ from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyIn
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
+from domain.tools.githubactions.approve_manual_intervention import approve_manual_intervention_wrapper, \
+    approve_manual_intervention_confirm_callback_wrapper
 from domain.tools.githubactions.create_release import create_release_wrapper, create_release_confirm_callback_wrapper
 from domain.tools.githubactions.dashboard import get_dashboard_callback
 from domain.tools.githubactions.default_values import default_value_callbacks
@@ -21,8 +23,6 @@ from domain.tools.githubactions.github_job_summary import get_job_summary_callba
 from domain.tools.githubactions.github_logs import get_github_logs_callback
 from domain.tools.githubactions.how_to import how_to_callback
 from domain.tools.githubactions.logout import logout
-from domain.tools.githubactions.manual_intervention import manual_intervention_wrapper, \
-    manual_intervention_confirm_callback_wrapper
 from domain.tools.githubactions.project_dashboard import get_project_dashboard_callback
 from domain.tools.githubactions.provide_help import provide_help_wrapper
 from domain.tools.githubactions.releases import releases_query_callback, releases_query_messages
@@ -268,15 +268,16 @@ def build_form_tools(query, req: func.HttpRequest):
             get_functions_connection_string(),
             log_query),
             callback=deploy_release_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query)),
-        FunctionDefinition(manual_intervention_wrapper(
+        FunctionDefinition(approve_manual_intervention_wrapper(
             url,
             api_key,
             get_github_user_from_form(req),
             query,
             get_functions_connection_string(),
             log_query),
-            callback=manual_intervention_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query),
-            is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users()),),
+            callback=approve_manual_intervention_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key,
+                                                                          log_query),
+            is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users())),
         FunctionDefinition(
             show_github_job_summary_wrapper(query,
                                             get_job_summary_callback(get_github_user_from_form(req),

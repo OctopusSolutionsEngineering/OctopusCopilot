@@ -727,7 +727,7 @@ class CopilotChatTest(unittest.TestCase):
             "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_handle_manual_intervention_none_found(self):
+    def test_approve_manual_intervention_none_found(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         space_name = "Simple"
         project_name = "Deploy Web App Container"
