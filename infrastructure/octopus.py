@@ -1825,7 +1825,7 @@ def approve_manual_intervention_for_task(space_id, project_id, release_version, 
     :param project_id: The Octopus project
     :param release_version: The Octopus release version
     :param environment_name: The Octopus environment
-    :param tenant_name: The Octopus tenant
+    :param tenant_name: The (optional) Octopus tenant
     :param task_id: The Octopus task
     :param my_api_key: The Octopus API key
     :param my_octopus_api: The Octopus server URL
@@ -1838,8 +1838,6 @@ def approve_manual_intervention_for_task(space_id, project_id, release_version, 
                             'release_version must be the release version (approve_manual_intervention_for_task).')
     ensure_string_not_empty(environment_name,
                             'environment_name must be the environment name (approve_manual_intervention_for_task).')
-    ensure_string_not_empty(tenant_name,
-                            'tenant_name must be the tenant name (approve_manual_intervention_for_task).')
     ensure_string_not_empty(task_id, 'task_id must be the task ID (approve_manual_intervention_for_task).')
     ensure_string_not_empty(my_api_key,
                             'my_api_key must be the Octopus Api key (approve_manual_intervention_for_task).')

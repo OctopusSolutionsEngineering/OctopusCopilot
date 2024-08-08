@@ -27,7 +27,7 @@ def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_k
                                         task_id=task_id)
 
         log_query("approve_manual_intervention_confirm_callback", f"""
-            Space: {space_id}
+            Space Id: {space_id}
             Project Name: {project_name}
             Project Id: {project_id}
             Version: {release_version}

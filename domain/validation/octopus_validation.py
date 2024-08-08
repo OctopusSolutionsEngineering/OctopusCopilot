@@ -38,7 +38,7 @@ def is_task_interruption_valid(space_name, space_id, project_name, release_versi
     :param project_name: The Octopus project name
     :param release_version: The Octopus release version
     :param environment_name: The Octopus environment name
-    :param tenant_name: The Octopus tenant name
+    :param tenant_name: The (optional) Octopus tenant name
     :param task_id: The Octopus task id
     :param task_interruptions: The Octopus task interruptions
     :param teams: The Octopus teams for the space
