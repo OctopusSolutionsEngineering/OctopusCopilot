@@ -52,7 +52,8 @@ def run_runbook_confirm_callback_wrapper(github_user, url, api_key, log_query):
 
 
 def run_runbook_wrapper(url, api_key, github_user, original_query, connection_string, log_query):
-    def run_runbook(space_name=None, project_name=None, runbook_name=None, environment_name=None, tenant_name=None, **kwargs):
+    def run_runbook(space_name=None, project_name=None, runbook_name=None, environment_name=None, tenant_name=None,
+                    **kwargs):
         """
         Runs a published runbook in Octopus Deploy.
 
@@ -100,7 +101,8 @@ def run_runbook_wrapper(url, api_key, github_user, original_query, connection_st
                                         runbook["Environments"]]
                 valid = any(filter(lambda x: x == sanitized_environment_names[0], runbook_environments))
             case "FromProjectLifecycles":
-                runbook_environments_from_project = get_runbook_environments_from_project(space_id, project['Id'], runbook['Id'], api_key, url)
+                runbook_environments_from_project = get_runbook_environments_from_project(space_id, project['Id'],
+                                                                                          runbook['Id'], api_key, url)
                 runbook_environments = [get_environment(space_id, x, api_key, url)["Name"] for x in
                                         runbook_environments_from_project]
                 valid = any(filter(lambda x: x == sanitized_environment_names[0], runbook_environments))
@@ -136,17 +138,14 @@ def run_runbook_wrapper(url, api_key, github_user, original_query, connection_st
                       original_query,
                       connection_string)
 
+        prompt_title = "Do you want to continue running the runbook?"
+        prompt_message = ["Please confirm the details below are correct before proceeding:"
+                          f"\n* Project: **{sanitized_project_names[0]}**"
+                          f"\n* Environment: **{sanitized_environment_names[0]}**"]
         if arguments["tenant_name"]:
-            return CopilotResponse("Run a runbook",
-                                   f"Do you want to continue running the runbook \"{sanitized_runbook_names[0]}\" "
-                                   + f"in the project \"{sanitized_project_names[0]}\" for the environment \"{sanitized_environment_names[0]}\" and tenant \"{arguments['tenant_name']}\" in the space \"{actual_space_name}\"?",
-                                   "Please confirm the runbook name, project name, tenant name, and space name are correct before proceeding.",
-                                   callback_id)
+            prompt_message.append(f"\n* Tenant: **{arguments['tenant_name']}**")
 
-        return CopilotResponse("Run a runbook",
-                               f"Do you want to continue running the runbook \"{sanitized_runbook_names[0]}\" "
-                               + f"in the project \"{sanitized_project_names[0]}\" for the environment \"{sanitized_environment_names[0]}\" in the space \"{actual_space_name}\"?",
-                               "Please confirm the runbook name, project name, and space name are correct before proceeding.",
-                               callback_id)
+        prompt_message.append(f"\n* Space: **{actual_space_name}**")
+        return CopilotResponse("Run a runbook", prompt_title, "".join(prompt_message), callback_id)
 
     return run_runbook

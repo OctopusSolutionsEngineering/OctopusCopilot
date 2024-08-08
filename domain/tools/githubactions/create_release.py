@@ -216,7 +216,7 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
         response.extend(warnings)
         response.extend(debug_text)
 
-        prompt_title = ["Do you want to create a release?"]
+        prompt_title = "Do you want to continue to create a release?"
         prompt_message = ["Please confirm the details below are correct before proceeding:"
                           f"\n* Project: **{sanitized_project_names[0]}**"
                           f"\n* Channel: **{channel['Name']}**"
@@ -229,6 +229,6 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
             prompt_message.append(f"\n* Deployment Tenant: **{sanitized_tenant_names[0]}**")
 
         prompt_message.append(f"\n* Space: **{actual_space_name}**")
-        return CopilotResponse("\n\n".join(response), "".join(prompt_title), "".join(prompt_message), callback_id)
+        return CopilotResponse("\n\n".join(response), prompt_title, "".join(prompt_message), callback_id)
 
     return create_release
