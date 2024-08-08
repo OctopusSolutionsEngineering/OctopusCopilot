@@ -123,7 +123,7 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
         query_details.append(f"\n* Space: **{actual_space_name}**")
 
         if task is None:
-            response = ["No task found for:"]
+            response = ["⚠️ No task found for:"]
             response.extend(query_details)
             return CopilotResponse("".join(response))
 
@@ -132,7 +132,7 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
         if task['HasPendingInterruptions']:
             interruptions = get_task_interruptions(space_id, task['Id'], api_key, url)
             if interruptions is None:
-                response = ["No interruptions found for:"]
+                response = ["⚠️ No interruptions found for:"]
                 response.extend(query_details)
                 return CopilotResponse("".join(response))
             else:
@@ -142,20 +142,22 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
                         team_names = [get_team(team_id, api_key, url)["Name"] for team_id in
                                       interruption['ResponsibleTeamIds']]
                         markdown_names = list(map(lambda t: f"* {t}", team_names))
-                        response = ["You don't have sufficient permissions to take responsibility for the manual"
-                                    " intervention.\n\nThe following teams can:\n", "\n".join(markdown_names)]
+                        response = ["🚫 You don't have sufficient permissions to take responsibility for the "
+                                    "manual intervention.\n\nThe following teams can:\n", "\n".join(markdown_names)]
                         return CopilotResponse("".join(response))
                     else:
                         if interruption['ResponsibleUserId'] and not interruption['HasResponsibility']:
-                            response = ["Another user has already taken responsibility of the manual intervention for:"]
+                            response = ["🚫 Another user has already taken responsibility of the manual "
+                                        "intervention for:"]
                             response.extend(query_details)
                             return CopilotResponse("".join(response))
                 else:
-                    response = ["An incompatible interruption (guided failure) was found for:"]
+                    response = ["🚫 An incompatible interruption (guided failure) was found for:"]
                     response.extend(query_details)
+                    response.append(f"\n\n[View task]({url}/app#/{space_id}/tasks/{task['Id']})")
                     return CopilotResponse("".join(response))
         else:
-            response = ["No pending manual interventions found for:"]
+            response = ["⚠️ No pending manual interventions found for:"]
             response.extend(query_details)
             return CopilotResponse("".join(response))
 
