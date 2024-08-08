@@ -41,6 +41,7 @@ def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_k
             project_id,
             release_version,
             environment_name,
+            tenant_name,
             task_id,
             api_key,
             url)
