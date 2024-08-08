@@ -148,7 +148,7 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
                                                                sanitized_project_names[0],
                                                                release_version,
                                                                sanitized_environment_names[0],
-                                                               sanitized_tenant_names[0],
+                                                               sanitized_tenant_names[0] if sanitized_tenant_names else None,
                                                                task['Id'],
                                                                interruptions,
                                                                teams,
