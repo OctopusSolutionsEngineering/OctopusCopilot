@@ -1896,7 +1896,7 @@ def take_responsibility_for_interruption(space_id, interruption_id, api_key, oct
     api = build_url(octopus_url, base_url)
 
     response = handle_response(
-        lambda: http.request("POST", api, headers=get_octopus_headers(api_key)))
+        lambda: http.request("PUT", api, headers=get_octopus_headers(api_key)))
 
     return response.json()
 
