@@ -53,7 +53,7 @@ def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_k
             return CopilotResponse(response)
 
         response_text = [
-            f"{project_name}\n\nManual intervention approved\n\n[View task]({url}/app#/{space_id}/tasks/{approval_response['TaskId']})"]
+            f"{project_name}\n\n☑️ Manual intervention approved\n\n[View task]({url}/app#/{space_id}/tasks/{approval_response['TaskId']})"]
 
         debug_text.extend(get_params_message(github_user, False,
                                              approve_manual_intervention_confirm_callback.__name__,
