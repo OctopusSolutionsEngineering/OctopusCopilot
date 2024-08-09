@@ -51,7 +51,7 @@ def is_task_interruption_valid(space_name, space_id, project_name, release_versi
     if tenant_name:
         interruption_details.append(f"\n* Tenant: **{tenant_name}**")
 
-    interruption_details.append(f"\n* Space: **{space_name}**")
+    interruption_details.append(f"\n* Space: **{space_name}**\n\n")
 
     if task_interruptions is None:
         response = ["⚠️ No interruptions found for:"]
@@ -75,7 +75,7 @@ def is_task_interruption_valid(space_name, space_id, project_name, release_versi
         else:
             response = ["🚫 An incompatible interruption (guided failure) was found for:"]
             response.extend(interruption_details)
-            response.append(f"\n\n[View task]({url}/app#/{space_id}/tasks/{task_id})")
+            response.append(f"[View task]({url}/app#/{space_id}/tasks/{task_id})")
             return False, "".join(response)
 
     return True, None

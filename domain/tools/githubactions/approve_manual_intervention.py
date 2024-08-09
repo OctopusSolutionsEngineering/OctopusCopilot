@@ -133,7 +133,7 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
         if sanitized_tenant_names:
             query_details.append(f"\n* Tenant: **{sanitized_tenant_names[0]}**")
 
-        query_details.append(f"\n* Space: **{actual_space_name}**")
+        query_details.append(f"\n* Space: **{actual_space_name}**\n\n")
 
         if task is None:
             response = ["⚠️ No task found for:"]
