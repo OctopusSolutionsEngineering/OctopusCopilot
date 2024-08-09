@@ -61,8 +61,7 @@ def is_task_interruption_valid(space_name, space_id, project_name, release_versi
         interruption = task_interruptions[0]
         if interruption['Type'] == "ManualIntervention":
             if not interruption['CanTakeResponsibility']:
-                team_names = [team["Name"] for team in teams for team["Id"] in
-                              interruption['ResponsibleTeamIds']]
+                team_names = [team['Name'] for team in teams if team['Id'] in interruption['ResponsibleTeamIds']]
                 markdown_names = list(map(lambda t: f"* {t}", team_names))
                 response = ["🚫 You don't have sufficient permissions to take responsibility for the "
                             "manual intervention.\n\nThe following teams can:\n", "\n".join(markdown_names)]
