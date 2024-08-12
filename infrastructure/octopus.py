@@ -23,7 +23,7 @@ from domain.sanitizers.sanitized_list import get_item_fuzzy, normalize_log_step_
 from domain.sanitizers.url_sanitizer import quote_safe
 from domain.url.build_url import build_url
 from domain.validation.argument_validation import ensure_string_not_empty
-from domain.validation.octopus_validation import is_task_interruption_valid
+from domain.validation.octopus_validation import is_manual_intervention_valid
 from infrastructure.http_pool import http, TAKE_ALL
 
 logger = configure_logging()
@@ -1852,16 +1852,16 @@ def approve_manual_intervention_for_task(space_id, project_id, release_version, 
         interruptions = get_task_interruptions(space_id, task['Id'], my_api_key, my_octopus_api)
 
         teams = get_teams(space_id, my_api_key, my_octopus_api)
-        valid, error_response = is_task_interruption_valid(space['Name'],
-                                                           space_id,
-                                                           project['Name'],
-                                                           release_version,
-                                                           environment_name,
-                                                           tenant_name,
-                                                           task_id,
-                                                           interruptions,
-                                                           teams,
-                                                           my_octopus_api)
+        valid, error_response = is_manual_intervention_valid(space['Name'],
+                                                            space_id,
+                                                            project['Name'],
+                                                            release_version,
+                                                            environment_name,
+                                                            tenant_name,
+                                                            task_id,
+                                                            interruptions,
+                                                            teams,
+                                                            my_octopus_api)
         if not valid:
             return None, error_response
 

@@ -29,8 +29,8 @@ def is_api_key(api_key):
     return re.match(pattern, api_key)
 
 
-def is_task_interruption_valid(space_name, space_id, project_name, release_version, environment_name, tenant_name, task_id,
-                               task_interruptions, teams, url):
+def is_manual_intervention_valid(space_name, space_id, project_name, release_version, environment_name, tenant_name, task_id,
+                                 task_interruptions, teams, url):
     """
 
     :param space_name: The Octopus space name
@@ -43,7 +43,7 @@ def is_task_interruption_valid(space_name, space_id, project_name, release_versi
     :param task_interruptions: The Octopus task interruptions
     :param teams: The Octopus teams for the space
     :param url: The Octopus Server url
-    :return: Tuple of: bool value indicating if the octopus task interruption is valid, and an error response if False.
+    :return: Tuple of: bool value indicating if the octopus manual interruption is valid, and an error response if False.
     """
     interruption_details = [f"\n* Project: **{project_name}**"
                             f"\n* Version: **{release_version}**"

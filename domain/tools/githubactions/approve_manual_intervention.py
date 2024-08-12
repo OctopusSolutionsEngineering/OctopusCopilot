@@ -6,7 +6,7 @@ from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import get_item_or_none
 from domain.tools.debug import get_params_message
-from domain.validation.octopus_validation import is_task_interruption_valid
+from domain.validation.octopus_validation import is_manual_intervention_valid
 from infrastructure.callbacks import save_callback
 from infrastructure.octopus import get_project, get_deployment_logs, get_task_interruptions, \
     approve_manual_intervention_for_task, get_teams
@@ -146,16 +146,17 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
             interruptions = get_task_interruptions(space_id, task['Id'], api_key, url)
 
             teams = get_teams(space_id, api_key, url)
-            valid, error_response = is_task_interruption_valid(actual_space_name,
-                                                               space_id,
-                                                               sanitized_project_names[0],
-                                                               release_version,
-                                                               sanitized_environment_names[0],
-                                                               sanitized_tenant_names[0] if sanitized_tenant_names else None,
-                                                               task['Id'],
-                                                               interruptions,
-                                                               teams,
-                                                               url)
+            valid, error_response = is_manual_intervention_valid(actual_space_name,
+                                                                 space_id,
+                                                                 sanitized_project_names[0],
+                                                                 release_version,
+                                                                 sanitized_environment_names[0],
+                                                                 sanitized_tenant_names[
+                                                                     0] if sanitized_tenant_names else None,
+                                                                 task['Id'],
+                                                                 interruptions,
+                                                                 teams,
+                                                                 url)
             if not valid:
                 response = [error_response]
                 response.extend(warnings)
