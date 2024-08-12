@@ -125,7 +125,7 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
             "Deployment logs")
 
         query_details = [f"\n* Project: **{sanitized_project_names[0]}**"
-                         f"\n* Version: **{release_version}**"
+                         f"\n* Version: **{actual_release_version}**"
                          f"\n* Environment: **{sanitized_environment_names[0]}**"]
         if sanitized_tenant_names:
             query_details.append(f"\n* Tenant: **{sanitized_tenant_names[0]}**")
