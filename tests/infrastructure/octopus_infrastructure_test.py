@@ -483,7 +483,7 @@ class OctopusAPIRequests(unittest.TestCase):
         teams = get_teams(space_id, Octopus_Api_Key, Octopus_Url)
         self.assertTrue(any(filter(lambda x: x["Name"] == "Simple team", teams)))
 
-        team = get_team(space_id, next(filter(lambda x: x["Name"] == "Simple team", teams))["Id"],
+        team = get_team(next(filter(lambda x: x["Name"] == "Simple team", teams))["Id"],
                         Octopus_Api_Key, Octopus_Url)
         self.assertEqual(team["Name"], "Simple team")
 
