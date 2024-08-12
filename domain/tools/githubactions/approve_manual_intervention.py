@@ -134,6 +134,7 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
 
         if task is None:
             response = ["⚠️ No task found for:"]
+            response.extend(query_details)
             response.extend(warnings)
             response.extend(debug_text)
             return CopilotResponse("".join(response))

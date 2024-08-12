@@ -75,7 +75,7 @@ def is_manual_intervention_valid(space_name, space_id, project_name, release_ver
         else:
             response = ["🚫 An incompatible interruption (guided failure) was found for:"]
             response.extend(interruption_details)
-            response.append(f"[View task]({url}/app#/{space_id}/tasks/{task_id})")
+            response.append(f"[View task]({url}/app#/{space_id}/tasks/{task_id})\n\n")
             return False, "".join(response)
 
     return True, None
