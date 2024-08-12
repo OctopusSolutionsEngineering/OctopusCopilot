@@ -58,7 +58,7 @@ def is_task_interruption_valid(space_name, space_id, project_name, release_versi
         response.extend(interruption_details)
         return False, "".join(response)
     else:
-        interruption = task_interruptions[0]
+        interruption = [interruption for interruption in task_interruptions if interruption['IsPending']][0]
         if interruption['Type'] == "ManualIntervention":
             if not interruption['CanTakeResponsibility']:
                 team_names = [team['Name'] for team in teams if team['Id'] in interruption['ResponsibleTeamIds']]

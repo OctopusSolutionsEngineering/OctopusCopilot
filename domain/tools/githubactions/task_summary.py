@@ -71,7 +71,7 @@ def get_task_summary_callback(github_user, api_key, url, log_query=None):
             interruptions = get_task_interruptions(space_id, task['Id'], api_key, url)
 
         if interruptions is not None:
-            first_interruption = interruptions[0]
+            first_interruption = [interruption for interruption in interruptions if interruption['IsPending']][0]
             responsible_user = first_interruption["ResponsibleUserId"]
             response.append(f"⚠️ **{first_interruption['Title']}**")
 

@@ -1865,7 +1865,7 @@ def approve_manual_intervention_for_task(space_id, project_id, release_version, 
         if not valid:
             return None, error_response
 
-        interruption = interruptions[0]
+        interruption = [interruption for interruption in interruptions if interruption['IsPending']][0]
         responsible_user_id = interruption['ResponsibleUserId']
         if responsible_user_id is None:
             _ = take_responsibility_for_interruption(space_id, interruption['Id'], my_api_key, my_octopus_api)

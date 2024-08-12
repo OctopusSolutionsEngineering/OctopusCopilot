@@ -171,7 +171,7 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
 
         instructions = None
         if interruptions is not None:
-            interruption = interruptions[0]
+            interruption = [interruption for interruption in interruptions if interruption['IsPending']][0]
             interruption_elements = interruption['Form']['Elements']
             instruction_element = [interruption_element for interruption_element in interruption_elements if
                                    interruption_element['Name'] == "Instructions"]
