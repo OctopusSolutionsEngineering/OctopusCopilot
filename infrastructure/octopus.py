@@ -1853,15 +1853,15 @@ def approve_manual_intervention_for_task(space_id, project_id, release_version, 
 
         teams = get_teams(space_id, my_api_key, my_octopus_api)
         valid, error_response = is_manual_intervention_valid(space['Name'],
-                                                            space_id,
-                                                            project['Name'],
-                                                            release_version,
-                                                            environment_name,
-                                                            tenant_name,
-                                                            task_id,
-                                                            interruptions,
-                                                            teams,
-                                                            my_octopus_api)
+                                                             space_id,
+                                                             project['Name'],
+                                                             release_version,
+                                                             environment_name,
+                                                             tenant_name,
+                                                             task_id,
+                                                             interruptions,
+                                                             teams,
+                                                             my_octopus_api)
         if not valid:
             return None, error_response
 
