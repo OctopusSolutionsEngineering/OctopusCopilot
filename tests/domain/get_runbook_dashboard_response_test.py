@@ -98,7 +98,7 @@ sample_json = """{
 }"""
 
 
-class RunbookDashboardest(unittest.TestCase):
+class RunbookDashboardTest(unittest.TestCase):
     def test_get_runbook_dashboard_response(self):
         result = get_runbook_dashboard_response({"Name": "Project"}, {"Name": "Runbook"}, json.loads(sample_json),
                                                 lambda x: x)
