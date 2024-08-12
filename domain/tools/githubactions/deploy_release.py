@@ -120,9 +120,6 @@ def deploy_release_wrapper(url, api_key, github_user, original_query, connection
         # get release
         release = get_release_fuzzy(space_id, project['Id'], release_version, api_key, url)
 
-        # get environment
-        sanitized_environment_names = lookup_environments(url, api_key, github_user, original_query, space_id,
-                                                          environment_name)
         # get (optional) tenant
         sanitized_tenant_names = None
         if tenant_name:

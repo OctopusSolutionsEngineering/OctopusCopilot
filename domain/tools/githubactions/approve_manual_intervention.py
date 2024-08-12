@@ -99,9 +99,6 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
         sanitized_project_names, sanitized_projects = lookup_projects(url, api_key, github_user, original_query,
                                                                       space_id, project_name)
 
-        if not release_version:
-            return CopilotResponse("Please specify a release version in the query.")
-
         if not sanitized_project_names:
             return CopilotResponse("Please specify a project name in the query.")
 
@@ -185,7 +182,7 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
             "space_id": space_id,
             "project_name": sanitized_project_names[0],
             "project_id": task['ProjectId'],
-            "release_version": release_version,
+            "release_version": actual_release_version,
             "environment_name": sanitized_environment_names[0],
             "tenant_name": sanitized_tenant_names[0] if sanitized_tenant_names else None,
             "deployment_id": task['Arguments']['DeploymentId'],
@@ -208,7 +205,7 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
                                              space_id=space_id,
                                              project_name=sanitized_project_names,
                                              project_id=project['Id'],
-                                             release_version=release_version,
+                                             release_version=actual_release_version,
                                              environment_name=sanitized_environment_names,
                                              task_id=task['Id']))
 
@@ -226,7 +223,7 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
         prompt_title = "Do you want to approve the manual intervention?"
         prompt_message = ["Please confirm the details below are correct before proceeding:"
                           f"\n* Project: **{sanitized_project_names[0]}**"
-                          f"\n* Version: **{release_version}**"
+                          f"\n* Version: **{actual_release_version}**"
                           f"\n* Environment: **{sanitized_environment_names[0]}**"]
         if sanitized_tenant_names:
             prompt_message.append(f"\n* Tenant: **{sanitized_tenant_names[0]}**")
