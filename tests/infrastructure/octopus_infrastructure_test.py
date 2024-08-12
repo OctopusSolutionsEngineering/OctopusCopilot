@@ -24,7 +24,7 @@ from infrastructure.octopus import get_project_progression, get_raw_deployment_p
     get_item_fuzzy, get_space_id_and_name_from_name, activity_logs_to_string, get_version, run_published_runbook_fuzzy, \
     get_runbook_deployment_logs, get_projects, get_tenants, get_feeds, get_accounts, get_machines, get_certificates, \
     get_environments, get_project_channel, get_lifecycle, get_tenant, get_tenant_fuzzy, get_project_fuzzy, \
-    get_environment, get_channel_by_name, get_default_channel
+    get_environment, get_channel_by_name, get_default_channel, get_teams, get_team
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release, wait_for_task
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.publish_runbook import publish_runbook
@@ -477,6 +477,15 @@ class OctopusAPIRequests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             get_raw_deployment_process("Simple", "Deploy Web App Container", Octopus_Api_Key, "")
+
+    def test_get_all_teams(self):
+        space_id, actual_space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+        teams = get_teams(space_id, Octopus_Api_Key, Octopus_Url)
+        self.assertTrue(any(filter(lambda x: x["Name"] == "Simple team", teams)))
+
+        team = get_team(space_id, next(filter(lambda x: x["Name"] == "Simple team", teams))["Id"],
+                        Octopus_Api_Key, Octopus_Url)
+        self.assertEqual(team["Name"], "Simple team")
 
 
 class UnitTests(unittest.TestCase):
