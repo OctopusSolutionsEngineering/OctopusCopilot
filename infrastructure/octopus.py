@@ -1393,15 +1393,6 @@ def get_tenant_fuzzy_cached(space_id, tenant_name, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_channels(space_id, project_id, api_key, octopus_url):
-    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/Channels")
-    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
-    channels = resp.json()
-    return channels['Items']
-
-
-@retry(HTTPError, tries=3, delay=2)
-@logging_wrapper
 def get_channel(space_id, channel_id, api_key, octopus_url):
     api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Channels/{quote_safe(channel_id)}")
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
@@ -1412,7 +1403,7 @@ def get_channel(space_id, channel_id, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_channel_by_name(space_id, project_id, channel_name, api_key, octopus_url):
-    channels = get_channels(space_id, project_id, api_key, octopus_url)
+    channels = get_project_channel(api_key, octopus_url, space_id, project_id)
     matching_channel = get_item_fuzzy(channels, channel_name)
     if matching_channel is None:
         raise ResourceNotFound("Channel", project_id)
@@ -1423,7 +1414,7 @@ def get_channel_by_name(space_id, project_id, channel_name, api_key, octopus_url
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_default_channel(space_id, project_id, api_key, octopus_url):
-    channels = get_channels(space_id, project_id, api_key, octopus_url)
+    channels = get_project_channel(api_key, octopus_url, space_id, project_id)
     default_channel = [channel for channel in channels if channel['IsDefault']]
     if len(default_channel) == 0:
         raise ResourceNotFound("Default Channel", project_id)

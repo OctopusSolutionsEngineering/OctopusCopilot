@@ -18,7 +18,7 @@ from infrastructure.github import get_workflow_run_async, get_open_pull_requests
     get_workflow_artifacts_async, get_run_jobs_async
 from infrastructure.octopus import get_project, get_project_progression, \
     get_project_tenant_dashboard, get_release_github_workflow_async, get_task_details_async, activity_logs_to_string, \
-    get_project_github_workflow, get_artifacts, get_channels
+    get_project_github_workflow, get_artifacts, get_project_channel
 
 logger = configure_logging(__name__)
 
@@ -49,7 +49,7 @@ def get_project_dashboard_callback(github_user, github_token, log_query=None):
                                              project_name=sanitized_project_names[0]))
 
         project = get_project(space_id, sanitized_project_names[0], api_key, url)
-        channels = get_channels(space_id, project['Id'], api_key, url)
+        channels = get_project_channel(api_key, url, space_id, project['Id'])
 
         response = []
         if project["TenantedDeploymentMode"] == "Untenanted":
