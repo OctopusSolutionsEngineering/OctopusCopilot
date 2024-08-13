@@ -73,18 +73,15 @@ def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_k
 def approve_manual_intervention_wrapper(url, api_key, github_user, original_query, connection_string, log_query):
     def approve_manual_intervention(space_name=None, project_name=None, release_version=None, environment_name=None,
                                     tenant_name=None, **kwargs):
-        """Answers a question about approving a manual intervention for an Octopus task, such as a release, deployment or runbook.
-           Use this function when the query is asking a question about approving a release or manual intervention.
+        """Answers a question about approving a manual intervention for a task, e.g. release, or deployment.
+           Use this function when the query is asking a question about approving a manual intervention.
 Questions can look like those in the following list:
 * Approve "1.0.1" to the "Development" environment for the "Contoso" project.
 * Approve "2.0.1-hotfix" to the "Test" environment.
 * Approve release "0.98.1" to the environment "Production".
-* Approve release "2024.08.13.1" to the "Development" environment for the "Contoso" project.
-* Approve release "2023.09.25.0" to the "Staging" environment for the "Contoso" project in the space "Default".
 * Approve the latest release to the "Test" environment.
 * Approve the manual intervention for the latest release to the "Production" environment.
-* Approve the manual intervention for release "3.17.8" to the "Staging" environment.
-* Approve the manual intervention for "1.4.6" to "QA" in the space "Default".
+* Approve the manual intervention for "3.17.8" to the "Staging" environment.
 
 Args:
 space_name: The name of the space
