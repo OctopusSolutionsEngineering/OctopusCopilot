@@ -71,7 +71,7 @@ def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_k
 
 
 def approve_manual_intervention_callback(url, api_key, github_user, connection_string, log_query):
-    def approve_manual_intervention_implementation(original_query, space_name=None, project_name=None, release_version=None,
+    def approve_manual_intervention_implementation(confirm_callback_function_name, original_query, space_name=None, project_name=None, release_version=None,
                                                    environment_name=None,
                                                    tenant_name=None):
 
@@ -199,7 +199,7 @@ def approve_manual_intervention_callback(url, api_key, github_user, connection_s
                                              task_id=task['Id']))
 
         save_callback(github_user,
-                      approve_manual_intervention_implementation.__name__,
+                      confirm_callback_function_name,
                       callback_id,
                       json.dumps(arguments),
                       original_query,
