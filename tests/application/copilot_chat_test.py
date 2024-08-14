@@ -732,7 +732,7 @@ class CopilotChatTest(unittest.TestCase):
         space_name = "Simple"
         project_name = "Deploy Web App Container"
         environment_name = "Development"
-        prompt = f"Approve \"{version}\" to the \"{environment_name}\" environment"
+        prompt = f"Approve \"{version}\" to \"{environment_name}\" for \"{project_name}\" in \"{space_name}\""
         response = copilot_handler_internal(build_request(prompt))
 
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))

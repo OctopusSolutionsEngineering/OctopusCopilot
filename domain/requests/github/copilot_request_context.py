@@ -11,7 +11,7 @@ from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyIn
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
-from domain.tools.githubactions.approve_manual_intervention import approve_manual_intervention_callback, \
+from domain.tools.githubactions.approve_manual_intervention import approve_manual_intervention_wrapper, \
     approve_manual_intervention_confirm_callback_wrapper
 from domain.tools.githubactions.create_release import create_release_wrapper, create_release_confirm_callback_wrapper
 from domain.tools.githubactions.dashboard import get_dashboard_callback
@@ -32,7 +32,6 @@ from domain.tools.githubactions.runbook_logs import get_runbook_logs_wrapper
 from domain.tools.githubactions.runbooks_dashboard import get_runbook_dashboard_callback
 from domain.tools.githubactions.task_summary import get_task_summary_callback
 from domain.tools.githubactions.variables import variable_query_callback
-from domain.tools.wrapper.approve_manual_intervention import approve_manual_intervention_wrapper
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
 from domain.tools.wrapper.dashboard_wrapper import show_space_dashboard_wrapper
 from domain.tools.wrapper.function_definition import FunctionDefinition, FunctionDefinitions
@@ -143,17 +142,6 @@ def build_form_tools(query, req: func.HttpRequest):
                       how_to_wrapper(query,
                                      how_to_callback(get_github_token(req), get_github_user_from_form(req), log_query),
                                      log_query)]
-
-    approval_functions = [FunctionDefinition(tool, callback=approve_manual_intervention_confirm_callback_wrapper(
-        get_github_user_from_form(req), url, api_key,
-        log_query), is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users()))
-                          for tool in approve_manual_intervention_wrapper(query,
-                                                                          approve_manual_intervention_callback(
-                                                                              url, api_key,
-                                                                              get_github_user_from_form(req),
-                                                                              get_functions_connection_string(),
-                                                                              log_query),
-                                                                          log_query)]
 
     # Functions related to the default values
     set_default_value, remove_default_value, get_default_value = default_value_callbacks(get_github_user_from_form(req))
@@ -280,7 +268,16 @@ def build_form_tools(query, req: func.HttpRequest):
             get_functions_connection_string(),
             log_query),
             callback=deploy_release_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query)),
-        *approval_functions,
+        FunctionDefinition(approve_manual_intervention_wrapper(
+            url,
+            api_key,
+            get_github_user_from_form(req),
+            query,
+            get_functions_connection_string(),
+            log_query),
+            callback=approve_manual_intervention_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key,
+                                                                          log_query),
+            is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users())),
         FunctionDefinition(
             show_github_job_summary_wrapper(query,
                                             get_job_summary_callback(get_github_user_from_form(req),
