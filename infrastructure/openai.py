@@ -63,7 +63,7 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
     """
     This is the handler that responds to a chat request.
     :param log_query: The function used to log the query
-    :param query: The pain text query
+    :param query: The plain text query
     :param functions: The set of tools used by OpenAI
     :param extra_prompt_messages: Additional messages to pass to the LLM
     :return: The result of the function, defined by the set of tools, that was called in response to the query
