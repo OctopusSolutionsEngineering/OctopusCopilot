@@ -70,11 +70,10 @@ def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_k
     return approve_manual_intervention_confirm_callback
 
 
-def approve_manual_intervention_wrapper(url, api_key, github_user, original_query, connection_string, log_query):
-    def approve_manual_intervention(space_name=None, project_name=None, release_version=None, environment_name=None,
-                                    tenant_name=None, **kwargs):
-        """
-        Approves a manual intervention request
+def approve_manual_intervention_callback(url, api_key, github_user, connection_string, log_query):
+    def approve_manual_intervention_implementation(confirm_callback_function_name, original_query, space_name=None, project_name=None, release_version=None,
+                                                   environment_name=None,
+                                                   tenant_name=None):
 
         Args:
         space_name: The name of the space
@@ -211,7 +210,7 @@ def approve_manual_intervention_wrapper(url, api_key, github_user, original_quer
                                              task_id=task['Id']))
 
         save_callback(github_user,
-                      approve_manual_intervention.__name__,
+                      confirm_callback_function_name,
                       callback_id,
                       json.dumps(arguments),
                       original_query,
