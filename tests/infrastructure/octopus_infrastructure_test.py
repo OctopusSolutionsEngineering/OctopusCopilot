@@ -24,7 +24,7 @@ from infrastructure.octopus import get_project_progression, get_raw_deployment_p
     get_item_fuzzy, get_space_id_and_name_from_name, activity_logs_to_string, get_version, run_published_runbook_fuzzy, \
     get_runbook_deployment_logs, get_projects, get_tenants, get_feeds, get_accounts, get_machines, get_certificates, \
     get_environments, get_project_channel, get_lifecycle, get_tenant, get_tenant_fuzzy, get_project_fuzzy, \
-    get_environment, get_channel_by_name, get_default_channel, get_teams, get_team
+    get_environment, get_channel_by_name, get_default_channel, get_teams, get_team, handle_manual_intervention_for_task
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release, wait_for_task
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.publish_runbook import publish_runbook
@@ -486,6 +486,16 @@ class OctopusAPIRequests(unittest.TestCase):
         team = get_team(next(filter(lambda x: x["Name"] == "Simple team", teams))["Id"],
                         Octopus_Api_Key, Octopus_Url)
         self.assertEqual(team["Name"], "Simple team")
+
+    def test_handle_manual_intervention_for_task_validates_operation(self):
+        """
+        Tests that the function handling manual interventions throws an error if an invalid submit_result is provided.
+        """
+        with self.assertRaises(ValueError):
+            handle_manual_intervention_for_task(space_id="Spaces-1", project_id="Projects-1", release_version="0.0.1",
+                                                environment_name="Development", tenant_name="TenantName",
+                                                task_id="ServerTasks-1234", submit_result='InvalidOption',
+                                                my_api_key='API-XXXX', my_octopus_api="http://localhost:8080")
 
 
 class UnitTests(unittest.TestCase):

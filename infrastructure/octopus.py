@@ -1806,18 +1806,30 @@ def get_task_interruptions(space_id, task_id, api_key, octopus_url):
     return interruptions['Items']
 
 
-@logging_wrapper
 def approve_manual_intervention_for_task(space_id, project_id, release_version, environment_name,
                                          tenant_name, task_id, my_api_key, my_octopus_api):
+    return handle_manual_intervention_for_task(space_id, project_id, release_version, environment_name,
+                                               tenant_name, task_id, 'Proceed', my_api_key, my_octopus_api)
+
+
+def reject_manual_intervention_for_task(space_id, project_id, release_version, environment_name,
+                                        tenant_name, task_id, my_api_key, my_octopus_api):
+    return handle_manual_intervention_for_task(space_id, project_id, release_version, environment_name,
+                                               tenant_name, task_id, 'Abort', my_api_key, my_octopus_api)
+
+@logging_wrapper
+def handle_manual_intervention_for_task(space_id, project_id, release_version, environment_name,
+                                        tenant_name, task_id, submit_result, my_api_key, my_octopus_api):
     """
 
-    Approve a manual intervention for a task
+    Handles a manual intervention for a task by either proceeding (approving) or aborting (rejecting) the interruption.
     :param space_id: The Octopus Space
     :param project_id: The Octopus project
     :param release_version: The Octopus release version
     :param environment_name: The Octopus environment
     :param tenant_name: The (optional) Octopus tenant
     :param task_id: The Octopus task
+    :param submit_result: The action to take to handle the interruption. Should be either 'Proceed' or 'Abort'
     :param my_api_key: The Octopus API key
     :param my_octopus_api: The Octopus server URL
     :return:
@@ -1834,6 +1846,9 @@ def approve_manual_intervention_for_task(space_id, project_id, release_version, 
                             'my_api_key must be the Octopus Api key (approve_manual_intervention_for_task).')
     ensure_string_not_empty(my_octopus_api,
                             'my_octopus_api must be the Octopus Url (approve_manual_intervention_for_task).')
+
+    if submit_result not in ['Proceed', 'Abort']:
+        raise ValueError(f"Invalid submit_result \"{submit_result}\". ")
 
     space = get_space(space_id, my_api_key, my_octopus_api)
     project = get_project(space_id, project_id, my_api_key, my_octopus_api)
@@ -1864,8 +1879,8 @@ def approve_manual_intervention_for_task(space_id, project_id, release_version, 
         # else we can assume we have taken responsibility already (validation checks this case already)
         approval_request = {
             'Instructions': None,
-            'Notes': 'Manual intervention approved by the Octopus extension for GitHub Copilot',
-            'Result': 'Proceed'
+            'Notes': f'Manual intervention {"approved" if submit_result == "Proceed" else "rejected"} by the Octopus extension for GitHub Copilot',
+            'Result': submit_result
         }
 
         base_url = f"api/{quote_safe(space_id)}/interruptions/{quote_safe(interruption['Id'])}/submit"

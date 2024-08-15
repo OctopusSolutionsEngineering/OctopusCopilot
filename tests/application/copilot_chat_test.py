@@ -20,6 +20,7 @@ from domain.transformers.sse_transformers import convert_from_sse_response, get_
 from function_app import copilot_handler_internal, health_internal
 from infrastructure.octopus import run_published_runbook_fuzzy, get_space_id_and_name_from_name, get_project
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
+from tests.infrastructure.cancel_task import cancel_task
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release, wait_for_task
 from tests.infrastructure.create_release import create_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
@@ -481,7 +482,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_channels(self):
-        prompt = "List the channels defined in the \"Deploy AWS Lambda\" project in a markdown table."
+        prompt = "List the channels defined in the project \"Deploy AWS Lambda\" in a markdown table."
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
@@ -732,7 +733,8 @@ class CopilotChatTest(unittest.TestCase):
         space_name = "Simple"
         project_name = "Copilot manual approval"
         environment_name = "Development"
-        create_and_deploy_release(space_name=space_name, project_name=project_name, environment_name=environment_name, release_version=version)
+        create_and_deploy_release(space_name=space_name, project_name=project_name, environment_name=environment_name,
+                                  release_version=version)
         time.sleep(5)
 
         prompt = f"Approve \"{version}\" to the \"{environment_name}\" environment for project \"{project_name}\" in space \"{space_name}\""
@@ -759,7 +761,8 @@ class CopilotChatTest(unittest.TestCase):
         run_response = copilot_handler_internal(build_confirmation_request(confirmation))
         response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
 
-        self.assertTrue(f"{project_name}" and "☑️ Manual intervention approved" in response_text, "Response was " + response_text)
+        self.assertTrue(f"{project_name}" and "☑️ Manual intervention approved" in response_text,
+                        "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_approve_manual_intervention_with_guided_failure_interruption(self):
@@ -767,16 +770,22 @@ class CopilotChatTest(unittest.TestCase):
         space_name = "Simple"
         project_name = "Copilot guided failure"
         environment_name = "Development"
-        create_and_deploy_release(space_name=space_name, project_name=project_name, environment_name=environment_name,
-                                  release_version=version, use_guided_failure=True)
+        deploy_response = create_and_deploy_release(space_name=space_name, project_name=project_name,
+                                                    environment_name=environment_name,
+                                                    release_version=version, use_guided_failure=True)
         time.sleep(15)
 
-        prompt = f"Approve \"{version}\" to the \"{environment_name}\" environment for project \"{project_name}\""
+        prompt = f"Approve release \"{version}\" to the \"{environment_name}\" environment for project \"{project_name}\""
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
-        self.assertTrue("🚫 An incompatible interruption (guided failure) was found for" in response_text,
+        self.assertTrue("🚫 An incompatible interruption (guided failure) was found for" and version in response_text,
                         "Response was " + response_text)
+
+        # clean-up task by canceling it
+        cancel_response = cancel_task(deploy_response['SpaceId'], deploy_response['TaskId'])
+        self.assertTrue(cancel_response['Id'] == deploy_response['TaskId'])
+        self.assertTrue(cancel_response['State'] in ['Canceled', 'Cancelling'])
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):
