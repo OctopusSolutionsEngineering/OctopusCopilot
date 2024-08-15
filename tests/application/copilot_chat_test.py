@@ -540,7 +540,7 @@ class CopilotChatTest(unittest.TestCase):
                                                channel_name="Hotfix")
         wait_for_task(deployment["TaskId"], space_name="Simple")
 
-        prompt = "Show the release version and time of the last successful hotfix deployment."
+        prompt = "Show the release version and time of the last successful deployment to the hotfix channel."
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
