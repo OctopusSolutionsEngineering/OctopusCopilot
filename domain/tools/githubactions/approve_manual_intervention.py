@@ -71,23 +71,13 @@ def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_k
 
 
 def approve_manual_intervention_callback(url, api_key, github_user, connection_string, log_query):
-    def approve_manual_intervention_implementation(confirm_callback_function_name, original_query, space_name=None, project_name=None, release_version=None,
+    def approve_manual_intervention_implementation(confirm_callback_function_name, original_query, space_name=None,
+                                                   project_name=None, release_version=None,
                                                    environment_name=None,
                                                    tenant_name=None):
 
-        Args:
-        space_name: The name of the space
-        project_name: The name of the project
-        release_version: The release version
-        environment_name: The name of the environment
-        tenant_name: The (optional) name of the tenant
-        """
-        for key, value in kwargs.items():
-            if log_query:
-                log_query(f"Unexpected Key: {key}", "Value: {value}")
-
         debug_text = get_params_message(github_user, True,
-                                        approve_manual_intervention.__name__,
+                                        approve_manual_intervention_implementation.__name__,
                                         space_name=space_name,
                                         project_name=project_name,
                                         release_version=release_version,
@@ -114,7 +104,7 @@ def approve_manual_intervention_callback(url, api_key, github_user, connection_s
         # Find matching task
         task, activity_logs, actual_release_version = timing_wrapper(
             lambda: get_deployment_logs(
-                space_name,
+                actual_space_name,
                 sanitized_project_names[0],
                 sanitized_environment_names[0],
                 get_item_or_none(sanitized_tenant_names, 0),
@@ -200,7 +190,7 @@ def approve_manual_intervention_callback(url, api_key, github_user, connection_s
             Task Id: {arguments["task_id"]}""")
 
         debug_text.extend(get_params_message(github_user, False,
-                                             approve_manual_intervention.__name__,
+                                             approve_manual_intervention_implementation.__name__,
                                              space_name=actual_space_name,
                                              space_id=space_id,
                                              project_name=sanitized_project_names,
@@ -233,4 +223,4 @@ def approve_manual_intervention_callback(url, api_key, github_user, connection_s
 
         return CopilotResponse("\n\n".join(response), prompt_title, "".join(prompt_message), callback_id)
 
-    return approve_manual_intervention
+    return approve_manual_intervention_implementation
