@@ -40,7 +40,7 @@ def get_octopus_resource(uri, headers, skip_count=0):
 def create_and_deploy_release(octopus_server_uri="http://localhost:8080", octopus_api_key=Octopus_Api_Key,
                               space_name="Default", project_name="Deploy Web App Container",
                               environment_name="Development", channel_name="Default", tenant_name=None,
-                              release_version=None, release_notes=None):
+                              release_version=None, release_notes=None, use_guided_failure=False):
     """
     Create and deploy a release in Octopus Deploy. Taken from
     octopus.com/docs/octopus-rest-api/examples/deployments/create-and-deploy-a-release
@@ -143,7 +143,8 @@ def create_and_deploy_release(octopus_server_uri="http://localhost:8080", octopu
     deploymentJson = {
         'ReleaseId': release['Id'],
         'EnvironmentId': environment['Id'],
-        'TenantId': tenant['Id'] if tenant else None
+        'TenantId': tenant['Id'] if tenant else None,
+        'UseGuidedFailure': use_guided_failure
     }
 
     # Deploy

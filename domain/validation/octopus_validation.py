@@ -64,13 +64,15 @@ def is_manual_intervention_valid(space_name, space_id, project_name, release_ver
                 team_names = [team['Name'] for team in teams if team['Id'] in interruption['ResponsibleTeamIds']]
                 markdown_names = list(map(lambda t: f"* {t}", team_names))
                 response = ["🚫 You don't have sufficient permissions to take responsibility for the "
-                            "manual intervention.\n\nThe following teams can:\n", "\n".join(markdown_names)]
+                            "manual intervention.\n\nThe following teams can:\n", "\n".join(markdown_names),
+                            f"\n\n[View task]({url}/app#/{space_id}/tasks/{task_id})\n\n"]
                 return False, "".join(response)
             else:
                 if interruption['ResponsibleUserId'] and not interruption['HasResponsibility']:
                     response = ["🚫 Another user has already taken responsibility of the manual "
                                 "intervention for:"]
                     response.extend(interruption_details)
+                    response.append(f"\n\n[View task]({url}/app#/{space_id}/tasks/{task_id})\n\n")
                     return False, "".join(response)
         else:
             response = ["🚫 An incompatible interruption (guided failure) was found for:"]

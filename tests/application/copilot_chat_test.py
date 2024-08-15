@@ -762,6 +762,24 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue(f"{project_name}" and "☑️ Manual intervention approved" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_approve_manual_intervention_with_guided_failure_interruption(self):
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        space_name = "Simple"
+        project_name = "Copilot guided failure"
+        environment_name = "Development"
+        create_and_deploy_release(space_name=space_name, project_name=project_name, environment_name=environment_name,
+                                  release_version=version, use_guided_failure=True)
+        time.sleep(15)
+
+        prompt = f"Approve \"{version}\" to the \"{environment_name}\" environment for project \"{project_name}\""
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        self.assertTrue("🚫 An incompatible interruption (guided failure) was found for" in response_text,
+                        "Response was " + response_text)
+
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         create_and_deploy_release(space_name="Simple", release_version=version)
