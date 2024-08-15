@@ -778,7 +778,6 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue("🚫 An incompatible interruption (guided failure) was found for" in response_text,
                         "Response was " + response_text)
 
-
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
