@@ -113,7 +113,7 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 You can approve or reject manual interventions in a deployment with prompts like these:
                 * @octopus-ai-app Approve release "0.81.5" in "{first_environment}" for the project "{first_project}"
                 * @octopus-ai-app Reject release "1.6.19" in the "{first_environment}" environment for the project "{first_project}
-                
+
                 By setting default values for the space, project, environment, and other entities, you can omit them from your queries.
                 This way, you can write prompts without specifying the space, project, environment, runbook, or tenant each time.
                 You can also set defaults for GitHub options like owner, repository and workflow.

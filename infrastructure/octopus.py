@@ -1817,6 +1817,7 @@ def reject_manual_intervention_for_task(space_id, project_id, release_version, e
     return handle_manual_intervention_for_task(space_id, project_id, release_version, environment_name,
                                                tenant_name, task_id, 'Abort', my_api_key, my_octopus_api)
 
+
 @logging_wrapper
 def handle_manual_intervention_for_task(space_id, project_id, release_version, environment_name,
                                         tenant_name, task_id, submit_result, my_api_key, my_octopus_api):
