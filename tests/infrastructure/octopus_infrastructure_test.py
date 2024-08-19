@@ -489,12 +489,12 @@ class OctopusAPIRequests(unittest.TestCase):
 
     def test_handle_manual_intervention_for_task_validates_operation(self):
         """
-        Tests that the function handling manual interventions throws an error if an invalid submit_result is provided.
+        Tests that the function handling manual interventions throws an error if an invalid interruption_action is provided.
         """
         with self.assertRaises(ValueError):
             handle_manual_intervention_for_task(space_id="Spaces-1", project_id="Projects-1", release_version="0.0.1",
                                                 environment_name="Development", tenant_name="TenantName",
-                                                task_id="ServerTasks-1234", submit_result='InvalidOption',
+                                                task_id="ServerTasks-1234", interruption_action='InvalidOption',
                                                 my_api_key='API-XXXX', my_octopus_api="http://localhost:8080")
 
 

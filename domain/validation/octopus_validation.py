@@ -1,6 +1,8 @@
 import re
 from urllib.parse import urlparse
 
+from domain.view.markdown.octopus_task_interruption_details import format_interruption_details
+
 
 def is_hosted_octopus(octopus_url):
     """
@@ -30,7 +32,7 @@ def is_api_key(api_key):
 
 
 def is_manual_intervention_valid(space_name, space_id, project_name, release_version, environment_name, tenant_name, task_id,
-                                 task_interruptions, teams, url):
+                                 task_interruptions, teams, url, interruption_action):
     """
 
     :param space_name: The Octopus space name
@@ -43,15 +45,12 @@ def is_manual_intervention_valid(space_name, space_id, project_name, release_ver
     :param task_interruptions: The Octopus task interruptions
     :param teams: The Octopus teams for the space
     :param url: The Octopus Server url
+    :param interruption_action: Whether the interruption should be approved or rejected
     :return: Tuple of: bool value indicating if the octopus manual interruption is valid, and an error response if False.
     """
-    interruption_details = [f"\n* Project: **{project_name}**"
-                            f"\n* Version: **{release_version}**"
-                            f"\n* Environment: **{environment_name}**"]
-    if tenant_name:
-        interruption_details.append(f"\n* Tenant: **{tenant_name}**")
 
-    interruption_details.append(f"\n* Space: **{space_name}**\n\n")
+    interruption_details = format_interruption_details(project_name, release_version, environment_name, tenant_name,
+                                                       space_name, interruption_action)
 
     if task_interruptions is None:
         response = ["⚠️ No interruptions found for:"]

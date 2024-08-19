@@ -7,6 +7,7 @@ from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import get_item_or_none
 from domain.tools.debug import get_params_message
 from domain.validation.octopus_validation import is_manual_intervention_valid
+from domain.view.markdown.octopus_task_interruption_details import format_interruption_details
 from infrastructure.callbacks import save_callback
 from infrastructure.octopus import get_project, get_deployment_logs, get_task_interruptions, \
     approve_manual_intervention_for_task, get_teams
@@ -113,13 +114,10 @@ def approve_manual_intervention_callback(url, api_key, github_user, connection_s
                 url),
             "Deployment logs")
 
-        query_details = [f"\n* Project: **{sanitized_project_names[0]}**"
-                         f"\n* Version: **{actual_release_version}**"
-                         f"\n* Environment: **{sanitized_environment_names[0]}**"]
-        if sanitized_tenant_names:
-            query_details.append(f"\n* Tenant: **{sanitized_tenant_names[0]}**")
-
-        query_details.append(f"\n* Space: **{actual_space_name}**\n\n")
+        query_details = format_interruption_details(sanitized_project_names[0], actual_release_version,
+                                                    sanitized_environment_names[0],
+                                                    sanitized_tenant_names[0] if sanitized_tenant_names else None,
+                                                    actual_space_name, "Proceed")
 
         if task is None:
             response = ["⚠️ No task found for:"]
@@ -143,7 +141,8 @@ def approve_manual_intervention_callback(url, api_key, github_user, connection_s
                                                                  task['Id'],
                                                                  interruptions,
                                                                  teams,
-                                                                 url)
+                                                                 url,
+                                                                 interruption_action="Proceed")
             if not valid:
                 response = [error_response]
                 response.extend(warnings)

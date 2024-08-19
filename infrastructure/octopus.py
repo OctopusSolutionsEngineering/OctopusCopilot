@@ -1820,7 +1820,7 @@ def reject_manual_intervention_for_task(space_id, project_id, release_version, e
 
 @logging_wrapper
 def handle_manual_intervention_for_task(space_id, project_id, release_version, environment_name,
-                                        tenant_name, task_id, submit_result, my_api_key, my_octopus_api):
+                                        tenant_name, task_id, interruption_action, my_api_key, my_octopus_api):
     """
 
     Handles a manual intervention for a task by either proceeding (approving) or aborting (rejecting) the interruption.
@@ -1830,7 +1830,7 @@ def handle_manual_intervention_for_task(space_id, project_id, release_version, e
     :param environment_name: The Octopus environment
     :param tenant_name: The (optional) Octopus tenant
     :param task_id: The Octopus task
-    :param submit_result: The action to take to handle the interruption. Should be either 'Proceed' or 'Abort'
+    :param interruption_action: The action to take to handle the interruption. Should be either 'Proceed' or 'Abort'
     :param my_api_key: The Octopus API key
     :param my_octopus_api: The Octopus server URL
     :return:
@@ -1848,8 +1848,8 @@ def handle_manual_intervention_for_task(space_id, project_id, release_version, e
     ensure_string_not_empty(my_octopus_api,
                             'my_octopus_api must be the Octopus Url (approve_manual_intervention_for_task).')
 
-    if submit_result not in ['Proceed', 'Abort']:
-        raise ValueError(f"Invalid submit_result \"{submit_result}\". ")
+    if interruption_action not in ['Proceed', 'Abort']:
+        raise ValueError(f"Invalid interruption_action \"{interruption_action}\". ")
 
     space = get_space(space_id, my_api_key, my_octopus_api)
     project = get_project(space_id, project_id, my_api_key, my_octopus_api)
@@ -1868,7 +1868,8 @@ def handle_manual_intervention_for_task(space_id, project_id, release_version, e
                                                              task_id,
                                                              interruptions,
                                                              teams,
-                                                             my_octopus_api)
+                                                             my_octopus_api,
+                                                             interruption_action)
         if not valid:
             return None, error_response
 
@@ -1880,8 +1881,8 @@ def handle_manual_intervention_for_task(space_id, project_id, release_version, e
         # else we can assume we have taken responsibility already (validation checks this case already)
         approval_request = {
             'Instructions': None,
-            'Notes': f'Manual intervention {"approved" if submit_result == "Proceed" else "rejected"} by the Octopus extension for GitHub Copilot',
-            'Result': submit_result
+            'Notes': f'Manual intervention {"approved" if interruption_action == "Proceed" else "rejected"} by the Octopus extension for GitHub Copilot',
+            'Result': interruption_action
         }
 
         base_url = f"api/{quote_safe(space_id)}/interruptions/{quote_safe(interruption['Id'])}/submit"

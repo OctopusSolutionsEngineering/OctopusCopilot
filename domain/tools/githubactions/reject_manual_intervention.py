@@ -7,6 +7,7 @@ from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import get_item_or_none
 from domain.tools.debug import get_params_message
 from domain.validation.octopus_validation import is_manual_intervention_valid
+from domain.view.markdown.octopus_task_interruption_details import format_interruption_details
 from infrastructure.callbacks import save_callback
 from infrastructure.octopus import get_project, get_deployment_logs, get_task_interruptions, get_teams, \
     reject_manual_intervention_for_task
@@ -53,7 +54,7 @@ def reject_manual_intervention_confirm_callback_wrapper(github_user, url, api_ke
             return CopilotResponse(response)
 
         response_text = [
-            f"{project_name}\n\n☑️ Manual intervention rejected\n\n[View task]({url}/app#/{space_id}/tasks/{abort_response['TaskId']})"]
+            f"{project_name}\n\n⛔ Manual intervention rejected\n\n[View task]({url}/app#/{space_id}/tasks/{abort_response['TaskId']})"]
 
         debug_text.extend(get_params_message(github_user, False,
                                              reject_manual_intervention_confirm_callback.__name__,
@@ -113,13 +114,10 @@ def reject_manual_intervention_callback(url, api_key, github_user, connection_st
                 url),
             "Deployment logs")
 
-        query_details = [f"\n* Project: **{sanitized_project_names[0]}**"
-                         f"\n* Version: **{actual_release_version}**"
-                         f"\n* Environment: **{sanitized_environment_names[0]}**"]
-        if sanitized_tenant_names:
-            query_details.append(f"\n* Tenant: **{sanitized_tenant_names[0]}**")
-
-        query_details.append(f"\n* Space: **{actual_space_name}**\n\n")
+        query_details = format_interruption_details(sanitized_project_names[0], actual_release_version,
+                                                    sanitized_environment_names[0],
+                                                    sanitized_tenant_names[0] if sanitized_tenant_names else None,
+                                                    actual_space_name, "Abort")
 
         if task is None:
             response = ["⚠️ No task found for:"]
@@ -138,11 +136,13 @@ def reject_manual_intervention_callback(url, api_key, github_user, connection_st
                                                                  sanitized_project_names[0],
                                                                  release_version,
                                                                  sanitized_environment_names[0],
-                                                                 sanitized_tenant_names[0] if sanitized_tenant_names else None,
+                                                                 sanitized_tenant_names[
+                                                                     0] if sanitized_tenant_names else None,
                                                                  task['Id'],
                                                                  interruptions,
                                                                  teams,
-                                                                 url)
+                                                                 url,
+                                                                 interruption_action="Abort")
             if not valid:
                 response = [error_response]
                 response.extend(warnings)
