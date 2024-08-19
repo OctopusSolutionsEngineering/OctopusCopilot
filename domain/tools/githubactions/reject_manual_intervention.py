@@ -9,15 +9,15 @@ from domain.tools.debug import get_params_message
 from domain.validation.octopus_validation import is_manual_intervention_valid
 from domain.view.markdown.octopus_task_interruption_details import format_interruption_details
 from infrastructure.callbacks import save_callback
-from infrastructure.octopus import get_project, get_deployment_logs, get_task_interruptions, \
-    approve_manual_intervention_for_task, get_teams
+from infrastructure.octopus import get_project, get_deployment_logs, get_task_interruptions, get_teams, \
+    reject_manual_intervention_for_task
 
 
-def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_key, log_query):
-    def approve_manual_intervention_confirm_callback(space_id, project_name, project_id, release_version,
-                                                     environment_name, tenant_name, deployment_id, task_id):
+def reject_manual_intervention_confirm_callback_wrapper(github_user, url, api_key, log_query):
+    def reject_manual_intervention_confirm_callback(space_id, project_name, project_id, release_version,
+                                                    environment_name, tenant_name, deployment_id, task_id):
         debug_text = get_params_message(github_user, True,
-                                        approve_manual_intervention_confirm_callback.__name__,
+                                        reject_manual_intervention_confirm_callback.__name__,
                                         space_id=space_id,
                                         project_name=project_name,
                                         project_id=project_id,
@@ -27,7 +27,7 @@ def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_k
                                         deployment_id=deployment_id,
                                         task_id=task_id)
 
-        log_query("approve_manual_intervention_confirm_callback", f"""
+        log_query("reject_manual_intervention_confirm_callback", f"""
             Space Id: {space_id}
             Project Name: {project_name}
             Project Id: {project_id}
@@ -37,7 +37,7 @@ def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_k
             Deployment Id: {deployment_id}
             Task Id: {task_id}""")
 
-        approval_response, error_message = approve_manual_intervention_for_task(
+        abort_response, error_message = reject_manual_intervention_for_task(
             space_id,
             project_id,
             release_version,
@@ -47,38 +47,38 @@ def approve_manual_intervention_confirm_callback_wrapper(github_user, url, api_k
             api_key,
             url)
 
-        if approval_response is None:
-            response = f"Unable to approve manual intervention. Please check and retry\n\n[View task]({url}/app#/{space_id}/tasks/{task_id}"
+        if abort_response is None:
+            response = f"Unable to reject manual intervention. Please check and retry\n\n[View task]({url}/app#/{space_id}/tasks/{task_id}"
             if error_message:
                 response = f"\n\n{error_message}"
             return CopilotResponse(response)
 
         response_text = [
-            f"{project_name}\n\n☑️ Manual intervention approved\n\n[View task]({url}/app#/{space_id}/tasks/{approval_response['TaskId']})"]
+            f"{project_name}\n\n⛔ Manual intervention rejected\n\n[View task]({url}/app#/{space_id}/tasks/{abort_response['TaskId']})"]
 
         debug_text.extend(get_params_message(github_user, False,
-                                             approve_manual_intervention_confirm_callback.__name__,
+                                             reject_manual_intervention_confirm_callback.__name__,
                                              space_id=space_id,
                                              project_name=project_name,
                                              project_id=project_id,
                                              release_version=release_version,
                                              environment_name=environment_name,
-                                             task_id=approval_response['TaskId']))
+                                             task_id=abort_response['TaskId']))
 
         response_text.extend(debug_text)
         return CopilotResponse("\n\n".join(response_text))
 
-    return approve_manual_intervention_confirm_callback
+    return reject_manual_intervention_confirm_callback
 
 
-def approve_manual_intervention_callback(url, api_key, github_user, connection_string, log_query):
-    def approve_manual_intervention_implementation(confirm_callback_function_name, original_query, space_name=None,
-                                                   project_name=None, release_version=None,
-                                                   environment_name=None,
-                                                   tenant_name=None):
+def reject_manual_intervention_callback(url, api_key, github_user, connection_string, log_query):
+    def reject_manual_intervention_implementation(confirm_callback_function_name, original_query, space_name=None,
+                                                  project_name=None, release_version=None,
+                                                  environment_name=None,
+                                                  tenant_name=None):
 
         debug_text = get_params_message(github_user, True,
-                                        approve_manual_intervention_implementation.__name__,
+                                        reject_manual_intervention_implementation.__name__,
                                         space_name=space_name,
                                         project_name=project_name,
                                         release_version=release_version,
@@ -117,7 +117,7 @@ def approve_manual_intervention_callback(url, api_key, github_user, connection_s
         query_details = format_interruption_details(sanitized_project_names[0], actual_release_version,
                                                     sanitized_environment_names[0],
                                                     sanitized_tenant_names[0] if sanitized_tenant_names else None,
-                                                    actual_space_name, "Proceed")
+                                                    actual_space_name, "Abort")
 
         if task is None:
             response = ["⚠️ No task found for:"]
@@ -142,7 +142,7 @@ def approve_manual_intervention_callback(url, api_key, github_user, connection_s
                                                                  interruptions,
                                                                  teams,
                                                                  url,
-                                                                 interruption_action="Proceed")
+                                                                 interruption_action="Abort")
             if not valid:
                 response = [error_response]
                 response.extend(warnings)
@@ -178,7 +178,7 @@ def approve_manual_intervention_callback(url, api_key, github_user, connection_s
             "task_id": task['Id']
         }
 
-        log_query("approve_manual_intervention", f"""
+        log_query("reject_manual_intervention", f"""
             Space: {arguments["space_id"]}
             Project Name: {arguments["project_name"]}
             Project Id: {arguments["project_id"]}
@@ -189,7 +189,7 @@ def approve_manual_intervention_callback(url, api_key, github_user, connection_s
             Task Id: {arguments["task_id"]}""")
 
         debug_text.extend(get_params_message(github_user, False,
-                                             approve_manual_intervention_implementation.__name__,
+                                             reject_manual_intervention_implementation.__name__,
                                              space_name=actual_space_name,
                                              space_id=space_id,
                                              project_name=sanitized_project_names,
@@ -205,11 +205,11 @@ def approve_manual_intervention_callback(url, api_key, github_user, connection_s
                       original_query,
                       connection_string)
 
-        response = ["Manual intervention approval"]
+        response = ["Manual intervention rejection"]
         response.extend(warnings)
         response.extend(debug_text)
 
-        prompt_title = "Do you want to approve the manual intervention?"
+        prompt_title = "Do you want to reject the manual intervention?"
         prompt_message = ["Please confirm the details below are correct before proceeding:"
                           f"\n* Project: **{sanitized_project_names[0]}**"
                           f"\n* Version: **{actual_release_version}**"
@@ -222,4 +222,4 @@ def approve_manual_intervention_callback(url, api_key, github_user, connection_s
 
         return CopilotResponse("\n\n".join(response), prompt_title, "".join(prompt_message), callback_id)
 
-    return approve_manual_intervention_implementation
+    return reject_manual_intervention_implementation

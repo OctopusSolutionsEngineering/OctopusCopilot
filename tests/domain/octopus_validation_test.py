@@ -247,7 +247,8 @@ class ApiKeyTest(unittest.TestCase):
                                                              task_id="ServerTasks-12345",
                                                              task_interruptions=None,
                                                              teams=None,
-                                                             url="http://localhost:8080/")
+                                                             url="http://localhost:8080/",
+                                                             interruption_action="Proceed")
 
         self.assertFalse(valid)
         self.assertTrue("No interruptions found for:" in error_response, "Response was " + error_response)
@@ -262,7 +263,8 @@ class ApiKeyTest(unittest.TestCase):
                                                              task_id="ServerTasks-12345",
                                                              task_interruptions=json.loads(sample_guided_failure),
                                                              teams=None,
-                                                             url="http://localhost:8080/")
+                                                             url="http://localhost:8080/",
+                                                             interruption_action="Proceed")
 
         self.assertFalse(valid)
         self.assertTrue("An incompatible interruption (guided failure) was found for:" in error_response,
@@ -281,7 +283,8 @@ class ApiKeyTest(unittest.TestCase):
                                                              task_id="ServerTasks-12345",
                                                              task_interruptions=interruptions,
                                                              teams=None,
-                                                             url="http://localhost:8080/")
+                                                             url="http://localhost:8080/",
+                                                             interruption_action="Proceed")
 
         self.assertFalse(valid)
         self.assertTrue("Another user has already taken responsibility of the manual intervention for:"
@@ -300,7 +303,8 @@ class ApiKeyTest(unittest.TestCase):
                                                              task_id="ServerTasks-12345",
                                                              task_interruptions=interruptions,
                                                              teams=json.loads(sample_teams),
-                                                             url="http://localhost:8080/")
+                                                             url="http://localhost:8080/",
+                                                             interruption_action="Proceed")
 
         self.assertFalse(valid)
         self.assertTrue("You don't have sufficient permissions to take responsibility for the manual intervention."
