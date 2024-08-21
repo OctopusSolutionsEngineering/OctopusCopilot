@@ -151,7 +151,7 @@ def build_form_tools(query, req: func.HttpRequest):
     approval_interruption_functions = [
         FunctionDefinition(tool, callback=approve_manual_intervention_confirm_callback_wrapper(
             get_github_user_from_form(req), url, api_key,
-            log_query), is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users()))
+            log_query))
         for tool in approve_manual_intervention_wrapper(query,
                                                         approve_manual_intervention_callback(
                                                             url, api_key,
@@ -163,7 +163,7 @@ def build_form_tools(query, req: func.HttpRequest):
     reject_interruption_functions = [
         FunctionDefinition(tool, callback=reject_manual_intervention_confirm_callback_wrapper(
             get_github_user_from_form(req), url, api_key,
-            log_query), is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users()))
+            log_query))
         for tool in reject_manual_intervention_wrapper(query,
                                                        reject_manual_intervention_callback(
                                                            url, api_key,
