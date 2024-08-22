@@ -111,7 +111,7 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 * @octopus-ai-app Deploy release version "2.0.8" of project "{first_project}" in the space "{space_name}" to the environment "{first_environment}" for tenant "Contoso"
 
                 You can cancel a deployment, runbook or other task with prompts like these:
-                * @octopus-ai-app Cancel the latest deployment for the project "{first_project}" to the environment "{first_environment}" environment
+                * @octopus-ai-app Cancel the latest deployment for the project "{first_project}" to the "{first_environment}" environment
                 * @octopus-ai-app Cancel the runbook run "{first_runbook}" in the project "{first_project}" in the space "{space_name}" in the "{first_environment}" environment
                 * @octopus-ai-app Cancel task "ServerTasks-58479"
 
