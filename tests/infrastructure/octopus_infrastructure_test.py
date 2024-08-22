@@ -199,7 +199,7 @@ class OctopusAPIRequests(unittest.TestCase):
                                            Octopus_Url)
         wait_for_task(task["TaskId"], space_name="Simple")
 
-        activity_logs = get_runbook_deployment_logs("Simple",
+        _, activity_logs = get_runbook_deployment_logs("Simple",
                                                     "Runbook Project",
                                                     "Test Runbook",
                                                     "Development",

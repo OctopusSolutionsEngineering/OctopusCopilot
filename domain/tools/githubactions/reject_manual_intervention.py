@@ -63,6 +63,8 @@ def reject_manual_intervention_confirm_callback_wrapper(github_user, url, api_ke
                                              project_id=project_id,
                                              release_version=release_version,
                                              environment_name=environment_name,
+                                             tenant_name=tenant_name,
+                                             deployment_id=deployment_id,
                                              task_id=abort_response['TaskId']))
 
         response_text.extend(debug_text)
@@ -178,7 +180,7 @@ def reject_manual_intervention_callback(url, api_key, github_user, connection_st
             "task_id": task['Id']
         }
 
-        log_query("reject_manual_intervention", f"""
+        log_query("reject_manual_intervention_implementation", f"""
             Space: {arguments["space_id"]}
             Project Name: {arguments["project_name"]}
             Project Id: {arguments["project_id"]}

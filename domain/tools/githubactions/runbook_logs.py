@@ -50,7 +50,7 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
 
         sanitized_tenant_names = lookup_tenants(url, api_key, github_user, original_query, space_id, tenants)
 
-        activity_logs = timing_wrapper(
+        _, activity_logs = timing_wrapper(
             lambda: get_runbook_deployment_logs(actual_space_name,
                                                 sanitized_project_names[0],
                                                 sanitized_runbook_names[0],
@@ -58,7 +58,7 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
                                                 sanitized_tenant_names[0] if sanitized_tenant_names else None,
                                                 api_key,
                                                 url),
-            "Deployment logs")
+            "Runbook logs")
 
         sanitized_steps = sanitize_log_steps(steps, original_query, activity_logs)
 
