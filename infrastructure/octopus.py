@@ -1142,7 +1142,6 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
 
     return task["Task"], task["ActivityLogs"], actual_release_version
 
-
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_runbook_deployment_logs(space_name, project_name, runbook_name, environment_name, tenant_name, api_key,
@@ -1201,7 +1200,7 @@ def get_runbook_deployment_logs(space_name, project_name, runbook_name, environm
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     task = json.loads(resp.data.decode("utf-8"))
 
-    return task["ActivityLogs"]
+    return task["Task"], task["ActivityLogs"],
 
 
 def activity_logs_to_string(activity_logs, sanitized_steps=None, categories=None, join_string="\n", include_name=True):
@@ -1806,14 +1805,44 @@ def get_task_interruptions(space_id, task_id, api_key, octopus_url):
     return interruptions['Items']
 
 
+@logging_wrapper
 def approve_manual_intervention_for_task(space_id, project_id, release_version, environment_name,
                                          tenant_name, task_id, my_api_key, my_octopus_api):
+    """
+
+    Approves a manual intervention for a task interruption
+    :param space_id: The Octopus Space
+    :param project_id: The Octopus project
+    :param release_version: The Octopus release version
+    :param environment_name: The Octopus environment
+    :param tenant_name: The (optional) Octopus tenant
+    :param task_id: The Octopus task
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus server URL
+    :return: The task interruption response and an optional error message
+    """
+
     return handle_manual_intervention_for_task(space_id, project_id, release_version, environment_name,
                                                tenant_name, task_id, 'Proceed', my_api_key, my_octopus_api)
 
 
+@logging_wrapper
 def reject_manual_intervention_for_task(space_id, project_id, release_version, environment_name,
                                         tenant_name, task_id, my_api_key, my_octopus_api):
+
+    """
+
+    Rejects a manual intervention for a task interruption
+    :param space_id: The Octopus Space
+    :param project_id: The Octopus project
+    :param release_version: The Octopus release version
+    :param environment_name: The Octopus environment
+    :param tenant_name: The (optional) Octopus tenant
+    :param task_id: The Octopus task
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus server URL
+    :return: The task interruption response and an optional error message
+    """
     return handle_manual_intervention_for_task(space_id, project_id, release_version, environment_name,
                                                tenant_name, task_id, 'Abort', my_api_key, my_octopus_api)
 
@@ -1907,6 +1936,34 @@ def take_responsibility_for_interruption(space_id, interruption_id, api_key, oct
         lambda: http.request("PUT", api, headers=get_octopus_headers(api_key)))
 
     return response.json()
+
+
+@logging_wrapper
+def cancel_server_task(space_id, task_id, my_api_key, my_octopus_api):
+    """
+    Cancels a server task in Octopus Deploy.
+
+    :param space_id: The Octopus Space
+    :param task_id: The Octopus Task ID
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus server URL
+    :return: The Octopus Server task
+
+    """
+
+    ensure_string_not_empty(space_id, 'space_id must be the space ID (cancel_server_task).')
+    ensure_string_not_empty(task_id, 'task_id must be the task ID (cancel_server_task).')
+    ensure_string_not_empty(my_api_key, 'my_api_key must be the Octopus Api key (cancel_server_task).')
+    ensure_string_not_empty(my_octopus_api, 'my_octopus_api must be the Octopus Url (cancel_server_task).')
+
+    base_url = f"api/{quote_safe(space_id)}/tasks/{quote_safe(task_id)}/cancel"
+    api = build_url(my_octopus_api, base_url)
+
+    response = handle_response(
+        lambda: http.request("POST", api, headers=get_octopus_headers(my_api_key)))
+
+    task = response.json()
+    return task
 
 
 @retry(HTTPError, tries=3, delay=2)

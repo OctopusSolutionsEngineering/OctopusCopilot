@@ -13,6 +13,9 @@ from domain.logging.query_loggin import log_query
 from domain.security.security import is_admin_user
 from domain.tools.githubactions.approve_manual_intervention import approve_manual_intervention_callback, \
     approve_manual_intervention_confirm_callback_wrapper
+from domain.tools.githubactions.cancel_deployment import cancel_deployment_callback
+from domain.tools.githubactions.cancel_runbook_run import cancel_runbook_run_callback
+from domain.tools.githubactions.cancel_task import cancel_task_confirm_callback_wrapper, cancel_task_callback
 from domain.tools.githubactions.create_release import create_release_wrapper, create_release_confirm_callback_wrapper
 from domain.tools.githubactions.dashboard import get_dashboard_callback
 from domain.tools.githubactions.default_values import default_value_callbacks
@@ -35,6 +38,9 @@ from domain.tools.githubactions.runbooks_dashboard import get_runbook_dashboard_
 from domain.tools.githubactions.task_summary import get_task_summary_callback
 from domain.tools.githubactions.variables import variable_query_callback
 from domain.tools.wrapper.approve_manual_intervention import approve_manual_intervention_wrapper
+from domain.tools.wrapper.cancel_deployment import cancel_deployment_wrapper
+from domain.tools.wrapper.cancel_runbook_run import cancel_runbook_run_wrapper
+from domain.tools.wrapper.cancel_task import cancel_task_wrapper
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
 from domain.tools.wrapper.dashboard_wrapper import show_space_dashboard_wrapper
 from domain.tools.wrapper.function_definition import FunctionDefinition, FunctionDefinitions
@@ -299,6 +305,34 @@ def build_form_tools(query, req: func.HttpRequest):
             callback=deploy_release_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query)),
         *approval_interruption_functions,
         *reject_interruption_functions,
+        FunctionDefinition(cancel_task_wrapper(query,
+                                               callback=cancel_task_callback(url, api_key,
+                                                                             get_github_user_from_form(req),
+                                                                             get_functions_connection_string(),
+                                                                             log_query),
+                                               logging=log_query),
+                           callback=cancel_task_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key,
+                                                                         log_query),
+                           is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users())),
+        FunctionDefinition(cancel_deployment_wrapper(query,
+                                                     callback=cancel_deployment_callback(url, api_key,
+                                                                                         get_github_user_from_form(req),
+                                                                                         get_functions_connection_string(),
+                                                                                         log_query),
+                                                     logging=log_query),
+                           callback=cancel_task_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key,
+                                                                         log_query),
+                           is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users())),
+        FunctionDefinition(cancel_runbook_run_wrapper(query,
+                                                      callback=cancel_runbook_run_callback(url, api_key,
+                                                                                           get_github_user_from_form(
+                                                                                               req),
+                                                                                           get_functions_connection_string(),
+                                                                                           log_query),
+                                                      logging=log_query),
+                           callback=cancel_task_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key,
+                                                                         log_query),
+                           is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users())),
         FunctionDefinition(
             show_github_job_summary_wrapper(query,
                                             get_job_summary_callback(get_github_user_from_form(req),
