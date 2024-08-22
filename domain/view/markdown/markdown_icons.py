@@ -28,7 +28,7 @@ def get_github_state_icon(status, conclusion):
     return "⚪"
 
 
-def get_state_icon(state, has_warnings):
+def get_state_icon(state, has_warnings, has_interruptions):
     if state == "Executing":
         return "🔵"
 
@@ -51,7 +51,10 @@ def get_state_icon(state, has_warnings):
         return "🔴"
 
     elif state == "Queued":
-        return "🟣"
+        if has_interruptions:
+            return "🟠"
+        else:
+            return "🟣"
 
     return "⚪"
 

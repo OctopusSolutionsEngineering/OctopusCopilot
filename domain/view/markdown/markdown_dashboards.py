@@ -115,7 +115,8 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
                     created = parse_unknown_format_date(last_deployment["Created"])
                     difference = get_date_difference_summary(now - created)
 
-                    icon = get_state_icon(last_deployment['State'], last_deployment['HasWarningsOrErrors'])
+                    icon = get_state_icon(last_deployment['State'], last_deployment['HasWarningsOrErrors'],
+                                          last_deployment['HasPendingInterruptions'])
                     url = build_deployment_url(octopus_url, space_id, last_deployment['ProjectId'],
                                                last_deployment['ReleaseVersion'], last_deployment['DeploymentId'])
 
@@ -175,7 +176,8 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
                         for deployment in yield_first(release["Deployments"][environment["Id"]]):
                             created = parse_unknown_format_date(deployment["Created"])
                             difference = get_date_difference_summary(now - created)
-                            icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
+                            icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'],
+                                                  deployment['HasPendingInterruptions'])
 
                             release_url = build_deployment_url(octopus_url, space_id, deployment['ProjectId'],
                                                                deployment['ReleaseVersion'], deployment['DeploymentId'])
@@ -269,7 +271,8 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                 tenanted = deployment.get("TenantId") == tenant.get("Id")
                 environment_match = deployment.get("EnvironmentId") == environment.get("Id")
                 if environment_match and tenanted:
-                    icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'])
+                    icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'],
+                                          deployment['HasPendingInterruptions'])
                     created = parse_unknown_format_date(deployment["Created"])
                     difference = get_date_difference_summary(now - created)
                     channel = get_channel_cached(space_id, deployment["ChannelId"], api_key, url)
@@ -315,7 +318,7 @@ def build_runbook_run_columns(run, now, get_tenant):
     tenant_name = 'Untenanted' if not run['TenantId'] else get_tenant(run['TenantId'])
     created = parse_unknown_format_date(run["Created"])
     difference = get_date_difference_summary(now - created)
-    icon = get_state_icon(run['State'], run['HasWarningsOrErrors'])
+    icon = get_state_icon(run['State'], run['HasWarningsOrErrors'], run['HasPendingInterruptions'])
     return [tenant_name, icon + " " + difference + " ago"]
 
 
