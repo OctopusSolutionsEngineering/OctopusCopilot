@@ -93,7 +93,7 @@ def create_release_wrapper(url, api_key, github_user, original_query, connection
         space_name: The name of the space
         project_name: The name of the project
         git_ref: The git reference for the release if the project is version-controlled
-        release_version: The release version
+        release_version: The (optional) release version
         channel_name: The name of the channel
         environment_name: The (optional) name of the environment to deploy to.
         tenant_name: The (optional) name of the tenant to deploy to.
