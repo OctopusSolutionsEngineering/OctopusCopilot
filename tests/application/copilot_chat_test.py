@@ -897,7 +897,7 @@ class CopilotChatTest(unittest.TestCase):
                         "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_cancel_deployment_to_environment(self):
+    def test_cancel_deployment(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         space_name = "Simple"
         project_name = "Deploy Web App Container"
@@ -934,7 +934,7 @@ class CopilotChatTest(unittest.TestCase):
                         "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_cancel_runbook_run_for_environment(self):
+    def test_cancel_runbook_run(self):
         space_name = "Simple"
         project_name = "Runbook Project"
         runbook_name = "Backup Database"

@@ -24,7 +24,8 @@ from infrastructure.octopus import get_project_progression, get_raw_deployment_p
     get_item_fuzzy, get_space_id_and_name_from_name, activity_logs_to_string, get_version, run_published_runbook_fuzzy, \
     get_runbook_deployment_logs, get_projects, get_tenants, get_feeds, get_accounts, get_machines, get_certificates, \
     get_environments, get_project_channel, get_lifecycle, get_tenant, get_tenant_fuzzy, get_project_fuzzy, \
-    get_environment, get_channel_by_name, get_default_channel, get_teams, get_team, handle_manual_intervention_for_task
+    get_environment, get_channel_by_name, get_default_channel, get_teams, get_team, handle_manual_intervention_for_task, \
+    cancel_server_task
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release, wait_for_task
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.publish_runbook import publish_runbook
@@ -496,6 +497,13 @@ class OctopusAPIRequests(unittest.TestCase):
                                                 environment_name="Development", tenant_name="TenantName",
                                                 task_id="ServerTasks-1234", interruption_action='InvalidOption',
                                                 my_api_key='API-XXXX', my_octopus_api="http://localhost:8080")
+
+    def test_cancel_task(self):
+        deployment = create_and_deploy_release(space_name="Simple")
+        space_id, space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+        cancel_response = cancel_server_task(space_id, deployment["TaskId"], Octopus_Api_Key, Octopus_Url)
+        self.assertTrue(cancel_response['Id'] == deployment['TaskId'])
+        self.assertTrue(cancel_response['State'] in ['Canceled', 'Cancelling'])
 
 
 class UnitTests(unittest.TestCase):

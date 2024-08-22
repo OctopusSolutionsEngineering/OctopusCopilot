@@ -3,39 +3,27 @@ import uuid
 import asyncio
 
 from domain.exceptions.none_on_exception import none_on_exception
-from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_environments, lookup_tenants, \
-    lookup_runbooks
-from domain.performance.timing import timing_wrapper
+from domain.lookup.octopus_lookups import lookup_space, lookup_projects
 from domain.response.copilot_response import CopilotResponse
-from domain.sanitizers.sanitized_list import get_item_or_none
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
-from infrastructure.octopus import get_project, get_deployment_logs, get_runbook_deployment_logs, cancel_server_task, \
+from infrastructure.octopus import get_project, cancel_server_task, \
     get_task_details_async
 
 
 def cancel_task_confirm_callback_wrapper(github_user, url, api_key, log_query):
-    def cancel_task_confirm_callback(space_id, project_name, project_id, release_version, environment_name,
-                                     runbook_name, tenant_name, task_id):
+    def cancel_task_confirm_callback(space_id, project_name, project_id, task_id):
         debug_text = get_params_message(github_user, True,
                                         cancel_task_confirm_callback.__name__,
                                         space_id=space_id,
                                         project_name=project_name,
                                         project_id=project_id,
-                                        release_version=release_version,
-                                        environment_name=environment_name,
-                                        runbook_name=runbook_name,
-                                        tenant_name=tenant_name,
                                         task_id=task_id)
 
         log_query("cancel_task_confirm_callback", f"""
             Space Id: {space_id}
             Project Name: {project_name}
             Project Id: {project_id}
-            Release Version: {release_version}
-            Environment Name: {environment_name}
-            Runbook Name: {runbook_name}
-            Tenant Name: {tenant_name}
             Task Id: {task_id}""")
 
         cancel_response = cancel_server_task(
@@ -56,10 +44,6 @@ def cancel_task_confirm_callback_wrapper(github_user, url, api_key, log_query):
                                              space_id=space_id,
                                              project_name=project_name,
                                              project_id=project_id,
-                                             release_version=release_version,
-                                             environment_name=environment_name,
-                                             runbook_name=runbook_name,
-                                             tenant_name=tenant_name,
                                              task_id=cancel_response['Id']))
 
         response_text.extend(debug_text)
@@ -69,18 +53,12 @@ def cancel_task_confirm_callback_wrapper(github_user, url, api_key, log_query):
 
 
 def cancel_task_callback(url, api_key, github_user, connection_string, log_query):
-    def cancel_task_implementation(confirm_callback_function_name, original_query, space_name=None, task_id=None,
-                                   project_name=None, release_version=None, environment_name=None, tenant_name=None,
-                                   runbook_name=None):
+    def cancel_task(original_query, space_name=None, project_name=None, task_id=None):
         debug_text = get_params_message(github_user, True,
-                                        cancel_task_implementation.__name__,
+                                        cancel_task.__name__,
                                         space_name=space_name,
                                         task_id=task_id,
-                                        project_name=project_name,
-                                        release_version=release_version,
-                                        environment_name=environment_name,
-                                        tenant_name=tenant_name,
-                                        runbook_name=runbook_name)
+                                        project_name=project_name)
 
         space_id, actual_space_name, warnings = lookup_space(url, api_key, github_user, original_query, space_name)
         sanitized_project_names, sanitized_projects = lookup_projects(url, api_key, github_user, original_query,
@@ -90,52 +68,17 @@ def cancel_task_callback(url, api_key, github_user, connection_string, log_query
             return CopilotResponse("Please specify a project name in the query.")
 
         project = get_project(space_id, sanitized_project_names[0], api_key, url)
-        sanitized_environment_names = lookup_environments(url, api_key, github_user, original_query, space_id,
-                                                          environment_name)
 
-        if not sanitized_environment_names:
-            return CopilotResponse("Please specify an environment name in the query.")
-
-        sanitized_tenant_names = lookup_tenants(url, api_key, github_user, original_query, space_id, tenant_name)
-        sanitized_runbook_names = lookup_runbooks(url, api_key, github_user, original_query, space_id, project["Id"],
-                                                  runbook_name)
-        actual_release_version = None
-
-        if task_id is None:
-            if sanitized_runbook_names is None and release_version is not None:
-                task, activity_logs, actual_release_version = timing_wrapper(
-                    lambda: get_deployment_logs(
-                        actual_space_name,
-                        sanitized_project_names[0],
-                        sanitized_environment_names[0],
-                        get_item_or_none(sanitized_tenant_names, 0),
-                        release_version,
-                        api_key,
-                        url),
-                    "Deployment logs")
-                actual_task_id = task["Id"]
+        if task_id.startswith("ServerTasks-"):
+            task_response = none_on_exception(lambda: asyncio.run(
+                get_task_details_async(space_id, task_id, api_key, url)))
+            if task_response is None:
+                return CopilotResponse("⚠️ Unable to determine task to cancel from query.")
             else:
-                task, activity_logs = timing_wrapper(
-                    lambda: get_runbook_deployment_logs(actual_space_name,
-                                                        sanitized_project_names[0],
-                                                        sanitized_runbook_names[0],
-                                                        sanitized_environment_names[0],
-                                                        sanitized_tenant_names[0] if sanitized_tenant_names else None,
-                                                        api_key,
-                                                        url),
-                    "Runbook logs")
+                task = task_response["Task"]
                 actual_task_id = task["Id"]
         else:
-            if task_id.startswith("ServerTasks-"):
-                task_response = none_on_exception(lambda: asyncio.run(
-                    get_task_details_async(space_id, task_id, api_key, url)))
-                if task_response is None:
-                    return CopilotResponse("⚠️ Unable to determine task to cancel from query.")
-                else:
-                    task = task_response["Task"]
-                    actual_task_id = task["Id"]
-            else:
-                return CopilotResponse(f"⚠️ Unable to determine task to cancel from: \"{task_id}\".")
+            return CopilotResponse(f"⚠️ Unable to determine task to cancel from: \"{task_id}\".")
 
         callback_id = str(uuid.uuid4())
 
@@ -143,37 +86,25 @@ def cancel_task_callback(url, api_key, github_user, connection_string, log_query
             "space_id": space_id,
             "project_name": sanitized_project_names[0],
             "project_id": project["Id"],
-            "release_version": actual_release_version,
-            "environment_name": sanitized_environment_names[0],
-            "runbook_name": sanitized_runbook_names[0] if sanitized_runbook_names else None,
-            "tenant_name": sanitized_tenant_names[0] if sanitized_tenant_names else None,
             "task_id": actual_task_id
         }
 
-        log_query("cancel_task_implementation", f"""
+        log_query("cancel_task", f"""
             Space: {arguments["space_id"]}
             Project Name: {arguments["project_name"]}
             Project Id: {arguments["project_id"]}
-            Version: {arguments["release_version"]}
-            Environment Name: {arguments["environment_name"]}
-            Runbook Name: {arguments["runbook_name"]}
-            Tenant Name: {arguments["tenant_name"]}
             Task Id: {arguments["task_id"]}""")
 
         debug_text.extend(get_params_message(github_user, False,
-                                             cancel_task_implementation.__name__,
+                                             cancel_task.__name__,
                                              space_name=actual_space_name,
-                                             task_id=actual_task_id,
                                              space_id=space_id,
                                              project_name=sanitized_project_names,
                                              project_id=project['Id'],
-                                             release_version=actual_release_version,
-                                             environment_name=sanitized_environment_names,
-                                             runbook_name=sanitized_runbook_names,
-                                             tenant_name=sanitized_tenant_names))
+                                             task_id=actual_task_id))
 
         save_callback(github_user,
-                      confirm_callback_function_name,
+                      cancel_task.__name__,
                       callback_id,
                       json.dumps(arguments),
                       original_query,
@@ -186,13 +117,9 @@ def cancel_task_callback(url, api_key, github_user, connection_string, log_query
         prompt_title = f"Do you want to cancel the task?"
         prompt_message = ["Please confirm the details below are correct before proceeding:"
                           f"\n* Project: **{sanitized_project_names[0]}**",
-                          f"\n* Environment: **{sanitized_environment_names[0]}**"]
+                          f"\n* Space: **{actual_space_name}**",
+                          f"\n* Task: **{task['Description']}**"]
 
-        if sanitized_tenant_names:
-            prompt_message.append(f"\n* Tenant: **{sanitized_tenant_names[0]}**")
-
-        prompt_message.append(f"\n* Space: **{actual_space_name}**")
-        prompt_message.append(f"\n* Task: **{task['Description']}**")
         return CopilotResponse("\n\n".join(response), prompt_title, "".join(prompt_message), callback_id)
 
-    return cancel_task_implementation
+    return cancel_task
