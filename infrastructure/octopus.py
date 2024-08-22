@@ -1142,6 +1142,7 @@ def get_deployment_logs(space_name, project_name, environment_name, tenant_name,
 
     return task["Task"], task["ActivityLogs"], actual_release_version
 
+
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_runbook_deployment_logs(space_name, project_name, runbook_name, environment_name, tenant_name, api_key,
