@@ -14,7 +14,8 @@ from domain.tools.githubactions.approve_manual_intervention import approve_manua
 from domain.tools.githubactions.cancel_deployment import cancel_deployment_callback
 from domain.tools.githubactions.cancel_runbook_run import cancel_runbook_run_callback
 from domain.tools.githubactions.cancel_task import cancel_task_confirm_callback_wrapper, cancel_task_callback
-from domain.tools.githubactions.create_release import create_release_wrapper, create_release_confirm_callback_wrapper
+from domain.tools.githubactions.create_release import create_release_confirm_callback_wrapper, \
+    create_release_callback
 from domain.tools.githubactions.dashboard import get_dashboard_callback
 from domain.tools.githubactions.default_values import default_value_callbacks
 from domain.tools.githubactions.deploy_release import deploy_release_wrapper, deploy_release_confirm_callback_wrapper
@@ -41,6 +42,7 @@ from domain.tools.wrapper.cancel_deployment import cancel_deployment_wrapper
 from domain.tools.wrapper.cancel_runbook_run import cancel_runbook_run_wrapper
 from domain.tools.wrapper.cancel_task import cancel_task_wrapper
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
+from domain.tools.wrapper.create_release import create_release_wrapper
 from domain.tools.wrapper.dashboard_wrapper import show_space_dashboard_wrapper
 from domain.tools.wrapper.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
@@ -287,14 +289,15 @@ def build_form_tools(query, req: func.HttpRequest):
                                                logging=log_query),
                            callback=run_runbook_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key,
                                                                          log_query)),
-        FunctionDefinition(create_release_wrapper(
-            url,
-            api_key,
-            get_github_user_from_form(req),
-            query,
-            get_functions_connection_string(),
-            log_query),
-            callback=create_release_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query)),
+        FunctionDefinition(create_release_wrapper(query,
+                                                  callback=create_release_callback(url, api_key,
+                                                                                   get_github_user_from_form(req),
+                                                                                   get_functions_connection_string(),
+                                                                                   log_query),
+                                                  logging=log_query),
+                           callback=create_release_confirm_callback_wrapper(get_github_user_from_form(req), url,
+                                                                            api_key,
+                                                                            log_query)),
         FunctionDefinition(deploy_release_wrapper(
             url,
             api_key,
