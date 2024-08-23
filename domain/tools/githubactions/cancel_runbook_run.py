@@ -52,6 +52,12 @@ def cancel_runbook_run_callback(url, api_key, github_user, connection_string, lo
                                                 url),
             "Runbook logs")
 
+        if task is None:
+            return CopilotResponse("⚠️ Runbook run not found.")
+
+        if task['State'] == 'Canceled':
+            return CopilotResponse("⚠️ Runbook run already cancelled.")
+
         callback_id = str(uuid.uuid4())
 
         arguments = {

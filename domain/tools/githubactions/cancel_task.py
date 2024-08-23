@@ -80,6 +80,9 @@ def cancel_task_callback(url, api_key, github_user, connection_string, log_query
         else:
             return CopilotResponse(f"⚠️ Unable to determine task to cancel from: \"{task_id}\".")
 
+        if task['State'] == 'Canceled':
+            return CopilotResponse("⚠️ Task already cancelled.")
+
         callback_id = str(uuid.uuid4())
 
         arguments = {

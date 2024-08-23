@@ -48,6 +48,12 @@ def cancel_deployment_callback(url, api_key, github_user, connection_string, log
                 url),
             "Deployment logs")
 
+        if task is None:
+            return CopilotResponse("⚠️ Deployment not found.")
+
+        if task['State'] == 'Canceled':
+            return CopilotResponse("⚠️ Deployment already cancelled.")
+
         callback_id = str(uuid.uuid4())
 
         arguments = {

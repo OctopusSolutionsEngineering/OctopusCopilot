@@ -124,7 +124,7 @@ def create_release_callback(url, api_key, github_user, connection_string, log_qu
         if release_version:
             existing_releases = get_releases_by_version(space_id, project['Id'], release_version, api_key, url)
             if existing_releases is not None:
-                return CopilotResponse(f"Release version \"{release_version}\" already exists.")
+                return CopilotResponse(f"⚠️ Release version \"{release_version}\" already exists.")
         else:
             release_version = release_template['NextVersionIncrement']
 

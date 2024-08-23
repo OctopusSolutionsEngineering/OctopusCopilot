@@ -1193,7 +1193,7 @@ def get_runbook_deployment_logs(space_name, project_name, runbook_name, environm
     runs = json.loads(resp.data.decode("utf-8")).get("Items")
 
     if not runs:
-        return ""
+        return None, ""
 
     task_id = runs[0]["Id"] if runs else None
 
@@ -1201,7 +1201,7 @@ def get_runbook_deployment_logs(space_name, project_name, runbook_name, environm
     resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
     task = json.loads(resp.data.decode("utf-8"))
 
-    return task["Task"], task["ActivityLogs"],
+    return task["Task"], task["ActivityLogs"]
 
 
 def activity_logs_to_string(activity_logs, sanitized_steps=None, categories=None, join_string="\n", include_name=True):

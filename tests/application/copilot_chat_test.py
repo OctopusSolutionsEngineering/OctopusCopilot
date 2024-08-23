@@ -871,6 +871,24 @@ class CopilotChatTest(unittest.TestCase):
                         "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_cancel_task_already_canceled(self):
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        space_name = "Simple"
+        project_name = "Deploy Web App Container"
+        environment_name = "Development"
+        deploy_response = create_and_deploy_release(space_name=space_name, project_name=project_name,
+                                                    environment_name=environment_name,
+                                                    release_version=version)
+        cancel_task(deploy_response['SpaceId'], deploy_response['TaskId'])
+        time.sleep(5)
+        prompt = f"Cancel the task \"{deploy_response['TaskId']}\""
+
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        self.assertTrue(f"Task already cancelled." in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_cancel_task_by_id(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         space_name = "Simple"
