@@ -9,10 +9,6 @@ def cancel_task_wrapper(query, callback, logging):
             space_name: The name of the space
             task_id: The server task
             project_name: The name of the project
-            release_version: The release version
-            environment_name: The name of the environment
-            runbook_name: The name of the runbook
-            tenant_name: The name of the tenant
             """
 
         if logging:
