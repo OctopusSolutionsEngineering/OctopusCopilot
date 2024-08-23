@@ -644,26 +644,8 @@ class CopilotChatTest(unittest.TestCase):
         # Then create it via a prompt
         prompt = f"Create release in the \"Deploy Web App Container\" project with version \"{version}\" and with channel \"Default\""
         response = copilot_handler_internal(build_request(prompt))
-        confirmation_id = get_confirmation_id(response.get_body().decode('utf8'))
-        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
-
-        confirmation = {"messages": [{
-            "role": "user",
-            "content": "",
-            "copilot_references": None,
-            "copilot_confirmations": [
-                {
-                    "state": "accepted",
-                    "confirmation": {
-                        "id": confirmation_id
-                    }
-                }
-            ]
-        }]}
-
-        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
-        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
-        self.assertTrue(f"Release {version}" in response_text, "Response was " + response_text)
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        self.assertTrue(f"Release version \"{version}\" already exists." in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_create_release_with_deployment_environment(self):
