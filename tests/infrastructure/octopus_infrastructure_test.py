@@ -25,8 +25,9 @@ from infrastructure.octopus import get_project_progression, get_raw_deployment_p
     get_runbook_deployment_logs, get_projects, get_tenants, get_feeds, get_accounts, get_machines, get_certificates, \
     get_environments, get_project_channel, get_lifecycle, get_tenant, get_tenant_fuzzy, get_project_fuzzy, \
     get_environment, get_channel_by_name, get_default_channel, get_teams, get_team, handle_manual_intervention_for_task, \
-    cancel_server_task
+    cancel_server_task, get_releases_by_version, get_project
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release, wait_for_task
+from tests.infrastructure.create_release import create_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.publish_runbook import publish_runbook
 
@@ -504,6 +505,19 @@ class OctopusAPIRequests(unittest.TestCase):
         cancel_response = cancel_server_task(space_id, deployment["TaskId"], Octopus_Api_Key, Octopus_Url)
         self.assertTrue(cancel_response['Id'] == deployment['TaskId'])
         self.assertTrue(cancel_response['State'] in ['Canceled', 'Cancelling'])
+
+    def test_get_releases_by_version(self):
+        create_release(space_name="Simple", release_version="1.0.0")
+        create_release(space_name="Simple", release_version="1.1.0")
+        space_id, space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+        project = get_project(space_id, "Deploy Web App Container", Octopus_Api_Key, Octopus_Url)
+
+        # Check both releases are returned.
+        releases = get_releases_by_version(space_id, project['Id'],"1.", Octopus_Api_Key, Octopus_Url)
+        self.assertEqual(2, len(releases))
+        # Check no matches returned
+        non_matching_releases = get_releases_by_version(space_id, project['Id'], "0.0.12", Octopus_Api_Key, Octopus_Url)
+        self.assertIsNone(non_matching_releases)
 
 
 class UnitTests(unittest.TestCase):

@@ -1478,6 +1478,19 @@ def get_release_template_and_default_branch(space_id, project, channel_id, git_r
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
+def get_releases_by_version(space_id, project_id, release_version, api_key, octopus_url):
+    api = build_url(octopus_url, f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/releases",
+                    query=dict(searchByVersion=quote_safe(release_version)))
+    resp = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key)))
+    releases = resp.json()
+    if len(releases['Items']) == 0:
+        return None
+
+    return releases['Items']
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_project_version_controlled_branch(space_id, project_id, branch_name, api_key, octopus_url):
     api = build_url(octopus_url,
                     f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/git/branches/{quote_safe(branch_name)}")
@@ -1830,7 +1843,6 @@ def approve_manual_intervention_for_task(space_id, project_id, release_version, 
 @logging_wrapper
 def reject_manual_intervention_for_task(space_id, project_id, release_version, environment_name,
                                         tenant_name, task_id, my_api_key, my_octopus_api):
-
     """
 
     Rejects a manual intervention for a task interruption
