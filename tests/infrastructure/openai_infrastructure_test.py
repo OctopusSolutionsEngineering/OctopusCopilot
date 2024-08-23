@@ -286,6 +286,19 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Cloud Region target" in body["target_names"], body)
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_general_project_channel_question(self):
+        """
+        Tests that the llm identifies the correct project name in the query
+        """
+
+        query = "List the channels defined in the project \"Deploy WebApp Container\" in a markdown table."
+        function = llm_tool_query(query, build_mock_test_tools(query))
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+        self.assertTrue("Deploy WebApp Container" in body["project_names"], "body")
+
     def test_documentation_question(self):
         """
         Tests that the llm identifies queries answered by documentation
