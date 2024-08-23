@@ -1,6 +1,7 @@
 def cancel_task_wrapper(query, callback, logging):
     def cancel_task(space_name=None, task_id=None, project_name=None, **kwargs):
-        """Answers queries about canceling a task. Use this function when the query is asking to cancel a task.
+        """Answers queries about canceling a task by its id. Use this function when the query is asking to cancel
+        a task by providing the task id.
     Questions can look like those in the following list:
     * Cancel the task id "ServerTasks-32495"
     * Cancel the task "ServerTasks-112747"
