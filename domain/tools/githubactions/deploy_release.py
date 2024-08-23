@@ -72,23 +72,9 @@ def deploy_release_confirm_callback_wrapper(github_user, url, api_key, log_query
     return deploy_release_confirm_callback
 
 
-def deploy_release_wrapper(url, api_key, github_user, original_query, connection_string, log_query):
-    def deploy_release(space_name=None, project_name=None, release_version=None, environment_name=None,
-                       tenant_name=None, **kwargs):
-        """
-        Deploy a release in Octopus Deploy.
-
-        Args:
-        space_name: The name of the space
-        project_name: The name of the project
-        release_version: The release version
-        environment_name: The name of the environment to deploy to.
-        tenant_name: The (optional) name of the tenant to deploy to.
-        """
-        for key, value in kwargs.items():
-            if log_query:
-                log_query(f"Unexpected Key: {key}", "Value: {value}")
-
+def deploy_release_callback(url, api_key, github_user, connection_string, log_query):
+    def deploy_release(original_query, space_name=None, project_name=None, release_version=None, environment_name=None,
+                       tenant_name=None):
         debug_text = get_params_message(github_user, True,
                                         deploy_release.__name__,
                                         space_name=space_name,

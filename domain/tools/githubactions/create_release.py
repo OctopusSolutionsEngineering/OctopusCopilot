@@ -83,24 +83,9 @@ def create_release_confirm_callback_wrapper(github_user, url, api_key, log_query
     return create_release_confirm_callback
 
 
-def create_release_wrapper(url, api_key, github_user, original_query, connection_string, log_query):
-    def create_release(space_name=None, project_name=None, git_ref=None, release_version=None, channel_name=None,
-                       environment_name=None, tenant_name=None, **kwargs):
-        """
-        Create a release in Octopus Deploy.
-
-        Args:
-        space_name: The name of the space
-        project_name: The name of the project
-        git_ref: The git reference for the release if the project is version-controlled
-        release_version: The (optional) release version
-        channel_name: The name of the channel
-        environment_name: The (optional) name of the environment to deploy to.
-        tenant_name: The (optional) name of the tenant to deploy to.
-        """
-        for key, value in kwargs.items():
-            if log_query:
-                log_query(f"Unexpected Key: {key}", "Value: {value}")
+def create_release_callback(url, api_key, github_user, connection_string, log_query):
+    def create_release(original_query, space_name=None, project_name=None, git_ref=None, release_version=None,
+                       channel_name=None, environment_name=None, tenant_name=None):
 
         debug_text = get_params_message(github_user, True,
                                         create_release.__name__,

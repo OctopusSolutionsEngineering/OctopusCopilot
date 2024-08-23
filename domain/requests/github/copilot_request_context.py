@@ -4,22 +4,22 @@ import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
 from domain.config.database import get_functions_connection_string
-from domain.config.users import get_admin_users
 from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
-from domain.security.security import is_admin_user
 from domain.tools.githubactions.approve_manual_intervention import approve_manual_intervention_callback, \
     approve_manual_intervention_confirm_callback_wrapper
 from domain.tools.githubactions.cancel_deployment import cancel_deployment_callback
 from domain.tools.githubactions.cancel_runbook_run import cancel_runbook_run_callback
 from domain.tools.githubactions.cancel_task import cancel_task_confirm_callback_wrapper, cancel_task_callback
-from domain.tools.githubactions.create_release import create_release_wrapper, create_release_confirm_callback_wrapper
+from domain.tools.githubactions.create_release import create_release_confirm_callback_wrapper, create_release_callback
+
 from domain.tools.githubactions.dashboard import get_dashboard_callback
 from domain.tools.githubactions.default_values import default_value_callbacks
-from domain.tools.githubactions.deploy_release import deploy_release_wrapper, deploy_release_confirm_callback_wrapper
+from domain.tools.githubactions.deploy_release import deploy_release_confirm_callback_wrapper, deploy_release_callback
+
 from domain.tools.githubactions.deployment_logs import logs_callback
 from domain.tools.githubactions.general_query import general_query_callback
 from domain.tools.githubactions.github_job_summary import get_job_summary_callback
@@ -32,7 +32,7 @@ from domain.tools.githubactions.reject_manual_intervention import reject_manual_
     reject_manual_intervention_callback
 from domain.tools.githubactions.releases import releases_query_callback, releases_query_messages
 from domain.tools.githubactions.resource_specific_callback import resource_specific_callback
-from domain.tools.githubactions.run_runbook import run_runbook_wrapper, run_runbook_confirm_callback_wrapper
+from domain.tools.githubactions.run_runbook import run_runbook_confirm_callback_wrapper, run_runbook_callback
 from domain.tools.githubactions.runbook_logs import get_runbook_logs_wrapper
 from domain.tools.githubactions.runbooks_dashboard import get_runbook_dashboard_callback
 from domain.tools.githubactions.task_summary import get_task_summary_callback
@@ -42,7 +42,9 @@ from domain.tools.wrapper.cancel_deployment import cancel_deployment_wrapper
 from domain.tools.wrapper.cancel_runbook_run import cancel_runbook_run_wrapper
 from domain.tools.wrapper.cancel_task import cancel_task_wrapper
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
+from domain.tools.wrapper.create_release import create_release_wrapper
 from domain.tools.wrapper.dashboard_wrapper import show_space_dashboard_wrapper
+from domain.tools.wrapper.deploy_release import deploy_release_wrapper
 from domain.tools.wrapper.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
 from domain.tools.wrapper.github_job_summary_wrapper import show_github_job_summary_wrapper
@@ -54,6 +56,7 @@ from domain.tools.wrapper.project_variables import answer_project_variables_wrap
     answer_project_variables_usage_wrapper
 from domain.tools.wrapper.reject_manual_intervention import reject_manual_intervention_wrapper
 from domain.tools.wrapper.releases_and_deployments import answer_releases_and_deployments_wrapper
+from domain.tools.wrapper.run_runbook import run_runbook_wrapper
 from domain.tools.wrapper.runbook_logs import answer_runbook_run_logs_wrapper
 from domain.tools.wrapper.runbooks_dashboard_wrapper import show_runbook_dashboard_wrapper
 from domain.tools.wrapper.step_features import answer_step_features_wrapper
@@ -279,30 +282,32 @@ def build_form_tools(query, req: func.HttpRequest):
         FunctionDefinition(get_default_value),
         FunctionDefinition(remove_default_value),
         *help_functions,
-        FunctionDefinition(run_runbook_wrapper(
-            url,
-            api_key,
-            get_github_user_from_form(req),
-            query,
-            get_functions_connection_string(),
-            log_query),
-            callback=run_runbook_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query)),
-        FunctionDefinition(create_release_wrapper(
-            url,
-            api_key,
-            get_github_user_from_form(req),
-            query,
-            get_functions_connection_string(),
-            log_query),
-            callback=create_release_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query)),
-        FunctionDefinition(deploy_release_wrapper(
-            url,
-            api_key,
-            get_github_user_from_form(req),
-            query,
-            get_functions_connection_string(),
-            log_query),
-            callback=deploy_release_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key, log_query)),
+        FunctionDefinition(run_runbook_wrapper(query,
+                                               callback=run_runbook_callback(url, api_key,
+                                                                             get_github_user_from_form(req),
+                                                                             get_functions_connection_string(),
+                                                                             log_query),
+                                               logging=log_query),
+                           callback=run_runbook_confirm_callback_wrapper(get_github_user_from_form(req), url, api_key,
+                                                                         log_query)),
+        FunctionDefinition(create_release_wrapper(query,
+                                                  callback=create_release_callback(url, api_key,
+                                                                                   get_github_user_from_form(req),
+                                                                                   get_functions_connection_string(),
+                                                                                   log_query),
+                                                  logging=log_query),
+                           callback=create_release_confirm_callback_wrapper(get_github_user_from_form(req), url,
+                                                                            api_key,
+                                                                            log_query)),
+        FunctionDefinition(deploy_release_wrapper(query,
+                                                  callback=deploy_release_callback(url, api_key,
+                                                                                   get_github_user_from_form(req),
+                                                                                   get_functions_connection_string(),
+                                                                                   log_query),
+                                                  logging=log_query),
+                           callback=deploy_release_confirm_callback_wrapper(get_github_user_from_form(req), url,
+                                                                            api_key,
+                                                                            log_query)),
         *approval_interruption_functions,
         *reject_interruption_functions,
         FunctionDefinition(cancel_task_wrapper(query,
