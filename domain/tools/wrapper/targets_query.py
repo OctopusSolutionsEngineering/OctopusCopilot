@@ -8,7 +8,7 @@ def answer_machines_wrapper(original_query, callback, logging=None):
                         workerpools=None, machinepolicies=None, tagsets=None,
                         steps=None, **kwargs):
         """Answers a general query about machines, targets, agents, or machine policies in an Octopus space.
-           You will be penalized for selecting this function for a query about listing the channels for an Octopus project.
+           This does not provide details about channels.
 
 Args:
 space: Space name
