@@ -902,11 +902,48 @@ class CopilotChatTest(unittest.TestCase):
         space_name = "Simple"
         project_name = "Deploy Web App Container"
         environment_name = "Development"
-        create_and_deploy_release(space_name=space_name, project_name=project_name,
-                                  environment_name=environment_name,
+        create_and_deploy_release(space_name=space_name, project_name=project_name, environment_name=environment_name,
                                   release_version=version)
 
         prompt = f"Cancel the latest deployment for the project \"{project_name}\" to the environment \"{environment_name}\" in the space \"{space_name}\"."
+        response = copilot_handler_internal(build_request(prompt))
+        response_body_decoded = response.get_body().decode('utf8')
+
+        confirmation_id = get_confirmation_id(response_body_decoded)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {"messages": [{
+            "role": "user",
+            "content": "",
+            "copilot_references": None,
+            "copilot_confirmations": [
+                {
+                    "state": "accepted",
+                    "confirmation": {
+                        "id": confirmation_id
+                    }
+                }
+            ]
+        }]}
+
+        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
+        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
+
+        self.assertTrue(f"{project_name}" and "⛔ Task canceled" in response_text,
+                        "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_cancel_tenanted_deployment(self):
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        space_name = "Simple"
+        project_name = "Deploy AWS Lambda"
+        environment_name = "Development"
+        tenant_name = "Marketing"
+        create_and_deploy_release(space_name=space_name, project_name=project_name, environment_name=environment_name,
+                                  tenant_name=tenant_name, release_version=version)
+
+        prompt = (f"Cancel the latest deployment for the project \"{project_name}\" to the environment "
+                  f"\"{environment_name}\" for the tenant \"{tenant_name}\" in the space \"{space_name}\".")
         response = copilot_handler_internal(build_request(prompt))
         response_body_decoded = response.get_body().decode('utf8')
 
