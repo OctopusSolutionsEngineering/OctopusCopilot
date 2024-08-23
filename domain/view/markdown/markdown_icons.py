@@ -84,4 +84,7 @@ def get_activity_log_state_icon(state):
     elif state == "Queued":
         return "🟣"
 
+    elif state == "Pending":
+        return "⌛"
+
     return "⚪"
