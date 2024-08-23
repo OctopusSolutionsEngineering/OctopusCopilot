@@ -513,7 +513,7 @@ class OctopusAPIRequests(unittest.TestCase):
         project = get_project(space_id, "Deploy Web App Container", Octopus_Api_Key, Octopus_Url)
 
         # Check both releases are returned.
-        releases = get_releases_by_version(space_id, project['Id'],"1.", Octopus_Api_Key, Octopus_Url)
+        releases = get_releases_by_version(space_id, project['Id'], "1.", Octopus_Api_Key, Octopus_Url)
         self.assertEqual(2, len(releases))
         # Check no matches returned
         non_matching_releases = get_releases_by_version(space_id, project['Id'], "0.0.12", Octopus_Api_Key, Octopus_Url)
