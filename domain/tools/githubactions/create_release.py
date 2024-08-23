@@ -6,7 +6,8 @@ from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
 from infrastructure.octopus import get_project, create_release_fuzzy, get_default_channel, get_channel_by_name, \
-    get_release_template_and_default_branch, get_environment, get_lifecycle, deploy_release_fuzzy
+    get_release_template_and_default_branch, get_environment, get_lifecycle, deploy_release_fuzzy, \
+    get_releases_by_version
 
 
 def create_release_confirm_callback_wrapper(github_user, url, api_key, log_query):
@@ -120,7 +121,14 @@ def create_release_callback(url, api_key, github_user, connection_string, log_qu
             space_id, project, channel['Id'], git_ref, api_key,
             url)
 
-        if not release_version:
+        if release_version:
+            # Figure out if it exists
+            existing_releases = get_releases_by_version(space_id, project['Id'], release_version, api_key, url)
+            if existing_releases is None:
+                release_version = release_template['NextVersionIncrement']
+            else:
+                return CopilotResponse(f"Release version \"{release_version}\" already exists.")
+        else:
             release_version = release_template['NextVersionIncrement']
 
         if project['IsVersionControlled']:

@@ -637,6 +637,17 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue(f"Release {version}" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_create_release_handles_existing_version(self):
+        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        # Create the release via the api
+        create_release(space_name="Simple", release_version=version)
+        # Then create it via a prompt
+        prompt = f"Create release in the \"Deploy Web App Container\" project with version \"{version}\" and with channel \"Default\""
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        self.assertTrue(f"Release version \"{version}\" already exists." in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_create_release_with_deployment_environment(self):
         project_name = "Deploy Web App Container"
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
