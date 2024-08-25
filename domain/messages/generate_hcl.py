@@ -7,10 +7,15 @@ from infrastructure.github import get_repo_contents
 
 def generate_hcl_messages(github_token, logging=None):
     # You can get the sample HCL live from the OctopusTerraformExport repository
-    # return get_live_messages(github_token, logging)
+    # messages = get_live_messages(github_token, logging)
 
     # These are the hard coded messages to remove the need to download the sample HCL
-    return get_hardcoded_hcl_examples()
+    messages = get_hardcoded_hcl_examples()
+
+    messages.append(("user:", "Question: {input}"))
+    messages.append(("user:", "Answer:"))
+
+    return messages
 
 
 def get_live_messages(github_token, logging):
