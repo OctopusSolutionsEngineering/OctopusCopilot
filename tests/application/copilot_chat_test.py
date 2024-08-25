@@ -903,7 +903,7 @@ class CopilotChatTest(unittest.TestCase):
                                                     environment_name=environment_name,
                                                     release_version=version)
         cancel_task(deploy_response['SpaceId'], deploy_response['TaskId'])
-        time.sleep(5)
+        time.sleep(10)
         prompt = f"Cancel the task \"{deploy_response['TaskId']}\""
 
         response = copilot_handler_internal(build_request(prompt))
