@@ -5,7 +5,7 @@ from infrastructure.github import get_repo_contents
 
 
 def generate_terraform_wrapper(query, callback, github_token, logging=None):
-    def generate_terraform(**kwargs):
+    def generate_terraform():
         """Generates the Terraform configuration that matches the query. Use this function when
         the query is asking to generate Terraform configuration, Terraform modules, or sample HCL.
         """
@@ -22,10 +22,7 @@ def generate_terraform_wrapper(query, callback, github_token, logging=None):
         tests = asyncio.run(get_repo_contents("OctopusSolutionsEngineering", "OctopusTerraformExport", "test/terraform",
                                               github_token))
 
-        contents = [get_file_content(test["name"], github_token, logging) for test in tests]
-        file_contents = [contents for contents in asyncio.run(asyncio.gather(*contents)) if
-                         contents and not isinstance(contents, Exception)]
-        messages += file_contents
+        messages += asyncio.run(get_all_file_content(tests, github_token, logging))
 
         messages.append(('user', "Question: {input}"))
         messages.append(('user', "Answer:"))
@@ -33,6 +30,12 @@ def generate_terraform_wrapper(query, callback, github_token, logging=None):
         return callback(query, messages)
 
     return generate_terraform
+
+
+async def get_all_file_content(tests, github_token, logging=None):
+    contents_results = await asyncio.gather(
+        *[get_file_content(test["name"], github_token, logging) for test in tests])
+    return [content for content in contents_results if content and not isinstance(content, Exception)]
 
 
 async def get_file_content(name, github_token, logging=None):
