@@ -132,6 +132,19 @@ class CopilotChatTest(unittest.TestCase):
         health_internal()
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_all_defaults(self):
+        prompt = "Get all default values."
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        self.assertTrue("Simple" in response_text, "Response was " + response_text)
+        self.assertTrue("Deploy Web App Container" in response_text, "Response was " + response_text)
+        self.assertTrue("Development" in response_text, "Response was " + response_text)
+        self.assertTrue("OctopusSolutionsEngineering" in response_text, "Response was " + response_text)
+        self.assertTrue("OctopusCopilot" in response_text, "Response was " + response_text)
+        self.assertTrue("build.yaml" in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_default_space(self):
         prompt = "Get default space."
         response = copilot_handler_internal(build_request(prompt))
@@ -645,7 +658,8 @@ class CopilotChatTest(unittest.TestCase):
         prompt = f"Create release in the \"Deploy Web App Container\" project with version \"{version}\" and with channel \"Default\""
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
-        self.assertTrue(f"Release version \"{version}\" already exists." in response_text, "Response was " + response_text)
+        self.assertTrue(f"Release version \"{version}\" already exists." in response_text,
+                        "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_create_release_with_deployment_environment(self):

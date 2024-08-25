@@ -1,6 +1,6 @@
 from domain.config.database import get_functions_connection_string
 from domain.response.copilot_response import CopilotResponse
-from domain.validation.default_value_validation import validate_default_value_name
+from domain.validation.default_value_validation import validate_default_value_name, get_all_default_value_names
 from infrastructure.users import save_default_values, delete_default_values, get_default_values
 
 
@@ -37,7 +37,7 @@ def default_value_callbacks(github_user):
         return CopilotResponse(f"Deleted default values")
 
     def get_default_value(default_name):
-        """Save a default value for a space, query_project, environment, or channel
+        """Return a default value for a space, query_project, environment, or channel
 
             Args:
                 default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
@@ -49,4 +49,13 @@ def default_value_callbacks(github_user):
         value = get_default_values(github_user, name, get_functions_connection_string())
         return CopilotResponse(f"The default value for \"{name}\" is \"{value}\"")
 
-    return set_default_value, remove_default_value, get_default_value
+    def get_all_default_values():
+        """
+            Return all the default values
+        """
+        responses = [
+            f"The default value for \"{name}\" is \"{get_default_values(github_user, name, get_functions_connection_string())}\""
+            for name in get_all_default_value_names()]
+        return CopilotResponse("\n\n".join(responses))
+
+    return set_default_value, remove_default_value, get_default_value, get_all_default_values

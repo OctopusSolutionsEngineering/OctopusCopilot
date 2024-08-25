@@ -15,11 +15,9 @@ from domain.tools.githubactions.cancel_deployment import cancel_deployment_callb
 from domain.tools.githubactions.cancel_runbook_run import cancel_runbook_run_callback
 from domain.tools.githubactions.cancel_task import cancel_task_confirm_callback_wrapper, cancel_task_callback
 from domain.tools.githubactions.create_release import create_release_confirm_callback_wrapper, create_release_callback
-
 from domain.tools.githubactions.dashboard import get_dashboard_callback
 from domain.tools.githubactions.default_values import default_value_callbacks
 from domain.tools.githubactions.deploy_release import deploy_release_confirm_callback_wrapper, deploy_release_callback
-
 from domain.tools.githubactions.deployment_logs import logs_callback
 from domain.tools.githubactions.general_query import general_query_callback
 from domain.tools.githubactions.github_job_summary import get_job_summary_callback
@@ -182,7 +180,8 @@ def build_form_tools(query, req: func.HttpRequest):
                                                        log_query)]
 
     # Functions related to the default values
-    set_default_value, remove_default_value, get_default_value = default_value_callbacks(get_github_user_from_form(req))
+    set_default_value, remove_default_value, get_default_value, get_all_default_values = default_value_callbacks(
+        get_github_user_from_form(req))
 
     # The order of the tools can make a difference. The dashboard tools are supplied first, as this
     # appears to give them a higher precedence.
@@ -280,6 +279,7 @@ def build_form_tools(query, req: func.HttpRequest):
         FunctionDefinition(logout(get_github_user_from_form(req), get_functions_connection_string())),
         FunctionDefinition(set_default_value),
         FunctionDefinition(get_default_value),
+        FunctionDefinition(get_all_default_values),
         FunctionDefinition(remove_default_value),
         *help_functions,
         FunctionDefinition(run_runbook_wrapper(query,
