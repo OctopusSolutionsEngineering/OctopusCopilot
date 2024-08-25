@@ -1,6 +1,7 @@
 import asyncio
 
 from domain.b64.b64_encoder import decode_string_b64
+from domain.context.octopus_context import max_chars_128
 from infrastructure.github import get_repo_contents
 
 
@@ -22,7 +23,15 @@ def generate_terraform_wrapper(query, callback, github_token, logging=None):
         tests = asyncio.run(get_repo_contents("OctopusSolutionsEngineering", "OctopusTerraformExport", "test/terraform",
                                               github_token))
 
-        messages += asyncio.run(get_all_file_content(tests, github_token, logging))
+        sample_hcl = asyncio.run(get_all_file_content(tests, github_token, logging))
+
+        # Don't go over the 128k context length limit
+        chars = 0
+        for hcl in sample_hcl:
+            chars += len(hcl[1])
+            if chars > max_chars_128:
+                break
+            messages.append(hcl)
 
         messages.append(('user', "Question: {input}"))
         messages.append(('user', "Answer:"))
