@@ -902,6 +902,7 @@ class CopilotChatTest(unittest.TestCase):
         deploy_response = create_and_deploy_release(space_name=space_name, project_name=project_name,
                                                     environment_name=environment_name,
                                                     release_version=version)
+        time.sleep(5)
         cancel_task(deploy_response['SpaceId'], deploy_response['TaskId'])
         wait_for_task(deploy_response['TaskId'], space_name=space_name)
         prompt = f"Cancel the task \"{deploy_response['TaskId']}\""
