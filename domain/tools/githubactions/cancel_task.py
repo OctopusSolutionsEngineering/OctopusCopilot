@@ -1,6 +1,6 @@
+import asyncio
 import json
 import uuid
-import asyncio
 
 from domain.exceptions.none_on_exception import none_on_exception
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects
@@ -80,7 +80,7 @@ def cancel_task_callback(url, api_key, github_user, connection_string, log_query
         else:
             return CopilotResponse(f"⚠️ Unable to determine task to cancel from: \"{task_id}\".")
 
-        if task['State'] == 'Canceled':
+        if task['State'] == 'Canceled' or task['State'] == 'Cancelling':
             return CopilotResponse("⚠️ Task already cancelled.")
 
         callback_id = str(uuid.uuid4())
