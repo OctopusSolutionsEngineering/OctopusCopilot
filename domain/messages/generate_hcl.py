@@ -17,7 +17,7 @@ def generate_hcl_messages(github_token, logging=None):
     # These are the hard coded messages to remove the need to download the sample HCL
     messages += get_hardcoded_hcl_examples()
 
-    messages += ([("user:", "Question: {input}"), ("user:", "Answer:")])
+    messages += ([("user", "Question: {input}"), ("user", "Answer:")])
 
     return messages
 
