@@ -131,6 +131,7 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 * @octopus-ai-app Set the default repository to "my_repository"
                 * @octopus-ai-app Set the default workflow to "build.yaml"
                 * @octopus-ai-app Remove default values
+                * @octopus-ai-app Show all the default values
                 * @octopus-ai-app Show the default space
                 * @octopus-ai-app Show the default project
                 * @octopus-ai-app Show the default environment
