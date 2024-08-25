@@ -174,8 +174,9 @@ def wait_for_task(task_id, octopus_server_uri="http://localhost:8080", octopus_a
         response.raise_for_status()
         task = response.json()
 
+        print(f"Task is {task['State']}")
+
         if task["State"] == "Executing" or task["State"] == "Cancelling" or task["State"] == "Queued":
-            print("Task is still running")
             time.sleep(5)
         else:
             break
