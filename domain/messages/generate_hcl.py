@@ -6,14 +6,18 @@ from infrastructure.github import get_repo_contents
 
 
 def generate_hcl_messages(github_token, logging=None):
+    messages = [
+        ('system', 'You are methodical agent who understands Terraform modules defining Octopus Deploy resources.'),
+        ('system',
+         'The supplied HCL configuration files are examples of valid Terraform configuration files for the Octopus Terraform provider.')]
+
     # You can get the sample HCL live from the OctopusTerraformExport repository
-    # messages = get_live_messages(github_token, logging)
+    # messages += get_live_messages(github_token, logging)
 
     # These are the hard coded messages to remove the need to download the sample HCL
-    messages = get_hardcoded_hcl_examples()
+    messages += get_hardcoded_hcl_examples()
 
-    messages.append(("user:", "Question: {input}"))
-    messages.append(("user:", "Answer:"))
+    messages += ([("user:", "Question: {input}"), ("user:", "Answer:")])
 
     return messages
 
@@ -22,10 +26,7 @@ def get_live_messages(github_token, logging):
     """
     Generate sample HCL messages from the OctopusTerraformExport repository
     """
-    messages = [
-        ('system', 'You are methodical agent who understands Terraform modules defining Octopus Deploy resources.'),
-        ('system',
-         'The supplied HCL configuration files are examples of valid Terraform configuration files for the Octopus Terraform provider.')]
+    messages = []
 
     tests = asyncio.run(get_repo_contents("OctopusSolutionsEngineering", "OctopusTerraformExport", "test/terraform",
                                           github_token))
@@ -47,10 +48,7 @@ def get_hardcoded_hcl_examples():
     """
     Get the hard coded HCL examples which avoids the need to download the sample HCL from the OctopusTerraformExport
     """
-    return [('system', 'You are methodical agent who understands Terraform modules defining Octopus Deploy resources.'),
-            ('system',
-             'The supplied HCL configuration files are examples of valid Terraform configuration files for the Octopus Terraform provider.'),
-            ('system',
+    return [('system',
              'HCL: ###\nvariable "octopus_server" {{\n  type        = string\n  nullable    = false\n  sensitive   = false\n  description = "The URL of the Octopus server e.g. https://myinstance.octopus.app."\n}}\nvariable "octopus_apikey" {{\n  type        = string\n  nullable    = false\n  sensitive   = true\n  description = "The API key used to access the Octopus server. See https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key for details on creating an API key."\n}}\nvariable "octopus_space_id" {{\n  type        = string\n  nullable    = false\n  sensitive   = false\n  description = "The space ID to populate"\n}}\n\n\noutput "octopus_space_id" {{\n  value = var.octopus_space_id\n}}\n\n###'),
             ('system',
              'HCL: ###\nterraform {{\n  required_providers {{\n    octopusdeploy = {{ source = "OctopusDeployLabs/octopusdeploy", version = "0.22.0" }}\n  }}\n}}\n\n\nresource "octopusdeploy_project_group" "project_group_test" {{\n  name        = "Test"\n  description = "Test Description"\n}}\n\n\nprovider "octopusdeploy" {{\n  address  = "${{var.octopus_server}}"\n  api_key  = "${{var.octopus_apikey}}"\n  space_id = "${{var.octopus_space_id}}"\n}}\n\n\nvariable "octopus_server" {{\n  type        = string\n  nullable    = false\n  sensitive   = false\n  description = "The URL of the Octopus server e.g. https://myinstance.octopus.app."\n}}\nvariable "octopus_apikey" {{\n  type        = string\n  nullable    = false\n  sensitive   = true\n  description = "The API key used to access the Octopus server. See https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key for details on creating an API key."\n}}\nvariable "octopus_space_id" {{\n  type        = string\n  nullable    = false\n  sensitive   = false\n  description = "The space ID to populate"\n}}\n\n\noutput "octopus_space_id" {{\n  value = var.octopus_space_id\n}}\n\n###'),
