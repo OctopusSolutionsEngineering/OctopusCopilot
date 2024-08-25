@@ -140,7 +140,7 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 * @octopus-ai-app Show the default owner
                 * @octopus-ai-app Show the default repository
                 * @octopus-ai-app Show the default workflow
-                
+
                 Generate sample Terraform modules for Octopus Deploy with prompts like these:
                 * @octopus-ai-app create a sample terraform module with: three environments called "Development", "Test", and "Production"; a docker feed pointing to dockerhub; three tenants called "US", "Europe", and "Asia"; a project group called "Web App"; a project called "Audits" with a single powershell script step that echoes "Hello World"; and all tenants linked to the project and all environments
 
