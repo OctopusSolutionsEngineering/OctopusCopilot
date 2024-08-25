@@ -475,6 +475,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
 
 def handle_value_error(e):
+    handle_error(e)
     return func.HttpResponse(convert_to_sse_response(NO_FUNCTION_RESPONSE), headers=get_sse_headers())
 
 

@@ -260,3 +260,24 @@ async def get_run_jobs_async(owner, repo, run_id, github_token):
                     body = await response.text()
                     raise GitHubRequestFailed(f"Request failed with " + body)
                 return await response.json()
+
+
+async def get_repo_contents(owner, repo, directory, github_token):
+    """
+    Async function to get open issues run
+    https://docs.github.com/en/rest/actions/workflow-jobs?apiVersion=2022-11-28#list-jobs-for-a-workflow-run
+    """
+    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_repo_contents).')
+    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_repo_contents).')
+    ensure_string_not_empty(directory, 'directory must be a non-empty string (get_repo_contents).')
+    ensure_string_not_empty(github_token, 'github_token must be a non-empty string (get_repo_contents).')
+
+    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/contents/{directory}")
+
+    async with sem:
+        async with aiohttp.ClientSession(headers=get_github_auth_headers(github_token)) as session:
+            async with session.get(str(api)) as response:
+                if response.status != 200:
+                    body = await response.text()
+                    raise GitHubRequestFailed(f"Request failed with " + body)
+                return await response.json()

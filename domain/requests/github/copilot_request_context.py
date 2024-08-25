@@ -20,6 +20,7 @@ from domain.tools.githubactions.default_values import default_value_callbacks
 from domain.tools.githubactions.deploy_release import deploy_release_confirm_callback_wrapper, deploy_release_callback
 from domain.tools.githubactions.deployment_logs import logs_callback
 from domain.tools.githubactions.general_query import general_query_callback
+from domain.tools.githubactions.generate_terraform import generate_terraform_callback_wrapper
 from domain.tools.githubactions.github_job_summary import get_job_summary_callback
 from domain.tools.githubactions.github_logs import get_github_logs_callback
 from domain.tools.githubactions.how_to import how_to_callback
@@ -45,6 +46,7 @@ from domain.tools.wrapper.dashboard_wrapper import show_space_dashboard_wrapper
 from domain.tools.wrapper.deploy_release import deploy_release_wrapper
 from domain.tools.wrapper.function_definition import FunctionDefinition, FunctionDefinitions
 from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.wrapper.generate_terraform import generate_terraform_wrapper
 from domain.tools.wrapper.github_job_summary_wrapper import show_github_job_summary_wrapper
 from domain.tools.wrapper.github_logs import answer_github_logs_wrapper
 from domain.tools.wrapper.how_to import how_to_wrapper
@@ -345,6 +347,8 @@ def build_form_tools(query, req: func.HttpRequest):
                                        get_github_logs_callback(get_github_user_from_form(req),
                                                                 get_github_token(req)),
                                        log_query)),
+        FunctionDefinition(
+            generate_terraform_wrapper(query, generate_terraform_callback_wrapper(), get_github_token(req), log_query))
     ],
         fallback=FunctionDefinitions(docs_functions),
         invalid=FunctionDefinition(
