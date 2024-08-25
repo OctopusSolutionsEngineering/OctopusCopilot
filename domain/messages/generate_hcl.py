@@ -14,9 +14,9 @@ def generate_hcl_messages(github_token, logging=None):
 
 
 def get_live_messages(github_token, logging):
-    # You can regenerate the messages by running the following code, which will download the sample
-    # HCL from the OctopusTerraformExport repository and generate the messages.
-    #
+    """
+    Generate sample HCL messages from the OctopusTerraformExport repository
+    """
     messages = [
         ('system', 'You are methodical agent who understands Terraform modules defining Octopus Deploy resources.'),
         ('system',
