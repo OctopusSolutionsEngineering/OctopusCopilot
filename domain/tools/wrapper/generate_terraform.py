@@ -15,6 +15,6 @@ def generate_terraform_wrapper(query, callback, github_token, logging=None):
         if logging:
             logging("Enter:", "generate_terraform_wrapper")
 
-        return callback(query, generate_hcl_messages())
+        return callback(query, generate_hcl_messages(github_token, logging))
 
     return generate_terraform
