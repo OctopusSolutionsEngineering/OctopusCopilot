@@ -27,10 +27,12 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
+        limited_keywords = keywords[:max_keywords]
+
         issues = asyncio.run(
             asyncio.gather(
-                get_tickets(keywords, zendesk_user, zendesk_token, max_keywords),
-                get_issues(keywords, github_token)))
+                get_tickets(limited_keywords, zendesk_user, zendesk_token, max_keywords),
+                get_issues(limited_keywords, github_token)))
 
         limited_issues = [issues[0][:max_issues], issues[1]['items'][:max_issues]]
 
@@ -64,13 +66,14 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
         context = {"input": query}
         chat_response = [llm_message_query(messages, context)]
 
-        chat_response.append("🔍: " + ", ".join(keywords))
+        chat_response.append("🔍: " + ", ".join(limited_keywords))
 
         for github_issue in limited_issues[1]:
-            chat_response.append(f"🐛: {github_issue['html_url']}")
+            chat_response.append(f"🐛: [{github_issue['title']}]({github_issue['html_url']})")
 
         for zendesk_issue in limited_issues[0]:
-            chat_response.append(f"📧: https://octopus.zendesk.com/agent/tickets/{zendesk_issue}")
+            chat_response.append(
+                f"📧: [{zendesk_issue['subject']}](https://octopus.zendesk.com/agent/tickets/{zendesk_issue['id']})")
 
         return callback(query, keywords, "\n\n".join(chat_response))
 
@@ -97,29 +100,29 @@ async def combine_issue_comments(issue_number, github_token):
     return combined_comments
 
 
-async def get_tickets(keywords, zendesk_user, zendesk_token, max_keywords=5):
+async def get_tickets(keywords, zendesk_user, zendesk_token):
     ticket_ids = {}
 
     # Zen desk only has AND logic for keywords. We really want OR logic.
     # So search for each keyword individually, tracking how many times a ticket was returned
     # by the search. We prioritise tickets with the most results.
     keyword_results = await asyncio.gather(
-        *[get_zen_tickets([keyword], zendesk_user, zendesk_token) for keyword in keywords[:max_keywords]])
+        *[get_zen_tickets([keyword], zendesk_user, zendesk_token) for keyword in keywords])
 
     for keyword_result in keyword_results:
         for ticket in keyword_result['results']:
             if not ticket_ids.get(ticket['id']):
-                ticket_ids[ticket['id']] = 1
+                ticket_ids[ticket['id']] = {'count': 1, 'ticket': ticket}
             else:
-                ticket_ids[ticket['id']] += 1
+                ticket_ids[ticket['id']]['count'] += 1
 
-    sorted_by_second = sorted(ticket_ids.items(), key=lambda tup: tup[1], reverse=True)
+    sorted_by_second = sorted(ticket_ids.items(), key=lambda tup: tup[1]['count'], reverse=True)
 
-    return list(map(lambda x: x[0], sorted_by_second))
+    return list(map(lambda x: x[1]['ticket'], sorted_by_second))
 
 
 async def get_tickets_comments(tickets, zendesk_user, zendesk_token):
-    return [await combine_ticket_comments(str(ticket), zendesk_user, zendesk_token) for ticket in
+    return [await combine_ticket_comments(str(ticket['id']), zendesk_user, zendesk_token) for ticket in
             tickets]
 
 
