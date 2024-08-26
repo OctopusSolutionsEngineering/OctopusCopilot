@@ -31,7 +31,7 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
 
         issues = asyncio.run(
             asyncio.gather(
-                get_tickets(limited_keywords, zendesk_user, zendesk_token, max_keywords),
+                get_tickets(limited_keywords, zendesk_user, zendesk_token),
                 get_issues(limited_keywords, github_token)))
 
         limited_issues = [issues[0][:max_issues], issues[1]['items'][:max_issues]]
