@@ -103,6 +103,9 @@ jobs:
           PYTHONPATH=$(pwd) coverage run --omit="./domain/sanitizers/stringlifier/*" -m pytest --junitxml=results.xml
           coverage html --omit="./domain/sanitizers/stringlifier/*" --fail-under=85
         env:
+          # These are the details for zendesk
+          ZENDESK_EMAIL: ${{ secrets.ZENDESK_EMAIL }}
+          ZENDESK_TOKEN: ${{ secrets.ZENDESK_TOKEN }}
           # These are the connection details to Azure OpenAI
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_ENDPOINT: ${{ secrets.OPENAI_ENDPOINT }}
