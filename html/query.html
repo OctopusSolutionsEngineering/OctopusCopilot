@@ -50,7 +50,7 @@
     <div class="form-group row m-md-1">
         <label for="query" class="col-lg-2 offset-lg-2 col-form-label">Query</label>
         <div class="col-lg-6">
-            <input id="query" name="query" type="text" class="form-control" required>
+            <textarea id="query" name="query" rows="5" class="form-control" required></textarea>
             <small id="queryHelp" class="form-text text-muted">This is a plain text query. Ask something like "<a
                     id="sampleQuery" href="#">Show me the projects in the Default space</a>" or "<a
                     id="helpQuery" href="#">What do you do?</a>".</small>
@@ -85,6 +85,16 @@
 </form>
 </body>
 <script>
+
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    const queryValue = getQueryParam('query');
+    if (queryValue) {
+        document.getElementById('query').value = DOMPurify.sanitize(queryValue);
+    }
 
     var queryHistory = []
     const savedHistory = localStorage.getItem("queryHistory");
