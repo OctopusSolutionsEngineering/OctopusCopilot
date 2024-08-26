@@ -293,7 +293,9 @@ async def search_issues(owner, repo, keywords, github_token):
     ensure_not_falsy(keywords, 'keywords must be a list of strings (search_issues).')
     ensure_string_not_empty(github_token, 'github_token must be a non-empty string (search_issues).')
 
-    api = build_github_url(f"/search/issues", {"q": f"{' '.join(keywords)} repo:{repo} org:{owner}"})
+    quoted_keywords = map(lambda x: f'"{x}"', keywords)
+
+    api = build_github_url(f"/search/issues", {"q": f"{' OR '.join(quoted_keywords)} repo:{owner}/{repo} is:issue"})
 
     async with sem:
         async with aiohttp.ClientSession(headers=get_github_auth_headers(github_token)) as session:
