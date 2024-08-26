@@ -3,6 +3,7 @@ import os
 import urllib.parse
 
 import azure.functions as func
+
 from domain.config.database import get_functions_connection_string
 from domain.config.octopus import min_octopus_version
 from domain.context.github_docs import get_docs_context
@@ -33,7 +34,7 @@ from domain.tools.wrapper.project_variables import answer_project_variables_wrap
     answer_project_variables_usage_wrapper
 from domain.tools.wrapper.releases_and_deployments import answer_releases_and_deployments_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
-from domain.transformers.minify_hcl import minify_hcl
+from domain.transformers.minify_strings import minify_strings
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
@@ -315,7 +316,7 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
                 headers=get_sse_headers())
 
         def get_context():
-            return minify_hcl(req.get_body().decode("utf-8"))
+            return minify_strings(req.get_body().decode("utf-8"))
 
         # Define some tools that the LLM can call
         def general_query_callback(*args, **kwargs):
