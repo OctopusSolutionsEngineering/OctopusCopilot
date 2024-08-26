@@ -1031,7 +1031,7 @@ class CopilotChatTest(unittest.TestCase):
         tenant_name = "Marketing"
         create_and_deploy_release(space_name=space_name, project_name=project_name, environment_name=environment_name,
                                   tenant_name=tenant_name, release_version=version)
-
+        time.sleep(5)
         prompt = (f"Cancel the latest deployment for the project \"{project_name}\" to the environment "
                   f"\"{environment_name}\" for the tenant \"{tenant_name}\" in the space \"{space_name}\".")
         response = copilot_handler_internal(build_request(prompt))
