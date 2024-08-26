@@ -219,8 +219,8 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
-        # This response could be anything, but make sure the LLM isn't saying sorry for something.
-        self.assertTrue("sorry" not in response_text.casefold(), "Response was " + response_text)
+        # This response could be anything, but it should mention helm
+        self.assertTrue("helm" in response_text.casefold(), "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_sample_hcl(self):
