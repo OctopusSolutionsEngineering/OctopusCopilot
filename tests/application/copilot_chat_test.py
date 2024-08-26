@@ -198,8 +198,20 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
-        # This response could be anything, but make sure the LLM isn't saying sorry for something.
-        self.assertTrue("sorry" not in response_text.casefold(), "Response was " + response_text)
+        self.assertTrue('resource "octopusdeploy_environment"' in response_text.casefold(),
+                        "Response was " + response_text)
+        self.assertTrue('resource "octopusdeploy_docker_container_registry"' in response_text.casefold(),
+                        "Response was " + response_text)
+        self.assertTrue('resource "octopusdeploy_tenant"' in response_text.casefold(),
+                        "Response was " + response_text)
+        self.assertTrue('resource "octopusdeploy_project_group"' in response_text.casefold(),
+                        "Response was " + response_text)
+        self.assertTrue('resource "octopusdeploy_project"' in response_text.casefold(),
+                        "Response was " + response_text)
+        self.assertTrue('resource "octopusdeploy_deployment_process"' in response_text.casefold(),
+                        "Response was " + response_text)
+        self.assertTrue('resource "octopusdeploy_tenant_project"' in response_text.casefold(),
+                        "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_space_lookup(self):
