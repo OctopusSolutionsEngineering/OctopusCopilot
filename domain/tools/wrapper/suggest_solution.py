@@ -26,11 +26,20 @@ def suggest_solution_wrapper(query, callback, zendesk_user, zendesk_token, loggi
 
         ticket_context = asyncio.run(get_tickets(keywords, zendesk_user, zendesk_token))
 
+        # The answer that we are trying to get from the LLM isn't something that is expected to be passed directly to
+        # the customer. The answer will be used as a way to suggest possible solutions to the support engineers,
+        # who will then investigate the problem and potential solutions further.
         messages = [
-            ('system', 'You are helpful agent who can provide helpful solutions to questions about Octopus Deploy.'),
+            ('system', 'You are helpful agent who can provide solutions to questions about Octopus Deploy.'),
             ('system',
              'The supplied conversations related to the same topics as the question being asked.'),
-            *[('user', "Message: ###\n" + context.replace("{", "{{").replace("}", "}}") + "\n###") for context in
+            ('system',
+             'Include any potential solutions that were provided in the supplied conversations in the answer.'),
+            ('system',
+             'Include any troubleshooting steps that were provided in the supplied conversations in the answer.'),
+            ('system',
+             'You must provide as many potential solutions and troubleshooting steps in the answer as possible.'),
+            *[('user', "Conversation: ###\n" + context.replace("{", "{{").replace("}", "}}") + "\n###") for context in
               ticket_context],
             ('user', "Question: {input}"),
             ('user', "Answer:")]

@@ -220,6 +220,7 @@ class CopilotChatTest(unittest.TestCase):
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         # This response could be anything, but it should mention helm
+        print(response_text)
         self.assertTrue("helm" in response_text.casefold(), "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
