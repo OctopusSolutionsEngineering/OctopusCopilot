@@ -24,7 +24,7 @@ NO_FUNCTION_RESPONSE = ("Sorry, I did not understand that request. View the docu
 def llm_message_query(message_prompt, context, log_query=None):
     # We can use a specific deployment to answer a query, or fallback to the default
     deployment = os.environ.get("OPENAI_API_DEPLOYMENT_QUERY") or os.environ["OPENAI_API_DEPLOYMENT"]
-    version = os.environ.get("OPENAI_API_DEPLOYMENT_QUERY_VERSION") or "2024-05-13"
+    version = os.environ.get("OPENAI_API_DEPLOYMENT_QUERY_VERSION") or "2024-02-01"
 
     llm = AzureChatOpenAI(
         temperature=0,
