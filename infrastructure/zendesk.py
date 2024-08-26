@@ -26,7 +26,8 @@ async def get_zen_tickets(keywords, zen_user, zen_token):
     ensure_string_not_empty(zen_user, 'zen_user must be a non-empty string (get_zen_tickets).')
     ensure_string_not_empty(zen_token, 'zen_token must be a non-empty string (get_zen_tickets).')
 
-    api = f"https://octopus.zendesk.com/api/v2/search?query={quote_safe(" ".join(keywords))}&sort_by=RELEVANCE&sort_order=DESC"
+    keywords_list = quote_safe(" ".join(keywords))
+    api = f"https://octopus.zendesk.com/api/v2/search?query={keywords_list}&sort_by=RELEVANCE&sort_order=DESC"
 
     async with zendesk_sem:
         async with aiohttp.ClientSession(headers=get_zen_authorization_header(zen_user, zen_token)) as session:
