@@ -4,12 +4,14 @@ import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
 from domain.config.database import get_functions_connection_string
+from domain.config.users import get_admin_users
 from domain.config.zendesk import get_zendesk_user, get_zendesk_token
 from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
+from domain.security.security import is_admin_user
 from domain.tools.githubactions.approve_manual_intervention import approve_manual_intervention_callback, \
     approve_manual_intervention_confirm_callback_wrapper
 from domain.tools.githubactions.cancel_deployment import cancel_deployment_callback
@@ -355,7 +357,8 @@ def build_form_tools(query, req: func.HttpRequest):
         FunctionDefinition(
             suggest_solution_wrapper(query, suggest_solution_callback_wrapper(get_github_user_from_form(req)),
                                      get_zendesk_user(),
-                                     get_zendesk_token())
+                                     get_zendesk_token()),
+            is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users())
         )
     ],
         fallback=FunctionDefinitions(docs_functions),

@@ -1,6 +1,5 @@
 import asyncio
 
-from domain.sanitizers.sanitize_logs import anonymize_message, sanitize_message
 from domain.transformers.minify_strings import minify_strings
 from infrastructure.openai import llm_message_query
 from infrastructure.zendesk import get_zen_tickets, get_zen_comments
@@ -76,6 +75,11 @@ async def get_tickets(keywords, zendesk_user, zendesk_token, max_keywords=5, max
 
 async def get_comments(ticket_id, zendesk_user, zendesk_token):
     comments = await get_zen_comments(ticket_id, zendesk_user, zendesk_token)
-    return "\n".join(
-        [minify_strings(anonymize_message(sanitize_message(comment['body']))) for comment in comments['comments'] if
+    combined_comments = "\n".join(
+        [minify_strings(comment['body']) for comment in comments['comments'] if
          comment['public']])
+
+    # If we need to strip PII from the comments, we can do it here
+    # combined_comments = anonymize_message(sanitize_message(combined_comments))
+
+    return combined_comments
