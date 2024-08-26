@@ -118,6 +118,16 @@ step "deploy-with-cli" {
                       "name": "APPLICATION_OCTOTERRA_URL",
                       "value": "#{Application.Octoterra.Url}",
                       "slotSetting": false
+                   },
+                   {
+                      "name": "ZENDESK_EMAIL",
+                      "value": "#{ZenDesk.Api.Email}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "ZENDESK_TOKEN",
+                      "value": "#{ZenDesk.Api.Token}",
+                      "slotSetting": false
                    } 
                 ] 
                 EOL
