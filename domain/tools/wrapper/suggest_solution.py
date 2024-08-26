@@ -5,6 +5,9 @@ from infrastructure.github import search_issues, get_issue_comments
 from infrastructure.openai import llm_message_query
 from infrastructure.zendesk import get_zen_tickets, get_zen_comments
 
+max_issues = 10
+max_keywords = 5
+
 
 def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendesk_token, logging=None):
     def suggest_solution(keywords=None, **kwargs):
@@ -24,10 +27,17 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
+        issues = asyncio.run(
+            asyncio.gather(
+                get_tickets(keywords, zendesk_user, zendesk_token, max_keywords),
+                get_issues(keywords, github_token)))
+
+        limited_issues = [issues[0][:max_issues], issues[1]['items'][:max_issues]]
+
         external_context = asyncio.run(
             asyncio.gather(
-                get_tickets(keywords, zendesk_user, zendesk_token),
-                get_issues(keywords, github_token)))
+                get_tickets_comments(limited_issues[0], zendesk_user, zendesk_token),
+                get_issues_comments(limited_issues[1], github_token)))
 
         # The answer that we are trying to get from the LLM isn't something that is expected to be passed directly to
         # the customer. The answer will be used as a way to suggest possible solutions to the support engineers,
@@ -52,17 +62,28 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
             ('user', "Answer:")]
 
         context = {"input": query}
-        chat_response = llm_message_query(messages, context)
+        chat_response = [llm_message_query(messages, context)]
 
-        return callback(query, keywords, chat_response)
+        chat_response.append("🔍: " + ", ".join(keywords))
+
+        for github_issue in limited_issues[1]:
+            chat_response.append(f"🐛: {github_issue['html_url']}")
+
+        for zendesk_issue in limited_issues[0]:
+            chat_response.append(f"📧: https://octopus.zendesk.com/agent/tickets/{zendesk_issue}")
+
+        return callback(query, keywords, "\n\n".join(chat_response))
 
     return suggest_solution
 
 
-async def get_issues(keywords, github_token, max_keywords=5, max_issues=10):
-    issues = await search_issues("OctopusDeploy", "Issues", keywords, github_token)
+async def get_issues(keywords, github_token):
+    return await search_issues("OctopusDeploy", "Issues", keywords, github_token)
+
+
+async def get_issues_comments(issues, github_token):
     return [await combine_issue_comments(str(ticket['number']), github_token) for ticket in
-            issues['items'][:max_issues]]
+            issues]
 
 
 async def combine_issue_comments(issue_number, github_token):
@@ -76,7 +97,7 @@ async def combine_issue_comments(issue_number, github_token):
     return combined_comments
 
 
-async def get_tickets(keywords, zendesk_user, zendesk_token, max_keywords=5, max_tickets=10):
+async def get_tickets(keywords, zendesk_user, zendesk_token, max_keywords=5):
     ticket_ids = {}
 
     # Zen desk only has AND logic for keywords. We really want OR logic.
@@ -86,7 +107,7 @@ async def get_tickets(keywords, zendesk_user, zendesk_token, max_keywords=5, max
         *[get_zen_tickets([keyword], zendesk_user, zendesk_token) for keyword in keywords[:max_keywords]])
 
     for keyword_result in keyword_results:
-        for ticket in keyword_result['results'][:max_tickets]:
+        for ticket in keyword_result['results']:
             if not ticket_ids.get(ticket['id']):
                 ticket_ids[ticket['id']] = 1
             else:
@@ -94,8 +115,12 @@ async def get_tickets(keywords, zendesk_user, zendesk_token, max_keywords=5, max
 
     sorted_by_second = sorted(ticket_ids.items(), key=lambda tup: tup[1], reverse=True)
 
-    return [await combine_ticket_comments(str(ticket[0]), zendesk_user, zendesk_token) for ticket in
-            sorted_by_second[:max_tickets]]
+    return list(map(lambda x: x[0], sorted_by_second))
+
+
+async def get_tickets_comments(tickets, zendesk_user, zendesk_token):
+    return [await combine_ticket_comments(str(ticket), zendesk_user, zendesk_token) for ticket in
+            tickets]
 
 
 async def combine_ticket_comments(ticket_id, zendesk_user, zendesk_token):
