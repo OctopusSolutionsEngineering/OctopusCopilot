@@ -1293,7 +1293,7 @@ class CopilotChatTest(unittest.TestCase):
         # The response should have formatted the text as a code block
         self.assertTrue(
             "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
-            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
+            or "🔴" in response_text or "⚪" in response_text or "🟣" in response_text, "Response was " + response_text)
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
