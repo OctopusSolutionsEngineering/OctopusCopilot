@@ -358,7 +358,8 @@ def build_form_tools(query, req: func.HttpRequest):
             suggest_solution_wrapper(query, suggest_solution_callback_wrapper(get_github_user_from_form(req)),
                                      get_github_token(req),
                                      get_zendesk_user(),
-                                     get_zendesk_token()),
+                                     get_zendesk_token(),
+                                     log_query),
             is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users())
         )
     ],

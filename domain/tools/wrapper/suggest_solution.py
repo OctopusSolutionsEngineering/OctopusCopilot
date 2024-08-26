@@ -29,17 +29,35 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
 
         limited_keywords = keywords[:max_keywords]
 
+        # Get the list of issues and tickets
         issues = asyncio.run(
             asyncio.gather(
                 get_tickets(limited_keywords, zendesk_user, zendesk_token),
-                get_issues(limited_keywords, github_token)))
+                get_issues(limited_keywords, github_token), return_exceptions=True))
 
-        limited_issues = [issues[0][:max_issues], issues[1]['items'][:max_issues]]
+        # Gracefully fallback with any exceptions
+        if logging:
+            if isinstance(issues[0], Exception):
+                logging("Zendesk Exception", str(issues[0]))
+            if isinstance(issues[1], Exception):
+                logging("GitHub Exception", str(issues[1]))
 
+        limited_issues = [issues[0][:max_issues] if not isinstance(issues[0], Exception) else [], issues[1]['items'][:max_issues] if not isinstance(issues[1], Exception) else []]
+
+        # Get the contents of the issues and tickets
         external_context = asyncio.run(
             asyncio.gather(
                 get_tickets_comments(limited_issues[0], zendesk_user, zendesk_token),
-                get_issues_comments(limited_issues[1], github_token)))
+                get_issues_comments(limited_issues[1], github_token), return_exceptions=True))
+
+        # Gracefully fallback with any exceptions
+        if logging:
+            if isinstance(external_context[0], Exception):
+                logging("Zendesk Exception", str(external_context[0]))
+            if isinstance(external_context[1], Exception):
+                logging("GitHub Exception", str(external_context[1]))
+
+        fixed_external_context = [external_context[0] if not isinstance(external_context[0], Exception) else [], external_context[1] if not isinstance(external_context[1], Exception) else []]
 
         # The answer that we are trying to get from the LLM isn't something that is expected to be passed directly to
         # the customer. The answer will be used as a way to suggest possible solutions to the support engineers,
@@ -57,9 +75,9 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
             ('system',
              'You must provide as many potential solutions and troubleshooting steps in the answer as possible.'),
             *[('user', "Conversation: ###\n" + context.replace("{", "{{").replace("}", "}}") + "\n###") for context in
-              external_context[0]],
+              fixed_external_context[0]],
             *[('user', "Issue: ###\n" + context.replace("{", "{{").replace("}", "}}") + "\n###") for context in
-              external_context[1]],
+              fixed_external_context[1]],
             ('user', "Question: {input}"),
             ('user', "Answer:")]
 
