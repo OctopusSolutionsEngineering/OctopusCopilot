@@ -68,7 +68,7 @@ async def get_issues(keywords, github_token, max_keywords=5, max_issues=10):
 async def combine_issue_comments(issue_number, github_token):
     comments = await get_issue_comments("OctopusDeploy", "Issues", str(issue_number), github_token)
     combined_comments = "\n".join(
-        [minify_strings(comment['body']) for comment in comments])
+        [minify_strings(comment['body']) for comment in comments if comment['body']])
 
     # If we need to strip PII from the comments, we can do it here
     # combined_comments = anonymize_message(sanitize_message(combined_comments))
