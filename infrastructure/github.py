@@ -9,7 +9,7 @@ from expiring_dict import ExpiringDict
 
 from domain.exceptions.request_failed import GitHubRequestFailed
 from domain.sanitizers.url_sanitizer import quote_safe
-from domain.validation.argument_validation import ensure_string_not_empty
+from domain.validation.argument_validation import ensure_string_not_empty, ensure_not_falsy
 from infrastructure.http_pool import http
 
 # Token user lookup cache that expires in 15 minutes.
@@ -273,6 +273,48 @@ async def get_repo_contents(owner, repo, directory, github_token):
     ensure_string_not_empty(github_token, 'github_token must be a non-empty string (get_repo_contents).')
 
     api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/contents/{directory}")
+
+    async with sem:
+        async with aiohttp.ClientSession(headers=get_github_auth_headers(github_token)) as session:
+            async with session.get(str(api)) as response:
+                if response.status != 200:
+                    body = await response.text()
+                    raise GitHubRequestFailed(f"Request failed with " + body)
+                return await response.json()
+
+
+async def search_issues(owner, repo, keywords, github_token):
+    """
+    Async function to search issues
+    https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-issues-and-pull-requests
+    """
+    ensure_string_not_empty(owner, 'owner must be a non-empty string (search_issues).')
+    ensure_string_not_empty(repo, 'repo must be a non-empty string (search_issues).')
+    ensure_not_falsy(keywords, 'keywords must be a list of strings (search_issues).')
+    ensure_string_not_empty(github_token, 'github_token must be a non-empty string (search_issues).')
+
+    api = build_github_url(f"/search/issues", {"q": f"{' '.join(keywords)} repo:{repo} org:{owner}"})
+
+    async with sem:
+        async with aiohttp.ClientSession(headers=get_github_auth_headers(github_token)) as session:
+            async with session.get(str(api)) as response:
+                if response.status != 200:
+                    body = await response.text()
+                    raise GitHubRequestFailed(f"Request failed with " + body)
+                return await response.json()
+
+
+async def get_issue_comments(owner, repo, issue_number, github_token):
+    """
+    Async function to get issue comments
+    https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-issues-and-pull-requests
+    """
+    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_issue_comments).')
+    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_issue_comments).')
+    ensure_string_not_empty(issue_number, 'issue_number must be a non-empty string (get_issue_comments).')
+    ensure_string_not_empty(github_token, 'github_token must be a non-empty string (get_issue_comments).')
+
+    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/issues/{quote_safe(issue_number)}/comments")
 
     async with sem:
         async with aiohttp.ClientSession(headers=get_github_auth_headers(github_token)) as session:

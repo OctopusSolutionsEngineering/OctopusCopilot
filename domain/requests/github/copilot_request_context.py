@@ -356,6 +356,7 @@ def build_form_tools(query, req: func.HttpRequest):
             generate_terraform_wrapper(query, generate_terraform_callback_wrapper(), get_github_token(req), log_query)),
         FunctionDefinition(
             suggest_solution_wrapper(query, suggest_solution_callback_wrapper(get_github_user_from_form(req)),
+                                     get_github_token(req),
                                      get_zendesk_user(),
                                      get_zendesk_token()),
             is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users())
