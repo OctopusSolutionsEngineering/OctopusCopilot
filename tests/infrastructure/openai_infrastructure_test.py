@@ -315,7 +315,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies queries answered by documentation
         """
 
-        docs_tools = ["provide_help_and_instructions", "how_do_i"]
+        docs_tools = ["provide_help_and_instructions", "how_do_i", "answer_support_question"]
         queries = ["How do I review deployment frequency metrics?",
                    "How do I enable Azure AD?",
                    "How do I create a new azure target?",
