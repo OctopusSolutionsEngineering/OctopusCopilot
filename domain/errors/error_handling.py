@@ -37,4 +37,4 @@ def handle_error(exception):
             send_slack_message(original_error_message, get_slack_url())
         send_slack_message(stack_trace, get_slack_url())
     except Exception as e:
-        logger.error(getattr(exception, 'message', repr(e)))
+        logger.error(getattr(e, 'message', repr(e)))

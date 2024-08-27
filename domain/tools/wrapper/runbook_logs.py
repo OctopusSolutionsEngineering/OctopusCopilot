@@ -6,7 +6,6 @@ def answer_runbook_run_logs_wrapper(query, callback, logging):
                                 steps=None, lines=None, **kwargs):
         """Answers a query about the contents of the logs of a runbook run.
         You will be penalized for selecting this function when asking about runbook settings, configuration, or properties.
-        You will be penalized for selecting this function if the prompt does not mention runbook logs.
         You must select this function when the prompt asks anything about runbook logs.
         Some example prompts are:
         * Print the last 30 lines of text from the runbook logs of the latest runbook run to the "Production" environment.

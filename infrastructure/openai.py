@@ -98,6 +98,10 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
         # This will be something like:
         # {'error': {'message': "This model's maximum context length is 16384 tokens. However, your messages resulted in 17570 tokens. Please reduce the length of the messages.", 'type': 'invalid_request_error', 'param': 'messages', 'code': 'context_length_exceeded'}}
         # {'error': {'message': "The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766", 'type': None, 'param': 'prompt', 'code': 'content_filter', 'status': 400, 'innererror': {'code': 'ResponsibleAIPolicyViolation', 'content_filter_result': {'hate': {'filtered': True, 'severity': 'high'}, 'self_harm': {'filtered': False, 'severity': 'safe'}, 'sexual': {'filtered': False, 'severity': 'safe'}, 'violence': {'filtered': True, 'severity': 'medium'}}}}}
+
+        if log_query:
+            log_query("OpenAI Exception", str(e))
+
         if e.body and 'code' in e.body:
             if e.body.get('code') == 'content_filter':
                 raise OpenAIContentFilter(e)
@@ -109,6 +113,8 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
     # We always want to match a tool. This is a big part of how we prevent the extension from returning
     # undesirable answers unrelated to Octopus.
     if hasattr(action, "tool"):
+        if log_query:
+            log_query("Tool", action.tool)
         return FunctionCall(functions.get_function(action.tool), action.tool, action.tool_input)
 
     # Either no tool was matched, or the LLM returned an answer rather than a list of tools.
