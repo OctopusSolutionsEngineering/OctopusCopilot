@@ -22,9 +22,9 @@ name: Python Build
 jobs:
   build:
     name: Build
-    runs-on:
-      group: ubuntu-large-runner
-      labels: 4core-ubuntu-runner
+#    runs-on:
+#      group: ubuntu-large-runner
+#      labels: 4core-ubuntu-runner
     steps:
       - uses: actions/checkout@v3
         with:
