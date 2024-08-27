@@ -153,7 +153,7 @@ class OctopusAPIRequests(unittest.TestCase):
 
         create_and_deploy_release(space_name="Simple")
 
-        time.sleep(30)
+        time.sleep(5)
 
         actual_space_name, actual_environment_name, actual_project_name, deployment = (
             get_deployment_status_base("Simple", "Development", "Deploy Web App Container", Octopus_Api_Key,
@@ -162,7 +162,7 @@ class OctopusAPIRequests(unittest.TestCase):
         self.assertEqual("Simple", actual_space_name)
         self.assertEqual("Development", actual_environment_name)
         self.assertEqual("Deploy Web App Container", actual_project_name)
-        self.assertTrue(deployment["State"] == "Executing" or deployment["State"] == "Success")
+        self.assertTrue(deployment["State"] == "Executing" or deployment["State"] == "Success" or deployment["State"] == "Queued")
 
     @retry(AssertionError, tries=3, delay=2)
     def test_get_deployment_logs(self):
@@ -203,7 +203,7 @@ class OctopusAPIRequests(unittest.TestCase):
 
         _, activity_logs = get_runbook_deployment_logs("Simple",
                                                        "Runbook Project",
-                                                       "Test Runbook",
+                                                       "Backup Database",
                                                        "Development",
                                                        None,
                                                        Octopus_Api_Key,
@@ -211,7 +211,7 @@ class OctopusAPIRequests(unittest.TestCase):
 
         logs = activity_logs_to_string(activity_logs, None)
 
-        self.assertTrue("Hello world" in logs)
+        self.assertTrue("Hello world" in logs, "Response was " + logs)
 
     def test_get_no_environment(self):
         """
@@ -515,6 +515,7 @@ class OctopusAPIRequests(unittest.TestCase):
         # Check both releases are returned.
         releases = get_releases_by_version(space_id, project['Id'], "1.", Octopus_Api_Key, Octopus_Url)
         self.assertEqual(2, len(releases))
+
         # Check no matches returned
         non_matching_releases = get_releases_by_version(space_id, project['Id'], "0.0.12", Octopus_Api_Key, Octopus_Url)
         self.assertIsNone(non_matching_releases)

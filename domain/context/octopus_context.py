@@ -1,5 +1,5 @@
 from domain.logging.app_logging import configure_logging
-from domain.transformers.minify_hcl import minify_hcl
+from domain.transformers.minify_strings import minify_strings
 from domain.validation.argument_validation import ensure_string_starts_with
 from infrastructure.octoterra import get_octoterra_space
 from infrastructure.openai import llm_message_query
@@ -89,7 +89,7 @@ def collect_llm_context(original_query, messages, context, space_id, project_nam
                                                      octopus_url,
                                                      log_query)
 
-    minified_hcl = minify_hcl(hcl)
+    minified_hcl = minify_strings(hcl)
     available_chars = max_chars
 
     if context.get("json"):

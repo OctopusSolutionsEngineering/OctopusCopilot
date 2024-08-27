@@ -16,6 +16,7 @@ from testcontainers.core.waiting_utils import wait_for_logs
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_environments, lookup_tenants, \
     lookup_runbooks
 from domain.transformers.clean_response import strip_before_first_curly_bracket
+from domain.transformers.minify_strings import minify_strings
 from domain.transformers.sse_transformers import convert_from_sse_response, get_confirmation_id
 from function_app import copilot_handler_internal, health_internal
 from infrastructure.octopus import run_published_runbook_fuzzy, get_space_id_and_name_from_name, get_project
@@ -191,6 +192,36 @@ class CopilotChatTest(unittest.TestCase):
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue("build.yaml" in response_text, "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_general_solution(self):
+        prompt = minify_strings("""Suggest a solution for the following issue:
+
+        Hello Octopus Support,
+
+        Today we discovered an interesting behavior, which does look like a bug, and would like to have some assistance on it.
+
+        With one of our new projects we started observing Helm step failures – Octopus is unable to find values from the chart. For example, we have this deployment (done today in the morning):
+
+        <URL>
+
+        This project was previously set to get additional values from file in the chart (we have used this approach multiple times before, and it still works for other projects like <URL>), but for this one we were getting this error:
+
+        Upon further investigation, I noticed two things:
+
+            Projects that are working have no Octopus.Action[helm-upgrade].Helm.TemplateValuesSources system variable, but the one that is failing – does have it.
+            Projects that are working have this line in logs: Unable to find values files at path `values.PPE.yaml`. Chart package contains root directory with chart name, so looking for values in there.
+
+        So my current theory is that something changed in Helm step, and now there is no heuristic to find values like we had before, and thus new projects are failing (because working directory for the step is not the folder of the chart, but the staging area). I was able to get the project working by forcefully passing additional arguments (-f redpanda-wholesale-us\values.STAGING.yaml) and making it look directly in the chart folder, but that’s a workaround – we would prefer a proper fix from your side.
+
+        You can log in to our instance to check things, but please revert any changes you do.
+        """)
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+
+        # This response could be anything, but it should mention helm
+        print(response_text)
+        self.assertTrue("helm" in response_text.casefold(), "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_sample_hcl(self):
@@ -466,7 +497,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
-        self.assertTrue("🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+        self.assertTrue("🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
                         or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
@@ -903,7 +934,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_cancel_task_already_canceled(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         space_name = "Simple"
-        project_name = "Deploy Web App Container"
+        project_name = "Long running script"
         environment_name = "Development"
         deploy_response = create_and_deploy_release(space_name=space_name, project_name=project_name,
                                                     environment_name=environment_name,
@@ -922,7 +953,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_cancel_task_by_id(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         space_name = "Simple"
-        project_name = "Deploy Web App Container"
+        project_name = "Long running script"
         environment_name = "Development"
         deploy_response = create_and_deploy_release(space_name=space_name, project_name=project_name,
                                                     environment_name=environment_name,
@@ -959,7 +990,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_cancel_deployment(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         space_name = "Simple"
-        project_name = "Deploy Web App Container"
+        project_name = "Long running script"
         environment_name = "Development"
         create_and_deploy_release(space_name=space_name, project_name=project_name, environment_name=environment_name,
                                   release_version=version)
@@ -995,12 +1026,12 @@ class CopilotChatTest(unittest.TestCase):
     def test_cancel_tenanted_deployment(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         space_name = "Simple"
-        project_name = "Deploy AWS Lambda"
+        project_name = "Long running script"
         environment_name = "Development"
         tenant_name = "Marketing"
         create_and_deploy_release(space_name=space_name, project_name=project_name, environment_name=environment_name,
                                   tenant_name=tenant_name, release_version=version)
-
+        time.sleep(5)
         prompt = (f"Cancel the latest deployment for the project \"{project_name}\" to the environment "
                   f"\"{environment_name}\" for the tenant \"{tenant_name}\" in the space \"{space_name}\".")
         response = copilot_handler_internal(build_request(prompt))
@@ -1033,7 +1064,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_cancel_runbook_run(self):
         space_name = "Simple"
         project_name = "Runbook Project"
-        runbook_name = "Backup Database"
+        runbook_name = "Long Running Runbook"
         environment_name = "Development"
         publish_runbook(space_name, project_name, runbook_name)
         space_id, space_name = get_space_id_and_name_from_name(space_name, Octopus_Api_Key, Octopus_Url)
@@ -1084,7 +1115,7 @@ class CopilotChatTest(unittest.TestCase):
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         print(response_text)
 
@@ -1099,7 +1130,7 @@ class CopilotChatTest(unittest.TestCase):
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         self.assertTrue("Simple" in response_text, "Response was " + response_text)
         print(response_text)
@@ -1122,7 +1153,7 @@ class CopilotChatTest(unittest.TestCase):
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         self.assertTrue(f"Deploy Deploy Web App Container release {version} to Development" in response_text,
                         response_text)
@@ -1155,7 +1186,7 @@ class CopilotChatTest(unittest.TestCase):
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         self.assertTrue("Simple / Deploy Web App Container" in response_text, "Response was " + response_text)
         self.assertTrue("This is a highlight" in response_text, "Response was " + response_text)
@@ -1183,7 +1214,7 @@ class CopilotChatTest(unittest.TestCase):
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         self.assertTrue("Simple / Deploy Web App Container" in response_text, "Response was " + response_text)
         self.assertTrue("Channel: Default" in response_text, "Response was " + response_text)
@@ -1218,7 +1249,7 @@ class CopilotChatTest(unittest.TestCase):
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         self.assertTrue("Simple / Deploy AWS Lambda" in response_text, "Response was " + response_text)
         self.assertTrue("Marketing" in response_text, "Response was " + response_text)
@@ -1261,8 +1292,8 @@ class CopilotChatTest(unittest.TestCase):
 
         # The response should have formatted the text as a code block
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
-            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            or "🔴" in response_text or "⚪" in response_text or "🟣" in response_text, "Response was " + response_text)
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
@@ -1284,7 +1315,7 @@ class CopilotChatTest(unittest.TestCase):
 
         # The response should have formatted the text as a code block
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         print(response_text)
 

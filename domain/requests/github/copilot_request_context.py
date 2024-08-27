@@ -4,11 +4,14 @@ import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
 from domain.config.database import get_functions_connection_string
+from domain.config.users import get_admin_users
+from domain.config.zendesk import get_zendesk_user, get_zendesk_token
 from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_loggin import log_query
+from domain.security.security import is_admin_user
 from domain.tools.githubactions.approve_manual_intervention import approve_manual_intervention_callback, \
     approve_manual_intervention_confirm_callback_wrapper
 from domain.tools.githubactions.cancel_deployment import cancel_deployment_callback
@@ -34,6 +37,7 @@ from domain.tools.githubactions.resource_specific_callback import resource_speci
 from domain.tools.githubactions.run_runbook import run_runbook_confirm_callback_wrapper, run_runbook_callback
 from domain.tools.githubactions.runbook_logs import get_runbook_logs_wrapper
 from domain.tools.githubactions.runbooks_dashboard import get_runbook_dashboard_callback
+from domain.tools.githubactions.suggest_solution import suggest_solution_callback_wrapper
 from domain.tools.githubactions.task_summary import get_task_summary_callback
 from domain.tools.githubactions.variables import variable_query_callback
 from domain.tools.wrapper.approve_manual_intervention import approve_manual_intervention_wrapper
@@ -60,6 +64,7 @@ from domain.tools.wrapper.run_runbook import run_runbook_wrapper
 from domain.tools.wrapper.runbook_logs import answer_runbook_run_logs_wrapper
 from domain.tools.wrapper.runbooks_dashboard_wrapper import show_runbook_dashboard_wrapper
 from domain.tools.wrapper.step_features import answer_step_features_wrapper
+from domain.tools.wrapper.suggest_solution import suggest_solution_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.tools.wrapper.task_summary_wrapper import show_task_summary_wrapper
 from infrastructure.github import get_github_user
@@ -348,7 +353,15 @@ def build_form_tools(query, req: func.HttpRequest):
                                                                 get_github_token(req)),
                                        log_query)),
         FunctionDefinition(
-            generate_terraform_wrapper(query, generate_terraform_callback_wrapper(), get_github_token(req), log_query))
+            generate_terraform_wrapper(query, generate_terraform_callback_wrapper(), get_github_token(req), log_query)),
+        FunctionDefinition(
+            suggest_solution_wrapper(query, suggest_solution_callback_wrapper(get_github_user_from_form(req)),
+                                     get_github_token(req),
+                                     get_zendesk_user(),
+                                     get_zendesk_token(),
+                                     log_query),
+            is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users())
+        )
     ],
         fallback=FunctionDefinitions(docs_functions),
         invalid=FunctionDefinition(

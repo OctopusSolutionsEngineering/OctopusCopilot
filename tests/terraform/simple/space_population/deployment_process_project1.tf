@@ -20,7 +20,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project1" {
         "Octopus.Action.RunOnServer"         = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax"       = "Bash"
-        "Octopus.Action.Script.ScriptBody"   = "echo \"Hi there from Step One\"\nwrite_highlight \"This is a highlight\"\n echo \"hi there\" > file.txt\nnew_octopusartifact $(pwd)/file.txt\nsleep 10"
+        "Octopus.Action.Script.ScriptBody"   = "echo \"Hi there from Step One\"\nwrite_highlight \"This is a highlight\"\n echo \"hi there\" > file.txt\nnew_octopusartifact $(pwd)/file.txt\nsleep 5"
       }
       environments = []
       excluded_environments = []
