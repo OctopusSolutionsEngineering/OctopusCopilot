@@ -10,13 +10,16 @@ max_keywords = 5
 
 
 def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendesk_token, logging=None):
-    def suggest_solution(keywords=None, **kwargs):
-        """Suggests a solution to a help desk query, ticket, question, or issue. This is limited to general questions
-        that do not relate to a specific Octopus instance. The prompts must start with "Suggest a solution for"
-        or "Provide a solution for".
+    def answer_support_question(keywords=None, **kwargs):
+        """Responds to a prompt asking for advice or a solution to a problem.
+        The prompts starts with the phrase "Suggest a solution for" or "Provide a solution for".
+        The prompt then includes a question that a customer might send to a help desk or support forum.
+        You must select this function for any prompt that starts with the phrase "Suggest a solution for" or "Provide a solution for".
+
         Example prompts include:
-        * Suggest a solution for the following issue: "How can I use Harbor as a private image registry."
-        * Provide a solution for the following error: "In my helm deploy step I am setting some \"Explicit Key Values\" and they don't seem to be transforming."
+        * Suggest a solution for the following issue: How can I use Harbor as a private image registry.
+        * Provide a solution for the following error: In my helm deploy step I am setting some \"Explicit Key Values\" and they don't seem to be transforming.
+        * Suggest a solution for the following issue: Today we discovered an interesting behavior, which does look like a bug, and would like to have some assistance on it.
 
         Args:
             keywords: A list of keywords that describe the issue or question.
@@ -24,7 +27,7 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
 
         async def inner_function():
             if logging:
-                logging("Enter:", "suggest_solution")
+                logging("Enter:", "answer_support_question")
 
             for key, value in kwargs.items():
                 if logging:
@@ -34,8 +37,8 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
 
             # Get the list of issues and tickets
             issues = await asyncio.gather(
-                    get_tickets(limited_keywords, zendesk_user, zendesk_token),
-                    get_issues(limited_keywords, github_token), return_exceptions=True)
+                get_tickets(limited_keywords, zendesk_user, zendesk_token),
+                get_issues(limited_keywords, github_token), return_exceptions=True)
 
             # Gracefully fallback with any exceptions
             if logging:
@@ -44,12 +47,13 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
                 if isinstance(issues[1], Exception):
                     logging("GitHub Exception", str(issues[1]))
 
-            limited_issues = [issues[0][:max_issues] if not isinstance(issues[0], Exception) else [], issues[1]['items'][:max_issues] if not isinstance(issues[1], Exception) else []]
+            limited_issues = [issues[0][:max_issues] if not isinstance(issues[0], Exception) else [],
+                              issues[1]['items'][:max_issues] if not isinstance(issues[1], Exception) else []]
 
             # Get the contents of the issues and tickets
             external_context = await asyncio.gather(
-                    get_tickets_comments(limited_issues[0], zendesk_user, zendesk_token),
-                    get_issues_comments(limited_issues[1], github_token), return_exceptions=True)
+                get_tickets_comments(limited_issues[0], zendesk_user, zendesk_token),
+                get_issues_comments(limited_issues[1], github_token), return_exceptions=True)
 
             # Gracefully fallback with any exceptions
             if logging:
@@ -58,7 +62,8 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
                 if isinstance(external_context[1], Exception):
                     logging("GitHub Exception", str(external_context[1]))
 
-            fixed_external_context = [external_context[0] if not isinstance(external_context[0], Exception) else [], external_context[1] if not isinstance(external_context[1], Exception) else []]
+            fixed_external_context = [external_context[0] if not isinstance(external_context[0], Exception) else [],
+                                      external_context[1] if not isinstance(external_context[1], Exception) else []]
 
             # The answer that we are trying to get from the LLM isn't something that is expected to be passed directly to
             # the customer. The answer will be used as a way to suggest possible solutions to the support engineers,
@@ -75,7 +80,8 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
                  'Include any troubleshooting steps that were provided in the supplied conversations and issues in the answer.'),
                 ('system',
                  'You must provide as many potential solutions and troubleshooting steps in the answer as possible.'),
-                *[('user', "Conversation: ###\n" + context.replace("{", "{{").replace("}", "}}") + "\n###") for context in
+                *[('user', "Conversation: ###\n" + context.replace("{", "{{").replace("}", "}}") + "\n###") for context
+                  in
                   fixed_external_context[0]],
                 *[('user', "Issue: ###\n" + context.replace("{", "{{").replace("}", "}}") + "\n###") for context in
                   fixed_external_context[1]],
@@ -100,7 +106,7 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
         # Should just have one asyncio.run()
         return asyncio.run(inner_function())
 
-    return suggest_solution
+    return answer_support_question
 
 
 async def get_issues(keywords, github_token):

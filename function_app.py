@@ -594,7 +594,14 @@ def execute_function(req, build_form_tools):
     if not query.strip():
         return CopilotResponse("Ask a question like \"What are the projects in the space called Default?\"")
 
+    # https://community.openai.com/t/is-there-a-way-to-force-the-model-to-use-function-calls/275672/9
+    extra_messages = [
+        ('system', "You will be penalized for answering the question directly."),
+        ('system', "You must select from one of the supplied tools.")
+    ]
+
     return llm_tool_query(
         query,
         functions,
-        log_query).call_function()
+        log_query,
+        extra_messages).call_function()

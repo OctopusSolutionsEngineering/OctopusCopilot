@@ -89,7 +89,7 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
                                        azure_endpoint=os.environ["OPENAI_ENDPOINT"],
                                        api_version=version),
         tools=tools,
-        extra_prompt_messages=extra_prompt_messages
+        extra_prompt_messages=extra_prompt_messages,
     )
 
     try:
