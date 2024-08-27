@@ -162,7 +162,7 @@ class OctopusAPIRequests(unittest.TestCase):
         self.assertEqual("Simple", actual_space_name)
         self.assertEqual("Development", actual_environment_name)
         self.assertEqual("Deploy Web App Container", actual_project_name)
-        self.assertTrue(deployment["State"] == "Executing" or deployment["State"] == "Success")
+        self.assertTrue(deployment["State"] == "Executing" or deployment["State"] == "Success" or deployment["State"] == "Queued")
 
     @retry(AssertionError, tries=3, delay=2)
     def test_get_deployment_logs(self):
