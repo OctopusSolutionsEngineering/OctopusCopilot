@@ -18,7 +18,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project2" {
       worker_pool_id                     = ""
       properties = {
         "Octopus.Action.Script.Syntax"       = "Bash"
-        "Octopus.Action.Script.ScriptBody"   = "echo \"Hi there from Step One\"\nwrite_highlight \"This is a highlight\"\necho \"hi there\" > file.txt\nnew_octopusartifact $(pwd)/file.txt\nsleep 10"
+        "Octopus.Action.Script.ScriptBody"   = "echo \"Hi there from Step One\"\nwrite_highlight \"This is a highlight\"\necho \"hi there\" > file.txt\nnew_octopusartifact $(pwd)/file.txt\nsleep 60"
         "Octopus.Action.RunOnServer"         = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
       }

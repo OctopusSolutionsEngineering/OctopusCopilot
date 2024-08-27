@@ -5,6 +5,7 @@ def cancel_deployment_wrapper(query, callback, logging):
            asking to cancel a deployment task.
     Questions can look like those in the following list:
     * Cancel the latest deployment for the project "CRM" to the environment "Test".
+    * Cancel the latest deployment for the project "CRM" to the environment "Test" in the space "Dev".
     * Cancel the deployment for release "1.4.2" in the "Dev" environment.
     * Cancel the latest release in the "Test" environment for the "MyTenant" tenant.
 

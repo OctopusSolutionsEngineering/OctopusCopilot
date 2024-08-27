@@ -14,7 +14,7 @@ def answer_general_query_wrapper(query, callback, logging=None):
                              worker_pools=None, machine_policies=None, tag_sets=None, project_groups=None,
                              channels=None, releases=None, steps=None, variables=None, git_credentials=None, dates=None,
                              **kwargs):
-        """A query about the configuration or state of an Octopus space. You will be penalized for selecting this function if a more specific function is available.
+        """A query about the configuration or state of an Octopus space. You will be penalized for selecting this function if a more specific function is available. You will be penalized for selecting this function for cancelling tasks.
 Args:
 space: Space name
 projects: project names

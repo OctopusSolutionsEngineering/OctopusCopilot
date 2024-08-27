@@ -11,7 +11,9 @@ max_keywords = 5
 
 def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendesk_token, logging=None):
     def suggest_solution(keywords=None, **kwargs):
-        """Suggests a solution to a help desk query, ticket, question, or issue.
+        """Suggests a solution to a help desk query, ticket, question, or issue. This is limited to general questions
+        that do not relate to a specific Octopus instance. The prompts must start with "Suggest a solution for"
+        or "Provide a solution for".
         Example prompts include:
         * Suggest a solution for the following issue: "How can I use Harbor as a private image registry."
         * Provide a solution for the following error: "In my helm deploy step I am setting some \"Explicit Key Values\" and they don't seem to be transforming."
