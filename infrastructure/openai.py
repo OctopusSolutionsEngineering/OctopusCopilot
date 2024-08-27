@@ -24,7 +24,7 @@ NO_FUNCTION_RESPONSE = ("Sorry, I did not understand that request. View the docu
 def llm_message_query(message_prompt, context, log_query=None):
     # We can use a specific deployment to answer a query, or fallback to the default
     deployment = os.environ.get("OPENAI_API_DEPLOYMENT_QUERY") or os.environ["OPENAI_API_DEPLOYMENT"]
-    version = os.environ.get("OPENAI_API_DEPLOYMENT_QUERY_VERSION") or "2024-02-01"
+    version = os.environ.get("OPENAI_API_DEPLOYMENT_QUERY_VERSION") or "2024-06-01"
 
     llm = AzureChatOpenAI(
         temperature=0,
@@ -74,13 +74,12 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
 
     tools = functions.get_tools()
 
-    # Version comes from https://github.com/openai/openai-python/issues/926#issuecomment-1839426482
-    # Note that for function calling you need 3.5-turbo-16k
-    # https://github.com/openai/openai-python/issues/926#issuecomment-1920037903
+    # Version comes from https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-ga-api-release
+    # These models support function calling: https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling#function-calling-support
 
     # We can use a specific deployment to select a tool, or fallback to the default
     deployment = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS") or os.environ["OPENAI_API_DEPLOYMENT"]
-    version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-02-01"
+    version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-06-01"
 
     agent = OpenAIFunctionsAgent.from_llm_and_tools(
         llm=AzureChatOpenAIWithTooling(temperature=0,

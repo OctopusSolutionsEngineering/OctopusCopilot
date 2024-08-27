@@ -17,7 +17,7 @@ from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn, OctopusVersionInvalid
 from domain.logging.app_logging import configure_logging
-from domain.logging.query_loggin import log_query
+from domain.logging.query_logging import log_query
 from domain.messages.docs_messages import docs_prompt
 from domain.messages.general import build_hcl_prompt
 from domain.messages.test_message import build_test_prompt

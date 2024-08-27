@@ -10,7 +10,7 @@ from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
-from domain.logging.query_loggin import log_query
+from domain.logging.query_logging import log_query
 from domain.security.security import is_admin_user
 from domain.tools.githubactions.approve_manual_intervention import approve_manual_intervention_callback, \
     approve_manual_intervention_confirm_callback_wrapper

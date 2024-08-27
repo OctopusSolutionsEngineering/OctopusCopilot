@@ -2,7 +2,7 @@ import argparse
 import os
 
 from domain.errors.error_handling import handle_error
-from domain.logging.query_loggin import log_query
+from domain.logging.query_logging import log_query
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import sanitize_list
 from domain.tools.cli.general_query_cli import general_query_cli_callback
