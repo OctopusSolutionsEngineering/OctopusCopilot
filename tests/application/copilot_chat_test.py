@@ -934,7 +934,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_cancel_task_already_canceled(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         space_name = "Simple"
-        project_name = "Deploy Web App Container"
+        project_name = "Long running script"
         environment_name = "Development"
         deploy_response = create_and_deploy_release(space_name=space_name, project_name=project_name,
                                                     environment_name=environment_name,
@@ -953,7 +953,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_cancel_task_by_id(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         space_name = "Simple"
-        project_name = "Deploy Web App Container"
+        project_name = "Long running script"
         environment_name = "Development"
         deploy_response = create_and_deploy_release(space_name=space_name, project_name=project_name,
                                                     environment_name=environment_name,
@@ -990,7 +990,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_cancel_deployment(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         space_name = "Simple"
-        project_name = "Deploy Web App Container"
+        project_name = "Long running script"
         environment_name = "Development"
         create_and_deploy_release(space_name=space_name, project_name=project_name, environment_name=environment_name,
                                   release_version=version)
@@ -1026,7 +1026,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_cancel_tenanted_deployment(self):
         version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
         space_name = "Simple"
-        project_name = "Deploy AWS Lambda"
+        project_name = "Long running script"
         environment_name = "Development"
         tenant_name = "Marketing"
         create_and_deploy_release(space_name=space_name, project_name=project_name, environment_name=environment_name,

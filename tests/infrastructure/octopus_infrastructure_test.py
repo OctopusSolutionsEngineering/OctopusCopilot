@@ -153,7 +153,7 @@ class OctopusAPIRequests(unittest.TestCase):
 
         create_and_deploy_release(space_name="Simple")
 
-        time.sleep(30)
+        time.sleep(5)
 
         actual_space_name, actual_environment_name, actual_project_name, deployment = (
             get_deployment_status_base("Simple", "Development", "Deploy Web App Container", Octopus_Api_Key,

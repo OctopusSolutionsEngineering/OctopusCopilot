@@ -1,5 +1,5 @@
-resource "octopusdeploy_deployment_process" "deployment_process_project2" {
-  project_id = "${octopusdeploy_project.project_project2.id}"
+resource "octopusdeploy_deployment_process" "deployment_process_project5" {
+  project_id = "${octopusdeploy_project.project_project5.id}"
 
   step {
     condition           = "Success"
@@ -18,7 +18,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_project2" {
       worker_pool_id                     = ""
       properties = {
         "Octopus.Action.Script.Syntax"       = "Bash"
-        "Octopus.Action.Script.ScriptBody"   = "echo \"Hi there from Step One\"\nwrite_highlight \"This is a highlight\"\necho \"hi there\" > file.txt\nnew_octopusartifact $(pwd)/file.txt\nsleep 5"
+        "Octopus.Action.Script.ScriptBody"   = "echo \"Hi there from Step One\"\nwrite_highlight \"This is a highlight\"\necho \"hi there\" > file.txt\nnew_octopusartifact $(pwd)/file.txt\nsleep 60"
         "Octopus.Action.RunOnServer"         = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
       }
