@@ -203,7 +203,7 @@ class OctopusAPIRequests(unittest.TestCase):
 
         _, activity_logs = get_runbook_deployment_logs("Simple",
                                                        "Runbook Project",
-                                                       "Test Runbook",
+                                                       "Backup Database",
                                                        "Development",
                                                        None,
                                                        Octopus_Api_Key,
