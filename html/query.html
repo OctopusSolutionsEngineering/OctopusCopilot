@@ -123,6 +123,11 @@
                 query.value = DOMPurify.sanitize(h)
                 return false
             }
+            link.style.textOverflow = "ellipsis";
+            link.style.width = "100%";
+            link.style.overflow = "hidden";
+            link.style.display = "inline-block";
+            link.style.whiteSpace = "nowrap";
             li.appendChild(link)
             historyList.appendChild(li)
         })
