@@ -48,10 +48,10 @@ class CopilotChatTest(unittest.TestCase):
     def test_general_solution2(self):
         prompt = minify_strings("""Suggest a solution for the following issue:
              Hi,
-             We have a guardrail in our deployment process which checks whether the packages in the current version that is being deployed are different to the last successful release to that environment. 
+             We have a guardrail in our deployment process which checks whether the packages in the current version that is being deployed are different to the last successful release to that environment.
              If they are, we trigger a manual approval process.
-             The challenge with this is, when this is expected and we approve this, if this project gets automatically triggered (which we want to happen every day), it triggers the manual approval each time. 
-             Is there a meta-argument or way to determine if the release is an auto-deploy that we can detect, and therefore ignore the package version check? 
+             The challenge with this is, when this is expected and we approve this, if this project gets automatically triggered (which we want to happen every day), it triggers the manual approval each time.
+             Is there a meta-argument or way to determine if the release is an auto-deploy that we can detect, and therefore ignore the package version check?
              Auto deploy triggered manual approval:
              Cheers,
              Chris
