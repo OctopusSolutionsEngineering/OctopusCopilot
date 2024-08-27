@@ -93,7 +93,7 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
             Space ID: {space_id}
             Space Name: {actual_space_name}
             Project Names: {sanitized_project_names[0]}
-            Project Names: {sanitized_runbook_names[0]}
+            Runbook Names: {sanitized_runbook_names[0]}
             Tenant Names: {sanitized_tenant_names[0] if sanitized_tenant_names else None}
             Environment Names: {sanitized_environment_names[0]}
             Steps: {sanitized_steps}
