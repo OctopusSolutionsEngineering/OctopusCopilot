@@ -211,7 +211,7 @@ class OctopusAPIRequests(unittest.TestCase):
 
         logs = activity_logs_to_string(activity_logs, None)
 
-        self.assertTrue("Hello world" in logs)
+        self.assertTrue("Hello world" in logs, "Response was " + logs)
 
     def test_get_no_environment(self):
         """
@@ -515,6 +515,7 @@ class OctopusAPIRequests(unittest.TestCase):
         # Check both releases are returned.
         releases = get_releases_by_version(space_id, project['Id'], "1.", Octopus_Api_Key, Octopus_Url)
         self.assertEqual(2, len(releases))
+
         # Check no matches returned
         non_matching_releases = get_releases_by_version(space_id, project['Id'], "0.0.12", Octopus_Api_Key, Octopus_Url)
         self.assertIsNone(non_matching_releases)
