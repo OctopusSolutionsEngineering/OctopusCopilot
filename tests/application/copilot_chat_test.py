@@ -497,7 +497,7 @@ class CopilotChatTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
-        self.assertTrue("🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+        self.assertTrue("🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
                         or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
@@ -1115,7 +1115,7 @@ class CopilotChatTest(unittest.TestCase):
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         print(response_text)
 
@@ -1130,7 +1130,7 @@ class CopilotChatTest(unittest.TestCase):
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         self.assertTrue("Simple" in response_text, "Response was " + response_text)
         print(response_text)
@@ -1153,7 +1153,7 @@ class CopilotChatTest(unittest.TestCase):
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         self.assertTrue(f"Deploy Deploy Web App Container release {version} to Development" in response_text,
                         response_text)
@@ -1186,7 +1186,7 @@ class CopilotChatTest(unittest.TestCase):
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         self.assertTrue("Simple / Deploy Web App Container" in response_text, "Response was " + response_text)
         self.assertTrue("This is a highlight" in response_text, "Response was " + response_text)
@@ -1214,7 +1214,7 @@ class CopilotChatTest(unittest.TestCase):
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         self.assertTrue("Simple / Deploy Web App Container" in response_text, "Response was " + response_text)
         self.assertTrue("Channel: Default" in response_text, "Response was " + response_text)
@@ -1249,7 +1249,7 @@ class CopilotChatTest(unittest.TestCase):
         response_text = convert_from_sse_response(response.get_body().decode('utf8'))
 
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         self.assertTrue("Simple / Deploy AWS Lambda" in response_text, "Response was " + response_text)
         self.assertTrue("Marketing" in response_text, "Response was " + response_text)
@@ -1292,7 +1292,7 @@ class CopilotChatTest(unittest.TestCase):
 
         # The response should have formatted the text as a code block
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text or "🟣" in response_text, "Response was " + response_text)
         print(response_text)
 
@@ -1315,7 +1315,7 @@ class CopilotChatTest(unittest.TestCase):
 
         # The response should have formatted the text as a code block
         self.assertTrue(
-            "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
+            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
             or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
         print(response_text)
 
