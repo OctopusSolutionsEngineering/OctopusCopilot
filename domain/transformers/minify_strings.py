@@ -18,6 +18,7 @@ def minify_strings(input):
     no_double_whitespace = re.sub(' +', ' ', no_empty_lines)
     return no_double_whitespace
 
+
 def replace_space_codes(input):
     ensure_string(input, 'input must be a string (replace_space_codes).')
     return input.replace("&nbsp;", " ")
