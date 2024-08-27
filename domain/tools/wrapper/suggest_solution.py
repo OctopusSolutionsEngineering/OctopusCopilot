@@ -22,80 +22,83 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
             keywords: A list of keywords that describe the issue or question.
         """
 
-        if logging:
-            logging("Enter:", "suggest_solution")
-
-        for key, value in kwargs.items():
+        async def inner_function():
             if logging:
-                logging(f"Unexpected Key: {key}", "Value: {value}")
+                logging("Enter:", "suggest_solution")
 
-        limited_keywords = keywords[:max_keywords]
+            for key, value in kwargs.items():
+                if logging:
+                    logging(f"Unexpected Key: {key}", "Value: {value}")
 
-        # Get the list of issues and tickets
-        issues = asyncio.run(
-            asyncio.gather(
-                get_tickets(limited_keywords, zendesk_user, zendesk_token),
-                get_issues(limited_keywords, github_token), return_exceptions=True))
+            limited_keywords = keywords[:max_keywords]
 
-        # Gracefully fallback with any exceptions
-        if logging:
-            if isinstance(issues[0], Exception):
-                logging("Zendesk Exception", str(issues[0]))
-            if isinstance(issues[1], Exception):
-                logging("GitHub Exception", str(issues[1]))
+            # Get the list of issues and tickets
+            issues = await asyncio.gather(
+                    get_tickets(limited_keywords, zendesk_user, zendesk_token),
+                    get_issues(limited_keywords, github_token), return_exceptions=True)
 
-        limited_issues = [issues[0][:max_issues] if not isinstance(issues[0], Exception) else [], issues[1]['items'][:max_issues] if not isinstance(issues[1], Exception) else []]
+            # Gracefully fallback with any exceptions
+            if logging:
+                if isinstance(issues[0], Exception):
+                    logging("Zendesk Exception", str(issues[0]))
+                if isinstance(issues[1], Exception):
+                    logging("GitHub Exception", str(issues[1]))
 
-        # Get the contents of the issues and tickets
-        external_context = asyncio.run(
-            asyncio.gather(
-                get_tickets_comments(limited_issues[0], zendesk_user, zendesk_token),
-                get_issues_comments(limited_issues[1], github_token), return_exceptions=True))
+            limited_issues = [issues[0][:max_issues] if not isinstance(issues[0], Exception) else [], issues[1]['items'][:max_issues] if not isinstance(issues[1], Exception) else []]
 
-        # Gracefully fallback with any exceptions
-        if logging:
-            if isinstance(external_context[0], Exception):
-                logging("Zendesk Exception", str(external_context[0]))
-            if isinstance(external_context[1], Exception):
-                logging("GitHub Exception", str(external_context[1]))
+            # Get the contents of the issues and tickets
+            external_context = await asyncio.gather(
+                    get_tickets_comments(limited_issues[0], zendesk_user, zendesk_token),
+                    get_issues_comments(limited_issues[1], github_token), return_exceptions=True)
 
-        fixed_external_context = [external_context[0] if not isinstance(external_context[0], Exception) else [], external_context[1] if not isinstance(external_context[1], Exception) else []]
+            # Gracefully fallback with any exceptions
+            if logging:
+                if isinstance(external_context[0], Exception):
+                    logging("Zendesk Exception", str(external_context[0]))
+                if isinstance(external_context[1], Exception):
+                    logging("GitHub Exception", str(external_context[1]))
 
-        # The answer that we are trying to get from the LLM isn't something that is expected to be passed directly to
-        # the customer. The answer will be used as a way to suggest possible solutions to the support engineers,
-        # who will then investigate the problem and potential solutions further.
-        messages = [
-            ('system', 'You are helpful agent who can provide solutions to questions about Octopus Deploy.'),
-            ('system',
-             'The supplied conversations are related to the same topics as the question being asked.'),
-            ('system',
-             'The supplied issues are related to bugs related to the same topics as the question being asked.'),
-            ('system',
-             'Include any potential solutions that were provided in the supplied conversations and issues in the answer.'),
-            ('system',
-             'Include any troubleshooting steps that were provided in the supplied conversations and issues in the answer.'),
-            ('system',
-             'You must provide as many potential solutions and troubleshooting steps in the answer as possible.'),
-            *[('user', "Conversation: ###\n" + context.replace("{", "{{").replace("}", "}}") + "\n###") for context in
-              fixed_external_context[0]],
-            *[('user', "Issue: ###\n" + context.replace("{", "{{").replace("}", "}}") + "\n###") for context in
-              fixed_external_context[1]],
-            ('user', "Question: {input}"),
-            ('user', "Answer:")]
+            fixed_external_context = [external_context[0] if not isinstance(external_context[0], Exception) else [], external_context[1] if not isinstance(external_context[1], Exception) else []]
 
-        context = {"input": query}
-        chat_response = [llm_message_query(messages, context)]
+            # The answer that we are trying to get from the LLM isn't something that is expected to be passed directly to
+            # the customer. The answer will be used as a way to suggest possible solutions to the support engineers,
+            # who will then investigate the problem and potential solutions further.
+            messages = [
+                ('system', 'You are helpful agent who can provide solutions to questions about Octopus Deploy.'),
+                ('system',
+                 'The supplied conversations are related to the same topics as the question being asked.'),
+                ('system',
+                 'The supplied issues are related to bugs related to the same topics as the question being asked.'),
+                ('system',
+                 'Include any potential solutions that were provided in the supplied conversations and issues in the answer.'),
+                ('system',
+                 'Include any troubleshooting steps that were provided in the supplied conversations and issues in the answer.'),
+                ('system',
+                 'You must provide as many potential solutions and troubleshooting steps in the answer as possible.'),
+                *[('user', "Conversation: ###\n" + context.replace("{", "{{").replace("}", "}}") + "\n###") for context in
+                  fixed_external_context[0]],
+                *[('user', "Issue: ###\n" + context.replace("{", "{{").replace("}", "}}") + "\n###") for context in
+                  fixed_external_context[1]],
+                ('user', "Question: {input}"),
+                ('user', "Answer:")]
 
-        chat_response.append("🔍: " + ", ".join(limited_keywords))
+            context = {"input": query}
+            chat_response = [llm_message_query(messages, context)]
 
-        for github_issue in limited_issues[1]:
-            chat_response.append(f"🐛: [{github_issue['title']}]({github_issue['html_url']})")
+            chat_response.append("🔍: " + ", ".join(limited_keywords))
 
-        for zendesk_issue in limited_issues[0]:
-            chat_response.append(
-                f"📧: [{zendesk_issue['subject']}](https://octopus.zendesk.com/agent/tickets/{zendesk_issue['id']})")
+            for github_issue in limited_issues[1]:
+                chat_response.append(f"🐛: [{github_issue['title']}]({github_issue['html_url']})")
 
-        return callback(query, keywords, "\n\n".join(chat_response))
+            for zendesk_issue in limited_issues[0]:
+                chat_response.append(
+                    f"📧: [{zendesk_issue['subject']}](https://octopus.zendesk.com/agent/tickets/{zendesk_issue['id']})")
+
+            return callback(query, keywords, "\n\n".join(chat_response))
+
+        # https://github.com/pytest-dev/pytest-asyncio/issues/658#issuecomment-1817927350
+        # Should just have one asyncio.run()
+        return asyncio.run(inner_function())
 
     return suggest_solution
 
