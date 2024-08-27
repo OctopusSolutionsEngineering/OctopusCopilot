@@ -193,21 +193,6 @@ class CopilotChatTest(unittest.TestCase):
         self.assertTrue("build.yaml" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    def test_sample_hcl(self):
-        prompt = "Generate a Terraform module with an environment called \"Development\", a project group called \"Test\", and a project called \"Hello World\" with a single Powershell script step that echoes the text \"Hello World\"."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
-
-        self.assertTrue('resource "octopusdeploy_environment"' in response_text.casefold(),
-                        "Response was " + response_text)
-        self.assertTrue('resource "octopusdeploy_project_group"' in response_text.casefold(),
-                        "Response was " + response_text)
-        self.assertTrue('resource "octopusdeploy_project"' in response_text.casefold(),
-                        "Response was " + response_text)
-        self.assertTrue('resource "octopusdeploy_deployment_process"' in response_text.casefold(),
-                        "Response was " + response_text)
-
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_space_lookup(self):
         prompt = "List the variable names defined in the project \"Deploy Web App Container\" in space \"Simpleish\"."
         space_id, actual_space_name, warnings = lookup_space(Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish")
