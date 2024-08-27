@@ -12,8 +12,12 @@ def minify_strings(input):
     :return: The minified input
     """
 
-    ensure_string(input, 'hcl must be a string (minify_strings).')
+    ensure_string(input, 'input must be a string (minify_strings).')
 
     no_empty_lines = '\n'.join([line for line in input.split('\n') if line.strip()])
     no_double_whitespace = re.sub(' +', ' ', no_empty_lines)
     return no_double_whitespace
+
+def replace_space_codes(input):
+    ensure_string(input, 'input must be a string (replace_space_codes).')
+    return input.replace("&nbsp;", " ")

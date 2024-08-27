@@ -1,6 +1,6 @@
 import asyncio
 
-from domain.transformers.minify_strings import minify_strings
+from domain.transformers.minify_strings import minify_strings, replace_space_codes
 from infrastructure.github import search_issues, get_issue_comments
 from infrastructure.openai import llm_message_query
 from infrastructure.zendesk import get_zen_tickets, get_zen_comments
@@ -160,7 +160,7 @@ async def get_tickets_comments(tickets, zendesk_user, zendesk_token):
 async def combine_ticket_comments(ticket_id, zendesk_user, zendesk_token):
     comments = await get_zen_comments(ticket_id, zendesk_user, zendesk_token)
     combined_comments = "\n".join(
-        [minify_strings(comment['body']) for comment in comments['comments'] if
+        [minify_strings(replace_space_codes(comment['body'])) for comment in comments['comments'] if
          comment['public']])
 
     # If we need to strip PII from the comments, we can do it here
