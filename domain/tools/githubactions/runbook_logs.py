@@ -17,6 +17,9 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
     def runbook_logs_implementation(original_query, messages, space, project, runbook, environments, tenants,
                                     steps, lines):
 
+        if log_query:
+            log_query("Enter:", "runbook_logs_implementation")
+
         debug_text = get_params_message(github_user, True, runbook_logs_implementation.__name__,
                                         original_query=original_query,
                                         space=space,
@@ -89,7 +92,7 @@ def get_runbook_logs_wrapper(github_user, api_key, url, log_query):
                             + f"e.g. `Show the last 100 lines from the deployment logs for the latest run of runbook \"{sanitized_runbook_names[0]}\" in project \"{sanitized_project_names[0]}\".` "
                             + f"or `Show me the the deployment logs for step 2 for the latest run of runbook \"{sanitized_runbook_names[0]}\" in project \"{sanitized_project_names[0]}\".`")
 
-        log_query("runbook_logs_callback", f"""
+        log_query("runbook_logs_implementation", f"""
             Space ID: {space_id}
             Space Name: {actual_space_name}
             Project Names: {sanitized_project_names[0]}
