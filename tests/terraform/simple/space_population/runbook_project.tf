@@ -53,7 +53,7 @@ resource "octopusdeploy_runbook" "runbook" {
 
 resource "octopusdeploy_runbook_process" "runbook" {
   runbook_id = octopusdeploy_runbook.runbook.id
-  
+
   step {
     condition           = "Success"
     name                = "Hello world (using PowerShell)"
@@ -72,6 +72,60 @@ resource "octopusdeploy_runbook_process" "runbook" {
       properties = {
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.ScriptBody"   = "Write-Host 'Hello world, using PowerShell'\n\n#TODO: Experiment with steps of your own :)\n\nWrite-Host '[Learn more about the types of steps available in Octopus](https://oc.to/OnboardingAddStepsLearnMore)'"
+        "Octopus.Action.Script.Syntax"       = "PowerShell"
+      }
+      environments = [octopusdeploy_environment.environment_development.id]
+      excluded_environments = []
+      channels = []
+      tenant_tags = []
+      features = ["Octopus.Features.JsonConfigurationVariables"]
+    }
+
+    properties = {}
+    target_roles = []
+  }
+}
+
+resource "octopusdeploy_runbook" "runbook2" {
+  project_id         = octopusdeploy_project.deploy_frontend_project.id
+  name               = "Long Running Runbook"
+  description        = "Test Runbook"
+  multi_tenancy_mode = "Untenanted"
+  connectivity_policy {
+    allow_deployments_to_no_targets = false
+    exclude_unhealthy_targets       = false
+    skip_machine_behavior           = "SkipUnavailableMachines"
+  }
+  retention_policy {
+    quantity_to_keep = 10
+  }
+  environment_scope           = "Specified"
+  environments = [octopusdeploy_environment.environment_development.id]
+  default_guided_failure_mode = "EnvironmentDefault"
+  force_package_download      = true
+}
+
+resource "octopusdeploy_runbook_process" "runbook2" {
+  runbook_id = octopusdeploy_runbook.runbook2.id
+
+  step {
+    condition           = "Success"
+    name                = "Hello world (using PowerShell)"
+    package_requirement = "LetOctopusDecide"
+    start_trigger       = "StartAfterPrevious"
+
+    action {
+      action_type                        = "Octopus.Script"
+      name                               = "Hello world (using PowerShell)"
+      condition                          = "Success"
+      run_on_server                      = true
+      is_disabled                        = false
+      can_be_used_for_project_versioning = false
+      is_required                        = true
+      worker_pool_id                     = ""
+      properties = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.ScriptBody"   = "Write-Host 'Hello world, using PowerShell'\n\n#TODO: Experiment with steps of your own :)\n\nWrite-Host '[Learn more about the types of steps available in Octopus](https://oc.to/OnboardingAddStepsLearnMore)'\n\nsleep 60"
         "Octopus.Action.Script.Syntax"       = "PowerShell"
       }
       environments = [octopusdeploy_environment.environment_development.id]

@@ -1064,7 +1064,7 @@ class CopilotChatTest(unittest.TestCase):
     def test_cancel_runbook_run(self):
         space_name = "Simple"
         project_name = "Runbook Project"
-        runbook_name = "Backup Database"
+        runbook_name = "Long Running Runbook"
         environment_name = "Development"
         publish_runbook(space_name, project_name, runbook_name)
         space_id, space_name = get_space_id_and_name_from_name(space_name, Octopus_Api_Key, Octopus_Url)
