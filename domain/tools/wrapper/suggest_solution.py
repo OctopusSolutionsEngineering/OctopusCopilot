@@ -94,11 +94,13 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
             chat_response.append("🔍: " + ", ".join(limited_keywords))
 
             for github_issue in limited_issues[1]:
-                chat_response.append(f"🐛: [{github_issue['title']}]({github_issue['html_url']})")
+                if github_issue.get('html_url') and github_issue.get('title'):
+                    chat_response.append(f"🐛: [{github_issue.get('title')}]({github_issue.get('html_url')})")
 
             for zendesk_issue in limited_issues[0]:
-                chat_response.append(
-                    f"📧: [{zendesk_issue['subject']}](https://octopus.zendesk.com/agent/tickets/{zendesk_issue['id']})")
+                if zendesk_issue.get('subject') and zendesk_issue.get('id'):
+                    chat_response.append(
+                        f"📧: [{zendesk_issue.get('subject')}](https://octopus.zendesk.com/agent/tickets/{zendesk_issue.get('id')})")
 
             return callback(query, keywords, "\n\n".join(chat_response))
 
