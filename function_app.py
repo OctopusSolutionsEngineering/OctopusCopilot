@@ -10,29 +10,56 @@ from domain.context.github_docs import get_docs_context
 from domain.context.octopus_context import llm_message_query
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
-from domain.exceptions.openai_error import OpenAIContentFilter, OpenAITokenLengthExceeded
-from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequestFailed, SlackRequestFailed
+from domain.exceptions.openai_error import (
+    OpenAIContentFilter,
+    OpenAITokenLengthExceeded,
+)
+from domain.exceptions.request_failed import (
+    GitHubRequestFailed,
+    OctopusRequestFailed,
+    SlackRequestFailed,
+)
 from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
-from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid, UserNotLoggedIn, OctopusVersionInvalid
+from domain.exceptions.user_not_loggedin import (
+    OctopusApiKeyInvalid,
+    UserNotLoggedIn,
+    OctopusVersionInvalid,
+)
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_logging import log_query
 from domain.messages.docs_messages import docs_prompt
 from domain.messages.general import build_hcl_prompt
 from domain.messages.test_message import build_test_prompt
-from domain.requestparsing.extract_query import extract_query, extract_confirmation_state_and_id
-from domain.requests.github.copilot_request_context import get_github_user_from_form, build_form_tools
+from domain.requestparsing.extract_query import (
+    extract_query,
+    extract_confirmation_state_and_id,
+)
+from domain.requests.github.copilot_request_context import (
+    get_github_user_from_form,
+    build_form_tools,
+)
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
 from domain.tools.wrapper.function_call import FunctionCall
-from domain.tools.wrapper.function_definition import FunctionDefinitions, FunctionDefinition
-from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
+from domain.tools.wrapper.function_definition import (
+    FunctionDefinitions,
+    FunctionDefinition,
+)
+from domain.tools.wrapper.general_query import (
+    answer_general_query_wrapper,
+    AnswerGeneralQuery,
+)
 from domain.tools.wrapper.how_to import how_to_wrapper
 from domain.tools.wrapper.project_logs import answer_project_deployment_logs_wrapper
-from domain.tools.wrapper.project_variables import answer_project_variables_wrapper, \
-    answer_project_variables_usage_wrapper
-from domain.tools.wrapper.releases_and_deployments import answer_releases_and_deployments_wrapper
+from domain.tools.wrapper.project_variables import (
+    answer_project_variables_wrapper,
+    answer_project_variables_usage_wrapper,
+)
+from domain.tools.wrapper.releases_and_deployments import (
+    answer_releases_and_deployments_wrapper,
+)
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.transformers.minify_strings import minify_strings
 from domain.transformers.sse_transformers import convert_to_sse_response
@@ -40,30 +67,37 @@ from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
 from domain.url.url_builder import base_request_url
 from domain.versions.octopus_version import octopus_version_at_least
-from infrastructure.callbacks import load_callback, delete_callback, delete_old_callbacks
+from infrastructure.callbacks import (
+    load_callback,
+    delete_callback,
+    delete_old_callbacks,
+)
 from infrastructure.github import get_github_user, search_repo
 from infrastructure.http_pool import http
-from infrastructure.octopus import get_current_user, \
-    create_limited_api_key, get_version
+from infrastructure.octopus import get_current_user, create_limited_api_key, get_version
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
-from infrastructure.users import delete_old_user_details, \
-    save_users_octopus_url_from_login, database_connection_test, save_users_slack_login, delete_old_slack_user_details
+from infrastructure.users import (
+    delete_old_user_details,
+    save_users_octopus_url_from_login,
+    database_connection_test,
+    save_users_slack_login,
+    delete_old_slack_user_details,
+)
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
 
 GUEST_API_KEY = "API-GUEST"
 GITHUB_LOGIN_MESSAGE = (
-        f"To continue chatting please click the link below:\n\n[log in](https://github.com/login/oauth/authorize?"
-        + f"client_id={os.environ.get('GITHUB_CLIENT_ID')}"
-        + f"&redirect_url={urllib.parse.quote(os.environ.get('GITHUB_CLIENT_REDIRECT'))}"
-        + "&scope=user&allow_signup=false)")
+    f"To continue chatting please click the link below:\n\n[log in](https://github.com/login/oauth/authorize?"
+    + f"client_id={os.environ.get('GITHUB_CLIENT_ID')}"
+    + f"&redirect_url={urllib.parse.quote(os.environ.get('GITHUB_CLIENT_REDIRECT'))}"
+    + "&scope=user&allow_signup=false)"
+)
 
 
 @app.function_name(name="api_key_cleanup")
-@app.timer_trigger(schedule="0 0 * * * *",
-                   arg_name="mytimer",
-                   run_on_startup=True)
+@app.timer_trigger(schedule="0 0 * * * *", arg_name="mytimer", run_on_startup=True)
 def api_key_cleanup(mytimer: func.TimerRequest) -> None:
     """
     A function handler used to clean up old API keys
@@ -76,9 +110,7 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
 
 
 @app.function_name(name="slack_token_cleanup")
-@app.timer_trigger(schedule="0 0 * * * *",
-                   arg_name="mytimer",
-                   run_on_startup=True)
+@app.timer_trigger(schedule="0 0 * * * *", arg_name="mytimer", run_on_startup=True)
 def api_key_cleanup(mytimer: func.TimerRequest) -> None:
     """
     A function handler used to clean up old slack tokens keys
@@ -91,9 +123,7 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
 
 
 @app.function_name(name="callback_cleanup")
-@app.timer_trigger(schedule="0 0 * * * *",
-                   arg_name="mytimer",
-                   run_on_startup=True)
+@app.timer_trigger(schedule="0 0 * * * *", arg_name="mytimer", run_on_startup=True)
 def callback_cleanup(mytimer: func.TimerRequest) -> None:
     """
     A function handler used to clean up old callbacks
@@ -133,8 +163,7 @@ def octopus(req: func.HttpRequest) -> func.HttpResponse:
     """
     try:
         with open("html/login.html", "r") as file:
-            return func.HttpResponse(file.read(),
-                                     headers={"Content-Type": "text/html"})
+            return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to read HTML form", status_code=500)
@@ -159,45 +188,63 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
     """
     try:
         # Exchange the code
-        resp = http.request("POST",
-                            build_url("https://github.com", "/login/oauth/access_token",
-                                      dict(client_id=os.environ.get('GITHUB_CLIENT_ID'),
-                                           client_secret=os.environ.get('GITHUB_CLIENT_SECRET'),
-                                           code=req.params.get('code'))),
-                            headers={"Accept": "application/json"})
+        resp = http.request(
+            "POST",
+            build_url(
+                "https://github.com",
+                "/login/oauth/access_token",
+                dict(
+                    client_id=os.environ.get("GITHUB_CLIENT_ID"),
+                    client_secret=os.environ.get("GITHUB_CLIENT_SECRET"),
+                    code=req.params.get("code"),
+                ),
+            ),
+            headers={"Accept": "application/json"},
+        )
 
         if resp.status != 200:
-            raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+            raise GitHubRequestFailed(
+                f"Request failed with " + resp.data.decode("utf-8")
+            )
 
         response_json = resp.json()
 
         # You can get 200 ok response with a bad request:
         # https://github.com/orgs/community/discussions/57068
         if "access_token" not in response_json:
-            raise GitHubRequestFailed(f"Request failed with " + json.dumps(response_json))
+            raise GitHubRequestFailed(
+                f"Request failed with " + json.dumps(response_json)
+            )
 
         access_token = response_json["access_token"]
 
-        session_json = create_session_blob(get_github_user(access_token),
-                                           os.environ.get("ENCRYPTION_PASSWORD"),
-                                           os.environ.get("ENCRYPTION_SALT"))
+        session_json = create_session_blob(
+            get_github_user(access_token),
+            os.environ.get("ENCRYPTION_PASSWORD"),
+            os.environ.get("ENCRYPTION_SALT"),
+        )
 
         # Normally the session information would be persisted in a cookie. I could not get Azure functions to pass
         # through a cookie. So we pass it as a query param.
-        return func.HttpResponse(status_code=301,
-                                 headers={
-                                     "Location": f"{base_request_url(req)}/api/octopus?state=" + session_json})
+        return func.HttpResponse(
+            status_code=301,
+            headers={
+                "Location": f"{base_request_url(req)}/api/octopus?state=" + session_json
+            },
+        )
     except Exception as e:
         handle_error(e)
 
         try:
             with open("html/login-failed.html", "r") as file:
-                return func.HttpResponse(file.read(),
-                                         headers={"Content-Type": "text/html"},
-                                         status_code=500)
+                return func.HttpResponse(
+                    file.read(), headers={"Content-Type": "text/html"}, status_code=500
+                )
 
         except Exception as e:
-            return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
+            return func.HttpResponse(
+                "Failed to process GitHub login or read HTML form", status_code=500
+            )
 
 
 @app.route(route="slack_oauth_callback", auth_level=func.AuthLevel.ANONYMOUS)
@@ -210,42 +257,57 @@ def slack_oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
     """
     try:
         # Get the state, which is the details of the GitHub user to associated with this slack login
-        state = req.params.get('state')
+        state = req.params.get("state")
 
         if not state:
             raise SlackRequestFailed(f"Request did not include a state parameter")
 
         # Extract the GitHub user from the client side session
-        user_id = extract_session_blob(req.params.get("state"),
-                                       os.environ.get("ENCRYPTION_PASSWORD"),
-                                       os.environ.get("ENCRYPTION_SALT"))
+        user_id = extract_session_blob(
+            req.params.get("state"),
+            os.environ.get("ENCRYPTION_PASSWORD"),
+            os.environ.get("ENCRYPTION_SALT"),
+        )
 
         # Exchange the code
-        resp = http.request("POST",
-                            build_url("https://slack.com", "/api/oauth.v2.access",
-                                      dict(client_id=os.environ.get('SLACK_CLIENT_ID'),
-                                           client_secret=os.environ.get('SLACK_CLIENT_SECRET'),
-                                           code=req.params.get('code'))),
-                            headers={"Accept": "application/json"})
+        resp = http.request(
+            "POST",
+            build_url(
+                "https://slack.com",
+                "/api/oauth.v2.access",
+                dict(
+                    client_id=os.environ.get("SLACK_CLIENT_ID"),
+                    client_secret=os.environ.get("SLACK_CLIENT_SECRET"),
+                    code=req.params.get("code"),
+                ),
+            ),
+            headers={"Accept": "application/json"},
+        )
 
         if resp.status != 200:
-            raise SlackRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+            raise SlackRequestFailed(
+                f"Request failed with " + resp.data.decode("utf-8")
+            )
 
         response_json = resp.json()
 
         # You can get 200 ok response with a bad request:
         # https://github.com/orgs/community/discussions/57068
         if "access_token" not in response_json:
-            raise SlackRequestFailed(f"Request failed with " + json.dumps(response_json))
+            raise SlackRequestFailed(
+                f"Request failed with " + json.dumps(response_json)
+            )
 
         access_token = response_json["access_token"]
 
         # Persist the slack access token against the GitHub user
-        save_users_slack_login(user_id,
-                               access_token,
-                                          os.environ.get("ENCRYPTION_PASSWORD"),
-                                          os.environ.get("ENCRYPTION_SALT"),
-                                          get_functions_connection_string())
+        save_users_slack_login(
+            user_id,
+            access_token,
+            os.environ.get("ENCRYPTION_PASSWORD"),
+            os.environ.get("ENCRYPTION_SALT"),
+            get_functions_connection_string(),
+        )
 
         with open("html/slack-login-success.html", "r") as file:
             return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
@@ -254,12 +316,14 @@ def slack_oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
 
         try:
             with open("html/login-failed.html", "r") as file:
-                return func.HttpResponse(file.read(),
-                                         headers={"Content-Type": "text/html"},
-                                         status_code=500)
+                return func.HttpResponse(
+                    file.read(), headers={"Content-Type": "text/html"}, status_code=500
+                )
 
         except Exception as e:
-            return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
+            return func.HttpResponse(
+                "Failed to process GitHub login or read HTML form", status_code=500
+            )
 
 
 @app.route(route="form", auth_level=func.AuthLevel.ANONYMOUS)
@@ -287,46 +351,64 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
     try:
         body = json.loads(req.get_body())
 
-        octopus_version = get_version(body['url'])
+        octopus_version = get_version(body["url"])
 
         if not octopus_version_at_least(octopus_version, min_octopus_version):
             raise OctopusVersionInvalid(octopus_version, min_octopus_version)
 
         # Extract the GitHub user from the client side session
-        user_id = extract_session_blob(req.params.get("state"),
-                                       os.environ.get("ENCRYPTION_PASSWORD"),
-                                       os.environ.get("ENCRYPTION_SALT"))
+        user_id = extract_session_blob(
+            req.params.get("state"),
+            os.environ.get("ENCRYPTION_PASSWORD"),
+            os.environ.get("ENCRYPTION_SALT"),
+        )
 
         # Using the supplied API key, create a time limited API key that we'll save and reuse until
         # the next cleanup cycle triggered by api_key_cleanup. Using temporary keys mens we never
         # persist a long-lived key.
-        user = get_current_user(body['api'], body['url'])
+        user = get_current_user(body["api"], body["url"])
 
         # The guest API key is a fixed string, and we do not create a new temporary key
-        api_key = create_limited_api_key(user, body['api'], body['url']) \
-            if body['api'].upper().strip() != GUEST_API_KEY else GUEST_API_KEY
+        api_key = (
+            create_limited_api_key(user, body["api"], body["url"])
+            if body["api"].upper().strip() != GUEST_API_KEY
+            else GUEST_API_KEY
+        )
 
         # Persist the Octopus details against the GitHub user
-        save_users_octopus_url_from_login(user_id,
-                                          body['url'],
-                                          api_key,
-                                          os.environ.get("ENCRYPTION_PASSWORD"),
-                                          os.environ.get("ENCRYPTION_SALT"),
-                                          get_functions_connection_string())
+        save_users_octopus_url_from_login(
+            user_id,
+            body["url"],
+            api_key,
+            os.environ.get("ENCRYPTION_PASSWORD"),
+            os.environ.get("ENCRYPTION_SALT"),
+            get_functions_connection_string(),
+        )
         return func.HttpResponse(status_code=201)
     except OctopusVersionInvalid as e:
         handle_error(e)
         return func.HttpResponse(
-            json.dumps({"error": "octopus_too_old",
-                        "octopus_version": e.version,
-                        "required_version": e.required_version,
-                        "message": f"Octopus version is too old ({e.version}). Requires at least {e.required_version}"}),
-            status_code=400)
+            json.dumps(
+                {
+                    "error": "octopus_too_old",
+                    "octopus_version": e.version,
+                    "required_version": e.required_version,
+                    "message": f"Octopus version is too old ({e.version}). Requires at least {e.required_version}",
+                }
+            ),
+            status_code=400,
+        )
     except (OctopusRequestFailed, OctopusApiKeyInvalid, ValueError) as e:
         handle_error(e)
         return func.HttpResponse(
-            json.dumps({"error": "octopus_key_invalid", "message": "Failed to generate temporary key"}),
-            status_code=400)
+            json.dumps(
+                {
+                    "error": "octopus_key_invalid",
+                    "message": "Failed to generate temporary key",
+                }
+            ),
+            status_code=400,
+        )
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to read form HTML", status_code=500)
@@ -346,17 +428,25 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
         if not query.strip():
             logger.info(req.get_body())
             return func.HttpResponse(
-                convert_to_sse_response("Ask a question like \"What are the projects in the space called Default?\""),
-                headers=get_sse_headers())
+                convert_to_sse_response(
+                    'Ask a question like "What are the projects in the space called Default?"'
+                ),
+                headers=get_sse_headers(),
+            )
 
         # A function that ignores the query and the messages and returns the body.
         # The body contains all the extracted entities that must be returned from the Octopus API.
         def return_body_callback(tool_query, body, messages):
             return body
 
-        tools = FunctionDefinitions([
-            FunctionDefinition(answer_general_query_wrapper(query, return_body_callback), schema=AnswerGeneralQuery),
-        ])
+        tools = FunctionDefinitions(
+            [
+                FunctionDefinition(
+                    answer_general_query_wrapper(query, return_body_callback),
+                    schema=AnswerGeneralQuery,
+                ),
+            ]
+        )
 
         # Result here is the body returned by return_body_callback
         result = llm_tool_query(query, tools, log_query).call_function()
@@ -364,8 +454,9 @@ def query_parse(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(json.dumps(result), mimetype="application/json")
     except Exception as e:
         handle_error(e)
-        return func.HttpResponse("An exception was raised. See the logs for more details.",
-                                 status_code=500)
+        return func.HttpResponse(
+            "An exception was raised. See the logs for more details.", status_code=500
+        )
 
 
 @app.route(route="submit_query", auth_level=func.AuthLevel.ANONYMOUS)
@@ -389,8 +480,11 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
         if not query.strip():
             logger.info(req.get_body())
             return func.HttpResponse(
-                convert_to_sse_response("Ask a question like \"What are the projects in the space called Default?\""),
-                headers=get_sse_headers())
+                convert_to_sse_response(
+                    'Ask a question like "What are the projects in the space called Default?"'
+                ),
+                headers=get_sse_headers(),
+            )
 
         def get_context():
             return minify_strings(req.get_body().decode("utf-8"))
@@ -401,46 +495,82 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             Answers a general query about an Octopus space
             """
             body = json.loads(get_context())
-            return llm_message_query(build_hcl_prompt(),
-                                     {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
-                                      "input": query},
-                                     log_query)
+            return llm_message_query(
+                build_hcl_prompt(),
+                {
+                    "json": body["json"],
+                    "hcl": body["hcl"],
+                    "context": body["context"],
+                    "input": query,
+                },
+                log_query,
+            )
 
         def logs_query_callback(original_query, messages, *args, **kwargs):
             """
             Answers a general query about a logs
             """
             body = json.loads(get_context())
-            return llm_message_query(messages,
-                                     {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
-                                      "input": original_query}, log_query)
+            return llm_message_query(
+                messages,
+                {
+                    "json": body["json"],
+                    "hcl": body["hcl"],
+                    "context": body["context"],
+                    "input": original_query,
+                },
+                log_query,
+            )
 
         def project_variables_usage_callback(original_query, messages, *args, **kwargs):
             """
             A function that passes the updated query through to the LLM
             """
             body = json.loads(get_context())
-            return llm_message_query(messages,
-                                     {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
-                                      "input": original_query}, log_query)
+            return llm_message_query(
+                messages,
+                {
+                    "json": body["json"],
+                    "hcl": body["hcl"],
+                    "context": body["context"],
+                    "input": original_query,
+                },
+                log_query,
+            )
 
-        def releases_and_deployments_callback(original_query, messages, *args, **kwargs):
+        def releases_and_deployments_callback(
+            original_query, messages, *args, **kwargs
+        ):
             """
             A function that passes the updated query through to the LLM
             """
             body = json.loads(get_context())
-            return llm_message_query(messages,
-                                     {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
-                                      "input": original_query}, log_query)
+            return llm_message_query(
+                messages,
+                {
+                    "json": body["json"],
+                    "hcl": body["hcl"],
+                    "context": body["context"],
+                    "input": original_query,
+                },
+                log_query,
+            )
 
         def resource_specific_callback(original_query, messages, *args, **kwargs):
             """
             A function that passes the updated query through to the LLM
             """
             body = json.loads(get_context())
-            return llm_message_query(messages,
-                                     {"json": body["json"], "hcl": body["hcl"], "context": body["context"],
-                                      "input": original_query}, log_query)
+            return llm_message_query(
+                messages,
+                {
+                    "json": body["json"],
+                    "hcl": body["hcl"],
+                    "context": body["context"],
+                    "input": original_query,
+                },
+                log_query,
+            )
 
         def how_to_callback(original_query, keywords, *args, **kwargs):
             """
@@ -462,22 +592,47 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
             return chat_response
 
         def get_tools(tool_query):
-            return FunctionDefinitions([
-                FunctionDefinition(general_query_callback),
-                FunctionDefinition(
-                    answer_project_variables_wrapper(tool_query, project_variables_usage_callback, log_query)),
-                FunctionDefinition(
-                    answer_project_variables_usage_wrapper(tool_query, project_variables_usage_callback, log_query)),
-                FunctionDefinition(
-                    answer_releases_and_deployments_wrapper(tool_query,
-                                                            releases_and_deployments_callback,
-                                                            None,
-                                                            log_query)),
-                FunctionDefinition(answer_project_deployment_logs_wrapper(tool_query, logs_query_callback, log_query)),
-                FunctionDefinition(answer_machines_wrapper(tool_query, resource_specific_callback, log_query)),
-                FunctionDefinition(answer_certificates_wrapper(tool_query, resource_specific_callback, log_query)),
-                FunctionDefinition(how_to_wrapper(query, how_to_callback, log_query)),
-            ])
+            return FunctionDefinitions(
+                [
+                    FunctionDefinition(general_query_callback),
+                    FunctionDefinition(
+                        answer_project_variables_wrapper(
+                            tool_query, project_variables_usage_callback, log_query
+                        )
+                    ),
+                    FunctionDefinition(
+                        answer_project_variables_usage_wrapper(
+                            tool_query, project_variables_usage_callback, log_query
+                        )
+                    ),
+                    FunctionDefinition(
+                        answer_releases_and_deployments_wrapper(
+                            tool_query,
+                            releases_and_deployments_callback,
+                            None,
+                            log_query,
+                        )
+                    ),
+                    FunctionDefinition(
+                        answer_project_deployment_logs_wrapper(
+                            tool_query, logs_query_callback, log_query
+                        )
+                    ),
+                    FunctionDefinition(
+                        answer_machines_wrapper(
+                            tool_query, resource_specific_callback, log_query
+                        )
+                    ),
+                    FunctionDefinition(
+                        answer_certificates_wrapper(
+                            tool_query, resource_specific_callback, log_query
+                        )
+                    ),
+                    FunctionDefinition(
+                        how_to_wrapper(query, how_to_callback, log_query)
+                    ),
+                ]
+            )
 
         # Call the appropriate tool. This may be a straight pass through of the query and context,
         # or may update the query with additional examples.
@@ -495,11 +650,13 @@ def submit_query(req: func.HttpRequest) -> func.HttpResponse:
         handle_error(e)
         return func.HttpResponse(
             "The query and context exceeded the context window size. This error has been logged.",
-            status_code=500)
+            status_code=500,
+        )
     except Exception as e:
         handle_error(e)
-        return func.HttpResponse("An exception was raised. See the logs for more details.",
-                                 status_code=500)
+        return func.HttpResponse(
+            "An exception was raised. See the logs for more details.", status_code=500
+        )
 
 
 @app.route(route="form_handler", auth_level=func.AuthLevel.ANONYMOUS)
@@ -520,13 +677,18 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
         result = execute_callback(
-            req,
-            build_form_tools,
-            get_github_user_from_form(req)) or execute_function(req, build_form_tools)
+            req, build_form_tools, get_github_user_from_form(req)
+        ) or execute_function(req, build_form_tools)
 
         return func.HttpResponse(
-            convert_to_sse_response(result.response, result.prompt_title, result.prompt_message, result.prompt_id),
-            headers=get_sse_headers())
+            convert_to_sse_response(
+                result.response,
+                result.prompt_title,
+                result.prompt_message,
+                result.prompt_id,
+            ),
+            headers=get_sse_headers(),
+        )
 
     except UserNotLoggedIn as e:
         return handle_user_not_logged_in(e)
@@ -554,76 +716,97 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
 
 def handle_value_error(e):
     handle_error(e)
-    return func.HttpResponse(convert_to_sse_response(NO_FUNCTION_RESPONSE), headers=get_sse_headers())
+    return func.HttpResponse(
+        convert_to_sse_response(NO_FUNCTION_RESPONSE), headers=get_sse_headers()
+    )
 
 
 def handle_exception(e):
     handle_error(e)
-    return func.HttpResponse(convert_to_sse_response(
-        "An unexpected error was thrown. This error has been logged. I'm sorry for the inconvenience."),
-        headers=get_sse_headers())
+    return func.HttpResponse(
+        convert_to_sse_response(
+            "An unexpected error was thrown. This error has been logged. I'm sorry for the inconvenience."
+        ),
+        headers=get_sse_headers(),
+    )
 
 
 def handle_resource_not_found(e):
     return func.HttpResponse(
-        convert_to_sse_response(f"The {e.resource_type} \"{e.resource_name}\" was not found. "
-                                + "Either the resource does not exist or the API key does not "
-                                + "have permissions to access it."),
-        headers=get_sse_headers())
+        convert_to_sse_response(
+            f'The {e.resource_type} "{e.resource_name}" was not found. '
+            + "Either the resource does not exist or the API key does not "
+            + "have permissions to access it."
+        ),
+        headers=get_sse_headers(),
+    )
 
 
 def handle_space_not_found(e):
     return func.HttpResponse(
-        convert_to_sse_response(f"The space \"{e.space_name}\" was not found. "
-                                + "Either the space does not exist or the API key does not "
-                                + "have permissions to access it."),
-        headers=get_sse_headers())
+        convert_to_sse_response(
+            f'The space "{e.space_name}" was not found. '
+            + "Either the space does not exist or the API key does not "
+            + "have permissions to access it."
+        ),
+        headers=get_sse_headers(),
+    )
 
 
 def handle_not_authorized(e):
-    return func.HttpResponse(convert_to_sse_response("You are not authorized."),
-                             headers=get_sse_headers())
+    return func.HttpResponse(
+        convert_to_sse_response("You are not authorized."), headers=get_sse_headers()
+    )
 
 
 def handle_github_request_failed(e):
     handle_error(e)
     return func.HttpResponse(
-        convert_to_sse_response("The request to the GitHub API failed. "
-                                + "Your GitHub token is likely to be invalid."),
-        headers=get_sse_headers())
+        convert_to_sse_response(
+            "The request to the GitHub API failed. "
+            + "Your GitHub token is likely to be invalid."
+        ),
+        headers=get_sse_headers(),
+    )
 
 
 def handle_user_not_logged_in(e):
-    return func.HttpResponse(convert_to_sse_response("Your GitHub token is invalid."),
-                             headers=get_sse_headers())
+    return func.HttpResponse(
+        convert_to_sse_response("Your GitHub token is invalid."),
+        headers=get_sse_headers(),
+    )
 
 
 def handle_octopus_request_failed(e):
     handle_error(e)
-    return func.HttpResponse(convert_to_sse_response(
-        "The request to the Octopus API failed. "
-        + "Either your API key is invalid, does not have the required permissions, or there was an issue contacting the server."),
-        headers=get_sse_headers())
+    return func.HttpResponse(
+        convert_to_sse_response(
+            "The request to the Octopus API failed. "
+            + "Either your API key is invalid, does not have the required permissions, or there was an issue contacting the server."
+        ),
+        headers=get_sse_headers(),
+    )
 
 
 def get_sse_headers():
-    return {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache'
-    }
+    return {"Content-Type": "text/event-stream", "Cache-Control": "no-cache"}
 
 
 def request_config_details():
     try:
         logger.info("User has not configured Octopus instance")
-        return func.HttpResponse(convert_to_sse_response(GITHUB_LOGIN_MESSAGE),
-                                 status_code=200,
-                                 headers=get_sse_headers())
+        return func.HttpResponse(
+            convert_to_sse_response(GITHUB_LOGIN_MESSAGE),
+            status_code=200,
+            headers=get_sse_headers(),
+        )
     except Exception as e:
         handle_error(e)
-        return func.HttpResponse("data: An exception was raised. See the logs for more details.\n\n",
-                                 status_code=500,
-                                 headers=get_sse_headers())
+        return func.HttpResponse(
+            "data: An exception was raised. See the logs for more details.\n\n",
+            status_code=500,
+            headers=get_sse_headers(),
+        )
 
 
 def execute_callback(req, build_form_tools, github_user):
@@ -642,17 +825,20 @@ def execute_callback(req, build_form_tools, github_user):
     # We have received a confirmation, so call the callback
     if state and task_id:
         if state.strip().casefold() == "accepted":
-            function_name, arguments, query = load_callback(github_user, task_id.strip(),
-                                                            get_functions_connection_string())
+            function_name, arguments, query = load_callback(
+                github_user, task_id.strip(), get_functions_connection_string()
+            )
             parsed_args = {}
             if arguments:
                 parsed_args = json.loads(arguments)
 
             if function_name:
                 functions = build_form_tools(query, req)
-                result = FunctionCall(functions.get_callback_function(function_name),
-                                      function_name,
-                                      parsed_args).call_function()
+                result = FunctionCall(
+                    functions.get_callback_function(function_name),
+                    function_name,
+                    parsed_args,
+                ).call_function()
                 delete_callback(task_id, get_functions_connection_string())
                 return result
 
@@ -669,16 +855,14 @@ def execute_function(req, build_form_tools):
     logger.info("Query: " + (query or "None"))
 
     if not query.strip():
-        return CopilotResponse("Ask a question like \"What are the projects in the space called Default?\"")
+        return CopilotResponse(
+            'Ask a question like "What are the projects in the space called Default?"'
+        )
 
     # https://community.openai.com/t/is-there-a-way-to-force-the-model-to-use-function-calls/275672/9
     extra_messages = [
-        ('system', "You will be penalized for answering the question directly."),
-        ('system', "You must select from one of the supplied tools.")
+        ("system", "You will be penalized for answering the question directly."),
+        ("system", "You must select from one of the supplied tools."),
     ]
 
-    return llm_tool_query(
-        query,
-        functions,
-        log_query,
-        extra_messages).call_function()
+    return llm_tool_query(query, functions, log_query, extra_messages).call_function()
