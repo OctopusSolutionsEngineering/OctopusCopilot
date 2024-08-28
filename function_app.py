@@ -47,7 +47,7 @@ from infrastructure.octopus import get_current_user, \
     create_limited_api_key, get_version
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
 from infrastructure.users import delete_old_user_details, \
-    save_users_octopus_url_from_login, database_connection_test, save_users_slack_login
+    save_users_octopus_url_from_login, database_connection_test, save_users_slack_login, delete_old_slack_user_details
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
@@ -71,6 +71,21 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
     """
     try:
         delete_old_user_details(get_functions_connection_string())
+    except Exception as e:
+        handle_error(e)
+
+
+@app.function_name(name="slack_token_cleanup")
+@app.timer_trigger(schedule="0 0 * * * *",
+                   arg_name="mytimer",
+                   run_on_startup=True)
+def api_key_cleanup(mytimer: func.TimerRequest) -> None:
+    """
+    A function handler used to clean up old slack tokens keys
+    :param mytimer: The Timer request
+    """
+    try:
+        delete_old_slack_user_details(get_functions_connection_string())
     except Exception as e:
         handle_error(e)
 

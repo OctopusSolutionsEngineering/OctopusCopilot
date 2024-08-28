@@ -393,6 +393,37 @@ def delete_old_user_details(connection_string):
 
 
 @logging_wrapper
+def delete_old_slack_user_details(connection_string):
+    """
+    Clean up any old slack tokens
+    :param connection_string: The database connection string
+    :return: The number of deleted records.
+    """
+
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (delete_old_slack_user_details).')
+
+    try:
+        table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+        table_client = table_service_client.get_table_client(table_name="slackusers")
+
+        old_records = (datetime.now() - timedelta(hours=8)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+        rows = table_client.query_entities(f"Timestamp lt datetime'{old_records}'")
+        counter = 0
+        for row in rows:
+            counter = counter + 1
+            table_client.delete_entity("github.com", row['RowKey'])
+
+        logger.info(f"Cleaned up {counter} entries.")
+
+        return counter
+
+    except HttpResponseError as e:
+        handle_error(e)
+
+
+@logging_wrapper
 def delete_user_details(username, connection_string):
     """
     This function is effectively a logout
