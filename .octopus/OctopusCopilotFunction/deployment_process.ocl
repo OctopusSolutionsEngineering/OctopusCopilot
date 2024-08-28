@@ -128,7 +128,17 @@ step "deploy-with-cli" {
                       "name": "ZENDESK_TOKEN",
                       "value": "#{ZenDesk.Api.Token}",
                       "slotSetting": false
-                   } 
+                   },
+                   {
+                      "name": "SLACK_CLIENT_ID",
+                      "value": "#{Slack.App.ClientID}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "SLACK_CLIENT_SECRET",
+                      "value": "#{Slack.App.ClientSecret}",
+                      "slotSetting": false
+                   }
                 ] 
                 EOL
                 
