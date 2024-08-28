@@ -12,6 +12,13 @@ class GitHubRequestFailed(Exception):
     pass
 
 
+class SlackRequestFailed(Exception):
+    """
+    Represents a failed request to the Slack api
+    """
+    pass
+
+
 class ZenDeskRequestFailed(Exception):
     """
     Represents a failed request to the ZenDesk api

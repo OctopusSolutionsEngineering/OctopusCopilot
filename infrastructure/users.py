@@ -282,6 +282,43 @@ def save_users_octopus_url(username, octopus_url, encrypted_api_key, tag, nonce,
 
 
 @logging_wrapper
+def save_users_slack_token(username, encrypted_access_token, tag, nonce, connection_string):
+    ensure_string_not_empty(username, "username must be the GitHub user's ID (save_users_slack_token).")
+    ensure_string_not_empty(encrypted_access_token,
+                            "encrypted_access_token must be a the slack access token of a service account (save_users_slack_token).")
+    ensure_string_not_empty(tag,
+                            "tag must be a the tag associated with the encrypted api key (save_users_slack_token).")
+    ensure_string_not_empty(nonce,
+                            "nonce must be a the nonce associated with the encrypted api key (save_users_slack_token).")
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (save_users_slack_token).')
+
+    user = {
+        'PartitionKey': "github.com",
+        'RowKey': username,
+        'SlackAccessToken': encrypted_access_token,
+        'EncryptionTag': tag,
+        'EncryptionNonce': nonce,
+    }
+
+    table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+    table_client = table_service_client.create_table_if_not_exists("slackusers")
+    table_client.upsert_entity(user)
+
+
+@logging_wrapper
+def save_users_slack_login(username, access_token, encryption_password, encryption_salt, connection_string):
+    ensure_string_not_empty(username,
+                            "username must be the GitHub user ID (save_users_slack_login).")
+    ensure_string_not_empty(access_token, "access_token must be the Slack access token URL (save_users_slack_login).")
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (save_users_slack_login).')
+
+    encryption_password = generate_password(encryption_password, encryption_salt)
+    encrypted_api_key, tag, nonce = encrypt_eax(access_token, encryption_password, encryption_salt)
+    save_users_slack_token(username, access_token, encrypted_api_key, tag, nonce, connection_string)
+
+@logging_wrapper
 def save_users_octopus_url_from_login(username, url, api, encryption_password, encryption_salt, connection_string):
     ensure_string_not_empty(username,
                             "username must be the GitHub user ID (save_users_octopus_url_from_login).")
@@ -309,6 +346,17 @@ def get_users_details(username, connection_string):
 
     table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
     table_client = table_service_client.create_table_if_not_exists("users")
+    return table_client.get_entity("github.com", username)
+
+
+@logging_wrapper
+def get_users_slack_details(username, connection_string):
+    ensure_string_not_empty(username, "username must be the GitHub user's ID (get_users_slack_details).")
+    ensure_string_not_empty(connection_string,
+                            'connection_string must be the connection string (get_users_slack_details).')
+
+    table_service_client = TableServiceClient.from_connection_string(conn_str=connection_string)
+    table_client = table_service_client.create_table_if_not_exists("slackusers")
     return table_client.get_entity("github.com", username)
 
 

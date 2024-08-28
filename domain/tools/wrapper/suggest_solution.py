@@ -1,6 +1,9 @@
 import asyncio
+import os
 
+from domain.slack.slack_urls import generate_slack_login
 from domain.transformers.minify_strings import minify_strings, replace_space_codes
+from domain.url.session import create_session_blob
 from infrastructure.github import search_issues, get_issue_comments
 from infrastructure.openai import llm_message_query
 from infrastructure.zendesk import get_zen_tickets, get_zen_comments
@@ -9,7 +12,7 @@ max_issues = 10
 max_keywords = 5
 
 
-def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendesk_token, logging=None):
+def suggest_solution_wrapper(query, callback, github_user, github_token, zendesk_user, zendesk_token, slack_token, encryption_password, encryption_salt, logging=None):
     def answer_support_question(keywords=None, **kwargs):
         """Responds to a prompt asking for advice or a solution to a problem.
         The prompts starts with the phrase "Suggest a solution for" or "Provide a solution for".
@@ -92,6 +95,12 @@ def suggest_solution_wrapper(query, callback, github_token, zendesk_user, zendes
             chat_response = [llm_message_query(messages, context)]
 
             chat_response.append("🔍: " + ", ".join(limited_keywords))
+
+            if not slack_token:
+                # Is the GitHub user really a secret we need to encrypt? Probably not, but the ability to decrypt this
+                # value on the return leg is a good indication the request came from us.
+                session_json = create_session_blob(github_user,encryption_password, encryption_salt)
+                chat_response.append(f"🐛: [Log in to Slack to include Slack messages in the context]({session_json})")
 
             for github_issue in limited_issues[1]:
                 if github_issue.get('html_url') and github_issue.get('title'):

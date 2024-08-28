@@ -11,7 +11,7 @@ from domain.context.octopus_context import llm_message_query
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
 from domain.exceptions.openai_error import OpenAIContentFilter, OpenAITokenLengthExceeded
-from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequestFailed
+from domain.exceptions.request_failed import GitHubRequestFailed, OctopusRequestFailed, SlackRequestFailed
 from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_configured import UserNotConfigured
@@ -47,13 +47,13 @@ from infrastructure.octopus import get_current_user, \
     create_limited_api_key, get_version
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
 from infrastructure.users import delete_old_user_details, \
-    save_users_octopus_url_from_login, database_connection_test
+    save_users_octopus_url_from_login, database_connection_test, save_users_slack_login
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
 
 GUEST_API_KEY = "API-GUEST"
-LOGIN_MESSAGE = (
+GITHUB_LOGIN_MESSAGE = (
         f"To continue chatting please click the link below:\n\n[log in](https://github.com/login/oauth/authorize?"
         + f"client_id={os.environ.get('GITHUB_CLIENT_ID')}"
         + f"&redirect_url={urllib.parse.quote(os.environ.get('GITHUB_CLIENT_REDIRECT'))}"
@@ -172,6 +172,68 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(status_code=301,
                                  headers={
                                      "Location": f"{base_request_url(req)}/api/octopus?state=" + session_json})
+    except Exception as e:
+        handle_error(e)
+
+        try:
+            with open("html/login-failed.html", "r") as file:
+                return func.HttpResponse(file.read(),
+                                         headers={"Content-Type": "text/html"},
+                                         status_code=500)
+
+        except Exception as e:
+            return func.HttpResponse("Failed to process GitHub login or read HTML form", status_code=500)
+
+
+@app.route(route="slack_oauth_callback", auth_level=func.AuthLevel.ANONYMOUS)
+def slack_oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    Responds to the Slack Oauth login callback by persisting the access token in the database against
+    the GitHub user.
+    :param req: The HTTP request
+    :return: The HTML form
+    """
+    try:
+        # Get the state, which is the details of the GitHub user to associated with this slack login
+        state = req.params.get('state')
+
+        if not state:
+            raise SlackRequestFailed(f"Request did not include a state parameter")
+
+        # Extract the GitHub user from the client side session
+        user_id = extract_session_blob(req.params.get("state"),
+                                       os.environ.get("ENCRYPTION_PASSWORD"),
+                                       os.environ.get("ENCRYPTION_SALT"))
+
+        # Exchange the code
+        resp = http.request("POST",
+                            build_url("https://slack.com", "/api/oauth.v2.access",
+                                      dict(client_id=os.environ.get('SLACK_CLIENT_ID'),
+                                           client_secret=os.environ.get('SLACK_CLIENT_SECRET'),
+                                           code=req.params.get('code'))),
+                            headers={"Accept": "application/json"})
+
+        if resp.status != 200:
+            raise SlackRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+
+        response_json = resp.json()
+
+        # You can get 200 ok response with a bad request:
+        # https://github.com/orgs/community/discussions/57068
+        if "access_token" not in response_json:
+            raise SlackRequestFailed(f"Request failed with " + json.dumps(response_json))
+
+        access_token = response_json["access_token"]
+
+        # Persist the slack access token against the GitHub user
+        save_users_slack_login(user_id,
+                               access_token,
+                                          os.environ.get("ENCRYPTION_PASSWORD"),
+                                          os.environ.get("ENCRYPTION_SALT"),
+                                          get_functions_connection_string())
+
+        with open("html/slack-login-success.html", "r") as file:
+            return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
     except Exception as e:
         handle_error(e)
 
@@ -539,7 +601,7 @@ def get_sse_headers():
 def request_config_details():
     try:
         logger.info("User has not configured Octopus instance")
-        return func.HttpResponse(convert_to_sse_response(LOGIN_MESSAGE),
+        return func.HttpResponse(convert_to_sse_response(GITHUB_LOGIN_MESSAGE),
                                  status_code=200,
                                  headers=get_sse_headers())
     except Exception as e:

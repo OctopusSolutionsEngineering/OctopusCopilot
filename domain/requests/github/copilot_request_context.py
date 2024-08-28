@@ -7,6 +7,7 @@ from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
 from domain.config.zendesk import get_zendesk_user, get_zendesk_token
 from domain.encryption.encryption import decrypt_eax, generate_password
+from domain.exceptions.slack_not_logged_in import SlackTokenInvalid
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
@@ -68,7 +69,7 @@ from domain.tools.wrapper.suggest_solution import suggest_solution_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.tools.wrapper.task_summary_wrapper import show_task_summary_wrapper
 from infrastructure.github import get_github_user
-from infrastructure.users import get_users_details
+from infrastructure.users import get_users_details, get_users_slack_details
 
 logger = configure_logging(__name__)
 
@@ -138,6 +139,45 @@ def get_api_key_and_url(req: func.HttpRequest):
         raise OctopusApiKeyInvalid()
 
 
+def get_slack_token(req: func.HttpRequest):
+    try:
+        # Then get the details saved for a user
+        github_username = get_github_user_from_form(req)
+
+        if not github_username:
+            raise UserNotLoggedIn()
+
+        try:
+            github_user = get_users_slack_details(github_username, get_functions_connection_string())
+
+            # We need to configure the Octopus details first because we need to know the service account id
+            # before attempting to generate an ID token.
+            if "SlackAccessToken" not in github_user or "EncryptionTag" not in github_user or "EncryptionNonce" not in github_user:
+                logger.info("No SlackAccessToken, EncryptionTag, or EncryptionNonce")
+                raise UserNotConfigured()
+
+        except HttpResponseError as e:
+            # assume any exception means the user must log in
+            raise UserNotConfigured()
+
+        tag = github_user["EncryptionTag"]
+        nonce = github_user["EncryptionNonce"]
+        token = github_user["SlackAccessToken"]
+
+        decrypted_token = decrypt_eax(
+            generate_password(os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")),
+            token,
+            tag,
+            nonce,
+            os.environ.get("ENCRYPTION_SALT"))
+
+        return decrypted_token
+
+    except ValueError as e:
+        logger.info("Encryption password must have changed because the token could not be decrypted")
+        raise SlackTokenInvalid()
+
+
 def build_form_tools(query, req: func.HttpRequest):
     """
     Builds a set of tools configured for use with HTTP requests (i.e. API key
@@ -147,6 +187,7 @@ def build_form_tools(query, req: func.HttpRequest):
     """
 
     api_key, url = get_api_key_and_url(req)
+    slack_token = get_slack_token(req)
 
     # A bunch of functions that do the same thing
     help_functions = [FunctionDefinition(tool) for tool in provide_help_wrapper(
@@ -359,6 +400,9 @@ def build_form_tools(query, req: func.HttpRequest):
                                      get_github_token(req),
                                      get_zendesk_user(),
                                      get_zendesk_token(),
+                                     slack_token,
+                                     os.environ.get("ENCRYPTION_PASSWORD"),
+                                     os.environ.get("ENCRYPTION_SALT"),
                                      log_query),
             is_enabled=is_admin_user(get_github_user_from_form(req), get_admin_users())
         )
