@@ -29,6 +29,7 @@ fuzzywuzzy==0.18.0
 python-Levenshtein==0.25.1
 expiring-dict==1.1.0
 html-sanitizer==2.4.4
+slack-sdk==3.31.0
 
 
 # Required for stringlifier

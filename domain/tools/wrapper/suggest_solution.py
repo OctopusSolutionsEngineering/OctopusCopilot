@@ -1,6 +1,8 @@
 import asyncio
 import os
 
+from slack_sdk import WebClient
+
 from domain.slack.slack_urls import generate_slack_login
 from domain.transformers.minify_strings import minify_strings, replace_space_codes
 from domain.url.session import create_session_blob
@@ -43,6 +45,9 @@ def suggest_solution_wrapper(query, callback, github_user, github_token, zendesk
                 get_tickets(limited_keywords, zendesk_user, zendesk_token),
                 get_issues(limited_keywords, github_token), return_exceptions=True)
 
+            # Get slack messages
+            slack_messages = await get_slack_messages(slack_token, limited_keywords)
+
             # Gracefully fallback with any exceptions
             if logging:
                 if isinstance(issues[0], Exception):
@@ -78,6 +83,8 @@ def suggest_solution_wrapper(query, callback, github_user, github_token, zendesk
                 ('system',
                  'The supplied issues are related to bugs related to the same topics as the question being asked.'),
                 ('system',
+                 'The supplied slack messages are related to the same topics as the question being asked.'),
+                ('system',
                  'Include any potential solutions that were provided in the supplied conversations and issues in the answer.'),
                 ('system',
                  'Include any troubleshooting steps that were provided in the supplied conversations and issues in the answer.'),
@@ -88,6 +95,8 @@ def suggest_solution_wrapper(query, callback, github_user, github_token, zendesk
                   fixed_external_context[0]],
                 *[('user', "Issue: ###\n" + context.replace("{", "{{").replace("}", "}}") + "\n###") for context in
                   fixed_external_context[1]],
+                *[('user', "Slack Message: ###\n" + context.replace("{", "{{").replace("}", "}}") + "\n###") for context in
+                  slack_messages],
                 ('user', "Question: {input}"),
                 ('user', "Answer:")]
 
@@ -138,6 +147,15 @@ async def combine_issue_comments(issue_number, github_token):
     # combined_comments = anonymize_message(sanitize_message(combined_comments))
 
     return combined_comments
+
+
+async def get_slack_messages(slack_token, keywords):
+    if not slack_token:
+        return []
+
+    client = WebClient(token=slack_token)
+    api_response = client.search_messages(query=" ".join(keywords), sort="timestamp", sort_dir="desc")
+    return [match['text'] for match in api_response['messages']['matches'] if match.get('text')]
 
 
 async def get_tickets(keywords, zendesk_user, zendesk_token):
