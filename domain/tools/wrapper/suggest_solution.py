@@ -59,7 +59,9 @@ def suggest_solution_wrapper(
             )
 
             # Get slack messages
-            slack_messages = await get_slack_messages(slack_token, limited_keywords)
+            slack_messages = await get_slack_messages(
+                slack_token, limited_keywords, logging
+            )
 
             # Gracefully fallback with any exceptions
             if logging:
@@ -236,17 +238,24 @@ async def combine_issue_comments(issue_number, github_token):
     return combined_comments
 
 
-async def get_slack_messages(slack_token, keywords):
+async def get_slack_messages(slack_token, keywords, logging):
     if not slack_token:
         return []
 
-    client = WebClient(token=slack_token)
-    api_response = client.search_messages(
-        query=" OR ".join(['"' + phrase + '"' for phrase in keywords]),
-        sort="timestamp",
-        sort_dir="desc",
-    )
-    return [match for match in api_response["messages"]["matches"] if match.get("text")]
+    try:
+        client = WebClient(token=slack_token)
+        api_response = client.search_messages(
+            query=" OR ".join(['"' + phrase + '"' for phrase in keywords]),
+            sort="timestamp",
+            sort_dir="desc",
+        )
+        return [
+            match for match in api_response["messages"]["matches"] if match.get("text")
+        ]
+    except Exception as e:
+        if logging:
+            logging("Slack Exception", str(e))
+        return []
 
 
 async def get_tickets(keywords, zendesk_user, zendesk_token):
