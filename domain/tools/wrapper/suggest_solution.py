@@ -84,6 +84,8 @@ def suggest_solution_wrapper(
                 return_exceptions=True,
             )
 
+            slack_context = [message["text"] for message in slack_messages]
+
             # Gracefully fallback with any exceptions
             if logging:
                 if isinstance(external_context[0], Exception):
@@ -161,7 +163,7 @@ def suggest_solution_wrapper(
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
                     )
-                    for context in slack_messages
+                    for context in slack_context
                 ],
                 ("user", "Question: {input}"),
                 ("user", "Answer:"),
@@ -192,6 +194,12 @@ def suggest_solution_wrapper(
                 if zendesk_issue.get("subject") and zendesk_issue.get("id"):
                     chat_response.append(
                         f"📧: [{zendesk_issue.get('subject')}](https://octopus.zendesk.com/agent/tickets/{zendesk_issue.get('id')})"
+                    )
+
+            for slack_message in slack_messages:
+                if slack_message.get("permalink") and slack_message.get("text"):
+                    chat_response.append(
+                        f"🗨: [{slack_message['text'][:50]}]({slack_message.get("permalink")})"
                     )
 
             return callback(query, keywords, "\n\n".join(chat_response))
@@ -236,11 +244,7 @@ async def get_slack_messages(slack_token, keywords):
     api_response = client.search_messages(
         query=" ".join(keywords), sort="timestamp", sort_dir="desc"
     )
-    return [
-        match["text"]
-        for match in api_response["messages"]["matches"]
-        if match.get("text")
-    ]
+    return [match for match in api_response["messages"]["matches"] if match.get("text")]
 
 
 async def get_tickets(keywords, zendesk_user, zendesk_token):
