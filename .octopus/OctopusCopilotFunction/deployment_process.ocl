@@ -138,6 +138,11 @@ step "deploy-with-cli" {
                       "name": "SLACK_CLIENT_SECRET",
                       "value": "#{Slack.App.ClientSecret}",
                       "slotSetting": false
+                   },
+                   {
+                      "name": "SLACK_CLIENT_REDIRECT",
+                      "value": "#{Slack.App.Redirect}",
+                      "slotSetting": false
                    }
                 ] 
                 EOL
