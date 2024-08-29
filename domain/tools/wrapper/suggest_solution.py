@@ -199,7 +199,7 @@ def suggest_solution_wrapper(
             for slack_message in slack_messages:
                 if slack_message.get("permalink") and slack_message.get("text"):
                     chat_response.append(
-                        f"🗨: [{slack_message['text'][:50]}]({slack_message.get("permalink")})"
+                        f"🗨: [{slack_message['text'][:50]}]({slack_message.get('permalink')})"
                     )
 
             return callback(query, keywords, "\n\n".join(chat_response))
