@@ -5,6 +5,7 @@ from slack_sdk.web.async_client import AsyncWebClient
 from domain.exceptions.none_on_exception import (
     default_on_exception_async,
 )
+from domain.sanitizers.sanitize_keywords import sanitize_keywords
 from domain.slack.slack_urls import generate_slack_login
 from domain.transformers.minify_strings import minify_strings, replace_space_codes
 from domain.transformers.trim_strings import trim_string_with_ellipsis
@@ -52,25 +53,16 @@ def suggest_solution_wrapper(
                 if logging:
                     logging(f"Unexpected Key: {key}", "Value: {value}")
 
-            # A key word like "Octopus" is not helpful
-            invalid_keywords = ["octopus", "octopus deploy", "octopusdeploy"]
-            filtered_keywords = [
-                keyword
-                for keyword in keywords
-                if keyword.casefold().strip() not in invalid_keywords
-            ]
-            limited_keywords = filtered_keywords[:max_keywords]
+            # A key word like "Octopus" is not helpful, so get a sanitized list of keywords
+            limited_keywords = sanitize_keywords(keywords, max_keywords)
 
-            # Get the list of issues and tickets
+            # Get the list of issues, tickets, and slack messages.
+            # Batch all of these async calls up for better performance
             issues = await asyncio.gather(
                 get_tickets(limited_keywords, zendesk_user, zendesk_token),
                 get_issues(limited_keywords, github_token),
+                get_slack_messages(slack_token, limited_keywords),
                 return_exceptions=True,
-            )
-
-            # Best effort attempt to get Get slack messages, but ignoring exceptions
-            slack_messages = await default_on_exception_async(
-                lambda: get_slack_messages(slack_token, limited_keywords), []
             )
 
             # Gracefully fallback with any exceptions
@@ -79,7 +71,10 @@ def suggest_solution_wrapper(
                     logging("Zendesk Exception", str(issues[0]))
                 if isinstance(issues[1], Exception):
                     logging("GitHub Exception", str(issues[1]))
+                if isinstance(issues[1], Exception):
+                    logging("Slack Exception", str(issues[2]))
 
+            # Limit the number of responses to the max_issues
             limited_issues = [
                 issues[0][:max_issues] if not isinstance(issues[0], Exception) else [],
                 (
@@ -87,6 +82,7 @@ def suggest_solution_wrapper(
                     if not isinstance(issues[1], Exception)
                     else []
                 ),
+                issues[2][:max_issues] if not isinstance(issues[2], Exception) else [],
             ]
 
             # Get the contents of the issues and tickets
@@ -96,7 +92,7 @@ def suggest_solution_wrapper(
                 return_exceptions=True,
             )
 
-            slack_context = [message["text"] for message in slack_messages[:max_issues]]
+            slack_context = [message["text"] for message in issues[2][:max_issues]]
 
             # Gracefully fallback with any exceptions
             if logging:
@@ -182,9 +178,8 @@ def suggest_solution_wrapper(
             ]
 
             context = {"input": query}
-            chat_response = [llm_message_query(messages, context)]
 
-            chat_response.append("🔍: " + ", ".join(limited_keywords))
+            chat_response = []
 
             if not slack_token:
                 # Is the GitHub user really a secret we need to encrypt? Probably not, but the ability to decrypt this
@@ -192,21 +187,30 @@ def suggest_solution_wrapper(
                 session_json = create_session_blob(
                     github_user, encryption_password, encryption_salt
                 )
+                # Build a login link to include in the response
                 chat_response.append(f"❗: {generate_slack_login(session_json)}")
 
-            for github_issue in limited_issues[1]:
-                if github_issue.get("html_url") and github_issue.get("title"):
-                    chat_response.append(
-                        f"🐛: [{github_issue.get('title')}]({github_issue.get('html_url')})"
-                    )
+            chat_response.append(llm_message_query(messages, context))
 
+            # List the keywords for reference
+            chat_response.append("🔍: " + ", ".join(limited_keywords))
+
+            # List the Zendesk tickets for reference
             for zendesk_issue in limited_issues[0]:
                 if zendesk_issue.get("subject") and zendesk_issue.get("id"):
                     chat_response.append(
                         f"📧: [{zendesk_issue.get('subject')}](https://octopus.zendesk.com/agent/tickets/{zendesk_issue.get('id')})"
                     )
 
-            for slack_message in slack_messages:
+            # List the GitHub issues for reference
+            for github_issue in limited_issues[1]:
+                if github_issue.get("html_url") and github_issue.get("title"):
+                    chat_response.append(
+                        f"🐛: [{github_issue.get('title')}]({github_issue.get('html_url')})"
+                    )
+
+            # List the Slack messages for reference
+            for slack_message in limited_issues[2]:
                 if slack_message.get("permalink") and slack_message.get("text"):
                     trimmed_message = trim_string_with_ellipsis(
                         slack_message["text"].replace("\n", " "), 100
@@ -250,6 +254,7 @@ async def combine_issue_comments(issue_number, github_token):
 
 
 async def get_slack_messages(slack_token, keywords):
+    # Graceful fallback in the absense of a token
     if not slack_token:
         return []
 
