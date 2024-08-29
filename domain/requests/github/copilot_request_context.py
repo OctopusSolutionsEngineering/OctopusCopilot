@@ -642,10 +642,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     get_zendesk_user(),
                     get_zendesk_token(),
                     slack_token,
-                    generate_password(
-                        os.environ.get("ENCRYPTION_PASSWORD"),
-                        os.environ.get("ENCRYPTION_SALT"),
-                    ),
+                    os.environ.get("ENCRYPTION_PASSWORD"),
                     os.environ.get("ENCRYPTION_SALT"),
                     log_query,
                 ),

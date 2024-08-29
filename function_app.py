@@ -196,9 +196,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
 
         session_json = create_session_blob(
             get_github_user(access_token),
-            generate_password(
-                os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")
-            ),
+            os.environ.get("ENCRYPTION_PASSWORD"),
             os.environ.get("ENCRYPTION_SALT"),
         )
 

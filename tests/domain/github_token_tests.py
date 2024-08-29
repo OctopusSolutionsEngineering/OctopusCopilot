@@ -25,9 +25,7 @@ class GitHubTokenTests(unittest.TestCase):
     def test_extract_encrypted_token(self):
         session_json = create_session_blob(
             "EncryptedToken",
-            generate_password(
-                os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")
-            ),
+            os.environ.get("ENCRYPTION_PASSWORD"),
             os.environ.get("ENCRYPTION_SALT"),
         )
 
