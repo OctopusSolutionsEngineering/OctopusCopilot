@@ -4,6 +4,7 @@ import os
 import azure.functions as func
 from azure.core.exceptions import HttpResponseError
 
+from domain.b64.b64_encoder import decode_string_b64
 from domain.config.database import get_functions_connection_string
 from domain.config.users import get_admin_users
 from domain.config.zendesk import get_zendesk_user, get_zendesk_token
@@ -143,16 +144,24 @@ def get_slack_token_from_request(req: func.HttpRequest):
 def get_github_token(req: func.HttpRequest):
     # The token may have been sent in an encrypted form from an untrusted client.
     # This is how the web based interface can send a token.
-    if req.headers.get("X-GitHub-Encrypted-Token"):
-        encrypted_token = json.load(req.headers.get("X-GitHub-Encrypted-Token", ""))
-        return decrypt_eax(
-            generate_password(
-                os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")
-            ),
-            encrypted_token.get("state"),
-            encrypted_token.get("tag"),
-            encrypted_token.get("nonce"),
-            os.environ.get("ENCRYPTION_SALT"),
+    try:
+        if req.headers.get("X-GitHub-Encrypted-Token"):
+            encrypted_token = json.load(
+                decode_string_b64(req.headers.get("X-GitHub-Encrypted-Token", ""))
+            )
+            return decrypt_eax(
+                generate_password(
+                    os.environ.get("ENCRYPTION_PASSWORD"),
+                    os.environ.get("ENCRYPTION_SALT"),
+                ),
+                encrypted_token.get("state"),
+                encrypted_token.get("tag"),
+                encrypted_token.get("nonce"),
+                os.environ.get("ENCRYPTION_SALT"),
+            )
+    except ValueError as e:
+        logger.info(
+            "Encryption password must have changed because the token could not be decrypted"
         )
 
     # Otherwise the token should be sent in the header. This is how Copilot sends the tokens.
