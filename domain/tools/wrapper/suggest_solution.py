@@ -2,6 +2,7 @@ import asyncio
 
 from slack_sdk.web.async_client import AsyncWebClient
 
+from domain.sanitizers.sanitize_logs import sanitize_message
 from domain.slack.slack_urls import generate_slack_login
 from domain.transformers.minify_strings import minify_strings, replace_space_codes
 from domain.transformers.trim_strings import trim_string_with_ellipsis
@@ -202,7 +203,10 @@ def suggest_solution_wrapper(
                         f"🗨: [{trim_string_with_ellipsis(slack_message['text'], 100)}]({slack_message.get('permalink')})"
                     )
 
-            return callback(query, keywords, "\n\n".join(chat_response))
+            # Remove things that look like keys
+            sanitised_response = sanitize_message("\n\n".join(chat_response))
+
+            return callback(query, keywords, "\n\n".join(sanitised_response))
 
         # https://github.com/pytest-dev/pytest-asyncio/issues/658#issuecomment-1817927350
         # Should just have one asyncio.run()
