@@ -292,12 +292,12 @@ def slack_oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
 
         # You can get 200 ok response with a bad request:
         # https://github.com/orgs/community/discussions/57068
-        if "access_token" not in response_json:
+        if "access_token" not in response_json.get("authed_user", {}):
             raise SlackRequestFailed(
                 f"Request failed with " + json.dumps(response_json)
             )
 
-        access_token = response_json["access_token"]
+        access_token = response_json["authed_user"]["access_token"]
 
         # Persist the slack access token against the GitHub user
         save_users_slack_login(
