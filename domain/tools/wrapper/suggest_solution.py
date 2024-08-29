@@ -1,4 +1,5 @@
 import asyncio
+from functools import reduce
 
 from slack_sdk.web.async_client import AsyncWebClient
 
@@ -12,7 +13,12 @@ from domain.transformers.limit_array import limit_array_to_max_char_length
 from domain.transformers.minify_strings import minify_strings, replace_space_codes
 from domain.transformers.trim_strings import trim_string_with_ellipsis
 from domain.url.session import create_session_blob
-from infrastructure.github import search_issues, get_issue_comments
+from infrastructure.github import (
+    search_issues,
+    get_issue_comments,
+    search_repo_async,
+    download_file_async,
+)
 from infrastructure.openai import llm_message_query
 from infrastructure.zendesk import get_zen_tickets, get_zen_comments
 
@@ -64,6 +70,7 @@ def suggest_solution_wrapper(
                 get_tickets(limited_keywords, zendesk_user, zendesk_token),
                 get_issues(limited_keywords, github_token),
                 get_slack_messages(slack_token, limited_keywords),
+                get_docs(limited_keywords, github_token),
                 return_exceptions=True,
             )
 
@@ -73,8 +80,10 @@ def suggest_solution_wrapper(
                     logging("Zendesk Exception", str(issues[0]))
                 if isinstance(issues[1], Exception):
                     logging("GitHub Exception", str(issues[1]))
-                if isinstance(issues[1], Exception):
+                if isinstance(issues[2], Exception):
                     logging("Slack Exception", str(issues[2]))
+                if isinstance(issues[3], Exception):
+                    logging("GitHub Docs Exception", str(issues[3]))
 
             # Limit the number of responses to the max_issues
             limited_issues = [
@@ -85,12 +94,18 @@ def suggest_solution_wrapper(
                     else []
                 ),
                 issues[2][:max_issues] if not isinstance(issues[2], Exception) else [],
+                (
+                    issues[3][:max_issues]
+                    if not isinstance(issues[3], Exception)
+                    else []
+                ),
             ]
 
             # Get the contents of the issues and tickets
             external_context = await asyncio.gather(
                 get_tickets_comments(limited_issues[0], zendesk_user, zendesk_token),
                 get_issues_comments(limited_issues[1], github_token),
+                get_docs_contents(limited_issues[3]),
                 return_exceptions=True,
             )
 
@@ -100,9 +115,11 @@ def suggest_solution_wrapper(
                     logging("Zendesk Exception", str(external_context[0]))
                 if isinstance(external_context[1], Exception):
                     logging("GitHub Exception", str(external_context[1]))
+                if isinstance(external_context[2], Exception):
+                    logging("GitHub Exception", str(external_context[2]))
 
             # Each external source gets its own dedicated slice of the context window
-            max_content_per_source = max_chars_128 / 3
+            max_content_per_source = max_chars_128 / 4
 
             # Limit the length of the response, and filter out exceptions
             slack_context = limit_array_to_max_char_length(
@@ -123,6 +140,13 @@ def suggest_solution_wrapper(
                         external_context[1], max_content_per_source
                     )
                     if not isinstance(external_context[1], Exception)
+                    else []
+                ),
+                (
+                    limit_array_to_max_char_length(
+                        external_context[2], max_content_per_source
+                    )
+                    if not isinstance(external_context[2], Exception)
                     else []
                 ),
             ]
@@ -186,6 +210,15 @@ def suggest_solution_wrapper(
                     )
                     for context in slack_context
                 ],
+                *[
+                    (
+                        "user",
+                        "Documentation: ###\n"
+                        + context.replace("{", "{{").replace("}", "}}")
+                        + "\n###",
+                    )
+                    for context in fixed_external_context[2]
+                ],
                 ("user", "Question: {input}"),
                 ("user", "Answer:"),
             ]
@@ -232,6 +265,12 @@ def suggest_solution_wrapper(
                         f"🗨: [{trimmed_message}]({slack_message.get('permalink')})"
                     )
 
+            # List the docs for reference
+            for docs in limited_issues[3]:
+                if docs.get("html_url"):
+                    url = docs["html_url"].replace("/blob/", "/raw/")
+                    chat_response.append(f"🗎: [{url}]({url})")
+
             return callback(query, keywords, "\n\n".join(chat_response))
 
         # https://github.com/pytest-dev/pytest-asyncio/issues/658#issuecomment-1817927350
@@ -249,6 +288,37 @@ async def get_issues_comments(issues, github_token):
     return [
         await combine_issue_comments(str(ticket["number"]), github_token)
         for ticket in issues
+    ]
+
+
+async def get_docs(keywords, github_token):
+    # GitHub search does not support OR logic for keywords, so we have to search for each keyword individually
+    keyword_results = await asyncio.gather(
+        *[
+            search_repo_async("OctopusDeploy/docs", "markdown", [keyword], github_token)
+            for keyword in keywords
+        ]
+    )
+
+    ticket_ids = {}
+    for keyword_result in keyword_results:
+        for result in keyword_result["items"]:
+            if not ticket_ids.get(result["sha"]):
+                ticket_ids[result["sha"]] = {"count": 1, "result": result}
+            else:
+                ticket_ids[result["sha"]]["count"] += 1
+
+    sorted_by_second = sorted(
+        ticket_ids.items(), key=lambda tup: tup[1]["count"], reverse=True
+    )
+
+    return list(map(lambda x: x[1]["result"], sorted_by_second))
+
+
+async def get_docs_contents(search_results):
+    return [
+        await download_file_async(result["html_url"].replace("/blob/", "/raw/"))
+        for result in search_results
     ]
 
 

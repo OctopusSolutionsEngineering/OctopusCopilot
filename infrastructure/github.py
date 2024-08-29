@@ -133,6 +133,42 @@ def search_repo(repo, language, keywords, get_token=None):
     return resp.json()
 
 
+async def search_repo_async(repo, language, keywords, get_token=None):
+    # The docs at https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-code note that:
+    # "This endpoint can be used without authentication if only public resources are requested."
+    # However, this does not appear to be true, with issues like https://github.com/pbek/QOwnNotes/issues/2772#issuecomment-1513352222
+    # noting:
+    # "GitHub now demands an access token for the code search API and has a harsh quota on the amounts of searches per person"
+    # I think the GitHub docs are incorrect, as I have not been able to perform a search without a token.
+
+    query = f"{' '.join(keywords)} in:file language:{language} repo:{repo}"
+    api = build_github_url("search/code", {"q": query})
+
+    async with sem:
+        async with aiohttp.ClientSession(
+            headers=get_github_auth_headers(get_token)
+        ) as session:
+            async with session.get(str(api)) as response:
+                if response.status != 200:
+                    body = await response.text()
+                    raise GitHubRequestFailed(f"Request failed with " + body)
+                return await response.json()
+
+
+async def download_file_async(url):
+    """
+    Download a file, respecting the rate limits
+    """
+
+    async with sem:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(str(url)) as response:
+                if response.status != 200:
+                    body = await response.text()
+                    raise GitHubRequestFailed(f"Request failed with " + body)
+                return await response.text()
+
+
 async def get_latest_workflow_run_async(owner, repo, workflow_id, get_token):
     """
     Async function to get workflow run
