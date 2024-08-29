@@ -1,11 +1,9 @@
 import asyncio
-import os
 
-from slack_sdk import WebClient
 from slack_sdk.web.async_client import AsyncWebClient
 
-from domain.slack.slack_urls import generate_slack_login
 from domain.transformers.minify_strings import minify_strings, replace_space_codes
+from domain.transformers.trim_strings import trim_string_with_ellipsis
 from domain.url.session import create_session_blob
 from infrastructure.github import search_issues, get_issue_comments
 from infrastructure.openai import llm_message_query
@@ -202,7 +200,7 @@ def suggest_solution_wrapper(
             for slack_message in slack_messages:
                 if slack_message.get("permalink") and slack_message.get("text"):
                     chat_response.append(
-                        f"🗨: [{slack_message['text'][:50]}]({slack_message.get('permalink')})"
+                        f"🗨: [{trim_string_with_ellipsis(slack_message['text'], 100)}]({slack_message.get('permalink')})"
                     )
 
             return callback(query, keywords, "\n\n".join(chat_response))
