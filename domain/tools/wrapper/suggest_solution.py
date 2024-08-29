@@ -256,7 +256,37 @@ async def get_slack_messages(slack_token, keywords, logging):
 
         matches = [item["messages"]["matches"] for item in slack_results]
 
-        return [item for sublist in matches for item in sublist]
+        # Flatten the list of lists
+        flat_matches = [item for sublist in matches for item in sublist]
+
+        try:
+            # Get the text for the conversations. If there is no conversation, the original
+            # message will be returned.
+            conversations = await asyncio.gather(
+                *[
+                    (
+                        client.conversations_replies(
+                            channel=item["channel"]["id"], ts=item["ts"]
+                        )
+                        if item.get("channel") and item.get("ts")
+                        else None
+                    )
+                    for item in flat_matches
+                ]
+            )
+
+            # get the returned messages
+            conversation_messages = [item["messages"] for item in conversations]
+
+            # flatten the list of lists
+            flat_conversations = [
+                item for sublist in conversation_messages for item in sublist
+            ]
+
+            return flat_conversations
+        except Exception as e:
+            # If we don't have permission to read the conversation, just return the top level messages
+            return flat_matches
     except Exception as e:
         if logging:
             logging("Slack Exception", str(e))
