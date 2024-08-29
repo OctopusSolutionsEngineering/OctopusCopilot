@@ -3,7 +3,6 @@ import os
 import urllib.parse
 
 import azure.functions as func
-
 from domain.config.database import get_functions_connection_string
 from domain.config.octopus import min_octopus_version
 from domain.context.github_docs import get_docs_context
@@ -315,7 +314,7 @@ def slack_oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
         handle_error(e)
 
         try:
-            with open("html/login-failed.html", "r") as file:
+            with open("html/slack-login-failed.html", "r") as file:
                 return func.HttpResponse(
                     file.read(), headers={"Content-Type": "text/html"}, status_code=500
                 )
