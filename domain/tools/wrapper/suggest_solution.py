@@ -52,7 +52,14 @@ def suggest_solution_wrapper(
                 if logging:
                     logging(f"Unexpected Key: {key}", "Value: {value}")
 
-            limited_keywords = keywords[:max_keywords]
+            # A key word like "Octopus" is not helpful
+            invalid_keywords = ["octopus", "octopus deploy", "octopusdeploy"]
+            filtered_keywords = [
+                keyword
+                for keyword in keywords
+                if invalid_keywords not in keyword.casefold().strip()
+            ]
+            limited_keywords = filtered_keywords[:max_keywords]
 
             # Get the list of issues and tickets
             issues = await asyncio.gather(
@@ -89,7 +96,7 @@ def suggest_solution_wrapper(
                 return_exceptions=True,
             )
 
-            slack_context = [message["text"] for message in slack_messages]
+            slack_context = [message["text"] for message in slack_messages[:max_issues]]
 
             # Gracefully fallback with any exceptions
             if logging:
