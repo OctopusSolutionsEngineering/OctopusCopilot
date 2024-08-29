@@ -7,6 +7,7 @@ from domain.config.database import get_functions_connection_string
 from domain.config.octopus import min_octopus_version
 from domain.context.github_docs import get_docs_context
 from domain.context.octopus_context import llm_message_query
+from domain.encryption.encryption import generate_password
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
 from domain.exceptions.openai_error import (
@@ -195,7 +196,9 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
 
         session_json = create_session_blob(
             get_github_user(access_token),
-            os.environ.get("ENCRYPTION_PASSWORD"),
+            generate_password(
+                os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")
+            ),
             os.environ.get("ENCRYPTION_SALT"),
         )
 
@@ -241,7 +244,9 @@ def slack_oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
         # Extract the GitHub user from the client side session
         user_id = extract_session_blob(
             state,
-            os.environ.get("ENCRYPTION_PASSWORD"),
+            generate_password(
+                os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")
+            ),
             os.environ.get("ENCRYPTION_SALT"),
         )
 
@@ -335,7 +340,9 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
         # Extract the GitHub user from the client side session
         user_id = extract_session_blob(
             req.params.get("state"),
-            os.environ.get("ENCRYPTION_PASSWORD"),
+            generate_password(
+                os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")
+            ),
             os.environ.get("ENCRYPTION_SALT"),
         )
 

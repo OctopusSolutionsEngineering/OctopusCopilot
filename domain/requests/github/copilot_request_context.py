@@ -146,7 +146,7 @@ def get_github_token(req: func.HttpRequest):
     # This is how the web based interface can send a token.
     try:
         if req.headers.get("X-GitHub-Encrypted-Token"):
-            encrypted_token = json.load(
+            encrypted_token = json.loads(
                 decode_string_b64(req.headers.get("X-GitHub-Encrypted-Token", ""))
             )
             return decrypt_eax(
@@ -642,7 +642,10 @@ def build_form_tools(query, req: func.HttpRequest):
                     get_zendesk_user(),
                     get_zendesk_token(),
                     slack_token,
-                    os.environ.get("ENCRYPTION_PASSWORD"),
+                    generate_password(
+                        os.environ.get("ENCRYPTION_PASSWORD"),
+                        os.environ.get("ENCRYPTION_SALT"),
+                    ),
                     os.environ.get("ENCRYPTION_SALT"),
                     log_query,
                 ),
