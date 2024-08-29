@@ -208,8 +208,11 @@ def suggest_solution_wrapper(
 
             for slack_message in slack_messages:
                 if slack_message.get("permalink") and slack_message.get("text"):
+                    trimmed_message = trim_string_with_ellipsis(
+                        slack_message["text"].replace("\n", " "), 100
+                    )
                     chat_response.append(
-                        f"🗨: [{trim_string_with_ellipsis(slack_message['text'].replace('\n', ' '), 100)}]({slack_message.get('permalink')})"
+                        f"🗨: [{trimmed_message}]({slack_message.get('permalink')})"
                     )
 
             return callback(query, keywords, "\n\n".join(chat_response))
