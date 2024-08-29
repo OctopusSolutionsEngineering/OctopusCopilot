@@ -9,5 +9,5 @@ def generate_slack_login(github_user):
         + f"&redirect_url={urllib.parse.quote(os.environ.get('SLACK_CLIENT_REDIRECT'))}"
         # + f"&user_scope={urllib.parse.quote('search:read,channels:history,groups:history,mpim:history,im:history')}"
         + f"&user_scope={urllib.parse.quote('search:read')}"
-        + f"&state={github_user}"
+        + f"&state={github_user})"
     )
