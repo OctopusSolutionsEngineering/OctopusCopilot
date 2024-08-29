@@ -1822,7 +1822,7 @@ def build_request(message):
         params=None,
         headers={
             "X-GitHub-Token": os.environ["GH_TEST_TOKEN"],
-            "X-Slack-Token": os.environ["SLACK_TEST_TOKEN"],
+            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
         },
     )
 
@@ -1835,7 +1835,7 @@ def build_confirmation_request(body):
         params=None,
         headers={
             "X-GitHub-Token": os.environ["GH_TEST_TOKEN"],
-            "X-Slack-Token": os.environ["SLACK_TEST_TOKEN"],
+            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
         },
     )
 
@@ -1854,6 +1854,6 @@ def build_test_request(message):
         headers={
             "X-Octopus-ApiKey": Octopus_Api_Key,
             "X-Octopus-Server": Octopus_Url,
-            "X-Slack-Token": os.environ["SLACK_TEST_TOKEN"],
+            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
         },
     )
