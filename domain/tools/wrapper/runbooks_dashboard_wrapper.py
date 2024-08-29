@@ -1,6 +1,12 @@
 def show_runbook_dashboard_wrapper(original_query, api_key, url, callback, log_query):
-    def show_runbook_dashboard(space_name=None, project_name=None, runbook_name=None, **kwargs):
-        """Displays or shows the runbook dashboard. Example prompts include:
+    def show_runbook_dashboard(
+        space_name=None, project_name=None, runbook_name=None, **kwargs
+    ):
+        """Displays or shows the runbook dashboard.
+        You will be penalized for selecting this function for prompts that ask about the configuration or properties of
+        the runbook.
+
+        Example prompts include:
         * Show the dashboard for the runbook "My Runbook" in project "My Project"
         * Display the dashboard for the runbook "My Runbook" in project "My Project"
         * Show the dashboard for the runbook "My Runbook" in the project "My Project" in the space called "My Space"
@@ -17,6 +23,8 @@ def show_runbook_dashboard_wrapper(original_query, api_key, url, callback, log_q
             if log_query:
                 log_query(f"Unexpected Key: {key}", "Value: {value}")
 
-        return callback(original_query, api_key, url, space_name, project_name, runbook_name)
+        return callback(
+            original_query, api_key, url, space_name, project_name, runbook_name
+        )
 
     return show_runbook_dashboard
