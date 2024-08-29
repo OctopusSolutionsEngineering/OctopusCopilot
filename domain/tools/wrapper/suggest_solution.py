@@ -92,7 +92,9 @@ def suggest_solution_wrapper(
                 return_exceptions=True,
             )
 
-            slack_context = [message["text"] for message in issues[2][:max_issues]]
+            slack_context = [
+                message["text"] for message in limited_issues[2][:max_issues]
+            ]
 
             # Gracefully fallback with any exceptions
             if logging:
