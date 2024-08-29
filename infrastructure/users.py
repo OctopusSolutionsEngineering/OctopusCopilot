@@ -468,9 +468,7 @@ def save_users_slack_login(
     encrypted_api_key, tag, nonce = encrypt_eax(
         access_token, encryption_password, encryption_salt
     )
-    save_users_slack_token(
-        username, access_token, encrypted_api_key, tag, nonce, connection_string
-    )
+    save_users_slack_token(username, encrypted_api_key, tag, nonce, connection_string)
 
 
 @logging_wrapper
