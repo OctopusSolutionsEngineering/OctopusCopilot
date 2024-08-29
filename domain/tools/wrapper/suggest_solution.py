@@ -278,7 +278,12 @@ async def get_slack_messages(slack_token, keywords):
 
 
 async def get_slack_threads(client, matches):
-    conversations = await asyncio.gather(
+    """
+    Queries the Slack API for messages that match the keywords
+    """
+
+    # Batch the requests for each keyword or phrase, because the queries don't support OR logic
+    keyword_results = await asyncio.gather(
         *[
             (
                 client.conversations_replies(
@@ -291,18 +296,25 @@ async def get_slack_threads(client, matches):
         ]
     )
 
-    # get the returned messages
-    conversation_messages = [item["messages"] for item in conversations]
+    # Scan the results for the messages, counting each time a message is returned
+    message_ids = {}
+    for keyword_result in keyword_results:
+        for message in keyword_result["messages"]:
+            if not message_ids.get(message["iid"]):
+                message_ids[message["iid"]] = {"count": 1, "message": message}
+            else:
+                message_ids[message["iid"]]["count"] += 1
 
-    # flatten the list of lists
-    flat_conversations = [item for sublist in conversation_messages for item in sublist]
+    # Prioritise messages that were returned by multiple searches
+    sorted_by_second = sorted(
+        message_ids.items(), key=lambda tup: tup[1]["count"], reverse=True
+    )
 
-    return flat_conversations
+    # Return the messages sorted by the number of times they were returned
+    return list(map(lambda x: x[1]["message"], sorted_by_second))
 
 
 async def get_tickets(keywords, zendesk_user, zendesk_token):
-    ticket_ids = {}
-
     # Zen desk only has AND logic for keywords. We really want OR logic.
     # So search for each keyword individually, tracking how many times a ticket was returned
     # by the search. We prioritise tickets with the most results.
@@ -313,6 +325,7 @@ async def get_tickets(keywords, zendesk_user, zendesk_token):
         ]
     )
 
+    ticket_ids = {}
     for keyword_result in keyword_results:
         for ticket in keyword_result["results"]:
             if not ticket_ids.get(ticket["id"]):
