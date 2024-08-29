@@ -2,11 +2,13 @@ import asyncio
 
 from slack_sdk.web.async_client import AsyncWebClient
 
+from domain.context.octopus_context import max_chars_128
 from domain.exceptions.none_on_exception import (
     default_on_exception_async,
 )
 from domain.sanitizers.sanitize_keywords import sanitize_keywords
 from domain.slack.slack_urls import generate_slack_login
+from domain.transformers.limit_array import limit_array_to_max_char_length
 from domain.transformers.minify_strings import minify_strings, replace_space_codes
 from domain.transformers.trim_strings import trim_string_with_ellipsis
 from domain.url.session import create_session_blob
@@ -92,10 +94,6 @@ def suggest_solution_wrapper(
                 return_exceptions=True,
             )
 
-            slack_context = [
-                message["text"] for message in limited_issues[2][:max_issues]
-            ]
-
             # Gracefully fallback with any exceptions
             if logging:
                 if isinstance(external_context[0], Exception):
@@ -103,14 +101,27 @@ def suggest_solution_wrapper(
                 if isinstance(external_context[1], Exception):
                     logging("GitHub Exception", str(external_context[1]))
 
+            # Each external source gets its own dedicated slice of the context window
+            max_content_per_source = max_chars_128 / 3
+
+            # Limit the length of the response, and filter out exceptions
+            slack_context = limit_array_to_max_char_length(
+                [message["text"] for message in limited_issues[2][:max_issues]],
+                max_content_per_source,
+            )
+
             fixed_external_context = [
                 (
-                    external_context[0]
+                    limit_array_to_max_char_length(
+                        external_context[0], max_content_per_source
+                    )
                     if not isinstance(external_context[0], Exception)
                     else []
                 ),
                 (
-                    external_context[1]
+                    limit_array_to_max_char_length(
+                        external_context[1], max_content_per_source
+                    )
                     if not isinstance(external_context[1], Exception)
                     else []
                 ),
