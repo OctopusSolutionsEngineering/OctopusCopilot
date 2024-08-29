@@ -40,6 +40,7 @@ from domain.requests.github.copilot_request_context import (
     build_form_tools,
 )
 from domain.response.copilot_response import CopilotResponse
+from domain.sanitizers.url_sanitizer import quote_safe
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
 from domain.tools.wrapper.function_call import FunctionCall
 from domain.tools.wrapper.function_definition import (
@@ -71,7 +72,7 @@ from infrastructure.callbacks import (
     delete_callback,
     delete_old_callbacks,
 )
-from infrastructure.github import get_github_user, search_repo
+from infrastructure.github import get_github_user, search_repo, exchange_github_code
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, create_limited_api_key, get_version
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
@@ -186,36 +187,11 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
     :return: The HTML form
     """
     try:
-        # Exchange the code
-        resp = http.request(
-            "POST",
-            build_url(
-                "https://github.com",
-                "/login/oauth/access_token",
-                dict(
-                    client_id=os.environ.get("GITHUB_CLIENT_ID"),
-                    client_secret=os.environ.get("GITHUB_CLIENT_SECRET"),
-                    code=req.params.get("code"),
-                ),
-            ),
-            headers={"Accept": "application/json"},
-        )
+        access_token = exchange_github_code(req.params.get("code"))
 
-        if resp.status != 200:
-            raise GitHubRequestFailed(
-                f"Request failed with " + resp.data.decode("utf-8")
-            )
-
-        response_json = resp.json()
-
-        # You can get 200 ok response with a bad request:
-        # https://github.com/orgs/community/discussions/57068
-        if "access_token" not in response_json:
-            raise GitHubRequestFailed(
-                f"Request failed with " + json.dumps(response_json)
-            )
-
-        access_token = response_json["access_token"]
+        # State is used to track the page to redirect to. It defaults to the page that collects
+        # octopus details.
+        state = req.params.get("state") or "octopus"
 
         session_json = create_session_blob(
             get_github_user(access_token),
@@ -228,7 +204,8 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             status_code=301,
             headers={
-                "Location": f"{base_request_url(req)}/api/octopus?state=" + session_json
+                "Location": f"{base_request_url(req)}/api/{quote_safe(state)}?state="
+                + session_json
             },
         )
     except Exception as e:

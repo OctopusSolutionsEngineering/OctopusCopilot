@@ -35,6 +35,12 @@
     </span>
 </nav>
 <form id="form" class="needs-validation" novalidate>
+    <!--<div class="form-group row m-md-1">
+        <label for="token" class="col-lg-2 offset-lg-2 col-form-label">GitHub Login</label>
+        <div class="col-lg-6">
+            <button id="github_login" name="github_login" type="button" class="btn btn-primary" onclick="githubLogin()">GitHub Login</button>
+        </div>
+    </div>-->
     <div class="form-group row m-md-1">
         <label for="token" class="col-lg-2 offset-lg-2 col-form-label">GitHub Token</label>
         <div class="col-lg-6">
@@ -85,6 +91,39 @@
 </form>
 </body>
 <script>
+
+    let state = getQueryParam('state');
+    if (state) {
+        setCookie('state', state, 1)
+    } else {
+        state = getCookie('state')
+    }
+
+    function githubLogin() {
+        // The state parameter redirects to the form page.
+        window.location.href = 'https://github.com/login/oauth/authorize?client_id=Iv1.7fbb4fdc9a50333d&redirect_url=https%3A//aiagent.octopus.com/api/oauth_callback&scope=user&allow_signup=false&state=form'
+    }
+
+    function setCookie(name, value, hours) {
+        var expires = "";
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (hours * 60 * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
+    }
+
+    function getCookie(name) {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
 
     function getQueryParam(param) {
         const urlParams = new URLSearchParams(window.location.search);
@@ -169,8 +208,10 @@
 
         // Use the polyfill to get the ability to send headers.
         var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(sanitized_value), {
+            // For now we send both the token and the encrypted token while we test the github login flow.
             headers: {
-                'X-GitHub-Token': token.value
+                'X-GitHub-Token': token.value,
+                'X-GitHub-Encrypted-Token': state
             },
             // https://stackoverflow.com/questions/71688537/event-source-timeout-in-45-seconds
             // Increase timeouts as it can take some time to process the request.

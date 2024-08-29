@@ -1,3 +1,4 @@
+import json
 import os
 
 import azure.functions as func
@@ -140,7 +141,25 @@ def get_slack_token_from_request(req: func.HttpRequest):
 
 
 def get_github_token(req: func.HttpRequest):
-    return req.headers.get("X-GitHub-Token")
+    # The token may have been sent in an encrypted form from an untrusted client.
+    # This is how the web based interface can send a token.
+    if req.headers.get("X-GitHub-Encrypted-Token"):
+        encrypted_token = json.load(req.headers.get("X-GitHub-Encrypted-Token", ""))
+        return decrypt_eax(
+            generate_password(
+                os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")
+            ),
+            encrypted_token.get("state"),
+            encrypted_token.get("tag"),
+            encrypted_token.get("nonce"),
+            os.environ.get("ENCRYPTION_SALT"),
+        )
+
+    # Otherwise the token should be sent in the header. This is how Copilot sends the tokens.
+    if req.headers.get("X-GitHub-Token"):
+        return req.headers.get("X-GitHub-Token")
+
+    return None
 
 
 def get_github_user_from_form(req: func.HttpRequest):

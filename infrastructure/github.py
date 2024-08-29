@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import tempfile
 import zipfile
@@ -9,7 +10,11 @@ from expiring_dict import ExpiringDict
 
 from domain.exceptions.request_failed import GitHubRequestFailed
 from domain.sanitizers.url_sanitizer import quote_safe
-from domain.validation.argument_validation import ensure_string_not_empty, ensure_not_falsy
+from domain.url.build_url import build_url
+from domain.validation.argument_validation import (
+    ensure_string_not_empty,
+    ensure_not_falsy,
+)
 from infrastructure.http_pool import http
 
 # Token user lookup cache that expires in 15 minutes.
@@ -21,6 +26,35 @@ token_lookup_cache = ExpiringDict(60 * 15)
 sem = asyncio.Semaphore(10)
 
 
+def exchange_github_code(code):
+    # Exchange the code
+    resp = http.request(
+        "POST",
+        build_url(
+            "https://github.com",
+            "/login/oauth/access_token",
+            dict(
+                client_id=os.environ.get("GITHUB_CLIENT_ID"),
+                client_secret=os.environ.get("GITHUB_CLIENT_SECRET"),
+                code=code,
+            ),
+        ),
+        headers={"Accept": "application/json"},
+    )
+
+    if resp.status != 200:
+        raise GitHubRequestFailed(f"Request failed with " + resp.data.decode("utf-8"))
+
+    response_json = resp.json()
+
+    # You can get 200 ok response with a bad request:
+    # https://github.com/orgs/community/discussions/57068
+    if "access_token" not in response_json:
+        raise GitHubRequestFailed(f"Request failed with " + json.dumps(response_json))
+
+    return response_json["access_token"]
+
+
 def get_github_auth_headers(get_token):
     """
     Build the headers used to make an Octopus API request
@@ -30,7 +64,7 @@ def get_github_auth_headers(get_token):
 
     headers = {
         "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28"
+        "X-GitHub-Api-Version": "2022-11-28",
     }
 
     if get_token:
@@ -72,7 +106,7 @@ def get_github_user(get_token):
     resp = http.request("GET", api, headers=get_github_auth_headers(get_token))
 
     if resp.status != 200:
-        raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+        raise GitHubRequestFailed(f"Request failed with " + resp.data.decode("utf-8"))
 
     json = resp.json()
 
@@ -94,7 +128,7 @@ def search_repo(repo, language, keywords, get_token=None):
     resp = http.request("GET", api, headers=get_github_auth_headers(get_token))
 
     if resp.status != 200:
-        raise GitHubRequestFailed(f"Request failed with " + resp.data.decode('utf-8'))
+        raise GitHubRequestFailed(f"Request failed with " + resp.data.decode("utf-8"))
 
     return resp.json()
 
@@ -104,17 +138,30 @@ async def get_latest_workflow_run_async(owner, repo, workflow_id, get_token):
     Async function to get workflow run
     https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#list-workflow-runs-for-a-workflow
     """
-    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_latest_workflow_run_async).')
-    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_latest_workflow_run_async).')
-    ensure_string_not_empty(workflow_id, 'workflow_id must be a non-empty string (get_latest_workflow_run_async).')
-    ensure_string_not_empty(get_token, 'get_token must be a non-empty string (get_latest_workflow_run_async).')
+    ensure_string_not_empty(
+        owner, "owner must be a non-empty string (get_latest_workflow_run_async)."
+    )
+    ensure_string_not_empty(
+        repo, "repo must be a non-empty string (get_latest_workflow_run_async)."
+    )
+    ensure_string_not_empty(
+        workflow_id,
+        "workflow_id must be a non-empty string (get_latest_workflow_run_async).",
+    )
+    ensure_string_not_empty(
+        get_token,
+        "get_token must be a non-empty string (get_latest_workflow_run_async).",
+    )
 
     api = build_github_url(
         f"repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/workflows/{quote_safe(workflow_id)}/runs",
-        {"per_page": 1})
+        {"per_page": 1},
+    )
 
     async with sem:
-        async with aiohttp.ClientSession(headers=get_github_auth_headers(get_token)) as session:
+        async with aiohttp.ClientSession(
+            headers=get_github_auth_headers(get_token)
+        ) as session:
             async with session.get(str(api)) as response:
                 return await response.json()
 
@@ -124,15 +171,25 @@ async def get_workflow_run_async(owner, repo, run_id, get_token):
     Async function to get workflow run
     https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#get-a-workflow-run
     """
-    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_workflow_run).')
-    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_workflow_run).')
-    ensure_string_not_empty(run_id, 'run_id must be a non-empty string (get_workflow_run).')
-    ensure_string_not_empty(get_token, 'get_token must be a non-empty string (get_workflow_run).')
+    ensure_string_not_empty(
+        owner, "owner must be a non-empty string (get_workflow_run)."
+    )
+    ensure_string_not_empty(repo, "repo must be a non-empty string (get_workflow_run).")
+    ensure_string_not_empty(
+        run_id, "run_id must be a non-empty string (get_workflow_run)."
+    )
+    ensure_string_not_empty(
+        get_token, "get_token must be a non-empty string (get_workflow_run)."
+    )
 
-    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/runs/{quote_safe(run_id)}")
+    api = build_github_url(
+        f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/runs/{quote_safe(run_id)}"
+    )
 
     async with sem:
-        async with aiohttp.ClientSession(headers=get_github_auth_headers(get_token)) as session:
+        async with aiohttp.ClientSession(
+            headers=get_github_auth_headers(get_token)
+        ) as session:
             async with session.get(str(api)) as response:
                 if response.status != 200:
                     body = await response.text()
@@ -145,15 +202,28 @@ async def get_workflow_run_logs_async(owner, repo, run_id, github_token):
     Async function to get workflow run logs
     https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#download-workflow-run-logs
     """
-    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_workflow_run_logs_async).')
-    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_workflow_run_logs_async).')
-    ensure_string_not_empty(run_id, 'run_id must be a non-empty string (get_workflow_run_logs_async).')
-    ensure_string_not_empty(github_token, 'github_token must be a non-empty string (get_workflow_run_logs_async).')
+    ensure_string_not_empty(
+        owner, "owner must be a non-empty string (get_workflow_run_logs_async)."
+    )
+    ensure_string_not_empty(
+        repo, "repo must be a non-empty string (get_workflow_run_logs_async)."
+    )
+    ensure_string_not_empty(
+        run_id, "run_id must be a non-empty string (get_workflow_run_logs_async)."
+    )
+    ensure_string_not_empty(
+        github_token,
+        "github_token must be a non-empty string (get_workflow_run_logs_async).",
+    )
 
-    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/runs/{quote_safe(run_id)}/logs")
+    api = build_github_url(
+        f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/runs/{quote_safe(run_id)}/logs"
+    )
 
     async with sem:
-        async with aiohttp.ClientSession(headers=get_github_auth_headers(github_token)) as session:
+        async with aiohttp.ClientSession(
+            headers=get_github_auth_headers(github_token)
+        ) as session:
             async with session.get(str(api)) as response:
                 try:
                     with tempfile.NamedTemporaryFile(delete=True, suffix=".zip") as tf:
@@ -163,14 +233,14 @@ async def get_workflow_run_logs_async(owner, repo, run_id, github_token):
                                 break
                             tf.write(chunk)
                         with tempfile.TemporaryDirectory() as temp_dir:
-                            with zipfile.ZipFile(tf, 'r') as zip_ref:
+                            with zipfile.ZipFile(tf, "r") as zip_ref:
                                 zip_ref.extractall(temp_dir)
 
                             logs = ""
                             for file in os.listdir(temp_dir):
                                 # We're only interested in the top level files
                                 if os.path.isfile(os.path.join(temp_dir, file)):
-                                    with open(os.path.join(temp_dir, file), 'r') as f:
+                                    with open(os.path.join(temp_dir, file), "r") as f:
                                         logs += f.read() + "\n"
 
                             return logs
@@ -183,15 +253,25 @@ async def get_workflow_artifacts_async(owner, repo, run_id, get_token):
     Async function to get workflow run artifacts
     https://docs.github.com/en/rest/actions/artifacts?apiVersion=2022-11-28#list-workflow-run-artifacts
     """
-    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_workflow_run).')
-    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_workflow_run).')
-    ensure_string_not_empty(run_id, 'run_id must be a non-empty string (get_workflow_run).')
-    ensure_string_not_empty(get_token, 'get_token must be a non-empty string (get_workflow_run).')
+    ensure_string_not_empty(
+        owner, "owner must be a non-empty string (get_workflow_run)."
+    )
+    ensure_string_not_empty(repo, "repo must be a non-empty string (get_workflow_run).")
+    ensure_string_not_empty(
+        run_id, "run_id must be a non-empty string (get_workflow_run)."
+    )
+    ensure_string_not_empty(
+        get_token, "get_token must be a non-empty string (get_workflow_run)."
+    )
 
-    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/runs/{quote_safe(run_id)}/artifacts")
+    api = build_github_url(
+        f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/runs/{quote_safe(run_id)}/artifacts"
+    )
 
     async with sem:
-        async with aiohttp.ClientSession(headers=get_github_auth_headers(get_token)) as session:
+        async with aiohttp.ClientSession(
+            headers=get_github_auth_headers(get_token)
+        ) as session:
             async with session.get(str(api)) as response:
                 if response.status != 200:
                     body = await response.text()
@@ -204,14 +284,25 @@ async def get_open_pull_requests_async(owner, repo, get_token):
     Async function to get open pull requests run
     https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
     """
-    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_open_pull_requests_async).')
-    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_open_pull_requests_async).')
-    ensure_string_not_empty(get_token, 'get_token must be a non-empty string (get_open_pull_requests_async).')
+    ensure_string_not_empty(
+        owner, "owner must be a non-empty string (get_open_pull_requests_async)."
+    )
+    ensure_string_not_empty(
+        repo, "repo must be a non-empty string (get_open_pull_requests_async)."
+    )
+    ensure_string_not_empty(
+        get_token,
+        "get_token must be a non-empty string (get_open_pull_requests_async).",
+    )
 
-    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/pulls", {"state": "open"})
+    api = build_github_url(
+        f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/pulls", {"state": "open"}
+    )
 
     async with sem:
-        async with aiohttp.ClientSession(headers=get_github_auth_headers(get_token)) as session:
+        async with aiohttp.ClientSession(
+            headers=get_github_auth_headers(get_token)
+        ) as session:
             async with session.get(str(api)) as response:
                 if response.status != 200:
                     body = await response.text()
@@ -224,14 +315,24 @@ async def get_open_issues_async(owner, repo, get_token):
     Async function to get open issues run
     https://docs.github.com/en/rest/issues/issues?apiVersion=2022-11-28#list-repository-issues
     """
-    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_open_issues_async).')
-    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_open_issues_async).')
-    ensure_string_not_empty(get_token, 'get_token must be a non-empty string (get_open_issues_async).')
+    ensure_string_not_empty(
+        owner, "owner must be a non-empty string (get_open_issues_async)."
+    )
+    ensure_string_not_empty(
+        repo, "repo must be a non-empty string (get_open_issues_async)."
+    )
+    ensure_string_not_empty(
+        get_token, "get_token must be a non-empty string (get_open_issues_async)."
+    )
 
-    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/issues", {"state": "open"})
+    api = build_github_url(
+        f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/issues", {"state": "open"}
+    )
 
     async with sem:
-        async with aiohttp.ClientSession(headers=get_github_auth_headers(get_token)) as session:
+        async with aiohttp.ClientSession(
+            headers=get_github_auth_headers(get_token)
+        ) as session:
             async with session.get(str(api)) as response:
                 if response.status != 200:
                     body = await response.text()
@@ -247,14 +348,24 @@ async def get_run_jobs_async(owner, repo, run_id, github_token):
     Async function to get open issues run
     https://docs.github.com/en/rest/actions/workflow-jobs?apiVersion=2022-11-28#list-jobs-for-a-workflow-run
     """
-    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_open_issues_async).')
-    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_open_issues_async).')
-    ensure_string_not_empty(github_token, 'github_token must be a non-empty string (get_open_issues_async).')
+    ensure_string_not_empty(
+        owner, "owner must be a non-empty string (get_open_issues_async)."
+    )
+    ensure_string_not_empty(
+        repo, "repo must be a non-empty string (get_open_issues_async)."
+    )
+    ensure_string_not_empty(
+        github_token, "github_token must be a non-empty string (get_open_issues_async)."
+    )
 
-    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/runs/{quote_safe(run_id)}/jobs")
+    api = build_github_url(
+        f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/actions/runs/{quote_safe(run_id)}/jobs"
+    )
 
     async with sem:
-        async with aiohttp.ClientSession(headers=get_github_auth_headers(github_token)) as session:
+        async with aiohttp.ClientSession(
+            headers=get_github_auth_headers(github_token)
+        ) as session:
             async with session.get(str(api)) as response:
                 if response.status != 200:
                     body = await response.text()
@@ -267,15 +378,27 @@ async def get_repo_contents(owner, repo, directory, github_token):
     Async function to get open issues run
     https://docs.github.com/en/rest/actions/workflow-jobs?apiVersion=2022-11-28#list-jobs-for-a-workflow-run
     """
-    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_repo_contents).')
-    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_repo_contents).')
-    ensure_string_not_empty(directory, 'directory must be a non-empty string (get_repo_contents).')
-    ensure_string_not_empty(github_token, 'github_token must be a non-empty string (get_repo_contents).')
+    ensure_string_not_empty(
+        owner, "owner must be a non-empty string (get_repo_contents)."
+    )
+    ensure_string_not_empty(
+        repo, "repo must be a non-empty string (get_repo_contents)."
+    )
+    ensure_string_not_empty(
+        directory, "directory must be a non-empty string (get_repo_contents)."
+    )
+    ensure_string_not_empty(
+        github_token, "github_token must be a non-empty string (get_repo_contents)."
+    )
 
-    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/contents/{directory}")
+    api = build_github_url(
+        f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/contents/{directory}"
+    )
 
     async with sem:
-        async with aiohttp.ClientSession(headers=get_github_auth_headers(github_token)) as session:
+        async with aiohttp.ClientSession(
+            headers=get_github_auth_headers(github_token)
+        ) as session:
             async with session.get(str(api)) as response:
                 if response.status != 200:
                     body = await response.text()
@@ -288,17 +411,24 @@ async def search_issues(owner, repo, keywords, github_token):
     Async function to search issues
     https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-issues-and-pull-requests
     """
-    ensure_string_not_empty(owner, 'owner must be a non-empty string (search_issues).')
-    ensure_string_not_empty(repo, 'repo must be a non-empty string (search_issues).')
-    ensure_not_falsy(keywords, 'keywords must be a list of strings (search_issues).')
-    ensure_string_not_empty(github_token, 'github_token must be a non-empty string (search_issues).')
+    ensure_string_not_empty(owner, "owner must be a non-empty string (search_issues).")
+    ensure_string_not_empty(repo, "repo must be a non-empty string (search_issues).")
+    ensure_not_falsy(keywords, "keywords must be a list of strings (search_issues).")
+    ensure_string_not_empty(
+        github_token, "github_token must be a non-empty string (search_issues)."
+    )
 
     quoted_keywords = map(lambda x: f'"{x}"', keywords)
 
-    api = build_github_url(f"/search/issues", {"q": f"{' OR '.join(quoted_keywords)} repo:{owner}/{repo} is:issue"})
+    api = build_github_url(
+        f"/search/issues",
+        {"q": f"{' OR '.join(quoted_keywords)} repo:{owner}/{repo} is:issue"},
+    )
 
     async with sem:
-        async with aiohttp.ClientSession(headers=get_github_auth_headers(github_token)) as session:
+        async with aiohttp.ClientSession(
+            headers=get_github_auth_headers(github_token)
+        ) as session:
             async with session.get(str(api)) as response:
                 if response.status != 200:
                     body = await response.text()
@@ -311,15 +441,27 @@ async def get_issue_comments(owner, repo, issue_number, github_token):
     Async function to get issue comments
     https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-issues-and-pull-requests
     """
-    ensure_string_not_empty(owner, 'owner must be a non-empty string (get_issue_comments).')
-    ensure_string_not_empty(repo, 'repo must be a non-empty string (get_issue_comments).')
-    ensure_string_not_empty(issue_number, 'issue_number must be a non-empty string (get_issue_comments).')
-    ensure_string_not_empty(github_token, 'github_token must be a non-empty string (get_issue_comments).')
+    ensure_string_not_empty(
+        owner, "owner must be a non-empty string (get_issue_comments)."
+    )
+    ensure_string_not_empty(
+        repo, "repo must be a non-empty string (get_issue_comments)."
+    )
+    ensure_string_not_empty(
+        issue_number, "issue_number must be a non-empty string (get_issue_comments)."
+    )
+    ensure_string_not_empty(
+        github_token, "github_token must be a non-empty string (get_issue_comments)."
+    )
 
-    api = build_github_url(f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/issues/{quote_safe(issue_number)}/comments")
+    api = build_github_url(
+        f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/issues/{quote_safe(issue_number)}/comments"
+    )
 
     async with sem:
-        async with aiohttp.ClientSession(headers=get_github_auth_headers(github_token)) as session:
+        async with aiohttp.ClientSession(
+            headers=get_github_auth_headers(github_token)
+        ) as session:
             async with session.get(str(api)) as response:
                 if response.status != 200:
                     body = await response.text()
