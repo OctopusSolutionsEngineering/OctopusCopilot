@@ -2,6 +2,7 @@ import asyncio
 import os
 
 from slack_sdk import WebClient
+from slack_sdk.web.async_client import AsyncWebClient
 
 from domain.slack.slack_urls import generate_slack_login
 from domain.transformers.minify_strings import minify_strings, replace_space_codes
@@ -243,15 +244,22 @@ async def get_slack_messages(slack_token, keywords, logging):
         return []
 
     try:
-        client = WebClient(token=slack_token)
-        api_response = client.search_messages(
-            query=" OR ".join(['"' + phrase + '"' for phrase in keywords]),
-            sort="timestamp",
-            sort_dir="desc",
+        client = AsyncWebClient(token=slack_token)
+
+        slack_results = await asyncio.gather(
+            *[
+                client.search_messages(
+                    query='"' + keyword + '"',
+                    sort="timestamp",
+                    sort_dir="desc",
+                )
+                for keyword in keywords
+            ]
         )
-        return [
-            match for match in api_response["messages"]["matches"] if match.get("text")
-        ]
+
+        matches = [item["messages"]["matches"] for item in slack_results]
+
+        return [item for sublist in matches for item in sublist]
     except Exception as e:
         if logging:
             logging("Slack Exception", str(e))

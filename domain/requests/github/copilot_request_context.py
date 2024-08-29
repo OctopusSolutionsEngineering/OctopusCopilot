@@ -131,6 +131,14 @@ def get_apikey_and_server(req: func.HttpRequest):
     return api_key, server
 
 
+def get_slack_token_from_request(req: func.HttpRequest):
+    """
+    When testing we supply the Slack token directly.
+    :return:
+    """
+    return req.headers.get("X-Slack-Token")
+
+
 def get_github_token(req: func.HttpRequest):
     return req.headers.get("X-GitHub-Token")
 
@@ -200,6 +208,12 @@ def get_api_key_and_url(req: func.HttpRequest):
 
 def get_slack_token(req: func.HttpRequest):
     try:
+        # First try to get the details from the headers
+        token = get_slack_token_from_request(req)
+
+        if token:
+            return token
+
         # Then get the details saved for a user
         github_username = get_github_user_from_form(req)
 
@@ -594,6 +608,7 @@ def build_form_tools(query, req: func.HttpRequest):
                 suggest_solution_wrapper(
                     query,
                     suggest_solution_callback_wrapper(get_github_user_from_form(req)),
+                    get_github_user_from_form(req),
                     get_github_token(req),
                     get_zendesk_user(),
                     get_zendesk_token(),

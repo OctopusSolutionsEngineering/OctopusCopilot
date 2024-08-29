@@ -13,15 +13,30 @@ from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
-from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_environments, lookup_tenants, \
-    lookup_runbooks
+from domain.lookup.octopus_lookups import (
+    lookup_space,
+    lookup_projects,
+    lookup_environments,
+    lookup_tenants,
+    lookup_runbooks,
+)
 from domain.transformers.clean_response import strip_before_first_curly_bracket
-from domain.transformers.sse_transformers import convert_from_sse_response, get_confirmation_id
+from domain.transformers.sse_transformers import (
+    convert_from_sse_response,
+    get_confirmation_id,
+)
 from function_app import copilot_handler_internal, health_internal
-from infrastructure.octopus import run_published_runbook_fuzzy, get_space_id_and_name_from_name, get_project
+from infrastructure.octopus import (
+    run_published_runbook_fuzzy,
+    get_space_id_and_name_from_name,
+    get_project,
+)
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.infrastructure.cancel_task import cancel_task
-from tests.infrastructure.create_and_deploy_release import create_and_deploy_release, wait_for_task
+from tests.infrastructure.create_and_deploy_release import (
+    create_and_deploy_release,
+    wait_for_task,
+)
 from tests.infrastructure.create_release import create_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.octopus_infrastructure_test import run_terraform
@@ -47,68 +62,105 @@ class CopilotChatTest(unittest.TestCase):
         # Simulate the result of a user login and saving their Octopus details
         try:
             github_user = os.environ["TEST_GH_USER"]
-            save_users_octopus_url_from_login(github_user,
-                                              Octopus_Url,
-                                              Octopus_Api_Key,
-                                              os.environ["ENCRYPTION_PASSWORD"],
-                                              os.environ["ENCRYPTION_SALT"],
-                                              os.environ["AzureWebJobsStorage"])
-            save_default_values(github_user,
-                                "space",
-                                "Simple",
-                                os.environ["AzureWebJobsStorage"])
-            save_default_values(github_user,
-                                "project",
-                                "Deploy Web App Container",
-                                os.environ["AzureWebJobsStorage"])
-            save_default_values(github_user,
-                                "environment",
-                                "Development",
-                                os.environ["AzureWebJobsStorage"])
-            save_default_values(github_user,
-                                "owner",
-                                "OctopusSolutionsEngineering",
-                                os.environ["AzureWebJobsStorage"])
-            save_default_values(github_user,
-                                "repository",
-                                "OctopusCopilot",
-                                os.environ["AzureWebJobsStorage"])
-            save_default_values(github_user,
-                                "workflow",
-                                "build.yaml",
-                                os.environ["AzureWebJobsStorage"])
+            save_users_octopus_url_from_login(
+                github_user,
+                Octopus_Url,
+                Octopus_Api_Key,
+                os.environ["ENCRYPTION_PASSWORD"],
+                os.environ["ENCRYPTION_SALT"],
+                os.environ["AzureWebJobsStorage"],
+            )
+            save_default_values(
+                github_user, "space", "Simple", os.environ["AzureWebJobsStorage"]
+            )
+            save_default_values(
+                github_user,
+                "project",
+                "Deploy Web App Container",
+                os.environ["AzureWebJobsStorage"],
+            )
+            save_default_values(
+                github_user,
+                "environment",
+                "Development",
+                os.environ["AzureWebJobsStorage"],
+            )
+            save_default_values(
+                github_user,
+                "owner",
+                "OctopusSolutionsEngineering",
+                os.environ["AzureWebJobsStorage"],
+            )
+            save_default_values(
+                github_user,
+                "repository",
+                "OctopusCopilot",
+                os.environ["AzureWebJobsStorage"],
+            )
+            save_default_values(
+                github_user, "workflow", "build.yaml", os.environ["AzureWebJobsStorage"]
+            )
         except Exception as e:
             print(
                 "The tests will fail because Azurite is not running. Run Azureite with: "
-                + "docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite")
+                + "docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite"
+            )
             print(e)
             return
 
         try:
-            cls.mssql = DockerContainer("mcr.microsoft.com/mssql/server:2022-latest").with_env(
-                "ACCEPT_EULA", "True").with_env("SA_PASSWORD", "Password01!")
+            cls.mssql = (
+                DockerContainer("mcr.microsoft.com/mssql/server:2022-latest")
+                .with_env("ACCEPT_EULA", "True")
+                .with_env("SA_PASSWORD", "Password01!")
+            )
             cls.mssql.start()
             wait_for_logs(cls.mssql, "SQL Server is now ready for client connections")
 
-            mssql_ip = cls.mssql.get_docker_client().bridge_ip(cls.mssql.get_wrapped_container().id)
+            mssql_ip = cls.mssql.get_docker_client().bridge_ip(
+                cls.mssql.get_wrapped_container().id
+            )
 
-            cls.octopus = DockerContainer("octopusdeploy/octopusdeploy").with_bind_ports(8080, 8080).with_env(
-                "ACCEPT_EULA", "Y").with_env("DB_CONNECTION_STRING",
-                                             "Server=" + mssql_ip + ",1433;Database=OctopusDeploy;User=sa;Password=Password01!").with_env(
-                "ADMIN_API_KEY", Octopus_Api_Key).with_env("DISABLE_DIND", "Y").with_env(
-                "ADMIN_USERNAME", "admin").with_env("ADMIN_PASSWORD", "Password01!").with_env(
-                "OCTOPUS_SERVER_BASE64_LICENSE", os.environ["LICENSE"]).with_env("ENABLE_USAGE", "N")
+            cls.octopus = (
+                DockerContainer("octopusdeploy/octopusdeploy")
+                .with_bind_ports(8080, 8080)
+                .with_env("ACCEPT_EULA", "Y")
+                .with_env(
+                    "DB_CONNECTION_STRING",
+                    "Server="
+                    + mssql_ip
+                    + ",1433;Database=OctopusDeploy;User=sa;Password=Password01!",
+                )
+                .with_env("ADMIN_API_KEY", Octopus_Api_Key)
+                .with_env("DISABLE_DIND", "Y")
+                .with_env("ADMIN_USERNAME", "admin")
+                .with_env("ADMIN_PASSWORD", "Password01!")
+                .with_env("OCTOPUS_SERVER_BASE64_LICENSE", os.environ["LICENSE"])
+                .with_env("ENABLE_USAGE", "N")
+            )
             cls.octopus.start()
-            wait_for_logs(cls.octopus, "Web server is ready to process requests", timeout=300)
+            wait_for_logs(
+                cls.octopus, "Web server is ready to process requests", timeout=300
+            )
 
-            output = run_terraform("../terraform/simple/space_creation", Octopus_Url, Octopus_Api_Key)
-            run_terraform("../terraform/simple/space_population", Octopus_Url, Octopus_Api_Key,
-                          json.loads(output)["octopus_space_id"]["value"])
-            run_terraform("../terraform/empty/space_creation", Octopus_Url, Octopus_Api_Key)
+            output = run_terraform(
+                "../terraform/simple/space_creation", Octopus_Url, Octopus_Api_Key
+            )
+            run_terraform(
+                "../terraform/simple/space_population",
+                Octopus_Url,
+                Octopus_Api_Key,
+                json.loads(output)["octopus_space_id"]["value"],
+            )
+            run_terraform(
+                "../terraform/empty/space_creation", Octopus_Url, Octopus_Api_Key
+            )
         except Exception as e:
-            print("Failed to start containers. Consider running ryuk in privileged mode by setting "
-                  + "TESTCONTAINERS_RYUK_PRIVILEGED=true or disabling ryuk by setting "
-                  + "TESTCONTAINERS_RYUK_DISABLED=true.")
+            print(
+                "Failed to start containers. Consider running ryuk in privileged mode by setting "
+                + "TESTCONTAINERS_RYUK_PRIVILEGED=true or disabling ryuk by setting "
+                + "TESTCONTAINERS_RYUK_DISABLED=true."
+            )
             print(e)
             cls.tearDownClass()
 
@@ -135,20 +187,27 @@ class CopilotChatTest(unittest.TestCase):
     def test_all_defaults(self):
         prompt = "Get all default values."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue("Simple" in response_text, "Response was " + response_text)
-        self.assertTrue("Deploy Web App Container" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "Deploy Web App Container" in response_text, "Response was " + response_text
+        )
         self.assertTrue("Development" in response_text, "Response was " + response_text)
-        self.assertTrue("OctopusSolutionsEngineering" in response_text, "Response was " + response_text)
-        self.assertTrue("OctopusCopilot" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "OctopusSolutionsEngineering" in response_text,
+            "Response was " + response_text,
+        )
+        self.assertTrue(
+            "OctopusCopilot" in response_text, "Response was " + response_text
+        )
         self.assertTrue("build.yaml" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_default_space(self):
         prompt = "Get default space."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue("Simple" in response_text, "Response was " + response_text)
 
@@ -156,15 +215,17 @@ class CopilotChatTest(unittest.TestCase):
     def test_default_project(self):
         prompt = "Get default project."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("Deploy Web App Container" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "Deploy Web App Container" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_default_environment(self):
         prompt = "Get default environment."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue("Development" in response_text, "Response was " + response_text)
 
@@ -172,170 +233,236 @@ class CopilotChatTest(unittest.TestCase):
     def test_default_owner(self):
         prompt = "Get default owner."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("OctopusSolutionsEngineering" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "OctopusSolutionsEngineering" in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_default_repository(self):
         prompt = "Get default repository."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("OctopusCopilot" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "OctopusCopilot" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_default_workflow(self):
         prompt = "Get default workflow."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue("build.yaml" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_space_lookup(self):
-        prompt = "List the variable names defined in the project \"Deploy Web App Container\" in space \"Simpleish\"."
-        space_id, actual_space_name, warnings = lookup_space(Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish")
+        prompt = 'List the variable names defined in the project "Deploy Web App Container" in space "Simpleish".'
+        space_id, actual_space_name, warnings = lookup_space(
+            Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish"
+        )
 
-        self.assertEqual(actual_space_name, "Simple", "Space name was " + actual_space_name)
+        self.assertEqual(
+            actual_space_name, "Simple", "Space name was " + actual_space_name
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_project_lookup(self):
-        prompt = "List the variable names defined in the project \"Deploy Web App Containerish\" in space \"Simpleish\"."
-        space_id, actual_space_name, warnings = lookup_space(Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish")
-        sanitized_project_names, sanitized_projects = lookup_projects(Octopus_Url, Octopus_Api_Key, None, prompt,
-                                                                      space_id, "Deploy Web App Containerish")
+        prompt = 'List the variable names defined in the project "Deploy Web App Containerish" in space "Simpleish".'
+        space_id, actual_space_name, warnings = lookup_space(
+            Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish"
+        )
+        sanitized_project_names, sanitized_projects = lookup_projects(
+            Octopus_Url,
+            Octopus_Api_Key,
+            None,
+            prompt,
+            space_id,
+            "Deploy Web App Containerish",
+        )
 
-        self.assertEqual(sanitized_project_names[0], "Deploy Web App Container",
-                         "Project name was " + sanitized_project_names[0])
+        self.assertEqual(
+            sanitized_project_names[0],
+            "Deploy Web App Container",
+            "Project name was " + sanitized_project_names[0],
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_environment_lookup(self):
-        prompt = "List the variable names defined in the project \"Deploy Web App Containerish\" in space \"Simpleish\" in environment \"Developmentish\"."
-        space_id, actual_space_name, warnings = lookup_space(Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish")
-        sanitized_environment_names = lookup_environments(Octopus_Url, Octopus_Api_Key, None, prompt,
-                                                          space_id, "Developmentish")
+        prompt = 'List the variable names defined in the project "Deploy Web App Containerish" in space "Simpleish" in environment "Developmentish".'
+        space_id, actual_space_name, warnings = lookup_space(
+            Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish"
+        )
+        sanitized_environment_names = lookup_environments(
+            Octopus_Url, Octopus_Api_Key, None, prompt, space_id, "Developmentish"
+        )
 
-        self.assertEqual(sanitized_environment_names[0], "Development",
-                         "Environment name was " + sanitized_environment_names[0])
+        self.assertEqual(
+            sanitized_environment_names[0],
+            "Development",
+            "Environment name was " + sanitized_environment_names[0],
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_tenant_lookup(self):
-        prompt = "List the variable names defined in the project \"Deploy Web App Containerish\" in space \"Simpleish\" in environment \"Developmentish\" scoped to Tenant \"Marketingish\"."
-        space_id, actual_space_name, warnings = lookup_space(Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish")
-        sanitized_tenant_names = lookup_tenants(Octopus_Url, Octopus_Api_Key, None, prompt,
-                                                space_id, "Marketingish")
+        prompt = 'List the variable names defined in the project "Deploy Web App Containerish" in space "Simpleish" in environment "Developmentish" scoped to Tenant "Marketingish".'
+        space_id, actual_space_name, warnings = lookup_space(
+            Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish"
+        )
+        sanitized_tenant_names = lookup_tenants(
+            Octopus_Url, Octopus_Api_Key, None, prompt, space_id, "Marketingish"
+        )
 
-        self.assertEqual(sanitized_tenant_names[0], "Marketing",
-                         "Tenant name was " + sanitized_tenant_names[0])
+        self.assertEqual(
+            sanitized_tenant_names[0],
+            "Marketing",
+            "Tenant name was " + sanitized_tenant_names[0],
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_runbook_lookup(self):
-        prompt = "List the variable names defined in the project \"Deploy Web App Containerish\" in space \"Simpleish\" in environment \"Developmentish\" scoped to Tenant \"Marketingish\" and runbook \"Backup Databaseish\"."
-        space_id, actual_space_name, warnings = lookup_space(Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish")
-        sanitized_project_names, sanitized_projects = lookup_projects(Octopus_Url, Octopus_Api_Key, None, prompt,
-                                                                      space_id, "Runbook Projectish")
-        project = get_project(space_id, sanitized_project_names[0], Octopus_Api_Key, Octopus_Url)
-        sanitized_runbook_names = lookup_runbooks(Octopus_Url, Octopus_Api_Key, None, prompt,
-                                                  space_id, project["Id"], "Backup Databaseish")
+        prompt = 'List the variable names defined in the project "Deploy Web App Containerish" in space "Simpleish" in environment "Developmentish" scoped to Tenant "Marketingish" and runbook "Backup Databaseish".'
+        space_id, actual_space_name, warnings = lookup_space(
+            Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish"
+        )
+        sanitized_project_names, sanitized_projects = lookup_projects(
+            Octopus_Url, Octopus_Api_Key, None, prompt, space_id, "Runbook Projectish"
+        )
+        project = get_project(
+            space_id, sanitized_project_names[0], Octopus_Api_Key, Octopus_Url
+        )
+        sanitized_runbook_names = lookup_runbooks(
+            Octopus_Url,
+            Octopus_Api_Key,
+            None,
+            prompt,
+            space_id,
+            project["Id"],
+            "Backup Databaseish",
+        )
 
-        self.assertEqual(sanitized_runbook_names[0], "Backup Database",
-                         "Runbook name was " + sanitized_runbook_names[0])
+        self.assertEqual(
+            sanitized_runbook_names[0],
+            "Backup Database",
+            "Runbook name was " + sanitized_runbook_names[0],
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_variables(self):
-        prompt = "List the variable names defined in the project \"Deploy Web App Container\" in space \"Simple\"."
+        prompt = 'List the variable names defined in the project "Deploy Web App Container" in space "Simple".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("Test.Variable" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "Test.Variable" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_space_fuzzy_match(self):
-        prompt = "List the variables defined in the project \"Deploy Web App Container\" in space \"Simple1\"."
+        prompt = 'List the variables defined in the project "Deploy Web App Container" in space "Simple1".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("Test.Variable" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "Test.Variable" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_variables_no_github_user(self):
-        prompt = "List the variable names defined in the project \"Deploy Web App Container\" in space \"Simple\"."
+        prompt = 'List the variable names defined in the project "Deploy Web App Container" in space "Simple".'
         response = copilot_handler_internal(build_test_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("Test.Variable" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "Test.Variable" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_variables_with_defaults(self):
         prompt = "List the variable names defined in the project."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("Test.Variable" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "Test.Variable" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_step(self):
-        prompt = "What does the step \"Run a Script 2\" do in the project \"Deploy Web App Container\" in space \"Simple\"."
+        prompt = 'What does the step "Run a Script 2" do in the project "Deploy Web App Container" in space "Simple".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue("Hi there" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_missing_step(self):
-        prompt = "What does the project \"Deploy Web App Container\" in space \"Simple\" do."
+        prompt = (
+            'What does the project "Deploy Web App Container" in space "Simple" do.'
+        )
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertFalse("Hi there" in response_text,
-                         "Response was " + response_text)
+        self.assertFalse("Hi there" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_machines(self):
-        prompt = "What machines are in the space \"Simple\"?"
+        prompt = 'What machines are in the space "Simple"?'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("Cloud Region Target" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "Cloud Region Target" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_all_projects(self):
-        prompt = "What projects are in the space \"Simple\"."
+        prompt = 'What projects are in the space "Simple".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("Deploy Web App Container" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "Deploy Web App Container" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_runbook(self):
-        prompt = "What is the description of the \"Backup Database\" runbook in the \"Runbook Project\" project."
+        prompt = 'What is the description of the "Backup Database" runbook in the "Runbook Project" project.'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("Test Runbook" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "Test Runbook" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_machine_policies(self):
-        prompt = "What is the powershell health check script defined in the \"Windows VM Policy\" machine policy?"
+        prompt = 'What is the powershell health check script defined in the "Windows VM Policy" machine policy?'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("win32_LogicalDisk" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "win32_LogicalDisk" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_project_groups(self):
-        prompt = "What is the description of the \"Azure Apps\" project group?"
+        prompt = 'What is the description of the "Azure Apps" project group?'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("Test Description" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "Test Description" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_tenants(self):
-        prompt = "Describe the tenant \"Marketing\"."
+        prompt = 'Describe the tenant "Marketing".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue("Marketing" in response_text, "Response was " + response_text)
 
@@ -348,96 +475,110 @@ class CopilotChatTest(unittest.TestCase):
         """
         prompt = "List the unique tenant names in the space, sorted in alphabetical order. Display the answer in a markdown table."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue("Marketing" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_environment(self):
-        prompt = "Does the \"Development\" environment allow dynamic infrastructure?."
+        prompt = 'Does the "Development" environment allow dynamic infrastructure?.'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue("Development" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_feed(self):
-        prompt = "What is the URI of the \"Helm\" feed?."
+        prompt = 'What is the URI of the "Helm" feed?.'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("https://charts.helm.sh/stable/" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "https://charts.helm.sh/stable/" in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_account(self):
-        prompt = "What is the access key in the \"AWS Account\" account."
+        prompt = 'What is the access key in the "AWS Account" account.'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("ABCDEFGHIJKLMNOPQRST" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "ABCDEFGHIJKLMNOPQRST" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_variable_set(self):
-        prompt = "List the variables belonging to the \"Database Settings\" library variable set."
+        prompt = 'List the variables belonging to the "Database Settings" library variable set.'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("Test.Variable" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "Test.Variable" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_worker_pool(self):
-        prompt = "What is the description of the \"Docker\" worker pool?"
+        prompt = 'What is the description of the "Docker" worker pool?'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("Workers running Docker containers" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "Workers running Docker containers" in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_certificate(self):
-        prompt = "What is the note of the \"Kind CA\" certificate?"
+        prompt = 'What is the note of the "Kind CA" certificate?'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("A test certificate" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "A test certificate" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_tagsets(self):
-        prompt = "List the tags associated with the \"regions\" tag set?"
+        prompt = 'List the tags associated with the "regions" tag set?'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue("us-east-1" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_lifecycle(self):
-        prompt = "What environments are in the \"Simple\" lifecycle?"
+        prompt = 'What environments are in the "Simple" lifecycle?'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue("Production" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_git_creds(self):
-        prompt = "What is the username for the \"GitHub Credentials\" git credentials?"
+        prompt = 'What is the username for the "GitHub Credentials" git credentials?'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue("admin" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         create_and_deploy_release(space_name="Simple", release_version=version)
-        prompt = "Get the release version of the latest deployment to the \"Development\" environment for the \"Deploy Web App Container\" project."
+        prompt = 'Get the release version of the latest deployment to the "Development" environment for the "Deploy Web App Container" project.'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue(version in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_runbook_dashboard(self):
         publish_runbook("Simple", "Runbook Project", "Backup Database")
-        space_id, space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+        space_id, space_name = get_space_id_and_name_from_name(
+            "Simple", Octopus_Api_Key, Octopus_Url
+        )
         runbook_run = run_published_runbook_fuzzy(
             space_id,
             "Runbook Project",
@@ -445,19 +586,29 @@ class CopilotChatTest(unittest.TestCase):
             "Development",
             "",
             Octopus_Api_Key,
-            Octopus_Url)
+            Octopus_Url,
+        )
         wait_for_task(runbook_run["TaskId"], space_name="Simple")
-        prompt = "Get the runbook dashboard for runbook \"Backup Database\" in the \"Runbook Project\" project."
+        prompt = 'Get the runbook dashboard for runbook "Backup Database" in the "Runbook Project" project.'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
-                        or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "🟣" in response_text
+            or "🔵" in response_text
+            or "🟡" in response_text
+            or "🟢" in response_text
+            or "🔴" in response_text
+            or "⚪" in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_runbook_logs(self):
         publish_runbook("Simple", "Runbook Project", "Backup Database")
-        space_id, space_name = get_space_id_and_name_from_name("Simple", Octopus_Api_Key, Octopus_Url)
+        space_id, space_name = get_space_id_and_name_from_name(
+            "Simple", Octopus_Api_Key, Octopus_Url
+        )
         runbook_run = run_published_runbook_fuzzy(
             space_id,
             "Runbook Project",
@@ -465,584 +616,754 @@ class CopilotChatTest(unittest.TestCase):
             "Development",
             "",
             Octopus_Api_Key,
-            Octopus_Url)
+            Octopus_Url,
+        )
         wait_for_task(runbook_run["TaskId"], space_name="Simple")
-        prompt = "Get the logs from the run of runbook \"Backup Database\" in the \"Runbook Project\" project."
+        prompt = 'Get the logs from the run of runbook "Backup Database" in the "Runbook Project" project.'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue("Hello world" in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment_fuzzy(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         create_and_deploy_release(space_name="Simple", release_version=version)
-        prompt = "Get the release version of the latest deployment to the \"Develpment\" environment for the \"Deploy WebApp Container\" project."
+        prompt = 'Get the release version of the latest deployment to the "Develpment" environment for the "Deploy WebApp Container" project.'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue(version in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_date_range_deployment(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         create_and_deploy_release(space_name="Simple", release_version=version)
-        prompt = "Get the release version of the last deployment made to the \"Development\" environment for the \"Deploy Web App Container\" project between 1st January 2024 and 31st December 2099."
+        prompt = 'Get the release version of the last deployment made to the "Development" environment for the "Deploy Web App Container" project between 1st January 2024 and 31st December 2099.'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue(version in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_get_channels(self):
-        prompt = "List the channels defined in the project \"Deploy AWS Lambda\" in the space \"Simple\" in a markdown table."
+        prompt = 'List the channels defined in the project "Deploy AWS Lambda" in the space "Simple" in a markdown table.'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue(re.search("Mainline", response_text), "Response was " + response_text)
+        self.assertTrue(
+            re.search("Mainline", response_text), "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment_channel(self):
         # Create a release in the Mainline channel against a tenant
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
-        create_and_deploy_release(space_name="Simple", channel_name="Mainline", project_name="Deploy AWS Lambda",
-                                  tenant_name="Marketing", release_version=version)
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        create_and_deploy_release(
+            space_name="Simple",
+            channel_name="Mainline",
+            project_name="Deploy AWS Lambda",
+            tenant_name="Marketing",
+            release_version=version,
+        )
         # Create another release without a tenant to ensure the query is actually doing a search and not
         # returning the first version it finds
-        create_and_deploy_release(space_name="Simple", project_name="Deploy AWS Lambda",
-                                  release_version=str(uuid.uuid4()))
-        prompt = ("What is the release version of the latest deployment to the \"Development\" environment for the "
-                  + "\"Deploy AWS Lambda\" project in the \"Mainline\" channel for the \"Marketing\" tenant?")
+        create_and_deploy_release(
+            space_name="Simple",
+            project_name="Deploy AWS Lambda",
+            release_version=str(uuid.uuid4()),
+        )
+        prompt = (
+            'What is the release version of the latest deployment to the "Development" environment for the '
+            + '"Deploy AWS Lambda" project in the "Mainline" channel for the "Marketing" tenant?'
+        )
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue(version in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment_channel_fuzzy(self):
         # Create a release in the Mainline channel against a tenant
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
-        create_and_deploy_release(space_name="Simple", channel_name="Mainline", project_name="Deploy AWS Lambda",
-                                  tenant_name="Marketing", release_version=version)
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        create_and_deploy_release(
+            space_name="Simple",
+            channel_name="Mainline",
+            project_name="Deploy AWS Lambda",
+            tenant_name="Marketing",
+            release_version=version,
+        )
         # Create another release without a tenant to ensure the query is actually doing a search and not
         # returning the first version it finds
-        create_and_deploy_release(space_name="Simple", project_name="Deploy AWS Lambda",
-                                  release_version=str(uuid.uuid4()))
+        create_and_deploy_release(
+            space_name="Simple",
+            project_name="Deploy AWS Lambda",
+            release_version=str(uuid.uuid4()),
+        )
         # The project name is misspelled here deliberately to test the fuzzy matching
-        prompt = ("What is the release version of the latest deployment to the \"Development\" environment for the "
-                  + "\"Deploy AS Lambda\" project in the \"Mainline\" channel for the \"Marketing\" tenant?")
+        prompt = (
+            'What is the release version of the latest deployment to the "Development" environment for the '
+            + '"Deploy AS Lambda" project in the "Mainline" channel for the "Marketing" tenant?'
+        )
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue(version in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment_defaults(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         create_and_deploy_release(space_name="Simple", release_version=version)
         prompt = "What is the release version of the latest deployment?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue(version in response_text, "Response was " + response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_hotfix_deployments(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
-        deployment = create_and_deploy_release(space_name="Simple", release_version=version + "-hotfix-timeouts-iss253",
-                                               channel_name="Hotfix")
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        deployment = create_and_deploy_release(
+            space_name="Simple",
+            release_version=version + "-hotfix-timeouts-iss253",
+            channel_name="Hotfix",
+        )
         wait_for_task(deployment["TaskId"], space_name="Simple")
 
         prompt = "Show the release version and time of the last successful deployment to the hotfix channel."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue(version + "-hotfix-timeouts-iss253" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            version + "-hotfix-timeouts-iss253" in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_question(self):
-        prompt = "What does the project \"Deploy Web App Container\" do?"
+        prompt = 'What does the project "Deploy Web App Container" do?'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         # This response could be anything, but make sure the LLM isn't saying sorry for something.
-        self.assertTrue("sorry" not in response_text.casefold(), "Response was " + response_text)
+        self.assertTrue(
+            "sorry" not in response_text.casefold(), "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_help(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         create_and_deploy_release(space_name="Simple", release_version=version)
         time.sleep(5)
 
-        for prompt in ["what questions can I ask", "help me", "hello", "hi", "what do you do", "what do you do?",
-                       "What do you do?"]:
+        for prompt in [
+            "what questions can I ask",
+            "help me",
+            "hello",
+            "hi",
+            "what do you do",
+            "what do you do?",
+            "What do you do?",
+        ]:
             response = copilot_handler_internal(build_request(prompt))
-            response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+            response_text = convert_from_sse_response(
+                response.get_body().decode("utf8")
+            )
 
-            self.assertTrue("Here are some sample queries you can ask" in response_text,
-                            "Prompt was " + prompt + " Response was " + response_text)
+            self.assertTrue(
+                "Here are some sample queries you can ask" in response_text,
+                "Prompt was " + prompt + " Response was " + response_text,
+            )
             # The project, environment, runbook, and space name must be included in the sample queries
-            self.assertTrue("Simple" in response_text, "Prompt was " + prompt + " Response was " + response_text)
-            self.assertTrue("Deploy Web App Container" in response_text,
-                            "Prompt was " + prompt + " Response was " + response_text)
-            self.assertTrue("Backup Database" in response_text,
-                            "Prompt was " + prompt + " Response was " + response_text)
-            self.assertTrue("Development" in response_text, "Prompt was " + prompt + " Response was " + response_text)
+            self.assertTrue(
+                "Simple" in response_text,
+                "Prompt was " + prompt + " Response was " + response_text,
+            )
+            self.assertTrue(
+                "Deploy Web App Container" in response_text,
+                "Prompt was " + prompt + " Response was " + response_text,
+            )
+            self.assertTrue(
+                "Backup Database" in response_text,
+                "Prompt was " + prompt + " Response was " + response_text,
+            )
+            self.assertTrue(
+                "Development" in response_text,
+                "Prompt was " + prompt + " Response was " + response_text,
+            )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_docs(self):
         for prompt in ["How do I enable server side apply?"]:
             response = copilot_handler_internal(build_request(prompt))
-            response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+            response_text = convert_from_sse_response(
+                response.get_body().decode("utf8")
+            )
 
-            self.assertTrue("Sorry, I did not understand that request." not in response_text,
-                            "Response was " + response_text)
+            self.assertTrue(
+                "Sorry, I did not understand that request." not in response_text,
+                "Response was " + response_text,
+            )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_runbook_run(self):
-        prompt = "Run runbook \"Backup Database\" in the \"Runbook Project\" project"
+        prompt = 'Run runbook "Backup Database" in the "Runbook Project" project'
         response = copilot_handler_internal(build_request(prompt))
-        confirmation_id = get_confirmation_id(response.get_body().decode('utf8'))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {"messages": [{
-            "role": "user",
-            "content": "",
-            "copilot_references": None,
-            "copilot_confirmations": [
+        confirmation = {
+            "messages": [
                 {
-                    "state": "accepted",
-                    "confirmation": {
-                        "id": confirmation_id
-                    }
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
                 }
             ]
-        }]}
+        }
 
-        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
-        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
-        self.assertTrue("Backup Database" in response_text, "Response was " + response_text)
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        self.assertTrue(
+            "Backup Database" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_create_release(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
-        prompt = f"Create release in the \"Deploy Web App Container\" project with version \"{version}\" and with channel \"Default\""
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        prompt = f'Create release in the "Deploy Web App Container" project with version "{version}" and with channel "Default"'
         response = copilot_handler_internal(build_request(prompt))
-        confirmation_id = get_confirmation_id(response.get_body().decode('utf8'))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {"messages": [{
-            "role": "user",
-            "content": "",
-            "copilot_references": None,
-            "copilot_confirmations": [
+        confirmation = {
+            "messages": [
                 {
-                    "state": "accepted",
-                    "confirmation": {
-                        "id": confirmation_id
-                    }
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
                 }
             ]
-        }]}
+        }
 
-        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
-        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
-        self.assertTrue(f"Release {version}" in response_text, "Response was " + response_text)
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        self.assertTrue(
+            f"Release {version}" in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_create_release_handles_existing_version(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         # Create the release via the api
         create_release(space_name="Simple", release_version=version)
         # Then create it via a prompt
-        prompt = f"Create release in the \"Deploy Web App Container\" project with version \"{version}\" and with channel \"Default\""
+        prompt = f'Create release in the "Deploy Web App Container" project with version "{version}" and with channel "Default"'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
-        self.assertTrue(f"Release version \"{version}\" already exists." in response_text,
-                        "Response was " + response_text)
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        self.assertTrue(
+            f'Release version "{version}" already exists.' in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_create_release_with_deployment_environment(self):
         project_name = "Deploy Web App Container"
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         deploy_environment = "Development"
-        prompt = f"Create release in the \"{project_name}\" project with version \"{version}\" and deploy to the \"{deploy_environment}\" environment"
+        prompt = f'Create release in the "{project_name}" project with version "{version}" and deploy to the "{deploy_environment}" environment'
         response = copilot_handler_internal(build_request(prompt))
-        confirmation_id = get_confirmation_id(response.get_body().decode('utf8'))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {"messages": [{
-            "role": "user",
-            "content": "",
-            "copilot_references": None,
-            "copilot_confirmations": [
+        confirmation = {
+            "messages": [
                 {
-                    "state": "accepted",
-                    "confirmation": {
-                        "id": confirmation_id
-                    }
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
                 }
             ]
-        }]}
+        }
 
-        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
-        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
-        self.assertTrue(f"Deployment of {project_name} release {version} to {deploy_environment}" in response_text,
-                        "Response was " + response_text)
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        self.assertTrue(
+            f"Deployment of {project_name} release {version} to {deploy_environment}"
+            in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_deploy_release(self):
         project_name = "Deploy Web App Container"
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
-        release = create_release(space_name="Simple", project_name=project_name, release_version=version)
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        release = create_release(
+            space_name="Simple", project_name=project_name, release_version=version
+        )
         deploy_environment = "Development"
         prompt = f"Deploy release version \"{release['Version']}\" for project \"{project_name}\" to the \"{deploy_environment}\" environment"
         response = copilot_handler_internal(build_request(prompt))
-        confirmation_id = get_confirmation_id(response.get_body().decode('utf8'))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {"messages": [{
-            "role": "user",
-            "content": "",
-            "copilot_references": None,
-            "copilot_confirmations": [
+        confirmation = {
+            "messages": [
                 {
-                    "state": "accepted",
-                    "confirmation": {
-                        "id": confirmation_id
-                    }
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
                 }
             ]
-        }]}
+        }
 
-        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
-        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
-        self.assertTrue(f"Deployment of {project_name} release {version} to {deploy_environment}" in response_text,
-                        "Response was " + response_text)
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        self.assertTrue(
+            f"Deployment of {project_name} release {version} to {deploy_environment}"
+            in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_deploy_release_default_project(self):
         project_name = "Deploy Web App Container"
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
-        release = create_release(space_name="Simple", project_name=project_name, release_version=version)
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        release = create_release(
+            space_name="Simple", project_name=project_name, release_version=version
+        )
         deploy_environment = "Development"
         prompt = f"Deploy release version \"{release['Version']}\" to the \"{deploy_environment}\" environment"
         response = copilot_handler_internal(build_request(prompt))
-        confirmation_id = get_confirmation_id(response.get_body().decode('utf8'))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {"messages": [{
-            "role": "user",
-            "content": "",
-            "copilot_references": None,
-            "copilot_confirmations": [
+        confirmation = {
+            "messages": [
                 {
-                    "state": "accepted",
-                    "confirmation": {
-                        "id": confirmation_id
-                    }
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
                 }
             ]
-        }]}
+        }
 
-        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
-        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
-        self.assertTrue(f"Deployment of {project_name} release {version} to {deploy_environment}" in response_text,
-                        "Response was " + response_text)
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        self.assertTrue(
+            f"Deployment of {project_name} release {version} to {deploy_environment}"
+            in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_deploy_release_to_tenant(self):
         project_name = "Deploy AWS Lambda"
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
-        release = create_release(space_name="Simple", project_name=project_name, release_version=version)
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        release = create_release(
+            space_name="Simple", project_name=project_name, release_version=version
+        )
         deploy_environment = "Development"
         tenant_name = "Marketing"
         prompt = f"Deploy release version \"{release['Version']}\" for project \"{project_name}\" to the \"{deploy_environment}\" environment for tenant \"{tenant_name}\""
         response = copilot_handler_internal(build_request(prompt))
-        confirmation_id = get_confirmation_id(response.get_body().decode('utf8'))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {"messages": [{
-            "role": "user",
-            "content": "",
-            "copilot_references": None,
-            "copilot_confirmations": [
+        confirmation = {
+            "messages": [
                 {
-                    "state": "accepted",
-                    "confirmation": {
-                        "id": confirmation_id
-                    }
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
                 }
             ]
-        }]}
+        }
 
-        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
-        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
         self.assertTrue(
-            f"Deployment of {project_name} release {version} to {deploy_environment} for {tenant_name}" in response_text,
-            "Response was " + response_text)
+            f"Deployment of {project_name} release {version} to {deploy_environment} for {tenant_name}"
+            in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_approve_manual_intervention_for_deployment(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         space_name = "Simple"
         project_name = "Copilot manual approval"
         environment_name = "Development"
-        create_and_deploy_release(space_name=space_name, project_name=project_name, environment_name=environment_name,
-                                  release_version=version)
+        create_and_deploy_release(
+            space_name=space_name,
+            project_name=project_name,
+            environment_name=environment_name,
+            release_version=version,
+        )
         time.sleep(5)
 
-        prompt = f"Approve \"{version}\" to the \"{environment_name}\" environment for project \"{project_name}\" in space \"{space_name}\""
+        prompt = f'Approve "{version}" to the "{environment_name}" environment for project "{project_name}" in space "{space_name}"'
         response = copilot_handler_internal(build_request(prompt))
-        response_body_decoded = response.get_body().decode('utf8')
+        response_body_decoded = response.get_body().decode("utf8")
 
         confirmation_id = get_confirmation_id(response_body_decoded)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {"messages": [{
-            "role": "user",
-            "content": "",
-            "copilot_references": None,
-            "copilot_confirmations": [
+        confirmation = {
+            "messages": [
                 {
-                    "state": "accepted",
-                    "confirmation": {
-                        "id": confirmation_id
-                    }
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
                 }
             ]
-        }]}
+        }
 
-        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
-        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
 
-        self.assertTrue(f"{project_name}" and "☑️ Manual intervention approved" in response_text,
-                        "Response was " + response_text)
+        self.assertTrue(
+            f"{project_name}" and "☑️ Manual intervention approved" in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_approve_manual_intervention_with_guided_failure_interruption(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         space_name = "Simple"
         project_name = "Copilot guided failure"
         environment_name = "Development"
-        deploy_response = create_and_deploy_release(space_name=space_name, project_name=project_name,
-                                                    environment_name=environment_name,
-                                                    release_version=version, use_guided_failure=True)
+        deploy_response = create_and_deploy_release(
+            space_name=space_name,
+            project_name=project_name,
+            environment_name=environment_name,
+            release_version=version,
+            use_guided_failure=True,
+        )
         time.sleep(15)
 
-        prompt = f"Approve release \"{version}\" to the \"{environment_name}\" environment for project \"{project_name}\""
+        prompt = f'Approve release "{version}" to the "{environment_name}" environment for project "{project_name}"'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("🚫 An incompatible interruption (guided failure) was found for" and version
-                        and "Proceed" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            "🚫 An incompatible interruption (guided failure) was found for"
+            and version
+            and "Proceed" in response_text,
+            "Response was " + response_text,
+        )
 
         # clean-up task by canceling it
-        cancel_response = cancel_task(deploy_response['SpaceId'], deploy_response['TaskId'])
-        self.assertTrue(cancel_response['Id'] == deploy_response['TaskId'])
-        self.assertTrue(cancel_response['State'] in ['Canceled', 'Cancelling'])
+        cancel_response = cancel_task(
+            deploy_response["SpaceId"], deploy_response["TaskId"]
+        )
+        self.assertTrue(cancel_response["Id"] == deploy_response["TaskId"])
+        self.assertTrue(cancel_response["State"] in ["Canceled", "Cancelling"])
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_reject_manual_intervention_for_deployment(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         space_name = "Simple"
         project_name = "Copilot manual approval"
         environment_name = "Development"
-        create_and_deploy_release(space_name=space_name, project_name=project_name,
-                                  environment_name=environment_name,
-                                  release_version=version)
+        create_and_deploy_release(
+            space_name=space_name,
+            project_name=project_name,
+            environment_name=environment_name,
+            release_version=version,
+        )
         time.sleep(5)
 
-        prompt = f"Reject \"{version}\" to the \"{environment_name}\" environment for project \"{project_name}\" in space \"{space_name}\""
+        prompt = f'Reject "{version}" to the "{environment_name}" environment for project "{project_name}" in space "{space_name}"'
         response = copilot_handler_internal(build_request(prompt))
-        response_body_decoded = response.get_body().decode('utf8')
+        response_body_decoded = response.get_body().decode("utf8")
 
         confirmation_id = get_confirmation_id(response_body_decoded)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {"messages": [{
-            "role": "user",
-            "content": "",
-            "copilot_references": None,
-            "copilot_confirmations": [
+        confirmation = {
+            "messages": [
                 {
-                    "state": "accepted",
-                    "confirmation": {
-                        "id": confirmation_id
-                    }
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
                 }
             ]
-        }]}
+        }
 
-        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
-        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
 
-        self.assertTrue(f"{project_name}" and "⛔ Manual intervention rejected" in response_text,
-                        "Response was " + response_text)
+        self.assertTrue(
+            f"{project_name}" and "⛔ Manual intervention rejected" in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_reject_manual_intervention_with_guided_failure_interruption(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         space_name = "Simple"
         project_name = "Copilot guided failure"
         environment_name = "Development"
-        deploy_response = create_and_deploy_release(space_name=space_name, project_name=project_name,
-                                                    environment_name=environment_name,
-                                                    release_version=version, use_guided_failure=True)
+        deploy_response = create_and_deploy_release(
+            space_name=space_name,
+            project_name=project_name,
+            environment_name=environment_name,
+            release_version=version,
+            use_guided_failure=True,
+        )
         time.sleep(15)
 
-        prompt = f"Reject release \"{version}\" to the \"{environment_name}\" environment for project \"{project_name}\""
+        prompt = f'Reject release "{version}" to the "{environment_name}" environment for project "{project_name}"'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue(
-            "🚫 An incompatible interruption (guided failure) was found for" and version and "Abort" in response_text,
-            "Response was " + response_text)
+            "🚫 An incompatible interruption (guided failure) was found for"
+            and version
+            and "Abort" in response_text,
+            "Response was " + response_text,
+        )
 
         # clean-up task by canceling it
-        cancel_response = cancel_task(deploy_response['SpaceId'], deploy_response['TaskId'])
-        self.assertTrue(cancel_response['Id'] == deploy_response['TaskId'])
-        self.assertTrue(cancel_response['State'] in ['Canceled', 'Cancelling'])
+        cancel_response = cancel_task(
+            deploy_response["SpaceId"], deploy_response["TaskId"]
+        )
+        self.assertTrue(cancel_response["Id"] == deploy_response["TaskId"])
+        self.assertTrue(cancel_response["State"] in ["Canceled", "Cancelling"])
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_cancel_task_by_invalid_id(self):
         invalid_task_id = "ServerTax-74872356"
-        prompt = f"Cancel the task \"{invalid_task_id}\""
+        prompt = f'Cancel the task "{invalid_task_id}"'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue(f"⚠️ Unable to determine task to cancel from: \"{invalid_task_id}\"." in response_text,
-                        "Response was " + response_text)
+        self.assertTrue(
+            f'⚠️ Unable to determine task to cancel from: "{invalid_task_id}".'
+            in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_cancel_task_already_canceled(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         space_name = "Simple"
         project_name = "Long running script"
         environment_name = "Development"
-        deploy_response = create_and_deploy_release(space_name=space_name, project_name=project_name,
-                                                    environment_name=environment_name,
-                                                    release_version=version)
+        deploy_response = create_and_deploy_release(
+            space_name=space_name,
+            project_name=project_name,
+            environment_name=environment_name,
+            release_version=version,
+        )
         time.sleep(5)
-        cancel_task(deploy_response['SpaceId'], deploy_response['TaskId'])
-        wait_for_task(deploy_response['TaskId'], space_name=space_name)
+        cancel_task(deploy_response["SpaceId"], deploy_response["TaskId"])
+        wait_for_task(deploy_response["TaskId"], space_name=space_name)
         prompt = f"Cancel the task \"{deploy_response['TaskId']}\""
 
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue(f"Task already cancelled." in response_text, "Response was " + response_text)
+        self.assertTrue(
+            f"Task already cancelled." in response_text, "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_cancel_task_by_id(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         space_name = "Simple"
         project_name = "Long running script"
         environment_name = "Development"
-        deploy_response = create_and_deploy_release(space_name=space_name, project_name=project_name,
-                                                    environment_name=environment_name,
-                                                    release_version=version)
+        deploy_response = create_and_deploy_release(
+            space_name=space_name,
+            project_name=project_name,
+            environment_name=environment_name,
+            release_version=version,
+        )
 
         prompt = f"Cancel the task \"{deploy_response['TaskId']}\""
         response = copilot_handler_internal(build_request(prompt))
-        response_body_decoded = response.get_body().decode('utf8')
+        response_body_decoded = response.get_body().decode("utf8")
 
         confirmation_id = get_confirmation_id(response_body_decoded)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {"messages": [{
-            "role": "user",
-            "content": "",
-            "copilot_references": None,
-            "copilot_confirmations": [
+        confirmation = {
+            "messages": [
                 {
-                    "state": "accepted",
-                    "confirmation": {
-                        "id": confirmation_id
-                    }
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
                 }
             ]
-        }]}
+        }
 
-        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
-        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
 
-        self.assertTrue(f"{project_name}" and "⛔ Task canceled" in response_text,
-                        "Response was " + response_text)
+        self.assertTrue(
+            f"{project_name}" and "⛔ Task canceled" in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_cancel_deployment(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         space_name = "Simple"
         project_name = "Long running script"
         environment_name = "Development"
-        create_and_deploy_release(space_name=space_name, project_name=project_name, environment_name=environment_name,
-                                  release_version=version)
+        create_and_deploy_release(
+            space_name=space_name,
+            project_name=project_name,
+            environment_name=environment_name,
+            release_version=version,
+        )
 
-        prompt = f"Cancel the latest deployment for the project \"{project_name}\" to the environment \"{environment_name}\" in the space \"{space_name}\"."
+        prompt = f'Cancel the latest deployment for the project "{project_name}" to the environment "{environment_name}" in the space "{space_name}".'
         response = copilot_handler_internal(build_request(prompt))
-        response_body_decoded = response.get_body().decode('utf8')
+        response_body_decoded = response.get_body().decode("utf8")
 
         confirmation_id = get_confirmation_id(response_body_decoded)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {"messages": [{
-            "role": "user",
-            "content": "",
-            "copilot_references": None,
-            "copilot_confirmations": [
+        confirmation = {
+            "messages": [
                 {
-                    "state": "accepted",
-                    "confirmation": {
-                        "id": confirmation_id
-                    }
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
                 }
             ]
-        }]}
+        }
 
-        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
-        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
 
-        self.assertTrue(f"{project_name}" and "⛔ Task canceled" in response_text,
-                        "Response was " + response_text)
+        self.assertTrue(
+            f"{project_name}" and "⛔ Task canceled" in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_cancel_tenanted_deployment(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         space_name = "Simple"
         project_name = "Long running script"
         environment_name = "Development"
         tenant_name = "Marketing"
-        create_and_deploy_release(space_name=space_name, project_name=project_name, environment_name=environment_name,
-                                  tenant_name=tenant_name, release_version=version)
+        create_and_deploy_release(
+            space_name=space_name,
+            project_name=project_name,
+            environment_name=environment_name,
+            tenant_name=tenant_name,
+            release_version=version,
+        )
         time.sleep(5)
-        prompt = (f"Cancel the latest deployment for the project \"{project_name}\" to the environment "
-                  f"\"{environment_name}\" for the tenant \"{tenant_name}\" in the space \"{space_name}\".")
+        prompt = (
+            f'Cancel the latest deployment for the project "{project_name}" to the environment '
+            f'"{environment_name}" for the tenant "{tenant_name}" in the space "{space_name}".'
+        )
         response = copilot_handler_internal(build_request(prompt))
-        response_body_decoded = response.get_body().decode('utf8')
+        response_body_decoded = response.get_body().decode("utf8")
 
         confirmation_id = get_confirmation_id(response_body_decoded)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {"messages": [{
-            "role": "user",
-            "content": "",
-            "copilot_references": None,
-            "copilot_confirmations": [
+        confirmation = {
+            "messages": [
                 {
-                    "state": "accepted",
-                    "confirmation": {
-                        "id": confirmation_id
-                    }
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
                 }
             ]
-        }]}
+        }
 
-        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
-        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
 
-        self.assertTrue(f"{project_name}" and "⛔ Task canceled" in response_text,
-                        "Response was " + response_text)
+        self.assertTrue(
+            f"{project_name}" and "⛔ Task canceled" in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_cancel_runbook_run(self):
@@ -1051,7 +1372,9 @@ class CopilotChatTest(unittest.TestCase):
         runbook_name = "Long Running Runbook"
         environment_name = "Development"
         publish_runbook(space_name, project_name, runbook_name)
-        space_id, space_name = get_space_id_and_name_from_name(space_name, Octopus_Api_Key, Octopus_Url)
+        space_id, space_name = get_space_id_and_name_from_name(
+            space_name, Octopus_Api_Key, Octopus_Url
+        )
         run_published_runbook_fuzzy(
             space_id,
             project_name,
@@ -1059,69 +1382,87 @@ class CopilotChatTest(unittest.TestCase):
             environment_name,
             "",
             Octopus_Api_Key,
-            Octopus_Url)
+            Octopus_Url,
+        )
 
-        prompt = f"Cancel the runbook \"{runbook_name}\" for project \"{project_name}\" to the environment \"{environment_name}\" in the space \"{space_name}\"."
+        prompt = f'Cancel the runbook "{runbook_name}" for project "{project_name}" to the environment "{environment_name}" in the space "{space_name}".'
         response = copilot_handler_internal(build_request(prompt))
-        response_body_decoded = response.get_body().decode('utf8')
+        response_body_decoded = response.get_body().decode("utf8")
 
         confirmation_id = get_confirmation_id(response_body_decoded)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {"messages": [{
-            "role": "user",
-            "content": "",
-            "copilot_references": None,
-            "copilot_confirmations": [
+        confirmation = {
+            "messages": [
                 {
-                    "state": "accepted",
-                    "confirmation": {
-                        "id": confirmation_id
-                    }
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
                 }
             ]
-        }]}
+        }
 
-        run_response = copilot_handler_internal(build_confirmation_request(confirmation))
-        response_text = convert_from_sse_response(run_response.get_body().decode('utf8'))
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
 
-        self.assertTrue(f"{project_name}" and "⛔ Task canceled" in response_text,
-                        "Response was " + response_text)
+        self.assertTrue(
+            f"{project_name}" and "⛔ Task canceled" in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         create_and_deploy_release(space_name="Simple", release_version=version)
         time.sleep(5)
         prompt = "Show the dashboard."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
-            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
+            "🟣" in response_text
+            or "🔵" in response_text
+            or "🟡" in response_text
+            or "🟢" in response_text
+            or "🔴" in response_text
+            or "⚪" in response_text,
+            "Response was " + response_text,
+        )
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_dashboard_fuzzy_space(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         create_and_deploy_release(space_name="Simple", release_version=version)
         time.sleep(5)
-        prompt = "Show the dashboard for space \"Simpleish\"."
+        prompt = 'Show the dashboard for space "Simpleish".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
-            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
+            "🟣" in response_text
+            or "🔵" in response_text
+            or "🟡" in response_text
+            or "🟢" in response_text
+            or "🔴" in response_text
+            or "⚪" in response_text,
+            "Response was " + response_text,
+        )
         self.assertTrue("Simple" in response_text, "Response was " + response_text)
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_deployment_summary_fuzzy_space(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         notes = """* GitHub Owner: OctopusSolutionsEngineering
         * GitHub Repo: OctopusCopilot
         * GitHub Workflow: build.yaml
@@ -1129,25 +1470,36 @@ class CopilotChatTest(unittest.TestCase):
         * GitHub Run: 1401
         * GitHub Attempt: 1
         * GitHub Run Id: 9656530979"""
-        deployment = create_and_deploy_release(space_name="Simple", release_version=version, release_notes=notes)
+        deployment = create_and_deploy_release(
+            space_name="Simple", release_version=version, release_notes=notes
+        )
         wait_for_task(deployment["TaskId"], space_name="Simple")
-        prompt = f"Show the task summary for release {version} of project \"Deploy Web App Container\" for space \"Simpleish\"."
+        prompt = f'Show the task summary for release {version} of project "Deploy Web App Container" for space "Simpleish".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
-            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
-        self.assertTrue(f"Deploy Deploy Web App Container release {version} to Development" in response_text,
-                        response_text)
+            "🟣" in response_text
+            or "🔵" in response_text
+            or "🟡" in response_text
+            or "🟢" in response_text
+            or "🔴" in response_text
+            or "⚪" in response_text,
+            "Response was " + response_text,
+        )
+        self.assertTrue(
+            f"Deploy Deploy Web App Container release {version} to Development"
+            in response_text,
+            response_text,
+        )
         self.assertTrue(f"This is a highlight" in response_text, response_text)
         self.assertTrue(f"file.txt" in response_text, response_text)
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_project_dashboard_fuzzy_space(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         notes = """* GitHub Owner: OctopusSolutionsEngineering
                 * GitHub Repo: OctopusCopilot
                 * GitHub Workflow: build.yaml
@@ -1155,31 +1507,47 @@ class CopilotChatTest(unittest.TestCase):
                 * GitHub Run: 1401
                 * GitHub Attempt: 1
                 * GitHub Run Id: 9656530979"""
-        prompt = "Show the project dashboard for \"Deploy Web App Container\" for space \"Simpleish\"."
-        deployment = create_and_deploy_release(space_name="Simple", release_version=version, release_notes=notes)
+        prompt = 'Show the project dashboard for "Deploy Web App Container" for space "Simpleish".'
+        deployment = create_and_deploy_release(
+            space_name="Simple", release_version=version, release_notes=notes
+        )
 
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
-        self.assertTrue("Configure the load balancer" in response_text, "Response was " + response_text)
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        self.assertTrue(
+            "Configure the load balancer" in response_text,
+            "Response was " + response_text,
+        )
         print(response_text)
 
         wait_for_task(deployment["TaskId"], space_name="Simple")
 
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
-            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
-        self.assertTrue("Simple / Deploy Web App Container" in response_text, "Response was " + response_text)
-        self.assertTrue("This is a highlight" in response_text, "Response was " + response_text)
+            "🟣" in response_text
+            or "🔵" in response_text
+            or "🟡" in response_text
+            or "🟢" in response_text
+            or "🔴" in response_text
+            or "⚪" in response_text,
+            "Response was " + response_text,
+        )
+        self.assertTrue(
+            "Simple / Deploy Web App Container" in response_text,
+            "Response was " + response_text,
+        )
+        self.assertTrue(
+            "This is a highlight" in response_text, "Response was " + response_text
+        )
         self.assertTrue("file.txt" in response_text, "Response was " + response_text)
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_project_dashboard_default_space(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         notes = """* GitHub Owner: OctopusSolutionsEngineering
                         * GitHub Repo: OctopusCopilot
                         * GitHub Workflow: build.yaml
@@ -1187,116 +1555,180 @@ class CopilotChatTest(unittest.TestCase):
                         * GitHub Run: 1401
                         * GitHub Attempt: 1
                         * GitHub Run Id: 9656530979"""
-        deployment = create_and_deploy_release(space_name="Simple", release_version=version, release_notes=notes)
-        hotfix_deployment = create_and_deploy_release(space_name="Simple", channel_name="Hotfix",
-                                                      release_version=f"{version}-hf", release_notes=notes)
+        deployment = create_and_deploy_release(
+            space_name="Simple", release_version=version, release_notes=notes
+        )
+        hotfix_deployment = create_and_deploy_release(
+            space_name="Simple",
+            channel_name="Hotfix",
+            release_version=f"{version}-hf",
+            release_notes=notes,
+        )
         wait_for_task(deployment["TaskId"], space_name="Simple")
         wait_for_task(hotfix_deployment["TaskId"], space_name="Simple")
-        prompt = "Show the project dashboard for \"Deploy Web App Container\"."
+        prompt = 'Show the project dashboard for "Deploy Web App Container".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
         self.assertTrue(
-            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
-            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
-        self.assertTrue("Simple / Deploy Web App Container" in response_text, "Response was " + response_text)
-        self.assertTrue("Channel: Default" in response_text, "Response was " + response_text)
-        self.assertTrue("Channel: Hotfix" in response_text, "Response was " + response_text)
+            "🟣" in response_text
+            or "🔵" in response_text
+            or "🟡" in response_text
+            or "🟢" in response_text
+            or "🔴" in response_text
+            or "⚪" in response_text,
+            "Response was " + response_text,
+        )
+        self.assertTrue(
+            "Simple / Deploy Web App Container" in response_text,
+            "Response was " + response_text,
+        )
+        self.assertTrue(
+            "Channel: Default" in response_text, "Response was " + response_text
+        )
+        self.assertTrue(
+            "Channel: Hotfix" in response_text, "Response was " + response_text
+        )
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_tenant_project_dashboard(self):
         # Create a release in the Mainline channel against a tenant
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         prompt = (
-            "Show the project dashboard for \"Deploy AWS Lambda\" for space \"Simple\"?")
+            'Show the project dashboard for "Deploy AWS Lambda" for space "Simple"?'
+        )
 
-        deployment = create_and_deploy_release(space_name="Simple", channel_name="Mainline",
-                                               project_name="Deploy AWS Lambda",
-                                               tenant_name="Marketing", release_version=version)
+        deployment = create_and_deploy_release(
+            space_name="Simple",
+            channel_name="Mainline",
+            project_name="Deploy AWS Lambda",
+            tenant_name="Marketing",
+            release_version=version,
+        )
         # Create another release without a tenant to ensure the query is actually doing a search and not
         # returning the first version it finds
         untenanted_version = str(uuid.uuid4())
-        untenanted_deployment = create_and_deploy_release(space_name="Simple", project_name="Deploy AWS Lambda",
-                                                          release_version=untenanted_version)
+        untenanted_deployment = create_and_deploy_release(
+            space_name="Simple",
+            project_name="Deploy AWS Lambda",
+            release_version=untenanted_version,
+        )
 
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
-        self.assertTrue("Run a Script" in response_text, "Response was " + response_text)
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        self.assertTrue(
+            "Run a Script" in response_text, "Response was " + response_text
+        )
         print(response_text)
 
         wait_for_task(deployment["TaskId"], space_name="Simple")
         wait_for_task(untenanted_deployment["TaskId"], space_name="Simple")
 
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue(
-            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
-            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
-        self.assertTrue("Simple / Deploy AWS Lambda" in response_text, "Response was " + response_text)
+            "🟣" in response_text
+            or "🔵" in response_text
+            or "🟡" in response_text
+            or "🟢" in response_text
+            or "🔴" in response_text
+            or "⚪" in response_text,
+            "Response was " + response_text,
+        )
+        self.assertTrue(
+            "Simple / Deploy AWS Lambda" in response_text,
+            "Response was " + response_text,
+        )
         self.assertTrue("Marketing" in response_text, "Response was " + response_text)
         self.assertTrue(version in response_text, "Response was " + response_text)
-        self.assertTrue(untenanted_version in response_text, "Response was " + response_text)
-        self.assertTrue("This is a highlight" in response_text, "Response was " + response_text)
+        self.assertTrue(
+            untenanted_version in response_text, "Response was " + response_text
+        )
+        self.assertTrue(
+            "This is a highlight" in response_text, "Response was " + response_text
+        )
         self.assertTrue("file.txt" in response_text, "Response was " + response_text)
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_logs(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
-        deployment = create_and_deploy_release(space_name="Simple", release_version=version)
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        deployment = create_and_deploy_release(
+            space_name="Simple", release_version=version
+        )
         wait_for_task(deployment["TaskId"], space_name="Simple")
 
         prompt = "List anything interesting in the deployment logs for the latest project deployment."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue("sorry" not in response_text.casefold(), "Response was " + response_text)
+        self.assertTrue(
+            "sorry" not in response_text.casefold(), "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_logs_raw(self):
-        version = datetime.now().strftime('%Y%m%d.%H.%M.%S')
-        deployment = create_and_deploy_release(space_name="Simple", release_version=version)
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        deployment = create_and_deploy_release(
+            space_name="Simple", release_version=version
+        )
         wait_for_task(deployment["TaskId"], space_name="Simple")
 
         prompt = "Print the last 30 lines of text from the deployment logs of the latest project deployment."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
-
-        # The response should have formatted the text as a code block
-        self.assertTrue("```" in response_text.casefold(), "Response was " + response_text)
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_github_task_summary(self):
-        prompt = "Show the github summary for workflow \"build.yaml\" from owner \"OctopusSolutionsEngineering\" and repo \"OctopusCopilot\"."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         # The response should have formatted the text as a code block
         self.assertTrue(
-            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
-            or "🔴" in response_text or "⚪" in response_text or "🟣" in response_text, "Response was " + response_text)
+            "```" in response_text.casefold(), "Response was " + response_text
+        )
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_github_task_summary(self):
+        prompt = 'Show the github summary for workflow "build.yaml" from owner "OctopusSolutionsEngineering" and repo "OctopusCopilot".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+
+        # The response should have formatted the text as a code block
+        self.assertTrue(
+            "🟣" in response_text
+            or "🔵" in response_text
+            or "🟡" in response_text
+            or "🟢" in response_text
+            or "🔴" in response_text
+            or "⚪" in response_text
+            or "🟣" in response_text,
+            "Response was " + response_text,
+        )
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_github_task_summary_defaults(self):
         prompt = "Show the Github Workflow summary."
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         # The response should have formatted the text as a code block
         self.assertTrue(
-            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
-            or "🔴" in response_text or "⚪" in response_text or "🟣" in response_text, "Response was " + response_text)
+            "🟣" in response_text
+            or "🔵" in response_text
+            or "🟡" in response_text
+            or "🟢" in response_text
+            or "🔴" in response_text
+            or "⚪" in response_text
+            or "🟣" in response_text,
+            "Response was " + response_text,
+        )
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_github_logs(self):
-        prompt = "Summarise the logs from the workflow \"build.yaml\" from owner \"OctopusSolutionsEngineering\" and repo \"OctopusCopilot\"."
+        prompt = 'Summarise the logs from the workflow "build.yaml" from owner "OctopusSolutionsEngineering" and repo "OctopusCopilot".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         # We don't actually know what will be printed, but it shouldn't be an apology
         self.assertTrue("sorry" not in response_text)
@@ -1305,76 +1737,107 @@ class CopilotChatTest(unittest.TestCase):
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_github_task_summary_combined_repo_format(self):
         # Combine the owner and repo into a single string
-        prompt = "Get the summary for the workflow \"build.yaml\" in the repo \"OctopusSolutionsEngineering/OctopusCopilot\"."
+        prompt = 'Get the summary for the workflow "build.yaml" in the repo "OctopusSolutionsEngineering/OctopusCopilot".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         # The response should have formatted the text as a code block
         self.assertTrue(
-            "🟣" in response_text or "🔵" in response_text or "🟡" in response_text or "🟢" in response_text
-            or "🔴" in response_text or "⚪" in response_text, "Response was " + response_text)
+            "🟣" in response_text
+            or "🔵" in response_text
+            or "🟡" in response_text
+            or "🟢" in response_text
+            or "🔴" in response_text
+            or "⚪" in response_text,
+            "Response was " + response_text,
+        )
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_count_projects(self):
         prompt = "How many projects are there in this space?"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         # This should return the one default project (even though there are 3 overall)
-        self.assertTrue("1" in response_text.casefold() or "one" in response_text.casefold(),
-                        "Response was " + response_text)
+        self.assertTrue(
+            "1" in response_text.casefold() or "one" in response_text.casefold(),
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_find_retries(self):
-        prompt = "What project steps have retries enabled? Provide the response as a literal JSON object like {\"steps\": [{\"name\": \"Step 1\", \"retries\": false}, {\"name\": \"Step 2\", \"retries\": true}]} with no markdown formatting."
+        prompt = 'What project steps have retries enabled? Provide the response as a literal JSON object like {"steps": [{"name": "Step 1", "retries": false}, {"name": "Step 2", "retries": true}]} with no markdown formatting.'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         try:
             response_json = json.loads(strip_before_first_curly_bracket(response_text))
         except Exception as e:
             print(response_text)
 
-        self.assertTrue(next(filter(lambda step: step["name"] == "Run a Script 2", response_json["steps"]))["retries"])
-        self.assertTrue(next(filter(lambda step: step["name"] == "Deploy to IIS", response_json["steps"]))["retries"])
+        self.assertTrue(
+            next(
+                filter(
+                    lambda step: step["name"] == "Run a Script 2",
+                    response_json["steps"],
+                )
+            )["retries"]
+        )
+        self.assertTrue(
+            next(
+                filter(
+                    lambda step: step["name"] == "Deploy to IIS", response_json["steps"]
+                )
+            )["retries"]
+        )
         self.assertFalse(
-            next(filter(lambda step: step["name"] == "Configure the load balancer", response_json["steps"]))["retries"])
+            next(
+                filter(
+                    lambda step: step["name"] == "Configure the load balancer",
+                    response_json["steps"],
+                )
+            )["retries"]
+        )
         # This is a red herring. The step is named "Retry this step" but it doesn't actually have retries enabled.
         self.assertFalse(
-            next(filter(lambda step: step["name"] == "Retry this step", response_json["steps"]))["retries"])
+            next(
+                filter(
+                    lambda step: step["name"] == "Retry this step",
+                    response_json["steps"],
+                )
+            )["retries"]
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
 
 def build_request(message):
     return func.HttpRequest(
-        method='POST',
-        body=json.dumps({
-            "messages": [
-                {
-                    "content": message
-                }
-            ]
-        }).encode('utf8'),
-        url='/api/form_handler',
+        method="POST",
+        body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
+        url="/api/form_handler",
         params=None,
         headers={
-            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"]
-        })
+            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"],
+            "X-Slack-Token": os.environ["SLACK_TEST_TOKEN"],
+        },
+    )
 
 
 def build_confirmation_request(body):
     return func.HttpRequest(
-        method='POST',
-        body=json.dumps(body).encode('utf8'),
-        url='/api/form_handler',
+        method="POST",
+        body=json.dumps(body).encode("utf8"),
+        url="/api/form_handler",
         params=None,
         headers={
-            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"]
-        })
+            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"],
+            "X-Slack-Token": os.environ["SLACK_TEST_TOKEN"],
+        },
+    )
 
 
 def build_test_request(message):
@@ -1384,17 +1847,13 @@ def build_test_request(message):
     :return:
     """
     return func.HttpRequest(
-        method='POST',
-        body=json.dumps({
-            "messages": [
-                {
-                    "content": message
-                }
-            ]
-        }).encode('utf8'),
-        url='/api/form_handler',
+        method="POST",
+        body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
+        url="/api/form_handler",
         params=None,
         headers={
             "X-Octopus-ApiKey": Octopus_Api_Key,
             "X-Octopus-Server": Octopus_Url,
-        })
+            "X-Slack-Token": os.environ["SLACK_TEST_TOKEN"],
+        },
+    )
