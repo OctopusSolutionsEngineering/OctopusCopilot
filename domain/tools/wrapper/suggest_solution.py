@@ -57,7 +57,7 @@ def suggest_solution_wrapper(
             filtered_keywords = [
                 keyword
                 for keyword in keywords
-                if invalid_keywords not in keyword.casefold().strip()
+                if keyword.casefold().strip() not in invalid_keywords
             ]
             limited_keywords = filtered_keywords[:max_keywords]
 
