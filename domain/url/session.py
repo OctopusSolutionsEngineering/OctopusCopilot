@@ -25,7 +25,7 @@ def create_session_blob(session, password, salt):
         salt, "salt must be the salt used for encryption (create_session_blob)."
     )
 
-    salted_password = (generate_password(password, salt),)
+    salted_password = generate_password(password, salt)
 
     # Encrypt the user id
     encrypted_id, tag, nonce = encrypt_eax(session, salted_password, salt)
