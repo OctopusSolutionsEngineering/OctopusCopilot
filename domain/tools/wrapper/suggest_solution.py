@@ -242,7 +242,9 @@ async def get_slack_messages(slack_token, keywords):
 
     client = WebClient(token=slack_token)
     api_response = client.search_messages(
-        query=" ".join(keywords), sort="timestamp", sort_dir="desc"
+        query=" OR ".join(['"' + phrase + '"' for phrase in keywords]),
+        sort="timestamp",
+        sort_dir="desc",
     )
     return [match for match in api_response["messages"]["matches"] if match.get("text")]
 
