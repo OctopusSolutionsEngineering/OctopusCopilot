@@ -23,8 +23,8 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-#      group: ubuntu-large-runner
-#      labels: 4core-ubuntu-runner
+    #      group: ubuntu-large-runner
+    #      labels: 4core-ubuntu-runner
     steps:
       - uses: actions/checkout@v3
         with:
@@ -103,6 +103,9 @@ jobs:
           PYTHONPATH=$(pwd) coverage run --omit="./domain/sanitizers/stringlifier/*" -m pytest --junitxml=results.xml
           coverage html --omit="./domain/sanitizers/stringlifier/*" --fail-under=85
         env:
+          # These are the details of Slack
+          SLACK_CLIENT_ID: ${{ secrets.SLACK_CLIENT_ID }}
+          SLACK_CLIENT_REDIRECT: ${{ secrets.SLACK_CLIENT_REDIRECT }}
           # These are the details for zendesk
           ZENDESK_EMAIL: ${{ secrets.ZENDESK_EMAIL }}
           ZENDESK_TOKEN: ${{ secrets.ZENDESK_TOKEN }}

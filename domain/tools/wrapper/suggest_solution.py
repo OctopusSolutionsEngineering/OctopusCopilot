@@ -182,9 +182,7 @@ def suggest_solution_wrapper(
                 session_json = create_session_blob(
                     github_user, encryption_password, encryption_salt
                 )
-                chat_response.append(
-                    f"❗: [Log in to Slack to include Slack messages in the context]({generate_slack_login(session_json)})"
-                )
+                chat_response.append(f"❗: {generate_slack_login(session_json)}")
 
             for github_issue in limited_issues[1]:
                 if github_issue.get("html_url") and github_issue.get("title"):

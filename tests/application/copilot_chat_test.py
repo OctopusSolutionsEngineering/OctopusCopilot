@@ -1828,6 +1828,27 @@ def build_request(message):
     )
 
 
+def build_no_octopus_request(message):
+    """
+    Build a request where all values are passed through headers. This supports tests that do not
+    populate the Azurite database.
+    :param message:
+    :return:
+    """
+    return func.HttpRequest(
+        method="POST",
+        body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
+        url="/api/form_handler",
+        params=None,
+        headers={
+            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"],
+            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
+            "X-Octopus-ApiKey": Octopus_Api_Key,
+            "X-Octopus-Server": Octopus_Url,
+        },
+    )
+
+
 def build_confirmation_request(body):
     return func.HttpRequest(
         method="POST",

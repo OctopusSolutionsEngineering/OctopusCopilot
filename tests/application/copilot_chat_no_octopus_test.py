@@ -6,7 +6,7 @@ from retry import retry
 from domain.transformers.minify_strings import minify_strings
 from domain.transformers.sse_transformers import convert_from_sse_response
 from function_app import copilot_handler_internal
-from tests.application.copilot_chat_test import build_request
+from tests.application.copilot_chat_test import build_no_octopus_request
 
 
 class CopilotChatTest(unittest.TestCase):
@@ -16,7 +16,8 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry(RateLimitError, tries=3, delay=2)
     def test_general_solution(self):
-        prompt = minify_strings("""Suggest a solution for the following issue:
+        prompt = minify_strings(
+            """Suggest a solution for the following issue:
 
             Hello Octopus Support,
 
@@ -36,17 +37,21 @@ class CopilotChatTest(unittest.TestCase):
             So my current theory is that something changed in Helm step, and now there is no heuristic to find values like we had before, and thus new projects are failing (because working directory for the step is not the folder of the chart, but the staging area). I was able to get the project working by forcefully passing additional arguments (-f redpanda-wholesale-us\values.STAGING.yaml) and making it look directly in the chart folder, but that’s a workaround – we would prefer a proper fix from your side.
 
             You can log in to our instance to check things, but please revert any changes you do.
-            """)
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+            """
+        )
+        response = copilot_handler_internal(build_no_octopus_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         # This response could be anything, but it should mention helm
         print(response_text)
-        self.assertTrue("helm" in response_text.casefold(), "Response was " + response_text)
+        self.assertTrue(
+            "helm" in response_text.casefold(), "Response was " + response_text
+        )
 
     @retry(RateLimitError, tries=3, delay=2)
     def test_general_solution2(self):
-        prompt = minify_strings("""Suggest a solution for the following issue:
+        prompt = minify_strings(
+            """Suggest a solution for the following issue:
              Hi,
              We have a guardrail in our deployment process which checks whether the packages in the current version that is being deployed are different to the last successful release to that environment.
              If they are, we trigger a manual approval process.
@@ -55,25 +60,36 @@ class CopilotChatTest(unittest.TestCase):
              Auto deploy triggered manual approval:
              Cheers,
              Chris
-            """)
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+            """
+        )
+        response = copilot_handler_internal(build_no_octopus_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         # This response could be anything, but it should mention helm
         print(response_text)
-        self.assertTrue("approval" in response_text.casefold(), "Response was " + response_text)
+        self.assertTrue(
+            "approval" in response_text.casefold(), "Response was " + response_text
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_sample_hcl(self):
-        prompt = "Generate a Terraform module with an environment called \"Development\", a project group called \"Test\", and a project called \"Hello World\" with a single Powershell script step that echoes the text \"Hello World\"."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode('utf8'))
+        prompt = 'Generate a Terraform module with an environment called "Development", a project group called "Test", and a project called "Hello World" with a single Powershell script step that echoes the text "Hello World".'
+        response = copilot_handler_internal(build_no_octopus_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue('resource "octopusdeploy_environment"' in response_text.casefold(),
-                        "Response was " + response_text)
-        self.assertTrue('resource "octopusdeploy_project_group"' in response_text.casefold(),
-                        "Response was " + response_text)
-        self.assertTrue('resource "octopusdeploy_project"' in response_text.casefold(),
-                        "Response was " + response_text)
-        self.assertTrue('resource "octopusdeploy_deployment_process"' in response_text.casefold(),
-                        "Response was " + response_text)
+        self.assertTrue(
+            'resource "octopusdeploy_environment"' in response_text.casefold(),
+            "Response was " + response_text,
+        )
+        self.assertTrue(
+            'resource "octopusdeploy_project_group"' in response_text.casefold(),
+            "Response was " + response_text,
+        )
+        self.assertTrue(
+            'resource "octopusdeploy_project"' in response_text.casefold(),
+            "Response was " + response_text,
+        )
+        self.assertTrue(
+            'resource "octopusdeploy_deployment_process"' in response_text.casefold(),
+            "Response was " + response_text,
+        )
