@@ -2,6 +2,7 @@ import asyncio
 
 from slack_sdk.web.async_client import AsyncWebClient
 
+from domain.slack.slack_urls import generate_slack_login
 from domain.transformers.minify_strings import minify_strings, replace_space_codes
 from domain.transformers.trim_strings import trim_string_with_ellipsis
 from domain.url.session import create_session_blob
@@ -182,7 +183,7 @@ def suggest_solution_wrapper(
                     github_user, encryption_password, encryption_salt
                 )
                 chat_response.append(
-                    f"🐛: [Log in to Slack to include Slack messages in the context]({session_json})"
+                    f"❗: [Log in to Slack to include Slack messages in the context]({generate_slack_login(session_json)})"
                 )
 
             for github_issue in limited_issues[1]:
