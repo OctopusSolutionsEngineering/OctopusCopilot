@@ -377,8 +377,7 @@ class CopilotChatTest(unittest.TestCase):
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue(
-            "Your GitHub token is invalid" in response_text,
-            "Response was " + response_text,
+            "Test.Variable" in response_text, "Response was " + response_text
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -1816,6 +1815,12 @@ if __name__ == "__main__":
 
 
 def build_request(message):
+    """
+    Build a request with the Slack and GitHub tokens passed through headers. Octopus details
+    are expected to be sourced from the database.
+    :param message:
+    :return:
+    """
     return func.HttpRequest(
         method="POST",
         body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
@@ -1831,7 +1836,7 @@ def build_request(message):
 def build_no_octopus_request(message):
     """
     Build a request where all values are passed through headers. This supports tests that do not
-    populate the Azurite database.
+    populate the Azurite database, as all details can be extracted from the headers.
     :param message:
     :return:
     """

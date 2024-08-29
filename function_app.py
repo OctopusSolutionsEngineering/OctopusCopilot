@@ -263,7 +263,7 @@ def slack_oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
 
         # Extract the GitHub user from the client side session
         user_id = extract_session_blob(
-            req.params.get("state"),
+            state,
             os.environ.get("ENCRYPTION_PASSWORD"),
             os.environ.get("ENCRYPTION_SALT"),
         )

@@ -217,20 +217,21 @@ def get_slack_token(req: func.HttpRequest):
         # Then get the details saved for a user
         github_username = get_github_user_from_form(req)
 
+        # If there is no GitHub token, and we have not embedded the Slack token in the request,
+        # then there is no way to retrieve a Slack token from the database.
         if not github_username:
-            raise UserNotLoggedIn()
+            return None
 
         try:
-            github_user = get_users_slack_details(
+            slack_user = get_users_slack_details(
                 github_username, get_functions_connection_string()
             )
 
-            # We need to configure the Octopus details first because we need to know the service account id
-            # before attempting to generate an ID token.
+            # Validate the returned fields
             if (
-                "SlackAccessToken" not in github_user
-                or "EncryptionTag" not in github_user
-                or "EncryptionNonce" not in github_user
+                "SlackAccessToken" not in slack_user
+                or "EncryptionTag" not in slack_user
+                or "EncryptionNonce" not in slack_user
             ):
                 logger.info("No SlackAccessToken, EncryptionTag, or EncryptionNonce")
                 return None
@@ -239,9 +240,9 @@ def get_slack_token(req: func.HttpRequest):
             # assume any exception means the user must log in
             return None
 
-        tag = github_user["EncryptionTag"]
-        nonce = github_user["EncryptionNonce"]
-        token = github_user["SlackAccessToken"]
+        tag = slack_user["EncryptionTag"]
+        nonce = slack_user["EncryptionNonce"]
+        token = slack_user["SlackAccessToken"]
 
         decrypted_token = decrypt_eax(
             generate_password(
