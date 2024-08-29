@@ -107,6 +107,10 @@ python3 main.py --query "Show the projects from the Documentation space"
 
 Octonaughts can see the `Octopus Copilot OpenAI` secure note in the password manager for the Open AI key and endpoint.
 
+## Style and Linting
+
+Consider using the [Black](github.com/psf/black) code formatter to ensure consistent code style.
+
 # Testing
 
 The testing is broken down into 3 categories:
