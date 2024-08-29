@@ -329,7 +329,12 @@ class CopilotChatTest(unittest.TestCase):
             Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish"
         )
         sanitized_project_names, sanitized_projects = lookup_projects(
-            Octopus_Url, Octopus_Api_Key, None, prompt, space_id, "Runbook Projectish"
+            Octopus_Url,
+            Octopus_Api_Key,
+            None,
+            prompt,
+            space_id,
+            "Copilot Test Runbook Projectish",
         )
         project = get_project(
             space_id, sanitized_project_names[0], Octopus_Api_Key, Octopus_Url
@@ -430,7 +435,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_runbook(self):
-        prompt = 'What is the description of the "Backup Database" runbook in the "Runbook Project" project.'
+        prompt = 'What is the description of the "Backup Database" runbook in the "Copilot Test Runbook Project" project.'
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
@@ -575,13 +580,13 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_runbook_dashboard(self):
-        publish_runbook("Simple", "Runbook Project", "Backup Database")
+        publish_runbook("Simple", "Copilot Test Runbook Project", "Backup Database")
         space_id, space_name = get_space_id_and_name_from_name(
             "Simple", Octopus_Api_Key, Octopus_Url
         )
         runbook_run = run_published_runbook_fuzzy(
             space_id,
-            "Runbook Project",
+            "Copilot Test Runbook Project",
             "Backup Database",
             "Development",
             "",
@@ -589,7 +594,7 @@ class CopilotChatTest(unittest.TestCase):
             Octopus_Url,
         )
         wait_for_task(runbook_run["TaskId"], space_name="Simple")
-        prompt = 'Get the runbook dashboard for runbook "Backup Database" in the "Runbook Project" project.'
+        prompt = 'Get the runbook dashboard for runbook "Backup Database" in the "Copilot Test Runbook Project" project.'
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
@@ -605,13 +610,13 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_runbook_logs(self):
-        publish_runbook("Simple", "Runbook Project", "Backup Database")
+        publish_runbook("Simple", "Copilot Test Runbook Project", "Backup Database")
         space_id, space_name = get_space_id_and_name_from_name(
             "Simple", Octopus_Api_Key, Octopus_Url
         )
         runbook_run = run_published_runbook_fuzzy(
             space_id,
-            "Runbook Project",
+            "Copilot Test Runbook Project",
             "Backup Database",
             "Development",
             "",
@@ -619,7 +624,7 @@ class CopilotChatTest(unittest.TestCase):
             Octopus_Url,
         )
         wait_for_task(runbook_run["TaskId"], space_name="Simple")
-        prompt = 'Get the logs from the run of runbook "Backup Database" in the "Runbook Project" project.'
+        prompt = 'Get the logs from the run of runbook "Backup Database" in the "Copilot Test Runbook Project" project.'
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
@@ -807,7 +812,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_runbook_run(self):
-        prompt = 'Run runbook "Backup Database" in the "Runbook Project" project'
+        prompt = 'Run runbook "Backup Database" in the "Copilot Test Runbook Project" project'
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
@@ -1368,7 +1373,7 @@ class CopilotChatTest(unittest.TestCase):
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_cancel_runbook_run(self):
         space_name = "Simple"
-        project_name = "Runbook Project"
+        project_name = "Copilot Test Runbook Project"
         runbook_name = "Long Running Runbook"
         environment_name = "Development"
         publish_runbook(space_name, project_name, runbook_name)

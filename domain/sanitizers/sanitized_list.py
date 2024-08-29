@@ -10,7 +10,10 @@ from domain.transformers.date_convert import datetime_to_str
 
 
 def sanitize_space(query, input_list):
-    input_list = sanitize_list(input_list, "(?i)Any|all|\\*|Space|Space\\s*[0-9A-Z]|My\\s*Space|current|this")
+    input_list = sanitize_list(
+        input_list,
+        "(?i)Any|all|\\*|Space|Space\\s*[0-9A-Z]|My\\s*Space|current|this|space_name",
+    )
 
     # The LLM will sometimes return the space name of "default" when no specific space is mentioned
     # If the query does not contain "default" or "Default", we ignore the name default.
@@ -24,7 +27,10 @@ def sanitize_space(query, input_list):
 
 
 def sanitize_projects(input_list):
-    return sanitize_list(input_list, "(?i)Any|all|\\*|Project\\s*[0-9A-Z]|My\\s*Project|project\\d")
+    return sanitize_list(
+        input_list,
+        "(?i)Any|all|\\*|Project\\s*[0-9A-Z]|My\\s*Project|project\\d|project_name",
+    )
 
 
 def update_query(original_query, sanitized_projects):
@@ -35,8 +41,12 @@ def update_query(original_query, sanitized_projects):
     :return: The query with misnamed resources replaced with their fuzzy matches
     """
     return reduce(
-        lambda new_query, name_map: new_query.replace(name_map["original"], name_map["matched"]),
-        sanitized_projects, original_query)
+        lambda new_query, name_map: new_query.replace(
+            name_map["original"], name_map["matched"]
+        ),
+        sanitized_projects,
+        original_query,
+    )
 
 
 def sanitize_names_fuzzy(names_generator, projects):
@@ -48,9 +58,14 @@ def sanitize_names_fuzzy(names_generator, projects):
     :param names_generator: The list of resource names from the space
     :return: A list of the closest matching project names from the space
     """
-    fuzzy_items = [get_item_fuzzy_generator(names_generator, project) for project in projects]
-    return [{"original": project["original"], "matched": project["matched"]["Name"]} for project in fuzzy_items if
-            project]
+    fuzzy_items = [
+        get_item_fuzzy_generator(names_generator, project) for project in projects
+    ]
+    return [
+        {"original": project["original"], "matched": project["matched"]["Name"]}
+        for project in fuzzy_items
+        if project
+    ]
 
 
 def sanitize_name_fuzzy(names_generator, name):
@@ -66,92 +81,148 @@ def sanitize_name_fuzzy(names_generator, name):
         return None
 
     fuzzy_item = get_item_fuzzy_generator(names_generator, name)
-    return {"original": fuzzy_item["original"], "matched": fuzzy_item["matched"]["Name"]} if fuzzy_item else None
+    return (
+        {"original": fuzzy_item["original"], "matched": fuzzy_item["matched"]["Name"]}
+        if fuzzy_item
+        else None
+    )
 
 
 def sanitize_tenants(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Tenant\\s*[0-9A-Z]|My\\s*Tenant")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Tenant\\s*[0-9A-Z]|My\\s*Tenant|tenant_name",
+    )
 
 
 def sanitize_feeds(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Feed\\s*[0-9A-Z]|My\\s*Feed")
+    return sanitize_list(
+        input_list, "(?i)\\.\\*|Any|None|all|\\*|Feed\\s*[0-9A-Z]|My\\s*Feed|feed_name"
+    )
 
 
 def sanitize_accounts(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Account\\s*[0-9A-Z]|My\\s*Account")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Account\\s*[0-9A-Z]|My\\s*Account|account_name",
+    )
 
 
 def sanitize_workerpools(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Worker\\s*Pool\\s*[0-9A-Z]|My\\s*Worker\\s*Pool")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Worker\\s*Pool\\s*[0-9A-Z]|My\\s*Worker\\s*Pool|worker_pool_name",
+    )
 
 
 def sanitize_machinepolicies(input_list):
-    return sanitize_list(input_list,
-                         "(?i)\\.\\*|Any|None|all|\\*|Machine\\s*Policy\\s*[0-9A-Z]|My\\s*Machine\\s*Policy")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Machine\\s*Policy\\s*[0-9A-Z]|My\\s*Machine\\s*Policy|machine_policy_name",
+    )
 
 
 def sanitize_tenanttagsets(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Tag\\s*Set\\s*[0-9A-Z]|My\\s*Tag\\s*Set")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Tag\\s*Set\\s*[0-9A-Z]|My\\s*Tag\\s*Set|tag_set_name",
+    )
 
 
 def sanitize_gitcredentials(input_list):
-    return sanitize_list(input_list,
-                         "(?i)\\.\\*|Any|None|all|\\*|Git\\s*Credential\\s*[0-9A-Z]|My\\s*Git\\s*Credential|cred\\d")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Git\\s*Credential\\s*[0-9A-Z]|My\\s*Git\\s*Credential|cred\\d|git_credential_name",
+    )
 
 
 def sanitize_projectgroups(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Project\\s*Group\\s*[0-9A-Z]|My\\s*Project\\s*Group")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Project\\s*Group\\s*[0-9A-Z]|My\\s*Project\\s*Group|project_group_name",
+    )
 
 
 def sanitize_channels(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Channel\\s*[0-9A-Z]|My\\s*Channel")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Channel\\s*[0-9A-Z]|My\\s*Channel|channel_name",
+    )
 
 
 def sanitize_releases(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Release\\s*[0-9A-Z]|My\\s*Release")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Release\\s*[0-9A-Z]|My\\s*Release|release_name",
+    )
 
 
 def sanitize_steps(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Step\\s*[0-9A-Z]|My\\s*Step")
+    return sanitize_list(
+        input_list, "(?i)\\.\\*|Any|None|all|\\*|Step\\s*[0-9A-Z]|My\\s*Step|step_name"
+    )
 
 
 def sanitize_variables(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Variable\\s*[0-9A-Z]|My\\s*Variable|var\\d")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Variable\\s*[0-9A-Z]|My\\s*Variable|var\\d|variable_name",
+    )
 
 
 def sanitize_lifecycles(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Lifecycle\\s*[0-9A-Z]|My\\s*Lifecycle")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Lifecycle\\s*[0-9A-Z]|My\\s*Lifecycle|lifecycle_name",
+    )
 
 
 def sanitize_certificates(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Certificate\\s*[0-9A-Z]|My\\s*Certificate")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Certificate\\s*[0-9A-Z]|My\\s*Certificate|certificate_name",
+    )
 
 
 def sanitize_environments(input_query, input_list):
-    list = sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Environment\\s*[0-9A-Z]|My\\s*Environment|env\\d")
+    list = sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Environment\\s*[0-9A-Z]|My\\s*Environment|env\\d|environment_name",
+    )
     # The LLM will sometimes return environment names that were never mentioned in the query. I suspect the
     # names comes from the few-shot examples. Every environment needs to be mentioned in the query.
     return [env for env in list if env in input_query]
 
 
 def sanitize_targets(input_list):
-    return sanitize_list(input_list,
-                         "(?i)\\.\\*|Any|None|all|\\*|Machine\\s*[0-9A-Z]|Target\\s*[0-9A-Z]|My\\s*Machine|My\\s*Target")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Machine\\s*[0-9A-Z]|Target\\s*[0-9A-Z]|My\\s*Machine|My\\s*Target|target_name",
+    )
 
 
 def sanitize_runbooks(input_list):
-    return sanitize_list(input_list, "(?i)\\.\\*|Any|None|all|\\*|Runbook\\s*[0-9A-Z]|My\\s*Runbook")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|Runbook\\s*[0-9A-Z]|My\\s*Runbook|runbook_name",
+    )
 
 
 def sanitize_library_variable_sets(input_list):
-    return sanitize_list(input_list,
-                         "(?i)\\.\\*|Any|None|all|\\*|(Library\\s*)?Variable\\s*Set\\s*[0-9A-Z]|Variables|My\\s*Variable\\s*Set")
+    return sanitize_list(
+        input_list,
+        "(?i)\\.\\*|Any|None|all|\\*|(Library\\s*)?Variable\\s*Set\\s*[0-9A-Z]|Variables|My\\s*Variable\\s*Set|library_variable_set_name",
+    )
 
 
 def sanitize_dates(input_list):
-    list = [replace_with_empty_string(date.lower(),
-                                      "after|before|between|on|today|yesterday|tomorrow|last\\s*week|last\\s*month|last\\s*year|next\\s*week|next\\s*month|next\\s*year")
-            for date in sanitize_list(input_list)]
+    list = [
+        replace_with_empty_string(
+            date.lower(),
+            "after|before|between|on|today|yesterday|tomorrow|last\\s*week|last\\s*month|last\\s*year|next\\s*week|next\\s*month|next\\s*year",
+        )
+        for date in sanitize_list(input_list)
+    ]
     dates = [parse_unknown_format_date(item.strip()) for item in list]
     return [datetime_to_str(date) for date in dates if date]
 
@@ -189,11 +260,17 @@ def sanitize_log_steps(input_list, input_query, logs):
     for log_item in logs:
         if log_item.get("Children") and len(log_item["Children"]) != 0:
             # These are the name of the top level log items
-            step_names = [child_log_item["Name"] for child_log_item in log_item["Children"]]
+            step_names = [
+                child_log_item["Name"] for child_log_item in log_item["Children"]
+            ]
             # Valid steps names are either ints (less than the number of steps)
             # or something that is at least an 80% match for a step name
-            valid_steps = [step for step in sanitized_steps if
-                           step_index_is_valid(step, input_query) or step_name_is_fuzzy_match(step, step_names)]
+            valid_steps = [
+                step
+                for step in sanitized_steps
+                if step_index_is_valid(step, input_query)
+                or step_name_is_fuzzy_match(step, step_names)
+            ]
             return valid_steps
 
     return []
@@ -212,7 +289,14 @@ def step_index_is_valid(step, input_query):
 
 def step_name_is_fuzzy_match(step_name, step_names):
     return any(
-        filter(lambda s: fuzz.ratio(normalize_log_step_name(step_name), normalize_log_step_name(s)) > 80, step_names))
+        filter(
+            lambda s: fuzz.ratio(
+                normalize_log_step_name(step_name), normalize_log_step_name(s)
+            )
+            > 80,
+            step_names,
+        )
+    )
 
 
 def normalize_log_step_name(name):
@@ -269,8 +353,13 @@ def sanitize_list(input_list, ignored_re=None):
         return []
 
     # Open AI will give you a list with a single asterisk if the list is empty
-    return [entry.strip() for entry in input_list if
-            isinstance(entry, str) and entry.strip() and not is_re_match(entry, ignored_re)]
+    return [
+        entry.strip()
+        for entry in input_list
+        if isinstance(entry, str)
+        and entry.strip()
+        and not is_re_match(entry, ignored_re)
+    ]
 
 
 def force_to_list(input_list):

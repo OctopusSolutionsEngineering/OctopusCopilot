@@ -16,7 +16,7 @@ resource "octopusdeploy_project" "deploy_frontend_project" {
   is_discrete_channel_release          = false
   is_version_controlled                = false
   lifecycle_id                         = data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id
-  name                                 = "Runbook Project"
+  name                                 = "Copilot Test Runbook Project"
   project_group_id                     = octopusdeploy_project_group.project_group_test.id
   tenanted_deployment_participation    = "Untenanted"
   space_id                             = var.octopus_space_id

@@ -30,7 +30,10 @@ class MockRequests(unittest.TestCase):
         query = "What is the size of the earth?"
         function = llm_tool_query(query, build_mock_test_tools(query))
 
-        self.assertTrue("Sorry, I did not understand that request." in function.call_function().response)
+        self.assertTrue(
+            "Sorry, I did not understand that request."
+            in function.call_function().response
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_show_all_defaults(self):
@@ -49,7 +52,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the project name in the query
         """
 
-        query = "What does the project \"Deploy WebApp\" do?"
+        query = 'What does the project "Deploy WebApp" do?'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -62,7 +65,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the project group name in the query
         """
 
-        query = "What is the description of the \"Azure Apps\" project group?"
+        query = 'What is the description of the "Azure Apps" project group?'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -75,7 +78,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the runbook name in the query
         """
 
-        query = "What is the description of the \"Backup Database\" runbook defined in the \"Runbook Project\" project."
+        query = 'What is the description of the "Backup Database" runbook defined in the "Copilot Test Runbook Project" project.'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -88,7 +91,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the tenant name in the query
         """
 
-        query = "Describe the \"Team A\" tenant."
+        query = 'Describe the "Team A" tenant.'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -101,7 +104,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the feed name in the query
         """
 
-        query = "Does the \"Helm\" feed have a password?."
+        query = 'Does the "Helm" feed have a password?.'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -114,7 +117,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the feed name in the query
         """
 
-        query = "What is the access key of the \"AWS Account\" account?."
+        query = 'What is the access key of the "AWS Account" account?.'
 
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
@@ -128,7 +131,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the library variable set name in the query
         """
 
-        query = "List the variables belonging to the \"Database Settings\" library variable set."
+        query = 'List the variables belonging to the "Database Settings" library variable set.'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -141,7 +144,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the worker pool name in the query
         """
 
-        query = "What is the description of the \"Docker\" worker pool?"
+        query = 'What is the description of the "Docker" worker pool?'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -154,7 +157,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the certificate name in the query
         """
 
-        query = "What is the note of the \"Kind CA\" certificate?"
+        query = 'What is the note of the "Kind CA" certificate?'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -167,7 +170,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the tagset name in the query
         """
 
-        query = "List the tags associated with the \"region\" tag set?"
+        query = 'List the tags associated with the "region" tag set?'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -180,7 +183,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the lifecycle name in the query
         """
 
-        query = "What environments are in the \"Simple\" lifecycle?"
+        query = 'What environments are in the "Simple" lifecycle?'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -193,7 +196,9 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the git credentials name in the query
         """
 
-        query = "What is the username for the git credentials called \"GitHub Credentials\"?"
+        query = (
+            'What is the username for the git credentials called "GitHub Credentials"?'
+        )
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -206,7 +211,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the machine policy name in the query
         """
 
-        query = "Show the powershell health check script for the \"Windows VM Policy\" machine policy."
+        query = 'Show the powershell health check script for the "Windows VM Policy" machine policy.'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -219,7 +224,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the environment in the query
         """
 
-        query = "List the variables scoped to the \"Development\" environment in the project \"Deploy WebApp\"."
+        query = 'List the variables scoped to the "Development" environment in the project "Deploy WebApp".'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -236,7 +241,7 @@ class MockRequests(unittest.TestCase):
         pass unknown arguments in the past does not break the function.
         """
 
-        query = "Find steps in the \"Commercial Billing\" project with a type of \"Octopus.Manual\". Double check the type of each step to ensure it is \"Octopus.Manual\". Show the step name and type in a markdown table."
+        query = 'Find steps in the "Commercial Billing" project with a type of "Octopus.Manual". Double check the type of each step to ensure it is "Octopus.Manual". Show the step name and type in a markdown table.'
         function = llm_tool_query(query, build_mock_test_tools(query))
 
         # Not raising an exception here is the test
@@ -250,7 +255,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm responds appropriately when no function is a match
         """
 
-        query = "Where is the variable \"Database\" used in the project \"Project1\"?"
+        query = 'Where is the variable "Database" used in the project "Project1"?'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -263,7 +268,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies the step name in the query
         """
 
-        query = "What do does the step \"Manual Intervention\" in the \"Project1\" do?"
+        query = 'What do does the step "Manual Intervention" in the "Project1" do?'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -276,13 +281,13 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies the step name in the query
         """
 
-        query = "Find deployments after \"1st Jan 2024\" and before \"2nd Mar 2024\"?"
+        query = 'Find deployments after "1st Jan 2024" and before "2nd Mar 2024"?'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
         self.assertEqual(function.name, "answer_general_query", body)
-        self.assertTrue(body["dates"][0] == '2024-01-01T00:00:00+00:00', body)
-        self.assertTrue(body["dates"][1] == '2024-03-02T00:00:00+00:00', body)
+        self.assertTrue(body["dates"][0] == "2024-01-01T00:00:00+00:00", body)
+        self.assertTrue(body["dates"][1] == "2024-03-02T00:00:00+00:00", body)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_machine_question(self):
@@ -290,7 +295,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies the machine name in the query
         """
 
-        query = "Show the details of the machine \"Cloud Region target\"?"
+        query = 'Show the details of the machine "Cloud Region target"?'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -303,7 +308,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies the correct project name in the query
         """
 
-        query = "List the channels defined in the project \"Deploy WebApp Container\" in a markdown table."
+        query = 'List the channels defined in the project "Deploy WebApp Container" in a markdown table.'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -315,21 +320,29 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies queries answered by documentation
         """
 
-        docs_tools = ["provide_help_and_instructions", "how_do_i", "answer_support_question"]
-        queries = ["How do I review deployment frequency metrics?",
-                   "How do I enable Azure AD?",
-                   "How do I create a new azure target?",
-                   "How do I integrate with ServiceNow?",
-                   "How do I use lifecycles",
-                   "How do I add a Worker?",
-                   "How do I setup a polling Tentacle?",
-                   "How do I review the DORA metrics?",
-                   "How do I use Community Step templates?",
-                   "How do I enable Config-as-code?", ]
+        docs_tools = [
+            "provide_help_and_instructions",
+            "how_do_i",
+            "answer_support_question",
+        ]
+        queries = [
+            "How do I review deployment frequency metrics?",
+            "How do I enable Azure AD?",
+            "How do I create a new azure target?",
+            "How do I integrate with ServiceNow?",
+            "How do I use lifecycles",
+            "How do I add a Worker?",
+            "How do I setup a polling Tentacle?",
+            "How do I review the DORA metrics?",
+            "How do I use Community Step templates?",
+            "How do I enable Config-as-code?",
+        ]
 
         for query in queries:
             query_result = llm_tool_query(query, build_mock_test_tools(query))
-            self.assertIn(query_result.name, docs_tools, query + " " + query_result.name)
+            self.assertIn(
+                query_result.name, docs_tools, query + " " + query_result.name
+            )
             print(query_result.name)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -338,11 +351,10 @@ class MockRequests(unittest.TestCase):
         Tests that the llm responds some response to a general prompt
         """
 
-        response = llm_message_query([
-            ('system', 'You are a helpful agent.'),
-            ('user', '{input}')
-        ],
-            {"input": 'What is the size of the earth?'})
+        response = llm_message_query(
+            [("system", "You are a helpful agent."), ("user", "{input}")],
+            {"input": "What is the size of the earth?"},
+        )
 
         # Make sure we get some kind of response
         self.assertTrue(response)
@@ -356,19 +368,21 @@ class MockRequests(unittest.TestCase):
         current_file_path = os.path.abspath(__file__)
         path_without_filename = os.path.dirname(current_file_path)
 
-        with open(os.path.join(path_without_filename, 'large_example.tf'), 'r') as file:
+        with open(os.path.join(path_without_filename, "large_example.tf"), "r") as file:
             data = file.read()
 
-        response = llm_message_query([
-            ('system', 'You are a helpful agent.'),
-            ('user', '{input}'),
-            ('user', '###\n{hcl}\n###')
-        ],
-            {"input": 'What does this project do?', "hcl": data})
+        response = llm_message_query(
+            [
+                ("system", "You are a helpful agent."),
+                ("user", "{input}"),
+                ("user", "###\n{hcl}\n###"),
+            ],
+            {"input": "What does this project do?", "hcl": data},
+        )
 
         # Make sure we get some kind of response
         self.assertTrue(response.index("reduce the length of the messages") != -1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
