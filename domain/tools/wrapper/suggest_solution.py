@@ -2,6 +2,9 @@ import asyncio
 
 from slack_sdk.web.async_client import AsyncWebClient
 
+from domain.exceptions.none_on_exception import (
+    default_on_exception_async,
+)
 from domain.sanitizers.sanitize_logs import sanitize_message
 from domain.slack.slack_urls import generate_slack_login
 from domain.transformers.minify_strings import minify_strings, replace_space_codes
@@ -59,9 +62,9 @@ def suggest_solution_wrapper(
                 return_exceptions=True,
             )
 
-            # Get slack messages
-            slack_messages = await get_slack_messages(
-                slack_token, limited_keywords, logging
+            # Best effort attempt to get Get slack messages, but ignoring exceptions
+            slack_messages = await default_on_exception_async(
+                lambda: get_slack_messages(slack_token, limited_keywords), []
             )
 
             # Gracefully fallback with any exceptions
@@ -206,7 +209,7 @@ def suggest_solution_wrapper(
             # Remove things that look like keys
             sanitised_response = sanitize_message("\n\n".join(chat_response))
 
-            return callback(query, keywords, "\n\n".join(sanitised_response))
+            return callback(query, keywords, sanitised_response)
 
         # https://github.com/pytest-dev/pytest-asyncio/issues/658#issuecomment-1817927350
         # Should just have one asyncio.run()
@@ -240,61 +243,55 @@ async def combine_issue_comments(issue_number, github_token):
     return combined_comments
 
 
-async def get_slack_messages(slack_token, keywords, logging):
+async def get_slack_messages(slack_token, keywords):
     if not slack_token:
         return []
 
-    try:
-        client = AsyncWebClient(token=slack_token)
+    client = AsyncWebClient(token=slack_token)
 
-        slack_results = await asyncio.gather(
-            *[
-                client.search_messages(
-                    query='"' + keyword + '"',
-                    sort="timestamp",
-                    sort_dir="desc",
-                )
-                for keyword in keywords
-            ]
-        )
-
-        matches = [item["messages"]["matches"] for item in slack_results]
-
-        # Flatten the list of lists
-        flat_matches = [item for sublist in matches for item in sublist]
-
-        try:
-            # Get the text for the conversations. If there is no conversation, the original
-            # message will be returned.
-            conversations = await asyncio.gather(
-                *[
-                    (
-                        client.conversations_replies(
-                            channel=item["channel"]["id"], ts=item["ts"]
-                        )
-                        if item.get("channel") and item.get("ts")
-                        else None
-                    )
-                    for item in flat_matches
-                ]
+    slack_results = await asyncio.gather(
+        *[
+            client.search_messages(
+                query='"' + keyword + '"',
+                sort="timestamp",
+                sort_dir="desc",
             )
+            for keyword in keywords
+        ]
+    )
 
-            # get the returned messages
-            conversation_messages = [item["messages"] for item in conversations]
+    matches = [item["messages"]["matches"] for item in slack_results]
 
-            # flatten the list of lists
-            flat_conversations = [
-                item for sublist in conversation_messages for item in sublist
-            ]
+    # Flatten the list of lists
+    flat_matches = [item for sublist in matches for item in sublist]
 
-            return flat_conversations
-        except Exception as e:
-            # If we don't have permission to read the conversation, just return the top level messages
-            return flat_matches
-    except Exception as e:
-        if logging:
-            logging("Slack Exception", str(e))
-        return []
+    # If we don't have permissions to get the threads, return the top level messages
+    return await default_on_exception_async(
+        lambda: get_slack_threads(client, flat_matches), flat_matches
+    )
+
+
+async def get_slack_threads(client, matches):
+    conversations = await asyncio.gather(
+        *[
+            (
+                client.conversations_replies(
+                    channel=item["channel"]["id"], ts=item["ts"]
+                )
+                if item.get("channel") and item.get("ts")
+                else None
+            )
+            for item in matches
+        ]
+    )
+
+    # get the returned messages
+    conversation_messages = [item["messages"] for item in conversations]
+
+    # flatten the list of lists
+    flat_conversations = [item for sublist in conversation_messages for item in sublist]
+
+    return flat_conversations
 
 
 async def get_tickets(keywords, zendesk_user, zendesk_token):
