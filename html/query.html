@@ -290,8 +290,8 @@
         evtSource.onmessage = (event) => {
             const endTime = new Date().getTime()
 
-            debugging.innerHTML = "Time taken: " + ((endTime - startTime) / 1000).toFixed(2) + " seconds"
-            debugging.innerHTML += "<br>Event: " + JSON.stringify(event)
+            debugging.innerText = "Time taken: " + ((endTime - startTime) / 1000).toFixed(2) + " seconds"
+            debugging.innerText += "\nEvent: " + JSON.stringify(event)
 
             console.log(event)
             evtSource.close()
@@ -312,7 +312,7 @@
             enableInput()
         };
         evtSource.onerror = (event) => {
-            debugging.innerHTML = "Event: " + JSON.stringify(event)
+            debugging.innerText = "Event: " + JSON.stringify(event)
             console.log(event)
             evtSource.close()
             markdown.innerHTML = "The request resulted in an error."
