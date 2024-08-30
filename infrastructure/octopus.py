@@ -2143,7 +2143,7 @@ def match_runbook_variables(space_id, project_id, runbook_name, runbook_snapshot
             return prompted_variables, None, f'Extra variables were found: {", ".join(extra_variables)}. These will be ignored.'
     else:
         return {}, ("Please specify variables in the format VariableLabel=VariableValue. Multiple variables can be "
-                      "supplied using a comma to separate them."), None
+                    "supplied using a comma to separate them."), None
 
     return prompted_variables, None, None
 
