@@ -152,7 +152,7 @@
     }
 
     function githubLogout() {
-        if (confirm("Are you sure you want to log out?")) {
+        if (confirm("Are you sure you want to log out? This is typically only required if something is broken.")) {
             setCookie('state', null, 1)
             checkLogin()
         }
