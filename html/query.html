@@ -12,24 +12,51 @@
     <script src=" https://cdn.jsdelivr.net/npm/dompurify@3.1.5/dist/purify.min.js"></script>
     <style>
         @-webkit-keyframes shake {
-            0% { -webkit-transform: translate(2px, 1px) rotate(0deg); }
-            5% { -webkit-transform: translate(-1px, -2px) rotate(-1deg); }
-            10% { -webkit-transform: translate(-3px, 0px) rotate(1deg); }
-            15% { -webkit-transform: translate(0px, 2px) rotate(0deg); }
-            20% { -webkit-transform: translate(1px, -1px) rotate(1deg); }
-            25% { -webkit-transform: translate(-1px, 2px) rotate(-1deg); }
-            30% { -webkit-transform: translate(-3px, 1px) rotate(0deg); }
-            35% { -webkit-transform: translate(2px, 1px) rotate(-1deg); }
-            40% { -webkit-transform: translate(-1px, -1px) rotate(1deg); }
-            45% { -webkit-transform: translate(2px, 2px) rotate(0deg); }
-            50% { -webkit-transform: translate(1px, -2px) rotate(-1deg); }
-            55% { -webkit-transform: translate(0px, 0px) rotate(0deg); }
-            100% { -webkit-transform: translate(0px, 0px) rotate(0deg); }
+            0% {
+                -webkit-transform: translate(2px, 1px) rotate(0deg);
+            }
+            5% {
+                -webkit-transform: translate(-1px, -2px) rotate(-1deg);
+            }
+            10% {
+                -webkit-transform: translate(-3px, 0px) rotate(1deg);
+            }
+            15% {
+                -webkit-transform: translate(0px, 2px) rotate(0deg);
+            }
+            20% {
+                -webkit-transform: translate(1px, -1px) rotate(1deg);
+            }
+            25% {
+                -webkit-transform: translate(-1px, 2px) rotate(-1deg);
+            }
+            30% {
+                -webkit-transform: translate(-3px, 1px) rotate(0deg);
+            }
+            35% {
+                -webkit-transform: translate(2px, 1px) rotate(-1deg);
+            }
+            40% {
+                -webkit-transform: translate(-1px, -1px) rotate(1deg);
+            }
+            45% {
+                -webkit-transform: translate(2px, 2px) rotate(0deg);
+            }
+            50% {
+                -webkit-transform: translate(1px, -2px) rotate(-1deg);
+            }
+            55% {
+                -webkit-transform: translate(0px, 0px) rotate(0deg);
+            }
+            100% {
+                -webkit-transform: translate(0px, 0px) rotate(0deg);
+            }
         }
+
         .shake {
             -webkit-animation-name: shake;
             -webkit-animation-duration: 3s;
-            -webkit-transform-origin:0 0;
+            -webkit-transform-origin: 0 0;
             -webkit-animation-iteration-count: infinite;
         }
     </style>
@@ -125,7 +152,13 @@
     function getState() {
         let state = sanitizeBase64(getQueryParam('state'));
         if (state) {
-            setCookie('state', state, 1)
+            /*
+                Session is valid for 7 hours, just below the 8 hours
+                that the function allows sessions to live for. This
+                avoids a situation where this web interface thinks
+                it has a valid session but the backend does not.
+             */
+            setCookie('state', state, 7)
             return state
         }
 
@@ -243,6 +276,12 @@
     }
 
     async function processQuery(event) {
+        // If the session has expired, we prompt to log in again.
+        if (!getState()) {
+            checkLogin()
+            return
+        }
+
         if (processing) {
             return
         }
