@@ -133,7 +133,7 @@
 </body>
 <script>
     // Extract the state from the query params
-    getState()
+    saveState()
 
     // Enable or disable fields based on login state
     checkLogin()
@@ -149,7 +149,7 @@
         return input.replace(base64Regex, '');
     }
 
-    function getState() {
+    function saveState() {
         let state = sanitizeBase64(getQueryParam('state'));
         if (state) {
             /*
@@ -159,9 +159,10 @@
                 it has a valid session but the backend does not.
              */
             setCookie('state', state, 7)
-            return state
         }
+    }
 
+    function getState() {
         return sanitizeBase64(getCookie('state'))
     }
 
