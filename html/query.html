@@ -184,6 +184,13 @@
         return urlParams.get(param);
     }
 
+    var queryHistory = []
+    const savedHistory = localStorage.getItem("queryHistory");
+    if (savedHistory) {
+        queryHistory = JSON.parse(savedHistory)
+        updateHistory()
+    }
+
     const queryValue = getQueryParam('query');
     if (queryValue) {
         sanitized_value = DOMPurify.sanitize(queryValue)
@@ -192,13 +199,6 @@
             queryHistory.push(sanitized_value)
             updateHistory()
         }
-    }
-
-    var queryHistory = []
-    const savedHistory = localStorage.getItem("queryHistory");
-    if (savedHistory) {
-        queryHistory = JSON.parse(savedHistory)
-        updateHistory()
     }
 
     var processing = false
