@@ -1589,30 +1589,18 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
     if not runbook['PublishedRunbookSnapshotId']:
         raise RunbookNotPublished(runbook_name)
 
-    prompted_variable_values = {}
+    matching_variables = {}
     if variables is not None and isinstance(variables, dict):
-        valid, error_message, _ = runbook_variables_valid(space_id, project['Id'],
-                                                          runbook_name,
-                                                          runbook['PublishedRunbookSnapshotId'],
-                                                          environment_name,
-                                                          variables,
-                                                          my_api_key, my_octopus_api)
-        if not valid:
+        prompted_variables, error_message, _ = match_runbook_variables(space_id, project['Id'],
+                                                                       runbook_name,
+                                                                       runbook['PublishedRunbookSnapshotId'],
+                                                                       environment_name,
+                                                                       variables,
+                                                                       my_api_key, my_octopus_api)
+        if prompted_variables is None:
             raise RunbookVariablesError(runbook_name, error_message)
 
-        # Get runbook preview
-        runbook_snapshot_preview = get_runbook_snapshot_preview(space_id, project['Id'],
-                                                                runbook['PublishedRunbookSnapshotId'],
-                                                                environment['Id'], my_api_key, my_octopus_api)
-
-        runbook_form = runbook_snapshot_preview['Form']
-        if len(runbook_form['Elements']) > 0:
-            for element in runbook_form['Elements']:
-                variable_id = element['Name']  # Variable GUID
-                control_name = element['Control']['Name']  # Variable name
-                variable_key_match = next((x for x in variables.keys() if x.casefold() == control_name.casefold()),
-                                          None)
-                prompted_variable_values[variable_id] = variables[variable_key_match]
+        matching_variables = {v['Name']: v['Value'] for k, v in prompted_variables.items()}
 
     base_url = f"api/{quote_safe(space_id)}/runbookRuns"
     api = build_url(my_octopus_api, base_url)
@@ -1625,7 +1613,7 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
         'SkipActions': None,
         'SpecificMachineIds': None,
         'ExcludedMachineIds': None,
-        'FormValues': prompted_variable_values
+        'FormValues': matching_variables
     }
 
     if log_query:
@@ -1640,7 +1628,7 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
                     Tenant Id: {tenant['Id'] if tenant else None}
                     Environment Names: {environment_name}
                     Environment Id: {environment['Id']}
-                    Variables : {variables}""")
+                    Variables : {matching_variables}""")
 
     response = handle_response(
         lambda: http.request("POST", api, json=runbook_run, headers=get_octopus_headers(my_api_key)))
@@ -2076,11 +2064,11 @@ def get_runbook_snapshot_preview(space_id, project_id, runbook_snapshot_id, envi
 
 
 @logging_wrapper
-def runbook_variables_valid(space_id, project_id, runbook_name, runbook_snapshot_id, environment_name, variables,
+def match_runbook_variables(space_id, project_id, runbook_name, runbook_snapshot_id, environment_name, variables,
                             my_api_key,
                             my_octopus_api):
     """
-    Checks the variables provided for a runbook are valid
+    Matches the variables provided for a runbook with ones available.
     :param space_id: The Octopus Space
     :param project_id: The Octopus project
     :param runbook_name: The Octopus runbook name
@@ -2096,12 +2084,14 @@ def runbook_variables_valid(space_id, project_id, runbook_name, runbook_snapshot
     if not runbook_snapshot_id:
         raise RunbookNotPublished(runbook_name)
 
+    prompted_variables = {}
+
     if isinstance(variables, dict):
         environment = get_environment_fuzzy(space_id, environment_name, my_api_key, my_octopus_api)
         runbook_snapshot_preview = get_runbook_snapshot_preview(space_id, project_id, runbook_snapshot_id,
                                                                 environment['Id'], my_api_key, my_octopus_api)
         if not runbook_snapshot_preview:
-            return False, "Runbook snapshot could not be found for variable lookup.", None
+            return {}, "Runbook snapshot could not be found for variable lookup.", None
 
         missing_required_variables = []
         extra_variables = []
@@ -2110,28 +2100,52 @@ def runbook_variables_valid(space_id, project_id, runbook_name, runbook_snapshot
             extra_variables = variables.keys()
         else:
             for element in runbook_form['Elements']:
+                element_name = element['Name']  # Variable Unique Name (GUID)
                 control_name = element['Control']['Name']  # Variable name
                 element_required = element['Control']['Required']  # Variable required
-                variable_key_match = next((x for x in variables.keys() if x.casefold() == control_name.casefold()),
+                variable_key_match = next(filter(lambda x: x == x.casefold() == control_name.casefold(), variables),
                                           None)
-
                 if element_required:
-                    if variable_key_match is None or not dictionary_has_value(variable_key_match, variables):
-                        missing_required_variables.append(control_name)
-                else:
                     if variable_key_match is None:
-                        extra_variables.append(control_name)
+                        missing_required_variables.append(control_name)
+                    else:
+                        if not dictionary_has_value(variable_key_match, variables):
+                            missing_required_variables.append(control_name)
+                        else:
+                            prompted_variables[element_name] = {
+                                'Name': control_name,
+                                'Value': variables[variable_key_match]
+                            }
+                else:
+                    if variable_key_match:
+                        prompted_variables[element_name] = {
+                            'Name': control_name,
+                            'Value': variables[variable_key_match]
+                        }
+                    else:  # Take default values
+                        default_value = runbook_form['Values'][element_name]
+                        prompted_variables[element_name] = {
+                            'Name': control_name,
+                            'Value': default_value
+                        }
+
+            for variable in variables.keys():
+                matching_prompted_variable = next(
+                    filter(lambda x: x['Control']['Name'].casefold() == variable.casefold(),
+                           runbook_form['Elements']), None)
+                if matching_prompted_variable is None:
+                    extra_variables.append(variable)
 
         if len(missing_required_variables) > 0:
-            return False, f'The runbook is missing values for required variables: {", ".join(missing_required_variables)}', None
+            return {}, f'The runbook is missing values for required variables: {", ".join(missing_required_variables)}', None
 
         if len(extra_variables) > 0:
-            return False, None, f'Extra variables were found: {", ".join(extra_variables)}. These will be ignored.'
+            return prompted_variables, None, f'Extra variables were found: {", ".join(extra_variables)}. These will be ignored.'
     else:
-        return False, ("Please specify variables in the format VariableLabel=VariableValue. Multiple variables can be "
-                       "supplied using a comma to separate them."), None
+        return {}, ("Please specify variables in the format VariableLabel=VariableValue. Multiple variables can be "
+                      "supplied using a comma to separate them."), None
 
-    return True, None, None
+    return prompted_variables, None, None
 
 
 @retry(HTTPError, tries=3, delay=2)
