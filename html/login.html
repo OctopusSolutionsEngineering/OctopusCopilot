@@ -86,7 +86,18 @@
 </body>
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const state = urlParams.get('state');
+    const state = sanitizeBase64(urlParams.get('state'));
+
+    function sanitizeBase64(input) {
+        if (!input) {
+            return null
+        }
+
+        // Regular expression to match valid Base64 characters
+        const base64Regex = /[^A-Za-z0-9+/=]/g;
+        // Replace invalid characters with an empty string
+        return input.replace(base64Regex, '');
+    }
 
     function enable_inputs() {
         submit.disabled = false
@@ -195,13 +206,23 @@
 
                 enable_inputs()
             } else {
-                success.style.display = 'block'
+                login_success()
             }
         } catch {
             response_error.style.display = 'block'
             enable_inputs()
         } finally {
             loading.style.display = 'none'
+        }
+    }
+
+    function login_success() {
+        const redirect = urlParams.get('redirect');
+
+        if (redirect) {
+            window.location.href = "/api/" + encodeURIComponent(redirect) + "?state=" + state
+        } else {
+            success.style.display = 'block'
         }
     }
 

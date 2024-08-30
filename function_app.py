@@ -192,7 +192,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
 
         # State is used to track the page to redirect to. It defaults to the page that collects
         # octopus details.
-        state = req.params.get("state") or "octopus"
+        redirect = req.params.get("state", "")
 
         session_json = create_session_blob(
             access_token,
@@ -205,8 +205,10 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             status_code=301,
             headers={
-                "Location": f"{base_request_url(req)}/api/{quote_safe(state)}?state="
+                "Location": f"{base_request_url(req)}/api/octopus?state="
                 + session_json
+                + "&redirect="
+                + quote_safe(redirect)
             },
         )
     except Exception as e:
