@@ -125,7 +125,7 @@
             return state
         }
 
-        return getCookie('state')
+        return sanitizeBase64(getCookie('state'))
     }
 
     function getStateCookie() {
