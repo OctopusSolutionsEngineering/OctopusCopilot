@@ -162,10 +162,6 @@
         }
     }
 
-    function getState() {
-        return sanitizeBase64(getCookie('state'))
-    }
-
     function getStateCookie() {
         return sanitizeBase64(getCookie('state'))
     }
@@ -278,7 +274,7 @@
 
     async function processQuery(event) {
         // If the session has expired, we prompt to log in again.
-        if (!getState()) {
+        if (!getStateCookie()) {
             checkLogin()
             return
         }
