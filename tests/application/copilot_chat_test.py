@@ -25,6 +25,7 @@ from domain.transformers.sse_transformers import (
     convert_from_sse_response,
     get_confirmation_id,
 )
+from domain.url.session import create_session_blob
 from function_app import copilot_handler_internal, health_internal
 from infrastructure.octopus import (
     run_published_runbook_fuzzy,
@@ -1852,6 +1853,33 @@ def build_no_octopus_request(message):
         params=None,
         headers={
             "X-GitHub-Token": os.environ["GH_TEST_TOKEN"],
+            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
+            "X-Octopus-ApiKey": Octopus_Api_Key,
+            "X-Octopus-Server": Octopus_Url,
+        },
+    )
+
+
+def build_no_octopus_encrypted_github_request(message):
+    """
+    Build a request where all values are passed through headers. This supports tests that do not
+    populate the Azurite database, as all details can be extracted from the headers.
+    :param message:
+    :return:
+    """
+    session_json = create_session_blob(
+        os.environ["GH_TEST_TOKEN"],
+        os.environ.get("ENCRYPTION_PASSWORD"),
+        os.environ.get("ENCRYPTION_SALT"),
+    )
+
+    return func.HttpRequest(
+        method="POST",
+        body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
+        url="/api/form_handler",
+        params=None,
+        headers={
+            "X-GitHub-Encrypted-Token": session_json,
             "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
             "X-Octopus-ApiKey": Octopus_Api_Key,
             "X-Octopus-Server": Octopus_Url,

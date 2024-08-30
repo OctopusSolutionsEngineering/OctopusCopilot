@@ -35,21 +35,12 @@
     </span>
 </nav>
 <form id="form" class="needs-validation" novalidate>
-    <!--<div class="form-group row m-md-1">
-        <label for="token" class="col-lg-2 offset-lg-2 col-form-label">GitHub Login</label>
-        <div class="col-lg-6">
-            <button id="github_login" name="github_login" type="button" class="btn btn-primary" onclick="githubLogin()">GitHub Login</button>
-        </div>
-    </div>-->
     <div class="form-group row m-md-1">
-        <label for="token" class="col-lg-2 offset-lg-2 col-form-label">GitHub Token</label>
+        <label for="github_login" class="col-lg-2 offset-lg-2 col-form-label">GitHub Login</label>
         <div class="col-lg-6">
-            <input id="token" name="token" type="password" class="form-control" required>
-            <small id="tokenHelp" class="form-text text-muted">This is a GitHub <a
-                    href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens">Personal
-                Access Token (PAT)</a>. It emulates the token that Copilot would normally send.</small>
-            <div class="invalid-feedback">
-                Please provide a valid personal access token.
+            <button id="github_login" name="github_login" type="button" class="btn btn-primary">GitHub Login</button>
+            <div id="github_login_warning" class="text-danger">
+                You must log in to GitHub to continue.
             </div>
         </div>
     </div>
@@ -91,17 +82,57 @@
 </form>
 </body>
 <script>
+    // Extract the state from the query params
+    getState()
 
-    let state = getQueryParam('state');
-    if (state) {
-        setCookie('state', state, 1)
-    } else {
-        state = getCookie('state')
+    // Enable or disable fields based on login state
+    checkLogin()
+
+    function getState() {
+        let state = getQueryParam('state');
+        if (state) {
+            setCookie('state', state, 1)
+            return state
+        }
+
+        return getCookie('state')
+    }
+
+    function getStateCookie() {
+        return getCookie('state')
+    }
+
+    function checkLogin() {
+        githubLoginButton = document.getElementById('github_login')
+        githubLoginButtonWarning = document.getElementById('github_login_warning')
+        queryTextArea = document.getElementById('query')
+        submitButton = document.getElementById('submit')
+
+        if (getStateCookie()) {
+            githubLoginButton.onclick = githubLogout
+            githubLoginButton.innerText = "GitHub Logout"
+            submitButton.disabled = false
+            queryTextArea.disabled = false
+            githubLoginButtonWarning.style.display = "none"
+        } else {
+            githubLoginButton.innerText = "GitHub Login"
+            githubLoginButton.onclick = githubLogin
+            submitButton.disabled = true
+            queryTextArea.disabled = true
+            githubLoginButtonWarning.style.display = "block"
+        }
     }
 
     function githubLogin() {
         // The state parameter redirects to the form page.
         window.location.href = 'https://github.com/login/oauth/authorize?client_id=Iv1.7fbb4fdc9a50333d&redirect_url=https%3A//aiagent.octopus.com/api/oauth_callback&scope=user&allow_signup=false&state=form'
+    }
+
+    function githubLogout() {
+        if (confirm("Are you sure you want to log out?")) {
+            setCookie('state', null, 1)
+            checkLogin()
+        }
     }
 
     function setCookie(name, value, hours) {
@@ -211,7 +242,7 @@
             // For now we send both the token and the encrypted token while we test the github login flow.
             headers: {
                 'X-GitHub-Token': token.value,
-                'X-GitHub-Encrypted-Token': state
+                'X-GitHub-Encrypted-Token': getStateCookie()
             },
             // https://stackoverflow.com/questions/71688537/event-source-timeout-in-45-seconds
             // Increase timeouts as it can take some time to process the request.

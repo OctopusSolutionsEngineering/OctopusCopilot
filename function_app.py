@@ -195,7 +195,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
         state = req.params.get("state") or "octopus"
 
         session_json = create_session_blob(
-            get_github_user(access_token),
+            access_token,
             os.environ.get("ENCRYPTION_PASSWORD"),
             os.environ.get("ENCRYPTION_SALT"),
         )
@@ -336,13 +336,15 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
             raise OctopusVersionInvalid(octopus_version, min_octopus_version)
 
         # Extract the GitHub user from the client side session
-        user_id = extract_session_blob(
+        access_token = extract_session_blob(
             req.params.get("state"),
             generate_password(
                 os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")
             ),
             os.environ.get("ENCRYPTION_SALT"),
         )
+
+        user_id = get_github_user(access_token)
 
         # Using the supplied API key, create a time limited API key that we'll save and reuse until
         # the next cleanup cycle triggered by api_key_cleanup. Using temporary keys mens we never
