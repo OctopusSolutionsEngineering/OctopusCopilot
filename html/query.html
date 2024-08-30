@@ -111,8 +111,15 @@
     // Enable or disable fields based on login state
     checkLogin()
 
+    function sanitizeBase64(input) {
+        // Regular expression to match valid Base64 characters
+        const base64Regex = /[^A-Za-z0-9+/=]/g;
+        // Replace invalid characters with an empty string
+        return input.replace(base64Regex, '');
+    }
+
     function getState() {
-        let state = getQueryParam('state');
+        let state = sanitizeBase64(getQueryParam('state'));
         if (state) {
             setCookie('state', state, 1)
             return state
