@@ -869,12 +869,12 @@ class CopilotChatTest(unittest.TestCase):
             build_confirmation_request(confirmation)
         )
 
-        response_text = convert_from_sse_response(
+        run_response_text = convert_from_sse_response(
             run_response.get_body().decode("utf8")
         )
 
         self.assertTrue(
-            "Prompted Variables Runbook" in response_text, "Response was " + response_text
+            "Prompted Variables Runbook" in run_response_text, "Response was " + run_response_text
         )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)

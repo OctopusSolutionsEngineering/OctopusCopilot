@@ -274,9 +274,10 @@ class OctopusAPIRequests(unittest.TestCase):
             "Copilot Test Runbook Project",
             "Backup Database",
             "Development",
-            None,
-            Octopus_Api_Key,
-            Octopus_Url,
+            tenant_name="",
+            variables=None,
+            my_api_key=Octopus_Api_Key,
+            my_octopus_api=Octopus_Url,
         )
         wait_for_task(task["TaskId"], space_name="Simple")
 

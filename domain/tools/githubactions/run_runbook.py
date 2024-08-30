@@ -153,6 +153,10 @@ def run_runbook_callback(url, api_key, github_user, connection_string, log_query
                           f"\n* Environment: **{sanitized_environment_names[0]}**"]
         if arguments["tenant_name"]:
             prompt_message.append(f"\n* Tenant: **{arguments['tenant_name']}**")
+        if variables is not None:
+            prompt_message.append(f"\n* Variables:")
+            for variable in variables.keys():
+                prompt_message.append(f"\n\t* {variable} = {variables[variable]}")
 
         prompt_message.append(f"\n* Space: **{actual_space_name}**")
 
