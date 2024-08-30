@@ -247,13 +247,13 @@
         markdown.innerHTML = "Processing..."
         query.disabled = true
         submit.disabled = true
-        token.disabled = true
+        github_login.disabled = true
         processing = true
 
         function enableInput() {
             query.disabled = false
             submit.disabled = false
-            token.disabled = false
+            github_login.disabled = false
             processing = false
         }
 
@@ -264,7 +264,6 @@
         var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(sanitized_value), {
             // For now we send both the token and the encrypted token while we test the github login flow.
             headers: {
-                'X-GitHub-Token': token.value,
                 'X-GitHub-Encrypted-Token': getStateCookie()
             },
             // https://stackoverflow.com/questions/71688537/event-source-timeout-in-45-seconds
