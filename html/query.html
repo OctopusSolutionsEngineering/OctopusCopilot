@@ -186,7 +186,12 @@
 
     const queryValue = getQueryParam('query');
     if (queryValue) {
-        document.getElementById('query').value = DOMPurify.sanitize(queryValue);
+        sanitized_value = DOMPurify.sanitize(queryValue)
+        document.getElementById('query').value = sanitized_value
+        if (queryHistory.indexOf(sanitized_value) === -1) {
+            queryHistory.push(sanitized_value)
+            updateHistory()
+        }
     }
 
     var queryHistory = []
@@ -262,7 +267,6 @@
 
         // Use the polyfill to get the ability to send headers.
         var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(sanitized_value), {
-            // For now we send both the token and the encrypted token while we test the github login flow.
             headers: {
                 'X-GitHub-Encrypted-Token': getStateCookie()
             },
