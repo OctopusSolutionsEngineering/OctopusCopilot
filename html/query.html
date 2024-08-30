@@ -129,7 +129,7 @@
     }
 
     function getStateCookie() {
-        return getCookie('state')
+        return sanitizeBase64(getCookie('state'))
     }
 
     function checkLogin() {
