@@ -34,7 +34,7 @@ def is_api_key(api_key):
 def is_manual_intervention_valid(space_name, space_id, project_name, release_version, environment_name, tenant_name, task_id,
                                  task_interruptions, teams, url, interruption_action):
     """
-
+    Checks if a manual intervention is valid
     :param space_name: The Octopus space name
     :param space_id: The Octopus space id
     :param project_name: The Octopus project name

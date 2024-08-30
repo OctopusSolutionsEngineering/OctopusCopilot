@@ -15,10 +15,12 @@ from domain.converters.string_to_int import string_to_int
 from domain.exceptions.request_failed import OctopusRequestFailed
 from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.runbook_not_published import RunbookNotPublished
+from domain.exceptions.runbook_variables_error import RunbookVariablesError
 from domain.exceptions.space_not_found import SpaceNotFound
 from domain.exceptions.user_not_loggedin import OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.query.query_inspector import release_is_latest
+from domain.sanitizers.dictionary_sanitizer import dictionary_has_value
 from domain.sanitizers.sanitized_list import get_item_fuzzy, normalize_log_step_name, flatten_list
 from domain.sanitizers.url_sanitizer import quote_safe
 from domain.url.build_url import build_url
@@ -1567,8 +1569,8 @@ def get_runbook_fuzzy(space_id, project_id, runbook_name, api_key, octopus_url):
 
 
 @logging_wrapper
-def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environment_name, tenant_name, my_api_key,
-                                my_octopus_api, log_query=None):
+def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environment_name, tenant_name, variables,
+                                my_api_key, my_octopus_api, log_query=None):
     """
     Runs a published runbook
     """
@@ -1587,6 +1589,31 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
     if not runbook['PublishedRunbookSnapshotId']:
         raise RunbookNotPublished(runbook_name)
 
+    prompted_variable_values = {}
+    if variables is not None and isinstance(variables, dict):
+        valid, error_message, _ = runbook_variables_valid(space_id, project['Id'],
+                                                          runbook_name,
+                                                          runbook['PublishedRunbookSnapshotId'],
+                                                          environment_name,
+                                                          variables,
+                                                          my_api_key, my_octopus_api)
+        if not valid:
+            raise RunbookVariablesError(runbook_name, error_message)
+
+        # Get runbook preview
+        runbook_snapshot_preview = get_runbook_snapshot_preview(space_id, project['Id'],
+                                                                runbook['PublishedRunbookSnapshotId'],
+                                                                environment['Id'], my_api_key, my_octopus_api)
+
+        runbook_form = runbook_snapshot_preview['Form']
+        if len(runbook_form['Elements']) > 0:
+            for element in runbook_form['Elements']:
+                variable_id = element['Name']  # Variable GUID
+                control_name = element['Control']['Name']  # Variable name
+                variable_key_match = next((x for x in variables.keys() if x.casefold() == control_name.casefold()),
+                                          None)
+                prompted_variable_values[variable_id] = variables[variable_key_match]
+
     base_url = f"api/{quote_safe(space_id)}/runbookRuns"
     api = build_url(my_octopus_api, base_url)
 
@@ -1597,7 +1624,8 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
         'TenantId': tenant['Id'] if tenant else None,
         'SkipActions': None,
         'SpecificMachineIds': None,
-        'ExcludedMachineIds': None
+        'ExcludedMachineIds': None,
+        'FormValues': prompted_variable_values
     }
 
     if log_query:
@@ -1611,7 +1639,8 @@ def run_published_runbook_fuzzy(space_id, project_name, runbook_name, environmen
                     Tenant Names: {tenant_name}
                     Tenant Id: {tenant['Id'] if tenant else None}
                     Environment Names: {environment_name}
-                    Environment Id: {environment['Id']}""")
+                    Environment Id: {environment['Id']}
+                    Variables : {variables}""")
 
     response = handle_response(
         lambda: http.request("POST", api, json=runbook_run, headers=get_octopus_headers(my_api_key)))
@@ -1977,6 +2006,132 @@ def cancel_server_task(space_id, task_id, my_api_key, my_octopus_api):
 
     task = response.json()
     return task
+
+
+@logging_wrapper
+def runbook_environment_valid(space_id, project_id, runbook, environment_name, my_api_key, my_octopus_api):
+    """
+    Checks if an environment is valid for the runbook specified
+    :param space_id: The Octopus Space
+    :param project_id: The Octopus project
+    :param runbook: The Octopus runbook
+    :param environment_name: The Octopus environment
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus server URL
+    :return: Tuple of: bool value indicating if the environment is valid, and an error response if False.
+    """
+    runbook_environments = []
+    match runbook['EnvironmentScope']:
+        case "All":
+            valid = True
+        case "Specified":
+            runbook_environments = [get_environment(space_id, environmentId, my_api_key, my_octopus_api)["Name"] for
+                                    environmentId in
+                                    runbook["Environments"]]
+            valid = any(filter(lambda x: x == environment_name, runbook_environments))
+        case "FromProjectLifecycles":
+            runbook_environments_from_project = get_runbook_environments_from_project(space_id, project_id,
+                                                                                      runbook['Id'], my_api_key,
+                                                                                      my_octopus_api)
+            runbook_environments = [get_environment(space_id, environment['Id'], my_api_key, my_octopus_api)["Name"] for
+                                    environment
+                                    in
+                                    runbook_environments_from_project]
+            valid = any(filter(lambda x: x == environment_name, runbook_environments))
+        case _:
+            valid = False
+
+    if not valid:
+        return False, (
+                          f"The environment \"{environment_name}\" is not valid for the runbook \"{runbook['Name']}\". Valid "
+                          f"environments are:") + ", ".join(runbook_environments)
+
+    return True, ""
+
+
+@logging_wrapper
+@retry(HTTPError, tries=3, delay=2)
+def get_runbook_snapshot_preview(space_id, project_id, runbook_snapshot_id, environment_id, my_api_key, my_octopus_api):
+    """
+    Gets a Runbook Snapshot preview
+
+    :param space_id: The Octopus Space
+    :param project_id: The Octopus project
+    :param runbook_snapshot_id: The Octopus Runbook Snapshot
+    :param environment_id: The Octopus Environment
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus server URL
+    :return: The Octopus Runbook Snapshot preview
+
+    """
+
+    base_url = f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/runbookSnapshots/{quote_safe(runbook_snapshot_id)}/runbookRuns/preview/{quote_safe(environment_id)}"
+    api = build_url(my_octopus_api, base_url, query=dict(includeDisabledSteps=True))
+
+    response = handle_response(
+        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key)))
+
+    runbook_snapshot_preview = response.json()
+    return runbook_snapshot_preview
+
+
+@logging_wrapper
+def runbook_variables_valid(space_id, project_id, runbook_name, runbook_snapshot_id, environment_name, variables,
+                            my_api_key,
+                            my_octopus_api):
+    """
+    Checks the variables provided for a runbook are valid
+    :param space_id: The Octopus Space
+    :param project_id: The Octopus project
+    :param runbook_name: The Octopus runbook name
+    :param runbook_snapshot_id: The Octopus runbook snapshot
+    :param environment_name: The Octopus environment
+    :param variables: The Octopus variables
+    :param my_api_key: The Octopus API key
+    :param my_octopus_api: The Octopus server URL
+    :return: A bool value indicating if the environment is valid, and an error response if False. If additional variables
+            were supplied, a warning will also be returned.
+    """
+
+    if not runbook_snapshot_id:
+        raise RunbookNotPublished(runbook_name)
+
+    if isinstance(variables, dict):
+        environment = get_environment_fuzzy(space_id, environment_name, my_api_key, my_octopus_api)
+        runbook_snapshot_preview = get_runbook_snapshot_preview(space_id, project_id, runbook_snapshot_id,
+                                                                environment['Id'], my_api_key, my_octopus_api)
+        if not runbook_snapshot_preview:
+            return False, "Runbook snapshot could not be found for variable lookup.", None
+
+        missing_required_variables = []
+        extra_variables = []
+        runbook_form = runbook_snapshot_preview['Form']
+        if len(runbook_form['Elements']) == 0:
+            extra_variables = variables.keys()
+        else:
+            for element in runbook_form['Elements']:
+                control_name = element['Control']['Name']  # Variable name
+                element_required = element['Control']['Required']  # Variable required
+                variable_key_match = next((x for x in variables.keys() if x.casefold() == control_name.casefold()),
+                                          None)
+
+                if element_required:
+                    if variable_key_match is None or not dictionary_has_value(variable_key_match, variables):
+                        missing_required_variables.append(control_name)
+                else:
+                    if variable_key_match is None:
+                        extra_variables.append(control_name)
+
+        if len(missing_required_variables) > 0:
+            return False, f'The runbook is missing values for required variables: {", ".join(missing_required_variables)}', None
+
+        if len(extra_variables) > 0:
+            return False, None, f'Extra variables were found: {", ".join(extra_variables)}. These will be ignored.'
+    else:
+        return False, ("Please specify variables in the format VariableLabel=VariableValue. Multiple variables can be "
+                       "supplied using a comma to separate them."), None
+
+    return True, None, None
 
 
 @retry(HTTPError, tries=3, delay=2)

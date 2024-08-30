@@ -1,6 +1,6 @@
 def run_runbook_wrapper(query, callback, logging):
     def run_runbook(space_name=None, project_name=None, runbook_name=None, environment_name=None, tenant_name=None,
-                    **kwargs):
+                    variables=None, **kwargs):
         """Responds to queries like: Run the runbook "Apply Windows updates" for the project "MyProject"
            in the "Development" environment
 
@@ -10,6 +10,7 @@ def run_runbook_wrapper(query, callback, logging):
         runbook_name: The name of the runbook
         environment_name: The name of the environment
         tenant_name: The optional name of the tenant
+        variables: The optional variable key/value pairs.
         """
 
         if logging:
@@ -25,6 +26,7 @@ def run_runbook_wrapper(query, callback, logging):
                         project_name,
                         runbook_name,
                         environment_name,
-                        tenant_name)
+                        tenant_name,
+                        variables)
 
     return run_runbook

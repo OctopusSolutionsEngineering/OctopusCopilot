@@ -590,9 +590,10 @@ class CopilotChatTest(unittest.TestCase):
             "Copilot Test Runbook Project",
             "Backup Database",
             "Development",
-            "",
-            Octopus_Api_Key,
-            Octopus_Url,
+            tenant_name="",
+            variables=None,
+            my_api_key=Octopus_Api_Key,
+            my_octopus_api=Octopus_Url,
         )
         wait_for_task(runbook_run["TaskId"], space_name="Simple")
         prompt = 'Get the runbook dashboard for runbook "Backup Database" in the "Copilot Test Runbook Project" project.'
@@ -620,9 +621,10 @@ class CopilotChatTest(unittest.TestCase):
             "Copilot Test Runbook Project",
             "Backup Database",
             "Development",
-            "",
-            Octopus_Api_Key,
-            Octopus_Url,
+            tenant_name="",
+            variables=None,
+            my_api_key=Octopus_Api_Key,
+            my_octopus_api=Octopus_Url,
         )
         wait_for_task(runbook_run["TaskId"], space_name="Simple")
         prompt = 'Get the logs from the run of runbook "Backup Database" in the "Copilot Test Runbook Project" project.'
@@ -813,6 +815,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_runbook_run(self):
+        publish_runbook("Simple", "Copilot Test Runbook Project", "Backup Database")
         prompt = 'Run runbook "Backup Database" in the "Copilot Test Runbook Project" project'
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
@@ -839,6 +842,50 @@ class CopilotChatTest(unittest.TestCase):
         )
         self.assertTrue(
             "Backup Database" in response_text, "Response was " + response_text
+        )
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_runbook_run_with_variables(self):
+        publish_runbook("Simple", "Copilot Test Runbook Project", "Prompted Variables Runbook")
+        prompt = 'Run runbook "Prompted Variables Runbook" in the "Copilot Test Runbook Project" project with variables notify=false, slot=Staging'
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+
+        self.assertTrue(
+            "Prompted Variables Runbook" in response_text, "Response was " + response_text
+        )
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_runbook_run_with_missing_required_variable(self):
+        publish_runbook("Simple", "Copilot Test Runbook Project", "Prompted Variables Runbook")
+        prompt = 'Run runbook "Prompted Variables Runbook" in the "Copilot Test Runbook Project" project with variables notify=false, slot='
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+
+        self.assertTrue(
+            "The runbook is missing values for required variables: slot" in response_text, "Response was " + response_text
         )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
@@ -1386,9 +1433,10 @@ class CopilotChatTest(unittest.TestCase):
             project_name,
             runbook_name,
             environment_name,
-            "",
-            Octopus_Api_Key,
-            Octopus_Url,
+            tenant_name="",
+            variables=None,
+            my_api_key=Octopus_Api_Key,
+            my_octopus_api=Octopus_Url,
         )
 
         prompt = f'Cancel the runbook "{runbook_name}" for project "{project_name}" to the environment "{environment_name}" in the space "{space_name}".'
