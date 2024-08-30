@@ -150,6 +150,7 @@ def run_runbook_callback(url, api_key, github_user, connection_string, log_query
         prompt_title = "Do you want to continue running the runbook?"
         prompt_message = ["Please confirm the details below are correct before proceeding:"
                           f"\n* Project: **{sanitized_project_names[0]}**"
+                          f"\n* Runbook: **{sanitized_runbook_names[0]}**",
                           f"\n* Environment: **{sanitized_environment_names[0]}**"]
         if arguments["tenant_name"]:
             prompt_message.append(f"\n* Tenant: **{arguments['tenant_name']}**")
