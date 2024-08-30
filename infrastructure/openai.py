@@ -31,10 +31,11 @@ NO_FUNCTION_RESPONSE = (
 
 
 @retry(RateLimitError, tries=3, delay=5)
-def llm_message_query(message_prompt, context, log_query=None):
+def llm_message_query(message_prompt, context, log_query=None, deployment=None):
     # We can use a specific deployment to answer a query, or fallback to the default
     deployment = (
-        os.environ.get("OPENAI_API_DEPLOYMENT_QUERY")
+        deployment
+        or os.environ.get("OPENAI_API_DEPLOYMENT_QUERY")
         or os.environ["OPENAI_API_DEPLOYMENT"]
     )
     version = os.environ.get("OPENAI_API_DEPLOYMENT_QUERY_VERSION") or "2024-06-01"
