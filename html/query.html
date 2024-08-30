@@ -99,8 +99,10 @@
         <div class="col-lg-6">
             <textarea id="query" name="query" rows="5" class="form-control" required></textarea>
             <small id="queryHelp" class="form-text text-muted">This is a plain text query. Ask something like "<a
-                    id="sampleQuery" href="#">Show me the projects in the Default space</a>" or "<a
-                    id="helpQuery" href="#">What do you do?</a>".</small>
+                    id="sampleQuery" href="#">Show me the projects in the Default space</a>", "<a
+                    id="helpQuery" href="#">What do you do?</a>", or "<a
+                    id="terraformQuery" href="#">Generate a Terraform module with the environments 'Development',
+                'Test', and 'Production'</a>".</small>
             <div class="invalid-feedback">
                 Please provide a valid query.
             </div>
@@ -371,6 +373,11 @@
 
     helpQuery.onclick = function () {
         query.value = "What do you do?"
+        return false
+    }
+
+    terraformQuery.onclick = function () {
+        query.value = "Generate a Terraform module with the environments 'Development', 'Test', and 'Production'"
         return false
     }
 
