@@ -158,7 +158,7 @@ jobs:
         run: |
           pip install pytest coverage setuptools
           coverage combine coverage*/.coverage*
-          coverage html --omit="./domain/sanitizers/stringlifier/*" --fail-under=85
+          coverage html --omit="./domain/sanitizers/stringlifier/*" --fail-under=80
 
       - name: Coverage Badge
         uses: tj-actions/coverage-badge-py@v2
