@@ -149,6 +149,8 @@ jobs:
           # Need 3.11 because of https://stackoverflow.com/questions/77364550/attributeerror-module-pkgutil-has-no-attribute-impimporter-did-you-mean
           python-version: 3.11
 
+      - uses: actions/checkout@v3
+
       - name: Download artifacts
         uses: actions/download-artifact@v3
 
