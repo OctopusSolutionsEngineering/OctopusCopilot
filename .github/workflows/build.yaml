@@ -28,7 +28,7 @@ jobs:
         with:
           # Need 3.11 because of https://stackoverflow.com/questions/77364550/attributeerror-module-pkgutil-has-no-attribute-impimporter-did-you-mean
           python-version: 3.11
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install tools
         run: |
           pip install pytest coverage setuptools radon xenon
@@ -56,11 +56,17 @@ jobs:
           # Need 3.11 because of https://stackoverflow.com/questions/77364550/attributeerror-module-pkgutil-has-no-attribute-impimporter-did-you-mean
           python-version: 3.11
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Start Azurite
         run: docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite
         shell: bash
+
+      - uses: robinraju/release-downloader@v1.9
+        with:
+          repository: "OctopusSolutionsEngineering/OctopusTerraformExport"
+          latest: true
+          fileName: "octoterra_linux_amd64_azure.zip"
 
       - name: Start Octoterra
         run: |
@@ -138,7 +144,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -254,11 +260,6 @@ jobs:
         with:
           name: Dependencies Updates
           path: dependencyUpdates.txt
-      - uses: robinraju/release-downloader@v1.9
-        with:
-          repository: "OctopusSolutionsEngineering/OctopusTerraformExport"
-          latest: true
-          fileName: "octoterra_linux_amd64_azure.zip"
       - name: Generate SBOM
         if: ${{ github.event_name != 'schedule' }}
         run: |
