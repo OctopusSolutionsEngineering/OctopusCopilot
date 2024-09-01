@@ -20,29 +20,15 @@ name: Python Build
   schedule:
     - cron: '0 0 * * *'
 jobs:
-  build:
-    name: Build
+  validate:
     runs-on: ubuntu-latest
-    #      group: ubuntu-large-runner
-    #      labels: 4core-ubuntu-runner
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: '0'
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           # Need 3.11 because of https://stackoverflow.com/questions/77364550/attributeerror-module-pkgutil-has-no-attribute-impimporter-did-you-mean
           python-version: 3.11
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v1.1.1
-        with:
-          versionSpec: 5.x
-      - id: determine_version
-        name: Determine Version
-        uses: gittools/actions/gitversion/execute@v1.1.1
-        with:
-          additionalArguments: /overrideconfig mode=Mainline
+      - uses: actions/checkout@v2
       - name: Install tools
         run: |
           pip install pytest coverage setuptools radon xenon
@@ -56,33 +42,26 @@ jobs:
       - name: Complexity Enforcement
         shell: bash
         run: find . -path ./domain/sanitizers/stringlifier -prune -o -path ./tests -prune -o -path ./venv -prune -o -path ./.venv -prune -o -name "*.py" -print0 | xargs -0 -n1 xenon --max-absolute C
-      - name: Install Dependencies
-        run: pip install -r requirements.txt
-        shell: bash
-      - name: List Dependencies
-        run: pip install pipdeptree; pipdeptree > dependencies.txt
-        shell: bash
-      - name: Collect Dependencies
-        uses: actions/upload-artifact@v2
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: validate
+    strategy:
+      matrix:
+        group: [ 1, 2, 3, 4, 5 ]
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          name: Dependencies
-          path: dependencies.txt
-      - name: List Dependency Updates
-        run: python3 -m pip list --outdated --format=json | jq -r '.[] | .name+"="+.latest_version' > dependencyUpdates.txt || true
-        shell: bash
-      - name: Collect Dependency Updates
-        uses: actions/upload-artifact@v2
-        with:
-          name: Dependencies Updates
-          path: dependencyUpdates.txt
-      - uses: robinraju/release-downloader@v1.9
-        with:
-          repository: "OctopusSolutionsEngineering/OctopusTerraformExport"
-          latest: true
-          fileName: "octoterra_linux_amd64_azure.zip"
+          # Need 3.11 because of https://stackoverflow.com/questions/77364550/attributeerror-module-pkgutil-has-no-attribute-impimporter-did-you-mean
+          python-version: 3.11
+
+      - uses: actions/checkout@v2
+
       - name: Start Azurite
         run: docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite
         shell: bash
+
       - name: Start Octoterra
         run: |
           # Start the octoterra microservice
@@ -96,11 +75,15 @@ jobs:
           # The port used when running the octoterra microservice
           FUNCTIONS_CUSTOMHANDLER_PORT: 8081
         shell: bash
-      # Requires OpenAI instance to allow GitHub runner's IP address
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+        shell: bash
+
       - name: Test
         run: |
           pip install pytest coverage setuptools
-          PYTHONPATH=$(pwd) coverage run --omit="./domain/sanitizers/stringlifier/*" -m pytest --junitxml=results.xml
+          PYTHONPATH=$(pwd) coverage run --omit="./domain/sanitizers/stringlifier/*" -m pytest --junitxml=results.xml --splits 5 --group ${{ matrix.group }}
           coverage html --omit="./domain/sanitizers/stringlifier/*" --fail-under=85
         env:
           # These are the details of Slack
@@ -137,8 +120,50 @@ jobs:
           GITHUB_CLIENT_REDIRECT: https://aiagent.octopus.com/api/oauth_callback
           GITHUB_CLIENT_ID: 4ae1ef506301902a41a5
         shell: bash
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage${{ matrix.group }}
+          path: .coverage
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: junit-test-summary-${{ matrix.index }}
+          path: results.xml
+          retention-days: 1
+
+  test-results:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          # Need 3.11 because of https://stackoverflow.com/questions/77364550/attributeerror-module-pkgutil-has-no-attribute-impimporter-did-you-mean
+          python-version: 3.11
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Download all artifacts
+        # Downloads coverage1, coverage2, etc.
+        uses: actions/download-artifact@v2
+
+      - name: Run coverage
+        run: |
+          pip install pytest coverage setuptools
+          coverage combine coverage*/.coverage*
+          coverage html --omit="./domain/sanitizers/stringlifier/*" --fail-under=85
+
       - name: Coverage Badge
         uses: tj-actions/coverage-badge-py@v2
+
       - name: Verify Changed files
         uses: tj-actions/verify-changed-files@v17
         id: verify-changed-files
@@ -160,12 +185,26 @@ jobs:
         with:
           github_token: ${{ secrets.github_token }}
           branch: ${{ github.ref }}
-      - name: Collect Dependencies
-        if: always()
-        uses: actions/upload-artifact@v2
+
+      - uses: actions/setup-node@v3
         with:
-          name: Coverage Report
-          path: htmlcov
+          node-version: 16
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Install junit-report-merger
+        run: npm install -g junit-report-merger
+
+      - name: Merge reports
+        run: >
+          jrm ./junit-test-summary.xml 
+          "junit-test-summary-1/*.xml" 
+          "junit-test-summary-2/*.xml" 
+          "junit-test-summary-3/*.xml" 
+          "junit-test-summary-4/*.xml" 
+          "junit-test-summary-5/*.xml" 
+
       - if: always()
         name: Report
         uses: dorny/test-reporter@v1
@@ -174,6 +213,52 @@ jobs:
           path: results.xml
           reporter: java-junit
           fail-on-error: 'false'
+
+  build:
+    name: Build
+    needs: test-results
+    runs-on: ubuntu-latest
+    #      group: ubuntu-large-runner
+    #      labels: 4core-ubuntu-runner
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: '0'
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          # Need 3.11 because of https://stackoverflow.com/questions/77364550/attributeerror-module-pkgutil-has-no-attribute-impimporter-did-you-mean
+          python-version: 3.11
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v1.1.1
+        with:
+          versionSpec: 5.x
+      - id: determine_version
+        name: Determine Version
+        uses: gittools/actions/gitversion/execute@v1.1.1
+        with:
+          additionalArguments: /overrideconfig mode=Mainline
+      - name: List Dependencies
+        run: pip install pipdeptree; pipdeptree > dependencies.txt
+        shell: bash
+      - name: Collect Dependencies
+        uses: actions/upload-artifact@v2
+        with:
+          name: Dependencies
+          path: dependencies.txt
+      - name: List Dependency Updates
+        run: python3 -m pip list --outdated --format=json | jq -r '.[] | .name+"="+.latest_version' > dependencyUpdates.txt || true
+        shell: bash
+      - name: Collect Dependency Updates
+        uses: actions/upload-artifact@v2
+        with:
+          name: Dependencies Updates
+          path: dependencyUpdates.txt
+      - uses: robinraju/release-downloader@v1.9
+        with:
+          repository: "OctopusSolutionsEngineering/OctopusTerraformExport"
+          latest: true
+          fileName: "octoterra_linux_amd64_azure.zip"
       - name: Generate SBOM
         if: ${{ github.event_name != 'schedule' }}
         run: |
