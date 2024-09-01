@@ -149,9 +149,8 @@ jobs:
           # Need 3.11 because of https://stackoverflow.com/questions/77364550/attributeerror-module-pkgutil-has-no-attribute-impimporter-did-you-mean
           python-version: 3.11
 
-      - name: Download all artifacts
-        # Downloads coverage1, coverage2, etc.
-        uses: actions/download-artifact@v2
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
 
       - name: Run coverage
         run: |
@@ -187,9 +186,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
 
       - name: Install junit-report-merger
         run: npm install -g junit-report-merger
