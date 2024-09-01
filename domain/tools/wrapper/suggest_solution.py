@@ -185,7 +185,7 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    "The first paragraph must indicate if the person asking the question is happy, neutral, or sad under a heading of 'Sentiment'",
+                    "The first paragraph must indicate if the person asking the question is happy (😄), neutral (😐), or sad (☹️) under a heading of 'Sentiment'. Include both the word and the emoji.",
                 ),
                 (
                     "system",
