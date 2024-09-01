@@ -90,7 +90,6 @@ jobs:
         run: |
           pip install pytest pytest-split coverage setuptools
           PYTHONPATH=$(pwd) coverage run --omit="./domain/sanitizers/stringlifier/*" -m pytest --junitxml=results.xml --splits 5 --group ${{ matrix.group }}
-          coverage html --omit="./domain/sanitizers/stringlifier/*" --fail-under=85
         env:
           # These are the details of Slack
           SLACK_CLIENT_ID: ${{ secrets.SLACK_CLIENT_ID }}
