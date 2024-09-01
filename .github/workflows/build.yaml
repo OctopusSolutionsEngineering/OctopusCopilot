@@ -211,7 +211,7 @@ jobs:
         uses: dorny/test-reporter@v1
         with:
           name: Python Tests
-          path: results.xml
+          path: junit-test-summary.xml
           reporter: java-junit
           fail-on-error: 'false'
 
