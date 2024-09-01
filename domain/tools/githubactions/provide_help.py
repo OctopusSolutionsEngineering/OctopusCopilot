@@ -2,24 +2,24 @@ from domain.defaults.defaults import get_default_argument
 from domain.errors.error_handling import handle_error
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitize_strings import strip_leading_whitespace
-from infrastructure.octopus import get_spaces_generator, get_space_first_project_runbook_and_environment, \
-    get_space_id_and_name_from_name
+from infrastructure.octopus import (
+    get_spaces_generator,
+    get_space_first_project_runbook_and_environment,
+    get_space_id_and_name_from_name,
+)
 
 
 def provide_help_wrapper(github_user, url, api_key, log_query):
     def say_hello():
-        """Responds to greetings like "hello" or "hi"
-        """
+        """Responds to greetings like "hello" or "hi" """
         return provide_help()
 
     def what_do_you_do():
-        """Responds to questions like "What do you do?"
-        """
+        """Responds to questions like "What do you do?" """
         return provide_help()
 
     def what_can_i_ask():
-        """Responds to questions like "What questions can I ask?"
-        """
+        """Responds to questions like "What questions can I ask?" """
         return provide_help()
 
     def provide_help():
@@ -37,10 +37,16 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
         # If we have a default space to look in, attempt to fill in any missing values from that space
         if space_name:
             try:
-                default_space_id, resolved_default_space_name = get_space_id_and_name_from_name(space_name,
-                                                                                                api_key, url)
-                default_first_project, default_first_runbook, default_first_environment = get_space_first_project_runbook_and_environment(
-                    default_space_id, api_key, url)
+                default_space_id, resolved_default_space_name = (
+                    get_space_id_and_name_from_name(space_name, api_key, url)
+                )
+                (
+                    default_first_project,
+                    default_first_runbook,
+                    default_first_environment,
+                ) = get_space_first_project_runbook_and_environment(
+                    default_space_id, api_key, url
+                )
 
                 if not first_project and default_first_project:
                     first_project = default_first_project["Name"]
@@ -57,8 +63,13 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
         if not space_name:
             try:
                 for space in get_spaces_generator(api_key, url):
-                    space_first_project, space_first_runbook, space_first_environment = get_space_first_project_runbook_and_environment(
-                        space["Id"], api_key, url)
+                    (
+                        space_first_project,
+                        space_first_runbook,
+                        space_first_environment,
+                    ) = get_space_first_project_runbook_and_environment(
+                        space["Id"], api_key, url
+                    )
 
                     # The first space we find with projects and environments is used as the example
                     if space_first_project and space_first_environment:
@@ -72,10 +83,13 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
             except Exception as e:
                 handle_error(e)
 
-        log_query("provide_help", f"""
+        log_query(
+            "provide_help",
+            f"""
                 Space: {space_name}
                 Project Names: {first_project}
-                Environment Names: {first_environment}""")
+                Environment Names: {first_environment}""",
+        )
 
         # If we have a space, project, and environment, use these for the examples
         if space_name and first_project and first_environment:
@@ -84,7 +98,9 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
             if not first_runbook:
                 first_runbook = "My Runbook"
 
-            return CopilotResponse(strip_leading_whitespace(f"""I am an AI assistant that can help you with your Octopus Deploy queries. I can answer questions about your Octopus Deploy spaces, projects, environments, deployments, and more.
+            return CopilotResponse(
+                strip_leading_whitespace(
+                    f"""I am an AI assistant that can help you with your Octopus Deploy queries. I can answer questions about your Octopus Deploy spaces, projects, environments, deployments, and more.
 
                 Here are some sample queries you can ask:
                 * @octopus-ai-app Show me the dashboard for the space "{space_name}"
@@ -141,6 +157,11 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 * @octopus-ai-app Show the default repository
                 * @octopus-ai-app Show the default workflow
 
+                Default values can be loaded and saved as profiles. This allows you to switch between sets of default values.
+                Saving a profile saves the current default values. Loading a profile replaces the current default values.
+                * @octopus-ai-app Save the profile "MyValues"
+                * @octopus-ai-app Load the profile "MyValues"
+
                 Generate sample Terraform modules for Octopus Deploy with prompts like these:
                 * @octopus-ai-app create a sample terraform module with: three environments called "Development", "Test", and "Production"; a docker feed pointing to dockerhub; three tenants called "US", "Europe", and "Asia"; a project group called "Web App"; a project called "Audits" with a single powershell script step that echoes "Hello World"; and all tenants linked to the project and all environments
 
@@ -148,9 +169,12 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 * @octopus-ai-app logout
 
                 See the [documentation](https://octopus.com/docs/administration/copilot) for more information.
-                """))
+                """
+                )
+            )
 
         return CopilotResponse(
-            "See the [documentation](https://octopus.com/docs/administration/copilot) for more information.")
+            "See the [documentation](https://octopus.com/docs/administration/copilot) for more information."
+        )
 
     return provide_help, say_hello, what_do_you_do, what_can_i_ask

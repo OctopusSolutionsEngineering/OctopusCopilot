@@ -1,5 +1,6 @@
 import os
 
+from domain.config.database import get_functions_connection_string
 from domain.config.zendesk import get_zendesk_user, get_zendesk_token
 from domain.tools.githubactions.default_values import default_value_callbacks
 from domain.tools.githubactions.generate_terraform import (
@@ -40,7 +41,9 @@ def build_mock_test_tools(tool_query):
         remove_default_value,
         get_default_value,
         get_all_default_values,
-    ) = default_value_callbacks(lambda: "1234567")
+        save_defaults_as_profile,
+        load_defaults_from_profile,
+    ) = default_value_callbacks(lambda: "1234567", get_functions_connection_string())
     return FunctionDefinitions(
         [
             FunctionDefinition(

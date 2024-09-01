@@ -1,7 +1,7 @@
 from datetime import timedelta, datetime
 
 from azure.core.exceptions import HttpResponseError
-from azure.data.tables import TableServiceClient
+from azure.data.tables import TableServiceClient, UpdateMode
 
 from domain.encryption.encryption import encrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
@@ -299,9 +299,6 @@ def save_default_values(username, default_name, default_value, connection_string
         default_name, "default_name must be a non-empty string (save_default_values)."
     )
     ensure_string_not_empty(
-        default_value, "default_value must be a non-empty string (save_default_values)."
-    )
-    ensure_string_not_empty(
         connection_string,
         "connection_string must be the connection string (save_default_values).",
     )
@@ -317,6 +314,54 @@ def save_default_values(username, default_name, default_value, connection_string
     )
     table_client = table_service_client.create_table_if_not_exists("userdefaults")
     table_client.upsert_entity(user)
+
+
+@logging_wrapper
+def save_profile(username, profile_name, values, connection_string):
+    ensure_string_not_empty(
+        username, "username must be the GitHub user's ID (save_profile)."
+    )
+    ensure_string_not_empty(
+        profile_name, "profile_name must be a non-empty string (save_profile)."
+    )
+    ensure_string_not_empty(
+        connection_string,
+        "connection_string must be the connection string (save_profile).",
+    )
+
+    user = {"PartitionKey": "github.com_" + username, "RowKey": profile_name}
+
+    for default_name in values:
+        user[default_name] = values[default_name]
+
+    table_service_client = TableServiceClient.from_connection_string(
+        conn_str=connection_string
+    )
+    table_client = table_service_client.create_table_if_not_exists("userprofiles")
+    table_client.upsert_entity(user)
+
+
+@logging_wrapper
+def get_profile(username, profile_name, connection_string):
+    ensure_string_not_empty(
+        username, "username must be the GitHub user's ID (get_profile)."
+    )
+    ensure_string_not_empty(
+        profile_name, "profile_name must be a non-empty string (get_profile)."
+    )
+    ensure_string_not_empty(
+        connection_string,
+        "connection_string must be the connection string (get_profile).",
+    )
+
+    try:
+        table_service_client = TableServiceClient.from_connection_string(
+            conn_str=connection_string
+        )
+        table_client = table_service_client.create_table_if_not_exists("userprofiles")
+        return table_client.get_entity("github.com_" + username, profile_name)
+    except HttpResponseError as e:
+        return None
 
 
 @logging_wrapper

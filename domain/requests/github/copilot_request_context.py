@@ -369,7 +369,11 @@ def build_form_tools(query, req: func.HttpRequest):
         remove_default_value,
         get_default_value,
         get_all_default_values,
-    ) = default_value_callbacks(get_github_user_from_form(req))
+        save_defaults_as_profile,
+        load_defaults_from_profile,
+    ) = default_value_callbacks(
+        get_github_user_from_form(req), get_functions_connection_string()
+    )
 
     # The order of the tools can make a difference. The dashboard tools are supplied first, as this
     # appears to give them a higher precedence.
@@ -508,6 +512,8 @@ def build_form_tools(query, req: func.HttpRequest):
             FunctionDefinition(get_default_value),
             FunctionDefinition(get_all_default_values),
             FunctionDefinition(remove_default_value),
+            FunctionDefinition(save_defaults_as_profile),
+            FunctionDefinition(load_defaults_from_profile),
             *help_functions,
             FunctionDefinition(
                 run_runbook_wrapper(

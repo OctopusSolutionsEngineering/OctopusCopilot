@@ -1,3 +1,4 @@
+import os
 import unittest
 
 from openai import RateLimitError
@@ -6,6 +7,7 @@ from retry import retry
 from domain.transformers.minify_strings import minify_strings
 from domain.transformers.sse_transformers import convert_from_sse_response
 from function_app import copilot_handler_internal
+from infrastructure.users import save_default_values
 from tests.application.copilot_chat_test import (
     build_no_octopus_request,
     build_no_octopus_encrypted_github_request,
@@ -16,6 +18,36 @@ class CopilotChatTest(unittest.TestCase):
     """
     Tests that do not rely on an Octopus instance.
     """
+
+    def test_profile(self):
+        github_user = os.environ["TEST_GH_USER"]
+        save_default_values(
+            github_user,
+            "project",
+            "Deploy Web App Container",
+            os.environ["AzureWebJobsStorage"],
+        )
+
+        prompt = 'Save the profile named "Test".'
+
+        response = copilot_handler_internal(build_no_octopus_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+
+        print(response_text)
+        self.assertTrue(
+            "saved profile" in response_text.casefold(), "Response was " + response_text
+        )
+
+        prompt = 'Load the profile named "Test".'
+
+        response = copilot_handler_internal(build_no_octopus_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+
+        print(response_text)
+        self.assertTrue(
+            "loaded profile" in response_text.casefold(),
+            "Response was " + response_text,
+        )
 
     @retry(RateLimitError, tries=3, delay=2)
     def test_general_solution(self):
