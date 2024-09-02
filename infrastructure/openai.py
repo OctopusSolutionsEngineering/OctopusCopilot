@@ -67,7 +67,9 @@ def llm_message_query(message_prompt, context, log_query=None, deployment=None):
 
 
 @retry(RateLimitError, tries=3, delay=5)
-async def llm_message_query(message_prompt, context, log_query=None, deployment=None):
+async def llm_message_query_async(
+    message_prompt, context, log_query=None, deployment=None
+):
     # We can use a specific deployment to answer a query, or fallback to the default
     deployment = (
         deployment
