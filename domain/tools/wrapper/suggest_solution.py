@@ -203,7 +203,7 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    "The fifth paragraph list any products, technologies, or services, along with their versions, mentioned in the question under a heading of 'Tools and Platforms'",
+                    "The fifth paragraph list any operating systems, cloud provders, products, technologies, or services, along with their versions, mentioned in the question under a heading of 'Tools and Platforms'",
                 ),
                 (
                     "system",
@@ -216,6 +216,10 @@ def suggest_solution_wrapper(
                 (
                     "system",
                     'The eighth paragraph must list any people that were mentioned in the question, including their job titles, under a heading of "People"',
+                ),
+                (
+                    "system",
+                    'The ninth paragraph must list any companies that were mentioned in the question, including their job titles, under a heading of "Companies"',
                 ),
                 (
                     "system",
