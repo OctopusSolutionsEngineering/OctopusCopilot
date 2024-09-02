@@ -161,7 +161,7 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    "The supplied conversations are related to the same topics as the question being asked.",
+                    "The supplied Conversations are related to the same topics as the question being asked.",
                 ),
                 (
                     "system",
@@ -170,6 +170,10 @@ def suggest_solution_wrapper(
                 (
                     "system",
                     "The supplied slack messages are related to the same topics as the question being asked.",
+                ),
+                (
+                    "system",
+                    "The supplied previous conversation list previous questions from the person who submitted the current question.",
                 ),
                 (
                     "system",
@@ -185,19 +189,23 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    "The first paragraph must indicate if the person asking the question is happy (😄), neutral (😐), or sad (☹️) under a heading of 'Sentiment'. Include both the word and the emoji.",
+                    "The first paragraph must indicate if the prompt is happy (😄), neutral (😐), or sad (☹️) under a heading of 'Sentiment'. Include both the word and the emoji.",
                 ),
                 (
                     "system",
-                    "The second paragraph must indicate if deployments to production environments are blocked under a heading of 'Blocked'",
+                    "The third paragraph must indicate if deployments to production environments are blocked under a heading of 'Blocked'",
                 ),
                 (
                     "system",
-                    "The third paragraph must summarize the question being asked under a heading of 'Summary'",
+                    "The fourth paragraph must summarize the question being asked under a heading of 'Summary'",
                 ),
                 (
                     "system",
-                    'The fourth paragraph must apply up to 5 tags to the question under a heading of \'Tags\' from this list: ".NET Config Transforms", "Accounts", "Active Directory", "Administration", "APT/Yum Repositories", "Artifacts", "Audit", "Automatic Release Creation", "AWS", "Azure", "Azure Active Directory", "Azure CLI", "Azure Container Instance", "Azure DevOps/Octo TFS", "Azure Web Apps", "AzureDevOps Issue Tracker", "Backup/Restore", "Bamboo", "Bento/Migrator", "BitBucket Pipelines", "Bootstrapper Scripts / Generators", "Build Information", "Built-in Package Feed", "Caching", "Calamari", "Certificates", "Channels", "Chocolatey", "CI Servers", "CLI", "Cloud Target Discovery", "Community Step Templates", "Configuration as Code", "Configuration File Substitution", "Container Deployments", "Control Center", "Dashboard", "Database", "Deployment Configuration", "Deployment History", "Deployment Manifest", "Deployment Process", "Deployment Targets", "Deployment Tools", "Deployments", "Docker", "DORA Metrics", "Dynamic Environments", "Dynamic Extensions", "Dynamic Worker Images", "Dynamic Worker Pools", "ECS", "Endpoints", "Environments", "Error Handling", "Event storage and retention", "Event tables", "Events", "Execution", "Execution Containers", "Execution Targets", "Export/Import", "External", "External Identities", "Feeds", "GDPR / user deletion requests", "GitHub Actions", "Github Issue Tracker", "Google Apps", "Group sync from Active Directory", "Halibut", "Health Check", "Helm", "High Availability", "HTTP API", "HTTP Security Headers", "Identity (Auth Providers)", "Infrastructure", "Insights", "Installation", "Integrations", "Issue Trackers", "Jenkins", "Jira", "Kubernetes", "LDAP", "Let\'s Encrypt", "Library", "Library Variable Sets", "Licences", "Lifecycles", "Linux", "Linux Container", "Logging", "Machine Policies", "Maintenance Mode", "Manual Intervention", "Master Key", "MessageBus", "NancyFX", "OCL", "Octopus CLI", "Octopus Client", "Octopus Cloud Infrastructure", "Octopus Server Certificate", "Octopus.com", "Octopus.CommandLine", "OctopusId", "Octostache", "Offline Package Drop", "OIDC", "Okta", "Operating Environment", "Output Variables", "Package Sources", "Package Stores", "Performance", "Persistence", "Process Editor", "Project Settings", "Projects", "Proxies", "React", "Release Notes", "Release Versioning", "Releases", "Retention", "Runbooks", "Sashimi", "Script Modules", "Security", "Semaphores and mutexes", "Server", "Server Builds", "Server Configuration", "Server Tasks", "Service Accounts", "ServiceNow", "Slugs", "SMTP", "Snapshots", "Spaces", "SSH", "SSL", "Step Templates/Action Templates", "Steps", "Structured Configuration", "Subscriptions", "Substitute Variables in Templates", "SwaggerUI", "System Integrity Check", "Tags", "Targets & Workers", "Task Logs", "Task Queue", "Task, Jobs and LRBPs", "TeamCity", "Telemetry", "Tenant Variables", "Tenants", "Tentacle", "Terraform", "Threading", "Tools & utilities", "Triggers", "Upgrades", "User Access", "Username/Password", "Users, Teams, Roles", "Variables", "Version Control Settings", "Web Server", "Windows", "Windows Installer", "Worker Images", "Worker Pools", "Terraform Provider"',
+                    "The fifth paragraph list any products, technologies, or services, along with their versions, mentioned in the question under a heading of 'Tools and Platforms'",
+                ),
+                (
+                    "system",
+                    'The sixth paragraph must apply up to 5 tags to the question under a heading of \'Tags\' from this list: ".NET Config Transforms", "Accounts", "Active Directory", "Administration", "APT/Yum Repositories", "Artifacts", "Audit", "Automatic Release Creation", "AWS", "Azure", "Azure Active Directory", "Azure CLI", "Azure Container Instance", "Azure DevOps/Octo TFS", "Azure Web Apps", "AzureDevOps Issue Tracker", "Backup/Restore", "Bamboo", "Bento/Migrator", "BitBucket Pipelines", "Bootstrapper Scripts / Generators", "Build Information", "Built-in Package Feed", "Caching", "Calamari", "Certificates", "Channels", "Chocolatey", "CI Servers", "CLI", "Cloud Target Discovery", "Community Step Templates", "Configuration as Code", "Configuration File Substitution", "Container Deployments", "Control Center", "Dashboard", "Database", "Deployment Configuration", "Deployment History", "Deployment Manifest", "Deployment Process", "Deployment Targets", "Deployment Tools", "Deployments", "Docker", "DORA Metrics", "Dynamic Environments", "Dynamic Extensions", "Dynamic Worker Images", "Dynamic Worker Pools", "ECS", "Endpoints", "Environments", "Error Handling", "Event storage and retention", "Event tables", "Events", "Execution", "Execution Containers", "Execution Targets", "Export/Import", "External", "External Identities", "Feeds", "GDPR / user deletion requests", "GitHub Actions", "Github Issue Tracker", "Google Apps", "Group sync from Active Directory", "Halibut", "Health Check", "Helm", "High Availability", "HTTP API", "HTTP Security Headers", "Identity (Auth Providers)", "Infrastructure", "Insights", "Installation", "Integrations", "Issue Trackers", "Jenkins", "Jira", "Kubernetes", "LDAP", "Let\'s Encrypt", "Library", "Library Variable Sets", "Licences", "Lifecycles", "Linux", "Linux Container", "Logging", "Machine Policies", "Maintenance Mode", "Manual Intervention", "Master Key", "MessageBus", "NancyFX", "OCL", "Octopus CLI", "Octopus Client", "Octopus Cloud Infrastructure", "Octopus Server Certificate", "Octopus.com", "Octopus.CommandLine", "OctopusId", "Octostache", "Offline Package Drop", "OIDC", "Okta", "Operating Environment", "Output Variables", "Package Sources", "Package Stores", "Performance", "Persistence", "Process Editor", "Project Settings", "Projects", "Proxies", "React", "Release Notes", "Release Versioning", "Releases", "Retention", "Runbooks", "Sashimi", "Script Modules", "Security", "Semaphores and mutexes", "Server", "Server Builds", "Server Configuration", "Server Tasks", "Service Accounts", "ServiceNow", "Slugs", "SMTP", "Snapshots", "Spaces", "SSH", "SSL", "Step Templates/Action Templates", "Steps", "Structured Configuration", "Subscriptions", "Substitute Variables in Templates", "SwaggerUI", "System Integrity Check", "Tags", "Targets & Workers", "Task Logs", "Task Queue", "Task, Jobs and LRBPs", "TeamCity", "Telemetry", "Tenant Variables", "Tenants", "Tentacle", "Terraform", "Threading", "Tools & utilities", "Triggers", "Upgrades", "User Access", "Username/Password", "Users, Teams, Roles", "Variables", "Version Control Settings", "Web Server", "Windows", "Windows Installer", "Worker Images", "Worker Pools", "Terraform Provider"',
                 ),
                 (
                     "system",
