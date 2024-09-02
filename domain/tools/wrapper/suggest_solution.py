@@ -1,4 +1,5 @@
 import asyncio
+import re
 from functools import reduce
 
 from slack_sdk.web.async_client import AsyncWebClient
@@ -8,6 +9,7 @@ from domain.exceptions.none_on_exception import (
     default_on_exception_async,
 )
 from domain.sanitizers.sanitize_keywords import sanitize_keywords
+from domain.sanitizers.sanitized_list import get_item_or_none
 from domain.slack.slack_urls import generate_slack_login
 from domain.transformers.limit_array import limit_array_to_max_char_length
 from domain.transformers.minify_strings import minify_strings, replace_space_codes
@@ -294,10 +296,13 @@ def suggest_solution_wrapper(
                     )
 
             # List the docs for reference
-            for docs in limited_issues[3]:
-                if docs.get("html_url"):
+            for i in range(len(fixed_external_context[2])):
+                docs = get_item_or_none(limited_issues[3], i)
+                content = get_item_or_none(fixed_external_context[2], i)
+                if docs and docs.get("html_url"):
+                    title = get_docs_title(content, docs.get("html_url"))
                     url = docs["html_url"].replace("/blob/", "/raw/")
-                    chat_response.append(f"🗎: [{url}]({url})")
+                    chat_response.append(f"🗎: [{title}]({url})")
 
             return callback(query, keywords, "\n\n".join(chat_response))
 
@@ -348,6 +353,20 @@ async def get_docs_contents(search_results):
         await download_file_async(result["html_url"].replace("/blob/", "/raw/"))
         for result in search_results
     ]
+
+
+def get_docs_title(content, filename):
+    if not content:
+        return "Unknown"
+
+    return get_item_or_none(
+        [
+            re.sub("title:\s*", "", line)
+            for line in content.split("\n")
+            if line.startswith("title:")
+        ],
+        0,
+    ) or filename.split("/")[-1].replace(".md", "").replace(".include", "")
 
 
 async def combine_issue_comments(issue_number, github_token):
