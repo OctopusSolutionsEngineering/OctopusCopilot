@@ -211,6 +211,14 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
+                    'The seventh paragraph must list any dates that were mentioned in the question under a heading of "Dates"',
+                ),
+                (
+                    "system",
+                    'The eighth paragraph must list any people that were mentioned in the question, including their job titles, under a heading of "People"',
+                ),
+                (
+                    "system",
                     "The remaining paragraphs must provide potential solutions and troubleshooting steps to the question being asked.",
                 ),
                 *[
