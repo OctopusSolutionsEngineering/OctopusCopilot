@@ -20,7 +20,12 @@ from infrastructure.github import (
     download_file_async,
 )
 from infrastructure.openai import llm_message_query
-from infrastructure.zendesk import get_zen_tickets, get_zen_comments
+from infrastructure.zendesk import (
+    get_zen_tickets,
+    get_zen_comments,
+    get_zen_tickets_from_requester,
+    get_zen_ticket,
+)
 
 max_issues = 10
 max_keywords = 5
@@ -38,7 +43,7 @@ def suggest_solution_wrapper(
     encryption_salt,
     logging=None,
 ):
-    def answer_support_question(keywords=None, **kwargs):
+    def answer_support_question(keywords=None, ticket_id=None, **kwargs):
         """Responds to a prompt asking for advice or a solution to a problem.
         The prompts starts with the phrase "Suggest a solution for" or "Provide a solution for".
         The prompt then includes a question that a customer might send to a help desk or support forum.
@@ -51,6 +56,7 @@ def suggest_solution_wrapper(
 
         Args:
             keywords: A list of keywords that describe the issue or question.
+            ticket_id: The optional ticket ID.
         """
 
         async def inner_function():
@@ -60,6 +66,13 @@ def suggest_solution_wrapper(
             for key, value in kwargs.items():
                 if logging:
                     logging(f"Unexpected Key: {key}", "Value: {value}")
+
+            requester = None
+            if ticket_id:
+                original_ticket = await get_zen_ticket(
+                    ticket_id, zendesk_user, zendesk_token
+                )
+                requester = original_ticket.get("ticket", {}).get("requester_id")
 
             # A key word like "Octopus" is not helpful, so get a sanitized list of keywords
             limited_keywords = sanitize_keywords(keywords, max_keywords)
@@ -71,6 +84,7 @@ def suggest_solution_wrapper(
                 get_issues(limited_keywords, github_token),
                 get_slack_messages(slack_token, limited_keywords),
                 get_docs(limited_keywords, github_token),
+                get_previous_tickets(requester, zendesk_user, zendesk_token),
                 return_exceptions=True,
             )
 
@@ -99,6 +113,7 @@ def suggest_solution_wrapper(
                     if not isinstance(issues[3], Exception)
                     else []
                 ),
+                issues[4][:max_issues] if not isinstance(issues[4], Exception) else [],
             ]
 
             # Get the contents of the issues and tickets
@@ -106,6 +121,7 @@ def suggest_solution_wrapper(
                 get_tickets_comments(limited_issues[0], zendesk_user, zendesk_token),
                 get_issues_comments(limited_issues[1], github_token),
                 get_docs_contents(limited_issues[3]),
+                get_tickets_comments(limited_issues[4], zendesk_user, zendesk_token),
                 return_exceptions=True,
             )
 
@@ -117,6 +133,8 @@ def suggest_solution_wrapper(
                     logging("GitHub Exception", str(external_context[1]))
                 if isinstance(external_context[2], Exception):
                     logging("GitHub Exception", str(external_context[2]))
+                if isinstance(external_context[3], Exception):
+                    logging("Zendesk Exception", str(external_context[3]))
 
             # Each external source gets its own dedicated slice of the context window
             max_content_per_source = max_chars_128 / 4
@@ -128,27 +146,10 @@ def suggest_solution_wrapper(
             )
 
             fixed_external_context = [
-                (
-                    limit_array_to_max_char_length(
-                        external_context[0], max_content_per_source
-                    )
-                    if not isinstance(external_context[0], Exception)
-                    else []
-                ),
-                (
-                    limit_array_to_max_char_length(
-                        external_context[1], max_content_per_source
-                    )
-                    if not isinstance(external_context[1], Exception)
-                    else []
-                ),
-                (
-                    limit_array_to_max_char_length(
-                        external_context[2], max_content_per_source
-                    )
-                    if not isinstance(external_context[2], Exception)
-                    else []
-                ),
+                limit_array(external_context[0], max_content_per_source),
+                limit_array(external_context[1], max_content_per_source),
+                limit_array(external_context[2], max_content_per_source),
+                limit_array(external_context[3], max_content_per_source),
             ]
 
             # The answer that we are trying to get from the LLM isn't something that is expected to be passed directly to
@@ -161,7 +162,7 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    "The supplied conversations are related to the same topics as the question being asked.",
+                    "The supplied Conversations are related to the same topics as the question being asked.",
                 ),
                 (
                     "system",
@@ -170,6 +171,10 @@ def suggest_solution_wrapper(
                 (
                     "system",
                     "The supplied slack messages are related to the same topics as the question being asked.",
+                ),
+                (
+                    "system",
+                    "The supplied previous conversation list previous questions from the person who submitted the current question.",
                 ),
                 (
                     "system",
@@ -185,19 +190,19 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    "The first paragraph must indicate if the person asking the question is happy (😄), neutral (😐), or sad (☹️) under a heading of 'Sentiment'. Include both the word and the emoji.",
+                    "The first paragraph must indicate if the prompt is happy (😄), neutral (😐), or sad (☹️) under a heading of 'Sentiment'. Include both the word and the emoji.",
                 ),
                 (
                     "system",
-                    "The second paragraph must indicate if deployments to production environments are blocked under a heading of 'Blocked'",
+                    "The third paragraph must indicate if deployments to production environments are blocked under a heading of 'Blocked'",
                 ),
                 (
                     "system",
-                    "The third paragraph must summarize the question being asked under a heading of 'Summary'",
+                    "The fourth paragraph must summarize the question being asked under a heading of 'Summary'",
                 ),
                 (
                     "system",
-                    'The fourth paragraph must apply up to 5 tags to the question under a heading of \'Tags\' from this list: ".NET Config Transforms", "Accounts", "Active Directory", "Administration", "APT/Yum Repositories", "Artifacts", "Audit", "Automatic Release Creation", "AWS", "Azure", "Azure Active Directory", "Azure CLI", "Azure Container Instance", "Azure DevOps/Octo TFS", "Azure Web Apps", "AzureDevOps Issue Tracker", "Backup/Restore", "Bamboo", "Bento/Migrator", "BitBucket Pipelines", "Bootstrapper Scripts / Generators", "Build Information", "Built-in Package Feed", "Caching", "Calamari", "Certificates", "Channels", "Chocolatey", "CI Servers", "CLI", "Cloud Target Discovery", "Community Step Templates", "Configuration as Code", "Configuration File Substitution", "Container Deployments", "Control Center", "Dashboard", "Database", "Deployment Configuration", "Deployment History", "Deployment Manifest", "Deployment Process", "Deployment Targets", "Deployment Tools", "Deployments", "Docker", "DORA Metrics", "Dynamic Environments", "Dynamic Extensions", "Dynamic Worker Images", "Dynamic Worker Pools", "ECS", "Endpoints", "Environments", "Error Handling", "Event storage and retention", "Event tables", "Events", "Execution", "Execution Containers", "Execution Targets", "Export/Import", "External", "External Identities", "Feeds", "GDPR / user deletion requests", "GitHub Actions", "Github Issue Tracker", "Google Apps", "Group sync from Active Directory", "Halibut", "Health Check", "Helm", "High Availability", "HTTP API", "HTTP Security Headers", "Identity (Auth Providers)", "Infrastructure", "Insights", "Installation", "Integrations", "Issue Trackers", "Jenkins", "Jira", "Kubernetes", "LDAP", "Let\'s Encrypt", "Library", "Library Variable Sets", "Licences", "Lifecycles", "Linux", "Linux Container", "Logging", "Machine Policies", "Maintenance Mode", "Manual Intervention", "Master Key", "MessageBus", "NancyFX", "OCL", "Octopus CLI", "Octopus Client", "Octopus Cloud Infrastructure", "Octopus Server Certificate", "Octopus.com", "Octopus.CommandLine", "OctopusId", "Octostache", "Offline Package Drop", "OIDC", "Okta", "Operating Environment", "Output Variables", "Package Sources", "Package Stores", "Performance", "Persistence", "Process Editor", "Project Settings", "Projects", "Proxies", "React", "Release Notes", "Release Versioning", "Releases", "Retention", "Runbooks", "Sashimi", "Script Modules", "Security", "Semaphores and mutexes", "Server", "Server Builds", "Server Configuration", "Server Tasks", "Service Accounts", "ServiceNow", "Slugs", "SMTP", "Snapshots", "Spaces", "SSH", "SSL", "Step Templates/Action Templates", "Steps", "Structured Configuration", "Subscriptions", "Substitute Variables in Templates", "SwaggerUI", "System Integrity Check", "Tags", "Targets & Workers", "Task Logs", "Task Queue", "Task, Jobs and LRBPs", "TeamCity", "Telemetry", "Tenant Variables", "Tenants", "Tentacle", "Terraform", "Threading", "Tools & utilities", "Triggers", "Upgrades", "User Access", "Username/Password", "Users, Teams, Roles", "Variables", "Version Control Settings", "Web Server", "Windows", "Windows Installer", "Worker Images", "Worker Pools", "Terraform Provider"',
+                    'The fifth paragraph must apply up to 5 tags to the question under a heading of \'Tags\' from this list: ".NET Config Transforms", "Accounts", "Active Directory", "Administration", "APT/Yum Repositories", "Artifacts", "Audit", "Automatic Release Creation", "AWS", "Azure", "Azure Active Directory", "Azure CLI", "Azure Container Instance", "Azure DevOps/Octo TFS", "Azure Web Apps", "AzureDevOps Issue Tracker", "Backup/Restore", "Bamboo", "Bento/Migrator", "BitBucket Pipelines", "Bootstrapper Scripts / Generators", "Build Information", "Built-in Package Feed", "Caching", "Calamari", "Certificates", "Channels", "Chocolatey", "CI Servers", "CLI", "Cloud Target Discovery", "Community Step Templates", "Configuration as Code", "Configuration File Substitution", "Container Deployments", "Control Center", "Dashboard", "Database", "Deployment Configuration", "Deployment History", "Deployment Manifest", "Deployment Process", "Deployment Targets", "Deployment Tools", "Deployments", "Docker", "DORA Metrics", "Dynamic Environments", "Dynamic Extensions", "Dynamic Worker Images", "Dynamic Worker Pools", "ECS", "Endpoints", "Environments", "Error Handling", "Event storage and retention", "Event tables", "Events", "Execution", "Execution Containers", "Execution Targets", "Export/Import", "External", "External Identities", "Feeds", "GDPR / user deletion requests", "GitHub Actions", "Github Issue Tracker", "Google Apps", "Group sync from Active Directory", "Halibut", "Health Check", "Helm", "High Availability", "HTTP API", "HTTP Security Headers", "Identity (Auth Providers)", "Infrastructure", "Insights", "Installation", "Integrations", "Issue Trackers", "Jenkins", "Jira", "Kubernetes", "LDAP", "Let\'s Encrypt", "Library", "Library Variable Sets", "Licences", "Lifecycles", "Linux", "Linux Container", "Logging", "Machine Policies", "Maintenance Mode", "Manual Intervention", "Master Key", "MessageBus", "NancyFX", "OCL", "Octopus CLI", "Octopus Client", "Octopus Cloud Infrastructure", "Octopus Server Certificate", "Octopus.com", "Octopus.CommandLine", "OctopusId", "Octostache", "Offline Package Drop", "OIDC", "Okta", "Operating Environment", "Output Variables", "Package Sources", "Package Stores", "Performance", "Persistence", "Process Editor", "Project Settings", "Projects", "Proxies", "React", "Release Notes", "Release Versioning", "Releases", "Retention", "Runbooks", "Sashimi", "Script Modules", "Security", "Semaphores and mutexes", "Server", "Server Builds", "Server Configuration", "Server Tasks", "Service Accounts", "ServiceNow", "Slugs", "SMTP", "Snapshots", "Spaces", "SSH", "SSL", "Step Templates/Action Templates", "Steps", "Structured Configuration", "Subscriptions", "Substitute Variables in Templates", "SwaggerUI", "System Integrity Check", "Tags", "Targets & Workers", "Task Logs", "Task Queue", "Task, Jobs and LRBPs", "TeamCity", "Telemetry", "Tenant Variables", "Tenants", "Tentacle", "Terraform", "Threading", "Tools & utilities", "Triggers", "Upgrades", "User Access", "Username/Password", "Users, Teams, Roles", "Variables", "Version Control Settings", "Web Server", "Windows", "Windows Installer", "Worker Images", "Worker Pools", "Terraform Provider"',
                 ),
                 (
                     "system",
@@ -298,6 +303,14 @@ def suggest_solution_wrapper(
         return asyncio.run(inner_function())
 
     return answer_support_question
+
+
+def limit_array(array, max_length):
+    return (
+        limit_array_to_max_char_length(array, max_length)
+        if not isinstance(array, Exception)
+        else []
+    )
 
 
 async def get_issues(keywords, github_token):
@@ -420,6 +433,15 @@ async def get_slack_threads(client, matches):
 
     # Return the messages sorted by the number of times they were returned
     return list(map(lambda x: x[1]["message"], sorted_by_second))
+
+
+async def get_previous_tickets(requester, zendesk_user, zendesk_token):
+    if not requester:
+        return []
+    tickets = await get_zen_tickets_from_requester(
+        requester, zendesk_user, zendesk_token
+    )
+    return tickets.get("tickets")
 
 
 async def get_tickets(keywords, zendesk_user, zendesk_token):

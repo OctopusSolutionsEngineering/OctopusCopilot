@@ -52,7 +52,7 @@ class CopilotChatTest(unittest.TestCase):
     @retry(RateLimitError, tries=3, delay=2)
     def test_general_solution(self):
         prompt = minify_strings(
-            """Suggest a solution for the following issue:
+            """Suggest a solution for the following issue with the ID "201295":
 
             Hello Octopus Support,
 

@@ -14,7 +14,7 @@ from domain.exceptions.openai_error import (
     OpenAIBadRequest,
 )
 from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
-from domain.performance.timing import timing_wrapper
+from domain.performance.timing import timing_wrapper, timing_wrapper_async
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitize_logs import sanitize_message
 from domain.tools.wrapper.function_call import FunctionCall
@@ -55,6 +55,44 @@ def llm_message_query(message_prompt, context, log_query=None, deployment=None):
 
     try:
         response = timing_wrapper(lambda: chain.invoke(context).content, "Query")
+    except openai.BadRequestError as e:
+        return handle_openai_exception(e)
+    except openai.APITimeoutError as e:
+        return handle_openai_exception(e)
+
+    # ensure known sensitive variables are not returned
+    client_response = sanitize_message(response).strip()
+
+    return client_response.strip()
+
+
+@retry(RateLimitError, tries=3, delay=5)
+async def llm_message_query(message_prompt, context, log_query=None, deployment=None):
+    # We can use a specific deployment to answer a query, or fallback to the default
+    deployment = (
+        deployment
+        or os.environ.get("OPENAI_API_DEPLOYMENT_QUERY")
+        or os.environ["OPENAI_API_DEPLOYMENT"]
+    )
+    version = os.environ.get("OPENAI_API_DEPLOYMENT_QUERY_VERSION") or "2024-06-01"
+
+    llm = AzureChatOpenAI(
+        temperature=0,
+        azure_deployment=deployment,
+        openai_api_key=os.environ["OPENAI_API_KEY"],
+        azure_endpoint=os.environ["OPENAI_ENDPOINT"],
+        api_version=version,
+        request_timeout=llm_timeout,
+    )
+
+    prompt = ChatPromptTemplate.from_messages(message_prompt)
+
+    chain = prompt | llm
+
+    try:
+        response = await timing_wrapper_async(
+            lambda: chain.ainvoke(context).content, "Query"
+        )
     except openai.BadRequestError as e:
         return handle_openai_exception(e)
     except openai.APITimeoutError as e:

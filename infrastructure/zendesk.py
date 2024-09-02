@@ -5,7 +5,10 @@ import aiohttp
 from domain.b64.b64_encoder import encode_string_b64
 from domain.exceptions.request_failed import ZenDeskRequestFailed
 from domain.sanitizers.url_sanitizer import quote_safe
-from domain.validation.argument_validation import ensure_string_not_empty, ensure_not_falsy
+from domain.validation.argument_validation import (
+    ensure_string_not_empty,
+    ensure_not_falsy,
+)
 
 # Semaphore to limit the number of concurrent requests to GitHub
 zendesk_sem = asyncio.Semaphore(10)
@@ -22,15 +25,83 @@ async def get_zen_tickets(keywords, zen_user, zen_token):
     Async function to search for tickets in Zendesk.
     https://developer.zendesk.com/api-reference/ticketing/ticket-management/search/
     """
-    ensure_not_falsy(keywords, 'keywords must be a list (get_zen_tickets).')
-    ensure_string_not_empty(zen_user, 'zen_user must be a non-empty string (get_zen_tickets).')
-    ensure_string_not_empty(zen_token, 'zen_token must be a non-empty string (get_zen_tickets).')
+    ensure_not_falsy(keywords, "keywords must be a list (get_zen_tickets).")
+    ensure_string_not_empty(
+        zen_user, "zen_user must be a non-empty string (get_zen_tickets)."
+    )
+    ensure_string_not_empty(
+        zen_token, "zen_token must be a non-empty string (get_zen_tickets)."
+    )
 
     keywords_list = quote_safe(" ".join(keywords))
     api = f"https://octopus.zendesk.com/api/v2/search?query={keywords_list}&sort_by=RELEVANCE&sort_order=DESC"
 
     async with zendesk_sem:
-        async with aiohttp.ClientSession(headers=get_zen_authorization_header(zen_user, zen_token)) as session:
+        async with aiohttp.ClientSession(
+            headers=get_zen_authorization_header(zen_user, zen_token)
+        ) as session:
+            async with session.get(str(api)) as response:
+                if response.status != 200:
+                    body = await response.text()
+                    raise ZenDeskRequestFailed(f"Request failed with " + body)
+                return await response.json()
+
+
+async def get_zen_tickets_from_requester(requester, zen_user, zen_token):
+    """
+    Async function to list tickets from a requester.
+    https://developer.zendesk.com/api-reference/ticketing/tickets/tickets/#list-tickets
+    """
+    ensure_not_falsy(
+        requester,
+        "requester must be a non-empty string (get_zen_tickets_from_requester).",
+    )
+    ensure_string_not_empty(
+        zen_user,
+        "zen_user must be a non-empty string (get_zen_tickets_from_requester).",
+    )
+    ensure_string_not_empty(
+        zen_token,
+        "zen_token must be a non-empty string (get_zen_tickets_from_requester).",
+    )
+
+    api = f"https://octopus.zendesk.com/api/v2/users/{requester}/tickets/requested"
+
+    async with zendesk_sem:
+        async with aiohttp.ClientSession(
+            headers=get_zen_authorization_header(zen_user, zen_token)
+        ) as session:
+            async with session.get(str(api)) as response:
+                if response.status != 200:
+                    body = await response.text()
+                    raise ZenDeskRequestFailed(f"Request failed with " + body)
+                return await response.json()
+
+
+async def get_zen_ticket(ticket_id, zen_user, zen_token):
+    """
+    Async function to list tickets from a requester.
+    https://developer.zendesk.com/api-reference/ticketing/tickets/tickets/#list-tickets
+    """
+    ensure_not_falsy(
+        ticket_id,
+        "ticket_id must be a non-empty string (get_zen_ticket).",
+    )
+    ensure_string_not_empty(
+        zen_user,
+        "zen_user must be a non-empty string (get_zen_ticket).",
+    )
+    ensure_string_not_empty(
+        zen_token,
+        "zen_token must be a non-empty string (get_zen_ticket).",
+    )
+
+    api = f"https://octopus.zendesk.com/api/v2/tickets/{ticket_id}"
+
+    async with zendesk_sem:
+        async with aiohttp.ClientSession(
+            headers=get_zen_authorization_header(zen_user, zen_token)
+        ) as session:
             async with session.get(str(api)) as response:
                 if response.status != 200:
                     body = await response.text()
@@ -43,14 +114,22 @@ async def get_zen_comments(ticket_id, zen_user, zen_token):
     Async function to get the comments associated with a ticket.
     https://developer.zendesk.com/api-reference/ticketing/tickets/ticket_comments/
     """
-    ensure_string_not_empty(ticket_id, 'ticket_id must be a non-empty string (get_zen_comments).')
-    ensure_string_not_empty(zen_user, 'zen_user must be a non-empty string (get_zen_comments).')
-    ensure_string_not_empty(zen_token, 'zen_token must be a non-empty string (get_zen_comments).')
+    ensure_string_not_empty(
+        ticket_id, "ticket_id must be a non-empty string (get_zen_comments)."
+    )
+    ensure_string_not_empty(
+        zen_user, "zen_user must be a non-empty string (get_zen_comments)."
+    )
+    ensure_string_not_empty(
+        zen_token, "zen_token must be a non-empty string (get_zen_comments)."
+    )
 
     api = f"https://octopus.zendesk.com/api/v2/tickets/{quote_safe(ticket_id)}/comments"
 
     async with zendesk_sem:
-        async with aiohttp.ClientSession(headers=get_zen_authorization_header(zen_user, zen_token)) as session:
+        async with aiohttp.ClientSession(
+            headers=get_zen_authorization_header(zen_user, zen_token)
+        ) as session:
             async with session.get(str(api)) as response:
                 if response.status != 200:
                     body = await response.text()
