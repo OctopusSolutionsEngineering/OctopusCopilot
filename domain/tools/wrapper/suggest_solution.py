@@ -203,7 +203,7 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    "The fifth paragraph list any operating systems, cloud provders, products, technologies, or services, along with their versions, mentioned in the question under a heading of 'Tools and Platforms'",
+                    "The fifth paragraph list any operating systems, cloud providers, products, technologies, or services, along with their versions, mentioned in the question under a heading of 'Tools and Platforms'",
                 ),
                 (
                     "system",
