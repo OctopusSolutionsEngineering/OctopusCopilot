@@ -361,7 +361,7 @@ def get_docs_title(content, filename):
 
     return get_item_or_none(
         [
-            re.sub("title:\s*", "", line)
+            re.sub("title:\\s*", "", line)
             for line in content.split("\n")
             if line.startswith("title:")
         ],
