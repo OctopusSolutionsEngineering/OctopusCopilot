@@ -199,7 +199,7 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    "The fourth paragraph must summarize the question being asked under a heading of 'Summary'",
+                    "The fourth paragraph must summarize the question being asked and the subsequent conversations under a heading of 'Summary'",
                 ),
                 (
                     "system",
