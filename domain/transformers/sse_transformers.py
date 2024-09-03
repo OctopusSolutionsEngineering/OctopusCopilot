@@ -16,40 +16,15 @@ def convert_to_sse_response(
     if not result.strip():
         return build_stop_message() + "\n\n"
 
-    content = list(
-        map(
-            lambda line: "data: "
-            + json.dumps(
-                {
-                    "choices": [
-                        {
-                            "index": 0,
-                            "delta": {"content": sanitize_message(line) + "\n"},
-                        }
-                    ]
-                }
-            ),
-            result.strip().split("\n"),
-        )
-    )
+    content = build_output_messages(result)
 
     if prompt_title and prompt_message and prompt_id:
         # This is a standalone message that must be separated by two newlines
-        prompt_data = (
+        content.append(
             "\n"
-            + "event: copilot_confirmation\n"
-            + "data: "
-            + json.dumps(
-                {
-                    "type": "action",
-                    "title": prompt_title,
-                    "message": prompt_message,
-                    "confirmation": {"id": prompt_id},
-                }
-            )
+            + build_confirmation_event(prompt_title, prompt_message, prompt_id)
             + "\n"
         )
-        content.append(prompt_data)
 
     content.append(build_stop_message())
 
@@ -101,7 +76,41 @@ def get_confirmation_id(sse_response):
     )
 
 
+def build_output_messages(message):
+    return list(
+        map(
+            lambda line: "data: "
+            + json.dumps(
+                {
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {"content": sanitize_message(line) + "\n"},
+                        }
+                    ]
+                }
+            ),
+            message.strip().split("\n"),
+        )
+    )
+
+
 def build_stop_message():
     return "data: " + json.dumps(
         {"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}
+    )
+
+
+def build_confirmation_event(prompt_title, prompt_message, prompt_id):
+    return (
+        "event: copilot_confirmation\n"
+        + "data: "
+        + json.dumps(
+            {
+                "type": "action",
+                "title": prompt_title,
+                "message": prompt_message,
+                "confirmation": {"id": prompt_id},
+            }
+        )
     )
