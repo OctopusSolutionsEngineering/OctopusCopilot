@@ -13,12 +13,8 @@ def convert_to_sse_response(
     :return: The SSE data only stream
     """
 
-    stop = "data: " + json.dumps(
-        {"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}
-    )
-
     if not result.strip():
-        return stop + "\n\n"
+        return build_stop_message() + "\n\n"
 
     content = list(
         map(
@@ -38,18 +34,24 @@ def convert_to_sse_response(
     )
 
     if prompt_title and prompt_message and prompt_id:
-        prompt_data = "data: " + json.dumps(
-            {
-                "type": "action",
-                "title": prompt_title,
-                "message": prompt_message,
-                "confirmation": {"id": prompt_id},
-            }
+        # This is a standalone message that must be separated by two newlines
+        prompt_data = (
+            "\n"
+            + "event: copilot_confirmation\n"
+            + "data: "
+            + json.dumps(
+                {
+                    "type": "action",
+                    "title": prompt_title,
+                    "message": prompt_message,
+                    "confirmation": {"id": prompt_id},
+                }
+            )
+            + "\n"
         )
-        content.append("event: copilot_confirmation")
         content.append(prompt_data)
 
-    content.append(stop)
+    content.append(build_stop_message())
 
     # https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#data-only_messages
     # "Each notification is sent as a block of text terminated by a pair of newlines."
@@ -96,4 +98,10 @@ def get_confirmation_id(sse_response):
             lambda response: response["confirmation"]["id"],
             confirmation_responses,
         )
+    )
+
+
+def build_stop_message():
+    return "data: " + json.dumps(
+        {"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}
     )
