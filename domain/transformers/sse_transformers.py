@@ -38,18 +38,15 @@ def convert_to_sse_response(
     )
 
     if prompt_title and prompt_message and prompt_id:
-        prompt_data = (
-            "event: copilot_confirmation\n"
-            + "data: "
-            + json.dumps(
-                {
-                    "type": "action",
-                    "title": prompt_title,
-                    "message": prompt_message,
-                    "confirmation": {"id": prompt_id},
-                }
-            )
+        prompt_data = "data: " + json.dumps(
+            {
+                "type": "action",
+                "title": prompt_title,
+                "message": prompt_message,
+                "confirmation": {"id": prompt_id},
+            }
         )
+        content.append("event: copilot_confirmation")
         content.append(prompt_data)
 
     content.append(stop)
