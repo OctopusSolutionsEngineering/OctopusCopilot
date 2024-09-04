@@ -11,7 +11,10 @@ from domain.exceptions.none_on_exception import (
 from domain.sanitizers.sanitize_keywords import sanitize_keywords
 from domain.sanitizers.sanitized_list import get_item_or_none
 from domain.slack.slack_urls import generate_slack_login
-from domain.transformers.limit_array import limit_array_to_max_char_length
+from domain.transformers.limit_array import (
+    limit_array_to_max_char_length,
+    limit_array_to_max_items,
+)
 from domain.transformers.minify_strings import minify_strings, replace_space_codes
 from domain.transformers.trim_strings import trim_string_with_ellipsis
 from domain.url.session import create_session_blob
@@ -22,6 +25,7 @@ from infrastructure.github import (
     download_file_async,
 )
 from infrastructure.openai import llm_message_query
+from infrastructure.storyblok import search_storyblok_stories, get_fields_with_text
 from infrastructure.zendesk import get_zen_tickets, get_zen_comments
 
 max_issues = 10
@@ -36,6 +40,7 @@ def suggest_solution_wrapper(
     zendesk_user,
     zendesk_token,
     slack_token,
+    storyblok_token,
     encryption_password,
     encryption_salt,
     logging=None,
@@ -73,6 +78,7 @@ def suggest_solution_wrapper(
                 get_issues(limited_keywords, github_token),
                 get_slack_messages(slack_token, limited_keywords),
                 get_docs(limited_keywords, github_token),
+                get_stories(limited_keywords, storyblok_token),
                 return_exceptions=True,
             )
 
@@ -86,21 +92,16 @@ def suggest_solution_wrapper(
                     logging("Slack Exception", str(issues[2]))
                 if isinstance(issues[3], Exception):
                     logging("GitHub Docs Exception", str(issues[3]))
+                if isinstance(issues[4], Exception):
+                    logging("Storyblok Exception", str(issues[4]))
 
             # Limit the number of responses to the max_issues
             limited_issues = [
-                issues[0][:max_issues] if not isinstance(issues[0], Exception) else [],
-                (
-                    issues[1]["items"][:max_issues]
-                    if not isinstance(issues[1], Exception)
-                    else []
-                ),
-                issues[2][:max_issues] if not isinstance(issues[2], Exception) else [],
-                (
-                    issues[3][:max_issues]
-                    if not isinstance(issues[3], Exception)
-                    else []
-                ),
+                limit_array_to_max_items(issues[0], max_issues),
+                limit_array_to_max_items(issues[1]["items"], max_issues),
+                limit_array_to_max_items(issues[2], max_issues),
+                limit_array_to_max_items(issues[3], max_issues),
+                limit_array_to_max_items(issues[4], max_issues),
             ]
 
             # Get the contents of the issues and tickets
@@ -121,12 +122,17 @@ def suggest_solution_wrapper(
                     logging("GitHub Exception", str(external_context[2]))
 
             # Each external source gets its own dedicated slice of the context window
-            max_content_per_source = max_chars_128 / 4
+            max_content_per_source = max_chars_128 / 5
 
             # Limit the length of the response, and filter out exceptions
             slack_context = limit_array_to_max_char_length(
                 [message["text"] for message in limited_issues[2][:max_issues]],
                 max_content_per_source,
+            )
+
+            # Get the contents of storyblok stories
+            storyblok_context = limit_array_to_max_char_length(
+                get_story_content(issues[4]), max_content_per_source
             )
 
             fixed_external_context = [
@@ -261,6 +267,15 @@ def suggest_solution_wrapper(
                     )
                     for context in fixed_external_context[2]
                 ],
+                *[
+                    (
+                        "user",
+                        "Documentation: ###\n"
+                        + context.replace("{", "{{").replace("}", "}}")
+                        + "\n###",
+                    )
+                    for context in storyblok_context
+                ],
                 ("user", "Question: {input}"),
                 ("user", "Answer:"),
             ]
@@ -360,11 +375,48 @@ async def get_docs(keywords, github_token):
     return list(map(lambda x: x[1]["result"], sorted_by_second))
 
 
+async def get_stories(keywords, storyblok_token):
+    # Graceful fallback in the absense of a token
+    if not storyblok_token:
+        return []
+
+    # Storyblok search does not support OR logic for keywords, so we have to search for each keyword individually
+    keyword_results = await asyncio.gather(
+        *[search_storyblok_stories(storyblok_token, keyword) for keyword in keywords]
+    )
+
+    ticket_ids = {}
+    for keyword_result in keyword_results:
+        for result in keyword_result["stories"]:
+            if not ticket_ids.get(result["id"]):
+                ticket_ids[result["id"]] = {"count": 1, "result": result}
+            else:
+                ticket_ids[result["id"]]["count"] += 1
+
+    sorted_by_second = sorted(
+        ticket_ids.items(), key=lambda tup: tup[1]["count"], reverse=True
+    )
+
+    return list(map(lambda x: x[1]["result"], sorted_by_second))
+
+
 async def get_docs_contents(search_results):
     return [
         await download_file_async(result["html_url"].replace("/blob/", "/raw/"))
         for result in search_results
     ]
+
+
+def get_story_content(search_results):
+    return list(
+        filter(
+            lambda text: text.strip(),
+            map(
+                lambda search_result: get_fields_with_text(search_result),
+                search_results,
+            ),
+        )
+    )
 
 
 def get_docs_title(content, filename):

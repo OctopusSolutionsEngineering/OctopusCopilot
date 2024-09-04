@@ -6,6 +6,7 @@ from azure.core.exceptions import HttpResponseError
 
 from domain.b64.b64_encoder import decode_string_b64
 from domain.config.database import get_functions_connection_string
+from domain.config.storyblok import get_storyblok_token
 from domain.config.users import get_admin_users
 from domain.config.zendesk import get_zendesk_user, get_zendesk_token
 from domain.encryption.encryption import decrypt_eax, generate_password
@@ -648,6 +649,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     get_zendesk_user(),
                     get_zendesk_token(),
                     slack_token,
+                    get_storyblok_token(),
                     os.environ.get("ENCRYPTION_PASSWORD"),
                     os.environ.get("ENCRYPTION_SALT"),
                     log_query,
