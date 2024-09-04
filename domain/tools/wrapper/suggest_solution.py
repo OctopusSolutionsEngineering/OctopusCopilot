@@ -206,11 +206,11 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    "The fourth section must summarize the conversation supplied with the prompt 'Summary'. The first paragraph must summarize the original question. The second paragraph must summarize the conversation. The third paragraph must list any outstanding questions or actions to be taken.",
+                    "The fourth section must summarize the conversation supplied with the prompt 'Summary'. The first paragraph must summarize the original question. The second paragraph must summarize the conversation. The third paragraph must list any outstanding questions or actions to be taken. If the question is too simple to require a summary, the section can be omitted.",
                 ),
                 (
                     "system",
-                    "The fifth section list any operating systems, cloud providers, products, technologies, or services, along with their versions, mentioned in the question under a heading of 'Tools and Platforms'",
+                    "The fifth section list any operating systems, cloud providers, products, technologies, or services, along with their versions, mentioned in the question under a heading of 'Tools and Platforms'. If no tools or platforms are mentioned, the section can be omitted.",
                 ),
                 (
                     "system",
@@ -218,15 +218,15 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    'The seventh paragraph must list any dates that were mentioned in the question under a heading of "Dates"',
+                    'The seventh paragraph must list any dates that were mentioned in the question under a heading of "Dates". If no dates are mentioned, the section can be omitted.',
                 ),
                 (
                     "system",
-                    'The eighth paragraph must list any people that were mentioned in the question, including their job titles, under a heading of "People"',
+                    'The eighth paragraph must list any people that were mentioned in the question, including their job titles, under a heading of "People". If no tools or people are mentioned, the section can be omitted.',
                 ),
                 (
                     "system",
-                    'The ninth section must list any companies that were mentioned in the question, including their job titles, under a heading of "Companies"',
+                    'The ninth section must list any companies that were mentioned in the question, including their job titles, under a heading of "Companies". If no tools or companies are mentioned, the section can be omitted.',
                 ),
                 (
                     "system",
