@@ -122,7 +122,8 @@ def suggest_solution_wrapper(
                     logging("GitHub Exception", str(external_context[2]))
 
             # Each external source gets its own dedicated slice of the context window
-            max_content_per_source = max_chars_128 / 5
+            sources_with_data = len(list(filter(lambda x: len(x) != 0, issues)))
+            max_content_per_source = max_chars_128 / sources_with_data
 
             # Limit the length of the response, and filter out exceptions
             slack_context = limit_array_to_max_char_length(
