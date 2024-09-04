@@ -9,6 +9,7 @@ from domain.exceptions.none_on_exception import (
     default_on_exception_async,
 )
 from domain.sanitizers.sanitize_keywords import sanitize_keywords
+from domain.sanitizers.sanitize_markdown import markdown_to_text
 from domain.sanitizers.sanitized_list import get_item_or_none
 from domain.slack.slack_urls import generate_slack_login
 from domain.transformers.limit_array import (
@@ -317,7 +318,7 @@ def suggest_solution_wrapper(
             for slack_message in limited_issues[2]:
                 if slack_message.get("permalink") and slack_message.get("text"):
                     trimmed_message = trim_string_with_ellipsis(
-                        slack_message["text"].replace("\n", " "), 100
+                        markdown_to_text(slack_message["text"].replace("\n", " ")), 100
                     )
                     chat_response.append(
                         f"🗨: [{trimmed_message}]({slack_message.get('permalink')})"
