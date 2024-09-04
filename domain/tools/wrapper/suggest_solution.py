@@ -206,7 +206,7 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    "The fourth section must summarize the conversation supplied with the prompt 'Summary'. The first paragraph must summarize the original question. The second paragraph must summarize the conversation. The third paragraph must list any outstanding questions or actions to be taken. If the question is too simple to require a summary, the section can be omitted.",
+                    "The fourth section must summarize the conversation supplied with the prompt 'Summary'. The first paragraph must summarize the original question. The second paragraph must summarize the the question. The third paragraph must list any outstanding questions or actions to be taken. If the question is too simple to require a summary, the section can be omitted. You will be penalized for including the content of related conversations in this summary.",
                 ),
                 (
                     "system",
@@ -214,7 +214,7 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    'The sixth section must apply up to 5 tags to the question under a heading of \'Tags\' from this list: ".NET Config Transforms", "Accounts", "Active Directory", "Administration", "APT/Yum Repositories", "Artifacts", "Audit", "Automatic Release Creation", "AWS", "Azure", "Azure Active Directory", "Azure CLI", "Azure Container Instance", "Azure DevOps/Octo TFS", "Azure Web Apps", "AzureDevOps Issue Tracker", "Backup/Restore", "Bamboo", "Bento/Migrator", "BitBucket Pipelines", "Bootstrapper Scripts / Generators", "Build Information", "Built-in Package Feed", "Caching", "Calamari", "Certificates", "Channels", "Chocolatey", "CI Servers", "CLI", "Cloud Target Discovery", "Community Step Templates", "Configuration as Code", "Configuration File Substitution", "Container Deployments", "Control Center", "Dashboard", "Database", "Deployment Configuration", "Deployment History", "Deployment Manifest", "Deployment Process", "Deployment Targets", "Deployment Tools", "Deployments", "Docker", "DORA Metrics", "Dynamic Environments", "Dynamic Extensions", "Dynamic Worker Images", "Dynamic Worker Pools", "ECS", "Endpoints", "Environments", "Error Handling", "Event storage and retention", "Event tables", "Events", "Execution", "Execution Containers", "Execution Targets", "Export/Import", "External", "External Identities", "Feeds", "GDPR / user deletion requests", "GitHub Actions", "Github Issue Tracker", "Google Apps", "Group sync from Active Directory", "Halibut", "Health Check", "Helm", "High Availability", "HTTP API", "HTTP Security Headers", "Identity (Auth Providers)", "Infrastructure", "Insights", "Installation", "Integrations", "Issue Trackers", "Jenkins", "Jira", "Kubernetes", "LDAP", "Let\'s Encrypt", "Library", "Library Variable Sets", "Licences", "Lifecycles", "Linux", "Linux Container", "Logging", "Machine Policies", "Maintenance Mode", "Manual Intervention", "Master Key", "MessageBus", "NancyFX", "OCL", "Octopus CLI", "Octopus Client", "Octopus Cloud Infrastructure", "Octopus Server Certificate", "Octopus.com", "Octopus.CommandLine", "OctopusId", "Octostache", "Offline Package Drop", "OIDC", "Okta", "Operating Environment", "Output Variables", "Package Sources", "Package Stores", "Performance", "Persistence", "Process Editor", "Project Settings", "Projects", "Proxies", "React", "Release Notes", "Release Versioning", "Releases", "Retention", "Runbooks", "Sashimi", "Script Modules", "Security", "Semaphores and mutexes", "Server", "Server Builds", "Server Configuration", "Server Tasks", "Service Accounts", "ServiceNow", "Slugs", "SMTP", "Snapshots", "Spaces", "SSH", "SSL", "Step Templates/Action Templates", "Steps", "Structured Configuration", "Subscriptions", "Substitute Variables in Templates", "SwaggerUI", "System Integrity Check", "Tags", "Targets & Workers", "Task Logs", "Task Queue", "Task, Jobs and LRBPs", "TeamCity", "Telemetry", "Tenant Variables", "Tenants", "Tentacle", "Terraform", "Threading", "Tools & utilities", "Triggers", "Upgrades", "User Access", "Username/Password", "Users, Teams, Roles", "Variables", "Version Control Settings", "Web Server", "Windows", "Windows Installer", "Worker Images", "Worker Pools", "Terraform Provider"',
+                    'The sixth section must apply up to 5 tags to the question under a heading of \'Tags\' from this list: ".NET Config Transforms", "Accounts", "Active Directory", "Administration", "APT/Yum Repositories", "Artifacts", "Audit", "Automatic Release Creation", "AWS", "Azure", "Azure Active Directory", "Azure CLI", "Azure Container Instance", "Azure DevOps/Octo TFS", "Azure Web Apps", "AzureDevOps Issue Tracker", "Backup/Restore", "Bamboo", "Bento/Migrator", "BitBucket Pipelines", "Bootstrapper Scripts / Generators", "Build Information", "Built-in Package Feed", "Caching", "Calamari", "Certificates", "Channels", "Chocolatey", "CI Servers", "CLI", "Cloud Target Discovery", "Community Step Templates", "Configuration as Code", "Configuration File Substitution", "Container Deployments", "Control Center", "Dashboard", "Database", "Deployment Configuration", "Deployment History", "Deployment Manifest", "Deployment Process", "Deployment Targets", "Deployment Tools", "Deployments", "Docker", "DORA Metrics", "Dynamic Environments", "Dynamic Extensions", "Dynamic Worker Images", "Dynamic Worker Pools", "ECS", "Endpoints", "Environments", "Error Handling", "Event storage and retention", "Event tables", "Events", "Execution", "Execution Containers", "Execution Targets", "Export/Import", "External", "External Identities", "Feeds", "GDPR / user deletion requests", "GitHub Actions", "Github Issue Tracker", "Google Apps", "Group sync from Active Directory", "Halibut", "Health Check", "Helm", "High Availability", "HTTP API", "HTTP Security Headers", "Identity (Auth Providers)", "Infrastructure", "Insights", "Installation", "Integrations", "Issue Trackers", "Jenkins", "Jira", "Kubernetes", "LDAP", "Let\'s Encrypt", "Library", "Library Variable Sets", "Licences", "Lifecycles", "Linux", "Linux Container", "Logging", "Machine Policies", "Maintenance Mode", "Manual Intervention", "Master Key", "MessageBus", "NancyFX", "OCL", "Octopus CLI", "Octopus Client", "Octopus Cloud Infrastructure", "Octopus Server Certificate", "Octopus.com", "Octopus.CommandLine", "OctopusId", "Octostache", "Offline Package Drop", "OIDC", "Okta", "Operating Environment", "Output Variables", "Package Sources", "Package Stores", "Performance", "Persistence", "Process Editor", "Project Settings", "Projects", "Proxies", "React", "Release Notes", "Release Versioning", "Releases", "Retention", "Runbooks", "Sashimi", "Script Modules", "Security", "Semaphores and mutexes", "Server", "Server Builds", "Server Configuration", "Server Tasks", "Service Accounts", "ServiceNow", "Slugs", "SMTP", "Snapshots", "Spaces", "SSH", "SSL", "Step Templates/Action Templates", "Steps", "Structured Configuration", "Subscriptions", "Substitute Variables in Templates", "SwaggerUI", "System Integrity Check", "Tags", "Targets & Workers", "Task Logs", "Task Queue", "Task, Jobs and LRBPs", "TeamCity", "Telemetry", "Tenant Variables", "Tenants", "Tentacle", "Terraform", "Threading", "Tools & utilities", "Triggers", "Upgrades", "User Access", "Username/Password", "Users, Teams, Roles", "Variables", "Version Control Settings", "Web Server", "Windows", "Windows Installer", "Worker Images", "Worker Pools", "Terraform Provider". You will be penalized for selecting a tag that is not in this list.',
                 ),
                 (
                     "system",
@@ -235,7 +235,7 @@ def suggest_solution_wrapper(
                 *[
                     (
                         "user",
-                        "Conversation: ###\n"
+                        "Related Conversation: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
                     )
@@ -244,7 +244,7 @@ def suggest_solution_wrapper(
                 *[
                     (
                         "user",
-                        "Issue: ###\n"
+                        "Related GitHub Issue: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
                     )
@@ -253,7 +253,7 @@ def suggest_solution_wrapper(
                 *[
                     (
                         "user",
-                        "Slack Message: ###\n"
+                        "Related Slack Message: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
                     )
@@ -262,7 +262,7 @@ def suggest_solution_wrapper(
                 *[
                     (
                         "user",
-                        "Documentation: ###\n"
+                        "Related Documentation: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
                     )
@@ -271,7 +271,7 @@ def suggest_solution_wrapper(
                 *[
                     (
                         "user",
-                        "Documentation: ###\n"
+                        "Related Documentation: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
                     )
