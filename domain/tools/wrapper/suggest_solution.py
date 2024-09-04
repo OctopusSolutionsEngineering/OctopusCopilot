@@ -8,6 +8,7 @@ from domain.context.octopus_context import max_chars_128
 from domain.exceptions.none_on_exception import (
     default_on_exception_async,
 )
+from domain.logging.log_if_exception import log_if_exception
 from domain.sanitizers.sanitize_keywords import sanitize_keywords
 from domain.sanitizers.sanitize_markdown import markdown_to_text
 from domain.sanitizers.sanitized_list import get_item_or_none
@@ -84,17 +85,11 @@ def suggest_solution_wrapper(
             )
 
             # Gracefully fallback with any exceptions
-            if logging:
-                if isinstance(issues[0], Exception):
-                    logging("Zendesk Exception", str(issues[0]))
-                if isinstance(issues[1], Exception):
-                    logging("GitHub Exception", str(issues[1]))
-                if isinstance(issues[2], Exception):
-                    logging("Slack Exception", str(issues[2]))
-                if isinstance(issues[3], Exception):
-                    logging("GitHub Docs Exception", str(issues[3]))
-                if isinstance(issues[4], Exception):
-                    logging("Storyblok Exception", str(issues[4]))
+            log_if_exception(logging, issues[0], "Zendesk Exception")
+            log_if_exception(logging, issues[1], "GitHub Exception")
+            log_if_exception(logging, issues[2], "Slack Exception")
+            log_if_exception(logging, issues[3], "GitHub Docs Exception")
+            log_if_exception(logging, issues[4], "Storyblok Exception")
 
             # Limit the number of responses to the max_issues
             limited_issues = [
@@ -114,13 +109,9 @@ def suggest_solution_wrapper(
             )
 
             # Gracefully fallback with any exceptions
-            if logging:
-                if isinstance(external_context[0], Exception):
-                    logging("Zendesk Exception", str(external_context[0]))
-                if isinstance(external_context[1], Exception):
-                    logging("GitHub Exception", str(external_context[1]))
-                if isinstance(external_context[2], Exception):
-                    logging("GitHub Exception", str(external_context[2]))
+            log_if_exception(logging, external_context[0], "Zendesk Exception")
+            log_if_exception(logging, external_context[1], "GitHub Exception")
+            log_if_exception(logging, external_context[2], "GitHub Docs Exception")
 
             # Each external source gets its own dedicated slice of the context window
             sources_with_data = len(list(filter(lambda x: len(x) != 0, limited_issues)))
@@ -138,26 +129,14 @@ def suggest_solution_wrapper(
             )
 
             fixed_external_context = [
-                (
-                    limit_array_to_max_char_length(
-                        external_context[0], max_content_per_source
-                    )
-                    if not isinstance(external_context[0], Exception)
-                    else []
+                limit_array_to_max_char_length(
+                    external_context[0], max_content_per_source
                 ),
-                (
-                    limit_array_to_max_char_length(
-                        external_context[1], max_content_per_source
-                    )
-                    if not isinstance(external_context[1], Exception)
-                    else []
+                limit_array_to_max_char_length(
+                    external_context[1], max_content_per_source
                 ),
-                (
-                    limit_array_to_max_char_length(
-                        external_context[2], max_content_per_source
-                    )
-                    if not isinstance(external_context[2], Exception)
-                    else []
+                limit_array_to_max_char_length(
+                    external_context[2], max_content_per_source
                 ),
             ]
 

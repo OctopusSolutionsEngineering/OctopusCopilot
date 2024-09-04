@@ -6,6 +6,9 @@ def limit_array_to_max_char_length(array, max_length):
     :param max_length: The max number of characters
     :return: The limited array
     """
+    if isinstance(array, Exception):
+        return []
+
     current_length = 0
     for i, item in enumerate(array):
         current_length += len(item)
