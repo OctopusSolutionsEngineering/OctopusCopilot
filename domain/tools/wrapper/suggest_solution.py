@@ -99,7 +99,7 @@ def suggest_solution_wrapper(
             # Limit the number of responses to the max_issues
             limited_issues = [
                 limit_array_to_max_items(issues[0], max_issues),
-                limit_array_to_max_items(issues[1]["items"], max_issues),
+                limit_array_to_max_items(issues[1], max_issues),
                 limit_array_to_max_items(issues[2], max_issues),
                 limit_array_to_max_items(issues[3], max_issues),
                 limit_array_to_max_items(issues[4], max_issues),
@@ -348,7 +348,8 @@ def suggest_solution_wrapper(
 
 
 async def get_issues(keywords, github_token):
-    return await search_issues("OctopusDeploy", "Issues", keywords, github_token)
+    issues = await search_issues("OctopusDeploy", "Issues", keywords, github_token)
+    return issues["items"]
 
 
 async def get_issues_comments(issues, github_token):
