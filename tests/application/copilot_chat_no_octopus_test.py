@@ -87,47 +87,47 @@ class CopilotChatTest(unittest.TestCase):
     def test_general_solution3(self):
         prompt = minify_strings(
             """Suggest a solution for the following issue:
-Hello 
+Hello
  I am writing to you, because we in Nets/Nexi together with Aeven are using Octopus for deployment between two sites, where we synchronize between the sites using custom scripts. We want to change the way we are working from the custom scripts
- to be using two instances of Octopus and the Space Cloner tool:  
+ to be using two instances of Octopus and the Space Cloner tool:
  GitHub - OctopusDeployLabs/SpaceCloner: A tool to clone/sync a space, project, and/or other items between different spaces in the same Octopus Deploy instances or spaces in different
- instances.. 
+ instances..
  We are, unfortunately, a little bit unsure about the future of the space cloner tool, will this be available and maintained in the future, or do you recommend using other tools going forward?
- Best wishes 
+ Best wishes
  Jesper Rugård
 This content is classified as Internal
 Querying with solutions: https://octopusdeploy.slack.com/archives/C041XDRL04D/p1725354661479129
 Hi Jesper,
-As you’ve noted, Space Cloner has not been updated in some time, and is not likely to receive significant updates in future. 
+As you’ve noted, Space Cloner has not been updated in some time, and is not likely to receive significant updates in future.
 However, we have another tool that is well suited to cloning resources between spaces called Octoterra (https://github.com/OctopusSolutionsEngineering/OctopusTerraformExport).
 Octoterra serialises an Octopus space to a Terraform module. The Terraform module can then be applied to a new space, effectively recreating (or cloning) the resources between spaces.
 The documentation at https://octopus.com/docs/platform-engineering/managing-space-resources and https://octopus.com/docs/platform-engineering/managing-project-resources provides instructions and a sample video demonstrating the use of Octoterra.
 However, there may be other solutions provided by the base Octopus platform that may also provide a solution. Are you provide some more information on the problem you are looking to solve by cloning resources between spaces?
-Further details: 
- Our current solution is based on two octopus installations that synchronize via custom scripts using Octopus Migrator – which is not supported anymore and keeping us from upgrading our octopus installations. 
+Further details:
+ Our current solution is based on two octopus installations that synchronize via custom scripts using Octopus Migrator – which is not supported anymore and keeping us from upgrading our octopus installations.
  We have a proposal for changing this that is based on introducing spaces, and using the space cloner for synchronizing between the environments. We currently have development, test, hosting test,
- staging and production environments. This dev and test environments are hosted at the developer company (DL) and the rest by the hosting company (UL). See the drawing below for a sketch of the proposed setup. 
+ staging and production environments. This dev and test environments are hosted at the developer company (DL) and the rest by the hosting company (UL). See the drawing below for a sketch of the proposed setup.
  Deployment process is thought as going like this:
-The process for deploying to Staging/IntTest/Production, facilitated by the new setup, is described briefly below.  
-1.      
+The process for deploying to Staging/IntTest/Production, facilitated by the new setup, is described briefly below.
+1.
 Packages are built by Jenkins and pushed to UL-Octopus built-in NuGet-repo.
-2.      
-UL uses Package Sync Export step at UL-Octopus to create an encrypted and signed zip.  
-3.      
-UL uses Package Sync Import step at DL-Octopus to import the NuGet-packages exported in 2).  
-4.      
-UL runs synchronization A, bringing UL-Octopus.Dev and DL-Octopus.Dev spaces into sync.  
-5.      
-DL performs a dry run of synchronization B. Changes are reviewed.  
-6.      
+2.
+UL uses Package Sync Export step at UL-Octopus to create an encrypted and signed zip.
+3.
+UL uses Package Sync Import step at DL-Octopus to import the NuGet-packages exported in 2).
+4.
+UL runs synchronization A, bringing UL-Octopus.Dev and DL-Octopus.Dev spaces into sync.
+5.
+DL performs a dry run of synchronization B. Changes are reviewed.
+6.
 If review is approved, DL attaches change-set listed in 3) to release-ticket, and performs the changes by running synchronization
- B.  
-7.      
-DL executes Release Tool to create releases in Production space.  
-8.      
-DL performs deployment according to ticket/release note.  
- Best wishes 
- Jesper 
+ B.
+7.
+DL executes Release Tool to create releases in Production space.
+8.
+DL performs deployment according to ticket/release note.
+ Best wishes
+ Jesper
 Thank you for providing that detailed information Jesper.
 From your diagram, the hosting company Octopus instance (UL-Octopus) is where development work is performed. You then have the developer company Octopus instance (DL-Octopus) where production deployments take place. So, at a high level, the goal is to have a process that:
   Synchronises packages between the built-in feeds in UL-Octopus and DL-Octopus  Synchronises the UL-Octopus Dev space with the DL-Octopus Dev space  Synchronises the DL-Octopus Dev space with the DL-Octopus Production space after testing is performed
