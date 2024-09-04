@@ -332,6 +332,11 @@ def suggest_solution_wrapper(
                     url = docs["html_url"].replace("/blob/", "/raw/")
                     chat_response.append(f"🗎: [{title}]({url})")
 
+            # List the Storyblok messages for reference
+            for story in issues[4]:
+                if story.get("name"):
+                    chat_response.append(f"🕮: {story.get('name')}")
+
             return callback(query, keywords, "\n\n".join(chat_response))
 
         # https://github.com/pytest-dev/pytest-asyncio/issues/658#issuecomment-1817927350
