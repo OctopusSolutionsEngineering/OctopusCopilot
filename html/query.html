@@ -134,6 +134,8 @@
 </form>
 </body>
 <script>
+    const MAX_QUERY_LENGTH = 4000
+
     // Extract the state from the query params
     saveState()
 
@@ -288,7 +290,7 @@
 
         form.classList.add('was-validated')
 
-        sanitized_value = DOMPurify.sanitize(query.value)
+        sanitized_value = DOMPurify.sanitize(query.value).substring(0, MAX_QUERY_LENGTH)
         query.value = sanitized_value
         if (!form.checkValidity()) {
             return
