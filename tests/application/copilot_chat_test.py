@@ -1,6 +1,5 @@
 import json
 import os
-import re
 import time
 import unittest
 import uuid
@@ -13,24 +12,16 @@ from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
-from domain.lookup.octopus_lookups import (
-    lookup_space,
-    lookup_projects,
-    lookup_environments,
-    lookup_tenants,
-    lookup_runbooks,
-)
 from domain.transformers.clean_response import strip_before_first_curly_bracket
 from domain.transformers.sse_transformers import (
     convert_from_sse_response,
     get_confirmation_id,
 )
 from domain.url.session import create_session_blob
-from function_app import copilot_handler_internal, health_internal
+from function_app import copilot_handler_internal
 from infrastructure.octopus import (
     run_published_runbook_fuzzy,
-    get_space_id_and_name_from_name,
-    get_project,
+    get_space_id_and_name_from_name
 )
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.infrastructure.cancel_task import cancel_task
@@ -215,9 +206,9 @@ class CopilotChatTest(unittest.TestCase):
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_runbook_run_with_variables(self):
         publish_runbook(
-            "Simple", "Copilot Test Runbook Project", "Prompted Variables Runbook"
+            "Simple", "Prompted Variable Project", "Prompted Variables Runbook"
         )
-        prompt = 'Run runbook "Prompted Variables Runbook" in the "Copilot Test Runbook Project" project with variables notify=false, slot=Staging, othervariable=extra'
+        prompt = 'Run runbook "Prompted Variables Runbook" in the "Prompted Variable Project" project with variables notify=false, slot=Staging, othervariable=extra'
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
@@ -251,14 +242,14 @@ class CopilotChatTest(unittest.TestCase):
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_runbook_run_with_missing_required_variable(self):
         publish_runbook(
-            "Simple", "Copilot Test Runbook Project", "Prompted Variables Runbook"
+            "Simple", "Prompted Variable Project", "Prompted Variables Runbook"
         )
-        prompt = 'Run runbook "Prompted Variables Runbook" in the "Copilot Test Runbook Project" project with variables notify=false, slot='
+        prompt = 'Run runbook "Prompted Variables Runbook" in the "Prompted Variable Project" project with variables notify=false, slot='
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue(
-            "The runbook is missing values for required variables: slot"
+            "The Runbook is missing values for required variables: slot"
             in response_text,
             "Response was " + response_text,
         )
@@ -454,6 +445,63 @@ class CopilotChatTest(unittest.TestCase):
         )
         self.assertTrue(
             f"Deployment of {project_name} release {version} to {deploy_environment} for {tenant_name}"
+            in response_text,
+            "Response was " + response_text,
+        )
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_deploy_release_with_variables(self):
+        project_name = "Prompted Variable Project"
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        release = create_release(
+            space_name="Simple", project_name=project_name, release_version=version
+        )
+        deploy_environment = "Development"
+        prompt = (f"Deploy release version \"{release['Version']}\" for project \"{project_name}\" to the "
+                  f"\"{deploy_environment}\" environment with variables notify=false, slot=Staging, othervariable=extra")
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        self.assertTrue(
+            f"Deployment of {project_name} release {version} to {deploy_environment}"
+            in response_text,
+            "Response was " + response_text,
+        )
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_deploy_release_with_missing_required_variable(self):
+        project_name = "Prompted Variable Project"
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        release = create_release(
+            space_name="Simple", project_name=project_name, release_version=version
+        )
+        deploy_environment = "Development"
+        prompt = f"Deploy release version \"{release['Version']}\" for project \"{project_name}\" to the \"{deploy_environment}\" environment with variables notify=false, slot="
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+
+        self.assertTrue(
+            "The Deployment is missing values for required variables: slot"
             in response_text,
             "Response was " + response_text,
         )

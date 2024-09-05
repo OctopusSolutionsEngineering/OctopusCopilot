@@ -20,10 +20,8 @@ from domain.lookup.octopus_lookups import (
     lookup_tenants,
     lookup_runbooks,
 )
-from domain.transformers.clean_response import strip_before_first_curly_bracket
 from domain.transformers.sse_transformers import (
-    convert_from_sse_response,
-    get_confirmation_id,
+    convert_from_sse_response
 )
 from domain.url.session import create_session_blob
 from function_app import copilot_handler_internal, health_internal
@@ -33,12 +31,10 @@ from infrastructure.octopus import (
     get_project,
 )
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
-from tests.infrastructure.cancel_task import cancel_task
 from tests.infrastructure.create_and_deploy_release import (
     create_and_deploy_release,
     wait_for_task,
 )
-from tests.infrastructure.create_release import create_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.octopus_infrastructure_test import run_terraform
 from tests.infrastructure.publish_runbook import publish_runbook

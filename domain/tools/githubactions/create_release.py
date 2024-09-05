@@ -58,6 +58,7 @@ def create_release_confirm_callback_wrapper(github_user, url, api_key, log_query
                                                    release_id,
                                                    environment_name,
                                                    tenant_name,
+                                                   None,
                                                    api_key,
                                                    url,
                                                    log_query)

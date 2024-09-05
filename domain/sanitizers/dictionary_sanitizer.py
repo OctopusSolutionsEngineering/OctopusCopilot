@@ -8,3 +8,5 @@ def dictionary_has_value(key, dictionary):
 
         value = dictionary[key]
         return len(value) > 0
+
+    return False
