@@ -98,8 +98,8 @@ def run_runbook_callback(url, api_key, github_user, connection_string, log_query
         if not valid:
             return CopilotResponse(error_message)
 
-        # TODO: Add validation if a runbook has required prompted variables and none are supplied in the prompt?
-        prompted_variables = {}
+        # TODO: Add validation if a runbook has required prompted variables and none are supplied in the prompt
+        matching_variables = None
         if variables is not None:
             prompted_variables, error_message, variable_warning = match_runbook_variables(space_id, project['Id'],
                                                                                           sanitized_runbook_names[0],
@@ -113,7 +113,8 @@ def run_runbook_callback(url, api_key, github_user, connection_string, log_query
             if variable_warning:
                 warnings.append(variable_warning)
 
-        matching_variables = {v['Name']: v['Value'] for k, v in prompted_variables.items()}
+            matching_variables = {v['Name']: v['Value'] for k, v in prompted_variables.items()}
+
         callback_id = str(uuid.uuid4())
         arguments = {
             "space_id": space_id,

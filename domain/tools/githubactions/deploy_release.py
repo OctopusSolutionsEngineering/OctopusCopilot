@@ -6,12 +6,12 @@ from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
 from infrastructure.octopus import get_project, get_environment, get_lifecycle, deploy_release_fuzzy, \
-    get_environment_fuzzy, get_release_fuzzy, get_channel, get_release
+    get_environment_fuzzy, get_release_fuzzy, get_channel, get_release, match_deployment_variables
 
 
 def deploy_release_confirm_callback_wrapper(github_user, url, api_key, log_query):
     def deploy_release_confirm_callback(space_id, project_name, project_id, release_version, release_id,
-                                        environment_name, environment_id, tenant_name):
+                                        environment_name, environment_id, tenant_name, variables):
         debug_text = get_params_message(github_user, True,
                                         deploy_release_confirm_callback.__name__,
                                         space_id=space_id,
@@ -21,7 +21,8 @@ def deploy_release_confirm_callback_wrapper(github_user, url, api_key, log_query
                                         release_id=release_id,
                                         environment_name=environment_name,
                                         environment_id=environment_id,
-                                        tenant_name=tenant_name)
+                                        tenant_name=tenant_name,
+                                        variables=variables)
 
         log_query("deploy_release_confirm_callback", f"""
             Space: {space_id}
@@ -31,7 +32,8 @@ def deploy_release_confirm_callback_wrapper(github_user, url, api_key, log_query
             Release Id: {release_id}
             Environment Name: {environment_name}
             Environment Id: {environment_id}
-            Tenant Name: {tenant_name}""")
+            Tenant Name: {tenant_name}
+            Variables: {variables}""")
 
         response_text = []
 
@@ -47,6 +49,7 @@ def deploy_release_confirm_callback_wrapper(github_user, url, api_key, log_query
                                         release['Id'],
                                         environment_name,
                                         tenant_name,
+                                        variables,
                                         api_key,
                                         url,
                                         log_query)
@@ -74,14 +77,15 @@ def deploy_release_confirm_callback_wrapper(github_user, url, api_key, log_query
 
 def deploy_release_callback(url, api_key, github_user, connection_string, log_query):
     def deploy_release(original_query, space_name=None, project_name=None, release_version=None, environment_name=None,
-                       tenant_name=None):
+                       tenant_name=None, variables=None):
         debug_text = get_params_message(github_user, True,
                                         deploy_release.__name__,
                                         space_name=space_name,
                                         project_name=project_name,
                                         release_version=release_version,
                                         environment_name=environment_name,
-                                        tenant_name=tenant_name)
+                                        tenant_name=tenant_name,
+                                        variables=variables)
 
         space_id, actual_space_name, warnings = lookup_space(url, api_key, github_user, original_query, space_name)
         sanitized_project_names, sanitized_projects = lookup_projects(url, api_key, github_user, original_query,
@@ -129,7 +133,22 @@ def deploy_release_callback(url, api_key, github_user, connection_string, log_qu
                 f"The environment \"{sanitized_environment_names[0]}\" is not valid for the project \"{sanitized_project_names[0]}\". "
                 + "Valid environments are " + ", ".join(project_environments) + ".")
 
-        # TODO: Consider adding a check for tenant being connected to this project and deployment environment
+        # TODO: 1. Consider adding a check for tenant being connected to this project and deployment environment
+        # TODO: 2. Add validation if a runbook has required prompted variables and none are supplied in the prompt
+
+        matching_variables = None
+        if variables is not None:
+            prompted_variables, error_message, variable_warning = match_deployment_variables(space_id, release['Id'],
+                                                                                             actual_environment['Id'],
+                                                                                             variables,
+                                                                                             api_key, url)
+            if len(prompted_variables) == 0:
+                return CopilotResponse(error_message)
+
+            if variable_warning:
+                warnings.append(variable_warning)
+
+            matching_variables = {v['Name']: v['Value'] for k, v in prompted_variables.items()}
 
         callback_id = str(uuid.uuid4())
         arguments = {
@@ -140,7 +159,8 @@ def deploy_release_callback(url, api_key, github_user, connection_string, log_qu
             "release_id": release['Id'],
             "environment_name": actual_environment['Name'],
             "environment_id": actual_environment['Id'],
-            "tenant_name": sanitized_tenant_names[0] if sanitized_tenant_names else None
+            "tenant_name": sanitized_tenant_names[0] if sanitized_tenant_names else None,
+            "variables": matching_variables
         }
 
         log_query("deploy_release", f"""
@@ -151,7 +171,8 @@ def deploy_release_callback(url, api_key, github_user, connection_string, log_qu
             Release Id: {arguments["release_id"]}
             Environment Name: {arguments["environment_name"]}
             Environment Id: {arguments["environment_id"]}
-            Tenant Name: {arguments["tenant_name"]}""")
+            Tenant Name: {arguments["tenant_name"]}
+            Variables: {arguments["variables"]}""")
 
         debug_text = get_params_message(github_user, False,
                                         deploy_release.__name__,
@@ -162,7 +183,8 @@ def deploy_release_callback(url, api_key, github_user, connection_string, log_qu
                                         release_version=release_version,
                                         release_id=release['Id'],
                                         environment_name=actual_environment['Name'],
-                                        tenant_name=sanitized_tenant_names)
+                                        tenant_name=sanitized_tenant_names,
+                                        variables=variables)
         save_callback(github_user,
                       deploy_release.__name__,
                       callback_id,
@@ -181,6 +203,11 @@ def deploy_release_callback(url, api_key, github_user, connection_string, log_qu
                           f"\n* Environment: **{actual_environment['Name']}**"]
         if tenant_name:
             prompt_message.append(f"\n* Tenant: **{sanitized_tenant_names[0]}**")
+
+        if matching_variables is not None:
+            prompt_message.append(f"\n* Variables:")
+            for variable in matching_variables.keys():
+                prompt_message.append(f"\n\t* **{variable}** = {variables[variable]}")
 
         prompt_message.append(f"\n* Space: **{actual_space_name}**")
         return CopilotResponse("\n\n".join(response), prompt_title, "".join(prompt_message), callback_id)

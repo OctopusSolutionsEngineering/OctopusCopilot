@@ -2,28 +2,28 @@ variable "project_project5_name" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The name of the project exported from Copilot guided failure"
+  description = "The name of the project exported from Long running script"
   default     = "Long running script"
 }
 variable "project_project5_description_prefix" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "An optional prefix to add to the project description for the project Copilot guided failure"
+  description = "An optional prefix to add to the project description for the project Long running script"
   default     = ""
 }
 variable "project_project5_description_suffix" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "An optional suffix to add to the project description for the project Copilot guided failure"
+  description = "An optional suffix to add to the project description for the project Long running script"
   default     = ""
 }
 variable "project_project5_description" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The description of the project exported from Copilot guided failure"
+  description = "The description of the project exported from Long running script"
   default     = ""
 }
 variable "project_project5_tenanted" {
