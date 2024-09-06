@@ -161,6 +161,7 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
                 Saving a profile saves the current default values. Loading a profile replaces the current default values.
                 * @octopus-ai-app Save the profile "MyValues"
                 * @octopus-ai-app Load the profile "MyValues"
+                * @octopus-ai-app List the profiles
 
                 Generate sample Terraform modules for Octopus Deploy with prompts like these:
                 * @octopus-ai-app create a sample terraform module with: three environments called "Development", "Test", and "Production"; a docker feed pointing to dockerhub; three tenants called "US", "Europe", and "Asia"; a project group called "Web App"; a project called "Audits" with a single powershell script step that echoes "Hello World"; and all tenants linked to the project and all environments

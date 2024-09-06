@@ -28,7 +28,7 @@ class CopilotChatTest(unittest.TestCase):
             os.environ["AzureWebJobsStorage"],
         )
 
-        prompt = 'Save the profile named "Test".'
+        prompt = 'Save the profile named "MyTestProfile".'
 
         response = copilot_handler_internal(build_no_octopus_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
@@ -38,7 +38,7 @@ class CopilotChatTest(unittest.TestCase):
             "saved profile" in response_text.casefold(), "Response was " + response_text
         )
 
-        prompt = 'Load the profile named "Test".'
+        prompt = 'Load the profile named "MyTestProfile".'
 
         response = copilot_handler_internal(build_no_octopus_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
@@ -46,6 +46,17 @@ class CopilotChatTest(unittest.TestCase):
         print(response_text)
         self.assertTrue(
             "loaded profile" in response_text.casefold(),
+            "Response was " + response_text,
+        )
+
+        prompt = "List the profiles."
+
+        response = copilot_handler_internal(build_no_octopus_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+
+        print(response_text)
+        self.assertTrue(
+            "MyTestProfile" in response_text,
             "Response was " + response_text,
         )
 

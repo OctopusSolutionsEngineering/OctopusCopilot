@@ -365,6 +365,30 @@ def get_profile(username, profile_name, connection_string):
 
 
 @logging_wrapper
+def get_profiles(username, connection_string):
+    ensure_string_not_empty(
+        username, "username must be the GitHub user's ID (get_profile)."
+    )
+    ensure_string_not_empty(
+        connection_string,
+        "connection_string must be the connection string (get_profile).",
+    )
+
+    try:
+        table_service_client = TableServiceClient.from_connection_string(
+            conn_str=connection_string
+        )
+        table_client = table_service_client.create_table_if_not_exists("userprofiles")
+        entities = table_client.query_entities(
+            "PartitionKey eq '" + "github.com_" + username + "'",
+        )
+        for entity in entities:
+            yield entity["RowKey"]
+    except HttpResponseError as e:
+        return None
+
+
+@logging_wrapper
 def delete_default_values(username, connection_string):
     ensure_string_not_empty(
         username, "username must be the GitHub user's ID (delete_default_values)."

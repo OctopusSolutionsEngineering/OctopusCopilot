@@ -44,6 +44,7 @@ def build_mock_test_tools(tool_query):
         get_all_default_values,
         save_defaults_as_profile,
         load_defaults_from_profile,
+        list_profiles,
     ) = default_value_callbacks(lambda: "1234567", get_functions_connection_string())
     return FunctionDefinitions(
         [

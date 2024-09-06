@@ -372,6 +372,7 @@ def build_form_tools(query, req: func.HttpRequest):
         get_all_default_values,
         save_defaults_as_profile,
         load_defaults_from_profile,
+        list_profiles,
     ) = default_value_callbacks(
         get_github_user_from_form(req), get_functions_connection_string()
     )
@@ -515,6 +516,7 @@ def build_form_tools(query, req: func.HttpRequest):
             FunctionDefinition(remove_default_value),
             FunctionDefinition(save_defaults_as_profile),
             FunctionDefinition(load_defaults_from_profile),
+            FunctionDefinition(list_profiles),
             *help_functions,
             FunctionDefinition(
                 run_runbook_wrapper(

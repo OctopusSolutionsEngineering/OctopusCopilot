@@ -10,6 +10,7 @@ from infrastructure.users import (
     get_default_values,
     save_profile,
     get_profile,
+    get_profiles,
 )
 
 
@@ -54,6 +55,21 @@ def default_value_callbacks(github_user, connection_string):
                 f'"{name}": "{get_default_values(github_user, name, get_functions_connection_string())}"'
                 for name in get_all_default_value_names()
             ],
+        ]
+
+        return CopilotResponse("\n\n".join(responses))
+
+    def list_profiles():
+        """Lists the available profiles."""
+        profiles = list(get_profiles(github_user, connection_string))
+
+        if not profiles:
+            return CopilotResponse("No profiles are available")
+
+        profile_list = "\n".join([f"* {profile}" for profile in profiles])
+        responses = [
+            f"The following profiles are available:",
+            profile_list,
         ]
 
         return CopilotResponse("\n\n".join(responses))
@@ -124,4 +140,5 @@ def default_value_callbacks(github_user, connection_string):
         get_all_default_values,
         save_defaults_as_profile,
         load_defaults_from_profile,
+        list_profiles,
     )
