@@ -136,9 +136,6 @@
 <script>
     const MAX_QUERY_LENGTH = 4000
 
-    // Extract the state from the query params
-    saveState()
-
     // Enable or disable fields based on login state
     checkLogin()
 
@@ -153,21 +150,8 @@
         return input.replace(base64Regex, '');
     }
 
-    function saveState() {
-        let state = sanitizeBase64(getQueryParam('state'));
-        if (state) {
-            /*
-                Session is valid for 7 hours, just below the 8 hours
-                that the function allows sessions to live for. This
-                avoids a situation where this web interface thinks
-                it has a valid session but the backend does not.
-             */
-            setCookie('state', state, 7)
-        }
-    }
-
-    function getStateCookie() {
-        return sanitizeBase64(getCookie('state'))
+    function getSessionCookie() {
+        return sanitizeBase64(getCookie('session'))
     }
 
     function checkLogin() {
@@ -176,7 +160,7 @@
         queryTextArea = document.getElementById('query')
         submitButton = document.getElementById('submit')
 
-        if (getStateCookie()) {
+        if (getSessionCookie()) {
             githubLoginButton.onclick = githubLogout
             githubLoginButton.innerText = "GitHub Logout"
             submitButton.disabled = false
@@ -198,7 +182,7 @@
 
     function githubLogout() {
         if (confirm("Are you sure you want to log out? This is typically only required if something is broken.")) {
-            setCookie('state', null, 1)
+            setCookie('session', null, 1)
             checkLogin()
         }
     }
@@ -214,12 +198,12 @@
     }
 
     function getCookie(name) {
-        var nameEQ = name + "=";
-        var ca = document.cookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
         }
         return null;
     }
@@ -279,7 +263,7 @@
 
     async function processQuery(event) {
         // If the session has expired, we prompt to log in again.
-        if (!getStateCookie()) {
+        if (!getSessionCookie()) {
             checkLogin()
             return
         }
@@ -319,9 +303,6 @@
 
         // Use the polyfill to get the ability to send headers.
         var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(sanitized_value), {
-            headers: {
-                'X-GitHub-Encrypted-Token': getStateCookie()
-            },
             // https://stackoverflow.com/questions/71688537/event-source-timeout-in-45-seconds
             // Increase timeouts as it can take some time to process the request.
             heartbeatTimeout: 300000,

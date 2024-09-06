@@ -1,6 +1,7 @@
 import json
 import os
 import urllib.parse
+from http.cookies import SimpleCookie
 
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
@@ -206,11 +207,9 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             status_code=301,
             headers={
-                "Location": f"{base_request_url(req)}/api/octopus?state="
-                + session_json
-                + "&redirect="
+                "Location": f"{base_request_url(req)}/api/octopus?redirect="
                 + quote_safe(redirect),
-                "Set-Cookie": f"session={json.dumps(session_json)}; HttpOnly; Secure; SameSite=Strict",
+                "Set-Cookie": f"session={session_json}; Secure; SameSite=Strict",
             },
         )
     except Exception as e:
@@ -349,8 +348,12 @@ def login_submit(req: func.HttpRequest) -> func.HttpResponse:
             raise OctopusVersionInvalid(octopus_version, min_octopus_version)
 
         # Extract the GitHub user from the client side session
+        cookie = SimpleCookie()
+        cookie.load(req.headers["Cookie"])
+        session = cookie["session"].value
+
         access_token = extract_session_blob(
-            req.params.get("state"),
+            session,
             generate_password(
                 os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")
             ),

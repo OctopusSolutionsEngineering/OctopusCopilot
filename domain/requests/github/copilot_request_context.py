@@ -1,5 +1,6 @@
 import json
 import os
+from http.cookies import SimpleCookie
 
 import azure.functions as func
 from azure.core.exceptions import HttpResponseError
@@ -143,6 +144,28 @@ def get_slack_token_from_request(req: func.HttpRequest):
 
 
 def get_github_token(req: func.HttpRequest):
+    # First try to get the session from a cookie. Session cookies are used by public facing
+    # web forms.
+    try:
+        cookie = SimpleCookie()
+        cookie.load(req.headers["Cookie"])
+        session = cookie["session"].value
+
+        encrypted_token = json.loads(decode_string_b64(session))
+
+        return decrypt_eax(
+            generate_password(
+                os.environ.get("ENCRYPTION_PASSWORD"),
+                os.environ.get("ENCRYPTION_SALT"),
+            ),
+            encrypted_token.get("state"),
+            encrypted_token.get("tag"),
+            encrypted_token.get("nonce"),
+            os.environ.get("ENCRYPTION_SALT"),
+        )
+    except Exception as e:
+        logger.info("State cookie could not be decoded")
+
     # The token may have been sent in an encrypted form from an untrusted client.
     # This is how the web based interface can send a token.
     try:

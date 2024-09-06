@@ -86,18 +86,6 @@
 </body>
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const state = sanitizeBase64(urlParams.get('state'));
-
-    function sanitizeBase64(input) {
-        if (!input) {
-            return null
-        }
-
-        // Regular expression to match valid Base64 characters
-        const base64Regex = /[^A-Za-z0-9+/=]/g;
-        // Replace invalid characters with an empty string
-        return input.replace(base64Regex, '');
-    }
 
     function enable_inputs() {
         submit.disabled = false
@@ -111,12 +99,6 @@
         url.disabled = true
         api.disabled = true
         samples.disabled = true
-    }
-
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
     }
 
     function validateApiKey(apiKey) {
@@ -180,7 +162,7 @@
         loading.style.display = 'block'
 
         try {
-            const response = await fetch("/api/login_submit?state=" + state,
+            const response = await fetch("/api/login_submit",
                 {
                     method: "POST",
                     body: JSON.stringify({url: urlValue, api: apiValue}),
@@ -220,7 +202,7 @@
         const redirect = urlParams.get('redirect');
 
         if (redirect) {
-            window.location.href = "/api/" + encodeURIComponent(redirect) + "?state=" + state
+            window.location.href = "/api/" + encodeURIComponent(redirect)
         } else {
             success.style.display = 'block'
         }
