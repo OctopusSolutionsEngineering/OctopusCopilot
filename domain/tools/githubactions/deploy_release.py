@@ -1,6 +1,7 @@
 import json
 import uuid
 
+from domain.exceptions.prompted_variable_match_error import PromptedVariableMatchingError
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_environments, lookup_tenants
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
@@ -43,19 +44,33 @@ def deploy_release_confirm_callback_wrapper(github_user, url, api_key, log_query
         if release is None:
             return CopilotResponse("The release was not found.")
 
+        deployment_id = None
+        matching_variables = None
         # deploy release
-        response = deploy_release_fuzzy(space_id,
-                                        project_id,
-                                        release['Id'],
-                                        environment_name,
-                                        tenant_name,
-                                        variables,
-                                        api_key,
-                                        url,
-                                        log_query)
+        try:
+            environment = get_environment_fuzzy(space_id, environment_name, api_key, url)
 
-        response_text.append(
-            f'* [Deployment of {project_name} release {release_version} to {environment_name} {"for " + tenant_name if tenant_name else ""}]({url}/app#/{space_id}/tasks/{response["TaskId"]})')
+            if variables is not None:
+                matching_variables = {k: v['Value'] for k, v in match_deployment_variables(space_id, release_id,
+                                                                                           environment['Id'],
+                                                                                           variables, api_key,
+                                                                                           url)[0].items()}
+            response = deploy_release_fuzzy(space_id,
+                                            project_id,
+                                            release['Id'],
+                                            environment['Id'],
+                                            tenant_name,
+                                            matching_variables,
+                                            api_key,
+                                            url,
+                                            log_query)
+            deployment_id = response['Id']
+
+            response_text.append(
+                f'* [Deployment of {project_name} release {release_version} to {environment_name} {"for " + tenant_name if tenant_name else ""}]({url}/app#/{space_id}/tasks/{response["TaskId"]})')
+
+        except PromptedVariableMatchingError as e:
+            response_text.append(f"❌ {e.error_message}")
 
         debug_text.extend(get_params_message(github_user, False,
                                              deploy_release_confirm_callback.__name__,
@@ -67,7 +82,7 @@ def deploy_release_confirm_callback_wrapper(github_user, url, api_key, log_query
                                              environment_name=environment_name,
                                              environment_id=environment_id,
                                              tenant_name=tenant_name,
-                                             deployment_id=response['Id']))
+                                             deployment_id=deployment_id))
 
         response_text.extend(debug_text)
         return CopilotResponse("\n\n".join(response_text))
@@ -102,7 +117,7 @@ def deploy_release_callback(url, api_key, github_user, connection_string, log_qu
         if not sanitized_environment_names:
             return CopilotResponse("Please specify an environment name in the query.")
 
-        actual_environment = get_environment_fuzzy(space_id, environment_name, api_key, url)
+        actual_environment = get_environment_fuzzy(space_id, sanitized_environment_names[0], api_key, url)
 
         if not release_version:
             return CopilotResponse("Please specify a release version in the query.")
@@ -138,17 +153,16 @@ def deploy_release_callback(url, api_key, github_user, connection_string, log_qu
 
         matching_variables = None
         if variables is not None:
-            prompted_variables, error_message, variable_warning = match_deployment_variables(space_id, release['Id'],
-                                                                                             actual_environment['Id'],
-                                                                                             variables,
-                                                                                             api_key, url)
-            if len(prompted_variables) == 0:
-                return CopilotResponse(error_message)
-
-            if variable_warning:
-                warnings.append(variable_warning)
-
-            matching_variables = {v['Name']: v['Value'] for k, v in prompted_variables.items()}
+            try:
+                prompted_variables, variable_warning = match_deployment_variables(space_id, release['Id'],
+                                                                                  actual_environment['Id'],
+                                                                                  variables, api_key, url)
+                # We return the names here (instead of ID), as they'll be returned to the copilot extension
+                matching_variables = {v['Name']: v['Value'] for k, v in prompted_variables.items()}
+                if variable_warning:
+                    warnings.append(variable_warning)
+            except PromptedVariableMatchingError as e:
+                return CopilotResponse(f"❌ {e.error_message}")
 
         callback_id = str(uuid.uuid4())
         arguments = {
