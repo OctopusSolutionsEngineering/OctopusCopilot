@@ -10,6 +10,7 @@ from domain.context.octopus_context import llm_message_query
 from domain.encryption.encryption import generate_password
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
+from domain.exceptions.oauth_failure import ExpectedParamMissing
 from domain.exceptions.openai_error import (
     OpenAIContentFilter,
     OpenAITokenLengthExceeded,
@@ -235,22 +236,9 @@ def slack_oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
     :return: The HTML form
     """
     try:
-        # Get the state, which is the details of the GitHub user to associated with this slack login
-        state = req.params.get("state")
-
-        if not state:
-            raise SlackRequestFailed(f"Request did not include a state parameter")
-
-        # Extract the GitHub user from the client side session
-        user_id = extract_session_blob(
-            state,
-            generate_password(
-                os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")
-            ),
-            os.environ.get("ENCRYPTION_SALT"),
-        )
-
-        # Exchange the code
+        # Exchange the code. Do this before extracting (or checking for) the state. This allows us
+        # to complete a login without a state parameter, which is useful for debugging and changing
+        # oauth permissions for a Slack app requires an OAuth login to succeed.
         resp = http.request(
             "POST",
             build_url(
@@ -281,6 +269,21 @@ def slack_oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
 
         access_token = response_json["authed_user"]["access_token"]
 
+        # Get the state, which is the details of the GitHub user to associated with this slack login
+        state = req.params.get("state")
+
+        if not state:
+            raise ExpectedParamMissing(f"Request did not include a state parameter")
+
+        # Extract the GitHub user from the client side session
+        user_id = extract_session_blob(
+            state,
+            generate_password(
+                os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")
+            ),
+            os.environ.get("ENCRYPTION_SALT"),
+        )
+
         # Persist the slack access token against the GitHub user
         save_users_slack_login(
             user_id,
@@ -292,6 +295,12 @@ def slack_oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
 
         with open("html/slack-login-success.html", "r") as file:
             return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
+    except ExpectedParamMissing as e:
+        handle_error(e)
+        with open("html/slack-login-incomplete.html", "r") as file:
+            return func.HttpResponse(
+                file.read(), headers={"Content-Type": "text/html"}, status_code=500
+            )
     except Exception as e:
         handle_error(e)
 
