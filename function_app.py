@@ -276,13 +276,14 @@ def slack_oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
             raise ExpectedParamMissing(f"Request did not include a state parameter")
 
         # Extract the GitHub user from the client side session
-        user_id = extract_session_blob(
+        token = extract_session_blob(
             state,
             generate_password(
                 os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")
             ),
             os.environ.get("ENCRYPTION_SALT"),
         )
+        user_id = get_github_user(token)
 
         # Persist the slack access token against the GitHub user
         save_users_slack_login(

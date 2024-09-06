@@ -269,7 +269,7 @@ def suggest_solution_wrapper(
                 # Is the GitHub user really a secret we need to encrypt? Probably not, but the ability to decrypt this
                 # value on the return leg is a good indication the request came from us.
                 session_json = create_session_blob(
-                    github_user, encryption_password, encryption_salt
+                    github_token, encryption_password, encryption_salt
                 )
                 # Build a login link to include in the response
                 chat_response.append(f"❗: {generate_slack_login(session_json)}")
