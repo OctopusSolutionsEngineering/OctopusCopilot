@@ -691,6 +691,30 @@ def delete_user_details(username, connection_string):
 
 
 @logging_wrapper
+def delete_slack_user_details(username, connection_string):
+    """
+    This function is effectively a logout from slack
+    :param username: The user to log out
+    :param connection_string: The database connection string
+    :return: The number of deleted records.
+    """
+    try:
+        table_service_client = TableServiceClient.from_connection_string(
+            conn_str=connection_string
+        )
+        slack_table_client = table_service_client.get_table_client(
+            table_name="slackusers"
+        )
+
+        slack_table_client.delete_entity("github.com", username)
+
+        logger.info(f"Logged out user {username} from Slack")
+
+    except HttpResponseError as e:
+        handle_error(e)
+
+
+@logging_wrapper
 def delete_all_user_details(connection_string):
     """
     Delete all user details.
