@@ -335,6 +335,73 @@ class CopilotChatTest(unittest.TestCase):
         )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_create_release_with_deployment_and_missing_variables(self):
+        project_name = "Prompted Variable Project"
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        deploy_environment = "Development"
+        prompt = f'Create release in the "{project_name}" project with version \"{version}\" and deploy to the "{deploy_environment}" environment with the variables slot=, notify=false'
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+
+        self.assertTrue(
+            "The Deployment is missing values for required variables: slot"
+            in response_text,
+            "Response was " + response_text,
+        )
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_create_release_with_deployment_and_variables(self):
+        project_name = "Prompted Variable Project"
+        deploy_environment = "Development"
+        prompt = f'Create release in the "{project_name}" project and deploy to the "{deploy_environment}" environment with the variables slot=Staging, notify=false'
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        self.assertTrue(f"Deployment of {project_name} release " and f"to {deploy_environment}" in response_text,
+                        "Response was " + response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_deploy_release(self):
         project_name = "Deploy Web App Container"
         version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
@@ -458,7 +525,7 @@ class CopilotChatTest(unittest.TestCase):
         )
         deploy_environment = "Development"
         prompt = (f"Deploy release version \"{release['Version']}\" for project \"{project_name}\" to the "
-                  f"\"{deploy_environment}\" environment with variables notify=false, slot=Staging, othervariable=extra")
+                  f"\"{deploy_environment}\" environment with variables notify=false, slot=Staging")
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)

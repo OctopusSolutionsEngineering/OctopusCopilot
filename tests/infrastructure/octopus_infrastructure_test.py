@@ -56,7 +56,7 @@ from infrastructure.octopus import (
     handle_manual_intervention_for_task,
     cancel_server_task,
     get_releases_by_version,
-    get_project,
+    get_project, match_deployment_variables,
 )
 from tests.infrastructure.create_and_deploy_release import (
     create_and_deploy_release,
@@ -730,6 +730,23 @@ class OctopusAPIRequests(unittest.TestCase):
             space_id, project["Id"], "0.0.12", Octopus_Api_Key, Octopus_Url
         )
         self.assertIsNone(non_matching_releases)
+
+    def test_match_deployment_variables_handles_json_variable_string(self):
+        space_id, space_name = get_space_id_and_name_from_name(
+            "Simple", Octopus_Api_Key, Octopus_Url
+        )
+        release = create_release(space_name="Simple", release_version="1.0.0", project_name="Prompted Variable Project")
+        environments = get_environments(Octopus_Api_Key, Octopus_Url, space_id)
+        environment = next(filter(lambda x: x["Name"] == "Development", environments))
+        variables = "{\"slot\": \"Staging\", \"notify\": \"true\", \"extraVar1\": \"extraValue1\", \"extraVar2\": \"extraValue2\"}"
+        matching_variables, warning_message = match_deployment_variables(space_id, release['Id'], environment['Id'],
+                                                                         variables, Octopus_Api_Key, Octopus_Url)
+        self.assertIsNotNone(matching_variables)
+        self.assertTrue(
+            f"Extra variables were found: extraVar1, extraVar2. These will be ignored."
+            in warning_message,
+            "Response was " + warning_message,
+        )
 
 
 class UnitTests(unittest.TestCase):

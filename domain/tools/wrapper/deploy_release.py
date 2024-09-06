@@ -14,7 +14,7 @@ def deploy_release_wrapper(query, callback, logging):
         release_version: The release version
         environment_name: The name of the environment to deploy to.
         tenant_name: The optional name of the tenant to deploy to.
-        variables: The optional variable key/value pairs.
+        variables: The optional dictionary of variable key/value pairs.
         """
 
         if logging:

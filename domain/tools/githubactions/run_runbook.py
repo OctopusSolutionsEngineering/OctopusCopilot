@@ -1,6 +1,7 @@
 import json
 import uuid
 
+from domain.exceptions.prompted_variable_match_error import PromptedVariableMatchingError
 from domain.exceptions.runbook_not_published import RunbookNotPublished
 from domain.lookup.octopus_lookups import lookup_space, lookup_projects, lookup_environments, lookup_tenants, \
     lookup_runbooks
@@ -47,7 +48,9 @@ def run_runbook_confirm_callback_wrapper(github_user, url, api_key, log_query):
             response_text.append(
                 f"{runbook_name}\n\n[Runbook Run]({url}/app#/{space_id}/projects/{project_id}/operations/runbooks/{response['RunbookId']}/snapshots/{response['RunbookSnapshotId']}/runs/{response['Id']})")
         except RunbookNotPublished as e:
-            response_text.append(f"The runbook {runbook_name} must be published")
+            response_text.append(f"The runbook \"{runbook_name}\" must be published")
+        except PromptedVariableMatchingError as e:
+            response_text.append(f"❌ {e.error_message}")
 
         response_text.extend(debug_text)
         return CopilotResponse("\n\n".join(response_text))
@@ -101,19 +104,21 @@ def run_runbook_callback(url, api_key, github_user, connection_string, log_query
         # TODO: Add validation if a runbook has required prompted variables and none are supplied in the prompt
         matching_variables = None
         if variables is not None:
-            prompted_variables, error_message, variable_warning = match_runbook_variables(space_id, project['Id'],
-                                                                                          sanitized_runbook_names[0],
-                                                                                          runbook['PublishedRunbookSnapshotId'],
-                                                                                          sanitized_environment_names[0],
-                                                                                          variables,
-                                                                                          api_key, url)
-            if len(prompted_variables) == 0:
-                return CopilotResponse(error_message)
+            try:
 
-            if variable_warning:
-                warnings.append(variable_warning)
+                prompted_variables, variable_warning = match_runbook_variables(space_id, project['Id'],
+                                                                               sanitized_runbook_names[0],
+                                                                               runbook['PublishedRunbookSnapshotId'],
+                                                                               sanitized_environment_names[0],
+                                                                               variables, api_key, url)
+                # We return the names here (instead of ID), as they'll be returned to the copilot extension
+                matching_variables = {v['Name']: v['Value'] for k, v in prompted_variables.items()}
 
-            matching_variables = {v['Name']: v['Value'] for k, v in prompted_variables.items()}
+                if variable_warning:
+                    warnings.append(variable_warning)
+
+            except PromptedVariableMatchingError as e:
+                return CopilotResponse(f"❌ {e.error_message}")
 
         callback_id = str(uuid.uuid4())
         arguments = {
