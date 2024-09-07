@@ -313,7 +313,7 @@ def suggest_solution_wrapper(
                     chat_response.append(f"🗎: [{title}]({url})")
 
             # List the Storyblok messages for reference
-            for story in storyblok_context:
+            for story in issues[4]:
                 if story.get("name"):
                     chat_response.append(f"🕮: {story.get('name')}")
 
