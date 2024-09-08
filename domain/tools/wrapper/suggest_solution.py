@@ -276,45 +276,57 @@ def suggest_solution_wrapper(
             chat_response.append(llm_message_query(messages, context))
 
             # List the keywords for reference
+            chat_response.append("## Keywords")
             chat_response.append("🔍: " + ", ".join(limited_keywords))
 
             # List the Zendesk tickets for reference
-            for zendesk_issue in limited_issues[0]:
-                if zendesk_issue.get("subject") and zendesk_issue.get("id"):
-                    chat_response.append(
-                        f"📧: [{zendesk_issue.get('subject')}](https://octopus.zendesk.com/agent/tickets/{zendesk_issue.get('id')})"
-                    )
+            if limited_issues[0]:
+                chat_response.append("## Zendesk Tickets")
+                for zendesk_issue in limited_issues[0]:
+                    if zendesk_issue.get("subject") and zendesk_issue.get("id"):
+                        chat_response.append(
+                            f"📧: [{zendesk_issue.get('subject')}](https://octopus.zendesk.com/agent/tickets/{zendesk_issue.get('id')})"
+                        )
 
             # List the GitHub issues for reference
-            for github_issue in limited_issues[1]:
-                if github_issue.get("html_url") and github_issue.get("title"):
-                    chat_response.append(
-                        f"🐛: [{github_issue.get('title')}]({github_issue.get('html_url')})"
-                    )
+            if limited_issues[1]:
+                chat_response.append("## GitHub Issues")
+                for github_issue in limited_issues[1]:
+                    if github_issue.get("html_url") and github_issue.get("title"):
+                        chat_response.append(
+                            f"🐛: [{github_issue.get('title')}]({github_issue.get('html_url')})"
+                        )
 
             # List the Slack messages for reference
-            for slack_message in limited_issues[2]:
-                if slack_message.get("permalink") and slack_message.get("text"):
-                    trimmed_message = trim_string_with_ellipsis(
-                        markdown_to_text(slack_message["text"].replace("\n", " ")), 100
-                    )
-                    chat_response.append(
-                        f"🗨: [{trimmed_message}]({slack_message.get('permalink')})"
-                    )
+            if limited_issues[2]:
+                chat_response.append("## Slack Messages")
+                for slack_message in limited_issues[2]:
+                    if slack_message.get("permalink") and slack_message.get("text"):
+                        trimmed_message = trim_string_with_ellipsis(
+                            markdown_to_text(slack_message["text"].replace("\n", " ")),
+                            100,
+                        )
+                        chat_response.append(
+                            f"🗨: [{trimmed_message}]({slack_message.get('permalink')})"
+                        )
 
             # List the docs for reference
-            for i in range(len(fixed_external_context[2])):
-                docs = get_item_or_none(limited_issues[3], i)
-                content = get_item_or_none(fixed_external_context[2], i)
-                if docs and docs.get("html_url"):
-                    title = get_docs_title(content, docs.get("html_url"))
-                    url = docs["html_url"].replace("/blob/", "/raw/")
-                    chat_response.append(f"🗎: [{title}]({url})")
+            if fixed_external_context[2]:
+                chat_response.append("## Documentation")
+                for i in range(len(fixed_external_context[2])):
+                    docs = get_item_or_none(limited_issues[3], i)
+                    content = get_item_or_none(fixed_external_context[2], i)
+                    if docs and docs.get("html_url"):
+                        title = get_docs_title(content, docs.get("html_url"))
+                        url = docs["html_url"].replace("/blob/", "/raw/")
+                        chat_response.append(f"🗎: [{title}]({url})")
 
             # List the Storyblok messages for reference
-            for story in issues[4]:
-                if story.get("name"):
-                    chat_response.append(f"🕮: {story.get('name')}")
+            if issues[4]:
+                chat_response.append("## Storyblok Stories")
+                for story in issues[4]:
+                    if story.get("name"):
+                        chat_response.append(f"🕮: {story.get('name')}")
 
             return callback(query, keywords, "\n\n".join(chat_response))
 
