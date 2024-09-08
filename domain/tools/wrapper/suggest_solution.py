@@ -9,6 +9,7 @@ from domain.exceptions.none_on_exception import (
 )
 from domain.logging.log_if_exception import log_if_exception
 from domain.sanitizers.sanitize_keywords import sanitize_keywords
+from domain.sanitizers.sanitize_logs import anonymize_message, sanitize_message
 from domain.sanitizers.sanitize_markdown import markdown_to_text
 from domain.sanitizers.sanitized_list import get_item_or_none
 from domain.slack.slack_urls import generate_slack_login
@@ -439,8 +440,7 @@ async def combine_issue_comments(issue_number, github_token):
         [minify_strings(comment["body"]) for comment in comments if comment["body"]]
     )
 
-    # If we need to strip PII from the comments, we can do it here
-    # combined_comments = anonymize_message(sanitize_message(combined_comments))
+    combined_comments = anonymize_message(sanitize_message(combined_comments))
 
     return combined_comments
 
