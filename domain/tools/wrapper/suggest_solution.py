@@ -58,7 +58,7 @@ def suggest_solution_wrapper(
         * Suggest a solution for the following issue: Today we discovered an interesting behavior, which does look like a bug, and would like to have some assistance on it.
 
         Args:
-            keywords: A list of keywords that describe the issue or question.
+            keywords: A list of keywords that describe the issue or question. Keywords should be 3 or less individual words, or literal exception names or error codes.
         """
 
         async def inner_function():
