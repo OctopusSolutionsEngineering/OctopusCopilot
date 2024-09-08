@@ -7,10 +7,29 @@ from presidio_anonymizer import AnonymizerEngine
 from domain.sanitizers.stringlifier.api import Stringlifier
 from domain.validation.argument_validation import ensure_string
 
+# https://github.com/odomojuli/regextokens
 sensitive_vars = [
     "[Aa][Pp][Ii]-[A-Za-z0-9]+",
-    "xoxe.[A-Za-z0-9-]+",
+    "xoxe.xoxp-1-[0-9a-zA-Z]{166}",
+    "xoxb-[0-9]{11}-[0-9]{11}-[0-9a-zA-Z]{24}",
+    "xoxp-[0-9]{11}-[0-9]{11}-[0-9a-zA-Z]{24}",
+    "xoxe-1-[0-9a-zA-Z]{147}",
+    "T[a-zA-Z0-9_]{8}/B[a-zA-Z0-9_]{8}/[a-zA-Z0-9_]{24}",
+    "AKIA[0-9A-Z]{16}",
+    "[0-9a-zA-Z/+]{40}",
+    "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+    "[A-Za-z0-9_]{21}--[A-Za-z0-9_]{8}",
+    "AIza[0-9A-Za-z-_]{35}",
+    "4/[0-9A-Za-z-_]+",
+    "1/[0-9A-Za-z-]{43}|1/[0-9A-Za-z-]{64}",
+    "[0-9a-zA-Z-_]{24}",
+    "ya29.[0-9A-Za-z-_]+",
     "ghp_[A-Za-z0-9-]+",
+    "^github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59}$",
+    "^gho_[a-zA-Z0-9]{36}$",
+    "^ghu_[a-zA-Z0-9]{36}$",
+    "^ghs_[a-zA-Z0-9]{36}$",
+    "^ghr_[a-zA-Z0-9]{36}$",
 ]
 # From https://github.com/adobe/stringlifier with some minor modifications to work with the latest
 # versions of numpy.
