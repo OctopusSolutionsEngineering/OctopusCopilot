@@ -1,6 +1,7 @@
+import re
+
 from bs4 import BeautifulSoup
 from markdown import markdown
-import re
 
 
 def markdown_to_text(markdown_string):
@@ -17,4 +18,5 @@ def markdown_to_text(markdown_string):
     soup = BeautifulSoup(html, "html.parser")
     text = "".join(soup.findAll(text=True))
 
-    return text
+    # Return plain text
+    return re.sub("[^A-Za-z0-9]", " ", text)
