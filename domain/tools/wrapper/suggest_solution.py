@@ -1,6 +1,5 @@
 import asyncio
 import re
-from functools import reduce
 
 from slack_sdk.web.async_client import AsyncWebClient
 
@@ -535,15 +534,13 @@ async def get_tickets_comments(tickets, zendesk_user, zendesk_token):
 
 async def combine_ticket_comments(ticket_id, zendesk_user, zendesk_token):
     comments = await get_zen_comments(ticket_id, zendesk_user, zendesk_token)
-    combined_comments = "\n".join(
-        [
-            minify_strings(replace_space_codes(comment["body"]))
-            for comment in comments["comments"]
-            if comment["public"]
-        ]
-    )
+    combined_comments = [comments["subject"]] + [
+        minify_strings(replace_space_codes(comment["body"]))
+        for comment in comments["comments"]
+        if comment["public"]
+    ]
 
     # If we need to strip PII from the comments, we can do it here
     # combined_comments = anonymize_message(sanitize_message(combined_comments))
 
-    return combined_comments
+    return "\n".join(combined_comments)
