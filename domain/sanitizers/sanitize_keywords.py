@@ -3,7 +3,7 @@ def sanitize_keywords(keywords, max_keywords):
     invalid_keywords = ["octopus", "octopus deploy", "octopusdeploy"]
     filtered_keywords = [
         keyword
-        for keyword in keywords
+        for keyword in set(keywords)
         if keyword.casefold().strip() not in invalid_keywords
     ]
     return filtered_keywords[:max_keywords]

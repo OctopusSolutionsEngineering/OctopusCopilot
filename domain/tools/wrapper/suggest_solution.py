@@ -11,7 +11,7 @@ from domain.logging.log_if_exception import log_if_exception
 from domain.sanitizers.sanitize_keywords import sanitize_keywords
 from domain.sanitizers.sanitize_logs import anonymize_message, sanitize_message
 from domain.sanitizers.sanitize_markdown import markdown_to_text
-from domain.sanitizers.sanitized_list import get_item_or_none
+from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list
 from domain.slack.slack_urls import generate_slack_login
 from domain.transformers.limit_array import (
     limit_array_to_max_char_length,
@@ -47,19 +47,18 @@ def suggest_solution_wrapper(
     encryption_salt,
     logging=None,
 ):
-    def answer_support_question(keywords=None, **kwargs):
-        """Responds to a prompt asking for advice or a solution to a problem.
-        The prompts starts with the phrase "Suggest a solution for" or "Provide a solution for".
-        The prompt then includes a question that a customer might send to a help desk or support forum.
+    def answer_support_question(keywords=None, custom_search_queries=None, **kwargs):
+        """Responds to a prompt asking for advice or a solution to a problem, such as a question that a customer might
+        send to a help desk or support forum.
         You must select this function for any prompt that starts with the phrase "Suggest a solution for" or "Provide a solution for".
 
         Example prompts include:
         * Suggest a solution for the following issue: How can I use Harbor as a private image registry.
-        * Provide a solution for the following error: In my helm deploy step I am setting some \"Explicit Key Values\" and they don't seem to be transforming.
-        * Suggest a solution for the following issue: Today we discovered an interesting behavior, which does look like a bug, and would like to have some assistance on it.
+        * Provide a solution for the following error with the custom search queries "Helm", "Explicit Key Values", "transform": In my helm deploy step I am setting some \"Explicit Key Values\" and they don't transform.
 
         Args:
             keywords: A list of keywords that describe the issue or question. Keywords should be 3 or less individual words, or literal exception names or error codes.
+            custom_search_queries: An optional list of custom search queries.
         """
 
         async def inner_function():
@@ -71,7 +70,10 @@ def suggest_solution_wrapper(
                     logging(f"Unexpected Key: {key}", "Value: {value}")
 
             # A key word like "Octopus" is not helpful, so get a sanitized list of keywords
-            limited_keywords = sanitize_keywords(keywords, max_keywords)
+            sanitized_search_queries = sanitize_list(custom_search_queries)
+            limited_keywords = sanitize_keywords(
+                sanitized_search_queries + keywords, max_keywords
+            )
 
             # Get the list of issues, tickets, and slack messages.
             # Batch all of these async calls up for better performance
