@@ -2,7 +2,6 @@ import json
 import os
 import time
 import unittest
-import uuid
 from datetime import datetime
 
 import azure.functions as func
@@ -21,7 +20,7 @@ from domain.url.session import create_session_blob
 from function_app import copilot_handler_internal
 from infrastructure.octopus import (
     run_published_runbook_fuzzy,
-    get_space_id_and_name_from_name
+    get_space_id_and_name_from_name,
 )
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.infrastructure.cancel_task import cancel_task
@@ -339,7 +338,7 @@ class CopilotChatTest(unittest.TestCase):
         project_name = "Prompted Variable Project"
         version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         deploy_environment = "Development"
-        prompt = f'Create release in the "{project_name}" project with version \"{version}\" and deploy to the "{deploy_environment}" environment with the variables slot=, notify=false'
+        prompt = f'Create release in the "{project_name}" project with version "{version}" and deploy to the "{deploy_environment}" environment with the variables slot=, notify=false'
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
@@ -398,8 +397,11 @@ class CopilotChatTest(unittest.TestCase):
         response_text = convert_from_sse_response(
             run_response.get_body().decode("utf8")
         )
-        self.assertTrue(f"Deployment of {project_name} release " and f"to {deploy_environment}" in response_text,
-                        "Response was " + response_text)
+        self.assertTrue(
+            f"Deployment of {project_name} release "
+            and f"to {deploy_environment}" in response_text,
+            "Response was " + response_text,
+        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_deploy_release(self):
@@ -524,8 +526,10 @@ class CopilotChatTest(unittest.TestCase):
             space_name="Simple", project_name=project_name, release_version=version
         )
         deploy_environment = "Development"
-        prompt = (f"Deploy release version \"{release['Version']}\" for project \"{project_name}\" to the "
-                  f"\"{deploy_environment}\" environment with variables notify=false, slot=Staging")
+        prompt = (
+            f"Deploy release version \"{release['Version']}\" for project \"{project_name}\" to the "
+            f'"{deploy_environment}" environment with variables notify=false, slot=Staging'
+        )
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
@@ -1153,7 +1157,7 @@ class CopilotChatTest(unittest.TestCase):
         )
         # Create another release without a tenant to ensure the query is actually doing a search and not
         # returning the first version it finds
-        untenanted_version = str(uuid.uuid4())
+        untenanted_version = datetime.now().strftime("%Y%m%d.%H.%M.%S") + "-untenanted"
         untenanted_deployment = create_and_deploy_release(
             space_name="Simple",
             project_name="Deploy AWS Lambda",
@@ -1182,19 +1186,20 @@ class CopilotChatTest(unittest.TestCase):
             or "⚪" in response_text,
             "Response was " + response_text,
         )
-        self.assertTrue(
-            "Simple / Deploy AWS Lambda" in response_text,
+        self.assertIn(
+            "Simple / Deploy AWS Lambda",
+            response_text,
             "Response was " + response_text,
         )
-        self.assertTrue("Marketing" in response_text, "Response was " + response_text)
-        self.assertTrue(version in response_text, "Response was " + response_text)
-        self.assertTrue(
-            untenanted_version in response_text, "Response was " + response_text
+        self.assertIn("Marketing", response_text, "Response was " + response_text)
+        self.assertIn(version, response_text, "Response was " + response_text)
+        self.assertIn(
+            untenanted_version, response_text, "Response was " + response_text
         )
-        self.assertTrue(
-            "This is a highlight" in response_text, "Response was " + response_text
+        self.assertIn(
+            "This is a highlight", response_text, "Response was " + response_text
         )
-        self.assertTrue("file.txt" in response_text, "Response was " + response_text)
+        self.assertIn("file.txt", response_text, "Response was " + response_text)
         print(response_text)
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)

@@ -149,20 +149,21 @@ def get_github_token(req: func.HttpRequest):
     try:
         cookie = SimpleCookie()
         cookie.load(req.headers["Cookie"])
-        session = cookie["session"].value
+        session = cookie.get("session")
 
-        encrypted_token = json.loads(decode_string_b64(session))
+        if session:
+            encrypted_token = json.loads(decode_string_b64(session.value))
 
-        return decrypt_eax(
-            generate_password(
-                os.environ.get("ENCRYPTION_PASSWORD"),
+            return decrypt_eax(
+                generate_password(
+                    os.environ.get("ENCRYPTION_PASSWORD"),
+                    os.environ.get("ENCRYPTION_SALT"),
+                ),
+                encrypted_token.get("state"),
+                encrypted_token.get("tag"),
+                encrypted_token.get("nonce"),
                 os.environ.get("ENCRYPTION_SALT"),
-            ),
-            encrypted_token.get("state"),
-            encrypted_token.get("tag"),
-            encrypted_token.get("nonce"),
-            os.environ.get("ENCRYPTION_SALT"),
-        )
+            )
     except Exception as e:
         logger.info("State cookie could not be decoded")
 
