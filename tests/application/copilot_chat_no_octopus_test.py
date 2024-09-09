@@ -242,15 +242,14 @@ From your diagram, the hosting company Octopus instance (UL-Octopus) is where de
 
         # This response could be anything, but it should mention tentacle
         print(response_text)
-        self.assertTrue(
-            "Helm" in response_text.casefold(), "Response was " + response_text
-        )
-        self.assertTrue(
-            "Explicit Key Values" in response_text.casefold(),
+        self.assertIn("helm", response_text.casefold(), "Response was " + response_text)
+        self.assertIn(
+            "explicit key values",
+            response_text.casefold(),
             "Response was " + response_text,
         )
-        self.assertTrue(
-            "transform" in response_text.casefold(), "Response was " + response_text
+        self.assertIn(
+            "transform", response_text.casefold(), "Response was " + response_text
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -259,19 +258,23 @@ From your diagram, the hosting company Octopus instance (UL-Octopus) is where de
         response = copilot_handler_internal(build_no_octopus_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        self.assertTrue(
-            'resource "octopusdeploy_environment"' in response_text.casefold(),
+        self.assertIn(
+            'resource "octopusdeploy_environment"',
+            response_text.casefold(),
             "Response was " + response_text,
         )
-        self.assertTrue(
-            'resource "octopusdeploy_project_group"' in response_text.casefold(),
+        self.assertIn(
+            'resource "octopusdeploy_project_group"',
+            response_text.casefold(),
             "Response was " + response_text,
         )
-        self.assertTrue(
-            'resource "octopusdeploy_project"' in response_text.casefold(),
+        self.assertIn(
+            'resource "octopusdeploy_project"',
+            response_text.casefold(),
             "Response was " + response_text,
         )
-        self.assertTrue(
-            'resource "octopusdeploy_deployment_process"' in response_text.casefold(),
+        self.assertIn(
+            'resource "octopusdeploy_deployment_process"',
+            response_text.casefold(),
             "Response was " + response_text,
         )
