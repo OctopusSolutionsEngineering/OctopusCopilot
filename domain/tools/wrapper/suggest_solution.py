@@ -152,27 +152,27 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    "The supplied Conversations are related to the same topics as the question being asked.",
+                    'The supplied "Related Conversation" items may include solutions to the question being asked.',
                 ),
                 (
                     "system",
-                    "The supplied issues are related to bugs related to the same topics as the question being asked.",
+                    'The supplied "Related GitHub Issue" items may include solutions to the question being asked.',
                 ),
                 (
                     "system",
-                    "The supplied slack messages are related to the same topics as the question being asked.",
+                    'The supplied "Related Slack Message" items may include solutions to the question being asked.',
                 ),
                 (
                     "system",
-                    "The supplied previous conversation list previous questions from the person who submitted the current question.",
+                    'The supplied "Related Documentation" items may include solutions to the question being asked.',
                 ),
                 (
                     "system",
-                    "Include any potential solutions that were provided in the supplied conversations and issues in the answer.",
+                    "Include any potential solutions that were provided in the supplied context in the answer.",
                 ),
                 (
                     "system",
-                    "Include any troubleshooting steps that were provided in the supplied conversations and issues in the answer.",
+                    "Include any troubleshooting steps that were provided in the supplied context in the answer.",
                 ),
                 (
                     "system",
@@ -188,7 +188,7 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    "The fourth section must summarize the conversation supplied with the prompt 'Summary'. The first paragraph must summarize the original question. The second paragraph must summarize the the question. The third paragraph must list any outstanding questions or actions to be taken. If the question is too simple to require a summary, the section can be omitted. You will be penalized for including the content of related conversations in this summary.",
+                    "The fourth section must summarize the conversation supplied with the prompt 'Summary'. The first paragraph must summarize the original question. You will be penalized for including the content of any.",
                 ),
                 (
                     "system",
