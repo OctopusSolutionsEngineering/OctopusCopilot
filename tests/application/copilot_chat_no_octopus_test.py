@@ -233,7 +233,8 @@ From your diagram, the hosting company Octopus instance (UL-Octopus) is where de
     @retry(RateLimitError, tries=3, delay=2)
     def test_general_solution5(self):
         prompt = minify_strings(
-            """Suggest a solution for the following issue with the custom search queries "Helm", "Explicit Key Values", "transform": I have multiple tentacles shared between spaces. Are these tentacles counted as 1 item in the license, or does each tentacle count multiple times under the license?
+            """Suggest a solution for the following issue with the custom search queries "Helm", "Explicit Key Values", "transform": 
+            I have multiple tentacles shared between spaces. Are these tentacles counted as 1 item in the license, or does each tentacle count multiple times under the license?
             """
         )
         response = copilot_handler_internal(build_no_octopus_request(prompt))
