@@ -1,33 +1,3 @@
-variable "Application.Octoterra.Url[OLD]" {
-    value "https://octoterraproduction.azurewebsites.net" {}
-}
-
-variable "Application.Production.HealthCheck[OLD]" {
-    value "https://octopuscopilotproduction.azurewebsites.net/api/health" {}
-}
-
-variable "Application.Staging.HealthCheck[OLD]" {
-    value "https://octopuscopilotproduction-staging.azurewebsites.net/api/health" {}
-}
-
-variable "Azure.Function.Name[OLD]" {
-    value "octopuscopilotproduction" {}
-}
-
-variable "Azure.ResourceGroup.Name[OLD]" {
-    value "OctopusCopilot" {}
-}
-
-variable "GitHub.Oauth.ClientId[OLD]" {
-    value "982539418ce22f8d6ca7" {}
-}
-
-variable "Octopus.Azure.Account[OLD]" {
-    type = "AzureAccount"
-
-    value "azure-solutions-engineering" {}
-}
-
 variable "OctopusPrintVariables" {
     value "False" {}
 }
