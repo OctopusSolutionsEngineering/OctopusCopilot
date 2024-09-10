@@ -11,5 +11,5 @@ class CreateCookieTest(unittest.TestCase):
         self.assertTrue(cookie["session"]["secure"])
         self.assertEqual(
             cookie["session"].OutputString(),
-            f"session=123; expires={cookie["session"]["expires"]}; Path=/; SameSite=Strict; Secure",
+            f"session=123; expires={cookie['session']['expires']}; Path=/; SameSite=Strict; Secure",
         )
