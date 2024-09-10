@@ -93,6 +93,7 @@ jobs:
             echo "No tests collected.  Exiting with 0 (instead of 5)."
             exit 0
           fi
+          ls -la
           exit "$ret"
         env:
           # These are the details of Slack
