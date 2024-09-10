@@ -36,9 +36,6 @@ jobs:
       - name: Linting
         shell: bash
         run: find . -path ./domain/sanitizers/stringlifier -prune -o -path ./venv -prune -o -name "*.py" -print0 | xargs -0 -n1 pycodestyle --ignore=E501,W503,E126
-      #      - name: Complexity Report
-      #        shell: bash
-      #        run: find . -path ./domain/sanitizers/stringlifier -prune -o -path ./tests -prune -o -path ./venv -prune -o -path ./.venv -prune -o -name "*.py" -print0 | xargs -0 -n1 radon cc -nc
       - name: Complexity Enforcement
         shell: bash
         run: find . -path ./domain/sanitizers/stringlifier -prune -o -path ./tests -prune -o -path ./venv -prune -o -path ./.venv -prune -o -name "*.py" -print0 | xargs -0 -n1 xenon --max-absolute C
@@ -48,7 +45,7 @@ jobs:
     needs: validate
     strategy:
       matrix:
-        group: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+        group: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ]
     steps:
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -213,6 +210,11 @@ jobs:
           "junit-test-summary-8/*.xml" 
           "junit-test-summary-9/*.xml" 
           "junit-test-summary-10/*.xml" 
+          "junit-test-summary-11/*.xml" 
+          "junit-test-summary-12/*.xml" 
+          "junit-test-summary-13/*.xml" 
+          "junit-test-summary-14/*.xml" 
+          "junit-test-summary-15/*.xml" 
 
       - if: always()
         name: Report
