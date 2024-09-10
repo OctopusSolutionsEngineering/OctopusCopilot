@@ -66,6 +66,7 @@ from domain.tools.wrapper.releases_and_deployments import (
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.transformers.minify_strings import minify_strings
 from domain.transformers.sse_transformers import convert_to_sse_response
+from domain.url.build_cookie import create_cookie
 from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
 from domain.url.url_builder import base_request_url
@@ -202,14 +203,15 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
             os.environ.get("ENCRYPTION_SALT"),
         )
 
-        # Normally the session information would be persisted in a cookie. I could not get Azure functions to pass
-        # through a cookie. So we pass it as a query param.
+        # Create a session cookie that will be used to maintain the user's state
+        session_cookie = create_cookie("session", session_json, 7)
+
         return func.HttpResponse(
             status_code=301,
             headers={
                 "Location": f"{base_request_url(req)}/api/octopus?redirect="
                 + quote_safe(redirect),
-                "Set-Cookie": f"session={session_json}; Secure; SameSite=Strict; Path=/",
+                "Set-Cookie": session_cookie["session"].OutputString(),
             },
         )
     except Exception as e:
