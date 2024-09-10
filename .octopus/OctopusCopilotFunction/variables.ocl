@@ -41,7 +41,7 @@ variable "SystemVariable" {
 }
 
 variable "Application.Users.Admin" {
-    value "[160104, 1418993, 38642825, 78527975, 18252832, 83265184]" {
+    value "[160104, 1418993, 38642825, 78527975, 18252832, 83265184, 20388190]" {
         description = "Find users at the url https://api.github.com/user/:id"
     }
 }
