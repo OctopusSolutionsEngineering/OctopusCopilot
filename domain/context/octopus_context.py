@@ -15,12 +15,34 @@ max_chars = 10000 * 4
 max_chars_128 = 100000 * 4
 
 
-def collect_llm_context(original_query, messages, context, space_id, project_names, runbook_names, target_names,
-                        tenant_names,
-                        library_variable_sets, environment_names, feed_names, account_names, certificate_names,
-                        lifecycle_names, workerpool_names, machinepolicy_names, tagset_names, projectgroup_names,
-                        channel_names, release_versions, step_names, variable_names, dates, api_key,
-                        octopus_url, log_query):
+def collect_llm_context(
+    original_query,
+    messages,
+    context,
+    space_id,
+    project_names,
+    runbook_names,
+    target_names,
+    tenant_names,
+    library_variable_sets,
+    environment_names,
+    feed_names,
+    account_names,
+    certificate_names,
+    lifecycle_names,
+    workerpool_names,
+    machinepolicy_names,
+    tagset_names,
+    projectgroup_names,
+    channel_names,
+    release_versions,
+    step_names,
+    variable_names,
+    dates,
+    api_key,
+    octopus_url,
+    log_query,
+):
     """
     We need to source context for the LLM from multiple locations. "Static" resources are defined using Terraform,
     as this is a publicly documented format the LLM may have had an opportunity to scrape that also has the benefit of
@@ -41,11 +63,16 @@ def collect_llm_context(original_query, messages, context, space_id, project_nam
     :return: The query result
     """
 
-    ensure_string_starts_with(space_id, 'Spaces-',
-                              'space_id must be a non-empty string starting with "Spaces-" (collect_llm_context).')
+    ensure_string_starts_with(
+        space_id,
+        "Spaces-",
+        'space_id must be a non-empty string starting with "Spaces-" (collect_llm_context).',
+    )
 
     if log_query:
-        log_query("collect_llm_context", f"""
+        log_query(
+            "collect_llm_context",
+            f"""
             Space Id: {space_id}
             Project Names: {project_names}
             Runbook Names: {runbook_names}
@@ -64,33 +91,36 @@ def collect_llm_context(original_query, messages, context, space_id, project_nam
             Release Versions: {release_versions}
             Steps: {step_names}
             Variables: {variable_names}
-            Dates: {dates}""")
+            Dates: {dates}""",
+        )
 
     # This context provides details about resources like projects, environments, feeds, accounts, certificates, etc.
-    hcl, include_all_resources = get_octoterra_space(original_query,
-                                                     space_id,
-                                                     project_names,
-                                                     runbook_names,
-                                                     target_names,
-                                                     tenant_names,
-                                                     library_variable_sets,
-                                                     environment_names,
-                                                     feed_names,
-                                                     account_names,
-                                                     certificate_names,
-                                                     lifecycle_names,
-                                                     workerpool_names,
-                                                     machinepolicy_names,
-                                                     tagset_names,
-                                                     projectgroup_names,
-                                                     step_names,
-                                                     variable_names,
-                                                     api_key,
-                                                     octopus_url,
-                                                     log_query)
+    hcl, include_all_resources = get_octoterra_space(
+        original_query,
+        space_id,
+        project_names,
+        runbook_names,
+        target_names,
+        tenant_names,
+        library_variable_sets,
+        environment_names,
+        feed_names,
+        account_names,
+        certificate_names,
+        lifecycle_names,
+        workerpool_names,
+        machinepolicy_names,
+        tagset_names,
+        projectgroup_names,
+        step_names,
+        variable_names,
+        api_key,
+        octopus_url,
+        log_query,
+    )
 
     minified_hcl = minify_strings(hcl)
-    available_chars = max_chars
+    available_chars = max_chars_128
 
     if context.get("json"):
         available_chars -= len(context["json"])
@@ -100,15 +130,19 @@ def collect_llm_context(original_query, messages, context, space_id, project_nam
 
     # Trim the HCL to fit within the token limit
     context["hcl"] = minified_hcl[:available_chars]
-    context["percent_trimmed"] = round((len(minified_hcl) - len(context["hcl"])) / len(minified_hcl) * 100, 2)
+    context["percent_trimmed"] = round(
+        (len(minified_hcl) - len(context["hcl"])) / len(minified_hcl) * 100, 2
+    )
 
     answer = llm_message_query(messages, context, log_query)
 
     # Broad questions are inaccurate, so add a warning when resources are included in the context in bulk.
     if len(include_all_resources) != 0:
-        answer += ("\n\nNOTE: The question may be too broad to generate an accurate answer."
-                   + f"\nProvide specific names for the following resources to generate a more accurate answer: {', '.join(include_all_resources)}."
-                   + "\nSee https://github.com/OctopusSolutionsEngineering/OctopusCopilot/wiki/Prompt-Engineering-with-Octopus for more details.")
+        answer += (
+            "\n\nNOTE: The question may be too broad to generate an accurate answer."
+            + f"\nProvide specific names for the following resources to generate a more accurate answer: {', '.join(include_all_resources)}."
+            + "\nSee https://github.com/OctopusSolutionsEngineering/OctopusCopilot/wiki/Prompt-Engineering-with-Octopus for more details."
+        )
     elif context["percent_trimmed"] != 0:
         answer += f"\n\nNOTE: The space context was trimmed by {context['percent_trimmed']}% to fit within the token limit. The answer may be based on incomplete information."
 
