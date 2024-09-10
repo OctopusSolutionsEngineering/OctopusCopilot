@@ -127,13 +127,13 @@ jobs:
         shell: bash
 
       - name: Upload coverage
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: coverage${{ matrix.group }}
           path: .coverage
 
       - name: Upload test artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: junit-test-summary-${{ matrix.group }}
           path: results.xml
@@ -243,7 +243,7 @@ jobs:
         run: pip install pipdeptree; pipdeptree > dependencies.txt
         shell: bash
       - name: Collect Dependencies
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Dependencies
           path: dependencies.txt
@@ -251,7 +251,7 @@ jobs:
         run: python3 -m pip list --outdated --format=json | jq -r '.[] | .name+"="+.latest_version' > dependencyUpdates.txt || true
         shell: bash
       - name: Collect Dependency Updates
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Dependencies Updates
           path: dependencyUpdates.txt
