@@ -9,7 +9,7 @@ from infrastructure.octopus import (
 )
 
 
-def provide_help_wrapper(github_user, url, api_key, log_query):
+def provide_help_wrapper(github_user, octopus_details, log_query):
     def say_hello():
         """Responds to greetings like "hello" or "hi" """
         return provide_help()
@@ -28,6 +28,8 @@ def provide_help_wrapper(github_user, url, api_key, log_query):
         answers questions like "What do you do?" or "How do I get started?" or "how can I use this?" or "What questions can I ask?",
         provides details on how to get started, provides details on how to use the agent, and provides documentation and support.
         """
+
+        api_key, url = octopus_details()
 
         space_name = get_default_argument(github_user, None, "Space")
         first_project = get_default_argument(github_user, None, "Project")

@@ -1,4 +1,6 @@
-def show_runbook_dashboard_wrapper(original_query, api_key, url, callback, log_query):
+def show_runbook_dashboard_wrapper(
+    original_query, octopus_details, callback, log_query
+):
     def show_runbook_dashboard(
         space_name=None, project_name=None, runbook_name=None, **kwargs
     ):
@@ -22,6 +24,8 @@ def show_runbook_dashboard_wrapper(original_query, api_key, url, callback, log_q
         for key, value in kwargs.items():
             if log_query:
                 log_query(f"Unexpected Key: {key}", "Value: {value}")
+
+        api_key, url = octopus_details()
 
         return callback(
             original_query, api_key, url, space_name, project_name, runbook_name
