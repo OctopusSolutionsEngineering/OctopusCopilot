@@ -211,7 +211,7 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
             headers={
                 "Location": f"{base_request_url(req)}/api/octopus?redirect="
                 + quote_safe(redirect),
-                "Set-Cookie": session_cookie["session"].OutputString(),
+                "Set-Cookie": f"session={session_json}; Secure; SameSite=Strict; Path=/",
             },
         )
     except Exception as e:
