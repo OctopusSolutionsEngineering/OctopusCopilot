@@ -11,28 +11,19 @@ from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
-from domain.transformers.clean_response import strip_before_first_curly_bracket
 from domain.transformers.sse_transformers import (
     convert_from_sse_response,
     get_confirmation_id,
 )
 from domain.url.session import create_session_blob
 from function_app import copilot_handler_internal
-from infrastructure.octopus import (
-    run_published_runbook_fuzzy,
-    get_space_id_and_name_from_name,
-)
+
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.application.copilot_chat_test import build_request
-from tests.infrastructure.cancel_task import cancel_task
-from tests.infrastructure.create_and_deploy_release import (
-    create_and_deploy_release,
-    wait_for_task,
-)
+
 from tests.infrastructure.create_release import create_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.octopus_infrastructure_test import run_terraform
-from tests.infrastructure.publish_runbook import publish_runbook
 
 
 class CopilotChatReleaseAndDeployTest(unittest.TestCase):
@@ -495,3 +486,102 @@ class CopilotChatReleaseAndDeployTest(unittest.TestCase):
             in response_text,
             "Response was " + response_text,
         )
+
+
+def build_request(message):
+    """
+    Build a request with the Slack and GitHub tokens passed through headers. Octopus details
+    are expected to be sourced from the database.
+    :param message:
+    :return:
+    """
+    return func.HttpRequest(
+        method="POST",
+        body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
+        url="/api/form_handler",
+        params=None,
+        headers={
+            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"],
+            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
+        },
+    )
+
+
+def build_no_octopus_request(message):
+    """
+    Build a request where all values are passed through headers. This supports tests that do not
+    populate the Azurite database, as all details can be extracted from the headers.
+    :param message:
+    :return:
+    """
+    return func.HttpRequest(
+        method="POST",
+        body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
+        url="/api/form_handler",
+        params=None,
+        headers={
+            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"],
+            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
+            "X-Octopus-ApiKey": Octopus_Api_Key,
+            "X-Octopus-Server": Octopus_Url,
+        },
+    )
+
+
+def build_no_octopus_encrypted_github_request(message):
+    """
+    Build a request where all values are passed through headers. This supports tests that do not
+    populate the Azurite database, as all details can be extracted from the headers.
+    :param message:
+    :return:
+    """
+    session_json = create_session_blob(
+        os.environ["GH_TEST_TOKEN"],
+        os.environ.get("ENCRYPTION_PASSWORD"),
+        os.environ.get("ENCRYPTION_SALT"),
+    )
+
+    return func.HttpRequest(
+        method="POST",
+        body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
+        url="/api/form_handler",
+        params=None,
+        headers={
+            "X-GitHub-Encrypted-Token": session_json,
+            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
+            "X-Octopus-ApiKey": Octopus_Api_Key,
+            "X-Octopus-Server": Octopus_Url,
+        },
+    )
+
+
+def build_confirmation_request(body):
+    return func.HttpRequest(
+        method="POST",
+        body=json.dumps(body).encode("utf8"),
+        url="/api/form_handler",
+        params=None,
+        headers={
+            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"],
+            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
+        },
+    )
+
+
+def build_test_request(message):
+    """
+    Builds a request that directly embeds the API key and server, removing the need to query the GitHub API.
+    :param message:
+    :return:
+    """
+    return func.HttpRequest(
+        method="POST",
+        body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
+        url="/api/form_handler",
+        params=None,
+        headers={
+            "X-Octopus-ApiKey": Octopus_Api_Key,
+            "X-Octopus-Server": Octopus_Url,
+            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
+        },
+    )
