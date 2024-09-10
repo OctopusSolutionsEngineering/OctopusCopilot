@@ -1,6 +1,14 @@
-def sanitize_keywords(keywords, max_keywords):
+def sanitize_keywords(
+    keywords,
+    max_keywords,
+    invalid_keywords=None,
+):
     # A key word like "Octopus" is not helpful
-    invalid_keywords = ["octopus", "octopus deploy", "octopusdeploy"]
+    invalid_keywords = invalid_keywords or [
+        "octopus",
+        "octopus deploy",
+        "octopusdeploy",
+    ]
     filtered_keywords = [
         keyword
         for keyword in keywords
