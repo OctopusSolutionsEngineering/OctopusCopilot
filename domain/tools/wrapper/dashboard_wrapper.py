@@ -1,4 +1,4 @@
-def show_space_dashboard_wrapper(original_query, api_key, url, callback, logging):
+def show_space_dashboard_wrapper(original_query, octopus_details, callback, logging):
     def show_space_dashboard(space_name=None, **kwargs):
         """Displays or shows the space dashboard. Example prompts include:
         * Show the dashboard
@@ -15,6 +15,8 @@ def show_space_dashboard_wrapper(original_query, api_key, url, callback, logging
         for key, value in kwargs.items():
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
+
+        api_key, url = octopus_details()
 
         return callback(original_query, api_key, url, space_name)
 

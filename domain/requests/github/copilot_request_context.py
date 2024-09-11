@@ -327,14 +327,13 @@ def build_form_tools(query, req: func.HttpRequest):
     :return: The OpenAI tools
     """
 
-    api_key, url = get_api_key_and_url(req)
     slack_token = get_slack_token(req)
 
     # A bunch of functions that do the same thing
     help_functions = [
         FunctionDefinition(tool)
         for tool in provide_help_wrapper(
-            get_github_user_from_form(req), url, api_key, log_query
+            get_github_user_from_form(req), lambda: get_api_key_and_url(req), log_query
         )
     ]
 
@@ -355,14 +354,15 @@ def build_form_tools(query, req: func.HttpRequest):
         FunctionDefinition(
             tool,
             callback=approve_manual_intervention_confirm_callback_wrapper(
-                get_github_user_from_form(req), url, api_key, log_query
+                get_github_user_from_form(req),
+                lambda: get_api_key_and_url(req),
+                log_query,
             ),
         )
         for tool in approve_manual_intervention_wrapper(
             query,
             approve_manual_intervention_callback(
-                url,
-                api_key,
+                lambda: get_api_key_and_url(req),
                 get_github_user_from_form(req),
                 get_functions_connection_string(),
                 log_query,
@@ -375,14 +375,15 @@ def build_form_tools(query, req: func.HttpRequest):
         FunctionDefinition(
             tool,
             callback=reject_manual_intervention_confirm_callback_wrapper(
-                get_github_user_from_form(req), url, api_key, log_query
+                get_github_user_from_form(req),
+                lambda: get_api_key_and_url(req),
+                log_query,
             ),
         )
         for tool in reject_manual_intervention_wrapper(
             query,
             reject_manual_intervention_callback(
-                url,
-                api_key,
+                lambda: get_api_key_and_url(req),
                 get_github_user_from_form(req),
                 get_functions_connection_string(),
                 log_query,
@@ -412,10 +413,11 @@ def build_form_tools(query, req: func.HttpRequest):
             FunctionDefinition(
                 show_space_dashboard_wrapper(
                     query,
-                    api_key,
-                    url,
+                    lambda: get_api_key_and_url(req),
                     get_dashboard_callback(
-                        get_github_token(req), get_github_user_from_form(req), log_query
+                        lambda: get_github_token(req),
+                        lambda: get_github_user_from_form(req),
+                        log_query,
                     ),
                     log_query,
                 )
@@ -423,8 +425,7 @@ def build_form_tools(query, req: func.HttpRequest):
             FunctionDefinition(
                 show_runbook_dashboard_wrapper(
                     query,
-                    api_key,
-                    url,
+                    lambda: get_api_key_and_url(req),
                     get_runbook_dashboard_callback(get_github_user_from_form(req)),
                     log_query,
                 )
@@ -432,8 +433,7 @@ def build_form_tools(query, req: func.HttpRequest):
             FunctionDefinition(
                 show_project_dashboard_wrapper(
                     query,
-                    api_key,
-                    url,
+                    lambda: get_api_key_and_url(req),
                     get_project_dashboard_callback(
                         get_github_user_from_form(req), get_github_token(req), log_query
                     ),
@@ -444,7 +444,9 @@ def build_form_tools(query, req: func.HttpRequest):
                 answer_general_query_wrapper(
                     query,
                     general_query_callback(
-                        get_github_user_from_form(req), api_key, url, log_query
+                        get_github_user_from_form(req),
+                        lambda: get_api_key_and_url(req),
+                        log_query,
                     ),
                     log_query,
                 ),
@@ -454,7 +456,9 @@ def build_form_tools(query, req: func.HttpRequest):
                 answer_step_features_wrapper(
                     query,
                     general_query_callback(
-                        get_github_user_from_form(req), api_key, url, log_query
+                        get_github_user_from_form(req),
+                        lambda: get_api_key_and_url(req),
+                        log_query,
                     ),
                     log_query,
                 )
@@ -463,7 +467,9 @@ def build_form_tools(query, req: func.HttpRequest):
                 answer_project_variables_wrapper(
                     query,
                     variable_query_callback(
-                        get_github_user_from_form(req), api_key, url, log_query
+                        get_github_user_from_form(req),
+                        lambda: get_api_key_and_url(req),
+                        log_query,
                     ),
                     log_query,
                 )
@@ -472,7 +478,9 @@ def build_form_tools(query, req: func.HttpRequest):
                 answer_project_variables_usage_wrapper(
                     query,
                     variable_query_callback(
-                        get_github_user_from_form(req), api_key, url, log_query
+                        get_github_user_from_form(req),
+                        lambda: get_api_key_and_url(req),
+                        log_query,
                     ),
                     log_query,
                 )
@@ -481,7 +489,9 @@ def build_form_tools(query, req: func.HttpRequest):
                 answer_project_deployment_logs_wrapper(
                     query,
                     logs_callback(
-                        get_github_user_from_form(req), api_key, url, log_query
+                        get_github_user_from_form(req),
+                        lambda: get_api_key_and_url(req),
+                        log_query,
                     ),
                     log_query,
                 )
@@ -490,7 +500,9 @@ def build_form_tools(query, req: func.HttpRequest):
                 show_task_summary_wrapper(
                     query,
                     get_task_summary_callback(
-                        get_github_user_from_form(req), api_key, url, log_query
+                        get_github_user_from_form(req),
+                        lambda: get_api_key_and_url(req),
+                        log_query,
                     ),
                     log_query,
                 )
@@ -499,7 +511,9 @@ def build_form_tools(query, req: func.HttpRequest):
                 answer_runbook_run_logs_wrapper(
                     query,
                     get_runbook_logs_wrapper(
-                        get_github_user_from_form(req), api_key, url, log_query
+                        get_github_user_from_form(req),
+                        lambda: get_api_key_and_url(req),
+                        log_query,
                     ),
                     log_query,
                 )
@@ -508,7 +522,9 @@ def build_form_tools(query, req: func.HttpRequest):
                 answer_releases_and_deployments_wrapper(
                     query,
                     releases_query_callback(
-                        get_github_user_from_form(req), api_key, url, log_query
+                        get_github_user_from_form(req),
+                        lambda: get_api_key_and_url(req),
+                        log_query,
                     ),
                     releases_query_messages(get_github_user_from_form(req)),
                     log_query,
@@ -518,7 +534,9 @@ def build_form_tools(query, req: func.HttpRequest):
                 answer_machines_wrapper(
                     query,
                     resource_specific_callback(
-                        get_github_user_from_form(req), api_key, url, log_query
+                        get_github_user_from_form(req),
+                        lambda: get_api_key_and_url(req),
+                        log_query,
                     ),
                     log_query,
                 )
@@ -527,7 +545,9 @@ def build_form_tools(query, req: func.HttpRequest):
                 answer_certificates_wrapper(
                     query,
                     resource_specific_callback(
-                        get_github_user_from_form(req), api_key, url, log_query
+                        get_github_user_from_form(req),
+                        lambda: get_api_key_and_url(req),
+                        log_query,
                     ),
                     log_query,
                 )
@@ -549,8 +569,7 @@ def build_form_tools(query, req: func.HttpRequest):
                 run_runbook_wrapper(
                     query,
                     callback=run_runbook_callback(
-                        url,
-                        api_key,
+                        lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
                         get_functions_connection_string(),
                         log_query,
@@ -558,15 +577,16 @@ def build_form_tools(query, req: func.HttpRequest):
                     logging=log_query,
                 ),
                 callback=run_runbook_confirm_callback_wrapper(
-                    get_github_user_from_form(req), url, api_key, log_query
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
                 ),
             ),
             FunctionDefinition(
                 create_release_wrapper(
                     query,
                     callback=create_release_callback(
-                        url,
-                        api_key,
+                        lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
                         get_functions_connection_string(),
                         log_query,
@@ -574,15 +594,16 @@ def build_form_tools(query, req: func.HttpRequest):
                     logging=log_query,
                 ),
                 callback=create_release_confirm_callback_wrapper(
-                    get_github_user_from_form(req), url, api_key, log_query
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
                 ),
             ),
             FunctionDefinition(
                 deploy_release_wrapper(
                     query,
                     callback=deploy_release_callback(
-                        url,
-                        api_key,
+                        lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
                         get_functions_connection_string(),
                         log_query,
@@ -590,7 +611,9 @@ def build_form_tools(query, req: func.HttpRequest):
                     logging=log_query,
                 ),
                 callback=deploy_release_confirm_callback_wrapper(
-                    get_github_user_from_form(req), url, api_key, log_query
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
                 ),
             ),
             *approval_interruption_functions,
@@ -599,8 +622,7 @@ def build_form_tools(query, req: func.HttpRequest):
                 cancel_task_wrapper(
                     query,
                     callback=cancel_task_callback(
-                        url,
-                        api_key,
+                        lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
                         get_functions_connection_string(),
                         log_query,
@@ -608,15 +630,16 @@ def build_form_tools(query, req: func.HttpRequest):
                     logging=log_query,
                 ),
                 callback=cancel_task_confirm_callback_wrapper(
-                    get_github_user_from_form(req), url, api_key, log_query
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
                 ),
             ),
             FunctionDefinition(
                 cancel_deployment_wrapper(
                     query,
                     callback=cancel_deployment_callback(
-                        url,
-                        api_key,
+                        lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
                         get_functions_connection_string(),
                         log_query,
@@ -624,15 +647,16 @@ def build_form_tools(query, req: func.HttpRequest):
                     logging=log_query,
                 ),
                 callback=cancel_task_confirm_callback_wrapper(
-                    get_github_user_from_form(req), url, api_key, log_query
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
                 ),
             ),
             FunctionDefinition(
                 cancel_runbook_run_wrapper(
                     query,
                     callback=cancel_runbook_run_callback(
-                        url,
-                        api_key,
+                        lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
                         get_functions_connection_string(),
                         log_query,
@@ -640,7 +664,9 @@ def build_form_tools(query, req: func.HttpRequest):
                     logging=log_query,
                 ),
                 callback=cancel_task_confirm_callback_wrapper(
-                    get_github_user_from_form(req), url, api_key, log_query
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
                 ),
             ),
             FunctionDefinition(
@@ -693,7 +719,9 @@ def build_form_tools(query, req: func.HttpRequest):
             answer_general_query_wrapper(
                 query,
                 general_query_callback(
-                    get_github_user_from_form(req), api_key, url, log_query
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
                 ),
                 log_query,
             ),
