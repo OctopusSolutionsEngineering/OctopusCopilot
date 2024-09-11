@@ -221,6 +221,7 @@
     }
 
     const queryValue = getQueryParam('query');
+    const redirected = getQueryParam('redirected');
     if (queryValue) {
         sanitized_value = DOMPurify.sanitize(queryValue)
         document.getElementById('query').value = sanitized_value
@@ -228,9 +229,19 @@
             queryHistory.push(sanitized_value)
             updateHistory()
         }
+    } else if (redirected === "true") {
+        loadLatestHistory()
     }
 
-    var processing = false
+    function loadLatestHistory() {
+        const savedHistory = localStorage.getItem("queryHistory");
+        if (savedHistory) {
+            queryHistory = JSON.parse(savedHistory)
+            if (queryHistory.length > 0) {
+                query.value = DOMPurify.sanitize(queryHistory[queryHistory.length - 1])
+            }
+        }
+    }
 
     function updateHistory() {
         if (queryHistory.length > 5) {
@@ -260,6 +271,8 @@
             historyList.appendChild(li)
         })
     }
+
+    var processing = false
 
     async function processQuery(event) {
         // If the session has expired, we prompt to log in again.
