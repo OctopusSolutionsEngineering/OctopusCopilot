@@ -99,6 +99,8 @@ def run_runbook_callback(octopus_details, github_user, connection_string, log_qu
         variables=None,
     ):
 
+        api_key, url = octopus_details()
+
         debug_text = get_params_message(
             github_user,
             True,
