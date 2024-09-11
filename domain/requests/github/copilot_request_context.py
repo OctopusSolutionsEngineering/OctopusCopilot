@@ -703,7 +703,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     get_github_token(req),
                     get_zendesk_user(),
                     get_zendesk_token(),
-                    slack_token,
+                    lambda: get_slack_token(req),
                     get_storyblok_token(),
                     os.environ.get("ENCRYPTION_PASSWORD"),
                     os.environ.get("ENCRYPTION_SALT"),

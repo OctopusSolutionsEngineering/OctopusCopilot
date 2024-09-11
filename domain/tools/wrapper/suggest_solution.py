@@ -41,7 +41,7 @@ def suggest_solution_wrapper(
     github_token,
     zendesk_user,
     zendesk_token,
-    slack_token,
+    slack_token_func,
     storyblok_token,
     encryption_password,
     encryption_salt,
@@ -68,6 +68,8 @@ def suggest_solution_wrapper(
             for key, value in kwargs.items():
                 if logging:
                     logging(f"Unexpected Key: {key}", "Value: {value}")
+
+            slack_token = slack_token_func()
 
             # A key word like "Octopus" is not helpful, so get a sanitized list of keywords
             sanitized_search_queries = sanitize_list(custom_search_queries)
