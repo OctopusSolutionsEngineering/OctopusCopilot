@@ -147,6 +147,8 @@
     // Enable or disable fields based on login state
     checkLogin()
 
+    updateHistoryLinkState()
+
     function sanitizeBase64(input) {
         if (!input) {
             return null
@@ -178,6 +180,14 @@
         }
     }
 
+    function updateHistoryLinkState() {
+        if (getSessionCookie()) {
+            enableHistoryLinks()
+        } else {
+            disableHistoryLinks()
+        }
+    }
+
     function checkLogin() {
         const githubLoginButton = document.getElementById('github_login')
         const githubLoginButtonWarning = document.getElementById('github_login_warning')
@@ -190,14 +200,12 @@
             submitButton.disabled = false
             queryTextArea.disabled = false
             githubLoginButtonWarning.style.display = "none"
-            enableHistoryLinks()
         } else {
             githubLoginButton.innerText = "GitHub Login"
             githubLoginButton.onclick = githubLogin
             submitButton.disabled = true
             queryTextArea.disabled = true
             githubLoginButtonWarning.style.display = "block"
-            disableHistoryLinks()
         }
     }
 
@@ -210,6 +218,7 @@
         if (confirm("Are you sure you want to log out? This is typically only required if something is broken.")) {
             setCookie('session', null, 1)
             checkLogin()
+            updateHistoryLinkState()
         }
     }
 
@@ -244,10 +253,11 @@
     if (queryValue) {
         sanitized_value = DOMPurify.sanitize(queryValue)
         document.getElementById('query').value = sanitized_value
-        if (queryHistory.indexOf(sanitized_value) === -1) {
-            queryHistory.push(sanitized_value)
-            updateHistory()
-        }
+        // Remove any existing value from the history
+        queryHistory = queryHistory.filter(x => x !== sanitized_value)
+        // push the new query to the end
+        queryHistory.push(sanitized_value)
+        updateHistory()
     } else if (redirected === "true") {
         loadLatestHistory()
     }
@@ -295,6 +305,8 @@
             li.appendChild(link)
             historyList.appendChild(li)
         })
+
+        updateHistoryLinkState()
     }
 
     var processing = false
@@ -303,6 +315,7 @@
         // If the session has expired, we prompt to log in again.
         if (!getSessionCookie()) {
             checkLogin()
+            updateHistoryLinkState()
             return
         }
 
