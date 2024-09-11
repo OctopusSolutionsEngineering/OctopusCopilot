@@ -136,6 +136,14 @@
 <script>
     const MAX_QUERY_LENGTH = 4000
 
+    // load the query histroy
+    let queryHistory = []
+    const savedHistory = localStorage.getItem("queryHistory");
+    if (savedHistory) {
+        queryHistory = JSON.parse(savedHistory)
+        updateHistory()
+    }
+
     // Enable or disable fields based on login state
     checkLogin()
 
@@ -154,11 +162,27 @@
         return sanitizeBase64(getCookie('session'))
     }
 
+    function disableHistoryLinks() {
+        const links = document.getElementsByClassName("history-link")
+        for (let i = 0; i < links.length; i++) {
+            links[i].style.pointerEvents = "none"
+            links[i].style.color = "gray"
+        }
+    }
+
+    function enableHistoryLinks() {
+        const links = document.getElementsByClassName("history-link")
+        for (let i = 0; i < links.length; i++) {
+            links[i].style.pointerEvents = "auto"
+            links[i].style.color = "blue"
+        }
+    }
+
     function checkLogin() {
-        githubLoginButton = document.getElementById('github_login')
-        githubLoginButtonWarning = document.getElementById('github_login_warning')
-        queryTextArea = document.getElementById('query')
-        submitButton = document.getElementById('submit')
+        const githubLoginButton = document.getElementById('github_login')
+        const githubLoginButtonWarning = document.getElementById('github_login_warning')
+        const queryTextArea = document.getElementById('query')
+        const submitButton = document.getElementById('submit')
 
         if (getSessionCookie()) {
             githubLoginButton.onclick = githubLogout
@@ -166,12 +190,14 @@
             submitButton.disabled = false
             queryTextArea.disabled = false
             githubLoginButtonWarning.style.display = "none"
+            enableHistoryLinks()
         } else {
             githubLoginButton.innerText = "GitHub Login"
             githubLoginButton.onclick = githubLogin
             submitButton.disabled = true
             queryTextArea.disabled = true
             githubLoginButtonWarning.style.display = "block"
+            disableHistoryLinks()
         }
     }
 
@@ -213,13 +239,6 @@
         return urlParams.get(param);
     }
 
-    var queryHistory = []
-    const savedHistory = localStorage.getItem("queryHistory");
-    if (savedHistory) {
-        queryHistory = JSON.parse(savedHistory)
-        updateHistory()
-    }
-
     const queryValue = getQueryParam('query');
     const redirected = getQueryParam('redirected');
     if (queryValue) {
@@ -236,7 +255,7 @@
     function loadLatestHistory() {
         const savedHistory = localStorage.getItem("queryHistory");
         if (savedHistory) {
-            queryHistory = JSON.parse(savedHistory)
+            const queryHistory = JSON.parse(savedHistory)
             if (queryHistory.length > 0) {
                 query.value = DOMPurify.sanitize(queryHistory[queryHistory.length - 1])
             }
@@ -258,9 +277,15 @@
             link.setAttribute("href", "#")
             link.appendChild(document.createTextNode(h))
             link.onclick = function () {
+                // Do nothing if we need to log in
+                if (!getSessionCookie()) {
+                    return false
+                }
+
                 query.value = DOMPurify.sanitize(h)
                 return false
             }
+            link.className = "history-link"
             link.style.textOverflow = "ellipsis";
             link.style.width = "100%";
             link.style.overflow = "hidden";
