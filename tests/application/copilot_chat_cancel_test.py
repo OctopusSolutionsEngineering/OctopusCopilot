@@ -34,7 +34,7 @@ from tests.infrastructure.octopus_infrastructure_test import run_terraform
 from tests.infrastructure.publish_runbook import publish_runbook
 
 
-class CopilotChatTest(unittest.TestCase):
+class CopilotChatCancelTest(unittest.TestCase):
     """
     End-to-end tests that verify the complete query including:
     * Persisting user details such as Octopus URL and API key
@@ -172,102 +172,56 @@ class CopilotChatTest(unittest.TestCase):
             cls.mssql = None
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_runbook_run(self):
-        publish_runbook("Simple", "Copilot Test Runbook Project", "Backup Database")
-        prompt = 'Run runbook "Backup Database" in the "Copilot Test Runbook Project" project'
-        response = copilot_handler_internal(build_request(prompt))
-        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
-        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
-
-        confirmation = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "",
-                    "copilot_references": None,
-                    "copilot_confirmations": [
-                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
-                    ],
-                }
-            ]
-        }
-
-        run_response = copilot_handler_internal(
-            build_confirmation_request(confirmation)
-        )
-        response_text = convert_from_sse_response(
-            run_response.get_body().decode("utf8")
-        )
-        self.assertTrue(
-            "Backup Database" in response_text, "Response was " + response_text
-        )
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_runbook_run_with_variables(self):
-        publish_runbook(
-            "Simple", "Prompted Variable Project", "Prompted Variables Runbook"
-        )
-        prompt = 'Run runbook "Prompted Variables Runbook" in the "Prompted Variable Project" project with variables notify=false, slot=Staging, othervariable=extra'
-        response = copilot_handler_internal(build_request(prompt))
-        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
-        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
-
-        confirmation = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "",
-                    "copilot_references": None,
-                    "copilot_confirmations": [
-                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
-                    ],
-                }
-            ]
-        }
-
-        run_response = copilot_handler_internal(
-            build_confirmation_request(confirmation)
-        )
-
-        run_response_text = convert_from_sse_response(
-            run_response.get_body().decode("utf8")
-        )
-
-        self.assertTrue(
-            "Prompted Variables Runbook" in run_response_text,
-            "Response was " + run_response_text,
-        )
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_runbook_run_with_missing_required_variable(self):
-        publish_runbook(
-            "Simple", "Prompted Variable Project", "Prompted Variables Runbook"
-        )
-        prompt = 'Run runbook "Prompted Variables Runbook" in the "Prompted Variable Project" project with variables notify=false, slot='
+    def test_cancel_task_by_invalid_id(self):
+        invalid_task_id = "ServerTax-74872356"
+        prompt = f'Cancel the task "{invalid_task_id}"'
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue(
-            "The Runbook is missing values for required variables: slot"
+            f'⚠️ Unable to determine task to cancel from: "{invalid_task_id}".'
             in response_text,
             "Response was " + response_text,
         )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_approve_manual_intervention_for_deployment(self):
+    def test_cancel_task_already_canceled(self):
         version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         space_name = "Simple"
-        project_name = "Copilot manual approval"
+        project_name = "Long running script"
         environment_name = "Development"
-        create_and_deploy_release(
+        deploy_response = create_and_deploy_release(
             space_name=space_name,
             project_name=project_name,
             environment_name=environment_name,
             release_version=version,
         )
         time.sleep(5)
+        cancel_task(deploy_response["SpaceId"], deploy_response["TaskId"])
+        wait_for_task(deploy_response["TaskId"], space_name=space_name)
+        prompt = f"Cancel the task \"{deploy_response['TaskId']}\""
 
-        prompt = f'Approve "{version}" to the "{environment_name}" environment for project "{project_name}" in space "{space_name}"'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+
+        self.assertTrue(
+            f"Task already cancelled." in response_text, "Response was " + response_text
+        )
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_cancel_task_by_id(self):
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        space_name = "Simple"
+        project_name = "Long running script"
+        environment_name = "Development"
+        deploy_response = create_and_deploy_release(
+            space_name=space_name,
+            project_name=project_name,
+            environment_name=environment_name,
+            release_version=version,
+        )
+
+        prompt = f"Cancel the task \"{deploy_response['TaskId']}\""
         response = copilot_handler_internal(build_request(prompt))
         response_body_decoded = response.get_body().decode("utf8")
 
@@ -295,48 +249,15 @@ class CopilotChatTest(unittest.TestCase):
         )
 
         self.assertTrue(
-            f"{project_name}" and "☑️ Manual intervention approved" in response_text,
+            f"{project_name}" and "⛔ Task canceled" in response_text,
             "Response was " + response_text,
         )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_approve_manual_intervention_with_guided_failure_interruption(self):
+    def test_cancel_deployment(self):
         version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         space_name = "Simple"
-        project_name = "Copilot guided failure"
-        environment_name = "Development"
-        deploy_response = create_and_deploy_release(
-            space_name=space_name,
-            project_name=project_name,
-            environment_name=environment_name,
-            release_version=version,
-            use_guided_failure=True,
-        )
-        time.sleep(15)
-
-        prompt = f'Approve release "{version}" to the "{environment_name}" environment for project "{project_name}"'
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue(
-            "🚫 An incompatible interruption (guided failure) was found for"
-            and version
-            and "Proceed" in response_text,
-            "Response was " + response_text,
-        )
-
-        # clean-up task by canceling it
-        cancel_response = cancel_task(
-            deploy_response["SpaceId"], deploy_response["TaskId"]
-        )
-        self.assertTrue(cancel_response["Id"] == deploy_response["TaskId"])
-        self.assertTrue(cancel_response["State"] in ["Canceled", "Cancelling"])
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_reject_manual_intervention_for_deployment(self):
-        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
-        space_name = "Simple"
-        project_name = "Copilot manual approval"
+        project_name = "Long running script"
         environment_name = "Development"
         create_and_deploy_release(
             space_name=space_name,
@@ -344,9 +265,8 @@ class CopilotChatTest(unittest.TestCase):
             environment_name=environment_name,
             release_version=version,
         )
-        time.sleep(5)
 
-        prompt = f'Reject "{version}" to the "{environment_name}" environment for project "{project_name}" in space "{space_name}"'
+        prompt = f'Cancel the latest deployment for the project "{project_name}" to the environment "{environment_name}" in the space "{space_name}".'
         response = copilot_handler_internal(build_request(prompt))
         response_body_decoded = response.get_body().decode("utf8")
 
@@ -374,130 +294,111 @@ class CopilotChatTest(unittest.TestCase):
         )
 
         self.assertTrue(
-            f"{project_name}" and "⛔ Manual intervention rejected" in response_text,
+            f"{project_name}" and "⛔ Task canceled" in response_text,
             "Response was " + response_text,
         )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_reject_manual_intervention_with_guided_failure_interruption(self):
+    def test_cancel_tenanted_deployment(self):
         version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
         space_name = "Simple"
-        project_name = "Copilot guided failure"
+        project_name = "Long running script"
         environment_name = "Development"
-        deploy_response = create_and_deploy_release(
+        tenant_name = "Marketing"
+        create_and_deploy_release(
             space_name=space_name,
             project_name=project_name,
             environment_name=environment_name,
+            tenant_name=tenant_name,
             release_version=version,
-            use_guided_failure=True,
         )
-        time.sleep(15)
-
-        prompt = f'Reject release "{version}" to the "{environment_name}" environment for project "{project_name}"'
+        time.sleep(5)
+        prompt = (
+            f'Cancel the latest deployment for the project "{project_name}" to the environment '
+            f'"{environment_name}" for the tenant "{tenant_name}" in the space "{space_name}".'
+        )
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_body_decoded = response.get_body().decode("utf8")
+
+        confirmation_id = get_confirmation_id(response_body_decoded)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
 
         self.assertTrue(
-            "🚫 An incompatible interruption (guided failure) was found for"
-            and version
-            and "Abort" in response_text,
-            "Response was " + response_text,
-        )
-
-        # clean-up task by canceling it
-        cancel_response = cancel_task(
-            deploy_response["SpaceId"], deploy_response["TaskId"]
-        )
-        self.assertTrue(cancel_response["Id"] == deploy_response["TaskId"])
-        self.assertTrue(cancel_response["State"] in ["Canceled", "Cancelling"])
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_get_logs(self):
-        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
-        deployment = create_and_deploy_release(
-            space_name="Simple", release_version=version
-        )
-        wait_for_task(deployment["TaskId"], space_name="Simple")
-
-        prompt = "List anything interesting in the deployment logs for the latest project deployment."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue(
-            "sorry" not in response_text.casefold(), "Response was " + response_text
-        )
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_get_logs_raw(self):
-        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
-        deployment = create_and_deploy_release(
-            space_name="Simple", release_version=version
-        )
-        wait_for_task(deployment["TaskId"], space_name="Simple")
-
-        prompt = "Print the last 30 lines of text from the deployment logs of the latest project deployment."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        # The response should have formatted the text as a code block
-        self.assertTrue(
-            "```" in response_text.casefold(), "Response was " + response_text
-        )
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_count_projects(self):
-        prompt = "How many projects are there in this space?"
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        # This should return the one default project (even though there are 3 overall)
-        self.assertTrue(
-            "1" in response_text.casefold() or "one" in response_text.casefold(),
+            f"{project_name}" and "⛔ Task canceled" in response_text,
             "Response was " + response_text,
         )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_find_retries(self):
-        prompt = 'What project steps have retries enabled? Provide the response as a literal JSON object like {"steps": [{"name": "Step 1", "retries": false}, {"name": "Step 2", "retries": true}]} with no markdown formatting.'
+    def test_cancel_runbook_run(self):
+        space_name = "Simple"
+        project_name = "Copilot Test Runbook Project"
+        runbook_name = "Long Running Runbook"
+        environment_name = "Development"
+        publish_runbook(space_name, project_name, runbook_name)
+        space_id, space_name = get_space_id_and_name_from_name(
+            space_name, Octopus_Api_Key, Octopus_Url
+        )
+        run_published_runbook_fuzzy(
+            space_id,
+            project_name,
+            runbook_name,
+            environment_name,
+            tenant_name="",
+            variables=None,
+            my_api_key=Octopus_Api_Key,
+            my_octopus_api=Octopus_Url,
+        )
+
+        prompt = f'Cancel the runbook "{runbook_name}" for project "{project_name}" to the environment "{environment_name}" in the space "{space_name}".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_body_decoded = response.get_body().decode("utf8")
 
-        try:
-            response_json = json.loads(strip_before_first_curly_bracket(response_text))
-        except Exception as e:
-            print(response_text)
+        confirmation_id = get_confirmation_id(response_body_decoded)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
 
         self.assertTrue(
-            next(
-                filter(
-                    lambda step: step["name"] == "Run a Script 2",
-                    response_json["steps"],
-                )
-            )["retries"]
-        )
-        self.assertTrue(
-            next(
-                filter(
-                    lambda step: step["name"] == "Deploy to IIS", response_json["steps"]
-                )
-            )["retries"]
-        )
-        self.assertFalse(
-            next(
-                filter(
-                    lambda step: step["name"] == "Configure the load balancer",
-                    response_json["steps"],
-                )
-            )["retries"]
-        )
-        # This is a red herring. The step is named "Retry this step" but it doesn't actually have retries enabled.
-        self.assertFalse(
-            next(
-                filter(
-                    lambda step: step["name"] == "Retry this step",
-                    response_json["steps"],
-                )
-            )["retries"]
+            f"{project_name}" and "⛔ Task canceled" in response_text,
+            "Response was " + response_text,
         )
 
 

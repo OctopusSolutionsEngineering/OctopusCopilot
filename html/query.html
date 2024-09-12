@@ -136,8 +136,18 @@
 <script>
     const MAX_QUERY_LENGTH = 4000
 
+    // load the query histroy
+    let queryHistory = []
+    const savedHistory = localStorage.getItem("queryHistory");
+    if (savedHistory) {
+        queryHistory = JSON.parse(savedHistory)
+        updateHistory()
+    }
+
     // Enable or disable fields based on login state
     checkLogin()
+
+    updateHistoryLinkState()
 
     function sanitizeBase64(input) {
         if (!input) {
@@ -154,11 +164,35 @@
         return sanitizeBase64(getCookie('session'))
     }
 
+    function disableHistoryLinks() {
+        const links = document.getElementsByClassName("history-link")
+        for (let i = 0; i < links.length; i++) {
+            links[i].style.pointerEvents = "none"
+            links[i].style.color = "gray"
+        }
+    }
+
+    function enableHistoryLinks() {
+        const links = document.getElementsByClassName("history-link")
+        for (let i = 0; i < links.length; i++) {
+            links[i].style.pointerEvents = "auto"
+            links[i].style.color = null
+        }
+    }
+
+    function updateHistoryLinkState() {
+        if (getSessionCookie()) {
+            enableHistoryLinks()
+        } else {
+            disableHistoryLinks()
+        }
+    }
+
     function checkLogin() {
-        githubLoginButton = document.getElementById('github_login')
-        githubLoginButtonWarning = document.getElementById('github_login_warning')
-        queryTextArea = document.getElementById('query')
-        submitButton = document.getElementById('submit')
+        const githubLoginButton = document.getElementById('github_login')
+        const githubLoginButtonWarning = document.getElementById('github_login_warning')
+        const queryTextArea = document.getElementById('query')
+        const submitButton = document.getElementById('submit')
 
         if (getSessionCookie()) {
             githubLoginButton.onclick = githubLogout
@@ -184,6 +218,7 @@
         if (confirm("Are you sure you want to log out? This is typically only required if something is broken.")) {
             setCookie('session', null, 1)
             checkLogin()
+            updateHistoryLinkState()
         }
     }
 
@@ -213,24 +248,29 @@
         return urlParams.get(param);
     }
 
-    var queryHistory = []
-    const savedHistory = localStorage.getItem("queryHistory");
-    if (savedHistory) {
-        queryHistory = JSON.parse(savedHistory)
-        updateHistory()
-    }
-
     const queryValue = getQueryParam('query');
+    const redirected = getQueryParam('redirected');
     if (queryValue) {
         sanitized_value = DOMPurify.sanitize(queryValue)
         document.getElementById('query').value = sanitized_value
-        if (queryHistory.indexOf(sanitized_value) === -1) {
-            queryHistory.push(sanitized_value)
-            updateHistory()
-        }
+        // Remove any existing value from the history
+        queryHistory = queryHistory.filter(x => x !== sanitized_value)
+        // push the new query to the end
+        queryHistory.push(sanitized_value)
+        updateHistory()
+    } else if (redirected === "true") {
+        loadLatestHistory()
     }
 
-    var processing = false
+    function loadLatestHistory() {
+        const savedHistory = localStorage.getItem("queryHistory");
+        if (savedHistory) {
+            const queryHistory = JSON.parse(savedHistory)
+            if (queryHistory.length > 0) {
+                query.value = DOMPurify.sanitize(queryHistory[queryHistory.length - 1])
+            }
+        }
+    }
 
     function updateHistory() {
         if (queryHistory.length > 5) {
@@ -247,9 +287,15 @@
             link.setAttribute("href", "#")
             link.appendChild(document.createTextNode(h))
             link.onclick = function () {
+                // Do nothing if we need to log in
+                if (!getSessionCookie()) {
+                    return false
+                }
+
                 query.value = DOMPurify.sanitize(h)
                 return false
             }
+            link.className = "history-link"
             link.style.textOverflow = "ellipsis";
             link.style.width = "100%";
             link.style.overflow = "hidden";
@@ -259,12 +305,17 @@
             li.appendChild(link)
             historyList.appendChild(li)
         })
+
+        updateHistoryLinkState()
     }
+
+    var processing = false
 
     async function processQuery(event) {
         // If the session has expired, we prompt to log in again.
         if (!getSessionCookie()) {
             checkLogin()
+            updateHistoryLinkState()
             return
         }
 

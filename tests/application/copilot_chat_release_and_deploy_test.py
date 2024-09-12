@@ -11,30 +11,22 @@ from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
-from domain.transformers.clean_response import strip_before_first_curly_bracket
 from domain.transformers.sse_transformers import (
     convert_from_sse_response,
     get_confirmation_id,
 )
 from domain.url.session import create_session_blob
 from function_app import copilot_handler_internal
-from infrastructure.octopus import (
-    run_published_runbook_fuzzy,
-    get_space_id_and_name_from_name,
-)
+
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
-from tests.infrastructure.cancel_task import cancel_task
-from tests.infrastructure.create_and_deploy_release import (
-    create_and_deploy_release,
-    wait_for_task,
-)
+from tests.application.copilot_chat_test import build_request
+
 from tests.infrastructure.create_release import create_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.octopus_infrastructure_test import run_terraform
-from tests.infrastructure.publish_runbook import publish_runbook
 
 
-class CopilotChatTest(unittest.TestCase):
+class CopilotChatReleaseAndDeployTest(unittest.TestCase):
     """
     End-to-end tests that verify the complete query including:
     * Persisting user details such as Octopus URL and API key
@@ -172,9 +164,9 @@ class CopilotChatTest(unittest.TestCase):
             cls.mssql = None
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_runbook_run(self):
-        publish_runbook("Simple", "Copilot Test Runbook Project", "Backup Database")
-        prompt = 'Run runbook "Backup Database" in the "Copilot Test Runbook Project" project'
+    def test_create_release(self):
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        prompt = f'Create release in the "Deploy Web App Container" project with version "{version}" and with channel "Default"'
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
@@ -199,15 +191,29 @@ class CopilotChatTest(unittest.TestCase):
             run_response.get_body().decode("utf8")
         )
         self.assertTrue(
-            "Backup Database" in response_text, "Response was " + response_text
+            f"Release {version}" in response_text, "Response was " + response_text
         )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_runbook_run_with_variables(self):
-        publish_runbook(
-            "Simple", "Prompted Variable Project", "Prompted Variables Runbook"
+    def test_create_release_handles_existing_version(self):
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        # Create the release via the api
+        create_release(space_name="Simple", release_version=version)
+        # Then create it via a prompt
+        prompt = f'Create release in the "Deploy Web App Container" project with version "{version}" and with channel "Default"'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        self.assertTrue(
+            f'Release version "{version}" already exists.' in response_text,
+            "Response was " + response_text,
         )
-        prompt = 'Run runbook "Prompted Variables Runbook" in the "Prompted Variable Project" project with variables notify=false, slot=Staging, othervariable=extra'
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_create_release_with_deployment_environment(self):
+        project_name = "Deploy Web App Container"
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        deploy_environment = "Development"
+        prompt = f'Create release in the "{project_name}" project with version "{version}" and deploy to the "{deploy_environment}" environment'
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
@@ -228,50 +234,23 @@ class CopilotChatTest(unittest.TestCase):
         run_response = copilot_handler_internal(
             build_confirmation_request(confirmation)
         )
-
-        run_response_text = convert_from_sse_response(
+        response_text = convert_from_sse_response(
             run_response.get_body().decode("utf8")
         )
-
         self.assertTrue(
-            "Prompted Variables Runbook" in run_response_text,
-            "Response was " + run_response_text,
-        )
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_runbook_run_with_missing_required_variable(self):
-        publish_runbook(
-            "Simple", "Prompted Variable Project", "Prompted Variables Runbook"
-        )
-        prompt = 'Run runbook "Prompted Variables Runbook" in the "Prompted Variable Project" project with variables notify=false, slot='
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue(
-            "The Runbook is missing values for required variables: slot"
+            f"Deployment of {project_name} release {version} to {deploy_environment}"
             in response_text,
             "Response was " + response_text,
         )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_approve_manual_intervention_for_deployment(self):
+    def test_create_release_with_deployment_and_missing_variables(self):
+        project_name = "Prompted Variable Project"
         version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
-        space_name = "Simple"
-        project_name = "Copilot manual approval"
-        environment_name = "Development"
-        create_and_deploy_release(
-            space_name=space_name,
-            project_name=project_name,
-            environment_name=environment_name,
-            release_version=version,
-        )
-        time.sleep(5)
-
-        prompt = f'Approve "{version}" to the "{environment_name}" environment for project "{project_name}" in space "{space_name}"'
+        deploy_environment = "Development"
+        prompt = f'Create release in the "{project_name}" project with version "{version}" and deploy to the "{deploy_environment}" environment with the variables slot=, notify=false'
         response = copilot_handler_internal(build_request(prompt))
-        response_body_decoded = response.get_body().decode("utf8")
-
-        confirmation_id = get_confirmation_id(response_body_decoded)
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
         confirmation = {
@@ -295,62 +274,18 @@ class CopilotChatTest(unittest.TestCase):
         )
 
         self.assertTrue(
-            f"{project_name}" and "☑️ Manual intervention approved" in response_text,
+            "The Deployment is missing values for required variables: slot"
+            in response_text,
             "Response was " + response_text,
         )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_approve_manual_intervention_with_guided_failure_interruption(self):
-        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
-        space_name = "Simple"
-        project_name = "Copilot guided failure"
-        environment_name = "Development"
-        deploy_response = create_and_deploy_release(
-            space_name=space_name,
-            project_name=project_name,
-            environment_name=environment_name,
-            release_version=version,
-            use_guided_failure=True,
-        )
-        time.sleep(15)
-
-        prompt = f'Approve release "{version}" to the "{environment_name}" environment for project "{project_name}"'
+    def test_create_release_with_deployment_and_variables(self):
+        project_name = "Prompted Variable Project"
+        deploy_environment = "Development"
+        prompt = f'Create release in the "{project_name}" project and deploy to the "{deploy_environment}" environment with the variables slot=Staging, notify=false'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue(
-            "🚫 An incompatible interruption (guided failure) was found for"
-            and version
-            and "Proceed" in response_text,
-            "Response was " + response_text,
-        )
-
-        # clean-up task by canceling it
-        cancel_response = cancel_task(
-            deploy_response["SpaceId"], deploy_response["TaskId"]
-        )
-        self.assertTrue(cancel_response["Id"] == deploy_response["TaskId"])
-        self.assertTrue(cancel_response["State"] in ["Canceled", "Cancelling"])
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_reject_manual_intervention_for_deployment(self):
-        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
-        space_name = "Simple"
-        project_name = "Copilot manual approval"
-        environment_name = "Development"
-        create_and_deploy_release(
-            space_name=space_name,
-            project_name=project_name,
-            environment_name=environment_name,
-            release_version=version,
-        )
-        time.sleep(5)
-
-        prompt = f'Reject "{version}" to the "{environment_name}" environment for project "{project_name}" in space "{space_name}"'
-        response = copilot_handler_internal(build_request(prompt))
-        response_body_decoded = response.get_body().decode("utf8")
-
-        confirmation_id = get_confirmation_id(response_body_decoded)
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
         confirmation = {
@@ -372,137 +307,185 @@ class CopilotChatTest(unittest.TestCase):
         response_text = convert_from_sse_response(
             run_response.get_body().decode("utf8")
         )
-
         self.assertTrue(
-            f"{project_name}" and "⛔ Manual intervention rejected" in response_text,
+            f"Deployment of {project_name} release "
+            and f"to {deploy_environment}" in response_text,
             "Response was " + response_text,
         )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_reject_manual_intervention_with_guided_failure_interruption(self):
+    def test_deploy_release(self):
+        project_name = "Deploy Web App Container"
         version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
-        space_name = "Simple"
-        project_name = "Copilot guided failure"
-        environment_name = "Development"
-        deploy_response = create_and_deploy_release(
-            space_name=space_name,
-            project_name=project_name,
-            environment_name=environment_name,
-            release_version=version,
-            use_guided_failure=True,
+        release = create_release(
+            space_name="Simple", project_name=project_name, release_version=version
         )
-        time.sleep(15)
-
-        prompt = f'Reject release "{version}" to the "{environment_name}" environment for project "{project_name}"'
+        deploy_environment = "Development"
+        prompt = f"Deploy release version \"{release['Version']}\" for project \"{project_name}\" to the \"{deploy_environment}\" environment"
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
         self.assertTrue(
-            "🚫 An incompatible interruption (guided failure) was found for"
-            and version
-            and "Abort" in response_text,
-            "Response was " + response_text,
-        )
-
-        # clean-up task by canceling it
-        cancel_response = cancel_task(
-            deploy_response["SpaceId"], deploy_response["TaskId"]
-        )
-        self.assertTrue(cancel_response["Id"] == deploy_response["TaskId"])
-        self.assertTrue(cancel_response["State"] in ["Canceled", "Cancelling"])
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_get_logs(self):
-        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
-        deployment = create_and_deploy_release(
-            space_name="Simple", release_version=version
-        )
-        wait_for_task(deployment["TaskId"], space_name="Simple")
-
-        prompt = "List anything interesting in the deployment logs for the latest project deployment."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue(
-            "sorry" not in response_text.casefold(), "Response was " + response_text
-        )
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_get_logs_raw(self):
-        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
-        deployment = create_and_deploy_release(
-            space_name="Simple", release_version=version
-        )
-        wait_for_task(deployment["TaskId"], space_name="Simple")
-
-        prompt = "Print the last 30 lines of text from the deployment logs of the latest project deployment."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        # The response should have formatted the text as a code block
-        self.assertTrue(
-            "```" in response_text.casefold(), "Response was " + response_text
-        )
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_count_projects(self):
-        prompt = "How many projects are there in this space?"
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        # This should return the one default project (even though there are 3 overall)
-        self.assertTrue(
-            "1" in response_text.casefold() or "one" in response_text.casefold(),
+            f"Deployment of {project_name} release {version} to {deploy_environment}"
+            in response_text,
             "Response was " + response_text,
         )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_find_retries(self):
-        prompt = 'What project steps have retries enabled? Provide the response as a literal JSON object like {"steps": [{"name": "Step 1", "retries": false}, {"name": "Step 2", "retries": true}]} with no markdown formatting.'
+    def test_deploy_release_default_project(self):
+        project_name = "Deploy Web App Container"
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        release = create_release(
+            space_name="Simple", project_name=project_name, release_version=version
+        )
+        deploy_environment = "Development"
+        prompt = f"Deploy release version \"{release['Version']}\" to the \"{deploy_environment}\" environment"
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        self.assertTrue(
+            f"Deployment of {project_name} release {version} to {deploy_environment}"
+            in response_text,
+            "Response was " + response_text,
+        )
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_deploy_release_to_tenant(self):
+        project_name = "Deploy AWS Lambda"
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        release = create_release(
+            space_name="Simple", project_name=project_name, release_version=version
+        )
+        deploy_environment = "Development"
+        tenant_name = "Marketing"
+        prompt = f"Deploy release version \"{release['Version']}\" for project \"{project_name}\" to the \"{deploy_environment}\" environment for tenant \"{tenant_name}\""
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        self.assertTrue(
+            f"Deployment of {project_name} release {version} to {deploy_environment} for {tenant_name}"
+            in response_text,
+            "Response was " + response_text,
+        )
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_deploy_release_with_variables(self):
+        project_name = "Prompted Variable Project"
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        release = create_release(
+            space_name="Simple", project_name=project_name, release_version=version
+        )
+        deploy_environment = "Development"
+        prompt = (
+            f"Deploy release version \"{release['Version']}\" for project \"{project_name}\" to the "
+            f'"{deploy_environment}" environment with variables notify=false, slot=Staging'
+        )
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        self.assertTrue(
+            f"Deployment of {project_name} release {version} to {deploy_environment}"
+            in response_text,
+            "Response was " + response_text,
+        )
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_deploy_release_with_missing_required_variable(self):
+        project_name = "Prompted Variable Project"
+        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
+        release = create_release(
+            space_name="Simple", project_name=project_name, release_version=version
+        )
+        deploy_environment = "Development"
+        prompt = f"Deploy release version \"{release['Version']}\" for project \"{project_name}\" to the \"{deploy_environment}\" environment with variables notify=false, slot="
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        try:
-            response_json = json.loads(strip_before_first_curly_bracket(response_text))
-        except Exception as e:
-            print(response_text)
-
         self.assertTrue(
-            next(
-                filter(
-                    lambda step: step["name"] == "Run a Script 2",
-                    response_json["steps"],
-                )
-            )["retries"]
+            "The Deployment is missing values for required variables: slot"
+            in response_text,
+            "Response was " + response_text,
         )
-        self.assertTrue(
-            next(
-                filter(
-                    lambda step: step["name"] == "Deploy to IIS", response_json["steps"]
-                )
-            )["retries"]
-        )
-        self.assertFalse(
-            next(
-                filter(
-                    lambda step: step["name"] == "Configure the load balancer",
-                    response_json["steps"],
-                )
-            )["retries"]
-        )
-        # This is a red herring. The step is named "Retry this step" but it doesn't actually have retries enabled.
-        self.assertFalse(
-            next(
-                filter(
-                    lambda step: step["name"] == "Retry this step",
-                    response_json["steps"],
-                )
-            )["retries"]
-        )
-
-
-if __name__ == "__main__":
-    unittest.main()
 
 
 def build_request(message):

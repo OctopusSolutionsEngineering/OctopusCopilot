@@ -199,10 +199,10 @@
     }
 
     function login_success() {
-        const redirect = urlParams.get('redirect');
+        const redirect = urlParams.get('redirect')
 
         if (redirect) {
-            window.location.href = "/api/" + encodeURIComponent(redirect)
+            window.location.href = "/api/" + encodeURIComponent(redirect) + "?redirected=true"
         } else {
             success.style.display = 'block'
         }
