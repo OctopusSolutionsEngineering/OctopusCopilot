@@ -11,7 +11,7 @@ from domain.url.github_urls import (
     extract_owner_repo_and_issue,
 )
 from infrastructure.github import get_commit_diff_async, get_commit_async
-from infrastructure.octopus import get_task_details_async
+from infrastructure.octopus import get_task_details_async, activity_logs_to_string
 from infrastructure.openai import llm_message_query
 
 
@@ -19,7 +19,6 @@ def release_what_changed_callback_wrapper(
     github_user, github_token, octopus_details, log_query
 ):
     async def release_what_changed_callback_async(
-        messages,
         original_query,
         space,
         projects,
@@ -90,7 +89,7 @@ def release_what_changed_callback_wrapper(
             "Deployments",
         )
 
-        if not deployments:
+        if not deployments or not deployments.get("Deployments"):
             return CopilotResponse(
                 "No deployments found for the space, project, environment, and tenant."
             )
@@ -100,56 +99,61 @@ def release_what_changed_callback_wrapper(
         commit_futures = []
         workitems_futures = []
         task_log_future = get_task_details_async(
-            space_resources["space_id"], deployments[0]["TaskId"], api_key, url
+            space_resources["space_id"],
+            deployments["Deployments"][0]["TaskId"],
+            api_key,
+            url,
         )
 
         # Get the task logs
 
         # From the deployment, get the diffs and commit details
-        if deployments[0]["BuildInformation"].get("Commits"):
-            commit_details = [
-                extract_owner_repo_and_commit(commit["LinkUrl"])
-                for commit in deployments[0]["BuildInformation"]["Commits"]
-            ]
+        for build_info in deployments["Deployments"][0]["BuildInformation"]:
+            if build_info.get("Commits"):
+                commit_details = [
+                    extract_owner_repo_and_commit(commit["LinkUrl"])
+                    for commit in build_info["Commits"]
+                ]
 
-            diff_futures = [
-                get_commit_diff_async(
-                    commit_detail[0],
-                    commit_detail[1],
-                    commit_detail[2],
-                    github_token,
-                )
-                for commit_detail in commit_details
-            ]
+                diff_futures = [
+                    get_commit_diff_async(
+                        commit_detail[0],
+                        commit_detail[1],
+                        commit_detail[2],
+                        github_token,
+                    )
+                    for commit_detail in commit_details
+                ]
 
-            commit_futures = [
-                get_commit_async(
-                    commit_detail[0],
-                    commit_detail[1],
-                    commit_detail[2],
-                    github_token,
-                )
-                for commit_detail in commit_details
-                if commit_detail[0]
-            ]
+                commit_futures = [
+                    get_commit_async(
+                        commit_detail[0],
+                        commit_detail[1],
+                        commit_detail[2],
+                        github_token,
+                    )
+                    for commit_detail in commit_details
+                    if commit_detail[0]
+                ]
 
         # Get the details of any issues fixed
-        if deployments[0]["BuildInformation"].get("WorkItems"):
-            workitems_details = [
-                extract_owner_repo_and_issue(commit["LinkUrl"])
-                for commit in deployments[0]["BuildInformation"]["WorkItems"]
-            ]
+        for build_info in deployments["Deployments"][0]["BuildInformation"]:
+            if build_info.get("WorkItems"):
+                workitems_details = [
+                    extract_owner_repo_and_issue(workitem["LinkUrl"])
+                    for workitem in build_info["WorkItems"]
+                ]
 
-            workitems_futures = [
-                get_commit_async(
-                    workitems_details[0],
-                    workitems_details[1],
-                    workitems_details[2],
-                    github_token,
-                )
-                for workitems_detail in workitems_details
-                if workitems_detail[0]
-            ]
+                workitems_futures = [
+                    get_commit_async(
+                        workitems_details[0],
+                        workitems_details[1],
+                        workitems_details[2],
+                        github_token,
+                    )
+                    for workitems_detail in workitems_details
+                    if workitems_detail[0]
+                ]
 
         # Fire off all the external API calls
         external_context = await asyncio.gather(
@@ -160,7 +164,12 @@ def release_what_changed_callback_wrapper(
         )
 
         # Get the list of people associated with the commits
-        committers = [commit["author"]["name"] for commit in external_context[1]]
+        committers = [
+            commit["commit"]["author"]["name"] for commit in external_context[1]
+        ]
+
+        # Get the raw logs
+        logs = activity_logs_to_string(external_context[3]["ActivityLogs"])
 
         # build the context sent to the LLM
         messages = [
@@ -189,12 +198,12 @@ def release_what_changed_callback_wrapper(
                     + context.replace("{", "{{").replace("}", "}}")
                     + "\n###",
                 )
-                for context in external_context[3]
+                for context in external_context[2]
             ],
             (
                 "system",
                 "Deployment Logs: ###\n"
-                + external_context[4].replace("{", "{{").replace("}", "}}")
+                + logs.replace("{", "{{").replace("}", "}}")
                 + "\n###",
             ),
             (

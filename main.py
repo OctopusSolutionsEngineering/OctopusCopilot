@@ -14,16 +14,34 @@ from domain.tools.cli.resource_specific import resource_specific_cli_callback
 from domain.tools.cli.task_summary import get_task_summary_cli_callback
 from domain.tools.cli.variable_query_cli import variable_query_cli_callback
 from domain.tools.githubactions.project_dashboard import get_project_dashboard_callback
+from domain.tools.githubactions.release_what_changed import (
+    release_what_changed_callback_wrapper,
+)
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
-from domain.tools.wrapper.function_definition import FunctionDefinitions, FunctionDefinition
-from domain.tools.wrapper.general_query import answer_general_query_wrapper, AnswerGeneralQuery
-from domain.tools.wrapper.github_job_summary_wrapper import show_github_job_summary_wrapper
+from domain.tools.wrapper.function_definition import (
+    FunctionDefinitions,
+    FunctionDefinition,
+)
+from domain.tools.wrapper.general_query import (
+    answer_general_query_wrapper,
+    AnswerGeneralQuery,
+)
+from domain.tools.wrapper.github_job_summary_wrapper import (
+    show_github_job_summary_wrapper,
+)
 from domain.tools.wrapper.how_to import how_to_wrapper
-from domain.tools.wrapper.project_dashboard_wrapper import show_project_dashboard_wrapper
+from domain.tools.wrapper.project_dashboard_wrapper import (
+    show_project_dashboard_wrapper,
+)
 from domain.tools.wrapper.project_logs import answer_project_deployment_logs_wrapper
-from domain.tools.wrapper.project_variables import answer_project_variables_wrapper, \
-    answer_project_variables_usage_wrapper
-from domain.tools.wrapper.releases_and_deployments import answer_releases_and_deployments_wrapper
+from domain.tools.wrapper.project_variables import (
+    answer_project_variables_wrapper,
+    answer_project_variables_usage_wrapper,
+)
+from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
+from domain.tools.wrapper.releases_and_deployments import (
+    answer_releases_and_deployments_wrapper,
+)
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.tools.wrapper.task_summary_wrapper import show_task_summary_wrapper
 from infrastructure.openai import llm_tool_query
@@ -35,10 +53,10 @@ def init_argparse():
     :return: The application arguments
     """
     parser = argparse.ArgumentParser(
-        usage='%(prog)s [OPTION] [FILE]...',
-        description='Query the Octopus Copilot agent'
+        usage="%(prog)s [OPTION] [FILE]...",
+        description="Query the Octopus Copilot agent",
     )
-    parser.add_argument('--query', action='store')
+    parser.add_argument("--query", action="store")
     return parser.parse_known_args()
 
 
@@ -50,7 +68,7 @@ def get_api_key():
     A function that extracts the API key from an environment variable
     :return: The Octopus API key
     """
-    return os.environ.get('OCTOPUS_CLI_API_KEY')
+    return os.environ.get("OCTOPUS_CLI_API_KEY")
 
 
 def get_github_token():
@@ -58,7 +76,7 @@ def get_github_token():
     A function that extracts the Github token from an environment variable
     :return: The Octopus API key
     """
-    return os.environ.get('GH_TEST_TOKEN')
+    return os.environ.get("GH_TEST_TOKEN")
 
 
 def get_github_user():
@@ -66,7 +84,7 @@ def get_github_user():
     A function that extracts the GitHub token from an environment variable
     :return: The Octopus API key
     """
-    return os.environ.get('TEST_GH_USER')
+    return os.environ.get("TEST_GH_USER")
 
 
 def get_octopus_api():
@@ -74,7 +92,7 @@ def get_octopus_api():
     A function that extracts the Octopus URL from an environment variable
     :return: The Octopus URL
     """
-    return os.environ.get('OCTOPUS_CLI_SERVER')
+    return os.environ.get("OCTOPUS_CLI_SERVER")
 
 
 def get_default_argument(argument, default_name):
@@ -82,7 +100,7 @@ def get_default_argument(argument, default_name):
         return argument
 
     if default_name == "Space":
-        return 'Octopus Copilot'
+        return "Octopus Copilot"
 
     return ""
 
@@ -97,81 +115,155 @@ def build_tools(tool_query):
     :return: The OpenAI tools
     """
 
-    help_functions = [FunctionDefinition(tool) for tool in how_to_wrapper(tool_query,
-                                                                          how_to_cli_callback(
-                                                                              get_github_token(),
-                                                                              log_query),
-                                                                          log_query)]
+    help_functions = [
+        FunctionDefinition(tool)
+        for tool in how_to_wrapper(
+            tool_query, how_to_cli_callback(get_github_token(), log_query), log_query
+        )
+    ]
 
-    return FunctionDefinitions([
-        FunctionDefinition(answer_general_query_wrapper(tool_query,
-                                                        general_query_cli_callback(get_api_key(),
-                                                                                   get_octopus_api(),
-                                                                                   get_default_argument,
-                                                                                   log_query),
-                                                        log_query),
-                           AnswerGeneralQuery),
-        FunctionDefinition(answer_project_variables_wrapper(tool_query,
-                                                            variable_query_cli_callback(get_api_key(),
-                                                                                        get_octopus_api(),
-                                                                                        get_default_argument,
-                                                                                        log_query),
-                                                            log_query)),
-        FunctionDefinition(show_project_dashboard_wrapper(tool_query,
-                                                          get_api_key(),
-                                                          get_octopus_api(),
-                                                          get_project_dashboard_callback(get_github_user(),
-                                                                                         get_github_token()),
-                                                          log_query)),
-        FunctionDefinition(answer_project_variables_usage_wrapper(tool_query,
-                                                                  variable_query_cli_callback(get_api_key(),
-                                                                                              get_octopus_api(),
-                                                                                              get_default_argument,
-                                                                                              log_query),
-                                                                  log_query)),
-        FunctionDefinition(
-            answer_releases_and_deployments_wrapper(tool_query,
-                                                    releases_query_cli_callback(get_api_key(),
-                                                                                get_octopus_api(),
-                                                                                get_default_argument,
-                                                                                log_query),
-                                                    None,
-                                                    log_query)),
-        FunctionDefinition(show_task_summary_wrapper(tool_query,
-                                                     get_task_summary_cli_callback(get_api_key(),
-                                                                                   get_octopus_api(),
-                                                                                   get_default_argument,
-                                                                                   log_query),
-                                                     log_query)),
-        FunctionDefinition(answer_project_deployment_logs_wrapper(tool_query,
-                                                                  logs_cli_callback(get_api_key(),
-                                                                                    get_octopus_api(),
-                                                                                    get_default_argument,
-                                                                                    log_query),
-                                                                  log_query)),
-        FunctionDefinition(answer_machines_wrapper(tool_query,
-                                                   resource_specific_cli_callback(get_api_key(),
-                                                                                  get_octopus_api(),
-                                                                                  get_default_argument,
-                                                                                  log_query), log_query)),
-        FunctionDefinition(answer_certificates_wrapper(tool_query,
-                                                       resource_specific_cli_callback(get_api_key(),
-                                                                                      get_octopus_api(),
-                                                                                      get_default_argument,
-                                                                                      log_query),
-                                                       log_query)),
-        FunctionDefinition(show_github_job_summary_wrapper(tool_query,
-                                                           get_job_summary_cli_callback(get_github_user(),
-                                                                                        get_github_token(),
-                                                                                        log_query),
-                                                           log_query))],
-        fallback=FunctionDefinitions(help_functions)
+    return FunctionDefinitions(
+        [
+            FunctionDefinition(
+                answer_general_query_wrapper(
+                    tool_query,
+                    general_query_cli_callback(
+                        get_api_key(),
+                        get_octopus_api(),
+                        get_default_argument,
+                        log_query,
+                    ),
+                    log_query,
+                ),
+                AnswerGeneralQuery,
+            ),
+            FunctionDefinition(
+                answer_project_variables_wrapper(
+                    tool_query,
+                    variable_query_cli_callback(
+                        get_api_key(),
+                        get_octopus_api(),
+                        get_default_argument,
+                        log_query,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                show_project_dashboard_wrapper(
+                    tool_query,
+                    lambda: (get_api_key(), get_octopus_api()),
+                    get_project_dashboard_callback(
+                        get_github_user(), get_github_token()
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                answer_project_variables_usage_wrapper(
+                    tool_query,
+                    variable_query_cli_callback(
+                        get_api_key(),
+                        get_octopus_api(),
+                        get_default_argument,
+                        log_query,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                answer_releases_and_deployments_wrapper(
+                    tool_query,
+                    releases_query_cli_callback(
+                        get_api_key(),
+                        get_octopus_api(),
+                        get_default_argument,
+                        log_query,
+                    ),
+                    None,
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                show_task_summary_wrapper(
+                    tool_query,
+                    get_task_summary_cli_callback(
+                        get_api_key(),
+                        get_octopus_api(),
+                        get_default_argument,
+                        log_query,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                answer_project_deployment_logs_wrapper(
+                    tool_query,
+                    logs_cli_callback(
+                        get_api_key(),
+                        get_octopus_api(),
+                        get_default_argument,
+                        log_query,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                answer_machines_wrapper(
+                    tool_query,
+                    resource_specific_cli_callback(
+                        get_api_key(),
+                        get_octopus_api(),
+                        get_default_argument,
+                        log_query,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                answer_certificates_wrapper(
+                    tool_query,
+                    resource_specific_cli_callback(
+                        get_api_key(),
+                        get_octopus_api(),
+                        get_default_argument,
+                        log_query,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                show_github_job_summary_wrapper(
+                    tool_query,
+                    get_job_summary_cli_callback(
+                        get_github_user(), get_github_token(), log_query
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                release_what_changed_wrapper(
+                    tool_query,
+                    release_what_changed_callback_wrapper(
+                        get_github_user(),
+                        get_github_token(),
+                        lambda: (get_api_key(), get_octopus_api()),
+                        log_query,
+                    ),
+                    log_query,
+                )
+            ),
+        ],
+        fallback=FunctionDefinitions(help_functions),
     )
 
 
 try:
-    result = llm_tool_query(parser.query, build_tools(parser.query),
-                            lambda x, y: print(x + " " + ",".join(sanitize_list(y)))).call_function()
+    result = llm_tool_query(
+        parser.query,
+        build_tools(parser.query),
+        lambda x, y: print(x + " " + ",".join(sanitize_list(y))),
+    ).call_function()
 
     if isinstance(result, CopilotResponse):
         print(result.response)

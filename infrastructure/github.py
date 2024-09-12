@@ -583,7 +583,7 @@ async def get_commit_diff_async(owner, repo, commit, github_token):
     )
 
     api = build_github_url(
-        f"/repos/{quote_safe(owner)}/{quote_safe(repo)}/commit/{quote_safe(commit)}.diff"
+        f"/{quote_safe(owner)}/{quote_safe(repo)}/commit/{quote_safe(commit)}.diff"
     )
 
     async with sem:
@@ -594,4 +594,4 @@ async def get_commit_diff_async(owner, repo, commit, github_token):
                 if response.status != 200:
                     body = await response.text()
                     raise GitHubRequestFailed(f"Request failed with " + body)
-                return await response.json()
+                return await response.text()
