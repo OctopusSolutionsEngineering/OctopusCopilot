@@ -216,7 +216,7 @@ def suggest_solution_wrapper(
                 ),
                 *[
                     (
-                        "user",
+                        "system",
                         "Related Conversation: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
@@ -225,7 +225,7 @@ def suggest_solution_wrapper(
                 ],
                 *[
                     (
-                        "user",
+                        "system",
                         "Related GitHub Issue: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
@@ -234,7 +234,7 @@ def suggest_solution_wrapper(
                 ],
                 *[
                     (
-                        "user",
+                        "system",
                         "Related Slack Message: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
@@ -243,7 +243,7 @@ def suggest_solution_wrapper(
                 ],
                 *[
                     (
-                        "user",
+                        "system",
                         "Related Documentation: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
@@ -252,7 +252,7 @@ def suggest_solution_wrapper(
                 ],
                 *[
                     (
-                        "user",
+                        "system",
                         "Related Documentation: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
@@ -548,13 +548,13 @@ async def get_tickets_comments(tickets, zendesk_user, zendesk_token):
 
 async def combine_ticket_comments(ticket_id, zendesk_user, zendesk_token):
     comments = await get_zen_comments(ticket_id, zendesk_user, zendesk_token)
-    combined_comments = [comments["subject"]] + [
-        minify_strings(replace_space_codes(comment["body"]))
-        for comment in comments["comments"]
-        if comment["public"]
+    combined_comments = [comments.get("subject", "")] + [
+        minify_strings(replace_space_codes(comment.get("body", "")))
+        for comment in comments.get("comments", [])
+        if comment.get("public", False)
     ]
 
     # If we need to strip PII from the comments, we can do it here
-    # combined_comments = anonymize_message(sanitize_message(combined_comments))
+    combined_comments = anonymize_message(sanitize_message(combined_comments))
 
     return "\n".join(combined_comments)
