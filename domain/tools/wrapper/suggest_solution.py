@@ -218,7 +218,7 @@ def suggest_solution_wrapper(
                 ),
                 *[
                     (
-                        "user",
+                        "system",
                         "Related Conversation: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
@@ -227,7 +227,7 @@ def suggest_solution_wrapper(
                 ],
                 *[
                     (
-                        "user",
+                        "system",
                         "Related GitHub Issue: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
@@ -236,7 +236,7 @@ def suggest_solution_wrapper(
                 ],
                 *[
                     (
-                        "user",
+                        "system",
                         "Related Slack Message: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
@@ -245,7 +245,7 @@ def suggest_solution_wrapper(
                 ],
                 *[
                     (
-                        "user",
+                        "system",
                         "Related Documentation: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
@@ -254,7 +254,7 @@ def suggest_solution_wrapper(
                 ],
                 *[
                     (
-                        "user",
+                        "system",
                         "Related Documentation: ###\n"
                         + context.replace("{", "{{").replace("}", "}}")
                         + "\n###",
