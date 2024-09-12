@@ -72,9 +72,10 @@ def suggest_solution_wrapper(
             slack_token = slack_token_func()
 
             # A key word like "Octopus" is not helpful, so get a sanitized list of keywords
-            sanitized_search_queries = sanitize_list(custom_search_queries)
+            custom_search_queries_list = sanitize_list(custom_search_queries)
+            keyword_list = sanitize_list(keywords)
             limited_keywords = sanitize_keywords(
-                sanitized_search_queries + keywords, max_keywords
+                custom_search_queries_list + keyword_list, max_keywords
             )
 
             # Get the list of issues, tickets, and slack messages.
