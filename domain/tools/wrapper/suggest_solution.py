@@ -22,7 +22,7 @@ from domain.transformers.trim_strings import trim_string_with_ellipsis
 from domain.url.session import create_session_blob
 from infrastructure.github import (
     search_issues,
-    get_issue_comments,
+    get_issue_comments_async,
     search_repo_async,
     download_file_async,
 )
@@ -437,7 +437,7 @@ def get_docs_title(content, filename):
 
 
 async def combine_issue_comments(issue_number, github_token):
-    comments = await get_issue_comments(
+    comments = await get_issue_comments_async(
         "OctopusDeploy", "Issues", str(issue_number), github_token
     )
     combined_comments = "\n".join(

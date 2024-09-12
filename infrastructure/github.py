@@ -502,7 +502,7 @@ async def search_issues(owner, repo, keywords, github_token):
                 return await response.json()
 
 
-async def get_issue_comments(owner, repo, issue_number, github_token):
+async def get_issue_comments_async(owner, repo, issue_number, github_token):
     """
     Async function to get issue comments
     https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-issues-and-pull-requests
