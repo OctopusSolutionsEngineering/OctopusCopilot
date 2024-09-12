@@ -12,13 +12,20 @@ from domain.url.github_urls import (
 )
 from infrastructure.github import get_commit_diff_async, get_commit_async
 from infrastructure.octopus import get_task_details_async
+from infrastructure.openai import llm_message_query
 
 
 def release_what_changed_callback_wrapper(
     github_user, github_token, octopus_details, log_query
 ):
     async def release_what_changed_callback_async(
-        original_query, space, projects, environments, tenants, release_version
+        messages,
+        original_query,
+        space,
+        projects,
+        environments,
+        tenants,
+        release_version,
     ):
 
         api_key, url = octopus_details()
@@ -65,6 +72,7 @@ def release_what_changed_callback_wrapper(
         )
 
         processed_query = update_query(original_query, space_resources["projects"])
+        context = {"input": processed_query}
 
         # Get the deployment. This is the root of all information we used to answer the prompt
         deployments = timing_wrapper(
@@ -144,14 +152,62 @@ def release_what_changed_callback_wrapper(
             ]
 
         # Fire off all the external API calls
-        context = await asyncio.gather(
+        external_context = await asyncio.gather(
             asyncio.gather(*diff_futures),
             asyncio.gather(*commit_futures),
             asyncio.gather(*workitems_futures),
             task_log_future,
         )
 
-        response = ["hi"]
+        # Get the list of people associated with the commits
+        committers = [commit["author"]["name"] for commit in external_context[1]]
+
+        # build the context sent to the LLM
+        messages = [
+            *[
+                (
+                    "system",
+                    "Git Diff: ###\n"
+                    + context.replace("{", "{{").replace("}", "}}")
+                    + "\n###",
+                )
+                for context in external_context[0]
+            ],
+            (
+                "system",
+                "Git Committers: ###\n"
+                + "\n".join(
+                    committer.replace("{", "{{").replace("}", "}}")
+                    for committer in committers
+                )
+                + "\n###",
+            ),
+            *[
+                (
+                    "system",
+                    "Issue: ###\n"
+                    + context.replace("{", "{{").replace("}", "}}")
+                    + "\n###",
+                )
+                for context in external_context[3]
+            ],
+            (
+                "system",
+                "Deployment Logs: ###\n"
+                + external_context[4].replace("{", "{{").replace("}", "}}")
+                + "\n###",
+            ),
+            (
+                "user",
+                "Question: {input}",
+            ),
+            (
+                "user",
+                "Answer:",
+            ),
+        ]
+
+        response = [llm_message_query(messages, context, log_query)]
         response.extend(space_resources["warnings"])
         response.extend(debug_text)
 
