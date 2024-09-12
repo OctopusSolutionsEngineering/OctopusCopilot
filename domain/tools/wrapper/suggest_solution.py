@@ -57,7 +57,7 @@ def suggest_solution_wrapper(
         * Provide a solution for the following error with the custom search queries "Helm", "Explicit Key Values", "transform": In my helm deploy step I am setting some \"Explicit Key Values\" and they don't transform.
 
         Args:
-            keywords: A list of keywords that describe the issue or question. Keywords should be 3 or less individual words, or literal exception names or error codes.
+            keywords: A list of keywords that describe the issue or question. Keywords must be 3 or less individual words, or literal exception names or error codes.
             custom_search_queries: An optional list of custom search queries.
         """
 
@@ -550,10 +550,10 @@ async def get_tickets_comments(tickets, zendesk_user, zendesk_token):
 
 async def combine_ticket_comments(ticket_id, zendesk_user, zendesk_token):
     comments = await get_zen_comments(ticket_id, zendesk_user, zendesk_token)
-    combined_comments = [comments["subject"]] + [
-        minify_strings(replace_space_codes(comment["body"]))
-        for comment in comments["comments"]
-        if comment["public"]
+    combined_comments = [comments.get("subject", "")] + [
+        minify_strings(replace_space_codes(comment.get("body", "")))
+        for comment in comments.get("comments", [])
+        if comment.get("public", False)
     ]
 
     # If we need to strip PII from the comments, we can do it here
