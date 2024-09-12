@@ -85,7 +85,7 @@ def get_deployments_for_project(
     deployments = []
     for release in releases["Items"]:
         # Keep the release if it matches the release version, or if there was no release version
-        if not release_version or not release_version == release["Version"]:
+        if release_version and not release_version == release["Version"]:
             continue
 
         release_deployments = get_release_deployments(
