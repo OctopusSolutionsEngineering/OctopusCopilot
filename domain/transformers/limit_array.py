@@ -6,7 +6,7 @@ def limit_array_to_max_char_length(array, max_length):
     :param max_length: The max number of characters
     :return: The limited array
     """
-    if isinstance(array, Exception):
+    if not array or isinstance(array, Exception):
         return []
 
     current_length = 0

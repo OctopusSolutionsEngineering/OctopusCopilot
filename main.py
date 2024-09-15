@@ -1,6 +1,7 @@
 import argparse
 import os
 
+from domain.config.zendesk import get_zendesk_user, get_zendesk_token
 from domain.errors.error_handling import handle_error
 from domain.logging.query_logging import log_query
 from domain.response.copilot_response import CopilotResponse
@@ -247,6 +248,8 @@ def build_tools(tool_query):
                     release_what_changed_callback_wrapper(
                         get_github_user(),
                         get_github_token(),
+                        get_zendesk_user(),
+                        get_zendesk_token(),
                         lambda: (get_api_key(), get_octopus_api()),
                         log_query,
                     ),

@@ -1,14 +1,18 @@
 import asyncio
 
 from domain.context.octopus_context import max_chars_128
+from domain.counters.counters import count_items_with_data
 from domain.lookup.octopus_multi_lookup import lookup_space_level_resources
 from domain.messages.describe_deployment import build_deployment_overview_prompt
+from domain.nlp.nlp import nlp_get_keywords
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import update_query, get_item_or_none
 from domain.tools.debug import get_params_message
+from domain.tools.wrapper.suggest_solution import get_tickets, get_issues
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from domain.transformers.limit_array import limit_array_to_max_char_length
+from domain.transformers.text_to_context import get_context_from_text_array
 from domain.url.github_urls import (
     extract_owner_repo_and_commit,
     extract_owner_repo_and_issue,
@@ -23,7 +27,7 @@ from infrastructure.openai import llm_message_query
 
 
 def release_what_changed_callback_wrapper(
-    github_user, github_token, octopus_details, log_query
+    github_user, github_token, zendesk_user, zendesk_token, octopus_details, log_query
 ):
     async def release_what_changed_callback_async(
         original_query,
@@ -177,16 +181,20 @@ def release_what_changed_callback_wrapper(
         # Get the raw logs
         logs = activity_logs_to_string(external_context[3]["ActivityLogs"])
 
+        # If the deployment failed, get the keywords and search for tickets and issues
+        failure_context = []
+        if deployments["Deployments"][0]["TaskState"] == "Failed":
+            keywords = nlp_get_keywords(logs[:max_chars_128])
+            failure_context = await asyncio.gather(
+                get_tickets(keywords, zendesk_user, zendesk_token),
+                get_issues(keywords, github_token),
+                return_exceptions=True,
+            )
+
         # Trim the context
         sources_with_data = (
-            len(
-                list(
-                    filter(
-                        lambda x: not isinstance(x, Exception) and len(x) != 0,
-                        external_context,
-                    )
-                )
-            )
+            count_items_with_data(external_context)
+            + count_items_with_data(failure_context)
             + 1
         )
         max_content_per_source = int(max_chars_128 / sources_with_data)
@@ -199,20 +207,49 @@ def release_what_changed_callback_wrapper(
             external_context[2], max_content_per_source
         )
 
+        support_ticket_context = limit_array_to_max_char_length(
+            get_item_or_none(failure_context, 0), max_content_per_source
+        )
+
+        support_issue_context = limit_array_to_max_char_length(
+            get_item_or_none(failure_context, 1), max_content_per_source
+        )
+
         log_context = logs[:max_content_per_source]
 
         # build the context sent to the LLM
         messages = build_deployment_overview_prompt(
             context=[
-                *[
-                    (
-                        "system",
-                        "Git Diff: ###\n"
-                        + context.replace("{", "{{").replace("}", "}}")
-                        + "\n###",
-                    )
-                    for context in diff_context
-                ],
+                (
+                    "system",
+                    'The supplied "Deployment Git Diff" context lists the code changes included in the deployment.',
+                ),
+                (
+                    "system",
+                    'The supplied "Deployment Issue" context lists the issues resolved by the deployment.',
+                ),
+                (
+                    "system",
+                    'The supplied "General Support Ticket" context relates to previous help desk tickets that may relate to the errors seen in the deployment logs. Use this context when providing help on a failed deployment.',
+                ),
+                (
+                    "system",
+                    'The supplied "General Issue" context relates to previous issues that may relate to the errors seen in the deployment logs. Use this context when providing help on a failed deployment.',
+                ),
+                (
+                    "system",
+                    'The supplied "Git Committers" context lists the developers who contributed to the deployment.',
+                ),
+                (
+                    "system",
+                    'The supplied "Deployment Logs" context provides the deployment logs.',
+                ),
+                *get_context_from_text_array(diff_context, "Deployment Git Diff"),
+                *get_context_from_text_array(issue_context, "Deployment Issue"),
+                *get_context_from_text_array(
+                    support_ticket_context, "General Support Ticket"
+                ),
+                *get_context_from_text_array(support_issue_context, "General Issue"),
                 (
                     "system",
                     "Git Committers: ###\n"
@@ -222,15 +259,6 @@ def release_what_changed_callback_wrapper(
                     )
                     + "\n###",
                 ),
-                *[
-                    (
-                        "system",
-                        "Issue: ###\n"
-                        + context.replace("{", "{{").replace("}", "}}")
-                        + "\n###",
-                    )
-                    for context in issue_context
-                ],
                 (
                     "system",
                     "Deployment Logs: ###\n"
