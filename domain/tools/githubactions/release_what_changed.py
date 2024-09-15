@@ -2,6 +2,7 @@ import asyncio
 
 from domain.context.octopus_context import max_chars_128
 from domain.lookup.octopus_multi_lookup import lookup_space_level_resources
+from domain.messages.describe_deployment import build_deployment_overview_prompt
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import update_query, get_item_or_none
@@ -201,59 +202,43 @@ def release_what_changed_callback_wrapper(
         log_context = logs[:max_content_per_source]
 
         # build the context sent to the LLM
-        messages = [
-            (
-                "system",
-                """You are a helpful agent that understands git commits, issues, and deployments. 
-                You are asked to provide information about a deployment. 
-                You must provide a summary of the code that changed in the git commits. 
-                You must summarize the issues and deployment logs.
-                You must list the committers of the commits. 
-                If the deployment was a failure, you must suggest a course of action.
-                You must also answer any questions asked by the user.""",
-            ),
-            *[
+        messages = build_deployment_overview_prompt(
+            context=[
+                *[
+                    (
+                        "system",
+                        "Git Diff: ###\n"
+                        + context.replace("{", "{{").replace("}", "}}")
+                        + "\n###",
+                    )
+                    for context in diff_context
+                ],
                 (
                     "system",
-                    "Git Diff: ###\n"
-                    + context.replace("{", "{{").replace("}", "}}")
+                    "Git Committers: ###\n"
+                    + "\n".join(
+                        committer.replace("{", "{{").replace("}", "}}")
+                        for committer in committers
+                    )
                     + "\n###",
-                )
-                for context in diff_context
-            ],
-            (
-                "system",
-                "Git Committers: ###\n"
-                + "\n".join(
-                    committer.replace("{", "{{").replace("}", "}}")
-                    for committer in committers
-                )
-                + "\n###",
-            ),
-            *[
+                ),
+                *[
+                    (
+                        "system",
+                        "Issue: ###\n"
+                        + context.replace("{", "{{").replace("}", "}}")
+                        + "\n###",
+                    )
+                    for context in issue_context
+                ],
                 (
                     "system",
-                    "Issue: ###\n"
-                    + context.replace("{", "{{").replace("}", "}}")
+                    "Deployment Logs: ###\n"
+                    + log_context.replace("{", "{{").replace("}", "}}")
                     + "\n###",
-                )
-                for context in issue_context
-            ],
-            (
-                "system",
-                "Deployment Logs: ###\n"
-                + log_context.replace("{", "{{").replace("}", "}}")
-                + "\n###",
-            ),
-            (
-                "user",
-                "Question: {input}",
-            ),
-            (
-                "user",
-                "Answer:",
-            ),
-        ]
+                ),
+            ]
+        )
 
         response = [llm_message_query(messages, context, log_query)]
         response.extend(space_resources["warnings"])
