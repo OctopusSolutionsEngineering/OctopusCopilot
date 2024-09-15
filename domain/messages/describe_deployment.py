@@ -10,8 +10,8 @@ def build_deployment_overview_prompt(few_shot=None, context=None):
                 If the deployment was a failure, you must suggest a course of action.
                 You must also answer any questions asked by the user.""",
         ),
-        *few_shot,
-        *context,
+        *(few_shot if few_shot else []),
+        *(context if context else []),
         (
             "user",
             "Question: {input}",
