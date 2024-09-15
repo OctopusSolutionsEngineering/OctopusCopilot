@@ -1,16 +1,22 @@
 import asyncio
 
+from domain.context.octopus_context import max_chars_128
 from domain.lookup.octopus_multi_lookup import lookup_space_level_resources
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import update_query, get_item_or_none
 from domain.tools.debug import get_params_message
 from domain.transformers.deployments_from_release import get_deployments_for_project
+from domain.transformers.limit_array import limit_array_to_max_char_length
 from domain.url.github_urls import (
     extract_owner_repo_and_commit,
     extract_owner_repo_and_issue,
 )
-from infrastructure.github import get_commit_diff_async, get_commit_async
+from infrastructure.github import (
+    get_commit_diff_async,
+    get_commit_async,
+    get_issue_comments_async,
+)
 from infrastructure.octopus import get_task_details_async, activity_logs_to_string
 from infrastructure.openai import llm_message_query
 
@@ -105,8 +111,6 @@ def release_what_changed_callback_wrapper(
             url,
         )
 
-        # Get the task logs
-
         # From the deployment, get the diffs and commit details
         for build_info in deployments["Deployments"][0]["BuildInformation"]:
             if build_info.get("Commits"):
@@ -145,7 +149,7 @@ def release_what_changed_callback_wrapper(
                 ]
 
                 workitems_futures = [
-                    get_commit_async(
+                    get_issue_comments_async(
                         workitems_details[0],
                         workitems_details[1],
                         workitems_details[2],
@@ -161,6 +165,7 @@ def release_what_changed_callback_wrapper(
             asyncio.gather(*commit_futures),
             asyncio.gather(*workitems_futures),
             task_log_future,
+            return_exceptions=True,
         )
 
         # Get the list of people associated with the commits
@@ -171,8 +176,42 @@ def release_what_changed_callback_wrapper(
         # Get the raw logs
         logs = activity_logs_to_string(external_context[3]["ActivityLogs"])
 
+        # Trim the context
+        sources_with_data = (
+            len(
+                list(
+                    filter(
+                        lambda x: not isinstance(x, Exception) and len(x) != 0,
+                        external_context,
+                    )
+                )
+            )
+            + 1
+        )
+        max_content_per_source = int(max_chars_128 / sources_with_data)
+
+        diff_context = limit_array_to_max_char_length(
+            external_context[0], max_content_per_source
+        )
+
+        issue_context = limit_array_to_max_char_length(
+            external_context[2], max_content_per_source
+        )
+
+        log_context = logs[:max_content_per_source]
+
         # build the context sent to the LLM
         messages = [
+            (
+                "system",
+                """You are a helpful agent that understands git commits, issues, and deployments. 
+                You are asked to provide information about a deployment. 
+                You must provide a summary of the code that changed in the git commits. 
+                You must summarize the issues and deployment logs.
+                You must list the committers of the commits. 
+                If the deployment was a failure, you must suggest a course of action.
+                You must also answer any questions asked by the user.""",
+            ),
             *[
                 (
                     "system",
@@ -180,7 +219,7 @@ def release_what_changed_callback_wrapper(
                     + context.replace("{", "{{").replace("}", "}}")
                     + "\n###",
                 )
-                for context in external_context[0]
+                for context in diff_context
             ],
             (
                 "system",
@@ -198,12 +237,12 @@ def release_what_changed_callback_wrapper(
                     + context.replace("{", "{{").replace("}", "}}")
                     + "\n###",
                 )
-                for context in external_context[2]
+                for context in issue_context
             ],
             (
                 "system",
                 "Deployment Logs: ###\n"
-                + logs.replace("{", "{{").replace("}", "}}")
+                + log_context.replace("{", "{{").replace("}", "}}")
                 + "\n###",
             ),
             (

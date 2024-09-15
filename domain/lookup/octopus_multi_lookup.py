@@ -18,7 +18,8 @@ def lookup_space_level_resources(
 ):
     """
     Many queries relate to a collection of projects, environments, and tenants in a space. This function
-    resolves all these space level resources, taking into account any default values.
+    resolves all these space level resources, taking into account any default values, and dealing with fuzzy
+    lookups.
     """
 
     space_id, actual_space_name, warnings = lookup_space(
