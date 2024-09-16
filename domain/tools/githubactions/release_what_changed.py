@@ -144,7 +144,7 @@ def release_what_changed_callback_wrapper(
         logs = activity_logs_to_string(external_context[3]["ActivityLogs"])
 
         # If the deployment failed, get the keywords and search for tickets and issues
-        failure_context = get_failure_context(deployments, logs)
+        failure_context = await get_failure_context(deployments, logs)
 
         # Trim the context
         sources_with_data = (
