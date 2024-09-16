@@ -16,6 +16,8 @@ def release_what_changed_wrapper(
         * What changed in the latest deployment to the production environment?
         * Suggest a solution for the failed deployment to production environment in the hotfix channel?
         * What code changes went into deployment version "1.23.675"?
+        * What issues were included in the latest deployment to the "prod" environment?
+        * What is the release version of the latest deployment?
 
         Args:
         space: The name of the space
