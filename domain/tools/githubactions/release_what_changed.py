@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from domain.context.octopus_context import max_chars_128
 from domain.counters.counters import count_items_with_data
@@ -261,6 +262,10 @@ def release_what_changed_callback_wrapper(
                     "system",
                     'The supplied "Deployment Logs" context provides the deployment logs.',
                 ),
+                (
+                    "system",
+                    'The supplied "Deployment JSON" context provides details about the deployment.',
+                ),
                 *(
                     [
                         (
@@ -288,6 +293,9 @@ def release_what_changed_callback_wrapper(
                 *get_context_from_text_array(support_issue_context, "General Issue"),
                 *get_context_from_string(log_context, "Deployment Logs"),
                 *get_context_from_string("\n".join(committers), "Git Committers"),
+                *get_context_from_string(
+                    json.dumps(deployments["Deployments"][0]), "Deployment JSON"
+                ),
             ]
         )
 
