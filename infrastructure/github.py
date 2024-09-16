@@ -620,7 +620,7 @@ async def combine_issue_comments(issue_number, github_token):
     )
 
     sanitized_contents = [
-        anonymize_message(sanitize_message(contents) for contents in combined_comments)
+        anonymize_message(sanitize_message(contents)) for contents in combined_comments
     ]
 
     return sanitized_contents
