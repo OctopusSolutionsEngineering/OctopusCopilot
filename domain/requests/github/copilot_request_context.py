@@ -52,9 +52,8 @@ from domain.tools.githubactions.reject_manual_intervention import (
     reject_manual_intervention_confirm_callback_wrapper,
     reject_manual_intervention_callback,
 )
-from domain.tools.githubactions.releases import (
-    releases_query_callback,
-    releases_query_messages,
+from domain.tools.githubactions.release_what_changed import (
+    release_what_changed_callback_wrapper,
 )
 from domain.tools.githubactions.resource_specific_callback import (
     resource_specific_callback,
@@ -105,9 +104,7 @@ from domain.tools.wrapper.project_variables import (
 from domain.tools.wrapper.reject_manual_intervention import (
     reject_manual_intervention_wrapper,
 )
-from domain.tools.wrapper.releases_and_deployments import (
-    answer_releases_and_deployments_wrapper,
-)
+from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
 from domain.tools.wrapper.run_runbook import run_runbook_wrapper
 from domain.tools.wrapper.runbook_logs import answer_runbook_run_logs_wrapper
 from domain.tools.wrapper.runbooks_dashboard_wrapper import (
@@ -519,18 +516,6 @@ def build_form_tools(query, req: func.HttpRequest):
                 )
             ),
             FunctionDefinition(
-                answer_releases_and_deployments_wrapper(
-                    query,
-                    releases_query_callback(
-                        get_github_user_from_form(req),
-                        lambda: get_api_key_and_url(req),
-                        log_query,
-                    ),
-                    releases_query_messages(get_github_user_from_form(req)),
-                    log_query,
-                )
-            ),
-            FunctionDefinition(
                 answer_machines_wrapper(
                     query,
                     resource_specific_callback(
@@ -699,6 +684,7 @@ def build_form_tools(query, req: func.HttpRequest):
                 suggest_solution_wrapper(
                     query,
                     suggest_solution_callback_wrapper(get_github_user_from_form(req)),
+                    is_admin_user(get_github_user_from_form(req), get_admin_users()),
                     get_github_user_from_form(req),
                     get_github_token(req),
                     get_zendesk_user(),
@@ -711,6 +697,23 @@ def build_form_tools(query, req: func.HttpRequest):
                 ),
                 is_enabled=is_admin_user(
                     get_github_user_from_form(req), get_admin_users()
+                ),
+            ),
+            FunctionDefinition(
+                release_what_changed_wrapper(
+                    query,
+                    release_what_changed_callback_wrapper(
+                        is_admin_user(
+                            get_github_user_from_form(req), get_admin_users()
+                        ),
+                        get_github_user_from_form(req),
+                        get_github_token(req),
+                        get_zendesk_user(),
+                        get_zendesk_token(),
+                        lambda: get_api_key_and_url(req),
+                        log_query,
+                    ),
+                    log_query,
                 ),
             ),
         ],

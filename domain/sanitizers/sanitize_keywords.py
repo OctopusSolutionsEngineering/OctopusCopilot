@@ -6,6 +6,7 @@ def sanitize_keywords(
     # A key word like "Octopus" is not helpful
     invalid_keywords = invalid_keywords or [
         "octopus",
+        "deploy",
         "octopus deploy",
         "octopusdeploy",
     ]

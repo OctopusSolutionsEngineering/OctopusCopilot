@@ -9,7 +9,6 @@ from domain.exceptions.none_on_exception import (
 )
 from domain.logging.log_if_exception import log_if_exception
 from domain.sanitizers.sanitize_keywords import sanitize_keywords
-from domain.sanitizers.sanitize_logs import anonymize_message, sanitize_message
 from domain.sanitizers.sanitize_markdown import markdown_to_text
 from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list
 from domain.slack.slack_urls import generate_slack_login
@@ -17,18 +16,17 @@ from domain.transformers.limit_array import (
     limit_array_to_max_char_length,
     limit_array_to_max_items,
 )
-from domain.transformers.minify_strings import minify_strings, replace_space_codes
 from domain.transformers.trim_strings import trim_string_with_ellipsis
 from domain.url.session import create_session_blob
 from infrastructure.github import (
-    search_issues,
-    get_issue_comments,
     search_repo_async,
     download_file_async,
+    get_issues_comments,
+    get_issues,
 )
 from infrastructure.openai import llm_message_query
 from infrastructure.storyblok import search_storyblok_stories, get_fields_with_text
-from infrastructure.zendesk import get_zen_tickets, get_zen_comments
+from infrastructure.zendesk import get_tickets_comments, get_tickets, get_no_tickets
 
 max_issues = 10
 max_keywords = 5
@@ -37,6 +35,7 @@ max_keywords = 5
 def suggest_solution_wrapper(
     query,
     callback,
+    is_admin,
     github_user,
     github_token,
     zendesk_user,
@@ -47,18 +46,20 @@ def suggest_solution_wrapper(
     encryption_salt,
     logging=None,
 ):
-    def answer_support_question(keywords=None, custom_search_queries=None, **kwargs):
+    def answer_support_question(
+        custom_search_queries=None, question_keywords=None, **kwargs
+    ):
         """Responds to a prompt asking for advice or a solution to a problem, such as a question that a customer might
         send to a help desk or support forum.
         You must select this function for any prompt that starts with the phrase "Suggest a solution for" or "Provide a solution for".
 
         Example prompts include:
         * Suggest a solution for the following issue: How can I use Harbor as a private image registry.
-        * Provide a solution for the following error with the custom search queries "Helm", "Explicit Key Values", "transform": In my helm deploy step I am setting some \"Explicit Key Values\" and they don't transform.
+        * Provide a solution for the following error with the custom search queries "kubernetes", "yaml", "linux": In my helm deploy step I am setting some \"Explicit Key Values\" and they don't transform.
 
         Args:
-            keywords: A list of keywords that describe the issue or question. Keywords must be 3 or less individual words, or literal exception names, file names, or error codes.
-            custom_search_queries: An optional list of custom search queries.
+            custom_search_queries: An optional list of keywords explicitly defined at the start of the prompt.
+            question_keywords: A list of keywords extracted from the issue or question. Keywords must be 3 or less individual words, or literal exception names, file names, or error codes.
         """
 
         async def inner_function():
@@ -73,15 +74,20 @@ def suggest_solution_wrapper(
 
             # A key word like "Octopus" is not helpful, so get a sanitized list of keywords
             custom_search_queries_list = sanitize_list(custom_search_queries)
-            keyword_list = sanitize_list(keywords)
+            keyword_list = sanitize_list(question_keywords)
             limited_keywords = sanitize_keywords(
                 custom_search_queries_list + keyword_list, max_keywords
             )
 
             # Get the list of issues, tickets, and slack messages.
             # Batch all of these async calls up for better performance
+            # Todo - remove the call to get_no_tickets() when this functionality is exposed publicly
             issues = await asyncio.gather(
-                get_tickets(limited_keywords, zendesk_user, zendesk_token),
+                (
+                    get_tickets(limited_keywords, zendesk_user, zendesk_token)
+                    if is_admin
+                    else get_no_tickets()
+                ),
                 get_issues(limited_keywords, github_token),
                 get_slack_messages(slack_token, limited_keywords),
                 get_docs(limited_keywords, github_token),
@@ -334,25 +340,13 @@ def suggest_solution_wrapper(
                     if story.get("name"):
                         chat_response.append(f"🕮: {story.get('name')}")
 
-            return callback(query, keywords, "\n\n".join(chat_response))
+            return callback(query, limited_keywords, "\n\n".join(chat_response))
 
         # https://github.com/pytest-dev/pytest-asyncio/issues/658#issuecomment-1817927350
         # Should just have one asyncio.run()
         return asyncio.run(inner_function())
 
     return answer_support_question
-
-
-async def get_issues(keywords, github_token):
-    issues = await search_issues("OctopusDeploy", "Issues", keywords, github_token)
-    return issues["items"]
-
-
-async def get_issues_comments(issues, github_token):
-    return [
-        await combine_issue_comments(str(ticket["number"]), github_token)
-        for ticket in issues
-    ]
 
 
 async def get_docs(keywords, github_token):
@@ -437,19 +431,6 @@ def get_docs_title(content, filename):
     ) or filename.split("/")[-1].replace(".md", "").replace(".include", "")
 
 
-async def combine_issue_comments(issue_number, github_token):
-    comments = await get_issue_comments(
-        "OctopusDeploy", "Issues", str(issue_number), github_token
-    )
-    combined_comments = "\n".join(
-        [minify_strings(comment["body"]) for comment in comments if comment["body"]]
-    )
-
-    combined_comments = anonymize_message(sanitize_message(combined_comments))
-
-    return combined_comments
-
-
 async def get_slack_messages(slack_token, keywords):
     # Graceful fallback in the absense of a token
     if not slack_token:
@@ -514,52 +495,3 @@ async def get_slack_threads(client, matches):
 
     # Return the messages sorted by the number of times they were returned
     return list(map(lambda x: x[1]["message"], sorted_by_second))
-
-
-async def get_tickets(keywords, zendesk_user, zendesk_token):
-    # Zen desk only has AND logic for keywords. We really want OR logic.
-    # So search for each keyword individually, tracking how many times a ticket was returned
-    # by the search. We prioritise tickets with the most results.
-    keyword_results = await asyncio.gather(
-        *[
-            get_zen_tickets([keyword], zendesk_user, zendesk_token)
-            for keyword in keywords
-        ]
-    )
-
-    ticket_ids = {}
-    for keyword_result in keyword_results:
-        for ticket in keyword_result["results"]:
-            if not ticket_ids.get(ticket["id"]):
-                ticket_ids[ticket["id"]] = {"count": 1, "ticket": ticket}
-            else:
-                ticket_ids[ticket["id"]]["count"] += 1
-
-    sorted_by_second = sorted(
-        ticket_ids.items(), key=lambda tup: tup[1]["count"], reverse=True
-    )
-
-    return list(map(lambda x: x[1]["ticket"], sorted_by_second))
-
-
-async def get_tickets_comments(tickets, zendesk_user, zendesk_token):
-    return [
-        await combine_ticket_comments(str(ticket["id"]), zendesk_user, zendesk_token)
-        for ticket in tickets
-    ]
-
-
-async def combine_ticket_comments(ticket_id, zendesk_user, zendesk_token):
-    comments = await get_zen_comments(ticket_id, zendesk_user, zendesk_token)
-    combined_comments = [comments.get("subject", "")] + [
-        minify_strings(replace_space_codes(comment.get("body", "")))
-        for comment in comments.get("comments", [])
-        if comment.get("public", False)
-    ]
-
-    # If we need to strip PII from the comments, we can do it here
-    sanitized_contents = [
-        anonymize_message(sanitize_message(contents)) for contents in combined_comments
-    ]
-
-    return "\n".join(sanitized_contents)

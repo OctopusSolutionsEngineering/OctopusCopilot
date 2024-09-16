@@ -20,9 +20,7 @@ from domain.lookup.octopus_lookups import (
     lookup_tenants,
     lookup_runbooks,
 )
-from domain.transformers.sse_transformers import (
-    convert_from_sse_response
-)
+from domain.transformers.sse_transformers import convert_from_sse_response
 from domain.url.session import create_session_blob
 from function_app import copilot_handler_internal, health_internal
 from infrastructure.octopus import (
@@ -632,7 +630,10 @@ class CopilotChatTestTwo(unittest.TestCase):
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_latest_deployment_fuzzy(self):
         version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
-        create_and_deploy_release(space_name="Simple", release_version=version)
+        deployment = create_and_deploy_release(
+            space_name="Simple", release_version=version
+        )
+        wait_for_task(deployment["TaskId"], space_name="Simple")
         prompt = 'Get the release version of the latest deployment to the "Develpment" environment for the "Deploy WebApp Container" project.'
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
