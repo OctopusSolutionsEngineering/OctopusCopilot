@@ -45,7 +45,9 @@ def suggest_solution_wrapper(
     encryption_salt,
     logging=None,
 ):
-    def answer_support_question(keywords=None, custom_search_queries=None, **kwargs):
+    def answer_support_question(
+        custom_search_queries=None, question_keywords=None, **kwargs
+    ):
         """Responds to a prompt asking for advice or a solution to a problem, such as a question that a customer might
         send to a help desk or support forum.
         You must select this function for any prompt that starts with the phrase "Suggest a solution for" or "Provide a solution for".
@@ -55,8 +57,8 @@ def suggest_solution_wrapper(
         * Provide a solution for the following error with the custom search queries "kubernetes", "yaml", "linux": In my helm deploy step I am setting some \"Explicit Key Values\" and they don't transform.
 
         Args:
-            keywords: A list of keywords extracted from the issue or question. Keywords must be 3 or less individual words, or literal exception names, file names, or error codes.
             custom_search_queries: An optional list of keywords explicitly defined at the start of the prompt.
+            question_keywords: A list of keywords extracted from the issue or question. Keywords must be 3 or less individual words, or literal exception names, file names, or error codes.
         """
 
         async def inner_function():
@@ -71,7 +73,7 @@ def suggest_solution_wrapper(
 
             # A key word like "Octopus" is not helpful, so get a sanitized list of keywords
             custom_search_queries_list = sanitize_list(custom_search_queries)
-            keyword_list = sanitize_list(keywords)
+            keyword_list = sanitize_list(question_keywords)
             limited_keywords = sanitize_keywords(
                 custom_search_queries_list + keyword_list, max_keywords
             )
@@ -332,7 +334,7 @@ def suggest_solution_wrapper(
                     if story.get("name"):
                         chat_response.append(f"🕮: {story.get('name')}")
 
-            return callback(query, keywords, "\n\n".join(chat_response))
+            return callback(query, limited_keywords, "\n\n".join(chat_response))
 
         # https://github.com/pytest-dev/pytest-asyncio/issues/658#issuecomment-1817927350
         # Should just have one asyncio.run()
