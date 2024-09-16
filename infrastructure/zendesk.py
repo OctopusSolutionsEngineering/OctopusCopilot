@@ -100,3 +100,30 @@ async def combine_ticket_comments(ticket_id, zendesk_user, zendesk_token):
     ]
 
     return "\n".join(sanitized_contents)
+
+
+async def get_tickets(keywords, zendesk_user, zendesk_token):
+    # Zen desk only has AND logic for keywords. We really want OR logic.
+    # So search for each keyword individually, tracking how many times a ticket was returned
+    # by the search. We prioritise tickets with the most results.
+    keyword_results = await asyncio.gather(
+        *[
+            get_zen_tickets([keyword], zendesk_user, zendesk_token)
+            for keyword in keywords
+        ]
+    )
+
+    ticket_ids = {}
+    for keyword_result in keyword_results:
+        for ticket in keyword_result["results"]:
+            if not ticket_ids.get(ticket["id"]):
+                ticket_ids[ticket["id"]] = {"count": 1, "ticket": ticket}
+            else:
+                ticket_ids[ticket["id"]]["count"] += 1
+
+    sorted_by_second = sorted(
+        ticket_ids.items(), key=lambda tup: tup[1]["count"], reverse=True
+    )
+
+    tickets = map(lambda x: x[1]["ticket"], sorted_by_second)
+    return list(filter(lambda x: x.get("type") == "incident", tickets))

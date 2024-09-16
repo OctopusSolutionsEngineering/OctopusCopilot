@@ -19,14 +19,14 @@ from domain.transformers.limit_array import (
 from domain.transformers.trim_strings import trim_string_with_ellipsis
 from domain.url.session import create_session_blob
 from infrastructure.github import (
-    search_issues,
     search_repo_async,
     download_file_async,
     get_issues_comments,
+    get_issues,
 )
 from infrastructure.openai import llm_message_query
 from infrastructure.storyblok import search_storyblok_stories, get_fields_with_text
-from infrastructure.zendesk import get_zen_tickets, get_tickets_comments
+from infrastructure.zendesk import get_tickets_comments, get_tickets
 
 max_issues = 10
 max_keywords = 5
@@ -341,11 +341,6 @@ def suggest_solution_wrapper(
     return answer_support_question
 
 
-async def get_issues(keywords, github_token):
-    issues = await search_issues("OctopusDeploy", "Issues", keywords, github_token)
-    return issues["items"]
-
-
 async def get_docs(keywords, github_token):
     # GitHub search does not support OR logic for keywords, so we have to search for each keyword individually
     keyword_results = await asyncio.gather(
@@ -492,30 +487,3 @@ async def get_slack_threads(client, matches):
 
     # Return the messages sorted by the number of times they were returned
     return list(map(lambda x: x[1]["message"], sorted_by_second))
-
-
-async def get_tickets(keywords, zendesk_user, zendesk_token):
-    # Zen desk only has AND logic for keywords. We really want OR logic.
-    # So search for each keyword individually, tracking how many times a ticket was returned
-    # by the search. We prioritise tickets with the most results.
-    keyword_results = await asyncio.gather(
-        *[
-            get_zen_tickets([keyword], zendesk_user, zendesk_token)
-            for keyword in keywords
-        ]
-    )
-
-    ticket_ids = {}
-    for keyword_result in keyword_results:
-        for ticket in keyword_result["results"]:
-            if not ticket_ids.get(ticket["id"]):
-                ticket_ids[ticket["id"]] = {"count": 1, "ticket": ticket}
-            else:
-                ticket_ids[ticket["id"]]["count"] += 1
-
-    sorted_by_second = sorted(
-        ticket_ids.items(), key=lambda tup: tup[1]["count"], reverse=True
-    )
-
-    tickets = map(lambda x: x[1]["ticket"], sorted_by_second)
-    return list(filter(lambda x: x.get("type") == "incident", tickets))

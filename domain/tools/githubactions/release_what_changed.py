@@ -9,7 +9,6 @@ from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import update_query, get_item_or_none
 from domain.tools.debug import get_params_message
-from domain.tools.wrapper.suggest_solution import get_tickets, get_issues
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from domain.transformers.limit_array import (
     limit_array_to_max_char_length,
@@ -25,10 +24,11 @@ from infrastructure.github import (
     get_commit_async,
     get_issue_comments_async,
     get_issues_comments,
+    get_issues,
 )
 from infrastructure.octopus import get_task_details_async, activity_logs_to_string
 from infrastructure.openai import llm_message_query
-from infrastructure.zendesk import get_tickets_comments
+from infrastructure.zendesk import get_tickets_comments, get_tickets
 
 max_issues = 10
 
@@ -237,7 +237,7 @@ def release_what_changed_callback_wrapper(
 
         log_context = logs[:max_content_per_source]
 
-        # build the context sent to the LLMticket
+        # build the context sent to the LLM
         messages = build_deployment_overview_prompt(
             context=[
                 (
@@ -266,7 +266,7 @@ def release_what_changed_callback_wrapper(
                 ),
                 (
                     "system",
-                    'If the deployment failed, you must suggest a course of action based on the "General Support Ticket" and "General Issue" context.',
+                    'If the deployment failed, you must suggest a course of action based any relevant solutions identified in the "General Support Ticket" and "General Issue" context.',
                 ),
                 *get_context_from_text_array(diff_context, "Deployment Git Diff"),
                 *get_context_from_text_array(issue_context, "Deployment Issue"),

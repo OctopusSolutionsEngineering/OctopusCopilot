@@ -27,6 +27,9 @@ token_lookup_cache = ExpiringDict(60 * 15)
 # Semaphore to limit the number of concurrent requests to GitHub
 sem = asyncio.Semaphore(10)
 
+# 5 keywords is a hard limit for GitHub searches
+max_keywords_with_boolean = 5
+
 
 def exchange_github_code(code):
     # Exchange the code
@@ -486,7 +489,7 @@ async def search_issues(owner, repo, keywords, github_token):
         github_token, "github_token must be a non-empty string (search_issues)."
     )
 
-    quoted_keywords = map(lambda x: f'"{x}"', keywords)
+    quoted_keywords = map(lambda x: f'"{x}"', keywords[:max_keywords_with_boolean])
 
     api = build_github_api_url(
         f"/search/issues",
@@ -621,3 +624,8 @@ async def combine_issue_comments(issue_number, github_token):
     ]
 
     return sanitized_contents
+
+
+async def get_issues(keywords, github_token):
+    issues = await search_issues("OctopusDeploy", "Issues", keywords, github_token)
+    return issues["items"]
