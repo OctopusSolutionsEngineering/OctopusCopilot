@@ -52,6 +52,9 @@ from domain.tools.githubactions.reject_manual_intervention import (
     reject_manual_intervention_confirm_callback_wrapper,
     reject_manual_intervention_callback,
 )
+from domain.tools.githubactions.release_what_changed import (
+    release_what_changed_callback_wrapper,
+)
 from domain.tools.githubactions.releases import (
     releases_query_callback,
     releases_query_messages,
@@ -105,6 +108,7 @@ from domain.tools.wrapper.project_variables import (
 from domain.tools.wrapper.reject_manual_intervention import (
     reject_manual_intervention_wrapper,
 )
+from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
 from domain.tools.wrapper.releases_and_deployments import (
     answer_releases_and_deployments_wrapper,
 )
@@ -528,7 +532,11 @@ def build_form_tools(query, req: func.HttpRequest):
                     ),
                     releases_query_messages(get_github_user_from_form(req)),
                     log_query,
-                )
+                ),
+                # Todo: remove this when the release_what_changed_wrapper is enabled for all users
+                is_enabled=not is_admin_user(
+                    get_github_user_from_form(req), get_admin_users()
+                ),
             ),
             FunctionDefinition(
                 answer_machines_wrapper(
@@ -707,6 +715,23 @@ def build_form_tools(query, req: func.HttpRequest):
                     get_storyblok_token(),
                     os.environ.get("ENCRYPTION_PASSWORD"),
                     os.environ.get("ENCRYPTION_SALT"),
+                    log_query,
+                ),
+                is_enabled=is_admin_user(
+                    get_github_user_from_form(req), get_admin_users()
+                ),
+            ),
+            FunctionDefinition(
+                release_what_changed_wrapper(
+                    query,
+                    release_what_changed_callback_wrapper(
+                        get_github_user_from_form(req),
+                        get_github_token(req),
+                        get_zendesk_user(),
+                        get_zendesk_token(),
+                        get_api_key_and_url,
+                        log_query,
+                    ),
                     log_query,
                 ),
                 is_enabled=is_admin_user(
