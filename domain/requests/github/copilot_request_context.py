@@ -729,7 +729,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_token(req),
                         get_zendesk_user(),
                         get_zendesk_token(),
-                        get_api_key_and_url,
+                        lambda: get_api_key_and_url(req),
                         log_query,
                     ),
                     log_query,

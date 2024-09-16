@@ -7,15 +7,18 @@ def release_what_changed_wrapper(
         environment=None,
         tenant=None,
         release_version=None,
+        dates=None,
         **kwargs,
     ):
         """
-        Provides details about what changes went into an Octopus release.
+        Provides details about an Octopus release or deployment and the changes went into it.
+
         Args:
         space: The name of the space
         project: The name of the project
         environment: The name of the environment
         tenant: The name of the tenant
+        dates: the dates in the query
         release_version: The release version
         """
 
@@ -33,6 +36,7 @@ def release_what_changed_wrapper(
             environment,
             tenant,
             release_version,
+            dates,
         )
 
     return release_what_changed

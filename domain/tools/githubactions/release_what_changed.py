@@ -8,7 +8,11 @@ from domain.messages.describe_deployment import build_deployment_overview_prompt
 from domain.nlp.nlp import nlp_get_keywords
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
-from domain.sanitizers.sanitized_list import update_query, get_item_or_none
+from domain.sanitizers.sanitized_list import (
+    update_query,
+    get_item_or_none,
+    sanitize_dates,
+)
 from domain.tools.debug import get_params_message
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from domain.transformers.limit_array import (
@@ -47,6 +51,7 @@ def release_what_changed_callback_wrapper(
         environments,
         tenants,
         release_version,
+        dates,
     ):
 
         api_key, url = octopus_details()
@@ -104,7 +109,7 @@ def release_what_changed_callback_wrapper(
                 get_item_or_none(space_resources["tenant_names"], 0),
                 api_key,
                 url,
-                None,
+                sanitize_dates(dates),
                 1,
                 release_version,
             ),
@@ -235,14 +240,20 @@ def release_what_changed_callback_wrapper(
         return CopilotResponse("\n\n".join(response))
 
     def release_what_changed_callback(
-        original_query, space, projects, environments, tenants, release_version
+        original_query, space, projects, environments, tenants, release_version, dates
     ):
         """
         The async entrypoint for a tool called by the extension
         """
         return asyncio.run(
             release_what_changed_callback_async(
-                original_query, space, projects, environments, tenants, release_version
+                original_query,
+                space,
+                projects,
+                environments,
+                tenants,
+                release_version,
+                dates,
             )
         )
 
