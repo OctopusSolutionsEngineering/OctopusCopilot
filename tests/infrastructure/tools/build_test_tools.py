@@ -59,8 +59,8 @@ def build_mock_test_tools(tool_query):
             FunctionDefinition(
                 suggest_solution_wrapper(
                     tool_query,
-                    True,
                     suggest_solution_callback_wrapper(os.environ["TEST_GH_USER"]),
+                    True,
                     os.environ["TEST_GH_USER"],
                     os.environ["GH_TEST_TOKEN"],
                     get_zendesk_user(),
