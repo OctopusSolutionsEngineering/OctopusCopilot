@@ -12,6 +12,7 @@ from infrastructure.octopus import (
     get_channel_cached,
     get_tenants_fuzzy_cached,
     get_environments_fuzzy_cached,
+    get_channel_by_name_fuzzy,
 )
 
 
@@ -37,6 +38,7 @@ def get_deployments_for_project(
     dates,
     max_results=max_context,
     release_version=None,
+    channel_names=None,
 ):
     """
     Gets the list of deployments for a specific environment from the progression of a project
@@ -47,7 +49,8 @@ def get_deployments_for_project(
     :param api_key: The Octopus API key
     :param octopus_url: The Octopus URL
     :param max_results: The maximum number of results
-    :param release_version The release version
+    :param release_version: The release version
+    :param channel_names: The deployment channel
     :return: The list of deployments
     """
 
@@ -79,6 +82,16 @@ def get_deployments_for_project(
     environments = get_environments_fuzzy_cached(
         space_id, environment_names, api_key, octopus_url
     )
+
+    # Look up the closest matching channel
+    channel = (
+        get_channel_by_name_fuzzy(
+            space_id, project["Id"], channel_names[0], api_key, octopus_url
+        )
+        if channel_names
+        else None
+    )
+
     tenants = get_tenants_fuzzy_cached(space_id, tenant_names, api_key, octopus_url)
 
     # Get the deployments associated with the releases, filtered to the environments
@@ -111,9 +124,13 @@ def get_deployments_for_project(
 
             task = get_task(space_id, deployment.get("TaskId"), api_key, octopus_url)
 
-            channel = get_channel_cached(
+            deployment_channel = get_channel_cached(
                 space_id, deployment["ChannelId"], api_key, octopus_url
             )
+
+            # Keep the deployment if it matches the channel, or if there were no channels
+            if channel and not channel["Name"] == deployment_channel["Name"]:
+                continue
 
             deployments.append(
                 {
@@ -147,7 +164,7 @@ def get_deployments_for_project(
                         "Name",
                     ),
                     "ChannelId": deployment["ChannelId"],
-                    "ChannelName": channel["Name"],
+                    "ChannelName": deployment_channel["Name"],
                     "Created": deployment["Created"],
                     "TaskState": task["State"] if task else None,
                     "TaskDuration": task["Duration"] if task else None,

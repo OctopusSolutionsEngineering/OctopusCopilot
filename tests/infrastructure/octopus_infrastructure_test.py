@@ -49,14 +49,15 @@ from infrastructure.octopus import (
     get_tenant_fuzzy,
     get_project_fuzzy,
     get_environment,
-    get_channel_by_name,
+    get_channel_by_name_fuzzy,
     get_default_channel,
     get_teams,
     get_team,
     handle_manual_intervention_for_task,
     cancel_server_task,
     get_releases_by_version,
-    get_project, match_deployment_variables,
+    get_project,
+    match_deployment_variables,
 )
 from tests.infrastructure.create_and_deploy_release import (
     create_and_deploy_release,
@@ -522,7 +523,7 @@ class OctopusAPIRequests(unittest.TestCase):
             filter(lambda x: x["Name"] == "Deploy Web App Container", projects)
         )
 
-        channel = get_channel_by_name(
+        channel = get_channel_by_name_fuzzy(
             space_id, project["Id"], "Hotfix", Octopus_Api_Key, Octopus_Url
         )
         self.assertTrue(channel["Name"] == "Hotfix")
@@ -735,12 +736,22 @@ class OctopusAPIRequests(unittest.TestCase):
         space_id, space_name = get_space_id_and_name_from_name(
             "Simple", Octopus_Api_Key, Octopus_Url
         )
-        release = create_release(space_name="Simple", release_version="1.0.0", project_name="Prompted Variable Project")
+        release = create_release(
+            space_name="Simple",
+            release_version="1.0.0",
+            project_name="Prompted Variable Project",
+        )
         environments = get_environments(Octopus_Api_Key, Octopus_Url, space_id)
         environment = next(filter(lambda x: x["Name"] == "Development", environments))
-        variables = "{\"slot\": \"Staging\", \"notify\": \"true\", \"extraVar1\": \"extraValue1\", \"extraVar2\": \"extraValue2\"}"
-        matching_variables, warning_message = match_deployment_variables(space_id, release['Id'], environment['Id'],
-                                                                         variables, Octopus_Api_Key, Octopus_Url)
+        variables = '{"slot": "Staging", "notify": "true", "extraVar1": "extraValue1", "extraVar2": "extraValue2"}'
+        matching_variables, warning_message = match_deployment_variables(
+            space_id,
+            release["Id"],
+            environment["Id"],
+            variables,
+            Octopus_Api_Key,
+            Octopus_Url,
+        )
         self.assertIsNotNone(matching_variables)
         self.assertTrue(
             f"Extra variables were found: extraVar1, extraVar2. These will be ignored."

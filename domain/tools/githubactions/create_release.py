@@ -17,7 +17,7 @@ from infrastructure.octopus import (
     get_project,
     create_release_fuzzy,
     get_default_channel,
-    get_channel_by_name,
+    get_channel_by_name_fuzzy,
     get_release_template_and_default_branch,
     get_environment,
     get_lifecycle,
@@ -205,7 +205,7 @@ def create_release_callback(octopus_details, github_user, connection_string, log
                 f"The query did not specify a channel, so the default channel was assumed."
             )
         else:
-            channel = get_channel_by_name(
+            channel = get_channel_by_name_fuzzy(
                 space_id, project["Id"], channel_name, api_key, url
             )
 

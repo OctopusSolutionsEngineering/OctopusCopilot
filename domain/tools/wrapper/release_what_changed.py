@@ -6,18 +6,23 @@ def release_what_changed_wrapper(
         project=None,
         environment=None,
         tenant=None,
+        channel=None,
         release_version=None,
         dates=None,
         **kwargs,
     ):
         """
-        Provides details about an Octopus release or deployment and the changes went into it.
+        Provides details about an Octopus release or deployment and the changes went into it. Example prompts include:
+        * What changed in the latest deployment to the production environment?
+        * Suggest a solution for the failed deployment to production environment in the hotfix channel?
+        * What code changes went into deployment version "1.23.675"?
 
         Args:
         space: The name of the space
         project: The name of the project
         environment: The name of the environment
         tenant: The name of the tenant
+        channel: The name of the channel
         dates: the dates in the query
         release_version: The release version
         """
@@ -35,6 +40,7 @@ def release_what_changed_wrapper(
             project,
             environment,
             tenant,
+            channel,
             release_version,
             dates,
         )

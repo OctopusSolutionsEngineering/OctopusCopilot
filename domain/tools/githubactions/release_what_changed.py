@@ -12,6 +12,7 @@ from domain.sanitizers.sanitized_list import (
     update_query,
     get_item_or_none,
     sanitize_dates,
+    sanitize_channels,
 )
 from domain.tools.debug import get_params_message
 from domain.transformers.deployments_from_release import get_deployments_for_project
@@ -50,6 +51,7 @@ def release_what_changed_callback_wrapper(
         projects,
         environments,
         tenants,
+        channel,
         release_version,
         dates,
     ):
@@ -65,6 +67,7 @@ def release_what_changed_callback_wrapper(
             release_version=release_version,
             environment=environments,
             tenant=tenants,
+            channel=channel,
         )
 
         space_resources = lookup_space_level_resources(
@@ -94,6 +97,7 @@ def release_what_changed_callback_wrapper(
                 release_version=release_version,
                 environment=space_resources["environment_names"],
                 tenant=space_resources["tenant_names"],
+                channel=channel,
             )
         )
 
@@ -112,6 +116,7 @@ def release_what_changed_callback_wrapper(
                 sanitize_dates(dates),
                 1,
                 release_version,
+                sanitize_channels(channel),
             ),
             "Deployments",
         )
@@ -240,7 +245,14 @@ def release_what_changed_callback_wrapper(
         return CopilotResponse("\n\n".join(response))
 
     def release_what_changed_callback(
-        original_query, space, projects, environments, tenants, release_version, dates
+        original_query,
+        space,
+        projects,
+        environments,
+        tenants,
+        channel,
+        release_version,
+        dates,
     ):
         """
         The async entrypoint for a tool called by the extension
@@ -252,6 +264,7 @@ def release_what_changed_callback_wrapper(
                 projects,
                 environments,
                 tenants,
+                channel,
                 release_version,
                 dates,
             )
