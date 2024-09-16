@@ -56,7 +56,7 @@ def suggest_solution_wrapper(
 
         Args:
             keywords: A list of keywords that describe the issue or question. Keywords must be 3 or less individual words, or literal exception names, file names, or error codes.
-            custom_search_queries: An optional list of custom search queries.
+            custom_search_queries: An optional list of custom search queries explicitly defined in the prompt.
         """
 
         async def inner_function():
