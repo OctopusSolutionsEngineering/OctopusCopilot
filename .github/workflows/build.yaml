@@ -83,6 +83,11 @@ jobs:
         run: pip install -r requirements.txt
         shell: bash
 
+      # To run tests locally, use these instructions:
+      # 1. source <venv>/bin/activate
+      # 2. pip install coverage pytest
+      # 3. pip install -r requirements.txt
+      # 4. coverage run --omit="./domain/sanitizers/stringlifier/*" -m pytest --junitxml=results.xml
       - name: Test
         run: |
           pip install pytest pytest-split coverage setuptools
