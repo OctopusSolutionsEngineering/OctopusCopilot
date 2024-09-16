@@ -14,7 +14,10 @@ from domain.transformers.limit_array import (
     limit_array_to_max_char_length,
     limit_array_to_max_items,
 )
-from domain.transformers.text_to_context import get_context_from_text_array
+from domain.transformers.text_to_context import (
+    get_context_from_text_array,
+    get_context_from_string,
+)
 from domain.url.github_urls import (
     extract_owner_repo_and_commit,
     extract_owner_repo_and_issue,
@@ -112,6 +115,8 @@ def release_what_changed_callback_wrapper(
                 "No deployments found for the space, project, environment, and tenant."
             )
 
+        deployment_is_failure = deployments["Deployments"][0]["TaskState"] == "Failed"
+
         # We need to build up a bunch of async calls that we can then batch up
         diff_futures = []
         commit_futures = []
@@ -190,7 +195,7 @@ def release_what_changed_callback_wrapper(
 
         # If the deployment failed, get the keywords and search for tickets and issues
         failure_context = []
-        if deployments["Deployments"][0]["TaskState"] == "Failed":
+        if deployment_is_failure:
             keywords = nlp_get_keywords(logs[:max_chars_128])
             initial_search = await asyncio.gather(
                 get_tickets(keywords, zendesk_user, zendesk_token),
@@ -250,23 +255,30 @@ def release_what_changed_callback_wrapper(
                 ),
                 (
                     "system",
-                    'The supplied "General Support Ticket" context relates to previous help desk tickets that may relate to the errors seen in the deployment logs. Use this context when providing help on a failed deployment.',
-                ),
-                (
-                    "system",
-                    'The supplied "General Issue" context relates to previous issues that may relate to the errors seen in the deployment logs. Use this context when providing help on a failed deployment.',
-                ),
-                (
-                    "system",
                     'The supplied "Git Committers" context lists the developers who contributed to the deployment.',
                 ),
                 (
                     "system",
                     'The supplied "Deployment Logs" context provides the deployment logs.',
                 ),
-                (
-                    "system",
-                    'If the deployment failed, you must suggest a course of action based any relevant solutions identified in the "General Support Ticket" and "General Issue" context.',
+                *(
+                    [
+                        (
+                            "system",
+                            'The supplied "General Support Ticket" context relates to previous help desk tickets that may relate to the errors seen in the deployment logs.',
+                        ),
+                        (
+                            "system",
+                            'The supplied "General Issue" context relates to previous issues that may relate to the errors seen in the deployment logs.',
+                        ),
+                        (
+                            "system",
+                            """You must list any relevant solutions or suggestions relating to the errors in the "Deployment Logs" from the "General Support Ticket" and "General Issue" context.
+                            You will be penalized if you do not include this information in your response.""",
+                        ),
+                    ]
+                    if deployment_is_failure
+                    else []
                 ),
                 *get_context_from_text_array(diff_context, "Deployment Git Diff"),
                 *get_context_from_text_array(issue_context, "Deployment Issue"),
@@ -274,6 +286,7 @@ def release_what_changed_callback_wrapper(
                     support_ticket_context, "General Support Ticket"
                 ),
                 *get_context_from_text_array(support_issue_context, "General Issue"),
+                get_context_from_string(log_context, "Deployment Logs"),
                 (
                     "system",
                     "Git Committers: ###\n"
@@ -281,12 +294,6 @@ def release_what_changed_callback_wrapper(
                         committer.replace("{", "{{").replace("}", "}}")
                         for committer in committers
                     )
-                    + "\n###",
-                ),
-                (
-                    "system",
-                    "Deployment Logs: ###\n"
-                    + log_context.replace("{", "{{").replace("}", "}}")
                     + "\n###",
                 ),
             ]
