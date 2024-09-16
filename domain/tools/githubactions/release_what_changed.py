@@ -116,66 +116,15 @@ def release_what_changed_callback_wrapper(
                 "No deployments found for the space, project, environment, and tenant."
             )
 
-        deployment_is_failure = deployments["Deployments"][0]["TaskState"] == "Failed"
-
         # We need to build up a bunch of async calls that we can then batch up
-        diff_futures = []
-        commit_futures = []
-        workitems_futures = []
+        diff_futures, commit_futures = get_commit_futures(deployments)
+        workitems_futures = get_workitem_futures(deployments)
         task_log_future = get_task_details_async(
             space_resources["space_id"],
             deployments["Deployments"][0]["TaskId"],
             api_key,
             url,
         )
-
-        # From the deployment, get the diffs and commit details
-        for build_info in deployments["Deployments"][0]["BuildInformation"]:
-            if build_info.get("Commits"):
-                commit_details = [
-                    extract_owner_repo_and_commit(commit["LinkUrl"])
-                    for commit in build_info["Commits"]
-                ]
-
-                diff_futures = [
-                    get_commit_diff_async(
-                        commit_detail[0],
-                        commit_detail[1],
-                        commit_detail[2],
-                        github_token,
-                    )
-                    for commit_detail in commit_details
-                ]
-
-                commit_futures = [
-                    get_commit_async(
-                        commit_detail[0],
-                        commit_detail[1],
-                        commit_detail[2],
-                        github_token,
-                    )
-                    for commit_detail in commit_details
-                    if commit_detail[0]
-                ]
-
-        # Get the details of any issues fixed
-        for build_info in deployments["Deployments"][0]["BuildInformation"]:
-            if build_info.get("WorkItems"):
-                workitems_details = [
-                    extract_owner_repo_and_issue(workitem["LinkUrl"])
-                    for workitem in build_info["WorkItems"]
-                ]
-
-                workitems_futures = [
-                    get_issue_comments_async(
-                        workitems_details[0],
-                        workitems_details[1],
-                        workitems_details[2],
-                        github_token,
-                    )
-                    for workitems_detail in workitems_details
-                    if workitems_detail[0]
-                ]
 
         # Fire off all the external API calls
         external_context = await asyncio.gather(
@@ -195,27 +144,7 @@ def release_what_changed_callback_wrapper(
         logs = activity_logs_to_string(external_context[3]["ActivityLogs"])
 
         # If the deployment failed, get the keywords and search for tickets and issues
-        failure_context = []
-        if deployment_is_failure:
-            keywords = nlp_get_keywords(logs[:max_chars_128])
-            initial_search = await asyncio.gather(
-                get_tickets(keywords, zendesk_user, zendesk_token),
-                get_issues(keywords, github_token),
-                return_exceptions=True,
-            )
-
-            failure_context = await asyncio.gather(
-                get_tickets_comments(
-                    limit_array_to_max_items(initial_search[0], max_issues),
-                    zendesk_user,
-                    zendesk_token,
-                ),
-                get_issues_comments(
-                    limit_array_to_max_items(initial_search[1], max_issues),
-                    github_token,
-                ),
-                return_exceptions=True,
-            )
+        failure_context = get_failure_context(deployments, logs)
 
         # Trim the context
         sources_with_data = (
@@ -282,7 +211,7 @@ def release_what_changed_callback_wrapper(
                             You will be penalized if you do not include this information in your response.""",
                         ),
                     ]
-                    if deployment_is_failure
+                    if deployment_is_failure(deployments)
                     else []
                 ),
                 *get_context_from_text_array(diff_context, "Deployment Git Diff"),
@@ -316,6 +245,89 @@ def release_what_changed_callback_wrapper(
                 original_query, space, projects, environments, tenants, release_version
             )
         )
+
+    def get_commit_futures(deployments):
+        # From the deployment, get the diffs and commit details
+        for build_info in deployments["Deployments"][0]["BuildInformation"]:
+            if build_info.get("Commits"):
+                commit_details = [
+                    extract_owner_repo_and_commit(commit["LinkUrl"])
+                    for commit in build_info["Commits"]
+                ]
+
+                diff_futures = [
+                    get_commit_diff_async(
+                        commit_detail[0],
+                        commit_detail[1],
+                        commit_detail[2],
+                        github_token,
+                    )
+                    for commit_detail in commit_details
+                ]
+
+                commit_futures = [
+                    get_commit_async(
+                        commit_detail[0],
+                        commit_detail[1],
+                        commit_detail[2],
+                        github_token,
+                    )
+                    for commit_detail in commit_details
+                    if commit_detail[0]
+                ]
+
+                return diff_futures, commit_futures
+
+        return [], []
+
+    def get_workitem_futures(deployments):
+        # Get the details of any issues fixed
+        for build_info in deployments["Deployments"][0]["BuildInformation"]:
+            if build_info.get("WorkItems"):
+                workitems_details = [
+                    extract_owner_repo_and_issue(workitem["LinkUrl"])
+                    for workitem in build_info["WorkItems"]
+                ]
+
+                return [
+                    get_issue_comments_async(
+                        workitems_details[0],
+                        workitems_details[1],
+                        workitems_details[2],
+                        github_token,
+                    )
+                    for workitems_detail in workitems_details
+                    if workitems_detail[0]
+                ]
+
+        return []
+
+    async def get_failure_context(deployments, logs):
+        if deployment_is_failure(deployments):
+            keywords = nlp_get_keywords(logs[:max_chars_128])
+            initial_search = await asyncio.gather(
+                get_tickets(keywords, zendesk_user, zendesk_token),
+                get_issues(keywords, github_token),
+                return_exceptions=True,
+            )
+
+            return await asyncio.gather(
+                get_tickets_comments(
+                    limit_array_to_max_items(initial_search[0], max_issues),
+                    zendesk_user,
+                    zendesk_token,
+                ),
+                get_issues_comments(
+                    limit_array_to_max_items(initial_search[1], max_issues),
+                    github_token,
+                ),
+                return_exceptions=True,
+            )
+
+        return []
+
+    def deployment_is_failure(deployments):
+        return deployments["Deployments"][0]["TaskState"] == "Failed"
 
     # Return the callback that in turns call the async function
     return release_what_changed_callback
