@@ -55,8 +55,8 @@ def suggest_solution_wrapper(
         * Provide a solution for the following error with the custom search queries "kubernetes", "yaml", "linux": In my helm deploy step I am setting some \"Explicit Key Values\" and they don't transform.
 
         Args:
-            keywords: A list of keywords that describe the issue or question. Keywords must be 3 or less individual words, or literal exception names, file names, or error codes.
-            custom_search_queries: An optional list of custom search queries explicitly defined in the prompt.
+            keywords: A list of keywords extracted from the issue or question. Keywords must be 3 or less individual words, or literal exception names, file names, or error codes.
+            custom_search_queries: An optional list of keywords explicitly defined at the start of the prompt.
         """
 
         async def inner_function():
