@@ -683,8 +683,8 @@ def build_form_tools(query, req: func.HttpRequest):
             FunctionDefinition(
                 suggest_solution_wrapper(
                     query,
-                    is_admin_user(get_github_user_from_form(req), get_admin_users()),
                     suggest_solution_callback_wrapper(get_github_user_from_form(req)),
+                    is_admin_user(get_github_user_from_form(req), get_admin_users()),
                     get_github_user_from_form(req),
                     get_github_token(req),
                     get_zendesk_user(),
