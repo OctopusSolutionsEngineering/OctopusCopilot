@@ -558,6 +558,8 @@ async def combine_ticket_comments(ticket_id, zendesk_user, zendesk_token):
     ]
 
     # If we need to strip PII from the comments, we can do it here
-    combined_comments = anonymize_message(sanitize_message(combined_comments))
+    sanitized_contents = [
+        anonymize_message(sanitize_message(contents) for contents in combined_comments)
+    ]
 
-    return "\n".join(combined_comments)
+    return "\n".join(sanitized_contents)
