@@ -600,10 +600,12 @@ async def get_commit_diff_async(owner, repo, commit, github_token):
 
 
 async def get_issues_comments(issues, github_token):
-    return [
-        await combine_issue_comments(str(ticket["number"]), github_token)
-        for ticket in issues
-    ]
+    return await asyncio.gather(
+        *[
+            combine_issue_comments(str(ticket["number"]), github_token)
+            for ticket in issues
+        ]
+    )
 
 
 async def combine_issue_comments(issue_number, github_token):

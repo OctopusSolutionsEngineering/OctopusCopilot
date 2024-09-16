@@ -237,7 +237,7 @@ def release_what_changed_callback_wrapper(
 
         log_context = logs[:max_content_per_source]
 
-        # build the context sent to the LLM
+        # build the context sent to the LLMticket
         messages = build_deployment_overview_prompt(
             context=[
                 (

@@ -78,10 +78,12 @@ async def get_zen_comments(ticket_id, zen_user, zen_token):
 
 
 async def get_tickets_comments(tickets, zendesk_user, zendesk_token):
-    return [
-        await combine_ticket_comments(str(ticket["id"]), zendesk_user, zendesk_token)
-        for ticket in tickets
-    ]
+    return await asyncio.gather(
+        *[
+            combine_ticket_comments(str(ticket["id"]), zendesk_user, zendesk_token)
+            for ticket in tickets
+        ]
+    )
 
 
 async def combine_ticket_comments(ticket_id, zendesk_user, zendesk_token):

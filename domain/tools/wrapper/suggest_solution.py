@@ -517,4 +517,5 @@ async def get_tickets(keywords, zendesk_user, zendesk_token):
         ticket_ids.items(), key=lambda tup: tup[1]["count"], reverse=True
     )
 
-    return list(map(lambda x: x[1]["ticket"], sorted_by_second))
+    tickets = map(lambda x: x[1]["ticket"], sorted_by_second)
+    return list(filter(lambda x: x.get("type") == "incident", tickets))
