@@ -11,7 +11,10 @@ from domain.sanitizers.sanitized_list import update_query, get_item_or_none
 from domain.tools.debug import get_params_message
 from domain.tools.wrapper.suggest_solution import get_tickets, get_issues
 from domain.transformers.deployments_from_release import get_deployments_for_project
-from domain.transformers.limit_array import limit_array_to_max_char_length
+from domain.transformers.limit_array import (
+    limit_array_to_max_char_length,
+    limit_array_to_max_items,
+)
 from domain.transformers.text_to_context import get_context_from_text_array
 from domain.url.github_urls import (
     extract_owner_repo_and_commit,
@@ -21,9 +24,13 @@ from infrastructure.github import (
     get_commit_diff_async,
     get_commit_async,
     get_issue_comments_async,
+    get_issues_comments,
 )
 from infrastructure.octopus import get_task_details_async, activity_logs_to_string
 from infrastructure.openai import llm_message_query
+from infrastructure.zendesk import get_tickets_comments
+
+max_issues = 10
 
 
 def release_what_changed_callback_wrapper(
@@ -185,9 +192,22 @@ def release_what_changed_callback_wrapper(
         failure_context = []
         if deployments["Deployments"][0]["TaskState"] == "Failed":
             keywords = nlp_get_keywords(logs[:max_chars_128])
-            failure_context = await asyncio.gather(
+            initial_search = await asyncio.gather(
                 get_tickets(keywords, zendesk_user, zendesk_token),
                 get_issues(keywords, github_token),
+                return_exceptions=True,
+            )
+
+            failure_context = await asyncio.gather(
+                get_tickets_comments(
+                    limit_array_to_max_items(initial_search[0], max_issues),
+                    zendesk_user,
+                    zendesk_token,
+                ),
+                get_issues_comments(
+                    limit_array_to_max_items(initial_search[1], max_issues),
+                    github_token,
+                ),
                 return_exceptions=True,
             )
 
@@ -243,6 +263,10 @@ def release_what_changed_callback_wrapper(
                 (
                     "system",
                     'The supplied "Deployment Logs" context provides the deployment logs.',
+                ),
+                (
+                    "system",
+                    'If the deployment failed, you must suggest a course of action based on the "General Support Ticket" and "General Issue" context.',
                 ),
                 *get_context_from_text_array(diff_context, "Deployment Git Diff"),
                 *get_context_from_text_array(issue_context, "Deployment Issue"),

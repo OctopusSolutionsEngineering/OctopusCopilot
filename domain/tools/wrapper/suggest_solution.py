@@ -9,7 +9,6 @@ from domain.exceptions.none_on_exception import (
 )
 from domain.logging.log_if_exception import log_if_exception
 from domain.sanitizers.sanitize_keywords import sanitize_keywords
-from domain.sanitizers.sanitize_logs import anonymize_message, sanitize_message
 from domain.sanitizers.sanitize_markdown import markdown_to_text
 from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list
 from domain.slack.slack_urls import generate_slack_login
@@ -17,18 +16,17 @@ from domain.transformers.limit_array import (
     limit_array_to_max_char_length,
     limit_array_to_max_items,
 )
-from domain.transformers.minify_strings import minify_strings, replace_space_codes
 from domain.transformers.trim_strings import trim_string_with_ellipsis
 from domain.url.session import create_session_blob
 from infrastructure.github import (
     search_issues,
-    get_issue_comments_async,
     search_repo_async,
     download_file_async,
+    get_issues_comments,
 )
 from infrastructure.openai import llm_message_query
 from infrastructure.storyblok import search_storyblok_stories, get_fields_with_text
-from infrastructure.zendesk import get_zen_tickets, get_zen_comments
+from infrastructure.zendesk import get_zen_tickets, get_tickets_comments
 
 max_issues = 10
 max_keywords = 5
@@ -348,13 +346,6 @@ async def get_issues(keywords, github_token):
     return issues["items"]
 
 
-async def get_issues_comments(issues, github_token):
-    return [
-        await combine_issue_comments(str(ticket["number"]), github_token)
-        for ticket in issues
-    ]
-
-
 async def get_docs(keywords, github_token):
     # GitHub search does not support OR logic for keywords, so we have to search for each keyword individually
     keyword_results = await asyncio.gather(
@@ -435,19 +426,6 @@ def get_docs_title(content, filename):
         ],
         0,
     ) or filename.split("/")[-1].replace(".md", "").replace(".include", "")
-
-
-async def combine_issue_comments(issue_number, github_token):
-    comments = await get_issue_comments_async(
-        "OctopusDeploy", "Issues", str(issue_number), github_token
-    )
-    combined_comments = "\n".join(
-        [minify_strings(comment["body"]) for comment in comments if comment["body"]]
-    )
-
-    combined_comments = anonymize_message(sanitize_message(combined_comments))
-
-    return combined_comments
 
 
 async def get_slack_messages(slack_token, keywords):
@@ -540,24 +518,3 @@ async def get_tickets(keywords, zendesk_user, zendesk_token):
     )
 
     return list(map(lambda x: x[1]["ticket"], sorted_by_second))
-
-
-async def get_tickets_comments(tickets, zendesk_user, zendesk_token):
-    return [
-        await combine_ticket_comments(str(ticket["id"]), zendesk_user, zendesk_token)
-        for ticket in tickets
-    ]
-
-
-async def combine_ticket_comments(ticket_id, zendesk_user, zendesk_token):
-    comments = await get_zen_comments(ticket_id, zendesk_user, zendesk_token)
-    combined_comments = [comments.get("subject", "")] + [
-        minify_strings(replace_space_codes(comment.get("body", "")))
-        for comment in comments.get("comments", [])
-        if comment.get("public", False)
-    ]
-
-    # If we need to strip PII from the comments, we can do it here
-    combined_comments = anonymize_message(sanitize_message(combined_comments))
-
-    return "\n".join(combined_comments)

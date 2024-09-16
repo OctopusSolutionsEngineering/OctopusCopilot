@@ -8,7 +8,7 @@ from domain.tools.wrapper.function_definition import (
 from infrastructure.openai import llm_tool_query
 
 
-def nlp_get_keywords(text, max_keywords=5):
+def nlp_get_keywords(text, max_keywords=10):
     """
     Extracts keywords with an LLM. This will probably need to be replaced with a call to more specific
     keyword extraction tool. But an LLM works for now.

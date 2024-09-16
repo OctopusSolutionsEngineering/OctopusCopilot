@@ -9,7 +9,9 @@ import aiohttp
 from expiring_dict import ExpiringDict
 
 from domain.exceptions.request_failed import GitHubRequestFailed
+from domain.sanitizers.sanitize_logs import anonymize_message, sanitize_message
 from domain.sanitizers.url_sanitizer import quote_safe
+from domain.transformers.minify_strings import minify_strings
 from domain.url.build_url import build_url
 from domain.validation.argument_validation import (
     ensure_string_not_empty,
@@ -595,3 +597,25 @@ async def get_commit_diff_async(owner, repo, commit, github_token):
                     body = await response.text()
                     raise GitHubRequestFailed(f"Request failed with " + body)
                 return await response.text()
+
+
+async def get_issues_comments(issues, github_token):
+    return [
+        await combine_issue_comments(str(ticket["number"]), github_token)
+        for ticket in issues
+    ]
+
+
+async def combine_issue_comments(issue_number, github_token):
+    comments = await get_issue_comments_async(
+        "OctopusDeploy", "Issues", str(issue_number), github_token
+    )
+    combined_comments = "\n".join(
+        [minify_strings(comment["body"]) for comment in comments if comment["body"]]
+    )
+
+    sanitized_contents = [
+        anonymize_message(sanitize_message(contents) for contents in combined_comments)
+    ]
+
+    return sanitized_contents

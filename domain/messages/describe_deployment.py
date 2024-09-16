@@ -8,7 +8,6 @@ def build_deployment_overview_prompt(few_shot=None, context=None):
                 If a list of committers are provided, you must list the committers. 
                 If details of issues are provided, you must provide a summary of the issues.
                 You must summarize deployment logs.
-                If the deployment was a failure, you must suggest a course of action.
                 You must also answer any questions asked by the user.""",
         ),
         *(few_shot if few_shot else []),
