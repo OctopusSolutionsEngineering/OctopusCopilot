@@ -615,15 +615,16 @@ async def combine_issue_comments(issue_number, github_token):
     comments = await get_issue_comments_async(
         "OctopusDeploy", "Issues", str(issue_number), github_token
     )
-    combined_comments = "\n".join(
-        [minify_strings(comment["body"]) for comment in comments if comment["body"]]
-    )
+
+    combined_comments = [
+        minify_strings(comment["body"]) for comment in comments if comment.get("body")
+    ]
 
     sanitized_contents = [
         anonymize_message(sanitize_message(contents)) for contents in combined_comments
     ]
 
-    return sanitized_contents
+    return "\n".join(sanitized_contents)
 
 
 async def get_issues(keywords, github_token):
