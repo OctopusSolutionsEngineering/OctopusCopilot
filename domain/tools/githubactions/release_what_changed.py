@@ -286,16 +286,8 @@ def release_what_changed_callback_wrapper(
                     support_ticket_context, "General Support Ticket"
                 ),
                 *get_context_from_text_array(support_issue_context, "General Issue"),
-                get_context_from_string(log_context, "Deployment Logs"),
-                (
-                    "system",
-                    "Git Committers: ###\n"
-                    + "\n".join(
-                        committer.replace("{", "{{").replace("}", "}}")
-                        for committer in committers
-                    )
-                    + "\n###",
-                ),
+                *get_context_from_string(log_context, "Deployment Logs"),
+                *get_context_from_string("\n".join(committers), "Git Committers"),
             ]
         )
 
