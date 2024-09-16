@@ -26,7 +26,7 @@ from infrastructure.github import (
 )
 from infrastructure.openai import llm_message_query
 from infrastructure.storyblok import search_storyblok_stories, get_fields_with_text
-from infrastructure.zendesk import get_tickets_comments, get_tickets
+from infrastructure.zendesk import get_tickets_comments, get_tickets, get_no_tickets
 
 max_issues = 10
 max_keywords = 5
@@ -35,6 +35,7 @@ max_keywords = 5
 def suggest_solution_wrapper(
     query,
     callback,
+    is_admin,
     github_user,
     github_token,
     zendesk_user,
@@ -80,8 +81,13 @@ def suggest_solution_wrapper(
 
             # Get the list of issues, tickets, and slack messages.
             # Batch all of these async calls up for better performance
+            # Todo - remove the call to get_no_tickets() when this functionality is exposed publicly
             issues = await asyncio.gather(
-                get_tickets(limited_keywords, zendesk_user, zendesk_token),
+                (
+                    get_tickets(limited_keywords, zendesk_user, zendesk_token)
+                    if is_admin
+                    else get_no_tickets()
+                ),
                 get_issues(limited_keywords, github_token),
                 get_slack_messages(slack_token, limited_keywords),
                 get_docs(limited_keywords, github_token),

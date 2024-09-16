@@ -129,3 +129,13 @@ async def get_tickets(keywords, zendesk_user, zendesk_token):
 
     tickets = map(lambda x: x[1]["ticket"], sorted_by_second)
     return list(filter(lambda x: x.get("type") == "incident", tickets))
+
+
+async def get_no_tickets():
+    """
+    Getting tickets is limited to admin users at this point. It is nice to be able to switch off
+    any interaction with the ZenDesk API without having to change the code. So for this we have
+    an empty function that can be used in place of get_tickets
+    :return: An empty array.
+    """
+    return []

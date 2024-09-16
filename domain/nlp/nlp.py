@@ -14,7 +14,7 @@ def nlp_get_keywords(text, max_keywords=10):
     keyword extraction tool. But an LLM works for now.
     :param max_keywords: The number of keywords to return
     :param text: The text to extract keywords from
-    :return:
+    :return: The keywords from the text.
     """
     keywords = llm_tool_query(
         "Get the keywords from the following text: " + text,

@@ -40,9 +40,6 @@ from domain.tools.wrapper.project_variables import (
     answer_project_variables_usage_wrapper,
 )
 from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
-from domain.tools.wrapper.releases_and_deployments import (
-    answer_releases_and_deployments_wrapper,
-)
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.tools.wrapper.task_summary_wrapper import show_task_summary_wrapper
 from infrastructure.openai import llm_tool_query
@@ -169,19 +166,6 @@ def build_tools(tool_query):
                         get_default_argument,
                         log_query,
                     ),
-                    log_query,
-                )
-            ),
-            FunctionDefinition(
-                answer_releases_and_deployments_wrapper(
-                    tool_query,
-                    releases_query_cli_callback(
-                        get_api_key(),
-                        get_octopus_api(),
-                        get_default_argument,
-                        log_query,
-                    ),
-                    None,
                     log_query,
                 )
             ),

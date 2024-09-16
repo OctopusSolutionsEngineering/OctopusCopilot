@@ -37,13 +37,19 @@ from infrastructure.github import (
 )
 from infrastructure.octopus import get_task_details_async, activity_logs_to_string
 from infrastructure.openai import llm_message_query
-from infrastructure.zendesk import get_tickets_comments, get_tickets
+from infrastructure.zendesk import get_tickets_comments, get_tickets, get_no_tickets
 
 max_issues = 10
 
 
 def release_what_changed_callback_wrapper(
-    github_user, github_token, zendesk_user, zendesk_token, octopus_details, log_query
+    is_admin,
+    github_user,
+    github_token,
+    zendesk_user,
+    zendesk_token,
+    octopus_details,
+    log_query,
 ):
     async def release_what_changed_callback_async(
         original_query,
@@ -154,7 +160,7 @@ def release_what_changed_callback_wrapper(
         logs = activity_logs_to_string(external_context[3]["ActivityLogs"])
 
         # If the deployment failed, get the keywords and search for tickets and issues
-        failure_context = await get_failure_context(deployments, logs)
+        failure_context = await get_failure_context(is_admin, deployments, logs)
 
         # Trim the context
         sources_with_data = (
@@ -329,8 +335,13 @@ def release_what_changed_callback_wrapper(
     async def get_failure_context(deployments, logs):
         if deployment_is_failure(deployments):
             keywords = nlp_get_keywords(logs[:max_chars_128])
+            # TODO: Remove the call to get_no_tickets() when we are happy to expose this to non-admin users
             initial_search = await asyncio.gather(
-                get_tickets(keywords, zendesk_user, zendesk_token),
+                (
+                    get_tickets(keywords, zendesk_user, zendesk_token)
+                    if is_admin
+                    else get_no_tickets()
+                ),
                 get_issues(keywords, github_token),
                 return_exceptions=True,
             )
