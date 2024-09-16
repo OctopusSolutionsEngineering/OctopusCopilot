@@ -52,7 +52,7 @@ def suggest_solution_wrapper(
 
         Example prompts include:
         * Suggest a solution for the following issue: How can I use Harbor as a private image registry.
-        * Provide a solution for the following error with the custom search queries "Helm", "Explicit Key Values", "transform": In my helm deploy step I am setting some \"Explicit Key Values\" and they don't transform.
+        * Provide a solution for the following error with the custom search queries "kubernetes", "yaml", "linux": In my helm deploy step I am setting some \"Explicit Key Values\" and they don't transform.
 
         Args:
             keywords: A list of keywords that describe the issue or question. Keywords must be 3 or less individual words, or literal exception names, file names, or error codes.
