@@ -26,3 +26,7 @@ def limit_array_to_max_items(array, max_items):
     :return: The limited array
     """
     return array[:max_items] if not isinstance(array, Exception) else []
+
+
+def limit_text_in_array(array, max_length):
+    return list(map(lambda x: x if not isinstance(x, str) else x[:max_length], array))

@@ -19,6 +19,7 @@ from domain.transformers.deployments_from_release import get_deployments_for_pro
 from domain.transformers.limit_array import (
     limit_array_to_max_char_length,
     limit_array_to_max_items,
+    limit_text_in_array,
 )
 from domain.transformers.text_to_context import (
     get_context_from_text_array,
@@ -170,25 +171,32 @@ def release_what_changed_callback_wrapper(
         )
         max_content_per_source = int(max_chars_128 / sources_with_data)
 
-        # Diffs can be big, and it is better to have some of the diff rather than none of it
-        trimmed_diffs = list(
-            map(lambda x: x[:max_content_per_source], external_context[0])
-        )
+        # We limit the overall length of all the items in the content to their own content window size,
+        # but also limit the length of any individual item to the max_content_per_source. This means
+        # that we can at least get some context from each source, even if it's not the full context.
 
         diff_context = limit_array_to_max_char_length(
-            trimmed_diffs, max_content_per_source
+            limit_text_in_array(external_context[0], max_content_per_source),
+            max_content_per_source,
         )
 
         issue_context = limit_array_to_max_char_length(
-            external_context[2], max_content_per_source
+            limit_text_in_array(external_context[2], max_content_per_source),
+            max_content_per_source,
         )
 
         support_ticket_context = limit_array_to_max_char_length(
-            get_item_or_none(failure_context, 0), max_content_per_source
+            limit_text_in_array(
+                get_item_or_none(failure_context, 0), max_content_per_source
+            ),
+            max_content_per_source,
         )
 
         support_issue_context = limit_array_to_max_char_length(
-            get_item_or_none(failure_context, 1), max_content_per_source
+            limit_text_in_array(
+                get_item_or_none(failure_context, 1), max_content_per_source
+            ),
+            limit_text_in_array,
         )
 
         log_context = logs[:max_content_per_source]
