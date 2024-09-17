@@ -30,7 +30,7 @@ def limit_array_to_max_items(array, max_items):
     if not isinstance(array, list):
         return array
 
-    return array[:max_items] if not isinstance(array, Exception) else []
+    return array[:max_items]
 
 
 def limit_text_in_array(array, max_length):
