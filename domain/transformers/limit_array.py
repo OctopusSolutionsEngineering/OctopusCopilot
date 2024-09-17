@@ -36,3 +36,17 @@ def limit_text_in_array(array, max_length):
         return array
 
     return list(map(lambda x: x if not isinstance(x, str) else x[:max_length], array))
+
+
+def count_non_empty_items(array):
+    if not isinstance(array, list):
+        return 0
+
+    return len(
+        list(
+            filter(
+                lambda x: (isinstance(x, list) or isinstance(x, str)) and len(x) != 0,
+                array,
+            )
+        )
+    )

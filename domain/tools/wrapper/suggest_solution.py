@@ -15,6 +15,7 @@ from domain.slack.slack_urls import generate_slack_login
 from domain.transformers.limit_array import (
     limit_array_to_max_char_length,
     limit_array_to_max_items,
+    count_non_empty_items,
 )
 from domain.transformers.trim_strings import trim_string_with_ellipsis
 from domain.url.session import create_session_blob
@@ -125,7 +126,7 @@ def suggest_solution_wrapper(
             log_if_exception(logging, external_context[2], "GitHub Docs Exception")
 
             # Each external source gets its own dedicated slice of the context window
-            sources_with_data = len(list(filter(lambda x: len(x) != 0, limited_issues)))
+            sources_with_data = count_non_empty_items(limited_issues)
             max_content_per_source = max_chars_128 / sources_with_data
 
             # Limit the length of the response, and filter out exceptions
