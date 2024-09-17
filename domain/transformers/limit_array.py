@@ -6,8 +6,8 @@ def limit_array_to_max_char_length(array, max_length):
     :param max_length: The max number of characters
     :return: The limited array
     """
-    if not array or isinstance(array, Exception):
-        return []
+    if not isinstance(array, list):
+        return array
 
     current_length = 0
     for i, item in enumerate(array):
@@ -25,14 +25,14 @@ def limit_array_to_max_items(array, max_items):
     :param max_items: The max number of items
     :return: The limited array
     """
-    if not array:
+    if not isinstance(array, list):
         return array
 
     return array[:max_items] if not isinstance(array, Exception) else []
 
 
 def limit_text_in_array(array, max_length):
-    if not array or isinstance(array, Exception):
+    if not isinstance(array, list):
         return array
 
     return list(map(lambda x: x if not isinstance(x, str) else x[:max_length], array))
