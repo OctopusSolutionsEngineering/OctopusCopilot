@@ -18,6 +18,7 @@ from domain.validation.argument_validation import (
     ensure_not_falsy,
 )
 from infrastructure.http_pool import http
+from infrastructure.octopus import logging_wrapper
 
 # Token user lookup cache that expires in 15 minutes.
 # This is really only for tests as Azure functions are going to launch a new instance for each request,
@@ -31,6 +32,7 @@ sem = asyncio.Semaphore(10)
 max_keywords_with_boolean = 5
 
 
+@logging_wrapper
 def exchange_github_code(code):
     # Exchange the code
     resp = http.request(
@@ -60,6 +62,7 @@ def exchange_github_code(code):
     return response_json["access_token"]
 
 
+@logging_wrapper
 def get_github_auth_headers(get_token):
     """
     Build the headers used to make a GitHub API request
@@ -78,6 +81,7 @@ def get_github_auth_headers(get_token):
     return headers
 
 
+@logging_wrapper
 def get_github_diff_headers(get_token):
     """
     Build the headers used to make a GitHub request for a commit diff
@@ -95,6 +99,7 @@ def get_github_diff_headers(get_token):
     return headers
 
 
+@logging_wrapper
 def build_github_api_url(path, query=None):
     """
     Create a URL from the GitHub API URL, additional path, and query params
@@ -108,6 +113,7 @@ def build_github_api_url(path, query=None):
     return urlunsplit((parsed.scheme, parsed.netloc, path, query, ""))
 
 
+@logging_wrapper
 def build_github_url(path, query=None):
     """
     Create a URL from the GitHub URL, additional path, and query params
@@ -121,6 +127,7 @@ def build_github_url(path, query=None):
     return urlunsplit((parsed.scheme, parsed.netloc, path, query, ""))
 
 
+@logging_wrapper
 def get_github_user(get_token):
     """
     Gets the GitHub username from the supplied token
@@ -151,6 +158,7 @@ def get_github_user(get_token):
     return str(json["id"])
 
 
+@logging_wrapper
 def search_repo(repo, language, keywords, get_token=None):
     # The docs at https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-code note that:
     # "This endpoint can be used without authentication if only public resources are requested."
@@ -168,6 +176,7 @@ def search_repo(repo, language, keywords, get_token=None):
     return resp.json()
 
 
+@logging_wrapper
 async def search_repo_async(repo, language, keywords, get_token=None):
     # The docs at https://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-code note that:
     # "This endpoint can be used without authentication if only public resources are requested."
@@ -190,6 +199,7 @@ async def search_repo_async(repo, language, keywords, get_token=None):
                 return await response.json()
 
 
+@logging_wrapper
 async def download_file_async(url):
     """
     Download a file, respecting the rate limits
@@ -204,6 +214,7 @@ async def download_file_async(url):
                 return await response.text()
 
 
+@logging_wrapper
 async def get_latest_workflow_run_async(owner, repo, workflow_id, get_token):
     """
     Async function to get workflow run
@@ -237,6 +248,7 @@ async def get_latest_workflow_run_async(owner, repo, workflow_id, get_token):
                 return await response.json()
 
 
+@logging_wrapper
 async def get_workflow_run_async(owner, repo, run_id, get_token):
     """
     Async function to get workflow run
@@ -268,6 +280,7 @@ async def get_workflow_run_async(owner, repo, run_id, get_token):
                 return await response.json()
 
 
+@logging_wrapper
 async def get_workflow_run_logs_async(owner, repo, run_id, github_token):
     """
     Async function to get workflow run logs
@@ -319,6 +332,7 @@ async def get_workflow_run_logs_async(owner, repo, run_id, github_token):
                     raise GitHubRequestFailed(f"Request failed with " + str(e))
 
 
+@logging_wrapper
 async def get_workflow_artifacts_async(owner, repo, run_id, get_token):
     """
     Async function to get workflow run artifacts
@@ -350,6 +364,7 @@ async def get_workflow_artifacts_async(owner, repo, run_id, get_token):
                 return await response.json()
 
 
+@logging_wrapper
 async def get_open_pull_requests_async(owner, repo, get_token):
     """
     Async function to get open pull requests run
@@ -381,6 +396,7 @@ async def get_open_pull_requests_async(owner, repo, get_token):
                 return await response.json()
 
 
+@logging_wrapper
 async def get_open_issues_async(owner, repo, get_token):
     """
     Async function to get open issues run
@@ -414,6 +430,7 @@ async def get_open_issues_async(owner, repo, get_token):
                 return list(filter(lambda x: "pull_request" not in x, issues))
 
 
+@logging_wrapper
 async def get_run_jobs_async(owner, repo, run_id, github_token):
     """
     Async function to get open issues run
@@ -444,6 +461,7 @@ async def get_run_jobs_async(owner, repo, run_id, github_token):
                 return await response.json()
 
 
+@logging_wrapper
 async def get_repo_contents(owner, repo, directory, github_token):
     """
     Async function to get open issues run
@@ -477,6 +495,7 @@ async def get_repo_contents(owner, repo, directory, github_token):
                 return await response.json()
 
 
+@logging_wrapper
 async def search_issues(owner, repo, keywords, github_token):
     """
     Async function to search issues
@@ -507,6 +526,7 @@ async def search_issues(owner, repo, keywords, github_token):
                 return await response.json()
 
 
+@logging_wrapper
 async def get_issue_comments_async(owner, repo, issue_number, github_token):
     """
     Async function to get issue comments
@@ -540,6 +560,7 @@ async def get_issue_comments_async(owner, repo, issue_number, github_token):
                 return await response.json()
 
 
+@logging_wrapper
 async def get_commit_async(owner, repo, commit, github_token):
     """
     Async function to get the details of a commit
@@ -571,6 +592,7 @@ async def get_commit_async(owner, repo, commit, github_token):
                 return await response.json()
 
 
+@logging_wrapper
 async def get_commit_diff_async(owner, repo, commit, github_token):
     """
     Async function to get commit diff
@@ -602,6 +624,7 @@ async def get_commit_diff_async(owner, repo, commit, github_token):
                 return await response.text()
 
 
+@logging_wrapper
 async def get_issues_comments(issues, github_token):
     return await asyncio.gather(
         *[
