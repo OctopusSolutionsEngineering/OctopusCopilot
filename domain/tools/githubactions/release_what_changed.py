@@ -8,6 +8,7 @@ from domain.messages.describe_deployment import build_deployment_overview_prompt
 from domain.nlp.nlp import nlp_get_keywords
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
+from domain.sanitizers.sanitize_strings import strip_leading_whitespace
 from domain.sanitizers.sanitized_list import (
     update_query,
     get_item_or_none,
@@ -213,25 +214,52 @@ def release_what_changed_callback_wrapper(
         # build the context sent to the LLM
         messages = build_deployment_overview_prompt(
             context=[
-                (
-                    "system",
-                    'The supplied "Deployment Git Diff" context lists the git diffs included in the deployment.',
+                *(
+                    [
+                        (
+                            "system",
+                            strip_leading_whitespace(
+                                """The supplied "Deployment Git Diff" context lists the git diffs included in the deployment.
+                                You must provide a summary of the changes made to individual files in the response."""
+                            ),
+                        )
+                    ]
+                    if external_context[0]
+                    else []
+                ),
+                *(
+                    [
+                        (
+                            "system",
+                            strip_leading_whitespace(
+                                """The supplied "Deployment Issue" context lists the issues resolved by the deployment.
+                                You must provide a summary of the issues in the response."""
+                            ),
+                        )
+                    ]
+                    if external_context[2]
+                    else []
                 ),
                 (
                     "system",
-                    'The supplied "Deployment Issue" context lists the issues resolved by the deployment.',
+                    strip_leading_whitespace(
+                        """The supplied "Git Committers" context lists the developers who contributed to the deployment.
+                        You must provide a summary of the developers in the response."""
+                    ),
                 ),
                 (
                     "system",
-                    'The supplied "Git Committers" context lists the developers who contributed to the deployment.',
+                    strip_leading_whitespace(
+                        """The supplied "Deployment Logs" context provides the Octopus deployment logs.
+                        You must provide a summary of the logs in the response."""
+                    ),
                 ),
                 (
                     "system",
-                    'The supplied "Deployment Logs" context provides the Octopus deployment logs.',
-                ),
-                (
-                    "system",
-                    'The supplied "Deployment JSON" context provides details about the Octopus deployment.',
+                    strip_leading_whitespace(
+                        """The supplied "Deployment JSON" context provides details about the Octopus deployment.
+                        You must provide the deployment details in the response."""
+                    ),
                 ),
                 *(
                     [
