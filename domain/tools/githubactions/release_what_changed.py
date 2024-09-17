@@ -170,8 +170,13 @@ def release_what_changed_callback_wrapper(
         )
         max_content_per_source = int(max_chars_128 / sources_with_data)
 
+        # Diffs can be big, and it is better to have some of the diff rather than none of it
+        trimmed_diffs = list(
+            map(lambda x: x[:max_content_per_source], external_context[0])
+        )
+
         diff_context = limit_array_to_max_char_length(
-            external_context[0], max_content_per_source
+            trimmed_diffs, max_content_per_source
         )
 
         issue_context = limit_array_to_max_char_length(
