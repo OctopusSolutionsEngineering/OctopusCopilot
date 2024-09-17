@@ -236,7 +236,9 @@ def release_what_changed_callback_wrapper(
                     [
                         (
                             "system",
-                            'The supplied "General Support Ticket" context relates to previous help desk tickets that may relate to the errors seen in the deployment logs.',
+                            """The supplied "General Support Ticket" context relates to previous help desk tickets that may relate to the errors seen in the deployment logs.
+                             Any personally identifiable information in the general support tickets has been removed and replace with placeholders.
+                             The placeholders must be ignored and not used in the response.""",
                         ),
                         (
                             "system",
