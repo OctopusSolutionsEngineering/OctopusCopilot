@@ -6,6 +6,7 @@ def limit_array_to_max_char_length(array, max_length):
     :param max_length: The max number of characters
     :return: The limited array
     """
+    # Anything other than an array is returned as is.
     if not isinstance(array, list):
         return array
 
@@ -52,3 +53,10 @@ def count_non_empty_items(array):
             )
         )
     )
+
+
+def array_or_empty_if_exception(array):
+    if isinstance(array, Exception):
+        return []
+
+    return array

@@ -16,6 +16,7 @@ from domain.transformers.limit_array import (
     limit_array_to_max_char_length,
     limit_array_to_max_items,
     count_non_empty_items,
+    array_or_empty_if_exception,
 )
 from domain.transformers.trim_strings import trim_string_with_ellipsis
 from domain.url.session import create_session_blob
@@ -142,13 +143,16 @@ def suggest_solution_wrapper(
 
             fixed_external_context = [
                 limit_array_to_max_char_length(
-                    external_context[0], max_content_per_source
+                    array_or_empty_if_exception(external_context[0]),
+                    max_content_per_source,
                 ),
                 limit_array_to_max_char_length(
-                    external_context[1], max_content_per_source
+                    array_or_empty_if_exception(external_context[1]),
+                    max_content_per_source,
                 ),
                 limit_array_to_max_char_length(
-                    external_context[2], max_content_per_source
+                    array_or_empty_if_exception(external_context[2]),
+                    max_content_per_source,
                 ),
             ]
 

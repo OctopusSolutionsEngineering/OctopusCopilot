@@ -20,6 +20,7 @@ from domain.transformers.limit_array import (
     limit_array_to_max_char_length,
     limit_array_to_max_items,
     limit_text_in_array,
+    array_or_empty_if_exception,
 )
 from domain.transformers.text_to_context import (
     get_context_from_text_array,
@@ -154,7 +155,8 @@ def release_what_changed_callback_wrapper(
 
         # Get the list of people associated with the commits
         committers = [
-            commit["commit"]["author"]["name"] for commit in external_context[1]
+            commit["commit"]["author"]["name"]
+            for commit in array_or_empty_if_exception(external_context[1])
         ]
 
         # Get the raw logs
@@ -176,12 +178,16 @@ def release_what_changed_callback_wrapper(
         # that we can at least get some context from each source, even if it's not the full context.
 
         diff_context = limit_array_to_max_char_length(
-            limit_text_in_array(external_context[0], max_content_per_source),
+            limit_text_in_array(
+                array_or_empty_if_exception(external_context[0]), max_content_per_source
+            ),
             max_content_per_source,
         )
 
         issue_context = limit_array_to_max_char_length(
-            limit_text_in_array(external_context[2], max_content_per_source),
+            limit_text_in_array(
+                array_or_empty_if_exception(external_context[2]), max_content_per_source
+            ),
             max_content_per_source,
         )
 
