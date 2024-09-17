@@ -25,11 +25,14 @@ def limit_array_to_max_items(array, max_items):
     :param max_items: The max number of items
     :return: The limited array
     """
+    if not array:
+        return array
+
     return array[:max_items] if not isinstance(array, Exception) else []
 
 
 def limit_text_in_array(array, max_length):
-    if not array:
+    if not array or isinstance(array, Exception):
         return array
 
     return list(map(lambda x: x if not isinstance(x, str) else x[:max_length], array))
