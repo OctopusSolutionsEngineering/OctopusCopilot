@@ -1,6 +1,5 @@
 import json
 import os
-import time
 import unittest
 from datetime import datetime
 
@@ -18,17 +17,12 @@ from domain.transformers.sse_transformers import (
 )
 from domain.url.session import create_session_blob
 from function_app import copilot_handler_internal
-from infrastructure.octopus import (
-    run_published_runbook_fuzzy,
-    get_space_id_and_name_from_name,
-)
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.infrastructure.cancel_task import cancel_task
 from tests.infrastructure.create_and_deploy_release import (
     create_and_deploy_release,
     wait_for_task,
 )
-from tests.infrastructure.create_release import create_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.octopus_infrastructure_test import run_terraform
 from tests.infrastructure.publish_runbook import publish_runbook
@@ -259,13 +253,13 @@ class CopilotChatTest(unittest.TestCase):
         space_name = "Simple"
         project_name = "Copilot manual approval"
         environment_name = "Development"
-        create_and_deploy_release(
+        deployment = create_and_deploy_release(
             space_name=space_name,
             project_name=project_name,
             environment_name=environment_name,
             release_version=version,
         )
-        time.sleep(5)
+        wait_for_task(deployment["TaskId"], space_name="Simple")
 
         prompt = f'Approve "{version}" to the "{environment_name}" environment for project "{project_name}" in space "{space_name}"'
         response = copilot_handler_internal(build_request(prompt))
@@ -312,7 +306,7 @@ class CopilotChatTest(unittest.TestCase):
             release_version=version,
             use_guided_failure=True,
         )
-        time.sleep(15)
+        wait_for_task(deploy_response["TaskId"], space_name="Simple")
 
         prompt = f'Approve release "{version}" to the "{environment_name}" environment for project "{project_name}"'
         response = copilot_handler_internal(build_request(prompt))
@@ -338,13 +332,13 @@ class CopilotChatTest(unittest.TestCase):
         space_name = "Simple"
         project_name = "Copilot manual approval"
         environment_name = "Development"
-        create_and_deploy_release(
+        deployment = create_and_deploy_release(
             space_name=space_name,
             project_name=project_name,
             environment_name=environment_name,
             release_version=version,
         )
-        time.sleep(5)
+        wait_for_task(deployment["TaskId"], space_name="Simple")
 
         prompt = f'Reject "{version}" to the "{environment_name}" environment for project "{project_name}" in space "{space_name}"'
         response = copilot_handler_internal(build_request(prompt))
@@ -391,7 +385,7 @@ class CopilotChatTest(unittest.TestCase):
             release_version=version,
             use_guided_failure=True,
         )
-        time.sleep(15)
+        wait_for_task(deploy_response["TaskId"], space_name="Simple")
 
         prompt = f'Reject release "{version}" to the "{environment_name}" environment for project "{project_name}"'
         response = copilot_handler_internal(build_request(prompt))
