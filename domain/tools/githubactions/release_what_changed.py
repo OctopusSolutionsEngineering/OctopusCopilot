@@ -95,20 +95,6 @@ def release_what_changed_callback_wrapper(
         if not space_resources["environment_names"]:
             return CopilotResponse("Please specify an environment name in the query.")
 
-        debug_text.extend(
-            get_params_message(
-                github_user,
-                False,
-                release_what_changed_callback.__name__,
-                space=space_resources["space_name"],
-                projects=space_resources["projects"],
-                release_version=release_version,
-                environment=space_resources["environment_names"],
-                tenant=space_resources["tenant_names"],
-                channel=channel,
-            )
-        )
-
         processed_query = update_query(original_query, space_resources["projects"])
         context = {"input": processed_query}
 
@@ -163,7 +149,22 @@ def release_what_changed_callback_wrapper(
         logs = activity_logs_to_string(external_context[3]["ActivityLogs"])
 
         # If the deployment failed, get the keywords and search for tickets and issues
-        failure_context = await get_failure_context(deployments, logs)
+        failure_context, keywords = await get_failure_context(deployments, logs)
+
+        debug_text.extend(
+            get_params_message(
+                github_user,
+                False,
+                release_what_changed_callback.__name__,
+                space=space_resources["space_name"],
+                projects=space_resources["project_names"],
+                release_version=release_version,
+                environment=space_resources["environment_names"],
+                tenant=space_resources["tenant_names"],
+                channel=channel,
+                keywords=keywords,
+            )
+        )
 
         # Trim the context
         sources_with_data = (
@@ -369,24 +370,27 @@ def release_what_changed_callback_wrapper(
                 return_exceptions=True,
             )
 
-            return await asyncio.gather(
-                get_tickets_comments(
-                    limit_array_to_max_items(
-                        array_or_empty_if_exception(initial_search[0]), max_issues
+            return (
+                await asyncio.gather(
+                    get_tickets_comments(
+                        limit_array_to_max_items(
+                            array_or_empty_if_exception(initial_search[0]), max_issues
+                        ),
+                        zendesk_user,
+                        zendesk_token,
                     ),
-                    zendesk_user,
-                    zendesk_token,
-                ),
-                get_issues_comments(
-                    limit_array_to_max_items(
-                        array_or_empty_if_exception(initial_search[1]), max_issues
+                    get_issues_comments(
+                        limit_array_to_max_items(
+                            array_or_empty_if_exception(initial_search[1]), max_issues
+                        ),
+                        github_token,
                     ),
-                    github_token,
+                    return_exceptions=True,
                 ),
-                return_exceptions=True,
+                keywords,
             )
 
-        return []
+        return [], None
 
     def deployment_is_failure(deployments):
         return deployments["Deployments"][0]["TaskState"] == "Failed"
