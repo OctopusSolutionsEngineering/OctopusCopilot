@@ -29,4 +29,7 @@ def limit_array_to_max_items(array, max_items):
 
 
 def limit_text_in_array(array, max_length):
+    if not array:
+        return array
+
     return list(map(lambda x: x if not isinstance(x, str) else x[:max_length], array))
