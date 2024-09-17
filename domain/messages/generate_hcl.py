@@ -402,7 +402,7 @@ async def get_file_content(name, github_token, logging=None):
         contents = [
             decode_string_b64(test_file_content["content"])
             for test_file_content in test_files_contents
-            if not isinstance(test_files_contents, Exception)
+            if not isinstance(test_file_content, Exception)
         ]
 
         return (

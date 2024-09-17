@@ -193,14 +193,16 @@ def release_what_changed_callback_wrapper(
 
         support_ticket_context = limit_array_to_max_char_length(
             limit_text_in_array(
-                get_item_or_none(failure_context, 0), max_content_per_source
+                array_or_empty_if_exception(get_item_or_none(failure_context, 0)),
+                max_content_per_source,
             ),
             max_content_per_source,
         )
 
         support_issue_context = limit_array_to_max_char_length(
             limit_text_in_array(
-                get_item_or_none(failure_context, 1), max_content_per_source
+                array_or_empty_if_exception(get_item_or_none(failure_context, 1)),
+                max_content_per_source,
             ),
             limit_text_in_array,
         )
@@ -367,12 +369,16 @@ def release_what_changed_callback_wrapper(
 
             return await asyncio.gather(
                 get_tickets_comments(
-                    limit_array_to_max_items(initial_search[0], max_issues),
+                    limit_array_to_max_items(
+                        array_or_empty_if_exception(initial_search[0]), max_issues
+                    ),
                     zendesk_user,
                     zendesk_token,
                 ),
                 get_issues_comments(
-                    limit_array_to_max_items(initial_search[1], max_issues),
+                    limit_array_to_max_items(
+                        array_or_empty_if_exception(initial_search[1]), max_issues
+                    ),
                     github_token,
                 ),
                 return_exceptions=True,

@@ -106,11 +106,21 @@ def suggest_solution_wrapper(
 
             # Limit the number of responses to the max_issues
             limited_issues = [
-                limit_array_to_max_items(issues[0], max_issues),
-                limit_array_to_max_items(issues[1], max_issues),
-                limit_array_to_max_items(issues[2], max_issues),
-                limit_array_to_max_items(issues[3], max_issues),
-                limit_array_to_max_items(issues[4], max_issues),
+                limit_array_to_max_items(
+                    array_or_empty_if_exception(issues[0]), max_issues
+                ),
+                limit_array_to_max_items(
+                    array_or_empty_if_exception(issues[1]), max_issues
+                ),
+                limit_array_to_max_items(
+                    array_or_empty_if_exception(issues[2]), max_issues
+                ),
+                limit_array_to_max_items(
+                    array_or_empty_if_exception(issues[3]), max_issues
+                ),
+                limit_array_to_max_items(
+                    array_or_empty_if_exception(issues[4]), max_issues
+                ),
             ]
 
             # Get the contents of the issues and tickets
