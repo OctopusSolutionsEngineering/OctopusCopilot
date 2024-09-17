@@ -10,7 +10,6 @@ from domain.tools.cli.general_query_cli import general_query_cli_callback
 from domain.tools.cli.github_job_summary import get_job_summary_cli_callback
 from domain.tools.cli.how_to import how_to_cli_callback
 from domain.tools.cli.logs import logs_cli_callback
-from domain.tools.cli.releases_query_cli import releases_query_cli_callback
 from domain.tools.cli.resource_specific import resource_specific_cli_callback
 from domain.tools.cli.task_summary import get_task_summary_cli_callback
 from domain.tools.cli.variable_query_cli import variable_query_cli_callback
@@ -230,6 +229,7 @@ def build_tools(tool_query):
                 release_what_changed_wrapper(
                     tool_query,
                     release_what_changed_callback_wrapper(
+                        True,
                         get_github_user(),
                         get_github_token(),
                         get_zendesk_user(),
