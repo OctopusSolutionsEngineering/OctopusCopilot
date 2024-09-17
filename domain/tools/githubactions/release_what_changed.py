@@ -206,7 +206,7 @@ def release_what_changed_callback_wrapper(
             context=[
                 (
                     "system",
-                    'The supplied "Deployment Git Diff" context lists the code changes included in the deployment.',
+                    'The supplied "Deployment Git Diff" context lists the git diffs included in the deployment.',
                 ),
                 (
                     "system",
@@ -218,11 +218,11 @@ def release_what_changed_callback_wrapper(
                 ),
                 (
                     "system",
-                    'The supplied "Deployment Logs" context provides the deployment logs.',
+                    'The supplied "Deployment Logs" context provides the Octopus deployment logs.',
                 ),
                 (
                     "system",
-                    'The supplied "Deployment JSON" context provides details about the deployment.',
+                    'The supplied "Deployment JSON" context provides details about the Octopus deployment.',
                 ),
                 *(
                     [
