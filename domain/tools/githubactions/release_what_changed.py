@@ -220,11 +220,11 @@ def release_what_changed_callback_wrapper(
                             "system",
                             strip_leading_whitespace(
                                 """The supplied "Deployment Git Diff" context lists the git diffs included in the deployment.
-                                You must provide a summary of the changes made to individual files in the response."""
+                                You must list each file included the diffs and provide a summary of the changes."""
                             ),
                         )
                     ]
-                    if external_context[0]
+                    if diff_context
                     else []
                 ),
                 *(
@@ -237,7 +237,7 @@ def release_what_changed_callback_wrapper(
                             ),
                         )
                     ]
-                    if external_context[2]
+                    if issue_context
                     else []
                 ),
                 (
