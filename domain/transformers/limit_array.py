@@ -67,3 +67,10 @@ def object_or_none_if_exception(object):
         return None
 
     return object
+
+
+def object_or_default_if_exception(object, default):
+    if isinstance(object, Exception):
+        return default
+
+    return object

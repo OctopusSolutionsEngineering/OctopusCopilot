@@ -23,6 +23,7 @@ from domain.transformers.limit_array import (
     limit_text_in_array,
     array_or_empty_if_exception,
     object_or_none_if_exception,
+    object_or_default_if_exception,
 )
 from domain.transformers.text_to_context import (
     get_context_from_text_array,
@@ -149,7 +150,7 @@ def release_what_changed_callback_wrapper(
 
         # Get the raw logs
         logs = activity_logs_to_string(
-            object_or_none_if_exception(external_context[3])["ActivityLogs"]
+            object_or_default_if_exception(external_context[3], {}).get("ActivityLogs")
         )
 
         # If the deployment failed, get the keywords and search for tickets and issues
