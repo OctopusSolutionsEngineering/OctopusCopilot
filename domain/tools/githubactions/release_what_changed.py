@@ -22,6 +22,7 @@ from domain.transformers.limit_array import (
     limit_array_to_max_items,
     limit_text_in_array,
     array_or_empty_if_exception,
+    object_or_none_if_exception,
 )
 from domain.transformers.text_to_context import (
     get_context_from_text_array,
@@ -147,7 +148,9 @@ def release_what_changed_callback_wrapper(
         ]
 
         # Get the raw logs
-        logs = activity_logs_to_string(external_context[3]["ActivityLogs"])
+        logs = activity_logs_to_string(
+            object_or_none_if_exception(external_context[3])["ActivityLogs"]
+        )
 
         # If the deployment failed, get the keywords and search for tickets and issues
         failure_context, keywords = await get_failure_context(deployments, logs)
@@ -258,7 +261,8 @@ def release_what_changed_callback_wrapper(
                     "system",
                     strip_leading_whitespace(
                         """The supplied "Deployment JSON" context provides details about the Octopus deployment.
-                        You must provide the deployment details in the response."""
+                        You must provide a summary of the deployment details in the response.
+                        You will be penalized if you print the JSON literally."""
                     ),
                 ),
                 *(

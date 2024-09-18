@@ -60,3 +60,10 @@ def array_or_empty_if_exception(array):
         return []
 
     return array
+
+
+def object_or_none_if_exception(object):
+    if isinstance(object, Exception):
+        return None
+
+    return object
