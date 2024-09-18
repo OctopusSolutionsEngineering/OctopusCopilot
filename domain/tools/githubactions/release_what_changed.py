@@ -218,6 +218,17 @@ def release_what_changed_callback_wrapper(
         # build the context sent to the LLM
         messages = build_deployment_overview_prompt(
             context=[
+                *get_context_from_text_array(diff_context, "Deployment Git Diff"),
+                *get_context_from_text_array(issue_context, "Deployment Issue"),
+                *get_context_from_text_array(
+                    support_ticket_context, "General Support Ticket"
+                ),
+                *get_context_from_text_array(support_issue_context, "General Issue"),
+                *get_context_from_string(log_context, "Deployment Logs"),
+                *get_context_from_string("\n".join(committers), "Git Committers"),
+                *get_context_from_string(
+                    json.dumps(deployments["Deployments"][0]), "Deployment JSON"
+                ),
                 *(
                     [
                         (
@@ -286,17 +297,6 @@ def release_what_changed_callback_wrapper(
                     ]
                     if deployment_is_failure(deployments)
                     else []
-                ),
-                *get_context_from_text_array(diff_context, "Deployment Git Diff"),
-                *get_context_from_text_array(issue_context, "Deployment Issue"),
-                *get_context_from_text_array(
-                    support_ticket_context, "General Support Ticket"
-                ),
-                *get_context_from_text_array(support_issue_context, "General Issue"),
-                *get_context_from_string(log_context, "Deployment Logs"),
-                *get_context_from_string("\n".join(committers), "Git Committers"),
-                *get_context_from_string(
-                    json.dumps(deployments["Deployments"][0]), "Deployment JSON"
                 ),
             ]
         )
