@@ -60,12 +60,12 @@ def suggest_solution_wrapper(
 
         Example prompts include:
         * Suggest a solution for the following issue: How can I use Harbor as a private image registry.
-        * Provide a solution for the following error with the custom search queries "kubernetes", "yaml", "linux": In my helm deploy step I am setting some \"Explicit Key Values\" and they don't transform.
+        * Provide a solution for the following error with the custom search queries "kubernetes", "yaml", "linux": In my helm deploy step I am setting some key values and they don't transform.
 
         Args:
             custom_search_queries: An optional list of keywords explicitly defined at the start of the prompt.
             question_keywords: A list of keywords extracted from the issue or question. Keywords must be 3 or less individual words, or literal exception names, file names, or error codes.
-            ignore_tickets: An optional list of ticket IDs to ignore when searching for tickets.
+            ignore_tickets: An optional list of ticket IDs.
         """
 
         async def inner_function():
