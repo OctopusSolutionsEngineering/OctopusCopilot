@@ -49,7 +49,10 @@ def suggest_solution_wrapper(
     logging=None,
 ):
     def answer_support_question(
-        custom_search_queries=None, question_keywords=None, **kwargs
+        custom_search_queries=None,
+        question_keywords=None,
+        ignore_tickets=None,
+        **kwargs,
     ):
         """Responds to a prompt asking for advice or a solution to a problem, such as a question that a customer might
         send to a help desk or support forum.
@@ -62,6 +65,7 @@ def suggest_solution_wrapper(
         Args:
             custom_search_queries: An optional list of keywords explicitly defined at the start of the prompt.
             question_keywords: A list of keywords extracted from the issue or question. Keywords must be 3 or less individual words, or literal exception names, file names, or error codes.
+            ignore_tickets: An optional list of ticket IDs to ignore when searching for tickets.
         """
 
         async def inner_function():
@@ -73,6 +77,9 @@ def suggest_solution_wrapper(
                     logging(f"Unexpected Key: {key}", "Value: {value}")
 
             slack_token = slack_token_func()
+
+            # sanitize the list of ignored tickets
+            sanitized_ignore_tickets = sanitize_list(ignore_tickets)
 
             # A key word like "Octopus" is not helpful, so get a sanitized list of keywords
             custom_search_queries_list = sanitize_list(custom_search_queries)
@@ -86,7 +93,12 @@ def suggest_solution_wrapper(
             # Todo - remove the call to get_no_tickets() when this functionality is exposed publicly
             issues = await asyncio.gather(
                 (
-                    get_tickets(limited_keywords, zendesk_user, zendesk_token)
+                    get_tickets(
+                        limited_keywords,
+                        sanitized_ignore_tickets,
+                        zendesk_user,
+                        zendesk_token,
+                    )
                     if is_admin
                     else get_no_tickets()
                 ),
