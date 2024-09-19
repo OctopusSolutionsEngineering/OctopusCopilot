@@ -318,6 +318,10 @@ def suggest_solution_wrapper(
             chat_response.append("## Keywords")
             chat_response.append("🔍: " + ", ".join(limited_keywords))
 
+            # List the keywords for reference
+            chat_response.append("## Ignored Tickets")
+            chat_response.append("📧: " + ", ".join(sanitized_ignore_tickets))
+
             # List the Zendesk tickets for reference
             if limited_issues[0]:
                 chat_response.append("## Zendesk Tickets")
