@@ -1,42 +1,78 @@
 from pydantic import BaseModel
 
 from domain.messages.general import build_hcl_prompt
-from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_runbooks, sanitize_targets, sanitize_tenants, \
-    sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, sanitize_certificates, \
-    sanitize_lifecycles, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, sanitize_projectgroups, \
-    sanitize_channels, sanitize_releases, sanitize_steps, sanitize_gitcredentials, sanitize_space, sanitize_dates
+from domain.sanitizers.sanitized_list import (
+    sanitize_projects,
+    sanitize_runbooks,
+    sanitize_targets,
+    sanitize_tenants,
+    sanitize_library_variable_sets,
+    sanitize_environments,
+    sanitize_feeds,
+    sanitize_accounts,
+    sanitize_certificates,
+    sanitize_lifecycles,
+    sanitize_workerpools,
+    sanitize_machinepolicies,
+    sanitize_tenanttagsets,
+    sanitize_projectgroups,
+    sanitize_channels,
+    sanitize_releases,
+    sanitize_steps,
+    sanitize_gitcredentials,
+    sanitize_space,
+    sanitize_dates,
+)
 
 
 def answer_general_query_wrapper(query, callback, logging=None):
-    def answer_general_query(space=None, projects=None, runbooks=None, targets=None,
-                             tenants=None, library_variable_sets=None, environments=None,
-                             feeds=None, accounts=None, certificates=None, lifecycles=None,
-                             worker_pools=None, machine_policies=None, tag_sets=None, project_groups=None,
-                             channels=None, releases=None, steps=None, variables=None, git_credentials=None, dates=None,
-                             **kwargs):
+    def answer_general_query(
+        space=None,
+        projects=None,
+        runbooks=None,
+        targets=None,
+        tenants=None,
+        library_variable_sets=None,
+        environments=None,
+        feeds=None,
+        accounts=None,
+        certificates=None,
+        lifecycles=None,
+        worker_pools=None,
+        machine_policies=None,
+        tag_sets=None,
+        project_groups=None,
+        channels=None,
+        releases=None,
+        steps=None,
+        variables=None,
+        git_credentials=None,
+        dates=None,
+        **kwargs,
+    ):
         """A query about the configuration or state of an Octopus space. You will be penalized for selecting this function if a more specific function is available. You will be penalized for selecting this function for cancelling tasks.
-Args:
-space: Space name
-projects: project names
-runbooks: runbook names
-targets: target/machine names
-tenants: tenant names
-library_variable_sets: library variable set names
-environments: environment names
-feeds: feed names
-accounts: account names
-certificates: certificate names
-lifecycles: lifecycle names
-worker_pools: worker pool names
-machine_policies: machine policy names
-tag_sets: tenant tag set names
-project_groups: project group names
-channels: channel names
-releases: release versions
-steps: step names
-variables: variable names
-git_credentials: git credential names
-dates: dates in the query"""
+        Args:
+        space: Space name
+        projects: project names
+        runbooks: runbook names
+        targets: target/machine names
+        tenants: tenant names
+        library_variable_sets: library variable set names
+        environments: environment names
+        feeds: feed names
+        accounts: account names
+        certificates: certificate names
+        lifecycles: lifecycle names
+        worker_pools: worker pool names
+        machine_policies: machine policy names
+        tag_sets: tenant tag set names
+        project_groups: project group names
+        channels: channel names
+        releases: release versions
+        steps: step names
+        variables: variable names
+        git_credentials: git credential names
+        dates: individual dates in the query"""
 
         if logging:
             logging("Enter:", "answer_general_query")
@@ -55,7 +91,9 @@ dates: dates in the query"""
             "runbook_names": sanitize_runbooks(runbooks),
             "target_names": sanitize_targets(targets),
             "tenant_names": sanitize_tenants(tenants),
-            "library_variable_sets": sanitize_library_variable_sets(library_variable_sets),
+            "library_variable_sets": sanitize_library_variable_sets(
+                library_variable_sets
+            ),
             "environment_names": sanitize_environments(query, environments),
             "feed_names": sanitize_feeds(feeds),
             "account_names": sanitize_accounts(accounts),
@@ -70,7 +108,7 @@ dates: dates in the query"""
             "step_names": sanitize_steps(steps),
             "variable_names": sanitize_steps(variables),
             "gitcredential_names": sanitize_gitcredentials(git_credentials),
-            "dates": sanitize_dates(dates)
+            "dates": sanitize_dates(dates),
         }
 
         for key, value in kwargs.items():
