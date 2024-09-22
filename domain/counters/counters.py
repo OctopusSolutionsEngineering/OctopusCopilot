@@ -10,7 +10,7 @@ def count_items_with_data(items):
     return len(
         list(
             filter(
-                lambda x: not isinstance(x, Exception) and len(x) != 0,
+                lambda x: x and not isinstance(x, Exception),
                 items,
             )
         )
