@@ -388,6 +388,7 @@ def release_what_changed_callback_wrapper(
                         github_token,
                     )
                     for commit_detail in commit_details
+                    if commit_detail[0]
                 ]
 
                 commit_futures = [
