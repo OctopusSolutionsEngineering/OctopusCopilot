@@ -14,7 +14,7 @@ def log_query(message, query, strip_leading_whitespace=True):
     :param message: The message prefix
     :param query: The message
     """
-    ensure_string_not_empty(message, 'message must be a non-empty string (log_query).')
+    ensure_string_not_empty(message, "message must be a non-empty string (log_query).")
 
     sanitized_query = sanitize_list(query)
     message_detail = anonymize_message(sanitize_message(",".join(sanitized_query)))
@@ -25,7 +25,8 @@ def log_query(message, query, strip_leading_whitespace=True):
     complete_message = message + separator + message_detail
 
     if strip_leading_whitespace:
-        complete_message = "\n".join(list(map(lambda x: x.strip(), complete_message.split("\n"))))
+        complete_message = "\n".join(
+            list(map(lambda x: x.strip(), complete_message.split("\n")))
+        )
 
     logger.info(complete_message)
-    send_slack_message(complete_message, get_slack_url())
