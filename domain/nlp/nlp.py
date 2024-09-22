@@ -16,6 +16,9 @@ def nlp_get_keywords(text, max_keywords=10):
     :param text: The text to extract keywords from
     :return: The keywords from the text.
     """
+    if not text:
+        return []
+
     keywords = llm_tool_query(
         "Get the keywords from the following text: " + text,
         FunctionDefinitions([FunctionDefinition(get_keywords)]),
