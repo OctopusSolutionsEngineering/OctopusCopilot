@@ -235,7 +235,7 @@ def release_what_changed_callback_wrapper(
                             "system",
                             strip_leading_whitespace(
                                 """The supplied "Deployment Git Diff" context lists the git diffs included in the deployment.
-                                You must list each file included the diffs and provide a summary of the changes if the prompt does not ask a more specific question."""
+                                If the user does not ask a question you must list each file included the diffs and provide a summary of the changes."""
                             ),
                         )
                     ]
@@ -248,7 +248,7 @@ def release_what_changed_callback_wrapper(
                             "system",
                             strip_leading_whitespace(
                                 """The supplied "Deployment Issue" context lists the issues resolved by the deployment.
-                                You must provide a summary of the issues in the response if the prompt does not ask a more specific question."""
+                                If the user does not ask a question you must provide a summary of the issues in the response."""
                             ),
                         )
                     ]
@@ -259,21 +259,21 @@ def release_what_changed_callback_wrapper(
                     "system",
                     strip_leading_whitespace(
                         """The supplied "Git Committers" context lists the developers who contributed to the deployment.
-                        You must provide a summary of the developers in the response if the prompt does not ask a more specific question."""
+                        If the user does not ask a question you must provide a summary of the developers in the response."""
                     ),
                 ),
                 (
                     "system",
                     strip_leading_whitespace(
                         """The supplied "Deployment Logs" context provides the Octopus deployment logs.
-                        You must provide a summary of the logs in the response if the prompt does not ask a more specific question."""
+                        If the user does not ask a question you must provide a summary of the logs in the response."""
                     ),
                 ),
                 (
                     "system",
                     strip_leading_whitespace(
                         """The supplied "Deployment JSON" context provides details about the Octopus deployment.
-                        You must provide a summary of the deployment details in the response if the prompt does not ask a more specific question.
+                        If the user does not ask a question you must provide a summary of the deployment details in the response.
                         You will be penalized if you print the JSON literally."""
                     ),
                 ),
