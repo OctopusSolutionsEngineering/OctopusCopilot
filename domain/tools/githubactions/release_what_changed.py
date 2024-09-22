@@ -291,7 +291,7 @@ def release_what_changed_callback_wrapper(
                 (
                     "system",
                     strip_leading_whitespace(
-                        """If the user did not ask a question or request specific information you must provide a list of the "Git Committers".
+                        """If the user does not ask for specific information you must provide a list of the "Git Committers".
                         You will be penalized for including the list of "Git Committers" in the response if the user asks for specific information."""
                     ),
                 ),
