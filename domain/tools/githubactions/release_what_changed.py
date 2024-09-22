@@ -233,9 +233,75 @@ def release_what_changed_callback_wrapper(
                     [
                         (
                             "system",
+                            'The supplied "Deployment Git Diff" context lists the git diffs included in the deployment.',
+                        )
+                    ]
+                    if diff_context
+                    else []
+                ),
+                *(
+                    [
+                        (
+                            "system",
+                            'The supplied "Deployment Issue" context lists the issues resolved by the deployment.',
+                        )
+                    ]
+                    if issue_context
+                    else []
+                ),
+                (
+                    "system",
+                    'The supplied "Git Committers" context lists the developers who contributed to the deployment.',
+                ),
+                (
+                    "system",
+                    'The supplied "Deployment Logs" context provides the Octopus deployment logs.',
+                ),
+                (
+                    "system",
+                    'The supplied "Deployment JSON" context provides details about the Octopus deployment.',
+                ),
+                *(
+                    [
+                        (
+                            "system",
                             strip_leading_whitespace(
-                                """The supplied "Deployment Git Diff" context lists the git diffs included in the deployment.
-                                If the user does not ask a question you must list each file included the diffs and provide a summary of the changes."""
+                                """The supplied "General Support Ticket" context relates to previous help desk tickets that may relate to the errors seen in the deployment logs.
+                                Any personally identifiable information in the general support tickets has been removed and replace with placeholders.
+                                The placeholders must be ignored and not used in the response."""
+                            ),
+                        ),
+                        (
+                            "system",
+                            'The supplied "General Issue" context relates to previous issues that may relate to the errors seen in the deployment logs.',
+                        ),
+                        (
+                            "system",
+                            strip_leading_whitespace(
+                                """You must list any relevant solutions or suggestions relating to the errors in the "Deployment Logs" from the "General Support Ticket" and "General Issue" context.
+                                You will be penalized if you do not include this information in your response."""
+                            ),
+                        ),
+                    ]
+                    if deployment_is_failure(deployments)
+                    else []
+                ),
+            ],
+            default_output=[
+                (
+                    "system",
+                    strip_leading_whitespace(
+                        """If the user did not ask a question or request specific information you must provide a list of the "Git Committers".
+                        You will be penalized for including the list of "Git Committers" in the response if the user asks for specific information."""
+                    ),
+                ),
+                *(
+                    [
+                        (
+                            "system",
+                            strip_leading_whitespace(
+                                """If the user does not ask for specific information you must list each file from the "Deployment Git Diff" and provide a summary of the changes.
+                                You will be penalized for including the "Deployment Git Diff" in the response if the user asks for specific information."""
                             ),
                         )
                     ]
@@ -247,8 +313,8 @@ def release_what_changed_callback_wrapper(
                         (
                             "system",
                             strip_leading_whitespace(
-                                """The supplied "Deployment Issue" context lists the issues resolved by the deployment.
-                                If the user does not ask a question you must provide a summary of the issues in the response."""
+                                """If the user does not ask for specific information you must provide a summary of the "Deployment Issue" in the response.
+                                You will be penalized for including the "Deployment Issue" in the response if the user asks for specific information."""
                             ),
                         )
                     ]
@@ -258,47 +324,19 @@ def release_what_changed_callback_wrapper(
                 (
                     "system",
                     strip_leading_whitespace(
-                        """The supplied "Git Committers" context lists the developers who contributed to the deployment.
-                        If the user does not ask a question you must provide a summary of the developers in the response."""
+                        """If the user does not ask for specific information you must provide a summary of the "Deployment Logs" in the response.
+                        You will be penalized for including the "Deployment Logs" in the response if the user asks for specific information."""
                     ),
                 ),
                 (
                     "system",
                     strip_leading_whitespace(
-                        """The supplied "Deployment Logs" context provides the Octopus deployment logs.
-                        If the user does not ask a question you must provide a summary of the logs in the response."""
-                    ),
-                ),
-                (
-                    "system",
-                    strip_leading_whitespace(
-                        """The supplied "Deployment JSON" context provides details about the Octopus deployment.
-                        If the user does not ask a question you must provide a summary of the deployment details in the response.
+                        """If the user does not ask for specific information you must provide a summary of the "Deployment JSON" in the response.
+                        You will be penalized for including the "Deployment JSON" in the response if the user asks for specific information.
                         You will be penalized if you print the JSON literally."""
                     ),
                 ),
-                *(
-                    [
-                        (
-                            "system",
-                            """The supplied "General Support Ticket" context relates to previous help desk tickets that may relate to the errors seen in the deployment logs.
-                             Any personally identifiable information in the general support tickets has been removed and replace with placeholders.
-                             The placeholders must be ignored and not used in the response.""",
-                        ),
-                        (
-                            "system",
-                            'The supplied "General Issue" context relates to previous issues that may relate to the errors seen in the deployment logs.',
-                        ),
-                        (
-                            "system",
-                            """You must list any relevant solutions or suggestions relating to the errors in the "Deployment Logs" from the "General Support Ticket" and "General Issue" context.
-                            You will be penalized if you do not include this information in your response.""",
-                        ),
-                    ]
-                    if deployment_is_failure(deployments)
-                    else []
-                ),
-            ]
+            ],
         )
 
         response = [llm_message_query(messages, context, log_query)]
