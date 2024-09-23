@@ -188,6 +188,8 @@ def run_runbook_callback(octopus_details, github_user, connection_string, log_qu
 
             except PromptedVariableMatchingError as e:
                 return CopilotResponse(f"❌ {e.error_message}")
+            except RunbookNotPublished as e:
+                return CopilotResponse("❌ Runbook is not published")
 
         callback_id = str(uuid.uuid4())
         arguments = {
