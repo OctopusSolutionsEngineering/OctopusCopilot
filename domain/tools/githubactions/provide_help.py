@@ -137,6 +137,12 @@ def provide_help_wrapper(github_user, octopus_details, log_query):
                 * @octopus-ai-app Approve release "0.81.5" in "{first_environment}" for the project "{first_project}"
                 * @octopus-ai-app Reject release "1.6.19" in the "{first_environment}" environment for the project "{first_project}
 
+                You can describe deployments with prompts like these:
+                * @octopus-ai-app Describe release "1.4.3" of the "{first_project}" project to the "{first_environment}" environment.
+                * @octopus-ai-app Describe release "1.4.3" of the "{first_project}" project to the "{first_environment}" environment. Generate release notes that highlight customer facing changes.
+                * @octopus-ai-app Describe release "1.4.3" of the "{first_project}" project to the "{first_environment}" environment. List any file changes that do not have matching tests.
+                * @octopus-ai-app Describe release "1.4.3" of the "{first_project}" project to the "{first_environment}" environment. List any new dependencies or changes to dependency versions in the commits. If no dependencies were added or changed, say so.
+
                 By setting default values for the space, project, environment, and other entities, you can omit them from your queries.
                 This way, you can write prompts without specifying the space, project, environment, runbook, or tenant each time.
                 You can also set defaults for GitHub options like owner, repository and workflow.
