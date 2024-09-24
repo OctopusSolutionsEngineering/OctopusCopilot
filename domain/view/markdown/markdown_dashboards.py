@@ -467,11 +467,17 @@ def build_runbook_run_columns(run, now, highlights, get_tenant):
     icon = get_state_icon(
         run["State"], run["HasWarningsOrErrors"], run["HasPendingInterruptions"]
     )
-    task_highlights = [
-        details["Highlights"]
-        for details in highlights
-        if details["TaskId"] == run["TaskId"]
-    ]
+
+    task_highlights = (
+        [
+            details["Highlights"]
+            for details in highlights
+            if details["TaskId"] == run["TaskId"]
+        ]
+        if highlights
+        else []
+    )
+
     return [
         tenant_name,
         "<br/>".join([icon + " " + difference + " ago", *task_highlights]),

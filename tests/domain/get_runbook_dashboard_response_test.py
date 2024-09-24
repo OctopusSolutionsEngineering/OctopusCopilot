@@ -103,8 +103,8 @@ class RunbookDashboardTest(unittest.TestCase):
         result = get_runbook_dashboard_response(
             {"Name": "Project"},
             {"Name": "Runbook"},
-            [],
             json.loads(sample_json),
+            [],
             lambda x: x,
         )
         print(result)
