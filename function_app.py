@@ -6,7 +6,6 @@ from http.cookies import SimpleCookie
 import azure.functions as func
 from domain.config.database import get_functions_connection_string
 from domain.config.octopus import min_octopus_version
-from domain.config.users import get_admin_users
 from domain.context.octopus_context import llm_message_query
 from domain.encryption.encryption import generate_password
 from domain.errors.error_handling import handle_error
@@ -38,7 +37,6 @@ from domain.requests.github.copilot_request_context import (
 )
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.url_sanitizer import quote_safe
-from domain.security.security import is_admin_user
 from domain.tools.wrapper.function_call import FunctionCall
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.url.build_cookie import create_cookie
@@ -61,11 +59,6 @@ from infrastructure.users import (
     database_connection_test,
     save_users_slack_login,
     delete_old_slack_user_details,
-)
-from jinja2 import (
-    Environment,
-    FileSystemLoader,
-    select_autoescape
 )
 
 app = func.FunctionApp()
@@ -146,13 +139,8 @@ def octopus(req: func.HttpRequest) -> func.HttpResponse:
     :return: The HTML form
     """
     try:
-        env = Environment(
-            loader=FileSystemLoader(searchpath="html/templates"),
-            autoescape=select_autoescape()
-        )
-        template = env.get_template("login.html")
-        output = template.render(is_admin_user=is_admin_user(get_github_user_from_form(req), get_admin_users()))
-        return func.HttpResponse(output, headers={"Content-Type": "text/html"})
+        with open("html/login.html", "r") as file:
+            return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to read HTML form", status_code=500)
@@ -319,10 +307,10 @@ def query_form(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("Failed to read form HTML", status_code=500)
 
 
-@app.route(route="octopus_login_submit", auth_level=func.AuthLevel.ANONYMOUS)
-def octopus_login_submit(req: func.HttpRequest) -> func.HttpResponse:
+@app.route(route="login_submit", auth_level=func.AuthLevel.ANONYMOUS)
+def login_submit(req: func.HttpRequest) -> func.HttpResponse:
     """
-    A function handler that responds to the submission of an Octopus API key and URL
+    A function handler that responds to the submission of the API key and URL
     :param req: The HTTP request
     :return: The HTML form
     """

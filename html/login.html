@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>Octopus Extension for GitHub Copilot Login</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+          integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+<nav class="navbar mb-4 navbar-dark" style="background-color: #0D80D8;">
+    <span class="navbar-brand text-center col-12 h1"><a
+            href="/api/form" style="color: white">Octopus Extension for GitHub Copilot</a></span>
+</nav>
+<form id="form" class="needs-validation" novalidate>
+    <div class="form-group row">
+        <label for="url" class="col-2 offset-2 col-form-label">Octopus URL</label>
+        <div class="col-6">
+            <input id="url" name="token" type="text" class="form-control" required>
+            <small class="form-text text-muted">This is the public URL to your Octopus instance e.g.
+                https://myinstance.octopus.app.</small>
+            <div class="invalid-feedback">
+                Please provide a valid Octopus URL.
+            </div>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label for="api" class="col-2 offset-2 col-form-label">Octopus API Key</label>
+        <div class="col-6">
+            <input id="api" name="api" type="password" class="form-control" required>
+            <small class="form-text text-muted">This is the <a
+                    href="https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key">API key</a> used to
+                interact with your Octopus
+                instance e.g. API-ABCDEFGHIJKLMNOPQRSTUVWXYZ</small>
+            <small class="form-text text-muted">Using a read-only service account is recommended. The instructions <a
+                    href="https://github.com/OctopusSolutionsEngineering/OctopusCopilot/blob/main/README.md#creating-a-service-account">here</a>
+                provide more information.</small>
+            <div class="invalid-feedback">
+                Please provide a valid Octopus API key.
+            </div>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="offset-4 col-8">
+            <button id="submit" name="submit" type="button" class="btn btn-primary">Submit</button>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="offset-4 col-6">
+            Alternatively, click the button below to test the Octopus Extension for GitHub Copilot with the <a
+                href="https://samples.octopus.app">samples
+            instance</a>. You do not need to provide an API key or URL to use the samples instance. This is useful if
+            you wish to test the Octopus Copilot agent without providing your own Octopus instance details.
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="offset-4 col-8">
+            <button id="samples" name="samples" type="button" class="btn btn-info">Log into samples instance
+            </button>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="offset-4 col-6">
+            <div class="spinner-border text-primary" role="status" id="loading" style="display: none">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div id="invalid_api_key_or_url" class="alert alert-danger" role="alert" style="display: none">
+                The Login Token, API key or URL you provided is invalid.
+            </div>
+            <div id="octopus_too_old" class="alert alert-danger" role="alert" style="display: none">
+                The Octopus instance is too old. Please upgrade your Octopus instance to the latest version.
+            </div>
+            <div id="response_error" class="alert alert-danger" role="alert" style="display: none">
+                There was an error logging in. Please try again later.
+            </div>
+            <div id="validation" class="alert alert-danger" role="alert" style="display: none">
+                The request to this page was not well-formed. You can not log in.
+            </div>
+            <div id="success" class="alert alert-success" role="alert" style="display: none">
+                You have logged in successfully. You may close this window and resume chatting with Copilot.
+            </div>
+        </div>
+    </div>
+</form>
+</body>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+
+    function enable_inputs() {
+        submit.disabled = false
+        url.disabled = false
+        api.disabled = false
+        samples.disabled = false
+    }
+
+    function disable_inputs() {
+        submit.disabled = true
+        url.disabled = true
+        api.disabled = true
+        samples.disabled = true
+    }
+
+    function validateApiKey(apiKey) {
+        if (!apiKey || !apiKey.trim()) {
+            return false
+        }
+
+        return /API-[A-Z0-9]+/.test(apiKey.trim())
+    }
+
+    function validateUrl(url) {
+        if (!url || !url.trim()) {
+            return false
+        }
+
+        try {
+            new URL(url.trim());
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
+    async function processQuery() {
+        invalid_api_key_or_url.style.display = 'none'
+        octopus_too_old.style.display = 'none'
+        response_error.style.display = 'none'
+        api.setCustomValidity('')
+        url.setCustomValidity('')
+
+        form.classList.add('was-validated')
+
+        let valid = true
+        if (!validateApiKey(api.value)) {
+            api.setCustomValidity('Invalid value')
+            valid = false
+        }
+
+        if (!validateUrl(url.value)) {
+            url.setCustomValidity('Invalid value')
+            valid = false
+        }
+
+        if (!valid) {
+            invalid_api_key_or_url.style.display = 'block'
+            return
+        }
+
+        if (!form.checkValidity()) {
+            return
+        }
+
+        login(url.value, api.value)
+    }
+
+    async function login(urlValue, apiValue) {
+        disable_inputs()
+        response_error.style.display = 'none'
+        octopus_too_old.style.display = 'none'
+        invalid_api_key_or_url.style.display = 'none'
+        loading.style.display = 'block'
+
+        try {
+            const response = await fetch("/api/login_submit",
+                {
+                    method: "POST",
+                    body: JSON.stringify({url: urlValue, api: apiValue}),
+                    credentials: "same-origin",
+                }
+            );
+
+            if (!response.ok) {
+                if (response.status === 400) {
+
+                    const response_body = await response.json()
+
+                    if (response_body.error === "octopus_too_old") {
+                        octopus_too_old.style.display = 'block'
+                    } else if (response_body.error === "octopus_key_invalid") {
+                        invalid_api_key_or_url.style.display = 'block'
+                    } else {
+                        response_error.style.display = 'block'
+                    }
+                } else {
+                    response_error.style.display = 'block'
+                }
+
+                enable_inputs()
+            } else {
+                login_success()
+            }
+        } catch {
+            response_error.style.display = 'block'
+            enable_inputs()
+        } finally {
+            loading.style.display = 'none'
+        }
+    }
+
+    function login_success() {
+        const redirect = urlParams.get('redirect')
+
+        if (redirect) {
+            window.location.href = "/api/" + encodeURIComponent(redirect) + "?redirected=true"
+        } else {
+            success.style.display = 'block'
+        }
+    }
+
+    submit.onclick = processQuery
+    samples.onclick = () => login("https://samples.octopus.app", "API-GUEST")
+</script>
+</html>
