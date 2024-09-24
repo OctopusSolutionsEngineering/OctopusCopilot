@@ -8,9 +8,11 @@ from domain.security.security import is_admin_user
 
 
 class HtmlTemplateTest(unittest.TestCase):
+
     def test_login_html_renders_correct_tabs_for_admin(self):
+        search_path = os.path.join(os.path.abspath(os.path.join(__file__, "../../..")), "html/templates")
         env = Environment(
-            loader=FileSystemLoader('../../html/templates'),
+            loader=FileSystemLoader(search_path),
             autoescape=select_autoescape()
         )
         template = env.get_template("login.html")
@@ -21,8 +23,9 @@ class HtmlTemplateTest(unittest.TestCase):
         )
 
     def test_login_html_renders_octopus_tab_for_non_admin(self):
+        search_path = os.path.join(os.path.abspath(os.path.join(__file__, "../../..")), "html/templates")
         env = Environment(
-            loader=FileSystemLoader('../../html/templates'),
+            loader=FileSystemLoader(search_path),
             autoescape=select_autoescape()
         )
         template = env.get_template("login.html")
