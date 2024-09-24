@@ -33,6 +33,7 @@ slack-sdk==3.31.0
 beautifulsoup4==4.12.3
 markdown==3.7
 setuptools==71.1.0
+Jinja2==3.1.4
 
 
 # Required for stringlifier
