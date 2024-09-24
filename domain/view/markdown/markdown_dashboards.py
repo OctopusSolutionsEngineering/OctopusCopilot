@@ -468,15 +468,11 @@ def build_runbook_run_columns(run, now, highlights, get_tenant):
         run["State"], run["HasWarningsOrErrors"], run["HasPendingInterruptions"]
     )
 
-    task_highlights = (
-        [
-            details["Highlights"]
-            for details in highlights
-            if details["TaskId"] == run["TaskId"]
-        ]
-        if highlights
-        else []
-    )
+    task_highlights = [
+        details["Highlights"]
+        for details in highlights or []
+        if details["TaskId"] == run["TaskId"]
+    ]
 
     return [
         tenant_name,
