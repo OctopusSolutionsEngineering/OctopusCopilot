@@ -71,7 +71,7 @@ resource "octopusdeploy_runbook_process" "runbook" {
       worker_pool_id                     = ""
       properties = {
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.ScriptBody"   = "Write-Host 'Hello world, using PowerShell'\n\n#TODO: Experiment with steps of your own :)\n\nWrite-Host '[Learn more about the types of steps available in Octopus](https://oc.to/OnboardingAddStepsLearnMore)'"
+        "Octopus.Action.Script.ScriptBody"   = "Write-Host 'Hello world, using PowerShell'\n\n#TODO: Experiment with steps of your own :)\n\nWrite-Host '[Learn more about the types of steps available in Octopus](https://oc.to/OnboardingAddStepsLearnMore)'\n\nWrite-Highlight \"This is a highlight\""
         "Octopus.Action.Script.Syntax"       = "PowerShell"
       }
       environments = [octopusdeploy_environment.environment_development.id]
@@ -125,7 +125,7 @@ resource "octopusdeploy_runbook_process" "runbook2" {
       worker_pool_id                     = ""
       properties = {
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.ScriptBody"   = "Write-Host 'Hello world, using PowerShell'\n\n#TODO: Experiment with steps of your own :)\n\nWrite-Host '[Learn more about the types of steps available in Octopus](https://oc.to/OnboardingAddStepsLearnMore)'\n\nsleep 60"
+        "Octopus.Action.Script.ScriptBody"   = "Write-Host 'Hello world, using PowerShell'\n\n#TODO: Experiment with steps of your own :)\n\nWrite-Host '[Learn more about the types of steps available in Octopus](https://oc.to/OnboardingAddStepsLearnMore)'\n\nWrite-Highlight \"This is a highlight\"\n\nsleep 60"
         "Octopus.Action.Script.Syntax"       = "PowerShell"
       }
       environments = [octopusdeploy_environment.environment_development.id]

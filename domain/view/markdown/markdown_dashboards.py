@@ -27,7 +27,10 @@ def get_octopus_project_names_response(space_name, projects):
     if space_name is None or not space_name.strip():
         return f"I found {len(projects)} projects:\n* " + "\n * ".join(projects)
 
-    return f"I found {len(projects)} projects in the space \"{space_name.strip()}\":\n* " + "\n* ".join(projects)
+    return (
+        f'I found {len(projects)} projects in the space "{space_name.strip()}":\n* '
+        + "\n* ".join(projects)
+    )
 
 
 def build_markdown_table_row(columns):
@@ -55,14 +58,24 @@ def build_markdown_table_header_separator(count):
 
 
 def get_env_name(dashboard, environment_id):
-    environment = next(filter(lambda e: e["Id"] == environment_id, dashboard["Environments"]), None)
+    environment = next(
+        filter(lambda e: e["Id"] == environment_id, dashboard["Environments"]), None
+    )
     if not environment:
         return None
     return environment["Name"]
 
 
-def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_actions=None,
-                           github_actions_status=None, pull_requests=None, issues=None):
+def get_dashboard_response(
+    octopus_url,
+    space_id,
+    space_name,
+    dashboard,
+    github_actions=None,
+    github_actions_status=None,
+    pull_requests=None,
+    issues=None,
+):
     now = datetime.now(pytz.utc)
     table = f"# {space_name}\n\n"
 
@@ -72,31 +85,62 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
 
         # If any projects have associated GitHub workflows, add the column to the start of the table
         if github_actions_status:
-            environment_names.append('GitHub')
+            environment_names.append("GitHub")
 
-        environment_names.extend(list(map(lambda e: get_env_name(dashboard, e), project_group["EnvironmentIds"])))
+        environment_names.extend(
+            list(
+                map(
+                    lambda e: get_env_name(dashboard, e),
+                    project_group["EnvironmentIds"],
+                )
+            )
+        )
 
-        columns = [project_group['Name'], *environment_names]
+        columns = [project_group["Name"], *environment_names]
         table += build_markdown_table_row(columns)
         table += build_markdown_table_header_separator(len(columns))
 
-        projects = list(filter(lambda p: p["ProjectGroupId"] == project_group["Id"], dashboard["Projects"]))
+        projects = list(
+            filter(
+                lambda p: p["ProjectGroupId"] == project_group["Id"],
+                dashboard["Projects"],
+            )
+        )
 
         for project in projects:
             table += f"| {project['Name']} "
 
             # Find the github repo details
-            github_repo = next(
-                filter(lambda x: x and x["ProjectId"] == project["Id"] and x["Repo"] and x["Owner"], github_actions),
-                None) if github_actions else None
+            github_repo = (
+                next(
+                    filter(
+                        lambda x: x
+                        and x["ProjectId"] == project["Id"]
+                        and x["Repo"]
+                        and x["Owner"],
+                        github_actions,
+                    ),
+                    None,
+                )
+                if github_actions
+                else None
+            )
 
             # Get the GitHub Actions workflow status
             if github_actions_status:
                 github_messages = []
                 github_messages.extend(build_repo_link(github_repo))
-                github_messages.extend(get_project_workflow_status(github_actions_status, project["Id"]))
-                github_messages.extend(build_pr_response_for_project(pull_requests, project["Id"], github_repo))
-                github_messages.extend(build_issue_response_for_project(issues, project["Id"], github_repo))
+                github_messages.extend(
+                    get_project_workflow_status(github_actions_status, project["Id"])
+                )
+                github_messages.extend(
+                    build_pr_response_for_project(
+                        pull_requests, project["Id"], github_repo
+                    )
+                )
+                github_messages.extend(
+                    build_issue_response_for_project(issues, project["Id"], github_repo)
+                )
 
                 if github_messages:
                     table += f"| {'<br/>'.join(github_messages)}"
@@ -106,8 +150,12 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
             # Get the deployment status
             for environment in project_group["EnvironmentIds"]:
                 deployment = list(
-                    filter(lambda d: d["ProjectId"] == project["Id"] and d["EnvironmentId"] == environment,
-                           dashboard["Items"]))
+                    filter(
+                        lambda d: d["ProjectId"] == project["Id"]
+                        and d["EnvironmentId"] == environment,
+                        dashboard["Items"],
+                    )
+                )
 
                 if len(deployment) > 0:
                     last_deployment = deployment[0]
@@ -115,14 +163,23 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
                     created = parse_unknown_format_date(last_deployment["Created"])
                     difference = get_date_difference_summary(now - created)
 
-                    icon = get_state_icon(last_deployment['State'], last_deployment['HasWarningsOrErrors'],
-                                          last_deployment['HasPendingInterruptions'])
-                    url = build_deployment_url(octopus_url, space_id, last_deployment['ProjectId'],
-                                               last_deployment['ReleaseVersion'], last_deployment['DeploymentId'])
+                    icon = get_state_icon(
+                        last_deployment["State"],
+                        last_deployment["HasWarningsOrErrors"],
+                        last_deployment["HasPendingInterruptions"],
+                    )
+                    url = build_deployment_url(
+                        octopus_url,
+                        space_id,
+                        last_deployment["ProjectId"],
+                        last_deployment["ReleaseVersion"],
+                        last_deployment["DeploymentId"],
+                    )
 
                     messages = [
                         f"{icon} [{last_deployment['ReleaseVersion']}]({url})",
-                        f"⟲ {difference} ago"]
+                        f"⟲ {difference} ago",
+                    ]
 
                     table += f"| {'<br/>'.join(messages)}"
                 else:
@@ -134,30 +191,41 @@ def get_dashboard_response(octopus_url, space_id, space_name, dashboard, github_
     return table
 
 
-def get_project_dashboard_response(octopus_url, space_id, space_name, project_name, project_id, dashboard,
-                                   channels,
-                                   github_repo=None,
-                                   github_actions_statuses=None,
-                                   pull_requests=None,
-                                   issues=None,
-                                   release_workflow_runs=None,
-                                   deployment_highlights=None):
+def get_project_dashboard_response(
+    octopus_url,
+    space_id,
+    space_name,
+    project_name,
+    project_id,
+    dashboard,
+    channels,
+    github_repo=None,
+    github_actions_statuses=None,
+    pull_requests=None,
+    issues=None,
+    release_workflow_runs=None,
+    deployment_highlights=None,
+):
     now = datetime.now(pytz.utc)
 
     table = f"# {space_name} / {project_name}\n\n"
 
     github_details = []
     github_details.extend(build_repo_link(github_repo))
-    github_details.extend(get_project_workflow_status(github_actions_statuses, project_id))
+    github_details.extend(
+        get_project_workflow_status(github_actions_statuses, project_id)
+    )
     github_details.extend(build_pr_response(pull_requests, github_repo))
     github_details.extend(build_issue_response(issues, github_repo))
 
     if github_details:
-        table += '<br/>'.join(github_details)
+        table += "<br/>".join(github_details)
 
     for channel_id, environments in dashboard["ChannelEnvironments"].items():
         table += "\n\n"
-        matching_channels = [channel for channel in channels if channel['Id'] == channel_id]
+        matching_channels = [
+            channel for channel in channels if channel["Id"] == channel_id
+        ]
         channel = matching_channels[0]
 
         if len(dashboard["ChannelEnvironments"]) > 1:
@@ -173,33 +241,64 @@ def get_project_dashboard_response(octopus_url, space_id, space_name, project_na
                     if environment["Id"] in release["Deployments"]:
                         # Get the latest deployment for the release. Redeploying a release can result in many
                         # deployments for an environment and a release.
-                        for deployment in yield_first(release["Deployments"][environment["Id"]]):
+                        for deployment in yield_first(
+                            release["Deployments"][environment["Id"]]
+                        ):
                             created = parse_unknown_format_date(deployment["Created"])
                             difference = get_date_difference_summary(now - created)
-                            icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'],
-                                                  deployment['HasPendingInterruptions'])
+                            icon = get_state_icon(
+                                deployment["State"],
+                                deployment["HasWarningsOrErrors"],
+                                deployment["HasPendingInterruptions"],
+                            )
 
-                            release_url = build_deployment_url(octopus_url, space_id, deployment['ProjectId'],
-                                                               deployment['ReleaseVersion'], deployment['DeploymentId'])
+                            release_url = build_deployment_url(
+                                octopus_url,
+                                space_id,
+                                deployment["ProjectId"],
+                                deployment["ReleaseVersion"],
+                                deployment["DeploymentId"],
+                            )
 
-                            release_details = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})"]
+                            release_details = [
+                                f"{icon} [{deployment['ReleaseVersion']}]({release_url})"
+                            ]
 
                             # Find any running steps
                             release_details.extend(
-                                map(lambda x: '&ensp;' + x,
-                                    get_running(deployment_highlights, deployment["DeploymentId"])))
+                                map(
+                                    lambda x: "&ensp;" + x,
+                                    get_running(
+                                        deployment_highlights,
+                                        deployment["DeploymentId"],
+                                    ),
+                                )
+                            )
 
                             release_details.append(f"⟲ {difference} ago")
 
                             # Find any highlights in the logs
-                            release_details.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
+                            release_details.extend(
+                                get_highlights(
+                                    deployment_highlights, deployment["DeploymentId"]
+                                )
+                            )
 
                             # Find any artifacts in
                             release_details.extend(
-                                get_artifacts(deployment_highlights, octopus_url, deployment["DeploymentId"]))
+                                get_artifacts(
+                                    deployment_highlights,
+                                    octopus_url,
+                                    deployment["DeploymentId"],
+                                )
+                            )
 
                             # Find the associated GitHub workflow and build a link
-                            release_details.extend(get_workflow_link(release_workflow_runs, release["Release"]["Id"]))
+                            release_details.extend(
+                                get_workflow_link(
+                                    release_workflow_runs, release["Release"]["Id"]
+                                )
+                            )
 
                             table += f"| {'<br/>'.join(release_details)}"
 
@@ -217,7 +316,9 @@ def get_tenant_environments(tenant, dashboard, project_id):
             # Tenants have a subset of environments they are associated with.
             # We retain the environment order of the project, and then check to see if
             # the project environment is associated with the tenant
-            if project_environment["Id"] in tenant.get("ProjectEnvironments", {}).get(project_id, []):
+            if project_environment["Id"] in tenant.get("ProjectEnvironments", {}).get(
+                project_id, []
+            ):
                 # Add the project environment to the list
                 environments_ids.append(project_environment["Id"])
         else:
@@ -238,9 +339,21 @@ def get_tenant_environment_details(environments_ids, dashboard):
     return environments
 
 
-def get_project_tenant_progression_response(space_id, space_name, project_name, project_id, dashboard,
-                                            github_repo, github_actions_statuses, release_workflow_runs,
-                                            pull_requests, issues, deployment_highlights, api_key, url):
+def get_project_tenant_progression_response(
+    space_id,
+    space_name,
+    project_name,
+    project_id,
+    dashboard,
+    github_repo,
+    github_actions_statuses,
+    release_workflow_runs,
+    pull_requests,
+    issues,
+    deployment_highlights,
+    api_key,
+    url,
+):
     now = datetime.now(pytz.utc)
 
     table = f"# {space_name} / {project_name}\n\n"
@@ -252,7 +365,7 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
     message.extend(build_issue_response(issues, github_repo))
 
     if message:
-        table += '<br/>'.join(message) + "\n\n"
+        table += "<br/>".join(message) + "\n\n"
 
     for tenant in dashboard["Tenants"]:
         table += f"## {tenant['Name']}\n"
@@ -269,41 +382,74 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
                 # Note None == None, so the untenanted deployment will satisfy this condition because
                 # the tenant has no ID and neither does the deployment
                 tenanted = deployment.get("TenantId") == tenant.get("Id")
-                environment_match = deployment.get("EnvironmentId") == environment.get("Id")
+                environment_match = deployment.get("EnvironmentId") == environment.get(
+                    "Id"
+                )
                 if environment_match and tenanted:
-                    icon = get_state_icon(deployment['State'], deployment['HasWarningsOrErrors'],
-                                          deployment['HasPendingInterruptions'])
+                    icon = get_state_icon(
+                        deployment["State"],
+                        deployment["HasWarningsOrErrors"],
+                        deployment["HasPendingInterruptions"],
+                    )
                     created = parse_unknown_format_date(deployment["Created"])
                     difference = get_date_difference_summary(now - created)
-                    channel = get_channel_cached(space_id, deployment["ChannelId"], api_key, url)
+                    channel = get_channel_cached(
+                        space_id, deployment["ChannelId"], api_key, url
+                    )
 
-                    release_url = build_deployment_url(url, space_id, deployment['ProjectId'],
-                                                       deployment['ReleaseVersion'], deployment['DeploymentId'])
+                    release_url = build_deployment_url(
+                        url,
+                        space_id,
+                        deployment["ProjectId"],
+                        deployment["ReleaseVersion"],
+                        deployment["DeploymentId"],
+                    )
 
-                    release_details = [f"{icon} [{deployment['ReleaseVersion']}]({release_url})"]
+                    release_details = [
+                        f"{icon} [{deployment['ReleaseVersion']}]({release_url})"
+                    ]
 
                     # Find any running steps
                     release_details.extend(
-                        map(lambda x: '&ensp;' + x, get_running(deployment_highlights, deployment["DeploymentId"])))
+                        map(
+                            lambda x: "&ensp;" + x,
+                            get_running(
+                                deployment_highlights, deployment["DeploymentId"]
+                            ),
+                        )
+                    )
 
-                    release_details.extend([f"🔀 {channel['Name']}",
-                                            f"⟲ {difference} ago"])
+                    release_details.extend(
+                        [f"🔀 {channel['Name']}", f"⟲ {difference} ago"]
+                    )
 
                     # Find any highlights in the logs
-                    release_details.extend(get_highlights(deployment_highlights, deployment["DeploymentId"]))
+                    release_details.extend(
+                        get_highlights(
+                            deployment_highlights, deployment["DeploymentId"]
+                        )
+                    )
 
                     # Find any artifacts in
-                    release_details.extend(get_artifacts(deployment_highlights, url, deployment["DeploymentId"]))
+                    release_details.extend(
+                        get_artifacts(
+                            deployment_highlights, url, deployment["DeploymentId"]
+                        )
+                    )
 
                     # Find the associated github workflow and build a link
-                    release_details.extend(get_workflow_link(release_workflow_runs, deployment["ReleaseId"]))
+                    release_details.extend(
+                        get_workflow_link(
+                            release_workflow_runs, deployment["ReleaseId"]
+                        )
+                    )
 
                     columns.append("<br/>".join(release_details))
                     found = True
                     break
 
             if not found:
-                columns.append('⨂')
+                columns.append("⨂")
 
         if columns:
             table += build_markdown_table_row(columns)
@@ -314,12 +460,22 @@ def get_project_tenant_progression_response(space_id, space_name, project_name, 
     return table
 
 
-def build_runbook_run_columns(run, now, get_tenant):
-    tenant_name = 'Untenanted' if not run['TenantId'] else get_tenant(run['TenantId'])
+def build_runbook_run_columns(run, now, highlights, get_tenant):
+    tenant_name = "Untenanted" if not run["TenantId"] else get_tenant(run["TenantId"])
     created = parse_unknown_format_date(run["Created"])
     difference = get_date_difference_summary(now - created)
-    icon = get_state_icon(run['State'], run['HasWarningsOrErrors'], run['HasPendingInterruptions'])
-    return [tenant_name, icon + " " + difference + " ago"]
+    icon = get_state_icon(
+        run["State"], run["HasWarningsOrErrors"], run["HasPendingInterruptions"]
+    )
+    task_highlights = [
+        details["Highlights"]
+        for details in highlights
+        if details["TaskId"] == run["TaskId"]
+    ]
+    return [
+        tenant_name,
+        "<br/>".join([icon + " " + difference + " ago", *task_highlights]),
+    ]
 
 
 def get_tenants(dashboard):
@@ -327,13 +483,13 @@ def get_tenants(dashboard):
     for environment in dashboard["RunbookRuns"]:
         runs = dashboard["RunbookRuns"][environment]
         for run in runs:
-            tenant = "Untenanted" if not run['TenantId'] else run['TenantId']
+            tenant = "Untenanted" if not run["TenantId"] else run["TenantId"]
             if tenant not in tenants:
                 tenants.append(tenant)
     return tenants
 
 
-def get_runbook_dashboard_response(project, runbook, dashboard, get_tenant):
+def get_runbook_dashboard_response(project, runbook, dashboard, highlights, get_tenant):
     dt = datetime.now(pytz.utc)
 
     table = f"{project['Name']} / {runbook['Name']}\n\n"
@@ -350,15 +506,23 @@ def get_runbook_dashboard_response(project, runbook, dashboard, get_tenant):
     for tenant in tenants:
         for environment in environment_ids:
             runs = list(
-                filter(lambda run: run['TenantId'] == tenant or (not run['TenantId'] and tenant == "Untenanted"),
-                       dashboard["RunbookRuns"][environment]))
+                filter(
+                    lambda run: run["TenantId"] == tenant
+                    or (not run["TenantId"] and tenant == "Untenanted"),
+                    dashboard["RunbookRuns"][environment],
+                )
+            )
             for run in runs:
-                table += build_markdown_table_row(build_runbook_run_columns(run, dt, get_tenant))
+                table += build_markdown_table_row(
+                    build_runbook_run_columns(run, dt, highlights, get_tenant)
+                )
 
     return table
 
 
-def build_deployment_url(octopus_url, space_id, project_id, release_version, deployment_id):
+def build_deployment_url(
+    octopus_url, space_id, project_id, release_version, deployment_id
+):
     return f"{octopus_url}/app#/{space_id}/projects/{project_id}/deployments/releases/{release_version}/deployments/{deployment_id}"
 
 
@@ -367,13 +531,19 @@ def get_project_workflow_status(github_actions_statuses, project_id):
     message = []
     if github_actions_statuses:
         github_actions_status = next(
-            filter(lambda x: x and x["ProjectId"] == project_id and x["Status"], github_actions_statuses), None)
+            filter(
+                lambda x: x and x["ProjectId"] == project_id and x["Status"],
+                github_actions_statuses,
+            ),
+            None,
+        )
 
         if github_actions_status:
             message.append(
                 f"{get_github_state_icon(github_actions_status.get('Status'), github_actions_status.get('Conclusion'))} "
                 + f"[{github_actions_status.get('Name')} {github_actions_status.get('ShortSha')}]({github_actions_status.get('Url')}) "
-                + f"(⟲ {get_date_difference_summary(now - github_actions_status.get('CreatedAt'))} ago)")
+                + f"(⟲ {get_date_difference_summary(now - github_actions_status.get('CreatedAt'))} ago)"
+            )
 
             # Print any jobs currently running
             if github_actions_status.get("Jobs"):
@@ -408,7 +578,8 @@ def build_pr_response(pull_requests, github_repo):
     message = []
     if pull_requests and github_repo:
         message.append(
-            f"🔁 [{pull_requests.get('Count')} PR{'s' if pull_requests.get('Count') != 1 else ''}](https://github.com/{github_repo['Owner']}/{github_repo['Repo']}/pulls)")
+            f"🔁 [{pull_requests.get('Count')} PR{'s' if pull_requests.get('Count') != 1 else ''}](https://github.com/{github_repo['Owner']}/{github_repo['Repo']}/pulls)"
+        )
     return message
 
 
@@ -424,27 +595,34 @@ def build_issue_response(issues, github_repo):
     message = []
     if issues and github_repo:
         message.append(
-            f"🐛 [{issues.get('Count')} issue{'s' if issues.get('Count') != 1 else ''}](https://github.com/{github_repo['Owner']}/{github_repo['Repo']}/issues)")
+            f"🐛 [{issues.get('Count')} issue{'s' if issues.get('Count') != 1 else ''}](https://github.com/{github_repo['Owner']}/{github_repo['Repo']}/issues)"
+        )
     return message
 
 
 def build_repo_link(github_repo):
     message = []
     if github_repo and github_repo.get("Owner") and github_repo.get("Repo"):
-        message.append(f'📑 [GitHub Repo](https://github.com/{github_repo["Owner"]}/{github_repo["Repo"]})')
+        message.append(
+            f'📑 [GitHub Repo](https://github.com/{github_repo["Owner"]}/{github_repo["Repo"]})'
+        )
     return message
 
 
 def get_workflow_link(release_workflow_runs, release_id):
-    matching_releases = yield_first(filter(
-        lambda x: x and x.get("ReleaseId") == release_id,
-        release_workflow_runs or []))
+    matching_releases = yield_first(
+        filter(
+            lambda x: x and x.get("ReleaseId") == release_id,
+            release_workflow_runs or [],
+        )
+    )
 
     messages = []
     for release in matching_releases:
         messages.append(
             f"{get_github_state_icon(release.get('Status'), release.get('Conclusion'))} "
-            + f"[{release.get('Name')} {release.get('ShortSha')}]({release.get('Url')})")
+            + f"[{release.get('Name')} {release.get('ShortSha')}]({release.get('Url')})"
+        )
 
         for artifact in release.get("Artifacts", [])[:max_github_artifacts]:
             messages.append(f"💾 [{artifact.get('Name')}]({artifact.get('Url')})")
@@ -453,29 +631,56 @@ def get_workflow_link(release_workflow_runs, release_id):
 
 
 def get_artifact_links(release_workflow_artifacts, release_id):
-    matching_artifacts = list(filter(
-        lambda x: x and x.get("ReleaseId") == release_id,
-        release_workflow_artifacts or []))
+    matching_artifacts = list(
+        filter(
+            lambda x: x and x.get("ReleaseId") == release_id,
+            release_workflow_artifacts or [],
+        )
+    )
 
-    return list(map(
-        lambda x: f"💾 [{x.get('Name')}]({x.get('Url')})",
-        matching_artifacts))
+    return list(
+        map(lambda x: f"💾 [{x.get('Name')}]({x.get('Url')})", matching_artifacts)
+    )
 
 
 def get_highlights(deployment_highlights, deployment_id):
-    return list(map(lambda x: x['Highlights'],
-                    filter(lambda x: x and x["DeploymentId"] == deployment_id and x['Highlights'],
-                           deployment_highlights or [])))
+    return list(
+        map(
+            lambda x: x["Highlights"],
+            filter(
+                lambda x: x and x["DeploymentId"] == deployment_id and x["Highlights"],
+                deployment_highlights or [],
+            ),
+        )
+    )
 
 
 def get_running(deployment_highlights, deployment_id):
-    return flatten_list(list(map(lambda x: x['Running'],
-                                 filter(lambda x: x and x["DeploymentId"] == deployment_id,
-                                        deployment_highlights or []))))
+    return flatten_list(
+        list(
+            map(
+                lambda x: x["Running"],
+                filter(
+                    lambda x: x and x["DeploymentId"] == deployment_id,
+                    deployment_highlights or [],
+                ),
+            )
+        )
+    )
 
 
 def get_artifacts(deployment_highlights, url, deployment_id):
-    artifacts = flatten_list(list(map(lambda x: x['Artifacts']['Items'],
-                                      filter(lambda x: x and x["DeploymentId"] == deployment_id,
-                                             deployment_highlights or []))))
-    return list(map(lambda a: f"💾 [{a['Filename']}]({url}{a['Links']['Content']})", artifacts))
+    artifacts = flatten_list(
+        list(
+            map(
+                lambda x: x["Artifacts"]["Items"],
+                filter(
+                    lambda x: x and x["DeploymentId"] == deployment_id,
+                    deployment_highlights or [],
+                ),
+            )
+        )
+    )
+    return list(
+        map(lambda a: f"💾 [{a['Filename']}]({url}{a['Links']['Content']})", artifacts)
+    )

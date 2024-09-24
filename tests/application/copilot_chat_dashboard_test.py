@@ -199,6 +199,10 @@ class CopilotChatDashboardTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
+        print(response_text)
+        self.assertTrue(
+            "This is a highlight" in response_text, "Response was " + response_text
+        )
         self.assertTrue(
             "🟣" in response_text
             or "🔵" in response_text
