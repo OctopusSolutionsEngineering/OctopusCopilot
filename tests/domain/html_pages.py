@@ -1,7 +1,7 @@
 import unittest
 
-from domain.b64.b64_encoder import encode_string_b64, decode_string_b64
-from domain.view.html.html_pages import get_redirect_page
+import azure.functions as func
+from domain.view.html.html_pages import get_redirect_page, get_login_page
 
 
 class AdminUser(unittest.TestCase):
@@ -14,3 +14,16 @@ class AdminUser(unittest.TestCase):
         self.assertTrue(
             'window.location.href = "http://example.com?redirect=path";' in output
         )
+
+    def test_get_login_page(self):
+        output = get_login_page(
+            func.HttpRequest(
+                method="GET",
+                body="".encode("utf8"),
+                url="/api/octopus",
+                params=None,
+                headers={},
+            ),
+            "../../html/templates",
+        )
+        self.assertFalse("Codefresh" in output)

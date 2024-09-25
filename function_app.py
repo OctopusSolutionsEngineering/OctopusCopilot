@@ -47,7 +47,7 @@ from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
 from domain.url.url_builder import base_request_url
 from domain.versions.octopus_version import octopus_version_at_least
-from domain.view.html.html_pages import get_redirect_page
+from domain.view.html.html_pages import get_redirect_page, get_login_page
 from infrastructure.callbacks import (
     load_callback,
     delete_callback,
@@ -144,17 +144,9 @@ def octopus(req: func.HttpRequest) -> func.HttpResponse:
     :return: The HTML form
     """
     try:
-        env = Environment(
-            loader=FileSystemLoader(searchpath="html/templates"),
-            autoescape=select_autoescape(),
+        return func.HttpResponse(
+            get_login_page(req), headers={"Content-Type": "text/html"}
         )
-        template = env.get_template("login.html")
-        output = template.render(
-            is_admin_user=is_admin_user(
-                get_github_user_from_form(req), get_admin_users()
-            )
-        )
-        return func.HttpResponse(output, headers={"Content-Type": "text/html"})
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to read HTML form", status_code=500)
