@@ -64,7 +64,9 @@ from infrastructure.users import (
     save_users_octopus_url_from_login,
     database_connection_test,
     save_users_slack_login,
-    delete_old_slack_user_details, save_users_codefresh_details_from_login, delete_old_codefresh_user_details,
+    delete_old_slack_user_details,
+    save_users_codefresh_details_from_login,
+    delete_old_codefresh_user_details,
 )
 
 app = func.FunctionApp()
@@ -74,7 +76,7 @@ GUEST_API_KEY = "API-GUEST"
 GITHUB_LOGIN_MESSAGE = (
     f"To continue chatting please click the link below:\n\n[log in](https://github.com/login/oauth/authorize?"
     + f"client_id={os.environ.get('GITHUB_CLIENT_ID')}"
-    + f"&redirect_url={urllib.parse.quote(os.environ.get('GITHUB_CLIENT_REDIRECT'))}"
+    + f"&redirect_url={quote_safe(os.environ.get('GITHUB_CLIENT_REDIRECT'))}"
     + "&scope=user&allow_signup=false)"
 )
 

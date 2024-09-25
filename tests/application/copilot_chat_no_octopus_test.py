@@ -99,7 +99,7 @@ class CopilotChatTest(unittest.TestCase):
         prompt = minify_strings(
             """Suggest a solution for the following issue:
 Hello
- I am writing to you, because we in Nets/Nexi together with Aeven are using Octopus for deployment between two sites, where we synchronize between the sites using custom scripts. We want to change the way we are working from the custom scripts
+ I am writing to you, because we are using Octopus for deployment between two sites, where we synchronize between the sites using custom scripts. We want to change the way we are working from the custom scripts
  to be using two instances of Octopus and the Space Cloner tool:
  GitHub - OctopusDeployLabs/SpaceCloner: A tool to clone/sync a space, project, and/or other items between different spaces in the same Octopus Deploy instances or spaces in different
  instances..
