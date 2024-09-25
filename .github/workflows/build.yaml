@@ -301,6 +301,7 @@ jobs:
             '*.bestType' \
             '*.conf' \
             '*.encodings' \
+            '*.graphql' \
             -x "octoterra/*" \
             -x "**/__pycache__/*" \
             -x ".vscode/*" \

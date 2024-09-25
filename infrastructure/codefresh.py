@@ -33,8 +33,8 @@ def handle_response(callback):
 
 
 def get_query(query_name, query_path="queries"):
-    query_path = os.path.join(query_path, f'{query_name}.graphql')
-    with open(query_path, 'r') as file:
+    query_file = os.path.join(query_path, f'{query_name}.graphql')
+    with open(query_file, 'r') as file:
         query_content = file.read()
     return gql(query_content)
 
