@@ -416,7 +416,7 @@ def codefresh_login_submit(req: func.HttpRequest) -> func.HttpResponse:
     """
     try:
         body = json.loads(req.get_body())
-        codefresh_token = body["cf-token"]
+        codefresh_token = body["cf_token"]
 
         # Simple validation we can get the basic user details from the token
         _ = get_codefresh_user(get_codefresh_url(), codefresh_token)
