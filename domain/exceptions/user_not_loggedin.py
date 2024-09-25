@@ -21,3 +21,10 @@ class OctopusVersionInvalid(Exception):
         self.version = version
         self.required_version = required_version
         super().__init__(f'{version} is to old')
+
+
+class CodefreshTokenInvalid(Exception):
+    """
+    Represents an invalid Codefresh token
+    """
+    pass

@@ -1,0 +1,22 @@
+query User {
+  me {
+    id
+    name
+    avatarUrl
+    registerDate
+    isAdmin
+    email
+    accounts {
+      id
+      name
+      admins
+      systemType
+      __typename
+    }
+    __typename
+  }
+  plan {
+    segment
+    __typename
+  }
+}

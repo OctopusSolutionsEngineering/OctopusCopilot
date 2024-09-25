@@ -6,7 +6,9 @@ from infrastructure.users import save_default_values, get_default_values, \
     database_connection_test, delete_default_values, enable_feature_flag_for_user, is_feature_flagged_for_user, \
     disable_feature_flag_for_user, enable_feature_flag_for_group, is_feature_flagged_for_group, \
     disable_feature_flag_for_group, enable_feature_flag_for_all, is_feature_flagged_for_all, \
-    disable_feature_flag_for_all, delete_user_details
+    disable_feature_flag_for_all, delete_user_details, save_users_codefresh_details_from_login, \
+    get_users_codefresh_details, delete_all_codefresh_user_details, delete_old_codefresh_user_details, \
+    delete_codefresh_user_details
 
 connection_string = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
 
@@ -115,3 +117,40 @@ class UsersTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             save_users_octopus_url_from_login("12345", "blah", "API-ABCDEFG", "password", "salt",
                                               connection_string)
+
+    def test_codefresh_login(self):
+        save_users_codefresh_details_from_login("12345", "000000000000000000000000.00000000000000000000000000000000",
+                                                "password", "salt",
+                                                connection_string)
+        user = get_users_codefresh_details("12345", connection_string)
+
+        self.assertTrue(user['CodefreshToken'])
+        self.assertTrue(user['EncryptionTag'])
+        self.assertTrue(user['EncryptionNonce'])
+
+        delete_all_codefresh_user_details(connection_string)
+
+        with self.assertRaises(Exception):
+            get_users_codefresh_details("12345", connection_string)
+
+        self.assertEqual(0, delete_old_codefresh_user_details(connection_string))
+
+    def test_codefresh_logout(self):
+        save_users_codefresh_details_from_login("12345", "000000000000000000000000.00000000000000000000000000000000",
+                                                "password", "salt",
+                                                connection_string)
+        user = get_users_codefresh_details("12345", connection_string)
+
+        self.assertTrue(user['CodefreshToken'])
+        self.assertTrue(user['EncryptionTag'])
+        self.assertTrue(user['EncryptionNonce'])
+
+        delete_codefresh_user_details("12345", connection_string)
+
+        with self.assertRaises(Exception):
+            get_users_codefresh_details("12345", connection_string)
+
+    def test_codefresh_login_invalid_token(self):
+        with self.assertRaises(ValueError):
+            save_users_codefresh_details_from_login("12345", "invalid", "password", "salt",
+                                                    connection_string)

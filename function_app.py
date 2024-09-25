@@ -5,9 +5,9 @@ import urllib.parse
 from http.cookies import SimpleCookie
 
 import azure.functions as func
+from domain.config.codefresh import get_codefresh_url
 from domain.config.database import get_functions_connection_string
 from domain.config.octopus import min_octopus_version
-from domain.config.users import get_admin_users
 from domain.context.octopus_context import llm_message_query
 from domain.encryption.encryption import generate_password
 from domain.errors.error_handling import handle_error
@@ -17,6 +17,7 @@ from domain.exceptions.request_failed import (
     GitHubRequestFailed,
     OctopusRequestFailed,
     SlackRequestFailed,
+    CodefreshRequestFailed,
 )
 from domain.exceptions.resource_not_found import ResourceNotFound
 from domain.exceptions.space_not_found import SpaceNotFound
@@ -25,6 +26,7 @@ from domain.exceptions.user_not_loggedin import (
     OctopusApiKeyInvalid,
     UserNotLoggedIn,
     OctopusVersionInvalid,
+    CodefreshTokenInvalid,
 )
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_logging import log_query
@@ -39,10 +41,9 @@ from domain.requests.github.copilot_request_context import (
 )
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.url_sanitizer import quote_safe
-from domain.security.security import is_admin_user
 from domain.tools.wrapper.function_call import FunctionCall
 from domain.transformers.sse_transformers import convert_to_sse_response
-from domain.url.build_cookie import create_cookie, get_cookie_expiration
+from domain.url.build_cookie import get_cookie_expiration
 from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
 from domain.url.url_builder import base_request_url
@@ -53,6 +54,7 @@ from infrastructure.callbacks import (
     delete_callback,
     delete_old_callbacks,
 )
+from infrastructure.codefresh import get_codefresh_user
 from infrastructure.github import get_github_user, exchange_github_code
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, create_limited_api_key, get_version
@@ -62,9 +64,8 @@ from infrastructure.users import (
     save_users_octopus_url_from_login,
     database_connection_test,
     save_users_slack_login,
-    delete_old_slack_user_details,
+    delete_old_slack_user_details, save_users_codefresh_details_from_login, delete_old_codefresh_user_details,
 )
-from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
@@ -95,11 +96,24 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
 @app.timer_trigger(schedule="0 0 * * * *", arg_name="mytimer", run_on_startup=True)
 def api_key_cleanup(mytimer: func.TimerRequest) -> None:
     """
-    A function handler used to clean up old slack tokens keys
+    A function handler used to clean up old slack tokens
     :param mytimer: The Timer request
     """
     try:
         delete_old_slack_user_details(get_functions_connection_string())
+    except Exception as e:
+        handle_error(e)
+
+
+@app.function_name(name="codefresh_token_cleanup")
+@app.timer_trigger(schedule="0 0 * * * *", arg_name="mytimer", run_on_startup=True)
+def api_key_cleanup(mytimer: func.TimerRequest) -> None:
+    """
+    A function handler used to clean up old codefresh tokens
+    :param mytimer: The Timer request
+    """
+    try:
+        delete_old_codefresh_user_details(get_functions_connection_string())
     except Exception as e:
         handle_error(e)
 
@@ -384,6 +398,60 @@ def octopus_login_submit(req: func.HttpRequest) -> func.HttpResponse:
                 {
                     "error": "octopus_key_invalid",
                     "message": "Failed to generate temporary key",
+                }
+            ),
+            status_code=400,
+        )
+    except Exception as e:
+        handle_error(e)
+        return func.HttpResponse("Failed to read form HTML", status_code=500)
+
+
+@app.route(route="codefresh_login_submit", auth_level=func.AuthLevel.ANONYMOUS)
+def codefresh_login_submit(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    A function handler that responds to the submission of a codefresh token
+    :param req: The HTTP request
+    :return: The HTML form
+    """
+    try:
+        body = json.loads(req.get_body())
+        codefresh_token = body["cf-token"]
+
+        # Simple validation we can get the basic user details from the token
+        _ = get_codefresh_user(get_codefresh_url(), codefresh_token)
+
+        # Extract the GitHub user from the client side session
+        cookie = SimpleCookie()
+        cookie.load(req.headers["Cookie"])
+        session = cookie["session"].value
+
+        access_token = extract_session_blob(
+            session,
+            generate_password(
+                os.environ.get("ENCRYPTION_PASSWORD"), os.environ.get("ENCRYPTION_SALT")
+            ),
+            os.environ.get("ENCRYPTION_SALT"),
+        )
+
+        user_id = get_github_user(access_token)
+
+        # Persist the Codefresh details against the GitHub user
+        save_users_codefresh_details_from_login(
+            user_id,
+            codefresh_token,
+            os.environ.get("ENCRYPTION_PASSWORD"),
+            os.environ.get("ENCRYPTION_SALT"),
+            get_functions_connection_string(),
+        )
+        return func.HttpResponse(status_code=201)
+    except (CodefreshRequestFailed, CodefreshTokenInvalid, ValueError) as e:
+        handle_error(e)
+        return func.HttpResponse(
+            json.dumps(
+                {
+                    "error": "codefresh_key_invalid",
+                    "message": "Failed to validate codefresh credentials",
                 }
             ),
             status_code=400,

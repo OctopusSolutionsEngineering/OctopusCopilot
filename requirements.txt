@@ -34,7 +34,9 @@ beautifulsoup4==4.12.3
 markdown==3.7
 setuptools==71.1.0
 Jinja2==3.1.4
-
+gql==3.5.0
+graphql-core==3.2.4
+requests-toolbelt==1.0.0
 
 # Required for stringlifier
 ipdb==0.13.13

@@ -36,3 +36,11 @@ class StoryBlokRequestFailed(Exception):
     """
 
     pass
+
+
+class CodefreshRequestFailed(Exception):
+    """
+    Represents a failed request to the Codefresh API
+    """
+
+    pass
