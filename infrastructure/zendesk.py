@@ -118,7 +118,7 @@ async def get_tickets(keywords, ignore_tickets, zendesk_user, zendesk_token):
     ticket_ids = {}
     for keyword_result in keyword_results:
         for ticket in keyword_result["results"]:
-            if ignore_tickets and ticket["id"] in ignore_tickets:
+            if ignore_tickets and ticket["id"] in (ignore_tickets or []):
                 continue
 
             if not ticket_ids.get(ticket["id"]):
