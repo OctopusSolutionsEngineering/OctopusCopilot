@@ -2,7 +2,7 @@ import unittest
 
 from domain.config.codefresh import get_codefresh_url
 from domain.exceptions.user_not_loggedin import CodefreshTokenInvalid
-from infrastructure.codefresh import get_codefresh_user, get_query, execute_graph_query
+from infrastructure.codefresh import get_query, execute_graph_query
 
 
 class CodefreshAPIRequests(unittest.TestCase):
