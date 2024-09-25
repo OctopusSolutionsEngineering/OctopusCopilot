@@ -160,7 +160,7 @@ def suggest_solution_wrapper(
 
             # Get the contents of storyblok stories
             storyblok_context = limit_array_to_max_char_length(
-                get_story_content(issues[4]), max_content_per_source
+                get_story_content(issues[4], limited_keywords), max_content_per_source
             )
 
             fixed_external_context = [
@@ -436,12 +436,12 @@ async def get_docs_contents(search_results):
     ]
 
 
-def get_story_content(search_results):
+def get_story_content(search_results, keywords):
     return list(
         filter(
             lambda text: text.strip(),
             map(
-                lambda search_result: get_fields_with_text(search_result),
+                lambda search_result: get_fields_with_text(search_result, keywords),
                 search_results,
             ),
         )

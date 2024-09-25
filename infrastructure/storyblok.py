@@ -33,7 +33,7 @@ async def search_storyblok_stories(storyblok_token, search_term):
                 return await response.json()
 
 
-def get_fields_with_text(story):
+def get_fields_with_text(story, keywords=None):
     """
     We don't know the structure of the stories, so loop through all fields and find anything that looks like
     long form text.
@@ -41,7 +41,9 @@ def get_fields_with_text(story):
     text = ""
     for keys in story.keys():
         if isinstance(story[keys], str) and len(story[keys]) > 250:
-            text += story[keys] + "\n"
+            # only get the text content if the keywords are in the text
+            if not keywords or any(keyword in story[keys] for keyword in keywords):
+                text += story[keys] + "\n"
         if isinstance(story[keys], dict):
             text += get_fields_with_text(story[keys]) + "\n"
     return text
