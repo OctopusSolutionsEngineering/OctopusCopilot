@@ -9,6 +9,6 @@ class CodefreshAPIRequests(unittest.TestCase):
 
     def test_execute_graph_query_invalid_token(self):
         with self.assertRaises(CodefreshTokenInvalid):
-            user_query = get_query('user', '../../infrastructure/queries')
+            user_query = get_query('user', 'infrastructure/queries')
             execute_graph_query(get_codefresh_url(), "000000000000000000000000.00000000000000000000000000000000",
                                 user_query)
