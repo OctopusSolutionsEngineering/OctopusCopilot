@@ -32,7 +32,7 @@ def handle_response(callback):
             raise CodefreshRequestFailed(f"Request failed with {e.args}")
 
 
-def get_query(query_name, query_path="infrastructure/queries"):
+def get_query(query_name, query_path="queries"):
     query_path = os.path.join(query_path, f'{query_name}.graphql')
     with open(query_path, 'r') as file:
         query_content = file.read()
