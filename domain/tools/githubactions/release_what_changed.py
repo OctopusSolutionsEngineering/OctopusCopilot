@@ -213,7 +213,9 @@ def release_what_changed_callback_wrapper(
             limit_text_in_array,
         )
 
-        log_context = logs[:max_content_per_source]
+        # Limit the logs, and trim the start if required.
+        # This is because any errors are important and those will be towards the end of the logs.
+        log_context = logs[-max_content_per_source:]
 
         # build the context sent to the LLM
         messages = build_deployment_overview_prompt(
