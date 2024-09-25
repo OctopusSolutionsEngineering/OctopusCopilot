@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import urllib.parse
@@ -41,11 +42,12 @@ from domain.sanitizers.url_sanitizer import quote_safe
 from domain.security.security import is_admin_user
 from domain.tools.wrapper.function_call import FunctionCall
 from domain.transformers.sse_transformers import convert_to_sse_response
-from domain.url.build_cookie import create_cookie
+from domain.url.build_cookie import create_cookie, get_cookie_expiration
 from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
 from domain.url.url_builder import base_request_url
 from domain.versions.octopus_version import octopus_version_at_least
+from domain.view.html.html_pages import get_redirect_page
 from infrastructure.callbacks import (
     load_callback,
     delete_callback,
@@ -62,11 +64,7 @@ from infrastructure.users import (
     save_users_slack_login,
     delete_old_slack_user_details,
 )
-from jinja2 import (
-    Environment,
-    FileSystemLoader,
-    select_autoescape
-)
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 app = func.FunctionApp()
 logger = configure_logging(__name__)
@@ -148,10 +146,14 @@ def octopus(req: func.HttpRequest) -> func.HttpResponse:
     try:
         env = Environment(
             loader=FileSystemLoader(searchpath="html/templates"),
-            autoescape=select_autoescape()
+            autoescape=select_autoescape(),
         )
         template = env.get_template("login.html")
-        output = template.render(is_admin_user=is_admin_user(get_github_user_from_form(req), get_admin_users()))
+        output = template.render(
+            is_admin_user=is_admin_user(
+                get_github_user_from_form(req), get_admin_users()
+            )
+        )
         return func.HttpResponse(output, headers={"Content-Type": "text/html"})
     except Exception as e:
         handle_error(e)
@@ -188,15 +190,14 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
             os.environ.get("ENCRYPTION_SALT"),
         )
 
-        # Create a session cookie that will be used to maintain the user's state
-        session_cookie = create_cookie("session", session_json, 7)
-
         return func.HttpResponse(
-            status_code=301,
+            get_redirect_page(
+                f"{base_request_url(req)}/api/octopus?redirect=" + quote_safe(redirect),
+                "Redirecting to Octopus login...",
+            ),
             headers={
-                "Location": f"{base_request_url(req)}/api/octopus?redirect="
-                + quote_safe(redirect),
-                "Set-Cookie": f"session={session_json}; Secure; SameSite=Strict; Path=/",
+                "Content-Type": "text/html",
+                "Set-Cookie": f"session={session_json}; Secure; SameSite=Strict; Path=/; Expires={get_cookie_expiration(datetime.datetime.now(), 7)}",
             },
         )
     except Exception as e:
