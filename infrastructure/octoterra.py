@@ -238,7 +238,7 @@ def get_octoterra_space(
         "excludeAllSteps": exclude_all_steps(query, sanitized_step_names),
         "excludeAllProjectVariables": exclude_all_projectvariables_value,
         "excludeProjectVariablesExcept": exclude_projectvariables_except,
-        "limitAttributeLength": 100,
+        "limitAttributeLength": 1000,
         # This setting ensures that any project, tenant, runbook, or target names are valid.
         # If not, the assumption is made that the LLM incorrectly identified the resource in the query,
         # and the results must not be limited by that incorrect assumption.
