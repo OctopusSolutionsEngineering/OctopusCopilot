@@ -224,6 +224,7 @@ def exclude_all_steps(query, entity_list):
         if not entity_list
         and "step" not in query.lower()
         and "variable" not in query.lower()
+        and "process" not in query.lower()
         else False
     )
 
