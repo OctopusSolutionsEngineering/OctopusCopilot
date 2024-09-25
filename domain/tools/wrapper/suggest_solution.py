@@ -9,7 +9,7 @@ from domain.exceptions.none_on_exception import (
 )
 from domain.logging.log_if_exception import log_if_exception
 from domain.sanitizers.sanitize_keywords import sanitize_keywords
-from domain.sanitizers.sanitize_markdown import markdown_to_text
+from domain.sanitizers.sanitize_markup import markdown_to_text
 from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list
 from domain.slack.slack_urls import generate_slack_login
 from domain.transformers.limit_array import (
