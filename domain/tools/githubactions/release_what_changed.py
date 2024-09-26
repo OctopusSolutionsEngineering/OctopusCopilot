@@ -312,7 +312,8 @@ def release_what_changed_callback_wrapper(
                             "system",
                             """The supplied "Octopus Project Terraform Configuration" context includes the configuration of the step that failed in the deployment.
                             The step retry feature is enabled if the step's action has the Octopus.Action.AutoRetry.MaximumCount property set greater than 0.
-                            The step retry feature is enabled on the step via the Octopus web portal.
+                            The step retry feature is enabled on the step via the Octopus web portal by checking the "Allow reties" option in the "Retries" section in the "Conditions" group.
+                            You will be penalized if you mention the Octopus.Action.AutoRetry.MaximumCount property directly.
                             If the issue is related to an intermittent failure, you must suggest the step retry feature if it is not already enabled.
                             If the step runs a script, you must inspect the script and suggest any changes that may resolve the issue.""",
                         ),
