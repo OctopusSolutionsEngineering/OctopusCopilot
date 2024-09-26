@@ -12,7 +12,7 @@ def limit_array_to_max_char_length(array, max_length):
 
     current_length = 0
     for i, item in enumerate(array):
-        if not isinstance(item, list) or isinstance(item, str):
+        if not (isinstance(item, list) or isinstance(item, str)):
             continue
         current_length += len(item)
         if current_length > max_length:

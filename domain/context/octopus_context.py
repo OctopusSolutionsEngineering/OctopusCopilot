@@ -13,7 +13,7 @@ max_chars = 10000 * 4
 
 # This is the max number of chars for 128k context length. Tokens are roughly 3 or 4 characters each. We also need
 # a buffer for the user's prompt.
-max_chars_128 = 100000 * 3
+max_chars_128 = 100000 * 4
 
 
 def collect_llm_context(
