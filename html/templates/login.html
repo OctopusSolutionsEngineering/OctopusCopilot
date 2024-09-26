@@ -359,6 +359,16 @@
             codefresh_loading.style.display = 'none'
         }
     }
+
+    function codefresh_login_success() {
+        const redirect = urlParams.get('redirect')
+
+        if (redirect) {
+            window.location.href = "/api/" + encodeURIComponent(redirect) + "?redirected=true"
+        } else {
+            codefresh_success.style.display = 'block'
+        }
+    }
     codefresh_submit.onclick = processCodefreshSubmit
     {% endif -%}
 
