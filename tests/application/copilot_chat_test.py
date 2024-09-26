@@ -460,6 +460,7 @@ class CopilotChatTest(unittest.TestCase):
             response_json = json.loads(strip_before_first_curly_bracket(response_text))
         except Exception as e:
             print(response_text)
+            self.fail("Failed to parse JSON response: " + str(e))
 
         self.assertTrue(
             next(
