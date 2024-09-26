@@ -12,7 +12,7 @@ my_log = configure_logging()
 max_chars = 10000 * 4
 
 # This is the max number of chars for 128k context length (with a buffer, because 4 chars per token is an estimate)
-max_chars_128 = 128000 * 3
+max_chars_128 = 120000 * 3
 
 
 def collect_llm_context(
