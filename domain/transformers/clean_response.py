@@ -9,14 +9,18 @@ def strip_before_first_curly_bracket(text):
     :param text:
     :return:
     """
-    ensure_string(text, 'text must be a string (strip_before_first_curly_bracket).')
+    ensure_string(text, "text must be a string (strip_before_first_curly_bracket).")
 
     # Find the index of the first curly bracket
-    index = text.find('{')
+    index = text.find("{")
 
     # If a curly bracket was found, return the substring from that index onwards
     if index != -1:
-        return text[index:]
+        text = text[index:]
 
-    # If no curly bracket was found, return the original string
+    last_index = text.rfind("}")
+
+    if last_index != -1:
+        text = text[: last_index + 1]
+
     return text
