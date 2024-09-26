@@ -315,7 +315,7 @@ def release_what_changed_callback_wrapper(
                             The step retry feature is enabled on the step via the Octopus web portal by checking the "Allow reties" option in the "Retries" section in the "Conditions" group.
                             You will be penalized if you mention the Octopus.Action.AutoRetry.MaximumCount property directly.
                             If the issue is related to an intermittent failure, you must suggest the step retry feature if it is not already enabled.
-                            If the step runs a script, you must inspect the script and suggest any changes that may resolve the issue.""",
+                            If the step runs a script, you must inspect the script and provide an example script that may resolve the issue.""",
                         ),
                         (
                             "system",
