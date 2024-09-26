@@ -218,6 +218,9 @@ def exclude_all_steps(query, entity_list):
 
     ensure_string(query, "query must be a string (exclude_all_steps).")
 
+    if entity_list and "<all>" in entity_list:
+        return False
+
     # Any mention of steps or variables means we should not exclude all steps
     return (
         True

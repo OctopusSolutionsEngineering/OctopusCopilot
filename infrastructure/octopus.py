@@ -1730,6 +1730,17 @@ def get_runbook_deployment_logs(
     return task["Task"], task["ActivityLogs"]
 
 
+def get_failed_step(activity_logs):
+    if not activity_logs:
+        return None
+
+    for log in activity_logs:
+        for child in log.get("Children", []):
+            if child["Status"] == "Failed":
+                return re.sub(r"Step \d+: ", "", child["Name"])
+    return None
+
+
 def activity_logs_to_string(
     activity_logs,
     sanitized_steps=None,

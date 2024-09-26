@@ -1,6 +1,8 @@
 import asyncio
 import json
 
+from openai import api_key
+
 from domain.context.octopus_context import max_chars_128
 from domain.counters.counters import count_items_with_data
 from domain.lookup.octopus_multi_lookup import lookup_space_level_resources
@@ -40,7 +42,12 @@ from infrastructure.github import (
     get_issues_comments,
     get_issues,
 )
-from infrastructure.octopus import get_task_details_async, activity_logs_to_string
+from infrastructure.octopus import (
+    get_task_details_async,
+    activity_logs_to_string,
+    get_failed_step,
+)
+from infrastructure.octoterra import get_octoterra_space_async
 from infrastructure.openai import llm_message_query
 from infrastructure.zendesk import get_tickets_comments, get_tickets, get_no_tickets
 
@@ -153,8 +160,15 @@ def release_what_changed_callback_wrapper(
             object_or_default_if_exception(external_context[3], {}).get("ActivityLogs")
         )
 
+        # Get the name of the failed step
+        failed_step = get_failed_step(
+            object_or_default_if_exception(external_context[3], {}).get("ActivityLogs")
+        )
+
         # If the deployment failed, get the keywords and search for tickets and issues
-        failure_context, keywords = await get_failure_context(deployments, logs)
+        failure_context, keywords = await get_failure_context(
+            original_query, space_resources, failed_step, deployments, logs
+        )
 
         debug_text.extend(
             get_params_message(
@@ -213,6 +227,10 @@ def release_what_changed_callback_wrapper(
             limit_text_in_array,
         )
 
+        octoterra_context = object_or_default_if_exception(
+            get_item_or_none(failure_context, 2), ""
+        )[-max_content_per_source:]
+
         # Limit the logs, and trim the start if required.
         # This is because any errors are important and those will be towards the end of the logs.
         log_context = logs[-max_content_per_source:]
@@ -220,6 +238,9 @@ def release_what_changed_callback_wrapper(
         # build the context sent to the LLM
         messages = build_deployment_overview_prompt(
             context=[
+                *get_context_from_string(
+                    octoterra_context, "Octopus Project Terraform Configuration"
+                ),
                 *get_context_from_text_array(diff_context, "Deployment Git Diff"),
                 *get_context_from_text_array(issue_context, "Deployment Issue"),
                 *get_context_from_text_array(
@@ -230,6 +251,16 @@ def release_what_changed_callback_wrapper(
                 *get_context_from_string("\n".join(committers), "Git Committers"),
                 *get_context_from_string(
                     json.dumps(deployments["Deployments"][0]), "Deployment JSON"
+                ),
+                *(
+                    [
+                        (
+                            "system",
+                            'The supplied "Octopus Project Terraform Configuration" context is the Terraform representation of the Octopus project that was deployed.',
+                        )
+                    ]
+                    if octoterra_context
+                    else []
                 ),
                 *(
                     [
@@ -276,6 +307,14 @@ def release_what_changed_callback_wrapper(
                         (
                             "system",
                             'The supplied "General Issue" context relates to previous issues that may relate to the errors seen in the deployment logs.',
+                        ),
+                        (
+                            "system",
+                            """The supplied "Octopus Project Terraform Configuration" context includes the configuration of the step that failed in the deployment.
+                            The step retry feature is enabled if the step's action has the Octopus.Action.AutoRetry.MaximumCount property set greater than 0.
+                            The step retry feature is enabled on the step via the Octopus web portal.
+                            If the issue is related to an intermittent failure, you must suggest the step retry feature if it is not already enabled.
+                            If the step runs a script, you must inspect the script and suggest any changes that may resolve the issue.""",
                         ),
                         (
                             "system",
@@ -430,7 +469,11 @@ def release_what_changed_callback_wrapper(
 
         return []
 
-    async def get_failure_context(deployments, logs):
+    async def get_failure_context(
+        original_query, space_resources, failed_step, deployments, logs
+    ):
+        api_key, url = octopus_details()
+
         if deployment_is_failure(deployments):
             keywords = nlp_get_keywords(logs[:max_chars_128])
             # TODO: Remove the call to get_no_tickets() when we are happy to expose this to non-admin users
@@ -458,6 +501,17 @@ def release_what_changed_callback_wrapper(
                             array_or_empty_if_exception(initial_search[1]), max_issues
                         ),
                         github_token,
+                    ),
+                    get_octoterra_space_async(
+                        api_key,
+                        url,
+                        original_query,
+                        space_resources["space_id"],
+                        project_names=get_item_or_none(
+                            space_resources["project_names"], 0
+                        ),
+                        step_names=[failed_step or "<all>"],
+                        max_attribute_length=10000,
                     ),
                     return_exceptions=True,
                 ),

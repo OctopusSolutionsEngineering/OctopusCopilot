@@ -1,10 +1,13 @@
+import asyncio
 import json
 import os
 
+import aiohttp
 from retry import retry
 from urllib3.exceptions import HTTPError
 
 from domain.config.openai import max_context
+from domain.exceptions.octoterra import OctoterraRequestFailed
 from domain.logging.app_logging import configure_logging
 from domain.performance.timing import timing_wrapper
 from domain.query.query_inspector import (
@@ -50,6 +53,84 @@ from infrastructure.http_pool import http
 from infrastructure.octopus import handle_response, logging_wrapper
 
 logger = configure_logging(__name__)
+
+# Semaphore to limit the number of concurrent requests to octoterra
+sem = asyncio.Semaphore(10)
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
+async def get_octoterra_space_async(
+    api_key,
+    octopus_url,
+    query,
+    space_id,
+    project_names=None,
+    runbook_names=None,
+    target_names=None,
+    tenant_names=None,
+    library_variable_sets=None,
+    environment_names=None,
+    feed_names=None,
+    account_names=None,
+    certificate_names=None,
+    lifecycle_names=None,
+    workerpool_names=None,
+    machinepolicy_names=None,
+    tagset_names=None,
+    projectgroup_names=None,
+    step_names=None,
+    variable_names=None,
+    max_attribute_length=1000,
+):
+    ensure_string_not_empty(
+        space_id, "space_id must be a non-empty string (get_octoterra_space_async)."
+    )
+    ensure_string_not_empty(
+        query, "query must be a non-empty string (get_octoterra_space_async)."
+    )
+    ensure_string_not_empty(
+        api_key, "api_key must be a non-empty string (get_octoterra_space_async)."
+    )
+    ensure_string_not_empty(
+        octopus_url,
+        "octopus_url must be a non-empty string (get_octoterra_space_async).",
+    )
+
+    octoterra_request_body, _ = get_octoterra_request_body(
+        query,
+        space_id,
+        project_names,
+        runbook_names,
+        target_names,
+        tenant_names,
+        library_variable_sets,
+        environment_names,
+        feed_names,
+        account_names,
+        certificate_names,
+        lifecycle_names,
+        workerpool_names,
+        machinepolicy_names,
+        tagset_names,
+        projectgroup_names,
+        step_names,
+        variable_names,
+        max_attribute_length,
+    )
+
+    api = os.environ["APPLICATION_OCTOTERRA_URL"] + "/api/octoterra"
+    headers = {"X-Octopus-ApiKey": api_key, "X-Octopus-Url": octopus_url}
+
+    async with sem:
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.post(
+                api, data=json.dumps(octoterra_request_body)
+            ) as response:
+                if response.status != 200:
+                    body = await response.text()
+                    raise OctoterraRequestFailed(f"Request failed with " + body)
+                return await response.text()
 
 
 @retry(HTTPError, tries=3, delay=2)
@@ -98,6 +179,71 @@ def get_octoterra_space(
     ensure_string_not_empty(
         octopus_url, "octopus_url must be a non-empty string (get_octoterra_space)."
     )
+
+    body, include_all_resources = get_octoterra_request_body(
+        query,
+        space_id,
+        project_names,
+        runbook_names,
+        target_names,
+        tenant_names,
+        library_variable_sets,
+        environment_names,
+        feed_names,
+        account_names,
+        certificate_names,
+        lifecycle_names,
+        workerpool_names,
+        machinepolicy_names,
+        tagset_names,
+        projectgroup_names,
+        step_names,
+        variable_names,
+    )
+
+    headers = {"X-Octopus-ApiKey": api_key, "X-Octopus-Url": octopus_url}
+
+    resp = timing_wrapper(
+        lambda: handle_response(
+            lambda: http.request(
+                "POST",
+                os.environ["APPLICATION_OCTOTERRA_URL"] + "/api/octoterra",
+                body=json.dumps(body),
+                headers=headers,
+            )
+        ),
+        "octoterra",
+    )
+
+    answer = resp.data.decode("utf-8")
+
+    return answer, include_all_resources
+
+
+def get_octoterra_request_body(
+    query,
+    space_id,
+    project_names,
+    runbook_names,
+    target_names,
+    tenant_names,
+    library_variable_sets,
+    environment_names,
+    feed_names,
+    account_names,
+    certificate_names,
+    lifecycle_names,
+    workerpool_names,
+    machinepolicy_names,
+    tagset_names,
+    projectgroup_names,
+    step_names,
+    variable_names,
+    max_attribute_length=1000,
+):
+    """
+    Returns the body of the request to get the terraform representation of a space
+    """
 
     # We want to restrict the size of the exported Terraform configuration as much as possible,
     # so we make heavy use of the options to exclude resources unless they were mentioned in the query.
@@ -203,7 +349,12 @@ def get_octoterra_space(
     )
     include_all_resources += resources
 
-    body = {
+    exclude_all_steps_value, exclude_steps_except, resources = includes_all_steps(
+        query, sanitized_step_names
+    )
+    include_all_resources += resources
+
+    return {
         "space": space_id,
         "ignoreCacManagedValues": False,
         "excludeCaCProjectSettings": True,
@@ -221,6 +372,7 @@ def get_octoterra_space(
         "excludeTenantTagSetsExcept": exclude_tenanttags_except,
         "excludeProjectGroupsExcept": exclude_projectgroups_except,
         "excludeLibraryVariableSetsExcept": exclude_libraryvariablesets_except,
+        "excludeStepsExcept": exclude_steps_except,
         "excludeAllProjects": exclude_all_projects_value,
         "excludeAllTenants": exclude_all_tenants_value,
         "excludeAllTargets": exclude_all_targets_value,
@@ -235,10 +387,10 @@ def get_octoterra_space(
         "excludeAllTenantTagSets": exclude_all_tenanttags_value,
         "excludeAllProjectGroups": exclude_all_projectgroups_value,
         "excludeAllLibraryVariableSets": exclude_all_libraryvariablesets_value,
-        "excludeAllSteps": exclude_all_steps(query, sanitized_step_names),
+        "excludeAllSteps": exclude_all_steps_value,
         "excludeAllProjectVariables": exclude_all_projectvariables_value,
         "excludeProjectVariablesExcept": exclude_projectvariables_except,
-        "limitAttributeLength": 1000,
+        "limitAttributeLength": max_attribute_length,
         # This setting ensures that any project, tenant, runbook, or target names are valid.
         # If not, the assumption is made that the LLM incorrectly identified the resource in the query,
         # and the results must not be limited by that incorrect assumption.
@@ -257,25 +409,16 @@ def get_octoterra_space(
         "includeDefaultChannel": True,
         # Ignore any errors with projects that have bad CaC settings
         "ignoreCacErrors": True,
-    }
+    }, include_all_resources
 
-    headers = {"X-Octopus-ApiKey": api_key, "X-Octopus-Url": octopus_url}
 
-    resp = timing_wrapper(
-        lambda: handle_response(
-            lambda: http.request(
-                "POST",
-                os.environ["APPLICATION_OCTOTERRA_URL"] + "/api/octoterra",
-                body=json.dumps(body),
-                headers=headers,
-            )
-        ),
-        "octoterra",
-    )
-
-    answer = resp.data.decode("utf-8")
-
-    return answer, include_all_resources
+def includes_all_steps(query, sanitized_step_names):
+    exclude_all_steps_value = exclude_all_steps(query, sanitized_step_names)
+    exclude_steps_except = none_if_falesy(sanitized_step_names)
+    include_all_resources = []
+    if not exclude_all_steps_value and not exclude_steps_except:
+        include_all_resources.append("steps")
+    return exclude_all_steps_value, exclude_steps_except, include_all_resources
 
 
 def includes_all_projects(query, sanitized_project_names):
