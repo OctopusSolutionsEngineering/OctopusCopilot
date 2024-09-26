@@ -395,6 +395,15 @@ def get_item_or_none(array, index):
         return None
 
 
+def get_item_or_default(array, index, default):
+    try:
+        if not array:
+            return default
+        return array[index]
+    except IndexError:
+        return default
+
+
 def get_key_or_none(source, key):
     if not source:
         return None

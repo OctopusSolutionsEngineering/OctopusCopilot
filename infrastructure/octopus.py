@@ -1736,7 +1736,7 @@ def get_failed_step(activity_logs):
 
     for log in activity_logs:
         for child in log.get("Children", []):
-            if child["Status"] == "Failed":
+            if child.get("Status") == "Failed":
                 return re.sub(r"Step \d+: ", "", child["Name"])
     return None
 

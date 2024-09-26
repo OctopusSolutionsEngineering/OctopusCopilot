@@ -16,6 +16,7 @@ from domain.sanitizers.sanitized_list import (
     get_item_or_none,
     sanitize_dates,
     sanitize_channels,
+    get_item_or_default,
 )
 from domain.tools.debug import get_params_message
 from domain.transformers.deployments_from_release import get_deployments_for_project
@@ -24,7 +25,6 @@ from domain.transformers.limit_array import (
     limit_array_to_max_items,
     limit_text_in_array,
     array_or_empty_if_exception,
-    object_or_none_if_exception,
     object_or_default_if_exception,
 )
 from domain.transformers.text_to_context import (
@@ -228,7 +228,7 @@ def release_what_changed_callback_wrapper(
         )
 
         octoterra_context = object_or_default_if_exception(
-            get_item_or_none(failure_context, 2), ""
+            get_item_or_default(failure_context, 2, ""), ""
         )[-max_content_per_source:]
 
         # Limit the logs, and trim the start if required.
