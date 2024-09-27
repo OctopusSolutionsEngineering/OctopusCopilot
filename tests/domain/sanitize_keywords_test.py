@@ -12,7 +12,9 @@ class TestSanitizeKeywords(unittest.TestCase):
     def test_sanitize_keywords_with_invalid_keywords(self):
         keywords = ["octopus", "deploy", "python", "code"]
         invalid_keywords = ["python"]
-        result = sanitize_keywords(keywords, max_keywords=3, invalid_keywords=invalid_keywords)
+        result = sanitize_keywords(
+            keywords, max_keywords=3, invalid_keywords=invalid_keywords
+        )
         self.assertEqual(result, ["octopus", "deploy", "code"])
 
     def test_sanitize_keywords_max_keywords(self):

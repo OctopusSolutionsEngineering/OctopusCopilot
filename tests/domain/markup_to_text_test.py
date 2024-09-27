@@ -20,9 +20,13 @@ class TestMarkdownToText(unittest.TestCase):
         self.assertEqual(result, "")
 
     def test_markdown_to_text_code_snippets(self):
-        markdown_string = "Here is some code:\n\n```\ndef hello():\n    print('Hello, world!')\n```"
+        markdown_string = (
+            "Here is some code:\n\n```\ndef hello():\n    print('Hello, world!')\n```"
+        )
         result = markdown_to_text(markdown_string)
-        self.assertEqual(result, "Here is some code  def hello        print  Hello  world   ")
+        self.assertEqual(
+            result, "Here is some code  def hello        print  Hello  world   "
+        )
 
     def test_markdown_to_text_links(self):
         markdown_string = "[GitHub](https://github.com)"

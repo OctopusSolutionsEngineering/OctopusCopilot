@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 def ensure_string_not_empty(value, error_message):
     """
     Ensures the value is a non-empty string
@@ -38,4 +41,14 @@ def ensure_not_falsy(value, error_message):
     :param error_message: The error message to raise if the test fails
     """
     if not value:
+        raise ValueError(error_message)
+
+
+def ensure_is_datetime(value, error_message):
+    """
+    Ensures the value is a datetime
+    :param value: The argument to test
+    :param error_message: The error message to raise if the test fails
+    """
+    if not value or not isinstance(value, datetime):
         raise ValueError(error_message)
