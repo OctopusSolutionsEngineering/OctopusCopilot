@@ -43,3 +43,33 @@ class SanitizeTests(unittest.TestCase):
 
     def test_get_item_or_none_none_array(self):
         self.assertEqual(None, get_item_or_none(None, 0))
+
+    def test_sanitize_message_api_key(self):
+        message = "Api key is API-ABCDEFG"
+        sanitized_message = sanitize_message(message)
+        self.assertEqual(sanitized_message, "Api key is *****")
+
+    def test_sanitize_message_github_pat(self):
+        message = "GitHub PAT is ghp_abcdefghijklmnopqrstuvwxyzABCD012345"
+        sanitized_message = sanitize_message(message)
+        self.assertEqual(sanitized_message, "GitHub PAT is *****")
+
+    def test_sanitize_message_empty(self):
+        message = ""
+        sanitized_message = sanitize_message(message)
+        self.assertEqual(sanitized_message, "")
+
+    def test_sanitize_message_none(self):
+        message = None
+        sanitized_message = sanitize_message(message)
+        self.assertEqual(sanitized_message, None)
+
+    def test_sanitize_message_no_sensitive_data(self):
+        message = "This is a safe message."
+        sanitized_message = sanitize_message(message)
+        self.assertEqual(sanitized_message, "This is a safe message.")
+
+    def test_sanitize_message_multiple_sensitive_data(self):
+        message = "Api key is API-ABCDEFG and GitHub PAT is ghp_abcdefghijklmnopqrstuvwxyzABCD012345"
+        sanitized_message = sanitize_message(message)
+        self.assertEqual(sanitized_message, "Api key is ***** and GitHub PAT is *****")

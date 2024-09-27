@@ -16,11 +16,11 @@ sensitive_vars = [
     "xoxe-1-[0-9a-zA-Z]{147}",
     "T[a-zA-Z0-9_]{8}/B[a-zA-Z0-9_]{8}/[a-zA-Z0-9_]{24}",
     "ghp_[A-Za-z0-9-]+",
-    "^github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59}$",
-    "^gho_[a-zA-Z0-9]{36}$",
-    "^ghu_[a-zA-Z0-9]{36}$",
-    "^ghs_[a-zA-Z0-9]{36}$",
-    "^ghr_[a-zA-Z0-9]{36}$",
+    "github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59}",
+    "gho_[a-zA-Z0-9]{36}",
+    "ghu_[a-zA-Z0-9]{36}",
+    "ghs_[a-zA-Z0-9]{36}",
+    "ghr_[a-zA-Z0-9]{36}",
 ]
 # From https://github.com/adobe/stringlifier with some minor modifications to work with the latest
 # versions of numpy.

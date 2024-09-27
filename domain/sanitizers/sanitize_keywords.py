@@ -19,6 +19,9 @@ def sanitize_keywords(
 
 
 def get_unique_values(input_list):
+    if not input_list:
+        return []
+
     unique_list = []
     for item in input_list:
         if item not in unique_list:

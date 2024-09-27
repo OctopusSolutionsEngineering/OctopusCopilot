@@ -3,7 +3,7 @@ def dictionary_has_value(key, dictionary):
         return False
 
     if isinstance(dictionary, dict):
-        if not dictionary[key]:
+        if not dictionary.get(key):
             return False
 
         value = dictionary[key]
