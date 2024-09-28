@@ -10,6 +10,7 @@ from domain.exceptions.none_on_exception import (
 from domain.logging.log_if_exception import log_if_exception
 from domain.sanitizers.sanitize_keywords import sanitize_keywords
 from domain.sanitizers.sanitize_markup import markdown_to_text
+from domain.sanitizers.sanitize_strings import strip_leading_whitespace
 from domain.sanitizers.sanitized_list import get_item_or_none, sanitize_list
 from domain.slack.slack_urls import generate_slack_login
 from domain.transformers.limit_array import (
@@ -248,7 +249,10 @@ def suggest_solution_wrapper(
                 ),
                 (
                     "system",
-                    "The remaining section must provide potential solutions and troubleshooting steps to the question being asked under a heading of 'Answer'",
+                    strip_leading_whitespace(
+                        """The remaining section must provide potential solutions and troubleshooting steps to the question being asked under a heading of 'Answer'.
+                        If the answer includes instructions to modify the database directly, it must include a warning that this is not supported without the guidance of the Octopus Support team."""
+                    ),
                 ),
                 *[
                     (
