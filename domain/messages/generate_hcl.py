@@ -2,6 +2,7 @@ import asyncio
 
 from domain.b64.b64_encoder import decode_string_b64
 from domain.context.octopus_context import max_chars_128
+from domain.sanitizers.escape_messages import escape_message
 from infrastructure.github import get_repo_contents
 
 
