@@ -8,6 +8,7 @@ from domain.exceptions.none_on_exception import (
     default_on_exception_async,
 )
 from domain.logging.log_if_exception import log_if_exception
+from domain.sanitizers.escape_messages import escape_message
 from domain.sanitizers.sanitize_keywords import sanitize_keywords
 from domain.sanitizers.sanitize_markup import markdown_to_text
 from domain.sanitizers.sanitize_strings import strip_leading_whitespace
@@ -258,7 +259,7 @@ def suggest_solution_wrapper(
                     (
                         "system",
                         "Related Conversation: ###\n"
-                        + context.replace("{", "{{").replace("}", "}}")
+                        + escape_message(context)
                         + "\n###",
                     )
                     for context in fixed_external_context[0]
@@ -267,7 +268,7 @@ def suggest_solution_wrapper(
                     (
                         "system",
                         "Related GitHub Issue: ###\n"
-                        + context.replace("{", "{{").replace("}", "}}")
+                        + escape_message(context)
                         + "\n###",
                     )
                     for context in fixed_external_context[1]
@@ -276,7 +277,7 @@ def suggest_solution_wrapper(
                     (
                         "system",
                         "Related Slack Message: ###\n"
-                        + context.replace("{", "{{").replace("}", "}}")
+                        + escape_message(context)
                         + "\n###",
                     )
                     for context in slack_context
@@ -285,7 +286,7 @@ def suggest_solution_wrapper(
                     (
                         "system",
                         "Related Documentation: ###\n"
-                        + context.replace("{", "{{").replace("}", "}}")
+                        + escape_message(context)
                         + "\n###",
                     )
                     for context in fixed_external_context[2]
@@ -294,7 +295,7 @@ def suggest_solution_wrapper(
                     (
                         "system",
                         "Related Documentation: ###\n"
-                        + context.replace("{", "{{").replace("}", "}}")
+                        + escape_message(context)
                         + "\n###",
                     )
                     for context in storyblok_context

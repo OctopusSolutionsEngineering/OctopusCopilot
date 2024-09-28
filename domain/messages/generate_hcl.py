@@ -407,9 +407,7 @@ async def get_file_content(name, github_token, logging=None):
 
         return (
             "system",
-            "HCL: ###\n"
-            + "\n\n".join(contents).replace("{", "{{").replace("}", "}}")
-            + "\n###",
+            "HCL: ###\n" + escape_message("\n\n".join(contents)) + "\n###",
         )
     except Exception as e:
         # Sometimes the directory structure might not match the assumptions, or the decode function
