@@ -37,32 +37,35 @@ def provide_help_wrapper(github_user, octopus_details, log_query):
         else:
             return default_help(github_user, api_key, url, log_query)
 
-
     return provide_help, say_hello, what_do_you_do, what_can_i_ask
+
 
 def ghu_help(github_user, api_key, url, log_query):
     return CopilotResponse(
         strip_leading_whitespace(
             f"""Welcome to GitHub Universe 2024! Use the prompts below to participate in the sandbox session.
-            
+
             # Dashboard Queries
             These prompt show dashboards showing project deployments to environments:
             * `@octopus-ai-app Show me the dashboard for the space "FunanceTech DevEx"`
-            
+
             # Create a Project
             This prompt creates a new project from the template. Make sure you replace `MyProject` with the name of your project:
             * `@octopus-ai-app Run the runbook "Create Project" in the project "Microservice Template" in the space "FunanceTech DevEx" with variables: Project Name=MyProject`
-            
+
             # Deploy a Project
             This prompt deploys your project to the "Development" environment. Make sure you replace `MyProject` with the name of your project:
             * `@octopus-ai-app Create a release in the project "MyProject" in the space "FunanceTech DevEx" and deploy to the "Development" environment`
-            
+
             # Observe Deployments
             These prompts allow you to observe deployments. Make sure you replace `MyProject` with the name of your project:
             * `@octopus-ai-app Show me the project dashboard for "MyProject" in the space "FunanceTech DevEx"`
             * `@octopus-ai-app Show me the task summary for release "0.0.1" of the project "MyProject" in the "Development" environment in the space "FunanceTech DevEx"`
             * `@octopus-ai-app Summarize the deployment logs for the latest deployment for the project "MyProject" in the "Development" environment in the space "FunanceTech DevEx"`
-            """))
+            """
+        )
+    )
+
 
 def default_help(github_user, api_key, url, log_query):
     space_name = get_default_argument(github_user, None, "Space")
