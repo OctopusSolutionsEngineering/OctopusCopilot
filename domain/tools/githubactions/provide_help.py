@@ -63,7 +63,7 @@ def ghu_help(github_user, api_key, url, log_query):
             # Observe Deployments
             These prompts allow you to observe deployments. Make sure you replace `MyProject` with the name of your project:
             * `@octopus-ai-app Show me the project dashboard for "MyProject" in the space "FunanceTech DevEx"`
-            * `@octopus-ai-app Show me the task summary for release "0.0.1" of the project "MyProject" in the "Development" environment in the space "FunanceTech DevEx"`
+            * `@octopus-ai-app Show me the task summary for the latest release of the project "MyProject" in the "Development" environment in the space "FunanceTech DevEx"`
             * `@octopus-ai-app Summarize the deployment logs for the latest deployment for the project "MyProject" in the "Development" environment in the space "FunanceTech DevEx"`
 
             # Manage deployments
