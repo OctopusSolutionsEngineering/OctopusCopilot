@@ -4,4 +4,7 @@ def is_ghu_server(server):
     :param server: The Octopus server
     :return:
     """
+    if not server:
+        return False
+
     return server.startswith("https://github-universe-2024.octopus.app")
