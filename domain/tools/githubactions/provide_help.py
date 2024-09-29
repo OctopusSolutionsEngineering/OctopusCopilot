@@ -1,5 +1,6 @@
 from domain.defaults.defaults import get_default_argument
 from domain.errors.error_handling import handle_error
+from domain.ghu.is_ghu import is_ghu_server
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitize_strings import strip_leading_whitespace
 from infrastructure.octopus import (
@@ -32,7 +33,7 @@ def provide_help_wrapper(github_user, octopus_details, log_query):
         api_key, url = octopus_details()
 
         # This is a hard coded
-        if "github-universe-2024.octopus.app" in url:
+        if is_ghu_server(url):
             return ghu_help(github_user, api_key, url, log_query)
         else:
             return default_help(github_user, api_key, url, log_query)
