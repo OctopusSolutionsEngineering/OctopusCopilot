@@ -40,6 +40,7 @@ from domain.requests.github.copilot_request_context import (
     build_form_tools,
 )
 from domain.response.copilot_response import CopilotResponse
+from domain.sanitizers.sanitize_prompt import sanitize_prompt
 from domain.sanitizers.url_sanitizer import quote_safe
 from domain.tools.wrapper.function_call import FunctionCall
 from domain.transformers.sse_transformers import convert_to_sse_response
@@ -652,7 +653,7 @@ def execute_callback(req, build_form_tools, github_user):
 
 
 def execute_function(req, build_form_tools):
-    query = extract_query(req)
+    query = sanitize_prompt(extract_query(req))
 
     functions = build_form_tools(query, req)
 

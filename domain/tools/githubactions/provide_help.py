@@ -56,12 +56,20 @@ def ghu_help(github_user, api_key, url, log_query):
             # Deploy a Project
             This prompt deploys your project to the "Development" environment. Make sure you replace `MyProject` with the name of your project:
             * `@octopus-ai-app Create a release in the project "MyProject" in the space "FunanceTech DevEx" and deploy to the "Development" environment`
+            * `@octopus-ai-app Deploy the latest release of project "MyProject" in the space "FunanceTech DevEx" to the "Staging" environment`
+            * `@octopus-ai-app Deploy the latest release of project "MyProject" in the space "FunanceTech DevEx" to the "Production" environment`
 
             # Observe Deployments
             These prompts allow you to observe deployments. Make sure you replace `MyProject` with the name of your project:
             * `@octopus-ai-app Show me the project dashboard for "MyProject" in the space "FunanceTech DevEx"`
             * `@octopus-ai-app Show me the task summary for release "0.0.1" of the project "MyProject" in the "Development" environment in the space "FunanceTech DevEx"`
             * `@octopus-ai-app Summarize the deployment logs for the latest deployment for the project "MyProject" in the "Development" environment in the space "FunanceTech DevEx"`
+            
+            # Manage deployments
+            These prompts allow you to manage deployments. Make sure you replace `MyProject` with the name of your project:
+            * `@octopus-ai-app Run runbook "Verify App Status" in the "Development" environment for the project "MyProject" in the space "FunanceTech DevEx"`
+            * `@octopus-ai-app Show me the runbook dashboard for "Verify App Status" in the project "MyProject" in the space "FunanceTech DevEx"`
+            * `@octopus-ai-app Summarize the execution logs of the runbook "Verify App Status" in the project "MyProject" in the space "FunanceTech DevEx" in the "Development" environment`
             """
         )
     )
