@@ -167,7 +167,7 @@ step "remove-worker-access" {
         environments = ["production"]
         notes = "Removes the dynamic worker's IP from the function's firewall"
         properties = {
-            Octopus.Action.Azure.AccountId = "#{Octopus.Azure.Account}"
+            Octopus.Action.Azure.AccountId = "#{Octolint.Octopus.Azure.Account}"
             Octopus.Action.Script.ScriptBody = <<-EOT
                 # Clear any existing rule
                 EXISTING=$(az functionapp config access-restriction show -g "#{Octolint.Azure.ResourceGroup.Name}" -n "#{Octolint.Azure.Function.Name}" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
