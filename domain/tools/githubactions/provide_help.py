@@ -51,27 +51,27 @@ def ghu_help(github_user, api_key, url, log_query):
             * `@octopus-ai-app Show me the dashboard for the space "FunanceTech DevEx"`
 
             # Create a Project
-            These prompts creates a new project from the template and watch the status. Make sure you replace `MyProject` with the name of your project:
-            * `@octopus-ai-app Run the runbook "Create Project" in the project "Microservice Template" in the "Administration" environment in the space "FunanceTech DevEx" with variables: Project Name=MyProject`
+            These prompts creates a new project from the template and watch the status. Make sure you replace `MyNewProject` with the name of your project:
+            * `@octopus-ai-app Run the runbook "Create Project" in the project "Microservice Template" in the "Administration" environment in the space "FunanceTech DevEx" with variables: Project Name=MyNewProject`
             * `@octopus-ai-app Show me the runbook dashboard for "Create Project" in the project "Microservice Template" in the space "FunanceTech DevEx"`
 
             # Deploy a Project
-            This prompt deploys your project to the "Development" environment. Make sure you replace `MyProject` with the name of your project:
-            * `@octopus-ai-app Create a release in the project "MyProject" in the space "FunanceTech DevEx" and deploy to the "Development" environment`
-            * `@octopus-ai-app Deploy the latest release of project "MyProject" in the space "FunanceTech DevEx" to the "Staging" environment`
-            * `@octopus-ai-app Deploy the latest release of project "MyProject" in the space "FunanceTech DevEx" to the "Production" environment`
+            This prompt deploys your project to the "Development" environment. Make sure you replace `MyNewProject` with the name of your project:
+            * `@octopus-ai-app Create a release in the project "MyNewProject" in the space "FunanceTech DevEx" and deploy to the "Development" environment`
+            * `@octopus-ai-app Deploy the latest release of project "MyNewProject" in the space "FunanceTech DevEx" to the "Staging" environment`
+            * `@octopus-ai-app Deploy the latest release of project "MyNewProject" in the space "FunanceTech DevEx" to the "Production" environment`
 
             # Observe Deployments
-            These prompts allow you to observe deployments. Make sure you replace `MyProject` with the name of your project:
-            * `@octopus-ai-app Show me the project dashboard for "MyProject" in the space "FunanceTech DevEx"`
-            * `@octopus-ai-app Show me the task summary for the latest release of the project "MyProject" in the "Development" environment in the space "FunanceTech DevEx"`
-            * `@octopus-ai-app Summarize the deployment logs for the latest deployment for the project "MyProject" in the "Development" environment in the space "FunanceTech DevEx"`
+            These prompts allow you to observe deployments. Make sure you replace `MyNewProject` with the name of your project:
+            * `@octopus-ai-app Show me the project dashboard for "MyNewProject" in the space "FunanceTech DevEx"`
+            * `@octopus-ai-app Show me the task summary for the latest release of the project "MyNewProject" in the "Development" environment in the space "FunanceTech DevEx"`
+            * `@octopus-ai-app Summarize the deployment logs for the latest deployment for the project "MyNewProject" in the "Development" environment in the space "FunanceTech DevEx"`
 
             # Manage deployments
-            These prompts allow you to manage deployments. Make sure you replace `MyProject` with the name of your project:
-            * `@octopus-ai-app Run runbook "Verify App Status" in the "Development" environment for the project "MyProject" in the space "FunanceTech DevEx"`
-            * `@octopus-ai-app Show me the runbook dashboard for "Verify App Status" in the project "MyProject" in the space "FunanceTech DevEx"`
-            * `@octopus-ai-app Summarize the execution logs of the runbook "Verify App Status" in the project "MyProject" in the space "FunanceTech DevEx" in the "Development" environment`
+            These prompts allow you to manage deployments. Make sure you replace `MyNewProject` with the name of your project:
+            * `@octopus-ai-app Run runbook "Verify App Status" in the "Development" environment for the project "MyNewProject" in the space "FunanceTech DevEx"`
+            * `@octopus-ai-app Show me the runbook dashboard for "Verify App Status" in the project "MyNewProject" in the space "FunanceTech DevEx"`
+            * `@octopus-ai-app Summarize the execution logs of the runbook "Verify App Status" in the project "MyNewProject" in the space "FunanceTech DevEx" in the "Development" environment`
             """
         )
     )
