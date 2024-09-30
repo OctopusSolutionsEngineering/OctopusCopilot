@@ -75,7 +75,7 @@ def lookup_environments(
     url, api_key, user_id, original_query, space_id, environment_name
 ):
     if not environment_name and user_id:
-        return get_default_argument(user_id, None, "Environment")
+        return sanitize_list(get_default_argument(user_id, None, "Environment"))
 
     sanitized_environments = sanitize_names_fuzzy(
         lambda: get_environments_generator(space_id, api_key, url),
@@ -96,7 +96,7 @@ def lookup_environments(
 
 def lookup_tenants(url, api_key, user_id, original_query, space_id, tenant_name):
     if not tenant_name and user_id:
-        return get_default_argument(user_id, None, "Tenant")
+        return sanitize_list(get_default_argument(user_id, None, "Tenant"))
 
     sanitized_tenants = sanitize_names_fuzzy(
         lambda: get_tenants_generator(space_id, api_key, url),
@@ -117,7 +117,7 @@ def lookup_runbooks(
     url, api_key, user_id, original_query, space_id, project_id, runbook_name
 ):
     if not runbook_name and user_id:
-        return get_default_argument(user_id, None, "Runbook")
+        return sanitize_list(get_default_argument(user_id, None, "Runbook"))
 
     sanitized_runbooks = sanitize_names_fuzzy(
         lambda: get_runbooks_generator(space_id, project_id, api_key, url),
