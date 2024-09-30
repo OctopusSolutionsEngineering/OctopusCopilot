@@ -130,20 +130,22 @@ def create_release_confirm_callback_wrapper(github_user, octopus_details, log_qu
             except PromptedVariableMatchingError as e:
                 response_text.append(f"❌ {e.error_message}")
 
-        debug_text = get_params_message(
-            github_user,
-            False,
-            create_release_confirm_callback.__name__,
-            space_id=space_id,
-            project_name=project_name,
-            project_id=project_id,
-            git_ref=git_ref,
-            release_version=response_release_version,
-            release_id=release_id,
-            channel_name=channel_name,
-            environment_name=environment_name,
-            tenant_name=tenant_name,
-            deployment_id=deployment_id,
+        debug_text.extend(
+            get_params_message(
+                github_user,
+                False,
+                create_release_confirm_callback.__name__,
+                space_id=space_id,
+                project_name=project_name,
+                project_id=project_id,
+                git_ref=git_ref,
+                release_version=response_release_version,
+                release_id=release_id,
+                channel_name=channel_name,
+                environment_name=environment_name,
+                tenant_name=tenant_name,
+                deployment_id=deployment_id,
+            )
         )
 
         response_text.extend(debug_text)

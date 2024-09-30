@@ -51,8 +51,9 @@ def ghu_help(github_user, api_key, url, log_query):
             * `@octopus-ai-app Show me the dashboard for the space "FunanceTech DevEx"`
 
             # Create a Project
-            This prompt creates a new project from the template. Make sure you replace `MyProject` with the name of your project:
+            These prompts creates a new project from the template and watch the status. Make sure you replace `MyProject` with the name of your project:
             * `@octopus-ai-app Run the runbook "Create Project" in the project "Microservice Template" in the "Administration" environment in the space "FunanceTech DevEx" with variables: Project Name=MyProject`
+            * `@octopus-ai-app Show me the runbook dashboard for "Create Project" in the project "Microservice Template" in the space "FunanceTech DevEx"`
 
             # Deploy a Project
             This prompt deploys your project to the "Development" environment. Make sure you replace `MyProject` with the name of your project:
