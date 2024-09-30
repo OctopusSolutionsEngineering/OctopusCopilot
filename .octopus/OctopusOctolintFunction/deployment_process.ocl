@@ -35,7 +35,7 @@ step "deploy-with-cli" {
                 
                 cd octoterra_azure
                 ../Azure.Functions.Cli.linux-x64/func azure functionapp publish "#{Azure.Function.Name}" --custom
-                EOT
+                    EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "Bash"
             OctopusUseBundledTooling = "False"
@@ -139,7 +139,7 @@ step "security-scan" {
                 
                 exit 0
                 
-                EOT
+                    EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "Bash"
         }
@@ -182,7 +182,7 @@ step "remove-worker-access" {
                   az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --slot "staging"
                 fi
                 
-                EOT
+                    EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "Bash"
             OctopusUseBundledTooling = "False"
