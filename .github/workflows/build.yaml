@@ -89,7 +89,7 @@ jobs:
         run: |
           # Start the octolint microservice
           mkdir octolint
-          mv octolint_linux_amd64_azure octolint
+          mv octolint_linux_amd64_azure.zip octolint
           cd octolint
           unzip octolint_linux_amd64_azure
           chmod +x octolint_linux_amd64_azure
