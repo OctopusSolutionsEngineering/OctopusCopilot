@@ -221,7 +221,7 @@ def get_api_key_and_url(req: func.HttpRequest):
             )
 
             # A hack to get GHU attendees into the instance without having to define an API key
-            if is_ghu_server(server):
+            if is_ghu_server(github_user["OctopusUrl"]):
                 return os.environ.get("OCTOPUS_GHU_APIKEY"), github_user["OctopusUrl"]
 
             # We need to configure the Octopus details first because we need to know the service account id
