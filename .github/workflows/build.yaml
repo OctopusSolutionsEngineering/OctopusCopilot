@@ -91,7 +91,7 @@ jobs:
           mkdir octolint
           mv octolint_linux_amd64_azure.zip octolint
           cd octolint
-          unzip octolint_linux_amd64_azure
+          unzip octolint_linux_amd64_azure.zip
           chmod +x octolint_linux_amd64_azure
           ./octolint_linux_amd64_azure &
         env:
