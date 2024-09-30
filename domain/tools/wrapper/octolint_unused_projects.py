@@ -15,6 +15,9 @@ def octolint_unused_projects_wrapper(callback, logging):
         space: The name of the space to run the check in.
         """
 
+        if logging:
+            logging("Enter:", "octolint_unused_projects")
+
         for key, value in kwargs.items():
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
