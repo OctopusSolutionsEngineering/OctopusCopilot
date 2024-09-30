@@ -12,9 +12,9 @@ def lookup_space_level_resources(
     github_user,
     original_query,
     space,
-    projects,
-    environments,
-    tenants,
+    projects=None,
+    environments=None,
+    tenants=None,
 ):
     """
     Many queries relate to a collection of projects, environments, and tenants in a space. This function

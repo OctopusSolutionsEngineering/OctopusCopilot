@@ -65,6 +65,12 @@ jobs:
           latest: true
           fileName: "octoterra_linux_amd64_azure.zip"
 
+      - uses: robinraju/release-downloader@v1.9
+        with:
+          repository: "OctopusSolutionsEngineering/OctopusRecommendationEngine"
+          latest: true
+          fileName: "octolint_linux_amd64_azure.zip"
+
       - name: Start Octoterra
         run: |
           # Start the octoterra microservice
@@ -77,6 +83,20 @@ jobs:
         env:
           # The port used when running the octoterra microservice
           FUNCTIONS_CUSTOMHANDLER_PORT: 8081
+        shell: bash
+
+      - name: Start Octolint
+        run: |
+          # Start the octolint microservice
+          mkdir octolint
+          mv octolint_linux_amd64_azure octolint
+          cd octolint
+          unzip octolint_linux_amd64_azure
+          chmod +x octolint_linux_amd64_azure
+          ./octolint_linux_amd64_azure &
+        env:
+          # The port used when running the octolint microservice
+          FUNCTIONS_CUSTOMHANDLER_PORT: 8082
         shell: bash
 
       - name: Install Dependencies
@@ -132,6 +152,8 @@ jobs:
           ENCRYPTION_SALT: salt
           # The location of the octoterra microservice
           APPLICATION_OCTOTERRA_URL: http://localhost:8081
+          # The location of the octolint microservice
+          APPLICATION_OCTOLINT_URL: http://localhost:8082
           GITHUB_CLIENT_REDIRECT: https://aiagent.octopus.com/api/oauth_callback
           GITHUB_CLIENT_ID: 4ae1ef506301902a41a5
         shell: /usr/bin/bash --noprofile --norc {0}
