@@ -50,7 +50,7 @@ def octolint_unused_projects_callback(octopus_details, github_user, original_que
             # The plain text response needs to be tweaked slightly to support markdown
             results = results.replace("\n", "\n\n")
 
-            wiki_page = f"Read the [documentation](https://github.com/OctopusSolutionsEngineering/OctopusRecommendationEngine/wiki/{check_name}) for more information."
+            wiki_page = f"Read the [documentation](https://github.com/OctopusSolutionsEngineering/OctopusRecommendationEngine/wiki/{check_name}) for more information on these results and practical next steps."
 
             results = [results, wiki_page]
             results.extend(debug_text)
