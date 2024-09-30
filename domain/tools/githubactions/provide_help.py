@@ -58,14 +58,17 @@ def ghu_help(github_user, api_key, url, log_query):
             # Deploy a Project
             This prompt deploys your project to the "Development" environment. Make sure you replace `MyNewProject` with the name of your project:
             * `@octopus-ai-app Create a release in the project "MyNewProject" in the space "FunanceTech DevEx" and deploy to the "Development" environment`
-            * `@octopus-ai-app Deploy the latest release of project "MyNewProject" in the space "FunanceTech DevEx" to the "Staging" environment`
-            * `@octopus-ai-app Deploy the latest release of project "MyNewProject" in the space "FunanceTech DevEx" to the "Production" environment`
 
             # Observe Deployments
             These prompts allow you to observe deployments. Make sure you replace `MyNewProject` with the name of your project:
             * `@octopus-ai-app Show me the project dashboard for "MyNewProject" in the space "FunanceTech DevEx"`
             * `@octopus-ai-app Show me the task summary for the latest release of the project "MyNewProject" in the "Development" environment in the space "FunanceTech DevEx"`
             * `@octopus-ai-app Summarize the deployment logs for the latest deployment for the project "MyNewProject" in the "Development" environment in the space "FunanceTech DevEx"`
+
+            # Promote Deployments
+            These prompts allow you to promote deployments to the higher environments. Make sure you replace `MyNewProject` with the name of your project:
+            * `@octopus-ai-app Deploy the latest release of project "MyNewProject" in the space "FunanceTech DevEx" to the "Staging" environment`
+            * `@octopus-ai-app Deploy the latest release of project "MyNewProject" in the space "FunanceTech DevEx" to the "Production" environment`
 
             # Manage deployments
             These prompts allow you to manage deployments. Make sure you replace `MyNewProject` with the name of your project:
