@@ -1,0 +1,7 @@
+variable "Empty" {
+    value {}
+}
+
+variable "OctopusPrintVariables" {
+    value "False" {}
+}

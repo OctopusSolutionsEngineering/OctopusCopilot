@@ -55,6 +55,10 @@ def ghu_help(github_user, api_key, url, log_query):
             * `@octopus-ai-app Run the runbook "Create Project" in the project "Microservice Template" in the "Administration" environment in the space "FunanceTech DevEx" with variables: Project Name=MyNewProject`
             * `@octopus-ai-app Show me the runbook dashboard for "Create Project" in the project "Microservice Template" in the space "FunanceTech DevEx"`
 
+            # Explain the Project
+            * `@octopus-ai-app What do the steps in the project "MyNewProject" in the space "FunanceTech DevEx" environment do? Provide a high level summary.`
+            * `@octopus-ai-app What do the steps in the runbook "Verify App Status" in the project "MyNewProject" in the space "FunanceTech DevEx" do?`
+
             # Deploy a Project
             This prompt deploys your project to the "Development" environment. Make sure you replace `MyNewProject` with the name of your project:
             * `@octopus-ai-app Create a release in the project "MyNewProject" in the space "FunanceTech DevEx" and deploy to the "Development" environment`
