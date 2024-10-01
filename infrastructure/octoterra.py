@@ -157,6 +157,7 @@ def get_octoterra_space(
     api_key,
     octopus_url,
     log_query,
+    max_attribute_length=1000,
 ):
     """
     Returns the terraform representation of a space
@@ -199,6 +200,7 @@ def get_octoterra_space(
         projectgroup_names,
         step_names,
         variable_names,
+        max_attribute_length,
     )
 
     headers = {"X-Octopus-ApiKey": api_key, "X-Octopus-Url": octopus_url}

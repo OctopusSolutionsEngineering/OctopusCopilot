@@ -43,6 +43,7 @@ def collect_llm_context(
     api_key,
     octopus_url,
     log_query,
+    max_attribute_length=1000,
 ):
     """
     We need to source context for the LLM from multiple locations. "Static" resources are defined using Terraform,
@@ -118,6 +119,7 @@ def collect_llm_context(
         api_key,
         octopus_url,
         log_query,
+        max_attribute_length,
     )
 
     minified_hcl = minify_strings(hcl)

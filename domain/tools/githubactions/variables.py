@@ -113,6 +113,9 @@ def variable_query_callback(github_user, octopus_details, log_query):
                 api_key,
                 url,
                 log_query,
+                # This value is the number of characters to include from the step. Additionally, any variables will be included in the response.
+                # This is a small number because we don't care about anything other than variable references.
+                100,
             )
         ]
 
