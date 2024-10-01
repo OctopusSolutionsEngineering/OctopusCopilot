@@ -54,6 +54,7 @@ def ghu_help(github_user, api_key, url, log_query):
             These prompts creates a new project from the template and watch the status. Make sure you replace `MyNewProject` with the name of your project:
             * `@octopus-ai-app Run the runbook "Create Project" in the project "Microservice Template" in the "Administration" environment in the space "FunanceTech DevEx" with variables: Project Name=MyNewProject`
             * `@octopus-ai-app Show me the runbook dashboard for "Create Project" in the project "Microservice Template" in the space "FunanceTech DevEx"`
+            * `@octopus-ai-app Summarize the execution logs of the latest run of runbook "Create Project" in the project "Microservice Template" in the space "FunanceTech DevEx" in the "Administration" environment`
 
             # Explain the Project
             * `@octopus-ai-app What do the steps in the project "MyNewProject" in the space "FunanceTech DevEx" environment do? Provide a high level summary.`
