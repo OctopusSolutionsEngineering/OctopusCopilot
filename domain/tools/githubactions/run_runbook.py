@@ -21,6 +21,7 @@ from infrastructure.octopus import (
     get_runbook_fuzzy,
     runbook_environment_valid,
     match_runbook_variables,
+    get_space,
 )
 
 
@@ -59,6 +60,8 @@ def run_runbook_confirm_callback_wrapper(github_user, octopus_details, log_query
             Variables: {variables}""",
         )
 
+        space = get_space(space_id, api_key, url)
+
         response_text = []
 
         try:
@@ -81,6 +84,14 @@ def run_runbook_confirm_callback_wrapper(github_user, octopus_details, log_query
             response_text.append(f'The runbook "{runbook_name}" must be published')
         except PromptedVariableMatchingError as e:
             response_text.append(f"❌ {e.error_message}")
+
+        response_text.extend(
+            [
+                "### Suggested Prompts",
+                f'* Show me the runbook dashboard for "{runbook_name}" in the project "{project_name}" in the space "{space["Name"]}"',
+                f'* Summarize the execution logs of the latest run of runbook "{runbook_name}" in the project "{project_name}" in the space "{space["Name"]}" in the "{environment_name}" environment',
+            ]
+        )
 
         response_text.extend(debug_text)
         return CopilotResponse("\n\n".join(response_text))

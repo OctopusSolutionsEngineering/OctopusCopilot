@@ -23,6 +23,7 @@ from infrastructure.octopus import (
     get_channel,
     get_release,
     match_deployment_variables,
+    get_space,
 )
 
 
@@ -73,6 +74,8 @@ def deploy_release_confirm_callback_wrapper(github_user, octopus_details, log_qu
 
         # Get release
         release = get_release(space_id, release_id, api_key, url)
+
+        space = get_space(space_id, api_key, url)
 
         if release is None:
             return CopilotResponse("The release was not found.")
@@ -127,6 +130,15 @@ def deploy_release_confirm_callback_wrapper(github_user, octopus_details, log_qu
                 tenant_name=tenant_name,
                 deployment_id=deployment_id,
             )
+        )
+
+        response_text.extend(
+            [
+                "### Suggested Prompts",
+                f'* Show me the project dashboard for "{project_name}" in the space "{space["Name"]}"',
+                f'* Show me the task summary for the latest release of the project "{project_name}" in the "{environment_name}" environment in the space "{space["Name"]}"',
+                f'* Summarize the deployment logs for the latest deployment for the project "{project_name}" in the "{environment_name}" environment in the space "{space["Name"]}"',
+            ]
         )
 
         response_text.extend(debug_text)

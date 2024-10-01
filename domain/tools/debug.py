@@ -10,9 +10,18 @@ def get_params_message(github_user, start, function_name, **kwargs):
     if not to_lower_case_or_none(debug) == "true":
         return []
 
-    return get_params(start, function_name, **kwargs)
+    response = ["### Debug"]
+    response.extend(get_params(start, function_name, **kwargs))
+
+    return response
 
 
 def get_params(start, function_name, **kwargs):
-    return [reduce(lambda x, y: x + f"\n* {y[0]}: {y[1]}", kwargs.items(),
-                   function_name + f" was {'called' if start else 'processed'} with the following parameters:")]
+    return [
+        reduce(
+            lambda x, y: x + f"\n* {y[0]}: {y[1]}",
+            kwargs.items(),
+            function_name
+            + f" was {'called' if start else 'processed'} with the following parameters:",
+        )
+    ]
