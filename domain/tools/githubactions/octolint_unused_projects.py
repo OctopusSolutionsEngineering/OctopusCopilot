@@ -6,16 +6,18 @@ from domain.tools.debug import get_params_message
 from infrastructure.octolint import run_octolint_check_async
 
 
-def octolint_unused_projects_callback(octopus_details, github_user, original_query):
-    def octolint_unused_projects(space):
+def octolint_callback(octopus_details, github_user, original_query, check_name):
+    def octolint(space):
+        """
+        This is a generic function that can call any Octolint check.
+        :param space: The name of the space to run the check in.
+        """
 
         async def inner_function():
-            check_name = "OctoLintUnusedProjects"
-
             debug_text = get_params_message(
                 github_user,
                 True,
-                octolint_unused_projects_callback.__name__,
+                octolint_callback.__name__,
                 space=space,
             )
 
@@ -38,7 +40,7 @@ def octolint_unused_projects_callback(octopus_details, github_user, original_que
                 get_params_message(
                     github_user,
                     False,
-                    octolint_unused_projects_callback.__name__,
+                    octolint_callback.__name__,
                     space=space_resources["space_name"],
                 )
             )
@@ -59,4 +61,4 @@ def octolint_unused_projects_callback(octopus_details, github_user, original_que
 
         return asyncio.run(inner_function())
 
-    return octolint_unused_projects
+    return octolint

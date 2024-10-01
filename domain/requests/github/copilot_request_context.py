@@ -48,7 +48,7 @@ from domain.tools.githubactions.github_logs import get_github_logs_callback
 from domain.tools.githubactions.how_to import how_to_callback
 from domain.tools.githubactions.logout import logout
 from domain.tools.githubactions.octolint_unused_projects import (
-    octolint_unused_projects_callback,
+    octolint_callback,
 )
 from domain.tools.githubactions.project_dashboard import get_project_dashboard_callback
 from domain.tools.githubactions.provide_help import provide_help_wrapper
@@ -729,10 +729,11 @@ def build_form_tools(query, req: func.HttpRequest):
             ),
             FunctionDefinition(
                 octolint_unused_projects_wrapper(
-                    octolint_unused_projects_callback(
+                    octolint_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
                         query,
+                        "OctoLintUnusedProjects",
                     ),
                     log_query,
                 ),
