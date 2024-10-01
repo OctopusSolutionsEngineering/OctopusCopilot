@@ -224,7 +224,7 @@ def release_what_changed_callback_wrapper(
                 array_or_empty_if_exception(get_item_or_none(failure_context, 1)),
                 max_content_per_source,
             ),
-            limit_text_in_array,
+            max_content_per_source,
         )
 
         octoterra_context = object_or_default_if_exception(
