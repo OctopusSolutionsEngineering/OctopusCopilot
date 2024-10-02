@@ -1,7 +1,11 @@
 import unittest
 import json
 
-from domain.validation.octopus_validation import is_api_key, is_manual_intervention_valid
+from domain.validation.octopus_validation import (
+    is_api_key,
+    is_manual_intervention_valid,
+    is_hosted_octopus,
+)
 
 sample_manual_intervention = """
 [
@@ -238,74 +242,107 @@ class ApiKeyTest(unittest.TestCase):
         self.assertFalse(is_api_key({}))
 
     def test_interruption_validation_no_interruptions(self):
-        valid, error_response = is_manual_intervention_valid(space_name="Simple",
-                                                             space_id="Spaces-1",
-                                                             project_name="Interruption project",
-                                                             release_version="0.0.1",
-                                                             environment_name="Development",
-                                                             tenant_name=None,
-                                                             task_id="ServerTasks-12345",
-                                                             task_interruptions=None,
-                                                             teams=None,
-                                                             url="http://localhost:8080/",
-                                                             interruption_action="Proceed")
+        valid, error_response = is_manual_intervention_valid(
+            space_name="Simple",
+            space_id="Spaces-1",
+            project_name="Interruption project",
+            release_version="0.0.1",
+            environment_name="Development",
+            tenant_name=None,
+            task_id="ServerTasks-12345",
+            task_interruptions=None,
+            teams=None,
+            url="http://localhost:8080/",
+            interruption_action="Proceed",
+        )
 
         self.assertFalse(valid)
-        self.assertTrue("No interruptions found for:" in error_response, "Response was " + error_response)
+        self.assertTrue(
+            "No interruptions found for:" in error_response,
+            "Response was " + error_response,
+        )
 
     def test_interruption_validation_guided_failure_is_invalid(self):
-        valid, error_response = is_manual_intervention_valid(space_name="Simple",
-                                                             space_id="Spaces-1",
-                                                             project_name="Interruption project",
-                                                             release_version="0.0.1",
-                                                             environment_name="Development",
-                                                             tenant_name=None,
-                                                             task_id="ServerTasks-12345",
-                                                             task_interruptions=json.loads(sample_guided_failure),
-                                                             teams=None,
-                                                             url="http://localhost:8080/",
-                                                             interruption_action="Proceed")
+        valid, error_response = is_manual_intervention_valid(
+            space_name="Simple",
+            space_id="Spaces-1",
+            project_name="Interruption project",
+            release_version="0.0.1",
+            environment_name="Development",
+            tenant_name=None,
+            task_id="ServerTasks-12345",
+            task_interruptions=json.loads(sample_guided_failure),
+            teams=None,
+            url="http://localhost:8080/",
+            interruption_action="Proceed",
+        )
 
         self.assertFalse(valid)
-        self.assertTrue("An incompatible interruption (guided failure) was found for:" in error_response,
-                        "Response was " + error_response)
+        self.assertTrue(
+            "An incompatible interruption (guided failure) was found for:"
+            in error_response,
+            "Response was " + error_response,
+        )
 
     def test_interruption_validation_another_user_taken_responsibility(self):
         interruptions = json.loads(sample_manual_intervention)
-        interruptions[0]['ResponsibleUserId'] = "Users-12345"
-        interruptions[0]['HasTakenResponsibility'] = False
-        valid, error_response = is_manual_intervention_valid(space_name="Simple",
-                                                             space_id="Spaces-1",
-                                                             project_name="Interruption project",
-                                                             release_version="0.0.1",
-                                                             environment_name="Development",
-                                                             tenant_name=None,
-                                                             task_id="ServerTasks-12345",
-                                                             task_interruptions=interruptions,
-                                                             teams=None,
-                                                             url="http://localhost:8080/",
-                                                             interruption_action="Proceed")
+        interruptions[0]["ResponsibleUserId"] = "Users-12345"
+        interruptions[0]["HasTakenResponsibility"] = False
+        valid, error_response = is_manual_intervention_valid(
+            space_name="Simple",
+            space_id="Spaces-1",
+            project_name="Interruption project",
+            release_version="0.0.1",
+            environment_name="Development",
+            tenant_name=None,
+            task_id="ServerTasks-12345",
+            task_interruptions=interruptions,
+            teams=None,
+            url="http://localhost:8080/",
+            interruption_action="Proceed",
+        )
 
         self.assertFalse(valid)
-        self.assertTrue("Another user has already taken responsibility of the manual intervention for:"
-                        in error_response, "Response was " + error_response)
+        self.assertTrue(
+            "Another user has already taken responsibility of the manual intervention for:"
+            in error_response,
+            "Response was " + error_response,
+        )
 
     def test_interruption_validation_user_cant_take_responsibility(self):
         interruptions = json.loads(sample_manual_intervention)
-        interruptions[0]['CanTakeResponsibility'] = False
+        interruptions[0]["CanTakeResponsibility"] = False
 
-        valid, error_response = is_manual_intervention_valid(space_name="Simple",
-                                                             space_id="Spaces-1",
-                                                             project_name="Interruption project",
-                                                             release_version="0.0.1",
-                                                             environment_name="Development",
-                                                             tenant_name=None,
-                                                             task_id="ServerTasks-12345",
-                                                             task_interruptions=interruptions,
-                                                             teams=json.loads(sample_teams),
-                                                             url="http://localhost:8080/",
-                                                             interruption_action="Proceed")
+        valid, error_response = is_manual_intervention_valid(
+            space_name="Simple",
+            space_id="Spaces-1",
+            project_name="Interruption project",
+            release_version="0.0.1",
+            environment_name="Development",
+            tenant_name=None,
+            task_id="ServerTasks-12345",
+            task_interruptions=interruptions,
+            teams=json.loads(sample_teams),
+            url="http://localhost:8080/",
+            interruption_action="Proceed",
+        )
 
         self.assertFalse(valid)
-        self.assertTrue("You don't have sufficient permissions to take responsibility for the manual intervention."
-                        in error_response, "Response was " + error_response)
+        self.assertTrue(
+            "You don't have sufficient permissions to take responsibility for the manual intervention."
+            in error_response,
+            "Response was " + error_response,
+        )
+
+    def test_is_hosted_octopus(self):
+        # Test with valid hosted Octopus URLs
+        self.assertTrue(is_hosted_octopus("https://example.octopus.app"))
+        self.assertTrue(is_hosted_octopus("https://example.testoctopus.app"))
+
+        # Test with invalid hosted Octopus URLs
+        self.assertFalse(is_hosted_octopus("https://example.com"))
+        self.assertFalse(is_hosted_octopus("https://octopus.app"))
+        self.assertFalse(is_hosted_octopus(""))
+
+        # Test with None
+        self.assertFalse(is_hosted_octopus(None))
