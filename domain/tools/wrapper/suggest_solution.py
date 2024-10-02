@@ -92,17 +92,9 @@ def suggest_solution_wrapper(
 
             # Get the list of issues, tickets, and slack messages.
             # Batch all of these async calls up for better performance
-            # Todo - remove the call to get_no_tickets() when this functionality is exposed publicly
             issues = await asyncio.gather(
-                (
-                    get_tickets(
-                        limited_keywords,
-                        sanitized_ignore_tickets,
-                        zendesk_user,
-                        zendesk_token,
-                    )
-                    if is_admin
-                    else get_no_tickets()
+                get_tickets(
+                    is_admin, limited_keywords, None, zendesk_user, zendesk_token
                 ),
                 get_issues(limited_keywords, github_token),
                 get_slack_messages(slack_token, limited_keywords),

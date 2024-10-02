@@ -104,7 +104,12 @@ async def combine_ticket_comments(ticket_id, zendesk_user, zendesk_token):
     return "\n".join(sanitized_contents)
 
 
-async def get_tickets(keywords, ignore_tickets, zendesk_user, zendesk_token):
+async def get_tickets(is_admin, keywords, ignore_tickets, zendesk_user, zendesk_token):
+    # This is too important to leave to the caller to decide.
+    # TODO: Remove this if tickets can be exposed to all users
+    if not is_admin:
+        return []
+
     # Zen desk only has AND logic for keywords. We really want OR logic.
     # So search for each keyword individually, tracking how many times a ticket was returned
     # by the search. We prioritise tickets with the most results.

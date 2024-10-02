@@ -556,13 +556,8 @@ def release_what_changed_callback_wrapper(
 
         if deployment_is_failure(deployments):
             keywords = nlp_get_keywords(logs[:max_chars_128])
-            # TODO: Remove the call to get_no_tickets() when we are happy to expose this to non-admin users
             initial_search = await asyncio.gather(
-                (
-                    get_tickets(keywords, None, zendesk_user, zendesk_token)
-                    if is_admin
-                    else get_no_tickets()
-                ),
+                get_tickets(is_admin, keywords, None, zendesk_user, zendesk_token),
                 get_issues(keywords, github_token),
                 return_exceptions=True,
             )
