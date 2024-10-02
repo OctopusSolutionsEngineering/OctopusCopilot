@@ -200,6 +200,14 @@ async def search_repo_async(repo, language, keywords, get_token=None):
 
 
 @logging_wrapper
+def download_file(url):
+    """
+    Download a file
+    """
+    return http.request("GET", url).data.decode("utf-8")
+
+
+@logging_wrapper
 async def download_file_async(url):
     """
     Download a file, respecting the rate limits
