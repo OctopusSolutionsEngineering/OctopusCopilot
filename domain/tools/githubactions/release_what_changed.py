@@ -9,6 +9,7 @@ from domain.categorization.octopus_target import (
     project_includes_aws_steps,
     project_includes_gcp_steps,
     project_includes_windows_steps,
+    has_unknown_steps,
 )
 from domain.context.octopus_context import max_chars_128
 from domain.counters.counters import count_items_with_data
@@ -401,12 +402,7 @@ def release_what_changed_callback_wrapper(
                                     ),
                                 )
                             ]
-                            if not (
-                                project_includes_azure_steps(octoterra_context)
-                                or project_includes_aws_steps(octoterra_context)
-                                or project_includes_gcp_steps(octoterra_context)
-                                or project_includes_windows_steps(octoterra_context)
-                            )
+                            if has_unknown_steps(octoterra_context)
                             else []
                         ),
                     ]
