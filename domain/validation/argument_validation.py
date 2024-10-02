@@ -34,6 +34,19 @@ def ensure_string(value, error_message):
         raise ValueError(error_message)
 
 
+def ensure_string_or_none(value, error_message):
+    """
+    Ensures the value is a string or None
+    :param value: The argument to test
+    :param error_message: The error message to raise if the test fails
+    """
+    if value is None:
+        return True
+
+    if not isinstance(value, str):
+        raise ValueError(error_message)
+
+
 def ensure_not_falsy(value, error_message):
     """
     Ensures the value is a non-falsy value

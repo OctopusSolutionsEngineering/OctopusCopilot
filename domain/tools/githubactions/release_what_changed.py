@@ -4,6 +4,12 @@ import re
 
 from openai import api_key
 
+from domain.categorization.octopus_target import (
+    project_includes_azure_steps,
+    project_includes_aws_steps,
+    project_includes_gcp_steps,
+    project_includes_windows_steps,
+)
 from domain.context.octopus_context import max_chars_128
 from domain.counters.counters import count_items_with_data
 from domain.lookup.octopus_multi_lookup import lookup_space_level_resources
@@ -600,21 +606,3 @@ def release_what_changed_callback_wrapper(
 
     # Return the callback that in turns call the async function
     return release_what_changed_callback
-
-
-def project_includes_azure_steps(deployment_context):
-    return re.search(r"action_type\s*=\s*\"Octopus.Azure.*?\"", deployment_context)
-
-
-def project_includes_aws_steps(deployment_context):
-    return re.search(r"action_type\s*=\s*\"Octopus.AWS.*?\"", deployment_context)
-
-
-def project_includes_gcp_steps(deployment_context):
-    return re.search(r"action_type\s*=\s*\"Octopus.Google.*?\"", deployment_context)
-
-
-def project_includes_windows_steps(deployment_context):
-    return re.search(
-        r"action_type\s*=\s*\"Octopus.IIS\"", deployment_context
-    ) or re.search(r"action_type\s*=\s*\"Octopus.WindowsService\"", deployment_context)
