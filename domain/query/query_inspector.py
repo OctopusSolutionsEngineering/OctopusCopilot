@@ -179,7 +179,13 @@ def exclude_all_machine_policies(query, entity_list):
 
     ensure_string(query, "query must be a string (exclude_all_machine_policies).")
 
-    return True if not entity_list and "policy" not in query.lower() else False
+    return (
+        True
+        if not entity_list
+        and "policy" not in query.lower()
+        and "policies" not in query.lower()
+        else False
+    )
 
 
 def exclude_all_tagsets(query, entity_list):

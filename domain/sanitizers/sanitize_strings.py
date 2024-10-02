@@ -10,7 +10,7 @@ def remove_double_whitespace(s):
 
 
 def add_spaces_before_capitals(s):
-    return re.sub(r"([A-Z])", r" \1", s)
+    return re.sub(r"((?<!^)[A-Z])", r" \1", s)
 
 
 def replace_with_empty_string(input_string, pattern):
