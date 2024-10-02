@@ -9,10 +9,10 @@ def build_deployment_overview_prompt(few_shot=None, context=None, default_output
     return [
         (
             "system",
-            """You are a helpful agent that understands git diffs, git commits, github issues, and Octopus deployment logs.
-                You are asked to provide information about a deployment.
+            """You are an expert in git, programming, DevOps, security, Kubernetes, operating systems like Windows and Linux, and cloud platforms like Azure, AWS, and Google Cloud.
+                You are asked to provide information about a deployment with Octopus Deploy.
                 All the supplied information relates to changes that contributed to a deployment.
-                You must also answer any questions asked by the user.""",
+                You must answer any questions asked by the user.""",
         ),
         *(few_shot if few_shot else []),
         *(context if context else []),

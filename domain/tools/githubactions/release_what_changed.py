@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 
 from openai import api_key
 
@@ -324,6 +325,84 @@ def release_what_changed_callback_wrapper(
                                 You will be penalized if you do not include this information in your response."""
                             ),
                         ),
+                        *(
+                            [
+                                (
+                                    "system",
+                                    strip_leading_whitespace(
+                                        """You must assume that the deployment was to the Azure cloud provider.
+                                        You must suggest a solution to the errors in the "Deployment Logs" context that prevented the deployment from succeeding.
+                                        You must pay attention to specific error messages, file names, and line numbers in the error.
+                                        """
+                                    ),
+                                )
+                            ]
+                            if project_includes_azure_steps(octoterra_context)
+                            else []
+                        ),
+                        *(
+                            [
+                                (
+                                    "system",
+                                    strip_leading_whitespace(
+                                        """You must assume that the deployment was to the AWS cloud provider.
+                                        You must suggest a solution to the errors in the "Deployment Logs" context that prevented the deployment from succeeding.
+                                        You must pay attention to specific error messages, file names, and line numbers in the error.
+                                        """
+                                    ),
+                                )
+                            ]
+                            if project_includes_aws_steps(octoterra_context)
+                            else []
+                        ),
+                        *(
+                            [
+                                (
+                                    "system",
+                                    strip_leading_whitespace(
+                                        """You must assume that the deployment was to the Google cloud provider.
+                                        You must suggest a solution to the errors in the "Deployment Logs" context that prevented the deployment from succeeding.
+                                        You must pay attention to specific error messages, file names, and line numbers in the error.
+                                        """
+                                    ),
+                                )
+                            ]
+                            if project_includes_gcp_steps(octoterra_context)
+                            else []
+                        ),
+                        *(
+                            [
+                                (
+                                    "system",
+                                    strip_leading_whitespace(
+                                        """You must assume that the deployment was to a Windows server.
+                                        You must suggest a solution to the errors in the "Deployment Logs" context that prevented the deployment from succeeding.
+                                        You must pay attention to specific error messages, file names, and line numbers in the error.
+                                        """
+                                    ),
+                                )
+                            ]
+                            if project_includes_windows_steps(octoterra_context)
+                            else []
+                        ),
+                        *(
+                            [
+                                (
+                                    "system",
+                                    strip_leading_whitespace(
+                                        """You must suggest a solution to the last error in the "Deployment Logs" context that prevented the deployment from succeeding.
+                                        You must pay attention to specific error messages, file names, and line numbers in the logs."""
+                                    ),
+                                )
+                            ]
+                            if not (
+                                project_includes_azure_steps(octoterra_context)
+                                or project_includes_aws_steps(octoterra_context)
+                                or project_includes_gcp_steps(octoterra_context)
+                                or project_includes_windows_steps(octoterra_context)
+                            )
+                            else []
+                        ),
                     ]
                     if deployment_is_failure(deployments)
                     else []
@@ -526,3 +605,21 @@ def release_what_changed_callback_wrapper(
 
     # Return the callback that in turns call the async function
     return release_what_changed_callback
+
+
+def project_includes_azure_steps(deployment_context):
+    return re.search(r"action_type\s*=\s*\"Octopus.Azure.*?\"", deployment_context)
+
+
+def project_includes_aws_steps(deployment_context):
+    return re.search(r"action_type\s*=\s*\"Octopus.AWS.*?\"", deployment_context)
+
+
+def project_includes_gcp_steps(deployment_context):
+    return re.search(r"action_type\s*=\s*\"Octopus.Google.*?\"", deployment_context)
+
+
+def project_includes_windows_steps(deployment_context):
+    return re.search(
+        r"action_type\s*=\s*\"Octopus.IIS\"", deployment_context
+    ) or re.search(r"action_type\s*=\s*\"Octopus.WindowsService\"", deployment_context)
