@@ -22,14 +22,14 @@ from infrastructure.octopus import (
     get_space_id_and_name_from_name,
 )
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
-from tests.infrastructure.cancel_task import cancel_task
+from tests.infrastructure.test_cancel import cancel_task
 from tests.infrastructure.create_and_deploy_release import (
     create_and_deploy_release,
     wait_for_task,
 )
 
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
-from tests.infrastructure.octopus_infrastructure_test import run_terraform
+from tests.infrastructure.test_octopus_infrastructure import run_terraform
 from tests.infrastructure.publish_runbook import publish_runbook
 
 

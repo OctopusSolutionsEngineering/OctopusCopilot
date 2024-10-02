@@ -14,10 +14,10 @@ from domain.transformers.sse_transformers import convert_from_sse_response
 from function_app import copilot_handler_internal
 from infrastructure.octopus import get_users, create_unlimited_api_key
 from infrastructure.users import save_users_octopus_url_from_login, delete_default_values
-from tests.application.copilot_chat_test import build_request
+from tests.application.test_copilot_chat import build_request
 from tests.infrastructure.create_and_deploy_release import create_and_deploy_release
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
-from tests.infrastructure.octopus_infrastructure_test import run_terraform
+from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
 class CopilotChatNoDefaultsTest(unittest.TestCase):

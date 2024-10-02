@@ -8,7 +8,7 @@ from domain.transformers.minify_strings import minify_strings
 from domain.transformers.sse_transformers import convert_from_sse_response
 from function_app import copilot_handler_internal
 from infrastructure.users import save_default_values
-from tests.application.copilot_chat_test import (
+from tests.application.test_copilot_chat import (
     build_no_octopus_request,
     build_no_octopus_encrypted_github_request,
 )

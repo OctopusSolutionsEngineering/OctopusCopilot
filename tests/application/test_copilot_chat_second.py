@@ -34,7 +34,7 @@ from tests.infrastructure.create_and_deploy_release import (
     wait_for_task,
 )
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
-from tests.infrastructure.octopus_infrastructure_test import run_terraform
+from tests.infrastructure.test_octopus_infrastructure import run_terraform
 from tests.infrastructure.publish_runbook import publish_runbook
 
 
