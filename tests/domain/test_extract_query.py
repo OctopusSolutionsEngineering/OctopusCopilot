@@ -30,6 +30,13 @@ class TestExtractQuery(unittest.TestCase):
         self.assertIsNone(state)
         self.assertIsNone(confirmation_id)
 
+    def test_extract_confirmation_invalid_json(self):
+        req = Mock()
+        req.get_body.return_value = "Invalid JSON".encode("utf-8")
+        state, confirmation_id = extract_confirmation_state_and_id(req)
+        self.assertIsNone(state)
+        self.assertIsNone(confirmation_id)
+
     def test_extract_query(self):
         req = Mock()
         req.params = {"message": "test query"}
@@ -45,6 +52,13 @@ class TestExtractQuery(unittest.TestCase):
         self.assertEqual(query, "test query")
 
         req.get_body.return_value = b""
+        query = extract_query(req)
+        self.assertEqual(query, "")
+
+    def test_extract_invalid_json_query(self):
+        req = Mock()
+        req.params = {}
+        req.get_body.return_value = "Invalid JSON".encode("utf-8")
         query = extract_query(req)
         self.assertEqual(query, "")
 
