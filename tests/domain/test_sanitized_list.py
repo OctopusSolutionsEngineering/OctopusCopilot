@@ -1,9 +1,34 @@
 import unittest
 
-from domain.sanitizers.sanitized_list import sanitize_list, sanitize_environments, sanitize_projects, sanitize_tenants, \
-    sanitize_feeds, sanitize_accounts, sanitize_workerpools, sanitize_machinepolicies, sanitize_tenanttagsets, \
-    sanitize_projectgroups, sanitize_channels, sanitize_releases, sanitize_lifecycles, sanitize_certificates, \
-    sanitize_targets, sanitize_runbooks
+from domain.sanitizers.sanitized_list import (
+    sanitize_list,
+    sanitize_environments,
+    sanitize_projects,
+    sanitize_tenants,
+    sanitize_feeds,
+    sanitize_accounts,
+    sanitize_workerpools,
+    sanitize_machinepolicies,
+    sanitize_tenanttagsets,
+    sanitize_projectgroups,
+    sanitize_channels,
+    sanitize_releases,
+    sanitize_lifecycles,
+    sanitize_certificates,
+    sanitize_targets,
+    sanitize_runbooks,
+    sanitize_gitcredentials,
+    sanitize_steps,
+    sanitize_variables,
+    sanitize_dates,
+    force_to_list,
+    get_item_or_default,
+    get_key_or_none,
+    flatten_list,
+    yield_first,
+    get_item_fuzzy_generator,
+    none_if_falesy_or_all,
+)
 
 
 class SanitizeList(unittest.TestCase):
@@ -201,3 +226,256 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_list(["hi"]))
         self.assertFalse(sanitize_list([["hi"]]))
         self.assertFalse(sanitize_environments("find releases in production", None))
+
+    def test_sanitize_gitcredentials_with_ignored_entries(self):
+        input_list = [
+            "Any",
+            "all",
+            "*",
+            "Git Credential 1",
+            "My Git Credential",
+            "cred123",
+        ]
+        result = sanitize_gitcredentials(input_list)
+        self.assertEqual(result, [])
+
+    def test_sanitize_gitcredentials_with_empty_list(self):
+        input_list = []
+        result = sanitize_gitcredentials(input_list)
+        self.assertEqual(result, [])
+
+    def test_sanitize_gitcredentials_with_non_string_entries(self):
+        input_list = [None, 123, True, "GitHub Login"]
+        result = sanitize_gitcredentials(input_list)
+        self.assertEqual(result, ["GitHub Login"])
+
+    def test_sanitize_steps_with_ignored_entries(self):
+        input_list = ["Any", "all", "*", "Step 1", "Step 2"]
+        result = sanitize_steps(input_list)
+        self.assertEqual(result, [])
+
+    def test_sanitize_steps_with_empty_list(self):
+        input_list = []
+        result = sanitize_steps(input_list)
+        self.assertEqual(result, [])
+
+    def test_sanitize_steps_with_non_string_entries(self):
+        input_list = [None, 123, True, "Deploy to WebApp"]
+        result = sanitize_steps(input_list)
+        self.assertEqual(result, ["Deploy to WebApp"])
+
+    def test_sanitize_variables_with_valid_entries(self):
+        input_list = ["Database.ConnectionString", "Variable 2", "Variable 3"]
+        result = sanitize_variables(input_list)
+        self.assertEqual(result, ["Database.ConnectionString"])
+
+    def test_sanitize_variables_with_ignored_entries(self):
+        input_list = ["Any", "all", "*", "Variable 1", "Variable 2"]
+        result = sanitize_variables(input_list)
+        self.assertEqual(result, [])
+
+    def test_sanitize_variables_with_empty_list(self):
+        input_list = []
+        result = sanitize_variables(input_list)
+        self.assertEqual(result, [])
+
+    def test_sanitize_variables_with_non_string_entries(self):
+        input_list = [None, 123, True, "Database.ConnectionString"]
+        result = sanitize_variables(input_list)
+        self.assertEqual(result, ["Database.ConnectionString"])
+
+    def test_sanitize_dates_with_valid_entries(self):
+        input_list = ["2023-01-01", "2023-12-31"]
+        result = sanitize_dates(input_list)
+        self.assertEqual(
+            result, ["2023-01-01T00:00:00+00:00", "2023-12-31T00:00:00+00:00"]
+        )
+
+    def test_sanitize_dates_with_valid_entries_with_offsets(self):
+        input_list = ["2023-01-01T00:00:00+10:00"]
+        result = sanitize_dates(input_list)
+        self.assertEqual(result, ["2023-01-01T00:00:00+10:00"])
+
+    def test_sanitize_dates_with_relative_dates(self):
+        input_list = ["today", "yesterday", "tomorrow"]
+        result = sanitize_dates(input_list)
+        self.assertEqual(result, [])
+
+    def test_sanitize_dates_with_empty_list(self):
+        input_list = []
+        result = sanitize_dates(input_list)
+        self.assertEqual(result, [])
+
+    def test_sanitize_dates_with_non_string_entries(self):
+        input_list = [None, 123, True, "2023-01-01"]
+        result = sanitize_dates(input_list)
+        self.assertEqual(result, ["2023-01-01T00:00:00+00:00"])
+
+    def test_sanitize_dates_with_invalid_dates(self):
+        input_list = ["invalid date", "another invalid date"]
+        result = sanitize_dates(input_list)
+        self.assertEqual(result, [])
+
+    def test_force_to_list_with_list(self):
+        input_data = ["item1", "item2"]
+        result = force_to_list(input_data)
+        self.assertEqual(result, ["item1", "item2"])
+
+    def test_force_to_list_with_string(self):
+        input_data = "item"
+        result = force_to_list(input_data)
+        self.assertEqual(result, ["item"])
+
+    def test_force_to_list_with_none(self):
+        input_data = None
+        result = force_to_list(input_data)
+        self.assertEqual(result, [])
+
+    def test_force_to_list_with_integer(self):
+        input_data = 123
+        result = force_to_list(input_data)
+        self.assertEqual(result, ["123"])
+
+    def test_force_to_list_with_boolean(self):
+        input_data = True
+        result = force_to_list(input_data)
+        self.assertEqual(result, ["True"])
+
+    def test_get_item_or_default_with_valid_index(self):
+        array = [1, 2, 3]
+        result = get_item_or_default(array, 1, 0)
+        self.assertEqual(result, 2)
+
+    def test_get_item_or_default_with_invalid_index(self):
+        array = [1, 2, 3]
+        result = get_item_or_default(array, 5, 0)
+        self.assertEqual(result, 0)
+
+    def test_get_item_or_default_with_empty_array(self):
+        array = []
+        result = get_item_or_default(array, 0, "default")
+        self.assertEqual(result, "default")
+
+    def test_get_item_or_default_with_none_array(self):
+        array = None
+        result = get_item_or_default(array, 0, "default")
+        self.assertEqual(result, "default")
+
+    def test_get_key_or_none_with_existing_key(self):
+        source = {"key1": "value1", "key2": "value2"}
+        result = get_key_or_none(source, "key1")
+        self.assertEqual(result, "value1")
+
+    def test_get_key_or_none_with_non_existing_key(self):
+        source = {"key1": "value1", "key2": "value2"}
+        result = get_key_or_none(source, "key3")
+        self.assertIsNone(result)
+
+    def test_get_key_or_none_with_none_source(self):
+        source = None
+        result = get_key_or_none(source, "key1")
+        self.assertIsNone(result)
+
+    def test_get_key_or_none_with_empty_source(self):
+        source = {}
+        result = get_key_or_none(source, "key1")
+        self.assertIsNone(result)
+
+    def test_flatten_list_with_nested_lists(self):
+        input_data = [[1, 2], [3, 4], [5, 6]]
+        result = flatten_list(input_data)
+        self.assertEqual(result, [1, 2, 3, 4, 5, 6])
+
+    def test_flatten_list_with_empty_lists(self):
+        input_data = [[], [], []]
+        result = flatten_list(input_data)
+        self.assertEqual(result, [])
+
+    def test_flatten_list_with_mixed_empty_and_non_empty_lists(self):
+        input_data = [[1, 2], [], [3, 4]]
+        result = flatten_list(input_data)
+        self.assertEqual(result, [1, 2, 3, 4])
+
+    def test_flatten_list_with_single_list(self):
+        input_data = [[1, 2, 3, 4]]
+        result = flatten_list(input_data)
+        self.assertEqual(result, [1, 2, 3, 4])
+
+    def test_flatten_list_with_no_nested_lists(self):
+        input_data = []
+        result = flatten_list(input_data)
+        self.assertEqual(result, [])
+
+    def test_yield_first_with_non_empty_list(self):
+        input_data = [1, 2, 3]
+        result = list(yield_first(input_data))
+        self.assertEqual(result, [1])
+
+    def test_yield_first_with_empty_list(self):
+        input_data = []
+        result = list(yield_first(input_data))
+        self.assertEqual(result, [])
+
+    def test_yield_first_with_none(self):
+        input_data = None
+        result = list(yield_first(input_data))
+        self.assertEqual(result, [])
+
+    def test_yield_first_with_single_element(self):
+        input_data = [42]
+        result = list(yield_first(input_data))
+        self.assertEqual(result, [42])
+
+    def test_get_item_fuzzy_generator_with_exact_match(self):
+        def items_generator():
+            return [{"Name": "item1"}, {"Name": "item2"}, {"Name": "item3"}]
+
+        result = get_item_fuzzy_generator(items_generator, "item2")
+        self.assertEqual(result, {"original": "item2", "matched": {"Name": "item2"}})
+
+    def test_get_item_fuzzy_generator_with_case_insensitive_match(self):
+        def items_generator():
+            return [{"Name": "Item1"}, {"Name": "item2"}, {"Name": "item3"}]
+
+        result = get_item_fuzzy_generator(items_generator, "item1")
+        self.assertEqual(result, {"original": "item1", "matched": {"Name": "Item1"}})
+
+    def test_get_item_fuzzy_generator_with_fuzzy_match(self):
+        def items_generator():
+            return [{"Name": "itm1"}, {"Name": "item2"}, {"Name": "item3"}]
+
+        result = get_item_fuzzy_generator(items_generator, "item1")
+        self.assertEqual(result["original"], "item1")
+        self.assertEqual(result["matched"]["Name"], "itm1")
+
+    def test_get_item_fuzzy_generator_with_empty_generator(self):
+        def items_generator():
+            return []
+
+        result = get_item_fuzzy_generator(items_generator, "item1")
+        self.assertIsNone(result)
+
+    def test_none_if_falesy_or_all_with_empty_list(self):
+        input_list = []
+        result = none_if_falesy_or_all(input_list)
+        self.assertIsNone(result)
+
+    def test_none_if_falesy_or_all_with_none(self):
+        input_list = None
+        result = none_if_falesy_or_all(input_list)
+        self.assertIsNone(result)
+
+    def test_none_if_falesy_or_all_with_all_string(self):
+        input_list = ["<all>"]
+        result = none_if_falesy_or_all(input_list)
+        self.assertIsNone(result)
+
+    def test_none_if_falesy_or_all_with_non_empty_list(self):
+        input_list = ["item1", "item2"]
+        result = none_if_falesy_or_all(input_list)
+        self.assertEqual(result, ["item1", "item2"])
+
+    def test_none_if_falesy_or_all_with_mixed_list(self):
+        input_list = ["<all>", "item1"]
+        result = none_if_falesy_or_all(input_list)
+        self.assertEqual(result, ["<all>", "item1"])
