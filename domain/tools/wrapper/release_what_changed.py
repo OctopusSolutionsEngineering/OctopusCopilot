@@ -14,6 +14,7 @@ def release_what_changed_wrapper(
         """
         Provides details about an Octopus release or deployment and the changes went into it. Example prompts include:
         * What changed in the latest deployment to the production environment?
+        * How do I fix release "10.23.65" of the "WebApp" project to the "Production" environment?
         * Suggest a solution for the failed deployment to production environment in the hotfix channel?
         * What code changes went into deployment version "1.23.675"?
         * What issues were included in the latest deployment to the "prod" environment?
