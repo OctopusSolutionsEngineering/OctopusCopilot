@@ -81,6 +81,10 @@ GITHUB_LOGIN_MESSAGE = (
     + "&scope=user&allow_signup=false)"
 )
 
+# When running as a service, files are available from the html dir.
+# When run as a test, files are located back up in the tree
+HTML_FILE_LOCATIONS = ["html/", "../../html/"]
+
 
 @app.function_name(name="api_key_cleanup")
 @app.timer_trigger(schedule="0 0 * * * *", arg_name="mytimer", run_on_startup=True)
@@ -171,6 +175,10 @@ def octopus(req: func.HttpRequest) -> func.HttpResponse:
 
 @app.route(route="oauth_callback", auth_level=func.AuthLevel.ANONYMOUS)
 def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
+    return oauth_callback_internal(req)
+
+
+def oauth_callback_internal(req: func.HttpRequest):
     """
     Responds to the Oauth login callback and redirects to a form to submit the Octopus details.
 
@@ -226,6 +234,10 @@ def oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
 
 @app.route(route="slack_oauth_callback", auth_level=func.AuthLevel.ANONYMOUS)
 def slack_oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
+    return slack_oauth_callback_internal(req)
+
+
+def slack_oauth_callback_internal(req: func.HttpRequest) -> func.HttpResponse:
     """
     Responds to the Slack Oauth login callback by persisting the access token in the database against
     the GitHub user.
@@ -291,11 +303,11 @@ def slack_oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
             get_functions_connection_string(),
         )
 
-        with open("html/slack-login-success.html", "r") as file:
+        with open(get_html_file("slack-login-success.html"), "r") as file:
             return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
     except ExpectedParamMissing as e:
         handle_error(e)
-        with open("html/slack-login-incomplete.html", "r") as file:
+        with open(get_html_file("slack-login-incomplete.html"), "r") as file:
             return func.HttpResponse(
                 file.read(), headers={"Content-Type": "text/html"}, status_code=500
             )
@@ -303,7 +315,7 @@ def slack_oauth_callback(req: func.HttpRequest) -> func.HttpResponse:
         handle_error(e)
 
         try:
-            with open("html/slack-login-failed.html", "r") as file:
+            with open(get_html_file("slack-login-failed.html"), "r") as file:
                 return func.HttpResponse(
                     file.read(), headers={"Content-Type": "text/html"}, status_code=500
                 )
@@ -590,6 +602,17 @@ def handle_octopus_request_failed(e):
             + "Either your API key is invalid, does not have the required permissions, or there was an issue contacting the server."
         ),
         headers=get_sse_headers(),
+    )
+
+
+def get_html_file(file):
+    paths = map(lambda x: x + file, HTML_FILE_LOCATIONS)
+
+    return next(
+        filter(
+            lambda x: os.path.exists(x),
+            paths,
+        )
     )
 
 
