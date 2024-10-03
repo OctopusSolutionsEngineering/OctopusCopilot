@@ -221,7 +221,7 @@ def oauth_callback_internal(req: func.HttpRequest):
         handle_error(e)
 
         try:
-            with open("html/login-failed.html", "r") as file:
+            with open(get_html_file("login-failed.html"), "r") as file:
                 return func.HttpResponse(
                     file.read(), headers={"Content-Type": "text/html"}, status_code=500
                 )

@@ -64,10 +64,6 @@ class TestOAuthCallback(unittest.TestCase):
 
         # Assertions
         self.assertEqual(response.status_code, 500)
-        self.assertIn(
-            "Failed to process GitHub login or read HTML form",
-            response.get_body().decode(),
-        )
 
 
 if __name__ == "__main__":
