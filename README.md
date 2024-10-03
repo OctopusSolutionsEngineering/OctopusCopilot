@@ -124,7 +124,7 @@ The testing is broken down into 3 categories:
     * Validate the ability to call the Azure Storage Service in
       the `tests/infrastructure/azure_storage_infrastructure_test.py` file
 * End-to-end tests that validate the ability to call web endpoints exposed by the Azure Functions app in the
-  `tests/application/copilot_chat.py` file
+  `tests/application` directory. These tests are split across multiple files to allow CI systems to run them in parallel.
 
 ## Test Coverage
 
