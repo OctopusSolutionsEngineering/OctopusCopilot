@@ -71,6 +71,7 @@ class QueryInspectorTest(unittest.TestCase):
 
     def test_exclude_all_environments(self):
         self.assertFalse(exclude_all_environments("show the environments", []))
+        self.assertFalse(exclude_all_environments("show the environments", ["<all>"]))
         self.assertFalse(exclude_all_environments("show the environments", ["env1"]))
         self.assertFalse(exclude_all_environments("show the environment", []))
         self.assertTrue(exclude_all_environments("show the dashboard", []))
@@ -129,12 +130,14 @@ class QueryInspectorTest(unittest.TestCase):
 
     def test_exclude_all_steps(self):
         self.assertFalse(exclude_all_steps("show the steps", []))
+        self.assertFalse(exclude_all_steps("show the steps", ["<all>"]))
         self.assertFalse(exclude_all_steps("show the steps", ["step1"]))
         self.assertFalse(exclude_all_steps("show the step", []))
         self.assertTrue(exclude_all_steps("show the dashboard", []))
 
     def test_exclude_all_variables(self):
         self.assertFalse(exclude_all_variables("show the variables", []))
+        self.assertFalse(exclude_all_variables("show the variables", ["<all>"]))
         self.assertFalse(exclude_all_variables("show the variables", ["variable1"]))
         self.assertFalse(exclude_all_variables("show the variable", []))
         self.assertTrue(exclude_all_variables("show the dashboard", []))

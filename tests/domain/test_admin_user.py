@@ -13,7 +13,7 @@ class AdminUser(unittest.TestCase):
         self.assertFalse(is_admin_user("123", '["1234"]'))
         self.assertFalse(is_admin_user("123", "Invalid JSON"))
 
-    def test_is_admin_user(self):
+    def test_call_admin_function(self):
         call_admin_function("123", "[123]", lambda: print("success"))
 
     def test_no_callabck(self):
