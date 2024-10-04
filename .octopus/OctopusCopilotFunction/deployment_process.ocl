@@ -401,7 +401,7 @@ step "octopus-prompt-ai" {
             OctopusAI.GitHub.Token = "#{GitHub.Token}"
             OctopusAI.Octopus.APIKey = "#{Octopus.ApiKey}"
             OctopusAI.Octopus.Url = "#{Octopus.Web.ServerUri}"
-            OctopusAI.Prompt = "Describe deployment \"#{Octopus.Release.Number}\" for project \"#{Octopus.Project.Name}\" to environment \"#{Octopus.Environment.Name}\" in space \"#{Octopus.Space.Name}\""
+            OctopusAI.Prompt = "Describe deployment \"#{Octopus.Release.Number}\" for project \"#{Octopus.Project.Name}\" to environment \"#{Octopus.Environment.Name}\" in space \"#{Octopus.Space.Name}\", listing only the git committers and a summary of the changes in the git diffs"
         }
         worker_pool_variable = ""
     }
