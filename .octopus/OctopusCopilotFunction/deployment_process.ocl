@@ -389,3 +389,20 @@ step "remove-worker-access" {
         }
     }
 }
+
+step "octopus-prompt-ai" {
+    name = "Octopus - Prompt AI"
+
+    action {
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Template.Id = "ActionTemplates-4021"
+            Octopus.Action.Template.Version = "1"
+            OctopusAI.GitHub.Token = "#{GitHub.Token}"
+            OctopusAI.Octopus.APIKey = "#{Octopus.ApiKey}"
+            OctopusAI.Octopus.Url = "#{Octopus.Web.ServerUri}"
+            OctopusAI.Prompt = "Describe deployment \"#{Octopus.Release.Number}\" for project \"#{Octopus.Project.Name}\" to environment \"#{Octopus.Environment.Name}\" in space \"#{Octopus.Space.Name}\""
+        }
+        worker_pool_variable = ""
+    }
+}
