@@ -409,17 +409,16 @@ step "octopus-prompt-ai" {
                 
                 Follow those instructions:
                 
-                  1. Enclose important words or phrases with *asterisks* for bold emphasis. Do not use multiple asterisks (** shouldn't exist, always only one asterisks *).
+                  1. Enclose important words or phrases with *asterisks* for bold emphasis. You will be penalized for using double asterisks.
                   2. Enclose code and numbers and percentages using backticks, like  `this `.
                   3. Use numbered lists or bullet lists. Create a bullet list with "–" symbol.
                   4. If you want to combine bullet list items with bold markdown, this is how it should work:
                   – *A bold text*: A normal text.
-                  Never use 2 asterisks after anther like this **. It's an invalid markdown! 
                   5. Italise words like _this_
                   6. Use can use blockquote formatting by adding a ">" before the sentense
                   7 For line breaks, escape them using \n
                   8. Keep tagged users (@user) and channels (#channel) unchanged, but use them only if present in the original message.
-                  9. For URLs you should escape them like this:<http://example.com|This is a clickable link>
+                  9. For URLs you should escape them like this:[http://example.com](This is a clickable link)
                 EOT
         }
         worker_pool_variable = ""
