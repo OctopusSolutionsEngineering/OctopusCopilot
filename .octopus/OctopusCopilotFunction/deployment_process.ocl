@@ -401,7 +401,29 @@ step "octopus-prompt-ai" {
             OctopusAI.GitHub.Token = "#{GitHub.Token}"
             OctopusAI.Octopus.APIKey = "#{Octopus.ApiKey}"
             OctopusAI.Octopus.Url = "#{Octopus.Web.ServerUri}"
-            OctopusAI.Prompt = "Describe deployment \"#{Octopus.Release.Number}\" for project \"#{Octopus.Project.Name}\" to environment \"#{Octopus.Environment.Name}\" in space \"#{Octopus.Space.Name}\", listing only the git committers and a summary of the changes in the git diffs"
+            OctopusAI.Prompt = <<-EOT
+                Describe deployment "#{Octopus.Release.Number}" for project "#{Octopus.Project.Name}" to environment "#{Octopus.Environment.Name}" in space "#{Octopus.Space.Name}", listing only the git committers and a summary of the changes in the git diffs.
+                
+                The output must utilize Slack's markdown language mrkdwn for various formatting elements.
+                
+                Follow those instructions:
+                
+                  1. Enclose important words or phrases with *asterisks* for bold emphasis. Do not use multiple asterisks (** shouldn't exist, always only one asterisks *).
+                  2. Enclose code and numbers and percentages using backticks, like  `this `.
+                  3. Use lots of emojis to add a touch of fun and expressiveness.
+                  4. Introduce bold formatted short intro to organize information in paragraphs if it makes sense
+                  5. Use numbered lists or bullet lists. Create a bullet list with "–" symbol.
+                  6. If you want to combine bullet list items with bold markdown, this is how it should work:
+                  – *A bold text*: A normal text.
+                  Never use 2 asterisks after anther like this **. It's an invalid markdown! 
+                  7. Italise words like _this_
+                  8. Use can use blockquote formatting by adding a ">" before the sentense
+                  9 For line breaks, escape them using \n
+                  10. Keep tagged users (@user) and channels (#channel) unchanged, but use them only if present in the original message.
+                  11. For URLs you should escape them like this:<http://example.com|This is a clickable link>
+                  
+                Use the above strategies for the entire text, use emojis to highlight key words, bullet lists and markdowns.
+                EOT
         }
         worker_pool_variable = ""
     }
