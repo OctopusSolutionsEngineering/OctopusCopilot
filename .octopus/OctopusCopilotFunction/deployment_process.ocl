@@ -411,7 +411,6 @@ step "slack-send-simple-notification-bash" {
     name = "Slack - Send Simple Notification - Bash"
 
     action {
-        is_disabled = true
         properties = {
             Octopus.Action.Template.Id = "ActionTemplates-4022"
             Octopus.Action.Template.Version = "2"
@@ -419,7 +418,7 @@ step "slack-send-simple-notification-bash" {
             ssn_Color = "good"
             ssn_HookUrl = "#{Slack.WebHook}"
             ssn_IconUrl = "https://octopus.com/content/resources/favicon.png"
-            ssn_Message = "#{Octopus.Action[Octopus - Prompt AI].Output.AIResult}"
+            ssn_Message = "#{Octopus.Action[Octopus - Prompt AI].Output.AIResult | JsonEscape}"
             ssn_Title = "Copilot Function Deployed"
             ssn_Username = "Octopus Deploy"
         }
