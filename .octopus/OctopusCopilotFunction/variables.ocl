@@ -15,3 +15,7 @@ variable "Application.Users.Admin" {
         description = "Find users at the url https://api.github.com/user/:id"
     }
 }
+
+variable "TestMessage" {
+    value "\"test\"" {}
+}
