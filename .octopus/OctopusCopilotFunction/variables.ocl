@@ -19,3 +19,7 @@ variable "Application.Users.Admin" {
 variable "TestMessage" {
     value "\"test\"" {}
 }
+
+variable "OctopusPrintEvaluatedVariables" {
+    value "True" {}
+}
