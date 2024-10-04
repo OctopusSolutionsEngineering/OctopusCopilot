@@ -394,6 +394,7 @@ step "octopus-prompt-ai" {
     name = "Octopus - Prompt AI"
 
     action {
+        environments = ["production"]
         properties = {
             Octopus.Action.RunOnServer = "true"
             Octopus.Action.Template.Id = "ActionTemplates-4021"
@@ -429,6 +430,7 @@ step "slack-send-simple-notification-bash" {
     name = "Slack - Send Simple Notification - Bash"
 
     action {
+        environments = ["production"]
         properties = {
             Octopus.Action.Template.Id = "ActionTemplates-4022"
             Octopus.Action.Template.Version = "2"
