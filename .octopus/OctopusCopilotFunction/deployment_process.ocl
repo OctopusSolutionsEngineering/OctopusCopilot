@@ -417,6 +417,7 @@ step "slack-send-simple-notification-bash" {
             ssn_Channel = "se-tool-requests"
             ssn_Color = "good"
             ssn_IconUrl = "https://octopus.com/content/resources/favicon.png"
+            ssn_Message = "#{Octopus.Action[Octopus - Prompt AI].Output.AIResult}"
             ssn_Title = "Copilot Function Deployed"
             ssn_Username = "Octopus Deploy"
         }
