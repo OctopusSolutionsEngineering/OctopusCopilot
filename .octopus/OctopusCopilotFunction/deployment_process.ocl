@@ -411,6 +411,7 @@ step "slack-send-simple-notification-bash" {
     name = "Slack - Send Simple Notification - Bash"
 
     action {
+        is_disabled = true
         properties = {
             Octopus.Action.Template.Id = "ActionTemplates-4022"
             Octopus.Action.Template.Version = "2"
