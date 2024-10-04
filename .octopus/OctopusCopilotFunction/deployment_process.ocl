@@ -434,7 +434,7 @@ step "slack-send-simple-notification-bash" {
         properties = {
             Octopus.Action.Template.Id = "ActionTemplates-4022"
             Octopus.Action.Template.Version = "2"
-            ssn_Channel = "se-tool-requests"
+            ssn_Channel = "feed-octopus-copilot-releases"
             ssn_Color = "good"
             ssn_HookUrl = "#{Slack.WebHook}"
             ssn_IconUrl = "https://octopus.com/content/resources/favicon.png"
