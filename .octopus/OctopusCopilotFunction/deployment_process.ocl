@@ -425,6 +425,24 @@ step "octopus-prompt-ai" {
     }
 }
 
+step "collect-summary" {
+    name = "Collect Summary"
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                Set-Content -Path summary.md -Value $OctopusParameters["Octopus.Action[Octopus - Prompt AI].Output.AIResult"]
+                
+                New-OctopusArtifact "summary.md"
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+        }
+        worker_pool = "hosted-ubuntu"
+    }
+}
+
 step "slack-send-simple-notification-bash" {
     name = "Slack - Send Simple Notification - Bash"
 
