@@ -418,7 +418,7 @@ step "octopus-prompt-ai" {
                   6. Use can use blockquote formatting by adding a ">" before the sentence
                   7 For line breaks, escape them using \n
                   8. Keep tagged users (@user) and channels (#channel) unchanged, but use them only if present in the original message.
-                  9. For URLs you should escape them like this: <http://example.com|This is a clickable link>
+                  9. For URLs you should escape them like this: Link name (http://example.com)
                 10. Headings must be enclosed with *asterisks* for bold emphasis. You will be penalized for using the # character for headings.
                 EOT
         }
