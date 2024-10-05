@@ -19,6 +19,7 @@ def release_what_changed_wrapper(
         * What code changes went into deployment version "1.23.675"?
         * What issues were included in the latest deployment to the "prod" environment?
         * What is the release version of the latest deployment?
+        * Given release "1.23.675" of the "WebApp" project to the "Production" environment, what changes were made?
 
         Args:
         space: The name of the space
