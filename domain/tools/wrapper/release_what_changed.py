@@ -12,7 +12,9 @@ def release_what_changed_wrapper(
         **kwargs,
     ):
         """
-        Provides details about an Octopus release or deployment and the changes went into it. Example prompts include:
+        Provides details about an Octopus release or deployment, including git commits, issues or tickets, release notes etc.
+        Select this function for any prompt regarding releases or deployments.
+        Example prompts include:
         * What changed in the latest deployment to the production environment?
         * How do I fix release "10.23.65" of the "WebApp" project to the "Production" environment?
         * Suggest a solution for the failed deployment to production environment in the hotfix channel?

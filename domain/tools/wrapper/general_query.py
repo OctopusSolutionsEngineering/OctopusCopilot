@@ -50,7 +50,9 @@ def answer_general_query_wrapper(query, callback, logging=None):
         dates=None,
         **kwargs,
     ):
-        """A query about the configuration or state of an Octopus space. You will be penalized for selecting this function if a more specific function is available. You will be penalized for selecting this function for cancelling tasks.
+        """Inspect the configuration or state of an Octopus space.
+        You will be penalized for selecting this function if a more specific function is available,
+        or for releases, deployments, and cancelling tasks.
         Args:
         space: Space name
         projects: project names
