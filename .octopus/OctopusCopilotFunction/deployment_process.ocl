@@ -274,7 +274,8 @@ step "security-scan" {
     action {
         action_type = "Octopus.Script"
         properties = {
-            Octopus.Action.AutoRetry.MaximumCount = "0"
+            Octopus.Action.AutoRetry.MaximumCount = "3"
+            Octopus.Action.AutoRetry.MinimumBackoff = "15"
             Octopus.Action.Script.ScriptBody = <<-EOT
                 echo "Pulling Trivy Docker Image"
                 echo "##octopus[stdout-verbose]"
