@@ -238,6 +238,15 @@ def default_help(github_user, api_key, url, log_query):
                     Generate sample Terraform modules for Octopus Deploy with prompts like these:
                     * @octopus-ai-app create a sample terraform module with: three environments called "Development", "Test", and "Production"; a docker feed pointing to dockerhub; three tenants called "US", "Europe", and "Asia"; a project group called "Web App"; a project called "Audits" with a single powershell script step that echoes "Hello World"; and all tenants linked to the project and all environments
 
+                    ## Configuration Checks
+                    These prompts check your Octopus Deploy space for common issues:
+                    * @octopus-ai-app Check my space for unused projects
+                    * @octopus-ai-app Check my space for empty projects
+                    * @octopus-ai-app Check my space for unused variables
+                    * @octopus-ai-app Check my space for unused targets
+                    * @octopus-ai-app Check my space for unhealthy targets
+                    * @octopus-ai-app Check my space for duplicate variables
+
                     ## Logout
                     Logout of your session with:
                     * @octopus-ai-app logout

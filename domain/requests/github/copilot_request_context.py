@@ -97,8 +97,19 @@ from domain.tools.wrapper.github_job_summary_wrapper import (
 )
 from domain.tools.wrapper.github_logs import answer_github_logs_wrapper
 from domain.tools.wrapper.how_to import how_to_wrapper
+from domain.tools.wrapper.octolint_duplicate_variables import (
+    octolint_duplicate_variables_wrapper,
+)
+from domain.tools.wrapper.octolint_empty_projects import octolint_empty_projects_wrapper
+from domain.tools.wrapper.octolint_unhealthy_targets import (
+    octolint_unhealthy_targets_wrapper,
+)
 from domain.tools.wrapper.octolint_unused_projects import (
     octolint_unused_projects_wrapper,
+)
+from domain.tools.wrapper.octolint_unused_targets import octolint_unused_targets_wrapper
+from domain.tools.wrapper.octolint_unused_variables import (
+    octolint_unused_variables_wrapper,
 )
 from domain.tools.wrapper.project_dashboard_wrapper import (
     show_project_dashboard_wrapper,
@@ -734,6 +745,61 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         query,
                         "OctoLintUnusedProjects",
+                    ),
+                    log_query,
+                ),
+            ),
+            FunctionDefinition(
+                octolint_unused_targets_wrapper(
+                    octolint_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        query,
+                        "OctoLintUnusedTargets",
+                    ),
+                    log_query,
+                ),
+            ),
+            FunctionDefinition(
+                octolint_empty_projects_wrapper(
+                    octolint_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        query,
+                        "OctoLintEmptyProject",
+                    ),
+                    log_query,
+                ),
+            ),
+            FunctionDefinition(
+                octolint_unused_variables_wrapper(
+                    octolint_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        query,
+                        "OctoLintUnusedVariables",
+                    ),
+                    log_query,
+                ),
+            ),
+            FunctionDefinition(
+                octolint_duplicate_variables_wrapper(
+                    octolint_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        query,
+                        "OctoLintDuplicatedVariables",
+                    ),
+                    log_query,
+                ),
+            ),
+            FunctionDefinition(
+                octolint_unhealthy_targets_wrapper(
+                    octolint_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        query,
+                        "OctoLintUnhealthyTargets",
                     ),
                     log_query,
                 ),
