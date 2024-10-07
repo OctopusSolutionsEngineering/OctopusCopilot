@@ -10,7 +10,7 @@ def get_params_message(github_user, start, function_name, **kwargs):
     if not to_lower_case_or_none(debug) == "true":
         return []
 
-    response = ["### Debug"]
+    response = ["### Debug"] if start else []
     response.extend(get_params(start, function_name, **kwargs))
 
     return response
