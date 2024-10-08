@@ -8,10 +8,11 @@ from infrastructure.octolint import run_octolint_check_async
 
 
 def octolint_callback(octopus_details, github_user, original_query, check_name):
-    def octolint(space, project):
+    def octolint(space, project=None):
         """
         This is a generic function that can call any Octolint check.
         :param space: The name of the space to run the check in.
+        :param project: The name of the project to run the check against.
         """
 
         async def inner_function():
