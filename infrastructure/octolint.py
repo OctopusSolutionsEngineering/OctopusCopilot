@@ -106,5 +106,5 @@ def get_octolint_request_body(check_name, space_id, project_name):
     return {
         "space": space_id,
         "onlyTests": check_name,
-        "excludeProjectsExcept": project_name,
+        "excludeProjectsExcept": [project_name] if project_name else [],
     }
