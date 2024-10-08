@@ -5,7 +5,7 @@ from infrastructure.octolint import run_octolint_check_async
 
 
 def octolint_empty_projects_wrapper(callback, logging):
-    def octolint_empty_projects(space=None, **kwargs):
+    def octolint_empty_projects(space=None, projects=None, **kwargs):
         """
         Checks for empty projects with no steps or runbooks in the space. Example prompts include:
         * Check for empty projects in the space "MySpace".
@@ -13,6 +13,7 @@ def octolint_empty_projects_wrapper(callback, logging):
 
         Args:
         space: The name of the space to run the check in.
+        projects: The name of the projects to run the check in.
         """
 
         if logging:
@@ -22,6 +23,6 @@ def octolint_empty_projects_wrapper(callback, logging):
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
-        return callback(space)
+        return callback(space, projects)
 
     return octolint_empty_projects

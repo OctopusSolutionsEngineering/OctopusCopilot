@@ -63,6 +63,7 @@ async def run_octolint_check_async(
     api_key,
     octopus_url,
     space_id,
+    project_name,
     check_name,
 ):
     ensure_string_not_empty(
@@ -80,8 +81,7 @@ async def run_octolint_check_async(
     )
 
     octolint_request_body = get_octolint_request_body(
-        check_name,
-        space_id,
+        check_name, space_id, project_name
     )
 
     api = os.environ["APPLICATION_OCTOLINT_URL"] + "/api/octolint"
@@ -98,10 +98,7 @@ async def run_octolint_check_async(
                 return await response.text()
 
 
-def get_octolint_request_body(
-    check_name,
-    space_id,
-):
+def get_octolint_request_body(check_name, space_id, project_name):
     """
     Returns the body of the request to run octolint in a space
     """
@@ -109,4 +106,5 @@ def get_octolint_request_body(
     return {
         "space": space_id,
         "onlyTests": check_name,
+        "excludeProjectsExcept": project_name,
     }
