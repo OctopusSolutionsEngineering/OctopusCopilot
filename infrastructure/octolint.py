@@ -107,4 +107,11 @@ def get_octolint_request_body(check_name, space_id, project_name):
         "space": space_id,
         "onlyTests": check_name,
         "excludeProjectsExcept": [project_name] if project_name else [],
+        "maxUnusedProjects": 1000,
+        "maxDefaultStepNameProjects": 1000,
+        "maxUnusedVariablesProjects": 1000,
+        "maxProjectStepsProjects": 1000,
+        "maxEmptyProjectCheckProjects": 1000,
+        "maxUnusedTargets": 1000,
+        "maxUnhealthyTargets": 1000,
     }
