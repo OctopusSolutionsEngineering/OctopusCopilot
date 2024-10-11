@@ -291,7 +291,7 @@ jobs:
         name: Determine Version
         uses: gittools/actions/gitversion/execute@v3.0.0
         with:
-          additionalArguments: /overrideconfig mode=Mainline
+          overrideConfig: mode=Mainline
       - name: List Dependencies
         run: pip install pipdeptree; pipdeptree > dependencies.txt
         shell: bash
