@@ -284,12 +284,12 @@ jobs:
           # Need 3.11 because of https://stackoverflow.com/questions/77364550/attributeerror-module-pkgutil-has-no-attribute-impimporter-did-you-mean
           python-version: 3.11
       - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v1.1.1
+        uses: gittools/actions/gitversion/setup@v3.0.0
         with:
           versionSpec: 5.x
       - id: determine_version
         name: Determine Version
-        uses: gittools/actions/gitversion/execute@v1.1.1
+        uses: gittools/actions/gitversion/execute@v3.0.0
         with:
           additionalArguments: /overrideconfig mode=Mainline
       - name: List Dependencies
