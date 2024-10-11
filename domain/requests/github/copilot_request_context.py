@@ -132,6 +132,7 @@ from domain.tools.wrapper.step_features import answer_step_features_wrapper
 from domain.tools.wrapper.suggest_solution import suggest_solution_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.tools.wrapper.task_summary_wrapper import show_task_summary_wrapper
+from function_app import GUEST_API_KEY
 from infrastructure.github import get_github_user
 from infrastructure.users import get_users_details, get_users_slack_details
 
@@ -238,7 +239,7 @@ def get_api_key_and_url(req: func.HttpRequest):
             )
 
             # A hack to get GHU attendees into the instance without having to define an API key
-            if is_ghu_server(github_user["OctopusUrl"]):
+            if is_ghu_server(github_user["OctopusUrl"]) and api_key == GUEST_API_KEY:
                 return os.environ.get("OCTOPUS_GHU_APIKEY"), github_user["OctopusUrl"]
 
             # We need to configure the Octopus details first because we need to know the service account id
