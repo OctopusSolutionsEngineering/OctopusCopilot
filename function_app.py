@@ -7,7 +7,7 @@ from http.cookies import SimpleCookie
 import azure.functions as func
 from domain.config.codefresh import get_codefresh_url
 from domain.config.database import get_functions_connection_string
-from domain.config.octopus import min_octopus_version
+from domain.config.octopus import min_octopus_version, GUEST_API_KEY
 from domain.context.octopus_context import llm_message_query
 from domain.encryption.encryption import generate_password
 from domain.errors.error_handling import handle_error
@@ -73,7 +73,6 @@ from infrastructure.users import (
 app = func.FunctionApp()
 logger = configure_logging(__name__)
 
-GUEST_API_KEY = "API-GUEST"
 GITHUB_LOGIN_MESSAGE = (
     f"To continue chatting please click the link below:\n\n[log in](https://github.com/login/oauth/authorize?"
     + f"client_id={os.environ.get('GITHUB_CLIENT_ID')}"

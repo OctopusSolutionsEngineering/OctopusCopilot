@@ -11,3 +11,5 @@ max_release_for_github_links = 20
 
 # The maximum number of artifacts to display
 max_github_artifacts = 5
+
+GUEST_API_KEY = "API-GUEST"
