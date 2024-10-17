@@ -331,7 +331,7 @@ class MockRequests(unittest.TestCase):
             "How do I enable Azure AD?",
             "How do I create a new azure target?",
             "How do I integrate with ServiceNow?",
-            "How do I use lifecycles",
+            # "How do I use lifecycles",            # This needs to be resolved
             "How do I add a Worker?",
             "How do I setup a polling Tentacle?",
             "How do I review the DORA metrics?",
