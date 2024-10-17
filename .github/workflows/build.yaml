@@ -385,6 +385,7 @@ jobs:
         with:
           packages: OctopusCopilot
           version: ${{ steps.determine_version.outputs.semVer }}
+          overwrite_mode: OverwriteExisting
       - name: Create Octopus Release
         if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'schedule' }}
         uses: OctopusDeploy/create-release-action@v3
