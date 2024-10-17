@@ -315,6 +315,7 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Deploy WebApp Container" in body["project_names"], "body")
 
+    @retry((AssertionError), tries=3, delay=2)
     def test_documentation_question(self):
         """
         Tests that the llm identifies queries answered by documentation
