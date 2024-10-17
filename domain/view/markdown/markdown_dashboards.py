@@ -460,24 +460,43 @@ def get_project_tenant_progression_response(
     return table
 
 
-def build_runbook_run_columns(run, now, highlights, get_tenant):
-    tenant_name = "Untenanted" if not run["TenantId"] else get_tenant(run["TenantId"])
-    created = parse_unknown_format_date(run["Created"])
-    difference = get_date_difference_summary(now - created)
-    icon = get_state_icon(
-        run["State"], run["HasWarningsOrErrors"], run["HasPendingInterruptions"]
-    )
+def build_runbook_run_columns(dashboard, tenant, now, highlights, environments):
+    # The first column is the tenant
+    columns = [tenant]
 
-    task_highlights = [
-        details["Highlights"]
-        for details in highlights or []
-        if details["TaskId"] == run["TaskId"]
-    ]
+    # Every environment is a column
+    for environment in environments:
+        # Get the runs for the tenant and environment
+        runs = list(
+            filter(
+                lambda run: run["TenantId"] == tenant
+                or (not run["TenantId"] and tenant == "Untenanted"),
+                dashboard["RunbookRuns"][environment],
+            )
+        )
 
-    return [
-        tenant_name,
-        "<br/>".join([icon + " " + difference + " ago", *task_highlights]),
-    ]
+        if not runs:
+            # A placeholder when no runs are found in that environment
+            columns.append("⨂")
+        else:
+            run = runs[0]
+            created = parse_unknown_format_date(run["Created"])
+            difference = get_date_difference_summary(now - created)
+            icon = get_state_icon(
+                run["State"], run["HasWarningsOrErrors"], run["HasPendingInterruptions"]
+            )
+
+            task_highlights = [
+                details["Highlights"]
+                for details in highlights or []
+                if details["TaskId"] == run["TaskId"]
+            ]
+
+            columns.append(
+                "<br/>".join([icon + " " + difference + " ago", *task_highlights]),
+            )
+
+    return columns
 
 
 def get_tenants(dashboard):
@@ -506,18 +525,11 @@ def get_runbook_dashboard_response(project, runbook, dashboard, highlights, get_
 
     # Build the execution rows
     for tenant in tenants:
-        for environment in environment_ids:
-            runs = list(
-                filter(
-                    lambda run: run["TenantId"] == tenant
-                    or (not run["TenantId"] and tenant == "Untenanted"),
-                    dashboard["RunbookRuns"][environment],
-                )
+        table += build_markdown_table_row(
+            build_runbook_run_columns(
+                dashboard, tenant, dt, highlights, environment_ids
             )
-            for run in runs:
-                table += build_markdown_table_row(
-                    build_runbook_run_columns(run, dt, highlights, get_tenant)
-                )
+        )
 
     return table
 

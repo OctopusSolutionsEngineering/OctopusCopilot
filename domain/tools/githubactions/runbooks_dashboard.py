@@ -8,7 +8,6 @@ from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import sanitize_name_fuzzy, sanitize_space
 from domain.tools.debug import get_params_message
 from domain.view.markdown.markdown_dashboards import get_runbook_dashboard_response
-from domain.view.markdown.octopus_task_running import activity_logs_to_running
 from infrastructure.octopus import (
     get_spaces_generator,
     get_space_id_and_name_from_name,
