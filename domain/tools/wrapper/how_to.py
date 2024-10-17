@@ -4,27 +4,27 @@ from domain.sanitizers.sanitized_list import sanitize_list
 def how_to_wrapper(query, callback, logging):
     def how_do_i(keywords=None, **kwargs):
         """Answers a question about how to do something. Use this function when the query is asking a general question.
-Questions can look like those in the following list:
-* How do I integrate with something?
-* How do I do something?
-* How can I enable something?
-* How do I add something?
-* How do I remove something?
-* How do I configure something?
-* How do I find something?
-* How do I use something?
-* How do I create something?
-* How do I disable something?
-* How do I setup something?
-* How do I setup a thing?
-* How do I set up something?
-* How do I enable something?
-* How do I enable something in something?
-* How do I enable something for something?
+        Questions can look like those in the following list:
+        * How do I integrate with jenkins?
+        * How do I do deployments?
+        * How can I enable config-as-code?
+        * How do I add a runbook?
+        * How do I remove a feed?
+        * How do I configure subscriptions?
+        * How do I find releases?
+        * How do I use channels?
+        * How do I create accounts?
+        * How do I disable tenants?
+        * How do I setup SIEM?
+        * How do I setup a target?
+        * How do I set up an agent?
+        * How do I enable projects?
+        * How do I enable something in something?
+        * How do I enable something for something?
 
-Args:
-keywords: The keywords extracted from the query
-"""
+        Args:
+        keywords: The keywords extracted from the query
+        """
 
         return provide_help_and_instructions(keywords, **kwargs)
 
