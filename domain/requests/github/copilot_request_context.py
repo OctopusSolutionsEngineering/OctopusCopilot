@@ -238,10 +238,6 @@ def get_api_key_and_url(req: func.HttpRequest):
                 github_username, get_functions_connection_string()
             )
 
-            # A hack to get GHU attendees into the instance without having to define an API key
-            if is_ghu_server(github_user["OctopusUrl"]) and api_key == GUEST_API_KEY:
-                return os.environ.get("OCTOPUS_GHU_APIKEY"), github_user["OctopusUrl"]
-
             # We need to configure the Octopus details first because we need to know the service account id
             # before attempting to generate an ID token.
             if (
@@ -272,6 +268,13 @@ def get_api_key_and_url(req: func.HttpRequest):
             nonce,
             os.environ.get("ENCRYPTION_SALT"),
         )
+
+        # A hack to get GHU attendees into the instance without having to define an API key
+        if (
+            is_ghu_server(github_user["OctopusUrl"])
+            and decrypted_api_key == GUEST_API_KEY
+        ):
+            return os.environ.get("OCTOPUS_GHU_APIKEY"), github_user["OctopusUrl"]
 
         return decrypted_api_key, github_user["OctopusUrl"]
 
