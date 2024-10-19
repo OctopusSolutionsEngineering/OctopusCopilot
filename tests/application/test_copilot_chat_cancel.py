@@ -22,15 +22,14 @@ from infrastructure.octopus import (
     get_space_id_and_name_from_name,
 )
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
-from tests.infrastructure.test_cancel import cancel_task
 from tests.infrastructure.create_and_deploy_release import (
     create_and_deploy_release,
     wait_for_task,
 )
-
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
-from tests.infrastructure.test_octopus_infrastructure import run_terraform
 from tests.infrastructure.publish_runbook import publish_runbook
+from tests.infrastructure.test_cancel import cancel_task
+from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
 class CopilotChatCancelTest(unittest.TestCase):
@@ -252,6 +251,7 @@ class CopilotChatCancelTest(unittest.TestCase):
             "Response was " + response_text,
         )
 
+    @unittest.skipIf(True, "Azure is flagging this prompt as a jailbreak attempt.")
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_cancel_deployment(self):
         version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
