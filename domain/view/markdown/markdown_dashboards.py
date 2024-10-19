@@ -89,9 +89,15 @@ def get_dashboard_response(
 
         environment_names.extend(
             list(
-                map(
-                    lambda e: get_env_name(dashboard, e),
-                    project_group["EnvironmentIds"],
+                filter(
+                    # Filter out any None responses from get_env_name, which might be
+                    # due to RBAC controls
+                    lambda e: e,
+                    map(
+                        # Get the environment name for each environment ID
+                        lambda e: get_env_name(dashboard, e),
+                        project_group["EnvironmentIds"],
+                    )
                 )
             )
         )
