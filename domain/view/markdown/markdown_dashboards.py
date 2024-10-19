@@ -97,7 +97,7 @@ def get_dashboard_response(
                         # Get the environment name for each environment ID
                         lambda e: get_env_name(dashboard, e),
                         project_group["EnvironmentIds"],
-                    )
+                    ),
                 )
             )
         )
@@ -524,7 +524,9 @@ def get_runbook_dashboard_response(project, runbook, dashboard, highlights, get_
     tenants = get_tenants(dashboard)
 
     environment_ids = list(map(lambda x: x, dashboard["RunbookRuns"]))
-    environment_names = list(map(lambda e: get_env_name(dashboard, e), environment_ids))
+    environment_names = list(
+        filter(lambda e: e, map(lambda e: get_env_name(dashboard, e), environment_ids))
+    )
     columns = ["", *environment_names]
     table += build_markdown_table_row(columns)
     table += build_markdown_table_header_separator(len(columns))
