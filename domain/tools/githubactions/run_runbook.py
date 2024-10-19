@@ -226,16 +226,18 @@ def run_runbook_callback(octopus_details, github_user, connection_string, log_qu
             Variables: {arguments["variables"]}""",
         )
 
-        debug_text = get_params_message(
-            github_user,
-            False,
-            run_runbook.__name__,
-            space_name=actual_space_name,
-            project_name=sanitized_project_names,
-            runbook_name=sanitized_runbook_names,
-            environment_name=environment_name,
-            tenant_name=sanitized_tenant_names,
-            variables=variables,
+        debug_text.extend(
+            get_params_message(
+                github_user,
+                False,
+                run_runbook.__name__,
+                space_name=actual_space_name,
+                project_name=sanitized_project_names,
+                runbook_name=sanitized_runbook_names,
+                environment_name=environment_name,
+                tenant_name=sanitized_tenant_names,
+                variables=variables,
+            )
         )
 
         save_callback(
