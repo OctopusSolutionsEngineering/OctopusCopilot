@@ -21,6 +21,7 @@ class TestExtractQuery(unittest.TestCase):
                 ]
             }
         ).encode("utf-8")
+        req.params = {}
         state, confirmation_id = extract_confirmation_state_and_id(req)
         self.assertEqual(state, "accepted")
         self.assertEqual(confirmation_id, "123")
@@ -33,6 +34,7 @@ class TestExtractQuery(unittest.TestCase):
     def test_extract_confirmation_invalid_json(self):
         req = Mock()
         req.get_body.return_value = "Invalid JSON".encode("utf-8")
+        req.params = {}
         state, confirmation_id = extract_confirmation_state_and_id(req)
         self.assertIsNone(state)
         self.assertIsNone(confirmation_id)
