@@ -173,7 +173,7 @@
         debugging.innerText += "\nEvent: " + JSON.stringify(event)
 
         console.log(event)
-        evtSource.close()
+
         /*
             https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#fields
             The data field for the message. When the EventSource receives multiple consecutive lines that begin
@@ -188,8 +188,10 @@
                 accept.onclick = approveConfirmation(parsedLine.confirmation.id)
                 response += parsedLine.title + "\n\n"
                 response += parsedLine.message
-            } else if (parsedLine.choices && parsedLine.choices[0].delta && parsedLine.choices[0].delta.content) {
+            } else if (parsedLine.choices && parsedLine.choices.length !== 0 && parsedLine.choices[0].delta && parsedLine.choices[0].delta.content) {
                 response += parsedLine.choices[0].delta.content
+            } else if (parsedLine.choices && parsedLine.choices.length !== 0 && parsedLine.choices[0].finish_reason === "stop") {
+                evtSource.close()
             } else {
                 response += "\n"
             }
