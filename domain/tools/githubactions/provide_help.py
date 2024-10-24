@@ -53,34 +53,31 @@ def ghu_help(github_user, api_key, url, log_query):
             * `@octopus-ai-app Show me the dashboard for the space "{space_name}"`
 
             # Create a Project
-            These prompts creates a new project from the template and watch the status. Make sure you replace `MyNewProject` with the name of your project:
-            * `@octopus-ai-app Run the runbook "Create Project" in the project "Microservice Template" in the "Administration" environment in the space "{space_name}" with variables: Project Name=MyNewProject`
-            * `@octopus-ai-app Show me the runbook dashboard for "Create Project" in the project "Microservice Template" in the space "{space_name}"`
-            * `@octopus-ai-app Summarize the execution logs of the latest run of runbook "Create Project" in the project "Microservice Template" in the space "{space_name}" in the "Administration" environment`
+            These prompts creates a new project from the template and watch the status. IMPORTANT: Make sure you replace `MyNewProject` with the name of your project:
+            * `@octopus-ai-app Run the runbook "Create Pipeline" in the project "Microservice Template" in the "Administration" environment in the space "{space_name}" with variables: Project Name=MyNewProject`
 
             # Explain the Project
             * `@octopus-ai-app What do the steps in the project "MyNewProject" in the space "{space_name}" environment do? Provide a high level summary.`
             * `@octopus-ai-app What do the steps in the runbook "Verify App Status" in the project "MyNewProject" in the space "{space_name}" do?`
 
             # Deploy a Project
-            This prompt deploys your project to the "Development" environment. Make sure you replace `MyNewProject` with the name of your project:
+            This prompt deploys your project to the "Development" environment. IMPORTANT: Make sure you replace `MyNewProject` with the name of your project:
             * `@octopus-ai-app Create a release in the project "MyNewProject" in the space "{space_name}" and deploy to the "Development" environment`
 
             # Observe Deployments
-            These prompts allow you to observe deployments. Make sure you replace `MyNewProject` with the name of your project:
+            These prompts allow you to observe deployments. IMPORTANT: Make sure you replace `MyNewProject` with the name of your project:
             * `@octopus-ai-app Show me the project dashboard for "MyNewProject" in the space "{space_name}"`
             * `@octopus-ai-app Show me the task summary for the latest release of the project "MyNewProject" in the "Development" environment in the space "{space_name}"`
             * `@octopus-ai-app Summarize the deployment logs for the latest deployment for the project "MyNewProject" in the "Development" environment in the space "{space_name}"`
 
             # Promote Deployments
-            These prompts allow you to promote deployments to the higher environments. Make sure you replace `MyNewProject` with the name of your project:
+            These prompts allow you to promote deployments to the higher environments. IMPORTANT: Make sure you replace `MyNewProject` with the name of your project:
             * `@octopus-ai-app Deploy the latest release of project "MyNewProject" in the space "{space_name}" to the "Staging" environment`
             * `@octopus-ai-app Deploy the latest release of project "MyNewProject" in the space "{space_name}" to the "Production" environment`
 
             # Manage deployments
-            These prompts allow you to manage deployments. Make sure you replace `MyNewProject` with the name of your project:
+            These prompts allow you to manage deployments. IMPORTANT: Make sure you replace `MyNewProject` with the name of your project:
             * `@octopus-ai-app Run runbook "Verify App Status" in the "Development" environment for the project "MyNewProject" in the space "{space_name}"`
-            * `@octopus-ai-app Show me the runbook dashboard for "Verify App Status" in the project "MyNewProject" in the space "{space_name}"`
             * `@octopus-ai-app Summarize the execution logs of the runbook "Verify App Status" in the project "MyNewProject" in the space "{space_name}" in the "Development" environment`
             """
         )
