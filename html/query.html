@@ -119,6 +119,12 @@
             <button id="submit" name="submit" type="button" class="btn btn-primary">Submit</button>
         </div>
     </div>
+    <div class="form-group row m-md-1" id="confirmation">
+        <div class="offset-lg-4 col-lg-8">
+            <button id="accept" name="accept" type="button" class="btn btn-primary">Accept</button>
+            <button id="dismiss" name="dismiss" type="button" class="btn btn-primary">Dismiss</button>
+        </div>
+    </div>
     <div class="form-group row m-md-1">
         <label class="col-lg-2 offset-lg-2 col-form-label">Response</label>
         <div class="col-lg-6">
@@ -148,6 +154,77 @@
     checkLogin()
 
     updateHistoryLinkState()
+
+    // Don't display the confirmation buttons by default
+    confirmation.style.display = "none"
+
+    function handleEventSourceError(startTime, evtSource, event) {
+        debugging.innerText = "Event: " + JSON.stringify(event)
+        console.log(event)
+        evtSource.close()
+        markdown.innerHTML = "The request resulted in an error."
+        enableInput()
+    }
+
+    function handleEventSourceMessage(startTime, evtSource, event) {
+        const endTime = new Date().getTime()
+
+        debugging.innerText = "Time taken: " + ((endTime - startTime) / 1000).toFixed(2) + " seconds"
+        debugging.innerText += "\nEvent: " + JSON.stringify(event)
+
+        console.log(event)
+        evtSource.close()
+        /*
+            https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#fields
+            The data field for the message. When the EventSource receives multiple consecutive lines that begin
+            with data:, it concatenates them, inserting a newline character between each one.
+         */
+        let response = ""
+        event.data.split("\n").forEach((line) => {
+            parsedLine = JSON.parse(line)
+
+            if (parsedLine.type && parsedLine.type === "action") {
+                confirmation.style.display = "inherit"
+                accept.onclick = approveConfirmation(parsedLine.confirmation.id)
+                response += parsedLine.title + "\n\n"
+                response += parsedLine.message
+            } else if (parsedLine.choices && parsedLine.choices[0].delta && parsedLine.choices[0].delta.content) {
+                response += parsedLine.choices[0].delta.content
+            } else {
+                response += "\n"
+            }
+        })
+        markdown.innerHTML = marked.parse(response);
+        enableInput()
+    }
+
+    function dismissConfirmation() {
+        confirmation.style.display = "none"
+        markdown.innerText = "Request was denied."
+    }
+
+    function approveConfirmation(id) {
+        return () => {
+            confirmation.style.display = "none"
+            markdown.innerText = "Request was approved."
+
+            const startTime = new Date().getTime()
+
+            // Use the polyfill to get the ability to send headers.
+            var evtSource = new EventSourcePolyfill('/api/form_handler?confirmation_id=' + encodeURIComponent(id) + "&confirmation_state=accepted", {
+                // https://stackoverflow.com/questions/71688537/event-source-timeout-in-45-seconds
+                // Increase timeouts as it can take some time to process the request.
+                heartbeatTimeout: 300000,
+            });
+
+            evtSource.onmessage = (event) => {
+                handleEventSourceMessage(startTime, evtSource, event)
+            };
+            evtSource.onerror = (event) => {
+                handleEventSourceError(startTime, evtSource, event)
+            }
+        }
+    }
 
     function sanitizeBase64(input) {
         if (!input) {
@@ -311,7 +388,17 @@
 
     var processing = false
 
+    function enableInput() {
+        query.disabled = false
+        submit.disabled = false
+        github_login.disabled = false
+        processing = false
+    }
+
     async function processQuery(event) {
+        // Hide the confirmation buttons when starting a new query
+        confirmation.style.display = "none"
+
         // If the session has expired, we prompt to log in again.
         if (!getSessionCookie()) {
             checkLogin()
@@ -342,13 +429,6 @@
         github_login.disabled = true
         processing = true
 
-        function enableInput() {
-            query.disabled = false
-            submit.disabled = false
-            github_login.disabled = false
-            processing = false
-        }
-
         debugging.innerHTML = ""
         const startTime = new Date().getTime()
 
@@ -359,40 +439,15 @@
             heartbeatTimeout: 300000,
         });
 
-        let response = ""
         evtSource.onmessage = (event) => {
-            const endTime = new Date().getTime()
-
-            debugging.innerText = "Time taken: " + ((endTime - startTime) / 1000).toFixed(2) + " seconds"
-            debugging.innerText += "\nEvent: " + JSON.stringify(event)
-
-            console.log(event)
-            evtSource.close()
-            /*
-                https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#fields
-                The data field for the message. When the EventSource receives multiple consecutive lines that begin
-                with data:, it concatenates them, inserting a newline character between each one.
-             */
-            event.data.split("\n").forEach((line) => {
-                parsedLine = JSON.parse(line)
-                if (parsedLine.choices[0].delta && parsedLine.choices[0].delta.content) {
-                    response += parsedLine.choices[0].delta.content
-                } else {
-                    response += "\n"
-                }
-            })
-            markdown.innerHTML = marked.parse(response);
-            enableInput()
+            handleEventSourceMessage(startTime, evtSource, event)
         };
         evtSource.onerror = (event) => {
-            debugging.innerText = "Event: " + JSON.stringify(event)
-            console.log(event)
-            evtSource.close()
-            markdown.innerHTML = "The request resulted in an error."
-            enableInput()
+            handleEventSourceError(startTime, evtSource, event)
         }
     }
 
+    dismiss.onclick = dismissConfirmation
     submit.onclick = processQuery
     query.addEventListener("keydown", function (e) {
         if (e.code === "Enter") {
