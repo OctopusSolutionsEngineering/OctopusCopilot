@@ -403,24 +403,7 @@ step "octopus-prompt-ai" {
             OctopusAI.GitHub.Token = "#{GitHub.Token}"
             OctopusAI.Octopus.APIKey = "#{Octopus.ApiKey}"
             OctopusAI.Octopus.Url = "#{Octopus.Web.ServerUri}"
-            OctopusAI.Prompt = <<-EOT
-                Given deployment "#{Octopus.Release.Number}" for project "#{Octopus.Project.Name}" to environment "#{Octopus.Environment.Name}" in space "#{Octopus.Space.Name}", list the git committers and a summary of the changes in the git diffs.
-                
-                The output must utilize Slack's markdown language mrkdwn for various formatting elements.
-                
-                Follow those instructions:
-                
-                  1. Enclose important words or phrases with *asterisks* for bold emphasis. You will be penalized for using double asterisks.
-                  2. Enclose code and numbers and percentages using backticks, like  `this `.
-                  3. Use numbered lists or bullet lists. Create a bullet list with "–" symbol.
-                  4. If you want to combine bullet list items with bold markdown, this is how it should work: – *A bold text*: A normal text.
-                  5. Italise words like _this_
-                  6. Use can use blockquote formatting by adding a ">" before the sentence
-                  7. For line breaks, escape them using \n
-                  8. Keep tagged users (@user) and channels (#channel) unchanged, but use them only if present in the original message.
-                  9. For URLs you must print them like this: Link name (http://example.com). You will be penalized for using links in the form [link][https://example.org].
-                 10. Headings must be enclosed with *asterisks* for bold emphasis. You will be penalized for using the # character for headings.
-                EOT
+            OctopusAI.Prompt = "Given deployment \"#{Octopus.Release.Number}\" for project \"#{Octopus.Project.Name}\" to environment \"#{Octopus.Environment.Name}\" in space \"#{Octopus.Space.Name}\", list the git committers and a summary of the changes in the git diffs."
         }
         worker_pool_variable = ""
     }
