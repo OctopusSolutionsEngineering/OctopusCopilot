@@ -453,7 +453,12 @@
 
         evtSource.onmessage = (event) => {
             handleEventSourceMessage(startTime, evtSource, event)
-        };
+        }
+
+        evtSource.addEventListener("copilot_confirmation", (event) => {
+          handleEventSourceMessage(startTime, evtSource, event)
+        })
+
         evtSource.onerror = (event) => {
             handleEventSourceError(startTime, evtSource, event)
         }
