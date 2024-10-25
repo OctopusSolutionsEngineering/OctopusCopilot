@@ -80,7 +80,7 @@ def ghu_help(github_user, api_key, url, log_query):
             * `@octopus-ai-app Summarize the deployment logs for the latest deployment for the project "MyNewProject" in the "Development" environment`
 
             # 7. Promote Deployments
-            These prompts allow you to promote deployments to the higher environments. 
+            These prompts allow you to promote deployments to the higher environments.
             IMPORTANT: Make sure you replace `MyNewProject` with the name of your project:
             * `@octopus-ai-app Deploy the latest release of project "MyNewProject" to the "Staging" environment`
             * `@octopus-ai-app Deploy the latest release of project "MyNewProject" to the "Production" environment`
