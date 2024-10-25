@@ -182,7 +182,7 @@ def release_what_changed_callback_wrapper(
                 release_what_changed_callback.__name__,
                 space=space_resources["space_name"],
                 projects=space_resources["project_names"],
-                release_version=release_version,
+                release_version=deployments.get("Deployments")[0].get("ReleaseVersion"),
                 environment=space_resources["environment_names"],
                 tenant=space_resources["tenant_names"],
                 channel=channel,
