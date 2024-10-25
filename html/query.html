@@ -158,6 +158,9 @@
     // Don't display the confirmation buttons by default
     confirmation.style.display = "none"
 
+    // Track the response stream
+    let response = ""
+
     function handleEventSourceError(startTime, evtSource, event) {
         debugging.innerText = "Event: " + JSON.stringify(event)
         console.log(event)
@@ -179,7 +182,6 @@
             The data field for the message. When the EventSource receives multiple consecutive lines that begin
             with data:, it concatenates them, inserting a newline character between each one.
          */
-        let response = ""
         event.data.split("\n").forEach((line) => {
             parsedLine = JSON.parse(line)
 
@@ -398,6 +400,9 @@
     }
 
     async function processQuery(event) {
+        // Clear the previous response
+        response = ""
+
         // Hide the confirmation buttons when starting a new query
         confirmation.style.display = "none"
 
