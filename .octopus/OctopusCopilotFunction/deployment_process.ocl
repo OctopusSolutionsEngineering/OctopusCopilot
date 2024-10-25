@@ -444,6 +444,37 @@ step "collect-summary" {
     }
 }
 
+step "convert-to-slack-markdown" {
+    name = "Convert to Slack Markdown"
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                from slackstyler import SlackStyler
+                
+                # Create a styler instance
+                styler = SlackStyler()
+                
+                markdown_text = get_octopusvariable("Octopus.Action[Octopus - Prompt AI].Output.AIResult")
+                slack_message = styler.convert(markdown_text)
+                set_octopusvariable("AIResult", slack_message)
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Python"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool = "hosted-ubuntu"
+
+        container {
+            dockerfile = <<-EOT
+                    FROM ghcr.io/octopusdeploylabs/workertools
+                    pip install slackstyler
+                    EOT
+        }
+    }
+}
+
 step "slack-send-simple-notification-bash" {
     name = "Slack - Send Simple Notification - Bash"
 
@@ -456,7 +487,7 @@ step "slack-send-simple-notification-bash" {
             ssn_Color = "good"
             ssn_HookUrl = "#{Slack.WebHook}"
             ssn_IconUrl = "https://octopus.com/content/resources/favicon.png"
-            ssn_Message = "#{Octopus.Action[Octopus - Prompt AI].Output.AIResult | JsonEscape}"
+            ssn_Message = "#{Octopus.Action[Convert to Slack Markdown].Output.AIResult | JsonEscape}"
             ssn_Title = "Copilot Function Deployed"
             ssn_Username = "Octopus Deploy"
         }
