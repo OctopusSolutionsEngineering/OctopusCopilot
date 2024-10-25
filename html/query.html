@@ -219,11 +219,16 @@
                 // https://stackoverflow.com/questions/71688537/event-source-timeout-in-45-seconds
                 // Increase timeouts as it can take some time to process the request.
                 heartbeatTimeout: 300000,
-            });
+            })
 
             evtSource.onmessage = (event) => {
                 handleEventSourceMessage(startTime, evtSource, event)
-            };
+            }
+
+            evtSource.addEventListener("copilot_confirmation", (event) => {
+              handleEventSourceMessage(startTime, evtSource, event)
+            })
+
             evtSource.onerror = (event) => {
                 handleEventSourceError(startTime, evtSource, event)
             }
