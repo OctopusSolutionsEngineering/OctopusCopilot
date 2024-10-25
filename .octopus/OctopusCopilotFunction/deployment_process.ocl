@@ -469,7 +469,7 @@ step "convert-to-slack-markdown" {
         container {
             dockerfile = <<-EOT
                     FROM ghcr.io/octopusdeploylabs/python-workertools
-                    pip install slackstyler
+                    RUN pip install slackstyler
                     EOT
         }
     }
