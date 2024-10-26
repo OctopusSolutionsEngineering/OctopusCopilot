@@ -1,4 +1,10 @@
-The Octopus Extension for GitHub Copilot brings real-time information and control over your builds and deployments into your Copilot chat. This allows you to:
+The Octopus Extension for GitHub Copilot brings real-time information and control over your builds and deployments into your Copilot chat. 
+
+The extension queries the state of your Octopus server, combines GitHub issues and Git diffs captured in [build information](https://octopus.com/docs/packaging-applications/build-servers/build-information), and passes the information to a GPT-4o LLM to summarize your deployments and provide assistance.
+
+The extension also interacts directly with the Octopus API to create releases, deploy releases, and run runbooks.
+
+This allows you to:
 
 * View the state of your GitHub Actions workflows - `Show the github workflow summary`
 * View the state of your environments - `Show the dashboard`
