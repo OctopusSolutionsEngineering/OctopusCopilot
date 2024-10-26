@@ -15,6 +15,8 @@ This allows you to:
 * Provide help on failed deployments - `Help me fix release "1.2.3" of the "Audits" project to the "Production" environment`
 * Generate customized reports - `Given release "1.2.3" of project "Audits" to the "Production" environment, provide a one sentence summary of the Git Diff for each file changed as part of the release.`
 
+To get started with the extension, enter the prompt `hi` to receive a list of available commands.
+
 # Screenshots
 
 ![Octopus Copilot screenshot](docs/screenshot-dashboard.png)
