@@ -14,7 +14,6 @@ from domain.encryption.encryption import decrypt_eax, generate_password
 from domain.exceptions.slack_not_logged_in import SlackTokenInvalid
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyInvalid
-from domain.ghu.is_ghu import is_ghu_server
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_logging import log_query
 from domain.security.security import is_admin_user
@@ -268,13 +267,6 @@ def get_api_key_and_url(req: func.HttpRequest):
             nonce,
             os.environ.get("ENCRYPTION_SALT"),
         )
-
-        # A hack to get GHU attendees into the instance without having to define an API key
-        if (
-            is_ghu_server(github_user["OctopusUrl"])
-            and decrypted_api_key == GUEST_API_KEY
-        ):
-            return os.environ.get("OCTOPUS_GHU_APIKEY"), github_user["OctopusUrl"]
 
         return decrypted_api_key, github_user["OctopusUrl"]
 
