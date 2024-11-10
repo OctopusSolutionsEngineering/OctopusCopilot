@@ -264,7 +264,9 @@ def create_release_callback(octopus_details, github_user, connection_string, log
                 get_environment(space_id, x, api_key, url)["Name"]
                 for x in lifecycle_environments
             ]
-            valid = any(
+            # The default lifecycle has no environments, which means it has all environments.
+            # So check to see if there are no environments, or specifically named environments
+            valid = len(project_environments) == 0 or any(
                 filter(
                     lambda x: x == sanitized_environment_names[0], project_environments
                 )
