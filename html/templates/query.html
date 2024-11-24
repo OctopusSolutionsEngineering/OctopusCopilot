@@ -204,7 +204,7 @@
                 response += "\n"
             }
         })
-        markdown.innerHTML = marked.parse(response);
+        markdown.innerHTML = marked.parse(DOMPurify.sanitize(response));
         enableInput()
     }
 
