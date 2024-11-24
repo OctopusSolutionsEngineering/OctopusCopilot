@@ -168,8 +168,13 @@ def octopus(req: func.HttpRequest) -> func.HttpResponse:
     :return: The HTML form
     """
     try:
+        # Clear the existing session cookie when doing a new login
         return func.HttpResponse(
-            get_login_page(req), headers={"Content-Type": "text/html"}
+            get_login_page(req),
+            headers={
+                "Content-Type": "text/html",
+                "Set-Cookie": f"session=deleted; Secure; SameSite=Strict; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly",
+            },
         )
     except Exception as e:
         handle_error(e)
@@ -339,7 +344,7 @@ def query_form(req: func.HttpRequest) -> func.HttpResponse:
     try:
         # Get the session cookie from the quest
         cookie = SimpleCookie()
-        cookie.load(req.headers["Cookie"])
+        cookie.load(req.headers.get("Cookie", ""))
         logged_in = "session" in cookie and cookie["session"].value
 
         return func.HttpResponse(
@@ -367,7 +372,7 @@ def octopus_login_submit(req: func.HttpRequest) -> func.HttpResponse:
 
         # Extract the GitHub user from the client side session
         cookie = SimpleCookie()
-        cookie.load(req.headers["Cookie"])
+        cookie.load(req.headers.get("Cookie", ""))
         session = cookie["session"].value
 
         access_token = extract_session_blob(
@@ -447,7 +452,7 @@ def codefresh_login_submit(req: func.HttpRequest) -> func.HttpResponse:
 
         # Extract the GitHub user from the client side session
         cookie = SimpleCookie()
-        cookie.load(req.headers["Cookie"])
+        cookie.load(req.headers.get("Cookie", ""))
         session = cookie["session"].value
 
         access_token = extract_session_blob(
