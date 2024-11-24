@@ -172,8 +172,7 @@ def octopus(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             get_login_page(req),
             headers={
-                "Content-Type": "text/html",
-                "Set-Cookie": f"session=deleted; Secure; SameSite=Strict; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly",
+                "Content-Type": "text/html"
             },
         )
     except Exception as e:
