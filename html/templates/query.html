@@ -167,7 +167,7 @@
         debugging.innerText = "Event: " + JSON.stringify(event)
         console.log(event)
         evtSource.close()
-        markdown.innerHTML = "The request resulted in an error."
+        markdown.innerText = "The request resulted in an error."
         enableInput()
     }
 
@@ -439,7 +439,7 @@
             updateHistory()
         }
 
-        markdown.innerHTML = "Processing..."
+        markdown.innerText = "Processing..."
         query.disabled = true
         submit.disabled = true
         github_login.disabled = true
