@@ -30,3 +30,12 @@ def get_login_page(req, search_path="html/templates"):
     return template.render(
         is_admin_user=is_admin_user(get_github_user_from_form(req), get_admin_users())
     )
+
+
+def get_query_page(logged_in, req, search_path="html/templates"):
+    env = Environment(
+        loader=FileSystemLoader(searchpath=search_path),
+        autoescape=select_autoescape(),
+    )
+    template = env.get_template("query.html")
+    return template.render(loggedIn=bool(logged_in))

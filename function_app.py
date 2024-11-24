@@ -49,7 +49,11 @@ from domain.url.build_url import build_url
 from domain.url.session import create_session_blob, extract_session_blob
 from domain.url.url_builder import base_request_url
 from domain.versions.octopus_version import octopus_version_at_least
-from domain.view.html.html_pages import get_redirect_page, get_login_page
+from domain.view.html.html_pages import (
+    get_redirect_page,
+    get_login_page,
+    get_query_page,
+)
 from infrastructure.callbacks import (
     load_callback,
     delete_callback,
@@ -213,7 +217,7 @@ def oauth_callback_internal(req: func.HttpRequest):
             ),
             headers={
                 "Content-Type": "text/html",
-                "Set-Cookie": f"session={session_json}; Secure; SameSite=Strict; Path=/; Expires={get_cookie_expiration(datetime.datetime.now(), 7)}",
+                "Set-Cookie": f"session={session_json}; Secure; SameSite=Strict; Path=/; Expires={get_cookie_expiration(datetime.datetime.now(), 7)}; HttpOnly",
             },
         )
     except Exception as e:
@@ -333,8 +337,14 @@ def query_form(req: func.HttpRequest) -> func.HttpResponse:
     :return: The HTML form
     """
     try:
-        with open("html/query.html", "r") as file:
-            return func.HttpResponse(file.read(), headers={"Content-Type": "text/html"})
+        # Get the session cookie from the quest
+        cookie = SimpleCookie()
+        cookie.load(req.headers["Cookie"])
+        logged_in = "session" in cookie and cookie["session"].value
+
+        return func.HttpResponse(
+            get_query_page(logged_in, req), headers={"Content-Type": "text/html"}
+        )
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to read form HTML", status_code=500)

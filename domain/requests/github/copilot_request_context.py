@@ -131,7 +131,6 @@ from domain.tools.wrapper.step_features import answer_step_features_wrapper
 from domain.tools.wrapper.suggest_solution import suggest_solution_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.tools.wrapper.task_summary_wrapper import show_task_summary_wrapper
-from function_app import GUEST_API_KEY
 from infrastructure.github import get_github_user
 from infrastructure.users import get_users_details, get_users_slack_details
 

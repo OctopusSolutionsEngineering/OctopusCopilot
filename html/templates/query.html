@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>Octopus AI</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+          integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/event-source-polyfill@1.0.31/src/eventsource.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src=" https://cdn.jsdelivr.net/npm/dompurify@3.1.5/dist/purify.min.js"></script>
+    <style>
+        @-webkit-keyframes shake {
+            0% {
+                -webkit-transform: translate(2px, 1px) rotate(0deg);
+            }
+            5% {
+                -webkit-transform: translate(-1px, -2px) rotate(-1deg);
+            }
+            10% {
+                -webkit-transform: translate(-3px, 0px) rotate(1deg);
+            }
+            15% {
+                -webkit-transform: translate(0px, 2px) rotate(0deg);
+            }
+            20% {
+                -webkit-transform: translate(1px, -1px) rotate(1deg);
+            }
+            25% {
+                -webkit-transform: translate(-1px, 2px) rotate(-1deg);
+            }
+            30% {
+                -webkit-transform: translate(-3px, 1px) rotate(0deg);
+            }
+            35% {
+                -webkit-transform: translate(2px, 1px) rotate(-1deg);
+            }
+            40% {
+                -webkit-transform: translate(-1px, -1px) rotate(1deg);
+            }
+            45% {
+                -webkit-transform: translate(2px, 2px) rotate(0deg);
+            }
+            50% {
+                -webkit-transform: translate(1px, -2px) rotate(-1deg);
+            }
+            55% {
+                -webkit-transform: translate(0px, 0px) rotate(0deg);
+            }
+            100% {
+                -webkit-transform: translate(0px, 0px) rotate(0deg);
+            }
+        }
+
+        .shake {
+            -webkit-animation-name: shake;
+            -webkit-animation-duration: 3s;
+            -webkit-transform-origin: 0 0;
+            -webkit-animation-iteration-count: infinite;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar mb-4 navbar-dark" style="background-color: #0D80D8;">
+    <span class="navbar-brand text-center col-12 h1"><a
+            href="/api/form" style="color: white">Octopus AI</a>
+
+        <span style="float:right">
+    <a href="javascript:void(0)" id="debug" style="color: white;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bug-fill"
+             viewBox="0 0 16 16">
+          <path d="M4.978.855a.5.5 0 1 0-.956.29l.41 1.352A5 5 0 0 0 3 6h10a5 5 0 0 0-1.432-3.503l.41-1.352a.5.5 0 1 0-.956-.29l-.291.956A5 5 0 0 0 8 1a5 5 0 0 0-2.731.811l-.29-.956z"/>
+          <path d="M13 6v1H8.5v8.975A5 5 0 0 0 13 11h.5a.5.5 0 0 1 .5.5v.5a.5.5 0 1 0 1 0v-.5a1.5 1.5 0 0 0-1.5-1.5H13V9h1.5a.5.5 0 0 0 0-1H13V7h.5A1.5 1.5 0 0 0 15 5.5V5a.5.5 0 0 0-1 0v.5a.5.5 0 0 1-.5.5zm-5.5 9.975V7H3V6h-.5a.5.5 0 0 1-.5-.5V5a.5.5 0 0 0-1 0v.5A1.5 1.5 0 0 0 2.5 7H3v1H1.5a.5.5 0 0 0 0 1H3v1h-.5A1.5 1.5 0 0 0 1 11.5v.5a.5.5 0 1 0 1 0v-.5a.5.5 0 0 1 .5-.5H3a5 5 0 0 0 4.5 4.975"/>
+        </svg>
+        </a>
+
+    <a style="color: white;"
+       href="https://octopus.com/docs/administration/copilot"><svg xmlns="http://www.w3.org/2000/svg" width="16"
+                                                                   height="16" fill="currentColor"
+                                                                   class="bi bi-question-circle-fill"
+                                                                   viewBox="0 0 16 16">
+  <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.496 6.033h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286a.237.237 0 0 0 .241.247m2.325 6.443c.61 0 1.029-.394 1.029-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94 0 .533.425.927 1.01.927z"/>
+    </svg></a></span>
+    </span>
+</nav>
+<form id="form" class="needs-validation" novalidate>
+    <div class="form-group row m-md-1">
+        <label for="github_login" class="col-lg-2 offset-lg-2 col-form-label">GitHub Login</label>
+        <div class="col-lg-6">
+            <button id="github_login" name="github_login" type="button" class="btn btn-primary">GitHub Login</button>
+            <div id="github_login_warning" class="text-danger shake">
+                You must log in to GitHub to continue.
+            </div>
+        </div>
+    </div>
+    <div class="form-group row m-md-1">
+        <label for="query" class="col-lg-2 offset-lg-2 col-form-label">Query</label>
+        <div class="col-lg-6">
+            <textarea id="query" name="query" rows="5" class="form-control" required></textarea>
+            <small id="queryHelp" class="form-text text-muted">This is a plain text query. Ask something like "<a
+                    id="sampleQuery" href="#">Show me the projects in the Default space</a>", "<a
+                    id="helpQuery" href="#">What do you do?</a>", or "<a
+                    id="terraformQuery" href="#">Generate a Terraform module with the environments 'Development',
+                'Test', and 'Production'</a>".</small>
+            <div class="invalid-feedback">
+                Please provide a valid query.
+            </div>
+        </div>
+    </div>
+    <div class="form-group row m-md-1">
+        <label for="query" class="col-lg-2 offset-lg-2 col-form-label">History</label>
+        <div class="col-lg-6">
+            <ul id="historyList"></ul>
+        </div>
+    </div>
+    <div class="form-group row m-md-1">
+        <div class="offset-lg-4 col-lg-8">
+            <button id="submit" name="submit" type="button" class="btn btn-primary">Submit</button>
+        </div>
+    </div>
+    <div class="form-group row m-md-1">
+        <label class="col-lg-2 offset-lg-2 col-form-label">Response</label>
+        <div class="col-lg-6">
+            <div id="markdown"></div>
+        </div>
+    </div>
+    <div class="form-group row m-md-1" id="confirmation">
+        <div class="offset-lg-4 col-lg-8">
+            <button id="accept" name="accept" type="button" class="btn btn-success">Accept</button>
+            <button id="dismiss" name="dismiss" type="button" class="btn btn-danger">Dismiss</button>
+        </div>
+    </div>
+    <div id="debuggingParent" class="form-group row m-md-1" style="display: none">
+        <label class="col-lg-2 offset-lg-2 col-form-label">Debug</label>
+        <div class="col-lg-6">
+            <div id="debugging"></div>
+        </div>
+    </div>
+</form>
+</body>
+<script>
+    const MAX_QUERY_LENGTH = 4000
+
+    let loggedIn = {{ loggedIn | default(false) | tojson }}
+
+    // load the query history
+    let queryHistory = []
+    const savedHistory = localStorage.getItem("queryHistory");
+    if (savedHistory) {
+        queryHistory = JSON.parse(savedHistory)
+        updateHistory()
+    }
+
+    // Enable or disable fields based on login state
+    checkLogin()
+
+    updateHistoryLinkState()
+
+    // Don't display the confirmation buttons by default
+    confirmation.style.display = "none"
+
+    // Track the response stream
+    let response = ""
+
+    function handleEventSourceError(startTime, evtSource, event) {
+        debugging.innerText = "Event: " + JSON.stringify(event)
+        console.log(event)
+        evtSource.close()
+        markdown.innerHTML = "The request resulted in an error."
+        enableInput()
+    }
+
+    function handleEventSourceMessage(startTime, evtSource, event) {
+        const endTime = new Date().getTime()
+
+        debugging.innerText = "Time taken: " + ((endTime - startTime) / 1000).toFixed(2) + " seconds"
+        debugging.innerText += "\nEvent: " + JSON.stringify(event)
+
+        console.log(event)
+
+        /*
+            https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#fields
+            The data field for the message. When the EventSource receives multiple consecutive lines that begin
+            with data:, it concatenates them, inserting a newline character between each one.
+         */
+        event.data.split("\n").forEach((line) => {
+            if (response.length > 0) {
+                response += "\n\n"
+            }
+
+            parsedLine = JSON.parse(line)
+
+            if (parsedLine.type && parsedLine.type === "action") {
+                confirmation.style.display = "inherit"
+                accept.onclick = approveConfirmation(parsedLine.confirmation.id)
+                response += parsedLine.title + "\n\n"
+                response += parsedLine.message
+            } else if (parsedLine.choices && parsedLine.choices.length !== 0 && parsedLine.choices[0].delta && parsedLine.choices[0].delta.content) {
+                response += parsedLine.choices[0].delta.content
+            } else if (parsedLine.choices && parsedLine.choices.length !== 0 && parsedLine.choices[0].finish_reason === "stop") {
+                evtSource.close()
+            } else {
+                response += "\n"
+            }
+        })
+        markdown.innerHTML = marked.parse(response);
+        enableInput()
+    }
+
+    function dismissConfirmation() {
+        confirmation.style.display = "none"
+        response = ""
+        markdown.innerText = "Request was denied."
+    }
+
+    function approveConfirmation(id) {
+        return () => {
+            response = ""
+            confirmation.style.display = "none"
+            markdown.innerText = "Request was approved."
+
+            const startTime = new Date().getTime()
+
+            // Use the polyfill to get the ability to send headers.
+            var evtSource = new EventSourcePolyfill('/api/form_handler?confirmation_id=' + encodeURIComponent(id) + "&confirmation_state=accepted", {
+                // https://stackoverflow.com/questions/71688537/event-source-timeout-in-45-seconds
+                // Increase timeouts as it can take some time to process the request.
+                heartbeatTimeout: 300000,
+            })
+
+            evtSource.onmessage = (event) => {
+                handleEventSourceMessage(startTime, evtSource, event)
+            }
+
+            evtSource.addEventListener("copilot_confirmation", (event) => {
+              handleEventSourceMessage(startTime, evtSource, event)
+            })
+
+            evtSource.onerror = (event) => {
+                handleEventSourceError(startTime, evtSource, event)
+            }
+        }
+    }
+
+    function sanitizeBase64(input) {
+        if (!input) {
+            return null
+        }
+
+        // Regular expression to match valid Base64 characters
+        const base64Regex = /[^A-Za-z0-9+/=]/g;
+        // Replace invalid characters with an empty string
+        return input.replace(base64Regex, '');
+    }
+
+    function disableHistoryLinks() {
+        const links = document.getElementsByClassName("history-link")
+        for (let i = 0; i < links.length; i++) {
+            links[i].style.pointerEvents = "none"
+            links[i].style.color = "gray"
+        }
+    }
+
+    function enableHistoryLinks() {
+        const links = document.getElementsByClassName("history-link")
+        for (let i = 0; i < links.length; i++) {
+            links[i].style.pointerEvents = "auto"
+            links[i].style.color = null
+        }
+    }
+
+    function updateHistoryLinkState() {
+        if (loggedIn) {
+            enableHistoryLinks()
+        } else {
+            disableHistoryLinks()
+        }
+    }
+
+    function checkLogin() {
+        const githubLoginButton = document.getElementById('github_login')
+        const githubLoginButtonWarning = document.getElementById('github_login_warning')
+        const queryTextArea = document.getElementById('query')
+        const submitButton = document.getElementById('submit')
+
+        if (loggedIn) {
+            githubLoginButton.onclick = githubLogout
+            githubLoginButton.innerText = "GitHub Logout"
+            submitButton.disabled = false
+            queryTextArea.disabled = false
+            githubLoginButtonWarning.style.display = "none"
+        } else {
+            githubLoginButton.innerText = "GitHub Login"
+            githubLoginButton.onclick = githubLogin
+            submitButton.disabled = true
+            queryTextArea.disabled = true
+            githubLoginButtonWarning.style.display = "block"
+        }
+    }
+
+    function githubLogin() {
+        // The state parameter redirects to the form page.
+        window.location.href = 'https://github.com/login/oauth/authorize?client_id=Iv1.7fbb4fdc9a50333d&redirect_url=https%3A//aiagent.octopus.com/api/oauth_callback&scope=user&allow_signup=false&state=form'
+    }
+
+    function githubLogout() {
+        if (confirm("Are you sure you want to log out? This is typically only required if something is broken.")) {
+            loggedIn = false
+            checkLogin()
+            updateHistoryLinkState()
+        }
+    }
+
+    function setCookie(name, value, hours) {
+        var expires = "";
+        if (hours) {
+            var date = new Date();
+            date.setTime(date.getTime() + (hours * 60 * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
+    }
+
+    function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    const queryValue = getQueryParam('query');
+    const redirected = getQueryParam('redirected');
+    if (queryValue) {
+        sanitized_value = DOMPurify.sanitize(queryValue)
+        document.getElementById('query').value = sanitized_value
+        // Remove any existing value from the history
+        queryHistory = queryHistory.filter(x => x !== sanitized_value)
+        // push the new query to the end
+        queryHistory.push(sanitized_value)
+        updateHistory()
+    } else if (redirected === "true") {
+        loadLatestHistory()
+    }
+
+    function loadLatestHistory() {
+        const savedHistory = localStorage.getItem("queryHistory");
+        if (savedHistory) {
+            const queryHistory = JSON.parse(savedHistory)
+            if (queryHistory.length > 0) {
+                query.value = DOMPurify.sanitize(queryHistory[queryHistory.length - 1])
+            }
+        }
+    }
+
+    function updateHistory() {
+        if (queryHistory.length > 5) {
+            queryHistory = queryHistory.slice(1, 6)
+        }
+
+        localStorage.setItem("queryHistory", JSON.stringify(queryHistory))
+
+        historyList.innerHTML = ''
+
+        queryHistory.forEach((h) => {
+            const li = document.createElement("li")
+            const link = document.createElement("a")
+            link.setAttribute("href", "#")
+            link.appendChild(document.createTextNode(h))
+            link.onclick = function () {
+                // Do nothing if we need to log in
+                if (!loggedIn) {
+                    return false
+                }
+
+                query.value = DOMPurify.sanitize(h)
+                return false
+            }
+            link.className = "history-link"
+            link.style.textOverflow = "ellipsis";
+            link.style.width = "100%";
+            link.style.overflow = "hidden";
+            link.style.display = "inline-block";
+            link.style.whiteSpace = "nowrap";
+            link.style.verticalAlign = "middle";
+            li.appendChild(link)
+            historyList.appendChild(li)
+        })
+
+        updateHistoryLinkState()
+    }
+
+    var processing = false
+
+    function enableInput() {
+        query.disabled = false
+        submit.disabled = false
+        github_login.disabled = false
+        processing = false
+    }
+
+    async function processQuery(event) {
+        // Clear the previous response
+        response = ""
+
+        // Hide the confirmation buttons when starting a new query
+        confirmation.style.display = "none"
+
+        // Prompt to log in again.
+        if (!loggedIn) {
+            checkLogin()
+            updateHistoryLinkState()
+            return
+        }
+
+        if (processing) {
+            return
+        }
+
+        form.classList.add('was-validated')
+
+        sanitized_value = DOMPurify.sanitize(query.value).substring(0, MAX_QUERY_LENGTH)
+        query.value = sanitized_value
+        if (!form.checkValidity()) {
+            return
+        }
+
+        if (queryHistory.indexOf(sanitized_value) === -1) {
+            queryHistory.push(sanitized_value)
+            updateHistory()
+        }
+
+        markdown.innerHTML = "Processing..."
+        query.disabled = true
+        submit.disabled = true
+        github_login.disabled = true
+        processing = true
+
+        debugging.innerHTML = ""
+        const startTime = new Date().getTime()
+
+        // Use the polyfill to get the ability to send headers.
+        var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(sanitized_value), {
+            // https://stackoverflow.com/questions/71688537/event-source-timeout-in-45-seconds
+            // Increase timeouts as it can take some time to process the request.
+            heartbeatTimeout: 300000,
+        });
+
+        evtSource.onmessage = (event) => {
+            handleEventSourceMessage(startTime, evtSource, event)
+        }
+
+        evtSource.addEventListener("copilot_confirmation", (event) => {
+          handleEventSourceMessage(startTime, evtSource, event)
+        })
+
+        evtSource.onerror = (event) => {
+            handleEventSourceError(startTime, evtSource, event)
+        }
+    }
+
+    dismiss.onclick = dismissConfirmation
+    submit.onclick = processQuery
+    query.addEventListener("keydown", function (e) {
+        if (e.code === "Enter") {
+            processQuery(e)
+            e.preventDefault();
+        }
+    });
+
+    sampleQuery.onclick = function () {
+        query.value = "Show me the projects in the Default space"
+        return false
+    }
+
+    helpQuery.onclick = function () {
+        query.value = "What do you do?"
+        return false
+    }
+
+    terraformQuery.onclick = function () {
+        query.value = "Generate a Terraform module with the environments 'Development', 'Test', and 'Production'"
+        return false
+    }
+
+    debug.onclick = function () {
+        if (debuggingParent.style.display === "none") {
+            debuggingParent.style.display = "flex"
+        } else {
+            debuggingParent.style.display = "none"
+        }
+    }
+</script>
+</html>

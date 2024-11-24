@@ -2,7 +2,11 @@ import os
 import unittest
 
 import azure.functions as func
-from domain.view.html.html_pages import get_redirect_page, get_login_page
+from domain.view.html.html_pages import (
+    get_redirect_page,
+    get_login_page,
+    get_query_page,
+)
 
 
 class AdminUser(unittest.TestCase):
@@ -46,3 +50,43 @@ class AdminUser(unittest.TestCase):
             search_path,
         )
         self.assertFalse("Codefresh" in output)
+
+    def test_get_query_page(self):
+        search_path = (
+            "../../html/templates"
+            if os.path.exists("../../html/templates")
+            else "html/templates"
+        )
+
+        output = get_query_page(
+            False,
+            func.HttpRequest(
+                method="GET",
+                body="".encode("utf8"),
+                url="/api/octopus",
+                params=None,
+                headers={},
+            ),
+            search_path,
+        )
+        self.assertTrue("let loggedIn = false" in output)
+
+    def test_get_query_page_logged_in(self):
+        search_path = (
+            "../../html/templates"
+            if os.path.exists("../../html/templates")
+            else "html/templates"
+        )
+
+        output = get_query_page(
+            True,
+            func.HttpRequest(
+                method="GET",
+                body="".encode("utf8"),
+                url="/api/octopus",
+                params=None,
+                headers={},
+            ),
+            search_path,
+        )
+        self.assertTrue("let loggedIn = true" in output)
