@@ -30,7 +30,10 @@ from domain.sanitizers.sanitized_list import (
 )
 from domain.sanitizers.url_sanitizer import quote_safe
 from domain.url.build_url import build_url
-from domain.validation.argument_validation import ensure_string_not_empty
+from domain.validation.argument_validation import (
+    ensure_string_not_empty,
+    ensure_api_key,
+)
 from domain.validation.octopus_validation import is_manual_intervention_valid
 from infrastructure.http_pool import http, TAKE_ALL
 
@@ -59,13 +62,15 @@ def logging_wrapper(func):
 
 def get_octopus_headers(my_api_key):
     """
-    Build the headers used to make an Octopus API request
+    Build the headers used to make an Octopus API request. Also validate the API key to prevent
+    clearly invalid keys from being used.
     :param my_api_key: The function used to get the Octopus API key
     :return: The headers required to call the Octopus API
     """
 
-    if my_api_key is None:
-        raise ValueError("my_api_key must be the Octopus API key.")
+    ensure_api_key(
+        my_api_key, "my_api_key must be the Octopus Api key (get_octopus_headers)."
+    )
 
     return {
         "X-Octopus-ApiKey": my_api_key,
@@ -84,6 +89,11 @@ def get_space_first_project_runbook_and_environment(space_id, api_key, url):
     :param url: The Octopus URL
     :return: The first combination of project, runbook, and environment
     """
+    ensure_api_key(
+        api_key,
+        "api_key must be the Octopus Api key (get_space_first_project_runbook_and_environment).",
+    )
+
     space_first_runbook = next(get_all_runbooks_generator(space_id, api_key, url), None)
     space_first_project = next(get_projects_generator(space_id, api_key, url), None)
     space_first_environment = next(
@@ -122,7 +132,7 @@ def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
         my_octopus_api,
         "my_octopus_api must be the Octopus Url (get_space_id_and_name_from_name).",
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key,
         "my_api_key must be the Octopus Api key (get_space_id_and_name_from_name).",
     )
@@ -166,6 +176,8 @@ def get_version(octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_spaces_batch(skip, take, api_key, octopus_url):
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_spaces_batch).")
+
     api = build_url(octopus_url, "api/Spaces", dict(take=take, skip=skip))
     resp = handle_response(
         lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
@@ -175,6 +187,10 @@ def get_spaces_batch(skip, take, api_key, octopus_url):
 
 @logging_wrapper
 def get_spaces_generator(api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_spaces_generator)."
+    )
+
     skip = 0
     take = 30
 
@@ -208,7 +224,7 @@ def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
         my_octopus_api,
         "my_octopus_api must be the Octopus Url (get_octopus_project_names_base).",
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key,
         "my_api_key must be the Octopus Api key (get_octopus_project_names_base).",
     )
@@ -246,8 +262,9 @@ def get_project_github_workflow(space_id, project_id, my_api_key, my_octopus_api
     ensure_string_not_empty(
         project_id, "project_id must not be empty (get_project_github_workflow)."
     )
-    ensure_string_not_empty(
-        my_api_key, "my_api_key must not be empty (get_project_github_workflow)."
+    ensure_api_key(
+        my_api_key,
+        "my_api_key must be the Octopus Api key (get_project_github_workflow).",
     )
     ensure_string_not_empty(
         my_octopus_api,
@@ -322,6 +339,11 @@ async def get_release_github_workflow_async(
     :param my_octopus_api: The Octopus url
     :return: The owner, repo, and workflow ID (if found)
     """
+    ensure_api_key(
+        my_api_key,
+        "my_api_key must be the Octopus Api key (get_release_github_workflow_async).",
+    )
+
     release = await get_release_async(space_id, release_id, my_api_key, my_octopus_api)
     # First get runs from build information, and then fall back to release notes
     return get_release_github_workflow_from_buildinfo(
@@ -437,7 +459,7 @@ def get_dashboard(space_id, my_api_key, my_octopus_api):
     ensure_string_not_empty(
         my_octopus_api, "my_octopus_api must be the Octopus Url (get_dashboard)."
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key, "my_api_key must be the Octopus Api key (get_dashboard)."
     )
 
@@ -475,7 +497,7 @@ def get_project_tenant_dashboard(space_id, project_id, my_api_key, my_octopus_ap
         my_octopus_api,
         "my_octopus_api must be the Octopus Url (get_project_progression).",
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key, "my_api_key must be the Octopus Api key (get_project_progression)."
     )
 
@@ -513,7 +535,7 @@ def get_runbooks_dashboard(space_id, runbook_id, my_api_key, my_octopus_api):
         my_octopus_api,
         "my_octopus_api must be the Octopus Url (get_runbooks_dashboard).",
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key, "my_api_key must be the Octopus Api key (get_runbooks_dashboard)."
     )
 
@@ -540,7 +562,7 @@ def get_current_user(my_api_key, my_octopus_api):
     ensure_string_not_empty(
         my_octopus_api, "my_octopus_api must be the Octopus Url (get_current_user)."
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key, "my_api_key must be the Octopus Api key (get_current_user)."
     )
 
@@ -565,9 +587,7 @@ def get_projects(space_id, my_api_key, my_octopus_api):
     ensure_string_not_empty(
         my_octopus_api, "my_octopus_api must be the Octopus Url (get_projects)."
     )
-    ensure_string_not_empty(
-        my_api_key, "my_api_key must be the Octopus Api key (get_projects)."
-    )
+    ensure_api_key(my_api_key, "my_api_key must be the Octopus Api key (get_projects).")
     ensure_string_not_empty(space_id, "space_id must be the space ID (get_projects).")
 
     api = build_url(
@@ -594,9 +614,7 @@ def get_feeds(my_api_key, my_octopus_api, space_id):
     ensure_string_not_empty(
         my_octopus_api, "my_octopus_api must be the Octopus Url (get_feeds)."
     )
-    ensure_string_not_empty(
-        my_api_key, "my_api_key must be the Octopus Api key (get_feeds)."
-    )
+    ensure_api_key(my_api_key, "my_api_key must be the Octopus Api key (get_feeds).")
     ensure_string_not_empty(space_id, "space_id must be the space ID (get_feeds).")
 
     api = build_url(
@@ -621,9 +639,7 @@ def get_accounts(my_api_key, my_octopus_api, space_id):
     ensure_string_not_empty(
         my_octopus_api, "my_octopus_api must be the Octopus Url (get_accounts)."
     )
-    ensure_string_not_empty(
-        my_api_key, "my_api_key must be the Octopus Api key (get_accounts)."
-    )
+    ensure_api_key(my_api_key, "my_api_key must be the Octopus Api key (get_accounts).")
     ensure_string_not_empty(space_id, "space_id must be the space ID (get_accounts).")
 
     api = build_url(
@@ -650,9 +666,7 @@ def get_machines(my_api_key, my_octopus_api, space_id):
     ensure_string_not_empty(
         my_octopus_api, "my_octopus_api must be the Octopus Url (get_machines)."
     )
-    ensure_string_not_empty(
-        my_api_key, "my_api_key must be the Octopus Api key (get_machines)."
-    )
+    ensure_api_key(my_api_key, "my_api_key must be the Octopus Api key (get_machines).")
     ensure_string_not_empty(space_id, "space_id must be the space ID (get_machines).")
 
     api = build_url(
@@ -679,7 +693,7 @@ def get_certificates(my_api_key, my_octopus_api, space_id):
     ensure_string_not_empty(
         my_octopus_api, "my_octopus_api must be the Octopus Url (get_certificates)."
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key, "my_api_key must be the Octopus Api key (get_certificates)."
     )
     ensure_string_not_empty(
@@ -710,7 +724,7 @@ def get_environments(my_api_key, my_octopus_api, space_id):
     ensure_string_not_empty(
         my_octopus_api, "my_octopus_api must be the Octopus Url (get_environments)."
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key, "my_api_key must be the Octopus Api key (get_environments)."
     )
     ensure_string_not_empty(
@@ -759,7 +773,7 @@ def get_runbook_environments_from_project(
         my_octopus_api,
         "my_octopus_api must be the Octopus Url (get_runbook_environments_from_project).",
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key,
         "my_api_key must be the Octopus Api key (get_runbook_environments_from_project).",
     )
@@ -787,7 +801,7 @@ def get_tenants(my_api_key, my_octopus_api, space_id):
     ensure_string_not_empty(
         my_octopus_api, "my_octopus_api must be the Octopus Url (get_environments)."
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key, "my_api_key must be the Octopus Api key (get_environments)."
     )
     ensure_string_not_empty(
@@ -818,7 +832,7 @@ def get_project_channel(my_api_key, my_octopus_api, space_id, project_id):
     ensure_string_not_empty(
         my_octopus_api, "my_octopus_api must be the Octopus Url (get_project_channel)."
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key, "my_api_key must be the Octopus Api key (get_project_channel)."
     )
     ensure_string_not_empty(
@@ -848,7 +862,7 @@ def get_lifecycle(my_api_key, my_octopus_api, space_id, lifecycle_id):
     ensure_string_not_empty(
         my_octopus_api, "my_octopus_api must be the Octopus Url (get_lifecycle)."
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key, "my_api_key must be the Octopus Api key (get_lifecycle)."
     )
     ensure_string_not_empty(space_id, "space_id must be the space ID (get_lifecycle).")
@@ -879,7 +893,7 @@ def create_limited_api_key(user, my_api_key, my_octopus_api):
         my_octopus_api,
         "my_octopus_api must be the Octopus Url (create_limited_api_key).",
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key, "my_api_key must be the Octopus Api key (create_limited_api_key)."
     )
     ensure_string_not_empty(
@@ -918,7 +932,7 @@ def create_unlimited_api_key(user, my_api_key, my_octopus_api):
         my_octopus_api,
         "my_octopus_api must be the Octopus Url (create_limited_api_key).",
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key, "my_api_key must be the Octopus Api key (create_limited_api_key)."
     )
     ensure_string_not_empty(
@@ -959,6 +973,9 @@ def get_raw_deployment_process(space_name, project_name, api_key, octopus_url):
         project_name,
         "project_name must be a non-empty string (get_raw_deployment_process).",
     )
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_raw_deployment_process)."
+    )
 
     space_id, actual_space_name = get_space_id_and_name_from_name(
         space_name, api_key, octopus_url
@@ -995,6 +1012,9 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
         project_name,
         "project_name must be a non-empty string (get_project_progression).",
     )
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_project_progression)."
+    )
 
     space_id, actual_space_name = get_space_id_and_name_from_name(
         space_name, api_key, octopus_url
@@ -1016,6 +1036,8 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_projects_batch(skip, take, space_id, api_key, octopus_url):
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_projects_batch).")
+
     api = build_url(
         octopus_url, f"api/{quote_safe(space_id)}/Projects", dict(take=take, skip=skip)
     )
@@ -1027,6 +1049,10 @@ def get_projects_batch(skip, take, space_id, api_key, octopus_url):
 
 @logging_wrapper
 def get_projects_generator(space_id, api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_projects_generator)."
+    )
+
     skip = 0
     take = 30
 
@@ -1045,6 +1071,10 @@ def get_projects_generator(space_id, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_environments_batch(skip, take, space_id, api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_environments_batch)."
+    )
+
     api = build_url(
         octopus_url,
         f"api/{quote_safe(space_id)}/Environments",
@@ -1058,6 +1088,10 @@ def get_environments_batch(skip, take, space_id, api_key, octopus_url):
 
 @logging_wrapper
 def get_environments_generator(space_id, api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_environments_generator)."
+    )
+
     skip = 0
     take = 30
 
@@ -1078,6 +1112,8 @@ def get_environments_generator(space_id, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_tenants_batch(skip, take, space_id, api_key, octopus_url):
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_tenants_batch).")
+
     api = build_url(
         octopus_url, f"api/{quote_safe(space_id)}/Tenants", dict(take=take, skip=skip)
     )
@@ -1089,6 +1125,10 @@ def get_tenants_batch(skip, take, space_id, api_key, octopus_url):
 
 @logging_wrapper
 def get_tenants_generator(space_id, api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_tenants_generator)."
+    )
+
     skip = 0
     take = 30
 
@@ -1107,6 +1147,8 @@ def get_tenants_generator(space_id, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_runbooks_batch(skip, take, space_id, project_id, api_key, octopus_url):
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_runbooks_batch).")
+
     api = build_url(
         octopus_url,
         f"api/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/Runbooks",
@@ -1120,6 +1162,10 @@ def get_runbooks_batch(skip, take, space_id, project_id, api_key, octopus_url):
 
 @logging_wrapper
 def get_runbooks_generator(space_id, project_id, api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_runbooks_generator)."
+    )
+
     skip = 0
     take = 30
 
@@ -1140,6 +1186,10 @@ def get_runbooks_generator(space_id, project_id, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_all_runbooks_batch(skip, take, space_id, api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_all_runbooks_batch)."
+    )
+
     api = build_url(
         octopus_url, f"api/{quote_safe(space_id)}/Runbooks", dict(take=take, skip=skip)
     )
@@ -1151,6 +1201,10 @@ def get_all_runbooks_batch(skip, take, space_id, api_key, octopus_url):
 
 @logging_wrapper
 def get_all_runbooks_generator(space_id, api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_all_runbooks_generator)."
+    )
+
     skip = 0
     take = 30
 
@@ -1184,7 +1238,7 @@ def get_space(space_id, api_key, octopus_url):
     ensure_string_not_empty(
         octopus_url, "octopus_url must be the Octopus Url (get_space)."
     )
-    ensure_string_not_empty(api_key, "api_key must be the Octopus Api key (get_space).")
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_space).")
 
     base_url = f"api/Spaces/{quote_safe(space_id)}"
 
@@ -1212,6 +1266,7 @@ def get_project(space_id, project_name, api_key, octopus_url):
     ensure_string_not_empty(
         project_name, "project_name must be a non-empty string (get_project)."
     )
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_project).")
 
     # Early exit when a project ID is used
     if project_name.startswith("Projects-"):
@@ -1259,6 +1314,7 @@ def get_environment(space_id, environment_id, api_key, octopus_url):
     ensure_string_not_empty(
         environment_id, "environment_id must be a non-empty string (get_environment)."
     )
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_environment).")
 
     base_url = f"api/{quote_safe(space_id)}/Environments/{quote_safe(environment_id)}"
 
@@ -1285,6 +1341,9 @@ def get_project_releases(space_id, project_id, api_key, octopus_url, take=max_co
     )
     ensure_string_not_empty(
         project_id, "project_id must be a non-empty string (get_project_releases)."
+    )
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_project_releases)."
     )
 
     api = build_url(
@@ -1316,6 +1375,9 @@ def get_release_deployments(space_id, release_id, api_key, octopus_url):
     ensure_string_not_empty(
         release_id, "release_id must be a non-empty string (get_release_deployments)."
     )
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_release_deployments)."
+    )
 
     api = build_url(
         octopus_url,
@@ -1345,6 +1407,9 @@ def get_release(space_id, release_id, api_key, octopus_url):
     ensure_string_not_empty(
         release_id, "release_id must be a non-empty string (get_release_deployments)."
     )
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_release_deployments)."
+    )
 
     api = build_url(
         octopus_url, f"api/{quote_safe(space_id)}/Releases/{quote_safe(release_id)}"
@@ -1368,6 +1433,8 @@ def get_task(space_id, task_id, api_key, octopus_url):
     :return: The deployment progression raw JSON
     """
     ensure_string_not_empty(space_id, "space_id must be a non-empty string (get_task).")
+
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_task).")
 
     if not task_id:
         return None
@@ -1393,7 +1460,13 @@ async def get_task_details_async(space_id, task_id, api_key, octopus_url):
     :param octopus_url: The Octopus URL
     :return: The deployment progression raw JSON
     """
-    ensure_string_not_empty(space_id, "space_id must be a non-empty string (get_task).")
+    ensure_string_not_empty(
+        space_id, "space_id must be a non-empty string (get_task_details_async)."
+    )
+
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_task_details_async)."
+    )
 
     if not task_id:
         return None
@@ -1429,6 +1502,10 @@ def get_project_progression_from_ids(space_id, project_id, api_key, octopus_url)
         project_id,
         "project_id must be a non-empty string (get_project_progression_from_ids).",
     )
+    ensure_api_key(
+        api_key,
+        "api_key must be the Octopus Api key (get_project_progression_from_ids).",
+    )
 
     api = build_url(
         octopus_url,
@@ -1455,9 +1532,6 @@ def get_deployment_status_base(
     :param octopus_url: The Octopus URL
     :return: The list of projects in the space
     """
-
-    logger.info("get_deployment_status - Enter")
-
     ensure_string_not_empty(
         space_name, "space_name must be a non-empty string (get_deployment_status)."
     )
@@ -1471,7 +1545,7 @@ def get_deployment_status_base(
     ensure_string_not_empty(
         octopus_url, "octopus_url must be the Octopus Url (get_deployment_status)."
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         api_key, "api_key must be the Octopus Api key (get_deployment_status)."
     )
 
@@ -1537,7 +1611,7 @@ def get_deployment_logs(
     ensure_string_not_empty(
         octopus_url, "octopus_url must be the Octopus Url (get_deployment_logs)."
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         api_key, "api_key must be the Octopus Api key (get_deployment_logs)."
     )
 
@@ -1659,19 +1733,23 @@ def get_runbook_deployment_logs(
     :return: The deployment progression raw JSON
     """
     ensure_string_not_empty(
-        space_name, "space_name must be a non-empty string (get_deployment_logs)."
+        space_name,
+        "space_name must be a non-empty string (get_runbook_deployment_logs).",
     )
     ensure_string_not_empty(
-        project_name, "project_name must be a non-empty string (get_deployment_logs)."
+        project_name,
+        "project_name must be a non-empty string (get_runbook_deployment_logs).",
     )
     ensure_string_not_empty(
-        runbook_name, "runbook_name must be a non-empty string (get_deployment_logs)."
+        runbook_name,
+        "runbook_name must be a non-empty string (get_runbook_deployment_logs).",
     )
     ensure_string_not_empty(
-        octopus_url, "octopus_url must be the Octopus Url (get_deployment_logs)."
+        octopus_url,
+        "octopus_url must be the Octopus Url (get_runbook_deployment_logs).",
     )
-    ensure_string_not_empty(
-        api_key, "api_key must be the Octopus Api key (get_deployment_logs)."
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_runbook_deployment_logs)."
     )
 
     space_id, actual_space_name = get_space_id_and_name_from_name(
@@ -1856,6 +1934,10 @@ def handle_response(callback):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_environment_fuzzy(space_id, environment_name, api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_environment_fuzzy)."
+    )
+
     base_url = f"api/{quote_safe(space_id)}/Environments"
     api = build_url(octopus_url, base_url, dict(partialname=environment_name))
     resp = handle_response(
@@ -1878,6 +1960,8 @@ def get_environment_fuzzy(space_id, environment_name, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_team(team_id, api_key, octopus_url):
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_team).")
+
     base_url = f"api/teams/{quote_safe(team_id)}"
     api = build_url(octopus_url, base_url)
     resp = handle_response(
@@ -1889,6 +1973,8 @@ def get_team(team_id, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_teams(space_id, api_key, octopus_url, include_system_teams=True):
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_teams).")
+
     base_url = f"api/teams"
     api = build_url(
         octopus_url,
@@ -1903,6 +1989,10 @@ def get_teams(space_id, api_key, octopus_url, include_system_teams=True):
 
 @logging_wrapper
 def get_environments_fuzzy_cached(space_id, environment_names, api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_environments_fuzzy_cached)."
+    )
+
     if not environment_names:
         return []
 
@@ -1918,6 +2008,10 @@ def get_environments_fuzzy_cached(space_id, environment_names, api_key, octopus_
 
 @logging_wrapper
 def get_environment_fuzzy_cached(space_id, environment_name, api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_environment_fuzzy_cached)."
+    )
+
     if not environment_cache.get(octopus_url):
         environment_cache[octopus_url] = {}
 
@@ -1935,6 +2029,8 @@ def get_environment_fuzzy_cached(space_id, environment_name, api_key, octopus_ur
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_tenant_fuzzy(space_id, tenant_name, api_key, octopus_url):
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_tenant_fuzzy).")
+
     base_url = f"api/{quote_safe(space_id)}/Tenants"
     api = build_url(octopus_url, base_url, dict(partialname=tenant_name))
     resp = handle_response(
@@ -1957,6 +2053,8 @@ def get_tenant_fuzzy(space_id, tenant_name, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_tenant(space_id, tenant_id, api_key, octopus_url):
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_tenant).")
+
     base_url = f"api/{quote_safe(space_id)}/Tenants/{quote_safe(tenant_id)}"
     api = build_url(octopus_url, base_url)
     resp = handle_response(
@@ -1967,6 +2065,10 @@ def get_tenant(space_id, tenant_id, api_key, octopus_url):
 
 @logging_wrapper
 def get_tenants_fuzzy_cached(space_id, tenant_names, api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_tenants_fuzzy_cached)."
+    )
+
     return (
         list(
             map(
@@ -1983,6 +2085,10 @@ def get_tenants_fuzzy_cached(space_id, tenant_names, api_key, octopus_url):
 
 @logging_wrapper
 def get_tenant_fuzzy_cached(space_id, tenant_name, api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_tenant_fuzzy_cached)."
+    )
+
     if not tenant_cache.get(octopus_url):
         tenant_cache[octopus_url] = {}
 
@@ -2000,6 +2106,8 @@ def get_tenant_fuzzy_cached(space_id, tenant_name, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_channel(space_id, channel_id, api_key, octopus_url):
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_channel).")
+
     api = build_url(
         octopus_url, f"api/{quote_safe(space_id)}/Channels/{quote_safe(channel_id)}"
     )
@@ -2013,6 +2121,10 @@ def get_channel(space_id, channel_id, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_channel_by_name_fuzzy(space_id, project_id, channel_name, api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_channel_by_name_fuzzy)."
+    )
+
     channels = get_project_channel(api_key, octopus_url, space_id, project_id)
     matching_channel = get_item_fuzzy(channels, channel_name)
     if matching_channel is None:
@@ -2024,6 +2136,10 @@ def get_channel_by_name_fuzzy(space_id, project_id, channel_name, api_key, octop
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_default_channel(space_id, project_id, api_key, octopus_url):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_default_channel)."
+    )
+
     channels = get_project_channel(api_key, octopus_url, space_id, project_id)
     default_channel = [channel for channel in channels if channel["IsDefault"]]
     if len(default_channel) == 0:
@@ -2035,6 +2151,8 @@ def get_default_channel(space_id, project_id, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_release_fuzzy(space_id, project_id, release_version, api_key, octopus_url):
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_release_fuzzy).")
+
     base_url = f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/releases"
     api = build_url(octopus_url, base_url, dict(searchByVersion=release_version))
     resp = handle_response(
@@ -2057,6 +2175,11 @@ def get_release_fuzzy(space_id, project_id, release_version, api_key, octopus_ur
 def get_version_controlled_project_release_template(
     space_id, project_id, channel_id, git_ref, api_key, octopus_url
 ):
+    ensure_api_key(
+        api_key,
+        "api_key must be the Octopus Api key (get_version_controlled_project_release_template).",
+    )
+
     api = build_url(
         octopus_url,
         f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/{quote_safe(git_ref)}/deploymentprocesses/template?channel={quote_safe(channel_id)}",
@@ -2072,6 +2195,11 @@ def get_version_controlled_project_release_template(
 def get_database_project_release_template(
     space_id, project_id, channel_id, api_key, octopus_url
 ):
+    ensure_api_key(
+        api_key,
+        "api_key must be the Octopus Api key (get_database_project_release_template).",
+    )
+
     api = build_url(
         octopus_url,
         f"api/{quote_safe(space_id)}/deploymentprocesses/deploymentprocess-{quote_safe(project_id)}/template?channel={quote_safe(channel_id)}",
@@ -2087,6 +2215,11 @@ def get_database_project_release_template(
 def get_release_template_and_default_branch(
     space_id, project, channel_id, git_ref, api_key, octopus_url
 ):
+    ensure_api_key(
+        api_key,
+        "api_key must be the Octopus Api key (get_release_template_and_default_branch).",
+    )
+
     default_branch = None
     if project["IsVersionControlled"]:
         if not git_ref:
@@ -2112,6 +2245,10 @@ def get_release_template_and_default_branch(
 def get_releases_by_version(
     space_id, project_id, release_version, api_key, octopus_url
 ):
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_releases_by_version)."
+    )
+
     api = build_url(
         octopus_url,
         f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/releases",
@@ -2132,6 +2269,11 @@ def get_releases_by_version(
 def get_project_version_controlled_branch(
     space_id, project_id, branch_name, api_key, octopus_url
 ):
+    ensure_api_key(
+        api_key,
+        "api_key must be the Octopus Api key (get_project_version_controlled_branch).",
+    )
+
     api = build_url(
         octopus_url,
         f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/git/branches/{quote_safe(branch_name)}",
@@ -2144,6 +2286,8 @@ def get_project_version_controlled_branch(
 
 @logging_wrapper
 def get_channel_cached(space_id, channel_id, api_key, octopus_url):
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_channel_cached).")
+
     if not channel_cache.get(octopus_url):
         channel_cache[octopus_url] = {}
 
@@ -2161,6 +2305,8 @@ def get_channel_cached(space_id, channel_id, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_packages(space_id, feed_id, package_id, api_key, octopus_url, take=1):
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_packages).")
+
     base_url = (
         f"api/{quote_safe(space_id)}/feeds/{quote_safe(feed_id)}/packages/versions"
     )
@@ -2177,6 +2323,8 @@ def get_packages(space_id, feed_id, package_id, api_key, octopus_url, take=1):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_project_fuzzy(space_id, project_name, api_key, octopus_url):
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_project_fuzzy).")
+
     # First try to find a nice match using a partial name lookup.
     # This is a shortcut that means we don't have to loop the entire list of project.
     # This will succeed if any resources match the supplied partial name.
@@ -2203,6 +2351,8 @@ def get_project_fuzzy(space_id, project_name, api_key, octopus_url):
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
 def get_runbook_fuzzy(space_id, project_id, runbook_name, api_key, octopus_url):
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_runbook_fuzzy).")
+
     # First try to find a nice match using a partial name lookup.
     # This is a shortcut that means we don't have to loop the entire list of runbooks.
     # This will succeed if any resources match the supplied partial name.
@@ -2245,7 +2395,7 @@ def run_published_runbook_fuzzy(
         my_octopus_api,
         "my_octopus_api must be the Octopus Url (run_published_runbook_fuzzy).",
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key,
         "my_api_key must be the Octopus Api key (run_published_runbook_fuzzy).",
     )
@@ -2351,7 +2501,7 @@ def create_release_fuzzy(
     ensure_string_not_empty(
         my_octopus_api, "my_octopus_api must be the Octopus Url (create_release_fuzzy)."
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key, "my_api_key must be the Octopus Api key (create_release_fuzzy)."
     )
     ensure_string_not_empty(
@@ -2452,7 +2602,7 @@ def deploy_release_fuzzy(
     ensure_string_not_empty(
         my_octopus_api, "my_octopus_api must be the Octopus Url (deploy_release_fuzzy)."
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key, "my_api_key must be the Octopus Api key (deploy_release_fuzzy)."
     )
     ensure_string_not_empty(
@@ -2513,9 +2663,7 @@ async def get_release_async(space_id, release_id, api_key, octopus_url):
     ensure_string_not_empty(
         release_id, "release_id must be a non-empty string (get_release_async)."
     )
-    ensure_string_not_empty(
-        api_key, "api_key must be a non-empty string (get_release_async)."
-    )
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_release_async).")
     ensure_string_not_empty(
         octopus_url, "octopus_url must be a non-empty string (get_release_async)."
     )
@@ -2574,6 +2722,8 @@ def get_artifacts(space_id, server_task, api_key, octopus_url):
     :param octopus_url: The Octopus server URL
     :return:
     """
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_artifacts).")
+
     base_url = f"api/{quote_safe(space_id)}/artifacts"
     api = build_url(octopus_url, base_url, dict(regarding=server_task, take=TAKE_ALL))
     resp = handle_response(
@@ -2595,6 +2745,10 @@ def get_task_interruptions(space_id, task_id, api_key, octopus_url):
     :param octopus_url: The Octopus server URL
     :return: The interruptions for an Octopus Server task
     """
+
+    ensure_api_key(
+        api_key, "api_key must be the Octopus Api key (get_task_interruptions)."
+    )
 
     base_url = f"api/{quote_safe(space_id)}/interruptions"
     api = build_url(octopus_url, base_url, dict(regarding=task_id))
@@ -2633,6 +2787,11 @@ def approve_manual_intervention_for_task(
     :return: The task interruption response and an optional error message
     """
 
+    ensure_api_key(
+        my_api_key,
+        "my_api_key must be the Octopus Api key (approve_manual_intervention_for_task).",
+    )
+
     return handle_manual_intervention_for_task(
         space_id,
         project_id,
@@ -2670,6 +2829,11 @@ def reject_manual_intervention_for_task(
     :param my_octopus_api: The Octopus server URL
     :return: The task interruption response and an optional error message
     """
+    ensure_api_key(
+        my_api_key,
+        "my_api_key must be the Octopus Api key (reject_manual_intervention_for_task).",
+    )
+
     return handle_manual_intervention_for_task(
         space_id,
         project_id,
@@ -2729,7 +2893,7 @@ def handle_manual_intervention_for_task(
     ensure_string_not_empty(
         task_id, "task_id must be the task ID (approve_manual_intervention_for_task)."
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key,
         "my_api_key must be the Octopus Api key (approve_manual_intervention_for_task).",
     )
@@ -2806,6 +2970,11 @@ def handle_manual_intervention_for_task(
 def take_responsibility_for_interruption(
     space_id, interruption_id, api_key, octopus_url
 ):
+    ensure_api_key(
+        api_key,
+        "api_key must be the Octopus Api key (take_responsibility_for_interruption).",
+    )
+
     base_url = f"api/{quote_safe(space_id)}/interruptions/{quote_safe(interruption_id)}/responsible"
     api = build_url(octopus_url, base_url)
 
@@ -2835,7 +3004,7 @@ def cancel_server_task(space_id, task_id, my_api_key, my_octopus_api):
     ensure_string_not_empty(
         task_id, "task_id must be the task ID (cancel_server_task)."
     )
-    ensure_string_not_empty(
+    ensure_api_key(
         my_api_key, "my_api_key must be the Octopus Api key (cancel_server_task)."
     )
     ensure_string_not_empty(
@@ -2869,6 +3038,11 @@ def runbook_environment_valid(
     :return: Tuple of: bool value indicating if the environment is valid, and an error response if False.
 
     """
+    ensure_api_key(
+        my_api_key,
+        "my_api_key must be the Octopus Api key (runbook_environment_valid).",
+    )
+
     runbook_environments = []
     match runbook["EnvironmentScope"]:
         case "All":
@@ -2927,6 +3101,11 @@ def get_runbook_snapshot_preview(
 
     """
 
+    ensure_api_key(
+        my_api_key,
+        "my_api_key must be the Octopus Api key (get_runbook_snapshot_preview).",
+    )
+
     base_url = f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/runbookSnapshots/{quote_safe(runbook_snapshot_id)}/runbookRuns/preview/{quote_safe(environment_id)}"
     api = build_url(my_octopus_api, base_url, query=dict(includeDisabledSteps=True))
 
@@ -2964,6 +3143,10 @@ def match_runbook_variables(
             were supplied, a warning will also be returned.
 
     """
+
+    ensure_api_key(
+        my_api_key, "my_api_key must be the Octopus Api key (match_runbook_variables)."
+    )
 
     if not runbook_snapshot_id:
         raise RunbookNotPublished(runbook_name)
@@ -3021,6 +3204,10 @@ def get_deployment_preview(
 
     """
 
+    ensure_api_key(
+        my_api_key, "my_api_key must be the Octopus Api key (get_deployment_preview)."
+    )
+
     base_url = f"api/{quote_safe(space_id)}/releases/{quote_safe(release_id)}/deployments/preview/{quote_safe(environment_id)}"
     api = build_url(my_octopus_api, base_url, query=dict(includeDisabledSteps=True))
 
@@ -3049,6 +3236,11 @@ def match_deployment_variables(
             were supplied, a warning will also be returned.
 
     """
+
+    ensure_api_key(
+        my_api_key,
+        "my_api_key must be the Octopus Api key (match_deployment_variables).",
+    )
 
     # OpenAI sometimes parses the variables as a json string
     if isinstance(variables, str):
@@ -3165,6 +3357,8 @@ def get_users(api_key, octopus_url):
     :param octopus_url: The Octopus server URL
     :return: The users for an Octopus Server task
     """
+
+    ensure_api_key(api_key, "api_key must be the Octopus Api key (get_users).")
 
     base_url = f"api/users"
     api = build_url(octopus_url, base_url, dict(take=TAKE_ALL))

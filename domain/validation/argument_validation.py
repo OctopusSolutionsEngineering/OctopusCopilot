@@ -1,5 +1,17 @@
 from datetime import datetime
 
+from domain.validation.octopus_validation import is_api_key
+
+
+def ensure_api_key(value, error_message):
+    """
+    Ensures the value is an API key
+    :param value: The argument to test
+    :param error_message: The error message to raise if the test fails
+    """
+    if not is_api_key(value):
+        raise ValueError(error_message)
+
 
 def ensure_string_not_empty(value, error_message):
     """
