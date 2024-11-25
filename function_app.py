@@ -171,9 +171,7 @@ def octopus(req: func.HttpRequest) -> func.HttpResponse:
         # Clear the existing session cookie when doing a new login
         return func.HttpResponse(
             get_login_page(req),
-            headers={
-                "Content-Type": "text/html"
-            },
+            headers={"Content-Type": "text/html"},
         )
     except Exception as e:
         handle_error(e)
