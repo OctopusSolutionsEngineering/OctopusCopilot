@@ -21,4 +21,4 @@ class CreateCookieTest(unittest.TestCase):
         tz = pytz.timezone("Australia/Brisbane")
         now = tz.localize(datetime.datetime(2024, 9, 25, 12, 0, 0, 0))
         expiration = get_cookie_expiration(now, 1)
-        self.assertEqual("Wed, 25 Sep 2024 03:00:00 GMT", expiration)
+        self.assertEqual("Thu, 26 Sep 2024 02:00:00 GMT", expiration)
