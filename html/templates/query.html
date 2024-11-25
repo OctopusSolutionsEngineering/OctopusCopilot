@@ -186,10 +186,6 @@
             with data:, it concatenates them, inserting a newline character between each one.
          */
         event.data.split("\n").forEach((line) => {
-            if (response.length > 0) {
-                response += "\n"
-            }
-
             parsedLine = JSON.parse(line)
 
             if (parsedLine.type && parsedLine.type === "action") {
