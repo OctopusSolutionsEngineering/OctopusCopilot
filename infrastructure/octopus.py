@@ -10,6 +10,7 @@ from fuzzywuzzy import fuzz
 from retry import retry
 from urllib3.exceptions import HTTPError
 
+from domain.config.octopus import TOKEN_LIFETIME
 from domain.config.openai import max_context
 from domain.converters.string_to_int import string_to_int
 from domain.exceptions.prompted_variable_match_error import (
@@ -900,11 +901,11 @@ def create_limited_api_key(user, my_api_key, my_octopus_api):
         user, "user must be the Octopus user ID (create_limited_api_key)."
     )
 
-    tomorrow = datetime.datetime.now(pytz.UTC) + datetime.timedelta(days=1)
+    expires = datetime.datetime.now(pytz.UTC) + datetime.timedelta(days=TOKEN_LIFETIME)
 
     api_key = {
         "Purpose": "Octopus Copilot temporary API key",
-        "Expires": tomorrow.isoformat(),
+        "Expires": expires.isoformat(),
     }
 
     api = build_url(my_octopus_api, f"/api/users/{quote_safe(user)}/apikeys")

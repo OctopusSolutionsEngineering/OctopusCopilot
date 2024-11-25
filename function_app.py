@@ -7,7 +7,7 @@ from http.cookies import SimpleCookie
 import azure.functions as func
 from domain.config.codefresh import get_codefresh_url
 from domain.config.database import get_functions_connection_string
-from domain.config.octopus import min_octopus_version, GUEST_API_KEY
+from domain.config.octopus import min_octopus_version, GUEST_API_KEY, TOKEN_LIFETIME
 from domain.context.octopus_context import llm_message_query
 from domain.encryption.encryption import generate_password
 from domain.errors.error_handling import handle_error
@@ -219,7 +219,7 @@ def oauth_callback_internal(req: func.HttpRequest):
             ),
             headers={
                 "Content-Type": "text/html",
-                "Set-Cookie": f"session={session_json}; Secure; SameSite=Strict; Path=/; Expires={get_cookie_expiration(datetime.datetime.now(), 7)}; HttpOnly",
+                "Set-Cookie": f"session={session_json}; Secure; SameSite=Strict; Path=/; Expires={get_cookie_expiration(datetime.datetime.now(), TOKEN_LIFETIME)}; HttpOnly",
             },
         )
     except Exception as e:

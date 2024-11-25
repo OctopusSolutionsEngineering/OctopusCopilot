@@ -3,6 +3,7 @@ from datetime import timedelta, datetime
 from azure.core.exceptions import HttpResponseError
 from azure.data.tables import TableServiceClient, UpdateMode
 
+from domain.config.octopus import TOKEN_LIFETIME
 from domain.encryption.encryption import encrypt_eax, generate_password
 from domain.errors.error_handling import handle_error
 from domain.logging.app_logging import configure_logging
@@ -484,7 +485,8 @@ def save_users_codefresh_details(
     username, encrypted_token, tag, nonce, connection_string
 ):
     ensure_string_not_empty(
-        username, "username must be the GitHub user's ID (save_users_codefresh_details)."
+        username,
+        "username must be the GitHub user's ID (save_users_codefresh_details).",
     )
     ensure_string_not_empty(
         encrypted_token,
@@ -623,7 +625,8 @@ def save_users_codefresh_details_from_login(
         "username must be the GitHub user ID (save_users_codefresh_details_from_login).",
     )
     ensure_string_not_empty(
-        token, "token must be the Codefresh token (save_users_codefresh_details_from_login)."
+        token,
+        "token must be the Codefresh token (save_users_codefresh_details_from_login).",
     )
     ensure_string_not_empty(
         connection_string,
@@ -631,7 +634,9 @@ def save_users_codefresh_details_from_login(
     )
 
     if not is_valid_token(token):
-        raise ValueError("The Token is not valid (save_users_codefresh_details_from_login).")
+        raise ValueError(
+            "The Token is not valid (save_users_codefresh_details_from_login)."
+        )
 
     encryption_password = generate_password(encryption_password, encryption_salt)
     encrypted_token, tag, nonce = encrypt_eax(
@@ -713,7 +718,7 @@ def delete_old_user_details(connection_string):
         )
         table_client = table_service_client.get_table_client(table_name="users")
 
-        old_records = (datetime.now() - timedelta(hours=8)).strftime(
+        old_records = (datetime.now() - timedelta(days=TOKEN_LIFETIME)).strftime(
             "%Y-%m-%dT%H:%M:%S.%fZ"
         )
 
@@ -786,7 +791,9 @@ def delete_old_codefresh_user_details(connection_string):
         table_service_client = TableServiceClient.from_connection_string(
             conn_str=connection_string
         )
-        table_client = table_service_client.get_table_client(table_name="codefreshusers")
+        table_client = table_service_client.get_table_client(
+            table_name="codefreshusers"
+        )
 
         old_records = (datetime.now() - timedelta(hours=8)).strftime(
             "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -870,7 +877,8 @@ def delete_codefresh_user_details(username, connection_string):
     """
 
     ensure_string_not_empty(
-        username, "username must be the connection string (delete_codefresh_user_details)."
+        username,
+        "username must be the connection string (delete_codefresh_user_details).",
     )
     ensure_string_not_empty(
         connection_string,
@@ -882,7 +890,9 @@ def delete_codefresh_user_details(username, connection_string):
             conn_str=connection_string
         )
 
-        cf_table_client = table_service_client.get_table_client(table_name="codefreshusers")
+        cf_table_client = table_service_client.get_table_client(
+            table_name="codefreshusers"
+        )
         cf_table_client.delete_entity("github.com", username)
 
         logger.info(f"Logged out user {username}")

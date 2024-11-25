@@ -13,3 +13,6 @@ max_release_for_github_links = 20
 max_github_artifacts = 5
 
 GUEST_API_KEY = "API-GUEST"
+
+# Number of days a token can live for
+TOKEN_LIFETIME = 7
