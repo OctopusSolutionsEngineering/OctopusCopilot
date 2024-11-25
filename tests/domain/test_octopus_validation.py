@@ -233,6 +233,12 @@ class ApiKeyTest(unittest.TestCase):
     def test_api_key_validation(self):
         self.assertTrue(is_api_key("API-XXXXXXXXX"))
         self.assertTrue(is_api_key("API-ABCDEFG1234"))
+        self.assertFalse(is_api_key("API-ABCDEFG1234\n"))
+        self.assertFalse(is_api_key(" API-ABCDEFG1234"))
+        self.assertFalse(is_api_key("API-ABCDEFG1234 "))
+        self.assertFalse(is_api_key("\tAPI-ABCDEFG1234"))
+        self.assertFalse(is_api_key("API-ABCDEFG1234\r"))
+        self.assertFalse(is_api_key("API-ABCDEFG1234\r\n"))
         self.assertFalse(is_api_key("blah"))
         self.assertFalse(is_api_key("javascript:alert('hello')"))
         self.assertFalse(is_api_key(""))

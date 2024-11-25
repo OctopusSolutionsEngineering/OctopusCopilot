@@ -382,22 +382,26 @@ def octopus_login_submit(req: func.HttpRequest) -> func.HttpResponse:
 
         user_id = get_github_user(access_token)
 
+        # Extract the Octopus details from the form, removing any leading or trailing whitespace
+        api_key = body["api"].strip()
+        url = body["url"].strip()
+
         # Using the supplied API key, create a time limited API key that we'll save and reuse until
         # the next cleanup cycle triggered by api_key_cleanup. Using temporary keys mens we never
         # persist a long-lived key.
-        user = get_current_user(body["api"], body["url"])
+        user = get_current_user(api_key, url)
 
         # The guest API key is a fixed string, and we do not create a new temporary key
         api_key = (
-            create_limited_api_key(user, body["api"], body["url"])
-            if body["api"].upper().strip() != GUEST_API_KEY
+            create_limited_api_key(user, api_key, url)
+            if api_key.upper().strip() != GUEST_API_KEY
             else GUEST_API_KEY
         )
 
         # Persist the Octopus details against the GitHub user
         save_users_octopus_url_from_login(
             user_id,
-            body["url"],
+            url,
             api_key,
             os.environ.get("ENCRYPTION_PASSWORD"),
             os.environ.get("ENCRYPTION_SALT"),
