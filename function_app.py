@@ -508,8 +508,12 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
     """
 
     try:
-        # Always require github creds. If they are not supplied, an exception will be thrown.
+        # Always require github creds. If they are invalid, an exception will be thrown.
         github_user = get_github_user_from_form(req)
+
+        # If the user is not logged in, we cannot proceed
+        if not github_user:
+            raise UserNotLoggedIn()
 
         result = execute_callback(
             req, build_form_tools, github_user
