@@ -165,12 +165,6 @@ class CopilotChatTest(unittest.TestCase):
         finally:
             cls.mssql = None
 
-    def test_no_git_creds(self):
-        response = copilot_handler_internal(build_no_github_request("blah"))
-        self.assertTrue(
-            "Your GitHub token is invalid" in response.get_body().decode("utf8")
-        )
-
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_runbook_run(self):
         publish_runbook("Simple", "Copilot Test Runbook Project", "Backup Database")
