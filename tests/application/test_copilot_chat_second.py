@@ -377,7 +377,8 @@ class CopilotChatTestTwo(unittest.TestCase):
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue(
-            "Test.Variable" in response_text, "Response was " + response_text
+            "Your GitHub token is invalid" in response_text,
+            "Response was " + response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
