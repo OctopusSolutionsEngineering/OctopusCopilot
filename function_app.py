@@ -508,8 +508,11 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
     """
 
     try:
+        # Always require github creds. If they are not supplied, an exception will be thrown.
+        github_user = get_github_user_from_form(req)
+
         result = execute_callback(
-            req, build_form_tools, get_github_user_from_form(req)
+            req, build_form_tools, github_user
         ) or execute_function(req, build_form_tools)
 
         return func.HttpResponse(
