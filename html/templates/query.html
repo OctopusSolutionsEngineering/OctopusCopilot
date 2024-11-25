@@ -187,12 +187,14 @@
          */
         event.data.split("\n").forEach((line) => {
             if (response.length > 0) {
-                response += "\n\n"
+                response += "\n"
             }
 
             parsedLine = JSON.parse(line)
 
             if (parsedLine.type && parsedLine.type === "action") {
+                // Add a newline to separate the actions
+                response += "\n"
                 confirmation.style.display = "inherit"
                 accept.onclick = approveConfirmation(parsedLine.confirmation.id)
                 response += parsedLine.title + "\n\n"
