@@ -898,7 +898,8 @@ def build_confirmation_request(body):
 
 def build_test_request(message):
     """
-    Builds a request that directly embeds the API key and server, removing the need to query the GitHub API.
+    Builds a request that directly embeds the API key and server with no GitHub creds. This
+    should fail because GitHub creds are required.
     :param message:
     :return:
     """
