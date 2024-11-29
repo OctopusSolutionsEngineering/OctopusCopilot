@@ -128,7 +128,7 @@ Octonaughts can see the `Octopus Copilot OpenAI` secure note in the password man
 
 ## Style and Linting
 
-Consider using the [Black](github.com/psf/black) code formatter to ensure consistent code style.
+Consider using the [Black](https://github.com/psf/black) code formatter to ensure consistent code style.
 
 # Testing
 
