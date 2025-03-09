@@ -32,10 +32,7 @@ class CopilotChatNoDefaultsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         try:
-            # The directory might be relative to the test file or the root of the project
-            terraform_dir = (
-                "../terraform/" if os.path.isdir("../terraform") else "tests/terraform/"
-            )
+            terraform_dir = "../terraform/"
 
             cls.mssql = (
                 DockerContainer("mcr.microsoft.com/mssql/server:2022-latest")
