@@ -119,6 +119,7 @@ jobs:
             exit 0
           fi
           ls -la
+          ls -la tests
           exit "$ret"
         env:
           # These are the details of Slack
