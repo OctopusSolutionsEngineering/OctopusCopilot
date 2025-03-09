@@ -18,14 +18,14 @@ from domain.transformers.sse_transformers import (
 from domain.url.session import create_session_blob
 from function_app import copilot_handler_internal
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
-from tests.infrastructure.test_cancel import cancel_task
 from tests.infrastructure.create_and_deploy_release import (
     create_and_deploy_release,
     wait_for_task,
 )
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
-from tests.infrastructure.test_octopus_infrastructure import run_terraform
 from tests.infrastructure.publish_runbook import publish_runbook
+from tests.infrastructure.test_cancel import cancel_task
+from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
 class CopilotChatTest(unittest.TestCase):
@@ -94,6 +94,13 @@ class CopilotChatTest(unittest.TestCase):
             return
 
         try:
+            # The directory might be relative to the test file or the root of the project
+            terraform_dir = (
+                "../terraform/"
+                if os.path.isdir("../terraform/")
+                else "tests/terraform/"
+            )
+
             cls.mssql = (
                 DockerContainer("mcr.microsoft.com/mssql/server:2022-latest")
                 .with_env("ACCEPT_EULA", "True")
@@ -129,16 +136,16 @@ class CopilotChatTest(unittest.TestCase):
             )
 
             output = run_terraform(
-                "../terraform/simple/space_creation", Octopus_Url, Octopus_Api_Key
+                terraform_dir + "simple/space_creation", Octopus_Url, Octopus_Api_Key
             )
             run_terraform(
-                "../terraform/simple/space_population",
+                terraform_dir + "simple/space_population",
                 Octopus_Url,
                 Octopus_Api_Key,
                 json.loads(output)["octopus_space_id"]["value"],
             )
             run_terraform(
-                "../terraform/empty/space_creation", Octopus_Url, Octopus_Api_Key
+                terraform_dir + "empty/space_creation", Octopus_Url, Octopus_Api_Key
             )
         except Exception as e:
             print(
