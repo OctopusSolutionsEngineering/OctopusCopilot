@@ -779,7 +779,8 @@ class UnitTests(unittest.TestCase):
 def run_terraform(directory, url, api, space=None):
     with tempfile.TemporaryDirectory() as temp_dir:
         test_file_path = os.path.dirname(__file__)
-        absolute_path = os.path.join(test_file_path, directory)
+        joined_path = os.path.join(test_file_path, directory)
+        absolute_path = os.path.abspath(joined_path)
 
         if not os.path.exists(absolute_path):
             raise (
