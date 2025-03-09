@@ -106,9 +106,7 @@ class CopilotChatTestTwo(unittest.TestCase):
         try:
             # The directory might be relative to the test file or the root of the project
             terraform_dir = (
-                "../terraform/"
-                if os.path.isdir("../terraform/")
-                else "tests/terraform/"
+                "../terraform/" if os.path.isdir("../terraform") else "tests/terraform/"
             )
 
             cls.mssql = (
