@@ -778,8 +778,22 @@ class UnitTests(unittest.TestCase):
 
 def run_terraform(directory, url, api, space=None):
     with tempfile.TemporaryDirectory() as temp_dir:
+        test_file_path = os.path.dirname(__file__)
+        absolute_path = os.path.join(test_file_path, directory)
+
+        if not os.path.exists(absolute_path):
+            raise (
+                "Path does not exist: "
+                + absolute_path
+                + ". Created from file path "
+                + test_file_path
+                + " and directory "
+                + directory
+                + "."
+            )
+
         shutil.copytree(
-            os.path.abspath(os.path.join(os.path.dirname(__file__), directory)),
+            absolute_path,
             temp_dir,
             dirs_exist_ok=True,
         )
