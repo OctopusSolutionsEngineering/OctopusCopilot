@@ -55,6 +55,8 @@ class CopilotChatNoDefaultsTest(unittest.TestCase):
             return
 
         try:
+            terraform_dir = "../terraform/"
+
             cls.mssql = (
                 DockerContainer("mcr.microsoft.com/mssql/server:2022-latest")
                 .with_env("ACCEPT_EULA", "True")
@@ -90,16 +92,16 @@ class CopilotChatNoDefaultsTest(unittest.TestCase):
             )
 
             output = run_terraform(
-                "../terraform/simple/space_creation", Octopus_Url, Octopus_Api_Key
+                terraform_dir + "simple/space_creation", Octopus_Url, Octopus_Api_Key
             )
             run_terraform(
-                "../terraform/simple/space_population",
+                terraform_dir + "simple/space_population",
                 Octopus_Url,
                 Octopus_Api_Key,
                 json.loads(output)["octopus_space_id"]["value"],
             )
             run_terraform(
-                "../terraform/empty/space_creation", Octopus_Url, Octopus_Api_Key
+                terraform_dir + "empty/space_creation", Octopus_Url, Octopus_Api_Key
             )
         except Exception as e:
             print(e)

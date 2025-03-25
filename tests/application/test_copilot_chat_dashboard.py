@@ -1,9 +1,7 @@
 import json
 import os
-import re
 import time
 import unittest
-import uuid
 from datetime import datetime
 
 import azure.functions as func
@@ -13,20 +11,12 @@ from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
-from domain.lookup.octopus_lookups import (
-    lookup_space,
-    lookup_projects,
-    lookup_environments,
-    lookup_tenants,
-    lookup_runbooks,
-)
 from domain.transformers.sse_transformers import convert_from_sse_response
 from domain.url.session import create_session_blob
 from function_app import copilot_handler_internal, health_internal
 from infrastructure.octopus import (
     run_published_runbook_fuzzy,
     get_space_id_and_name_from_name,
-    get_project,
 )
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.infrastructure.create_and_deploy_release import (
@@ -34,8 +24,8 @@ from tests.infrastructure.create_and_deploy_release import (
     wait_for_task,
 )
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
-from tests.infrastructure.test_octopus_infrastructure import run_terraform
 from tests.infrastructure.publish_runbook import publish_runbook
+from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
 class CopilotChatDashboardTest(unittest.TestCase):
@@ -104,6 +94,8 @@ class CopilotChatDashboardTest(unittest.TestCase):
             return
 
         try:
+            terraform_dir = "../terraform/"
+
             cls.mssql = (
                 DockerContainer("mcr.microsoft.com/mssql/server:2022-latest")
                 .with_env("ACCEPT_EULA", "True")
@@ -139,16 +131,16 @@ class CopilotChatDashboardTest(unittest.TestCase):
             )
 
             output = run_terraform(
-                "../terraform/simple/space_creation", Octopus_Url, Octopus_Api_Key
+                terraform_dir + "simple/space_creation", Octopus_Url, Octopus_Api_Key
             )
             run_terraform(
-                "../terraform/simple/space_population",
+                terraform_dir + "simple/space_population",
                 Octopus_Url,
                 Octopus_Api_Key,
                 json.loads(output)["octopus_space_id"]["value"],
             )
             run_terraform(
-                "../terraform/empty/space_creation", Octopus_Url, Octopus_Api_Key
+                terraform_dir + "empty/space_creation", Octopus_Url, Octopus_Api_Key
             )
         except Exception as e:
             print(
