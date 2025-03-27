@@ -11,6 +11,7 @@ from domain.config.storyblok import get_storyblok_token
 from domain.config.users import get_admin_users
 from domain.config.zendesk import get_zendesk_user, get_zendesk_token
 from domain.encryption.encryption import decrypt_eax, generate_password
+from domain.exceptions.request_failed import GitHubRequestFailed
 from domain.exceptions.slack_not_logged_in import SlackTokenInvalid
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyInvalid
@@ -214,7 +215,14 @@ def get_github_token(req: func.HttpRequest):
 
 
 def get_github_user_from_form(req: func.HttpRequest):
-    return get_github_user(get_github_token(req))
+    try:
+        return get_github_user(get_github_token(req))
+    except GitHubRequestFailed:
+        # Maybe there was an old cookie or token. If the end user is mixing
+        # Copilot requests with other clients, then this is possible.
+        # This must not fail the request, as it is possible to send all the required
+        # authentication details in the request headers and not rely on a GitHub token.
+        return None
 
 
 def get_api_key_and_url(req: func.HttpRequest):

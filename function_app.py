@@ -670,6 +670,14 @@ def execute_callback(req, build_form_tools, github_user):
 
     # We have received a confirmation, so call the callback
     if state and task_id:
+
+        # Only the copilot interface supports callbacks.
+        # If there is no github user, there is no way to retrieve a callback
+        if not github_user:
+            raise GitHubRequestFailed(
+                "Can not process callback without a valid GitHub user. The token may have expired or the session Cookie may be invalid."
+            )
+
         if state.strip().casefold() == "accepted":
             function_name, arguments, query = load_callback(
                 github_user, task_id.strip(), get_functions_connection_string()
