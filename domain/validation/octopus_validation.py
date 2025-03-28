@@ -3,8 +3,6 @@ from urllib.parse import urlparse
 
 from jwt import PyJWT
 
-from domain import jwt
-from domain.jwt.oidc import parse_jwt
 from domain.view.markdown.octopus_task_interruption_details import (
     format_interruption_details,
 )
