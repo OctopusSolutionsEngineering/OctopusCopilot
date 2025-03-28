@@ -1,6 +1,8 @@
 import re
 from urllib.parse import urlparse
 
+from jwt import PyJWT
+
 from domain import jwt
 from domain.jwt.oidc import parse_jwt
 from domain.view.markdown.octopus_task_interruption_details import (
@@ -40,7 +42,11 @@ def is_api_key_or_jwt(api_key):
 
     # It might be a token
     try:
-        parse_jwt(api_key)
+        PyJWT().decode(
+            jwt=api_key,
+            options={"verify_signature": False, "verify_exp": True},
+            algorithms=["HS256"],
+        )
         return True
     except Exception:
         return False
