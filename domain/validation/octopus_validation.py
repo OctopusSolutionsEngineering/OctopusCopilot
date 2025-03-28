@@ -42,7 +42,7 @@ def is_api_key_or_jwt(api_key):
     try:
         parse_jwt(api_key)
         return True
-    except:
+    except Exception:
         return False
 
 
