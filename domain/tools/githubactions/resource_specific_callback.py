@@ -44,7 +44,14 @@ def resource_specific_callback(github_user, octopus_details, log_query):
         While the tool functions are resource specific, this callback is generic.
         """
 
-        api_key, url = octopus_details()
+        auth, url = octopus_details()
+        api_key = ""
+        access_token = ""
+
+        if auth.startswith("API-"):
+            api_key = auth
+        else:
+            access_token = auth
 
         debug_text = get_params_message(
             github_user,
@@ -160,6 +167,7 @@ def resource_specific_callback(github_user, octopus_details, log_query):
                 None,
                 None,
                 api_key,
+                access_token,
                 url,
                 log_query,
             )

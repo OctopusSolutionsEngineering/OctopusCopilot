@@ -19,7 +19,14 @@ from infrastructure.octopus import (
 
 def general_query_callback(github_user, octopus_details, log_query):
     def general_query_callback_implementation(original_query, body, messages):
-        api_key, url = octopus_details()
+        auth, url = octopus_details()
+        api_key = ""
+        access_token = ""
+
+        if auth.startswith("API-"):
+            api_key = auth
+        else:
+            access_token = auth
 
         debug_text = get_params_message(
             github_user,
@@ -119,6 +126,7 @@ def general_query_callback(github_user, octopus_details, log_query):
                 body["variable_names"],
                 body["dates"],
                 api_key,
+                access_token,
                 url,
                 log_query,
             )

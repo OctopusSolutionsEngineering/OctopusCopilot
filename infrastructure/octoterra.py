@@ -160,6 +160,7 @@ def get_octoterra_space(
     step_names,
     variable_names,
     api_key,
+    access_token,
     octopus_url,
     log_query,
     max_attribute_length=1000,
@@ -208,7 +209,11 @@ def get_octoterra_space(
         max_attribute_length,
     )
 
-    headers = {"X-Octopus-ApiKey": api_key, "X-Octopus-Url": octopus_url}
+    headers = {
+        "X-Octopus-ApiKey": api_key,
+        "X-Octopus-Url": octopus_url,
+        "X-Octopus-AccessToken": access_token,
+    }
 
     resp = timing_wrapper(
         lambda: handle_response(

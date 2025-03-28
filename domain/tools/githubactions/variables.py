@@ -21,7 +21,14 @@ def variable_query_callback(github_user, octopus_details, log_query):
     def variable_query_callback_implementation(
         original_query, messages, space, projects, variables
     ):
-        api_key, url = octopus_details()
+        auth, url = octopus_details()
+        api_key = ""
+        access_token = ""
+
+        if auth.startswith("API-"):
+            api_key = auth
+        else:
+            access_token = auth
 
         debug_text = get_params_message(
             github_user,
@@ -111,6 +118,7 @@ def variable_query_callback(github_user, octopus_details, log_query):
                 ["<all>"] if none_if_falesy_or_all(variables) else variables,
                 None,
                 api_key,
+                access_token,
                 url,
                 log_query,
                 # This value is the number of characters to include from the step. Additionally, any variables will be included in the response.

@@ -3,9 +3,16 @@ import unittest
 
 from domain.context.octopus_context import collect_llm_context
 from domain.messages.general import build_hcl_prompt
-from domain.tools.wrapper.function_definition import FunctionDefinition, FunctionDefinitions
+from domain.tools.wrapper.function_definition import (
+    FunctionDefinition,
+    FunctionDefinitions,
+)
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
-from infrastructure.octopus import get_machines, get_environments, get_space_id_and_name_from_name
+from infrastructure.octopus import (
+    get_machines,
+    get_environments,
+    get_space_id_and_name_from_name,
+)
 from infrastructure.openai import llm_tool_query
 
 
@@ -14,21 +21,41 @@ def get_test_cases(limit=0):
     Generates a set of test cases based on the status of a real Octopus instance.
     :return: a list of tuples matching a project name, id, status, scoped environments
     """
-    machines = get_machines(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
-                            os.environ.get("TEST_OCTOPUS_SPACE_ID"))
-    environments = get_environments(os.environ.get("TEST_OCTOPUS_API_KEY"), os.environ.get("TEST_OCTOPUS_URL"),
-                                    os.environ.get("TEST_OCTOPUS_SPACE_ID"))
+    machines = get_machines(
+        os.environ.get("TEST_OCTOPUS_API_KEY"),
+        os.environ.get("TEST_OCTOPUS_URL"),
+        os.environ.get("TEST_OCTOPUS_SPACE_ID"),
+    )
+    environments = get_environments(
+        os.environ.get("TEST_OCTOPUS_API_KEY"),
+        os.environ.get("TEST_OCTOPUS_URL"),
+        os.environ.get("TEST_OCTOPUS_SPACE_ID"),
+    )
 
     # Get a list of tuples with environment names and a list of tuples with the machine name and ID
-    environment_machines = list(map(lambda e: (
-        # environment name
-        e.get("Name"),
-        # machines in environment
-        list(map(lambda m: (
-            # machine name
-            m.get("Name"),
-            # machine id
-            m.get("Id")), filter(lambda m: e.get("Id") in m.get("EnvironmentIds"), machines)))), environments))
+    environment_machines = list(
+        map(
+            lambda e: (
+                # environment name
+                e.get("Name"),
+                # machines in environment
+                list(
+                    map(
+                        lambda m: (
+                            # machine name
+                            m.get("Name"),
+                            # machine id
+                            m.get("Id"),
+                        ),
+                        filter(
+                            lambda m: e.get("Id") in m.get("EnvironmentIds"), machines
+                        ),
+                    )
+                ),
+            ),
+            environments,
+        )
+    )
 
     if limit > 0:
         return environment_machines[:limit]
@@ -36,8 +63,22 @@ def get_test_cases(limit=0):
     return environment_machines
 
 
-def targets_callback(original_query, messages, space, projects, runbooks, targets,
-                     tenants, environments, accounts, certificates, workerpools, machinepolicies, tagsets, steps):
+def targets_callback(
+    original_query,
+    messages,
+    space,
+    projects,
+    runbooks,
+    targets,
+    tenants,
+    environments,
+    accounts,
+    certificates,
+    workerpools,
+    machinepolicies,
+    tagsets,
+    steps,
+):
     api_key = os.environ.get("TEST_OCTOPUS_API_KEY")
     url = os.environ.get("TEST_OCTOPUS_URL")
 
@@ -47,32 +88,35 @@ def targets_callback(original_query, messages, space, projects, runbooks, target
 
     space_id, actual_space_name = get_space_id_and_name_from_name(space, api_key, url)
 
-    return collect_llm_context(original_query,
-                               messages,
-                               context,
-                               space_id,
-                               projects,
-                               runbooks,
-                               targets,
-                               tenants,
-                               None,
-                               environments,
-                               None,
-                               accounts,
-                               certificates,
-                               None,
-                               workerpools,
-                               machinepolicies,
-                               tagsets,
-                               None,
-                               None,
-                               None,
-                               steps,
-                               None,
-                               None,
-                               api_key,
-                               url,
-                               None)
+    return collect_llm_context(
+        original_query,
+        messages,
+        context,
+        space_id,
+        projects,
+        runbooks,
+        targets,
+        tenants,
+        None,
+        environments,
+        None,
+        accounts,
+        certificates,
+        None,
+        workerpools,
+        machinepolicies,
+        tagsets,
+        None,
+        None,
+        None,
+        steps,
+        None,
+        None,
+        api_key,
+        "",
+        url,
+        None,
+    )
 
 
 class DynamicMachineEnvironmentExperiments(unittest.TestCase):
@@ -92,13 +136,20 @@ class DynamicMachineEnvironmentExperiments(unittest.TestCase):
 
             with self.subTest(f"{name} - {','.join(map(lambda m: m[0], machines))}"):
                 # Create a query that should generate the same result as the test case
-                query = (f"What are the unique names and IDs of all machines "
-                         + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space "
-                         + f"belonging to the \"{name}\" environment?")
+                query = (
+                    f"What are the unique names and IDs of all machines "
+                    + f"in the \"{os.environ.get('TEST_OCTOPUS_SPACE_NAME')}\" space "
+                    + f'belonging to the "{name}" environment?'
+                )
 
                 def get_tools(tool_query):
                     return FunctionDefinitions(
-                        [FunctionDefinition(answer_machines_wrapper(tool_query, targets_callback))])
+                        [
+                            FunctionDefinition(
+                                answer_machines_wrapper(tool_query, targets_callback)
+                            )
+                        ]
+                    )
 
                 result = llm_tool_query(query, get_tools).call_function()
 
@@ -114,6 +165,9 @@ class DynamicMachineEnvironmentExperiments(unittest.TestCase):
                     else:
                         found_machines += 1
 
-                self.assertEqual(len(missing_machines), 0,
-                                 f"Found {found_machines} and missed {len(machines) - found_machines} machines. "
-                                 + f"Missing machines: {','.join(missing_machines)}")
+                self.assertEqual(
+                    len(missing_machines),
+                    0,
+                    f"Found {found_machines} and missed {len(machines) - found_machines} machines. "
+                    + f"Missing machines: {','.join(missing_machines)}",
+                )
