@@ -82,7 +82,7 @@ def get_octopus_headers(api_key_or_access_token):
 
     # Assume an access token instead
     return {
-        "Authentication": "Bearer " + api_key_or_access_token,
+        "Authorization": "Bearer " + api_key_or_access_token,
         "User-Agent": "OctopusAI",
     }
 
