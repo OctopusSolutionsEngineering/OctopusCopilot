@@ -93,9 +93,7 @@ def resource_specific_callback(github_user, octopus_details, log_query):
                 f"The query did not specify a space so the so the space named {space} was assumed."
             )
 
-        space_id, actual_space_name = get_space_id_and_name_from_name(
-            space, auth, url
-        )
+        space_id, actual_space_name = get_space_id_and_name_from_name(space, auth, url)
 
         sanitized_projects = sanitize_names_fuzzy(
             lambda: get_projects_generator(space_id, auth, url),
