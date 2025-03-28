@@ -2,7 +2,7 @@ import unittest
 import json
 
 from domain.validation.octopus_validation import (
-    is_api_key,
+    is_api_key_or_jwt,
     is_manual_intervention_valid,
     is_hosted_octopus,
 )
@@ -231,21 +231,21 @@ sample_teams = """
 
 class ApiKeyTest(unittest.TestCase):
     def test_api_key_validation(self):
-        self.assertTrue(is_api_key("API-XXXXXXXXX"))
-        self.assertTrue(is_api_key("API-ABCDEFG1234"))
-        self.assertFalse(is_api_key("API-ABCDEFG1234\n"))
-        self.assertFalse(is_api_key(" API-ABCDEFG1234"))
-        self.assertFalse(is_api_key("API-ABCDEFG1234 "))
-        self.assertFalse(is_api_key("\tAPI-ABCDEFG1234"))
-        self.assertFalse(is_api_key("API-ABCDEFG1234\r"))
-        self.assertFalse(is_api_key("API-ABCDEFG1234\r\n"))
-        self.assertFalse(is_api_key("blah"))
-        self.assertFalse(is_api_key("javascript:alert('hello')"))
-        self.assertFalse(is_api_key(""))
-        self.assertFalse(is_api_key("     "))
-        self.assertFalse(is_api_key(None))
-        self.assertFalse(is_api_key([]))
-        self.assertFalse(is_api_key({}))
+        self.assertTrue(is_api_key_or_jwt("API-XXXXXXXXX"))
+        self.assertTrue(is_api_key_or_jwt("API-ABCDEFG1234"))
+        self.assertFalse(is_api_key_or_jwt("API-ABCDEFG1234\n"))
+        self.assertFalse(is_api_key_or_jwt(" API-ABCDEFG1234"))
+        self.assertFalse(is_api_key_or_jwt("API-ABCDEFG1234 "))
+        self.assertFalse(is_api_key_or_jwt("\tAPI-ABCDEFG1234"))
+        self.assertFalse(is_api_key_or_jwt("API-ABCDEFG1234\r"))
+        self.assertFalse(is_api_key_or_jwt("API-ABCDEFG1234\r\n"))
+        self.assertFalse(is_api_key_or_jwt("blah"))
+        self.assertFalse(is_api_key_or_jwt("javascript:alert('hello')"))
+        self.assertFalse(is_api_key_or_jwt(""))
+        self.assertFalse(is_api_key_or_jwt("     "))
+        self.assertFalse(is_api_key_or_jwt(None))
+        self.assertFalse(is_api_key_or_jwt([]))
+        self.assertFalse(is_api_key_or_jwt({}))
 
     def test_interruption_validation_no_interruptions(self):
         valid, error_response = is_manual_intervention_valid(

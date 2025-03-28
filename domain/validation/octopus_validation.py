@@ -1,6 +1,8 @@
 import re
 from urllib.parse import urlparse
 
+from domain import jwt
+from domain.jwt.oidc import parse_jwt
 from domain.view.markdown.octopus_task_interruption_details import (
     format_interruption_details,
 )
@@ -21,7 +23,7 @@ def is_hosted_octopus(octopus_url):
     )
 
 
-def is_api_key(api_key):
+def is_api_key_or_jwt(api_key):
     """
     Tests if a string is an API key
     :param api_key: The value to test
@@ -32,7 +34,16 @@ def is_api_key(api_key):
 
     pattern = r"API-[A-Z0-9a-z]+"
 
-    return re.fullmatch(pattern, api_key)
+    # It might be an API key
+    if re.fullmatch(pattern, api_key):
+        return True
+
+    # It might be a token
+    try:
+        parse_jwt(api_key)
+        return True
+    except:
+        return False
 
 
 def is_manual_intervention_valid(

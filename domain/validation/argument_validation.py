@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from domain.validation.octopus_validation import is_api_key
+from domain.validation.octopus_validation import is_api_key_or_jwt
 
 
 def ensure_api_key(value, error_message):
@@ -9,7 +9,7 @@ def ensure_api_key(value, error_message):
     :param value: The argument to test
     :param error_message: The error message to raise if the test fails
     """
-    if not is_api_key(value):
+    if not is_api_key_or_jwt(value):
         raise ValueError(error_message)
 
 

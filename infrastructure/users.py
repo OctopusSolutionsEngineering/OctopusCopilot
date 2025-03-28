@@ -9,7 +9,7 @@ from domain.errors.error_handling import handle_error
 from domain.logging.app_logging import configure_logging
 from domain.validation.argument_validation import ensure_string_not_empty
 from domain.validation.codefresh_validation import is_valid_token
-from domain.validation.octopus_validation import is_api_key
+from domain.validation.octopus_validation import is_api_key_or_jwt
 from domain.validation.url_validation import validate_url
 from infrastructure.octopus import logging_wrapper
 
@@ -604,7 +604,7 @@ def save_users_octopus_url_from_login(
     if not validate_url(url):
         raise ValueError("The Octopus URL is not valid (save_users_octopus_url).")
 
-    if not is_api_key(api):
+    if not is_api_key_or_jwt(api):
         raise ValueError("The API key is not valid (save_users_octopus_url).")
 
     encryption_password = generate_password(encryption_password, encryption_salt)
