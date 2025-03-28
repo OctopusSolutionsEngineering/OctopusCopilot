@@ -150,6 +150,16 @@ def get_apikey_and_server(req: func.HttpRequest):
     return api_key, server
 
 
+def get_access_token_and_server(req: func.HttpRequest):
+    """
+    The OctoAI integration will pass through an access token and server URL in the headers.
+    :return:
+    """
+    api_key = req.headers.get("X-Octopus-AccessToken")
+    server = req.headers.get("X-Octopus-Server")
+    return api_key, server
+
+
 def get_slack_token_from_request(req: func.HttpRequest):
     """
     When testing we supply the Slack token directly.
@@ -232,6 +242,12 @@ def get_api_key_and_url(req: func.HttpRequest):
 
         if api_key and server:
             return api_key, server
+
+        # Next we try to get the access token and server from the headers
+        access_token, server = get_access_token_and_server(req)
+
+        if access_token and server:
+            return access_token, server
 
         # Then get the details saved for a user
         github_username = get_github_user_from_form(req)

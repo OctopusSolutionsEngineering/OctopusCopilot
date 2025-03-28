@@ -61,20 +61,28 @@ def logging_wrapper(func):
     return wrapper
 
 
-def get_octopus_headers(my_api_key):
+def get_octopus_headers(api_key_or_access_token):
     """
     Build the headers used to make an Octopus API request. Also validate the API key to prevent
     clearly invalid keys from being used.
-    :param my_api_key: The function used to get the Octopus API key
+    :param api_key_or_access_token: The API key or access token
     :return: The headers required to call the Octopus API
     """
 
     ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (get_octopus_headers)."
+        api_key_or_access_token,
+        "my_api_key must be the Octopus Api key (get_octopus_headers).",
     )
 
+    if api_key_or_access_token.startswith("API-"):
+        return {
+            "X-Octopus-ApiKey": api_key_or_access_token,
+            "User-Agent": "OctopusAI",
+        }
+
+    # Assume an access token instead
     return {
-        "X-Octopus-ApiKey": my_api_key,
+        "Authentication": "Bearer " + api_key_or_access_token,
         "User-Agent": "OctopusAI",
     }
 
