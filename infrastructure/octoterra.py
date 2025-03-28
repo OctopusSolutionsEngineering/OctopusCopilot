@@ -91,9 +91,6 @@ async def get_octoterra_space_async(
         query, "query must be a non-empty string (get_octoterra_space_async)."
     )
     ensure_string_not_empty(
-        api_key, "api_key must be a non-empty string (get_octoterra_space_async)."
-    )
-    ensure_string_not_empty(
         octopus_url,
         "octopus_url must be a non-empty string (get_octoterra_space_async).",
     )
@@ -179,9 +176,6 @@ def get_octoterra_space(
     )
     ensure_string_not_empty(
         query, "query must be a non-empty string (get_octoterra_space)."
-    )
-    ensure_string_not_empty(
-        api_key, "api_key must be a non-empty string (get_octoterra_space)."
     )
     ensure_string_not_empty(
         octopus_url, "octopus_url must be a non-empty string (get_octoterra_space)."
