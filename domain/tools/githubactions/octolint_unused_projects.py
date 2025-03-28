@@ -34,7 +34,7 @@ def octolint_callback(octopus_details, github_user, original_query, check_name):
                 access_token = auth
 
             space_resources = lookup_space_level_resources(
-                url, api_key, github_user, original_query, space, project
+                url, auth, github_user, original_query, space, project
             )
 
             if not space_resources["space_id"]:

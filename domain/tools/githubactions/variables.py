@@ -41,7 +41,7 @@ def variable_query_callback(github_user, octopus_details, log_query):
         )
 
         sanitized_space = sanitize_name_fuzzy(
-            lambda: get_spaces_generator(api_key, url),
+            lambda: get_spaces_generator(auth, url),
             sanitize_space(original_query, space),
         )
 
@@ -54,7 +54,7 @@ def variable_query_callback(github_user, octopus_details, log_query):
         warnings = []
 
         if not space:
-            space = next(get_spaces_generator(api_key, url), {"Name": "Default"}).get(
+            space = next(get_spaces_generator(auth, url), {"Name": "Default"}).get(
                 "Name"
             )
             warnings.append(
@@ -62,11 +62,11 @@ def variable_query_callback(github_user, octopus_details, log_query):
             )
 
         space_id, actual_space_name = get_space_id_and_name_from_name(
-            space, api_key, url
+            space, auth, url
         )
 
         sanitized_projects = sanitize_names_fuzzy(
-            lambda: get_projects_generator(space_id, api_key, url),
+            lambda: get_projects_generator(space_id, auth, url),
             sanitize_projects(projects),
         )
 
