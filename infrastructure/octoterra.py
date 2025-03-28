@@ -62,6 +62,7 @@ sem = asyncio.Semaphore(10)
 @logging_wrapper
 async def get_octoterra_space_async(
     api_key,
+    access_token,
     octopus_url,
     query,
     space_id,
@@ -120,7 +121,11 @@ async def get_octoterra_space_async(
     )
 
     api = os.environ["APPLICATION_OCTOTERRA_URL"] + "/api/octoterra"
-    headers = {"X-Octopus-ApiKey": api_key, "X-Octopus-Url": octopus_url}
+    headers = {
+        "X-Octopus-ApiKey": api_key,
+        "X-Octopus-Url": octopus_url,
+        "X-Octopus-AccessToken": access_token,
+    }
 
     async with sem:
         async with aiohttp.ClientSession(headers=headers) as session:

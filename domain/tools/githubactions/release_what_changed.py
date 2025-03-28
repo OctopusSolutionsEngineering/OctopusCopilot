@@ -1,6 +1,8 @@
 import asyncio
 import json
 
+from openai import api_key
+
 from domain.categorization.octopus_target import (
     project_includes_azure_steps,
     project_includes_aws_steps,
@@ -24,6 +26,9 @@ from domain.sanitizers.sanitized_list import (
     get_item_or_default,
 )
 from domain.tools.debug import get_params_message
+from domain.tools.githubactions.approve_manual_intervention import (
+    approve_manual_intervention_confirm_callback_wrapper,
+)
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from domain.transformers.limit_array import (
     limit_array_to_max_char_length,
@@ -551,7 +556,14 @@ def release_what_changed_callback_wrapper(
     async def get_failure_context(
         original_query, space_resources, failed_step, deployments, logs
     ):
-        api_key, url = octopus_details()
+        auth, url = octopus_details()
+        api_key = ""
+        access_token = ""
+
+        if auth.startswith("API-"):
+            api_key = auth
+        else:
+            access_token = auth
 
         if deployment_is_failure(deployments):
             keywords = nlp_get_keywords(logs[:max_chars_128])
@@ -578,6 +590,7 @@ def release_what_changed_callback_wrapper(
                     ),
                     get_octoterra_space_async(
                         api_key,
+                        access_token,
                         url,
                         original_query,
                         space_resources["space_id"],
