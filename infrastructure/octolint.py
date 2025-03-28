@@ -61,6 +61,7 @@ sem = asyncio.Semaphore(10)
 @logging_wrapper
 async def run_octolint_check_async(
     api_key,
+    access_token,
     octopus_url,
     space_id,
     project_name,
@@ -73,9 +74,6 @@ async def run_octolint_check_async(
         check_name, "check_name must be a non-empty string (run_octolint_check_async)."
     )
     ensure_string_not_empty(
-        api_key, "api_key must be a non-empty string (run_octolint_check_async)."
-    )
-    ensure_string_not_empty(
         octopus_url,
         "octopus_url must be a non-empty string (run_octolint_check_async).",
     )
@@ -85,7 +83,11 @@ async def run_octolint_check_async(
     )
 
     api = os.environ["APPLICATION_OCTOLINT_URL"] + "/api/octolint"
-    headers = {"X-Octopus-ApiKey": api_key, "X-Octopus-Url": octopus_url}
+    headers = {
+        "X-Octopus-ApiKey": api_key,
+        "X-Octopus-Url": octopus_url,
+        "X-Octopus-AccessToken": access_token,
+    }
 
     async with sem:
         async with aiohttp.ClientSession(headers=headers) as session:

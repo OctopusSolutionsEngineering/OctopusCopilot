@@ -24,7 +24,14 @@ def octolint_callback(octopus_details, github_user, original_query, check_name):
                 project=project,
             )
 
-            api_key, url = octopus_details()
+            auth, url = octopus_details()
+            api_key = ""
+            access_token = ""
+
+            if auth.startswith("API-"):
+                api_key = auth
+            else:
+                access_token = auth
 
             space_resources = lookup_space_level_resources(
                 url, api_key, github_user, original_query, space, project
@@ -47,6 +54,7 @@ def octolint_callback(octopus_details, github_user, original_query, check_name):
 
             results = await run_octolint_check_async(
                 api_key,
+                access_token,
                 url,
                 space_resources["space_id"],
                 get_item_or_none(space_resources["project_names"], 0),
