@@ -71,7 +71,7 @@ def get_octopus_headers(api_key_or_access_token):
 
     ensure_api_key(
         api_key_or_access_token,
-        "my_api_key must be the Octopus Api key (get_octopus_headers).",
+        "api_key_or_access_token must be the Octopus Api key (get_octopus_headers).",
     )
 
     if api_key_or_access_token.startswith("API-"):
