@@ -63,10 +63,10 @@ def exchange_github_code(code):
 
 
 @logging_wrapper
-def get_github_auth_headers(get_token):
+def get_github_auth_headers(token):
     """
     Build the headers used to make a GitHub API request
-    :param get_token: The github token
+    :param token: The github token
     :return: The headers required to call the Octopus API
     """
 
@@ -75,8 +75,8 @@ def get_github_auth_headers(get_token):
         "X-GitHub-Api-Version": "2022-11-28",
     }
 
-    if get_token:
-        headers["Authorization"] = "Bearer {}".format(get_token)
+    if token:
+        headers["Authorization"] = "Bearer {}".format(token)
 
     return headers
 
@@ -128,24 +128,24 @@ def build_github_url(path, query=None):
 
 
 @logging_wrapper
-def get_github_user(get_token):
+def get_github_user(token):
     """
     Gets the GitHub username from the supplied token
-    :param get_token: The function used to get theGithub token
+    :param token: The Github token
     :return: The GitHub username
     """
 
-    if get_token is None:
+    if token is None:
         return None
 
     # Copilot appears to send a new token every request, but this does cut down the number of API requests
     # used when running tests against a long-lived token.
-    if get_token in token_lookup_cache:
-        return str(token_lookup_cache[get_token]["id"])
+    if token in token_lookup_cache:
+        return str(token_lookup_cache[token]["id"])
 
     api = build_github_api_url("user", "")
 
-    resp = http.request("GET", api, headers=get_github_auth_headers(get_token))
+    resp = http.request("GET", api, headers=get_github_auth_headers(token))
 
     if resp.status != 200:
         raise GitHubRequestFailed(f"Request failed with " + resp.data.decode("utf-8"))
@@ -153,7 +153,7 @@ def get_github_user(get_token):
     json = resp.json()
 
     # Cache the user lookup result
-    token_lookup_cache[get_token] = json
+    token_lookup_cache[token] = json
 
     return str(json["id"])
 

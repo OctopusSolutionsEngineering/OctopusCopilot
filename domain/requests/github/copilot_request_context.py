@@ -133,6 +133,7 @@ from domain.tools.wrapper.suggest_solution import suggest_solution_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.tools.wrapper.task_summary_wrapper import show_task_summary_wrapper
 from infrastructure.github import get_github_user
+from infrastructure.octopus import logging_wrapper
 from infrastructure.users import get_users_details, get_users_slack_details
 
 logger = configure_logging(__name__)
@@ -224,6 +225,7 @@ def get_github_token(req: func.HttpRequest):
     return None
 
 
+@logging_wrapper
 def get_github_user_from_form(req: func.HttpRequest):
     try:
         return get_github_user(get_github_token(req))
