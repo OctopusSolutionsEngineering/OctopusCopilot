@@ -600,8 +600,8 @@ class CopilotChatTestTwo(unittest.TestCase):
         self.assertTrue(
             "🟣" in response_text
             or "🔵" in response_text
-            or "🟡" in response_text
-            or "🟢" in response_text
+            or "💛" in response_text
+            or "💚" in response_text
             or "🔴" in response_text
             or "⚪" in response_text,
             "Response was " + response_text,

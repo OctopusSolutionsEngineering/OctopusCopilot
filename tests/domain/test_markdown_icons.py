@@ -11,7 +11,7 @@ class TestMarkdownIcons(unittest.TestCase):
     def test_get_github_state_icon(self):
         self.assertEqual(get_github_state_icon("in_progress", None), "🔵")
         self.assertEqual(get_github_state_icon("queued", None), "🟣")
-        self.assertEqual(get_github_state_icon("completed", "success"), "🟢")
+        self.assertEqual(get_github_state_icon("completed", "success"), "💚")
         self.assertEqual(get_github_state_icon("completed", "failure"), "🔴")
         self.assertEqual(get_github_state_icon("completed", "timed_out"), "🔴")
         self.assertEqual(get_github_state_icon("completed", "action_required"), "🟠")
@@ -22,8 +22,8 @@ class TestMarkdownIcons(unittest.TestCase):
 
     def test_get_state_icon(self):
         self.assertEqual(get_state_icon("Executing", False, False), "🔵")
-        self.assertEqual(get_state_icon("Success", False, False), "🟢")
-        self.assertEqual(get_state_icon("Success", True, False), "🟡")
+        self.assertEqual(get_state_icon("Success", False, False), "💚")
+        self.assertEqual(get_state_icon("Success", True, False), "💛")
         self.assertEqual(get_state_icon("Failed", False, False), "🔴")
         self.assertEqual(get_state_icon("Canceled", False, False), "⚪")
         self.assertEqual(get_state_icon("TimedOut", False, False), "🔴")
@@ -34,8 +34,8 @@ class TestMarkdownIcons(unittest.TestCase):
 
     def test_get_activity_log_state_icon(self):
         self.assertEqual(get_activity_log_state_icon("Running"), "🔵")
-        self.assertEqual(get_activity_log_state_icon("SuccessWithWarning"), "🟡")
-        self.assertEqual(get_activity_log_state_icon("Success"), "🟢")
+        self.assertEqual(get_activity_log_state_icon("SuccessWithWarning"), "💛")
+        self.assertEqual(get_activity_log_state_icon("Success"), "💚")
         self.assertEqual(get_activity_log_state_icon("Failed"), "🔴")
         self.assertEqual(get_activity_log_state_icon("Canceled"), "⚪")
         self.assertEqual(get_activity_log_state_icon("TimedOut"), "🔴")

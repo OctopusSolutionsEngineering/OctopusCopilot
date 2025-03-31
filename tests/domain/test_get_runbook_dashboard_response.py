@@ -108,4 +108,4 @@ class RunbookDashboardTest(unittest.TestCase):
             lambda x: x,
         )
         print(result)
-        self.assertTrue("🟡" in result, result)
+        self.assertTrue("💛" in result, result)

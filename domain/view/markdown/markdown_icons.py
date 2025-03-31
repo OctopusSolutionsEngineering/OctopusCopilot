@@ -5,6 +5,12 @@ def get_github_state_icon(status, conclusion):
     # We need a value of the conclusion property.
     # Can be one of the “success”, “failure”, “neutral”, “cancelled”, “skipped”, “timed_out”, or “action_required”.
 
+    # Note that on Linux sometimes only icons from the "Miscellaneous Symbols and Pictographs” block are available.
+    # https://www.compart.com/en/unicode/block/U+1F300
+
+    # This is the bug for intellij
+    # https://youtrack.jetbrains.com/issue/IDEA-365436/Some-UTF-characters-are-rendered-grey
+
     if status == "in_progress":
         return "🔵"
 
@@ -14,7 +20,7 @@ def get_github_state_icon(status, conclusion):
     # status of completed is assumed from this point down, and we're displaying the conclusion
 
     if conclusion == "success":
-        return "🟢"
+        return "💚"
 
     elif conclusion == "failure" or conclusion == "timed_out":
         return "🔴"
@@ -22,7 +28,9 @@ def get_github_state_icon(status, conclusion):
     elif conclusion == "action_required":
         return "🟠"
 
-    elif conclusion == "cancelled" or conclusion == "neutral" or conclusion == "skipped":
+    elif (
+        conclusion == "cancelled" or conclusion == "neutral" or conclusion == "skipped"
+    ):
         return "⚪"
 
     return "⚪"
@@ -34,9 +42,9 @@ def get_state_icon(state, has_warnings, has_interruptions):
 
     if state == "Success":
         if has_warnings:
-            return "🟡"
+            return "💛"
         else:
-            return "🟢"
+            return "💚"
 
     elif state == "Failed":
         return "🔴"
@@ -64,10 +72,10 @@ def get_activity_log_state_icon(state):
         return "🔵"
 
     if state == "SuccessWithWarning":
-        return "🟡"
+        return "💛"
 
     if state == "Success":
-        return "🟢"
+        return "💚"
 
     elif state == "Failed":
         return "🔴"

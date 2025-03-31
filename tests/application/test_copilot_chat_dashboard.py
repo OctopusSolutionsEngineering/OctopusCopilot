@@ -198,8 +198,8 @@ class CopilotChatDashboardTest(unittest.TestCase):
         self.assertTrue(
             "🟣" in response_text
             or "🔵" in response_text
-            or "🟡" in response_text
-            or "🟢" in response_text
+            or "💛" in response_text
+            or "💚" in response_text
             or "🔴" in response_text
             or "⚪" in response_text,
             "Response was " + response_text,
@@ -214,12 +214,12 @@ class CopilotChatDashboardTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
-        # Make sure one of these icons is in the output: 🔵🟡🟢🔴⚪
+        # Make sure one of these icons is in the output: 🔵🟡💚🔴⚪
         self.assertTrue(
             "🟣" in response_text
             or "🔵" in response_text
-            or "🟡" in response_text
-            or "🟢" in response_text
+            or "💛" in response_text
+            or "💚" in response_text
             or "🔴" in response_text
             or "⚪" in response_text,
             "Response was " + response_text,
@@ -239,8 +239,8 @@ class CopilotChatDashboardTest(unittest.TestCase):
         self.assertTrue(
             "🟣" in response_text
             or "🔵" in response_text
-            or "🟡" in response_text
-            or "🟢" in response_text
+            or "💛" in response_text
+            or "💚" in response_text
             or "🔴" in response_text
             or "⚪" in response_text,
             "Response was " + response_text,
@@ -270,8 +270,8 @@ class CopilotChatDashboardTest(unittest.TestCase):
         self.assertTrue(
             "🟣" in response_text
             or "🔵" in response_text
-            or "🟡" in response_text
-            or "🟢" in response_text
+            or "💛" in response_text
+            or "💚" in response_text
             or "🔴" in response_text
             or "⚪" in response_text,
             "Response was " + response_text,
@@ -317,8 +317,8 @@ class CopilotChatDashboardTest(unittest.TestCase):
         self.assertTrue(
             "🟣" in response_text
             or "🔵" in response_text
-            or "🟡" in response_text
-            or "🟢" in response_text
+            or "💛" in response_text
+            or "💚" in response_text
             or "🔴" in response_text
             or "⚪" in response_text,
             "Response was " + response_text,
@@ -362,8 +362,8 @@ class CopilotChatDashboardTest(unittest.TestCase):
         self.assertTrue(
             "🟣" in response_text
             or "🔵" in response_text
-            or "🟡" in response_text
-            or "🟢" in response_text
+            or "💛" in response_text
+            or "💚" in response_text
             or "🔴" in response_text
             or "⚪" in response_text,
             "Response was " + response_text,
@@ -420,8 +420,8 @@ class CopilotChatDashboardTest(unittest.TestCase):
         self.assertTrue(
             "🟣" in response_text
             or "🔵" in response_text
-            or "🟡" in response_text
-            or "🟢" in response_text
+            or "💛" in response_text
+            or "💚" in response_text
             or "🔴" in response_text
             or "⚪" in response_text,
             "Response was " + response_text,
@@ -452,8 +452,8 @@ class CopilotChatDashboardTest(unittest.TestCase):
         self.assertTrue(
             "🟣" in response_text
             or "🔵" in response_text
-            or "🟡" in response_text
-            or "🟢" in response_text
+            or "💛" in response_text
+            or "💚" in response_text
             or "🔴" in response_text
             or "⚪" in response_text
             or "🟣" in response_text,
@@ -471,8 +471,8 @@ class CopilotChatDashboardTest(unittest.TestCase):
         self.assertTrue(
             "🟣" in response_text
             or "🔵" in response_text
-            or "🟡" in response_text
-            or "🟢" in response_text
+            or "💛" in response_text
+            or "💚" in response_text
             or "🔴" in response_text
             or "⚪" in response_text
             or "🟣" in response_text,
@@ -501,8 +501,8 @@ class CopilotChatDashboardTest(unittest.TestCase):
         self.assertTrue(
             "🟣" in response_text
             or "🔵" in response_text
-            or "🟡" in response_text
-            or "🟢" in response_text
+            or "💛" in response_text
+            or "💚" in response_text
             or "🔴" in response_text
             or "⚪" in response_text,
             "Response was " + response_text,
