@@ -276,18 +276,33 @@ class MockRequests(unittest.TestCase):
         self.assertTrue("Manual Intervention" in body["step_names"])
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    def test_general_date_question(self):
+    def test_release_what_changed_date_question(self):
         """
-        Tests that the llm identifies the step name in the query
+        Tests that the llm identifies the dates in the query
         """
 
         query = 'Find deployments after "1st Jan 2024" and before "2nd Mar 2024"?'
         function = llm_tool_query(query, build_mock_test_tools(query))
-        body = function.call_function()
+        response = function.call_function()
 
-        self.assertEqual(function.name, "answer_general_query", body)
-        self.assertTrue(body["dates"][0] == "2024-01-01T00:00:00+00:00", body)
-        self.assertTrue(body["dates"][1] == "2024-03-02T00:00:00+00:00", body)
+        self.assertEqual(function.name, "release_what_changed", response)
+        self.assertTrue(response["dates"][0] == "2024-01-01", response)
+        self.assertTrue(response["dates"][1] == "2024-03-02", response)
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_release_what_changed_environment_question(self):
+        """
+        Tests that the llm identifies the environment and project name in the query
+        """
+
+        query = 'What is the latest version of project "test" deployed to the production environment?'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+        response = function.call_function()
+
+        self.assertEqual(function.name, "release_what_changed", response)
+        self.assertTrue(response["projects"] == "test", response)
+        # Interestingly, the LLM will capitalize the environment name sometimes
+        self.assertTrue(response["environments"].casefold() == "production", response)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_machine_question(self):

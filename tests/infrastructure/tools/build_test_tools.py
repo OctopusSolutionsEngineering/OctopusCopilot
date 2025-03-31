@@ -7,6 +7,9 @@ from domain.tools.githubactions.default_values import default_value_callbacks
 from domain.tools.githubactions.generate_terraform import (
     generate_terraform_callback_wrapper,
 )
+from domain.tools.githubactions.release_what_changed import (
+    release_what_changed_callback_wrapper,
+)
 from domain.tools.githubactions.suggest_solution import (
     suggest_solution_callback_wrapper,
 )
@@ -20,6 +23,7 @@ from domain.tools.wrapper.general_query import (
 )
 from domain.tools.wrapper.generate_terraform import generate_terraform_wrapper
 from domain.tools.wrapper.how_to import how_to_wrapper
+from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
 from domain.tools.wrapper.suggest_solution import suggest_solution_wrapper
 
 
@@ -29,6 +33,28 @@ def general_query_handler(query, body, messages):
 
 def how_to_callback(query, keywords):
     return query, keywords
+
+
+def release_what_changed_callback(
+    original_query,
+    space,
+    projects,
+    environments,
+    tenants,
+    channel,
+    release_version,
+    dates,
+):
+    return {
+        "original_query": original_query,
+        "space": space,
+        "projects": projects,
+        "environments": environments,
+        "tenants": tenants,
+        "channel": channel,
+        "release_version": release_version,
+        "dates": dates,
+    }
 
 
 def build_mock_test_tools(tool_query):
@@ -76,6 +102,12 @@ def build_mock_test_tools(tool_query):
                     tool_query,
                     generate_terraform_callback_wrapper(),
                     os.environ["GH_TEST_TOKEN"],
+                )
+            ),
+            FunctionDefinition(
+                release_what_changed_wrapper(
+                    tool_query,
+                    release_what_changed_callback,
                 )
             ),
         ],
