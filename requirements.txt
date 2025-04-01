@@ -44,11 +44,8 @@ ipdb==0.13.13
 nptyping==2.5.0
 numpy==1.26.4
 PyJWT==2.8.0
---find-links https://download.pytorch.org/whl/torch_stable.html
-torch==2.2.2+cpu; sys_platform == 'linux' or sys_platform == 'windows'
-# Cpu only builds are not available for macOS
-# https://github.com/python-poetry/poetry/issues/7597
-torch==2.2.2; sys_platform == 'darwin'
+--index-url https://download.pytorch.org/whl/cpu
+torch==2.6.0
 tqdm==4.66.3
 # https://stackoverflow.com/a/67910697/157605
 # Download this file with pip, oherwise the function will try to download it fresh each time.
