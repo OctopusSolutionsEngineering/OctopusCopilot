@@ -44,7 +44,7 @@ ipdb==0.13.13
 nptyping==2.5.0
 numpy==1.26.4
 PyJWT==2.8.0
---index-url https://download.pytorch.org/whl/cpu
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch==2.6.0
 tqdm==4.66.3
 # https://stackoverflow.com/a/67910697/157605
