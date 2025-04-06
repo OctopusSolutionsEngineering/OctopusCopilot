@@ -376,6 +376,17 @@ step "deploy-with-cli" {
                 SelectionMode = "immediate"
             }
         }
+
+        packages "OctopusCopilot" {
+            acquisition_location = "Server"
+            feed = "octopus-server-built-in"
+            package_id = "OctopusCopilot"
+            properties = {
+                Extract = "True"
+                Purpose = ""
+                SelectionMode = "immediate"
+            }
+        }
     }
 }
 
