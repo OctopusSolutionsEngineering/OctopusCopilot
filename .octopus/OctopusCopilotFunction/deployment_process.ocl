@@ -22,16 +22,8 @@ step "deploy-to-flex-consumption-function" {
                   az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.FlexName}" --rule-name "dynamicworker"
                 fi
                 
-                EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.FlexName}" --slot "staging" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
-                if [[ $EXISTING -eq "1" ]]
-                then
-                  az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.FlexName}" --rule-name "dynamicworker" --slot "staging"
-                fi
-                
                 # Allow this worker access
                 az functionapp config access-restriction add -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.FlexName}" --rule-name "dynamicworker" --action Allow --ip-address ${WORKERIP} --priority 500
-                az functionapp config access-restriction add -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.FlexName}" --rule-name "dynamicworker" --action Allow --ip-address ${WORKERIP} --priority 500 --slot "staging"
-                
                 
                 cat >appsettings.json <<EOL
                 [
