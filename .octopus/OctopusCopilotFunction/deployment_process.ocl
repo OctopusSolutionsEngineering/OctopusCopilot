@@ -144,11 +144,8 @@ step "deploy-to-flex-consumption-function" {
                 
                 az functionapp config appsettings set -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.FlexName}" --settings @appsettings.json 2>&1
                 
-                # https://stackoverflow.com/a/79503414/157605
-                az functionapp deployment source config-zip --resource-group "#{Azure.ResourceGroup.Name}" --name "#{Azure.Function.FlexName}" --src OctopusCopilot.zip
-                
-                #cd OctopusCopilot
-                #../Azure.Functions.Cli.linux-x64/func azure functionapp publish "#{Azure.Function.FlexName}" --python
+                cd OctopusCopilot
+                ../Azure.Functions.Cli.linux-x64/func azure functionapp publish "#{Azure.Function.FlexName}" --python
                 
                 EOT
             Octopus.Action.Script.ScriptSource = "Inline"
