@@ -154,7 +154,7 @@ step "deploy-to-flex-consumption-function" {
         worker_pool = "hosted-ubuntu"
 
         container {
-            feed = "docker-hub"
+            feed = "ghcr"
             image = "ghcr.io/octopusdeploylabs/azure-workertools"
         }
 
