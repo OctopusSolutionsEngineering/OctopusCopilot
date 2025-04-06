@@ -4,6 +4,8 @@ import os
 import urllib.parse
 from http.cookies import SimpleCookie
 
+import requests
+
 import azure.functions as func
 from domain.config.codefresh import get_codefresh_url
 from domain.config.database import get_functions_connection_string
@@ -139,6 +141,20 @@ def callback_cleanup(mytimer: func.TimerRequest) -> None:
         delete_old_callbacks(5, get_functions_connection_string())
     except Exception as e:
         handle_error(e)
+
+
+@app.route(route="ip", auth_level=func.AuthLevel.ANONYMOUS)
+def HttpExample(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    Get the IP address of the client making the request. Useful for verifying firewall rules.
+    """
+    response = requests.get("https://ifconfig.me")
+    if response.status_code == 200:
+        return func.HttpResponse(f"Your IP address is: {response.text}")
+    else:
+        return func.HttpResponse(
+            f"Failed to retrieve IP address. Status code: {response.status_code}"
+        )
 
 
 @app.route(route="health", auth_level=func.AuthLevel.ANONYMOUS)
