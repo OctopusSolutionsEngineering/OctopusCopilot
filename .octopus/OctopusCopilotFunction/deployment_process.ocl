@@ -18,7 +18,7 @@ step "deploy-to-flex-consumption-function" {
                 
                 
                 # Clear any existing rule
-                EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
+                EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.FlexName}" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
                 if [[ $EXISTING -eq "1" ]]
                 then
                   az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.FlexName}" --rule-name "dynamicworker"
