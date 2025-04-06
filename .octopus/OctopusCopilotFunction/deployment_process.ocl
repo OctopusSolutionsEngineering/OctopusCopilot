@@ -363,7 +363,7 @@ step "deploy-with-cli" {
 
         container {
             feed = "docker-hub"
-            image = "octopusdeploy/worker-tools:6.4.0-ubuntu.22.04"
+            image = "ghcr.io/octopusdeploylabs/azure-workertools"
         }
 
         packages "Azure.Functions.Cli.linux-x64" {
