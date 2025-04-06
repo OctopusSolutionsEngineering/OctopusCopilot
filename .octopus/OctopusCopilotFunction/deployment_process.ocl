@@ -4,6 +4,8 @@ step "deploy-to-flex-consumption-function" {
     action {
         action_type = "Octopus.AzurePowerShell"
         properties = {
+            Octopus.Action.AutoRetry.MaximumCount = "3"
+            Octopus.Action.AutoRetry.MinimumBackoff = "15"
             Octopus.Action.Azure.AccountId = "azure-copilot"
             Octopus.Action.Script.ScriptBody = <<-EOT
                 pushd Azure.Functions.Cli.linux-x64
