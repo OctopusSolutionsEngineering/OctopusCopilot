@@ -149,4 +149,7 @@ The testing is broken down into 3 categories:
 
 ![coverage badge](./coverage.svg)
 
+## Notes
+
+* Consider deploying with Azure Flex Consumption plans to enable VNet integration and use a [NAT Gateway](https://learn.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-nat-gateway) to ensure a fixed outbound IP address.
 
