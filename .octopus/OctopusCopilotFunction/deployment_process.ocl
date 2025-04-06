@@ -477,3 +477,182 @@ step "slack-send-simple-notification-bash" {
         worker_pool = "hosted-ubuntu"
     }
 }
+
+step "deploy-to-flex-consumption-function" {
+    name = "Deploy to Flex Consumption Function"
+
+    action {
+        action_type = "Octopus.AzurePowerShell"
+        properties = {
+            Octopus.Action.Azure.AccountId = "azure-copilot"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                pushd Azure.Functions.Cli.linux-x64
+                chmod +x func
+                chmod +x gozip
+                popd
+                
+                # Grant access to this dynamic worker
+                WORKERIP=$(curl --silent ifconfig.net/)
+                
+                
+                # Clear any existing rule
+                EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
+                if [[ $EXISTING -eq "1" ]]
+                then
+                  az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker"
+                fi
+                
+                EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --slot "staging" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
+                if [[ $EXISTING -eq "1" ]]
+                then
+                  az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --slot "staging"
+                fi
+                
+                # Allow this worker access
+                az functionapp config access-restriction add -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --action Allow --ip-address ${WORKERIP} --priority 500
+                az functionapp config access-restriction add -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --action Allow --ip-address ${WORKERIP} --priority 500 --slot "staging"
+                
+                
+                # Disable autoswap
+                az functionapp deployment slot auto-swap \
+                	-g "#{Azure.ResourceGroup.Name}" \
+                    -n "#{Azure.Function.Name}" \
+                    --slot staging \
+                    --disable
+                
+                
+                # See https://stackoverflow.com/a/74619020/157605 for why WEBSITE_OVERRIDE_STICKY_DIAGNOSTICS_SETTINGS
+                # is set to "0"
+                
+                cat >appsettings.json <<EOL
+                [
+                	{
+                      "name": "WEBSITE_OVERRIDE_STICKY_DIAGNOSTICS_SETTINGS",
+                      "value": "0",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "OPENAI_API_KEY",
+                      "value": "#{Azure.US.OpenAI.Key}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "OPENAI_ENDPOINT",
+                      "value": "#{Azure.US.OpenAI.Endpoint}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "OPENAI_API_DEPLOYMENT",
+                      "value": "#{Azure.US.OpenAI.Deployment}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "OPENAI_API_DEPLOYMENT_FUNCTIONS",
+                      "value": "#{Azure.US.OpenAI.Deployment.Functions}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "OPENAI_API_DEPLOYMENT_QUERY",
+                      "value": "#{Azure.US.OpenAI.Deployment.Query}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "APPLICATION_USERS_ADMIN",
+                      "value": "#{Application.Users.Admin}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "SLACK_WEBHOOK_URL",
+                      "value": "#{Slack.Webhook.Url}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "ENCRYPTION_SALT",
+                      "value": "#{Encryption.Salt}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "ENCRYPTION_PASSWORD",
+                      "value": "#{Encryption.Password}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "GITHUB_CLIENT_ID",
+                      "value": "#{GitHub.App.ClientId}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "GITHUB_CLIENT_REDIRECT",
+                      "value": "#{GitHub.Oauth.Redirect}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "GITHUB_CLIENT_SECRET",
+                      "value": "#{GitHub.App.ClientSecret}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "APPLICATION_OCTOTERRA_URL",
+                      "value": "#{Application.Octoterra.Url}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "ZENDESK_EMAIL",
+                      "value": "#{ZenDesk.Api.Email}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "ZENDESK_TOKEN",
+                      "value": "#{ZenDesk.Api.Token}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "SLACK_CLIENT_ID",
+                      "value": "#{Slack.App.ClientID}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "SLACK_CLIENT_SECRET",
+                      "value": "#{Slack.App.ClientSecret}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "SLACK_CLIENT_REDIRECT",
+                      "value": "#{Slack.App.Redirect}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "STORYBLOK_TOKEN",
+                      "value": "#{Storyblok.Api.Token}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "OCTOPUS_GHU_APIKEY",
+                      "value": "#{Octopus.Guest.ApiKey}",
+                      "slotSetting": false
+                   },
+                   {
+                      "name": "APPLICATION_OCTOLINT_URL",
+                      "value": "#{Octolint.Application.Url}",
+                      "slotSetting": false
+                   }
+                ] 
+                EOL
+                
+                az functionapp config appsettings set -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --settings @appsettings.json 2>&1
+                
+                cd OctopusCopilot
+                ../Azure.Functions.Cli.linux-x64/func azure functionapp publish "#{Azure.Function.Name}" --python
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool = "hosted-ubuntu"
+
+        container {
+            feed = "docker-hub"
+            image = "octopusdeploy/worker-tools:6.4.0-ubuntu.22.04"
+        }
+    }
+}
