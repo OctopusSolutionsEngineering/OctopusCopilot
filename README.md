@@ -151,5 +151,5 @@ The testing is broken down into 3 categories:
 
 ## Notes
 
-* Consider deploying with Azure Flex Consumption plans to enable VNet integration and use a [NAT Gateway](https://learn.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-nat-gateway) to ensure a fixed outbound IP address.
+* This service needs to be deployed as an Azure Flex Consumption function using a [NAT Gateway](https://learn.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-nat-gateway) to ensure a fixed outbound IP address.
 
