@@ -350,6 +350,11 @@ step "deploy-with-cli" {
                       "name": "REDIRECTION_SERVICE_APIKEY",
                       "value": "#{Redirection.Service.ApiKey}",
                       "slotSetting": false
+                   },
+                   {
+                      "name": "REDIRECTION_HOST",
+                      "value": "#{Redirection.Host}",
+                      "slotSetting": false
                    }
                 ] 
                 EOL
