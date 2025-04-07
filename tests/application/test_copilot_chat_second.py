@@ -589,8 +589,8 @@ class CopilotChatTestTwo(unittest.TestCase):
             "Development",
             tenant_name="",
             variables=None,
-            my_api_key=Octopus_Api_Key,
-            my_octopus_api=Octopus_Url,
+            api_key=Octopus_Api_Key,
+            octopus_url=Octopus_Url,
         )
         wait_for_task(runbook_run["TaskId"], space_name="Simple")
         prompt = 'Get the runbook dashboard for runbook "Backup Database" in the "Copilot Test Runbook Project" project.'
@@ -620,8 +620,8 @@ class CopilotChatTestTwo(unittest.TestCase):
             "Development",
             tenant_name="",
             variables=None,
-            my_api_key=Octopus_Api_Key,
-            my_octopus_api=Octopus_Url,
+            api_key=Octopus_Api_Key,
+            octopus_url=Octopus_Url,
         )
         wait_for_task(runbook_run["TaskId"], space_name="Simple")
         prompt = 'Get the logs from the run of runbook "Backup Database" in the "Copilot Test Runbook Project" project.'

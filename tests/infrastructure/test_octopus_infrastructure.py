@@ -281,8 +281,8 @@ class OctopusAPIRequests(unittest.TestCase):
             "Development",
             tenant_name="",
             variables=None,
-            my_api_key=Octopus_Api_Key,
-            my_octopus_api=Octopus_Url,
+            api_key=Octopus_Api_Key,
+            octopus_url=Octopus_Url,
         )
         wait_for_task(task["TaskId"], space_name="Simple")
 
@@ -699,8 +699,8 @@ class OctopusAPIRequests(unittest.TestCase):
                 tenant_name="TenantName",
                 task_id="ServerTasks-1234",
                 interruption_action="InvalidOption",
-                my_api_key="API-XXXX",
-                my_octopus_api="http://localhost:8080",
+                api_key="API-XXXX",
+                octopus_url="http://localhost:8080",
             )
 
     def test_cancel_task(self):

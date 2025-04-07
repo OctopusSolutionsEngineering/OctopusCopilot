@@ -366,8 +366,8 @@ class CopilotChatCancelTest(unittest.TestCase):
             environment_name,
             tenant_name="",
             variables=None,
-            my_api_key=Octopus_Api_Key,
-            my_octopus_api=Octopus_Url,
+            api_key=Octopus_Api_Key,
+            octopus_url=Octopus_Url,
         )
 
         prompt = f'Cancel the runbook "{runbook_name}" for project "{project_name}" to the environment "{environment_name}" in the space "{space_name}".'

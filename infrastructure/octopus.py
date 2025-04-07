@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import json
+import os
 import re
 from urllib.parse import urlparse
 
@@ -30,7 +31,7 @@ from domain.sanitizers.sanitized_list import (
     flatten_list,
 )
 from domain.sanitizers.url_sanitizer import quote_safe
-from domain.url.build_url import build_url
+from domain.url.build_url import build_url, is_octopus_cloud_local_or_example
 from domain.validation.argument_validation import (
     ensure_string_not_empty,
     ensure_api_key,
@@ -59,6 +60,25 @@ def logging_wrapper(func):
             print(func.__name__ + " Exit")
 
     return wrapper
+
+
+def get_request_headers(api_key, octopus_url):
+    headers = get_octopus_headers(api_key)
+    headers.update(get_redirect_headers(octopus_url))
+    return headers
+
+
+def get_redirect_headers(octopus_url):
+    parsed = urlparse(octopus_url)
+    if not is_octopus_cloud_local_or_example(parsed):
+        return {
+            "X_REDIRECTION_SERVICE_API_KEY": os.environ.get(
+                "REDIRECTION_SERVICE_APIKEY", "Unknown"
+            ),
+            "X_REDIRECTION_UPSTREAM_HOST": parsed.hostname,
+        }
+
+    return {}
 
 
 def get_octopus_headers(api_key_or_access_token):
@@ -123,13 +143,13 @@ def get_space_first_project_runbook_and_environment(space_id, api_key, url):
 
 
 @logging_wrapper
-def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
+def get_space_id_and_name_from_name(space_name, api_key, octopus_url):
     """
     Gets a space ID and actual space name from a name extracted from a query.
     Note that we are quite lenient here in terms of whitespace and capitalisation.
     :param space_name: The name or id of the space
-    :param my_octopus_api: The Octopus URL
-    :param my_api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
+    :param api_key: The Octopus API key
     :return: The space ID and actual name
     """
 
@@ -138,22 +158,24 @@ def get_space_id_and_name_from_name(space_name, my_api_key, my_octopus_api):
         "space_name must be a non-empty string (get_space_id_and_name_from_name).",
     )
     ensure_string_not_empty(
-        my_octopus_api,
+        octopus_url,
         "my_octopus_api must be the Octopus Url (get_space_id_and_name_from_name).",
     )
     ensure_api_key(
-        my_api_key,
+        api_key,
         "my_api_key must be the Octopus Api key (get_space_id_and_name_from_name).",
     )
 
     # Early exit if an ID was supplied
     if space_name.startswith("Spaces-"):
-        space = get_space(space_name, my_api_key, my_octopus_api)
+        space = get_space(space_name, api_key, octopus_url)
         return space["Id"], space["Name"]
 
-    api = build_url(my_octopus_api, "api/spaces", dict(take=TAKE_ALL))
+    api = build_url(octopus_url, "api/spaces", dict(take=TAKE_ALL))
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     json = resp.json()
 
@@ -189,7 +211,9 @@ def get_spaces_batch(skip, take, api_key, octopus_url):
 
     api = build_url(octopus_url, "api/Spaces", dict(take=take, skip=skip))
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     return resp.json()["Items"]
 
@@ -217,12 +241,12 @@ def get_spaces_generator(api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
+def get_octopus_project_names_base(space_name, api_key, octopus_url):
     """
     The base function used to get a list of project names.
     :param space_name: The name of the Octopus space containing the projects
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The list of projects in the space
     """
     ensure_string_not_empty(
@@ -230,23 +254,25 @@ def get_octopus_project_names_base(space_name, my_api_key, my_octopus_api):
         "space_name must be a non-empty string (get_octopus_project_names_base).",
     )
     ensure_string_not_empty(
-        my_octopus_api,
+        octopus_url,
         "my_octopus_api must be the Octopus Url (get_octopus_project_names_base).",
     )
     ensure_api_key(
-        my_api_key,
+        api_key,
         "my_api_key must be the Octopus Api key (get_octopus_project_names_base).",
     )
 
     space_id, actual_space_name = get_space_id_and_name_from_name(
-        space_name, my_api_key, my_octopus_api
+        space_name, api_key, octopus_url
     )
 
     api = build_url(
-        my_octopus_api, f"api/{quote_safe(space_id)}/Projects", dict(take=TAKE_ALL)
+        octopus_url, f"api/{quote_safe(space_id)}/Projects", dict(take=TAKE_ALL)
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     json = resp.json()
@@ -453,12 +479,12 @@ def get_release_github_workflow_from_desc(release_id, release):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_dashboard(space_id, my_api_key, my_octopus_api):
+def get_dashboard(space_id, api_key, octopus_url):
     """
     The base function used to get the dashboard summary
     :param space_id: The id of the Octopus space containing the projects
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The actual space name and the dashboard summary
     """
 
@@ -466,19 +492,19 @@ def get_dashboard(space_id, my_api_key, my_octopus_api):
         space_id, "space_id must be a non-empty string (get_dashboard)."
     )
     ensure_string_not_empty(
-        my_octopus_api, "my_octopus_api must be the Octopus Url (get_dashboard)."
+        octopus_url, "my_octopus_api must be the Octopus Url (get_dashboard)."
     )
-    ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (get_dashboard)."
-    )
+    ensure_api_key(api_key, "my_api_key must be the Octopus Api key (get_dashboard).")
 
     api = build_url(
-        my_octopus_api,
+        octopus_url,
         f"api/{quote_safe(space_id)}/Dashboard",
         dict(highestLatestVersionPerProjectAndEnvironment="true"),
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     return resp.json()
@@ -486,13 +512,13 @@ def get_dashboard(space_id, my_api_key, my_octopus_api):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_project_tenant_dashboard(space_id, project_id, my_api_key, my_octopus_api):
+def get_project_tenant_dashboard(space_id, project_id, api_key, octopus_url):
     """
     The base function used to get the tenanted dashboard for a project
     :param space_id: The id of the Octopus space containing the projects
     :param project_id: The id of the project
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The project tenanted dashboard
     """
 
@@ -503,20 +529,22 @@ def get_project_tenant_dashboard(space_id, project_id, my_api_key, my_octopus_ap
         space_id, "project_id must be a non-empty string (get_project_progression)."
     )
     ensure_string_not_empty(
-        my_octopus_api,
+        octopus_url,
         "my_octopus_api must be the Octopus Url (get_project_progression).",
     )
     ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (get_project_progression)."
+        api_key, "my_api_key must be the Octopus Api key (get_project_progression)."
     )
 
     api = build_url(
-        my_octopus_api,
+        octopus_url,
         f"bff/spaces/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/tenanted-dashboard",
         dict(showAll="true", skip=0, take=30),
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     return resp.json()
@@ -524,13 +552,13 @@ def get_project_tenant_dashboard(space_id, project_id, my_api_key, my_octopus_ap
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
-def get_runbooks_dashboard(space_id, runbook_id, my_api_key, my_octopus_api):
+def get_runbooks_dashboard(space_id, runbook_id, api_key, octopus_url):
     """
     The base function used to get the runbooks dashboard summary
     :param space_id: The id of the Octopus space containing the runbook
     :param runbook_id: The id of the runbook
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The actual space name and the dashboard summary
     """
 
@@ -541,43 +569,47 @@ def get_runbooks_dashboard(space_id, runbook_id, my_api_key, my_octopus_api):
         runbook_id, "runbook_id must be a non-empty string (get_runbooks_dashboard)."
     )
     ensure_string_not_empty(
-        my_octopus_api,
+        octopus_url,
         "my_octopus_api must be the Octopus Url (get_runbooks_dashboard).",
     )
     ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (get_runbooks_dashboard)."
+        api_key, "my_api_key must be the Octopus Api key (get_runbooks_dashboard)."
     )
 
     api = build_url(
-        my_octopus_api,
+        octopus_url,
         f"api/{quote_safe(space_id)}/progression/runbooks/{quote_safe(runbook_id)}",
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     return resp.json()
 
 
 @logging_wrapper
-def get_current_user(my_api_key, my_octopus_api):
+def get_current_user(api_key, octopus_url):
     """
     Returns the ID of the octopus user. This can be used to verify an API key, as even Octopus users with
     no permissions can access this endpoint.
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The Octopus user ID
     """
     ensure_string_not_empty(
-        my_octopus_api, "my_octopus_api must be the Octopus Url (get_current_user)."
+        octopus_url, "my_octopus_api must be the Octopus Url (get_current_user)."
     )
     ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (get_current_user)."
+        api_key, "my_api_key must be the Octopus Api key (get_current_user)."
     )
 
-    api = build_url(my_octopus_api, "/api/users/me")
+    api = build_url(octopus_url, "/api/users/me")
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     json = resp.json()
@@ -586,26 +618,28 @@ def get_current_user(my_api_key, my_octopus_api):
 
 @logging_wrapper
 @retry(HTTPError, tries=3, delay=2)
-def get_projects(space_id, my_api_key, my_octopus_api):
+def get_projects(space_id, api_key, octopus_url):
     """
     Returns the projects in a space
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The list of projects
     """
     ensure_string_not_empty(
-        my_octopus_api, "my_octopus_api must be the Octopus Url (get_projects)."
+        octopus_url, "my_octopus_api must be the Octopus Url (get_projects)."
     )
-    ensure_api_key(my_api_key, "my_api_key must be the Octopus Api key (get_projects).")
+    ensure_api_key(api_key, "my_api_key must be the Octopus Api key (get_projects).")
     ensure_string_not_empty(space_id, "space_id must be the space ID (get_projects).")
 
     api = build_url(
-        my_octopus_api,
+        octopus_url,
         f"/api/{quote_safe(space_id)}/Projects",
         query=dict(take=TAKE_ALL),
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     json = resp.json()
@@ -613,24 +647,26 @@ def get_projects(space_id, my_api_key, my_octopus_api):
 
 
 @logging_wrapper
-def get_feeds(my_api_key, my_octopus_api, space_id):
+def get_feeds(api_key, octopus_url, space_id):
     """
     Returns the feeds in a space
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The list of feeds
     """
     ensure_string_not_empty(
-        my_octopus_api, "my_octopus_api must be the Octopus Url (get_feeds)."
+        octopus_url, "my_octopus_api must be the Octopus Url (get_feeds)."
     )
-    ensure_api_key(my_api_key, "my_api_key must be the Octopus Api key (get_feeds).")
+    ensure_api_key(api_key, "my_api_key must be the Octopus Api key (get_feeds).")
     ensure_string_not_empty(space_id, "space_id must be the space ID (get_feeds).")
 
     api = build_url(
-        my_octopus_api, f"/api/{quote_safe(space_id)}/Feeds", query=dict(take=TAKE_ALL)
+        octopus_url, f"/api/{quote_safe(space_id)}/Feeds", query=dict(take=TAKE_ALL)
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     json = resp.json()
@@ -638,26 +674,28 @@ def get_feeds(my_api_key, my_octopus_api, space_id):
 
 
 @logging_wrapper
-def get_accounts(my_api_key, my_octopus_api, space_id):
+def get_accounts(api_key, octopus_url, space_id):
     """
     Returns the accounts in a space
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The list of accounts
     """
     ensure_string_not_empty(
-        my_octopus_api, "my_octopus_api must be the Octopus Url (get_accounts)."
+        octopus_url, "my_octopus_api must be the Octopus Url (get_accounts)."
     )
-    ensure_api_key(my_api_key, "my_api_key must be the Octopus Api key (get_accounts).")
+    ensure_api_key(api_key, "my_api_key must be the Octopus Api key (get_accounts).")
     ensure_string_not_empty(space_id, "space_id must be the space ID (get_accounts).")
 
     api = build_url(
-        my_octopus_api,
+        octopus_url,
         f"/api/{quote_safe(space_id)}/Accounts",
         query=dict(take=TAKE_ALL),
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     json = resp.json()
@@ -665,26 +703,28 @@ def get_accounts(my_api_key, my_octopus_api, space_id):
 
 
 @logging_wrapper
-def get_machines(my_api_key, my_octopus_api, space_id):
+def get_machines(api_key, octopus_url, space_id):
     """
     Returns the machines in a space
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The list of machines
     """
     ensure_string_not_empty(
-        my_octopus_api, "my_octopus_api must be the Octopus Url (get_machines)."
+        octopus_url, "my_octopus_api must be the Octopus Url (get_machines)."
     )
-    ensure_api_key(my_api_key, "my_api_key must be the Octopus Api key (get_machines).")
+    ensure_api_key(api_key, "my_api_key must be the Octopus Api key (get_machines).")
     ensure_string_not_empty(space_id, "space_id must be the space ID (get_machines).")
 
     api = build_url(
-        my_octopus_api,
+        octopus_url,
         f"/api/{quote_safe(space_id)}/Machines",
         query=dict(take=TAKE_ALL),
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     json = resp.json()
@@ -692,30 +732,32 @@ def get_machines(my_api_key, my_octopus_api, space_id):
 
 
 @logging_wrapper
-def get_certificates(my_api_key, my_octopus_api, space_id):
+def get_certificates(api_key, octopus_url, space_id):
     """
     Returns the certificate in a space
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The list of certificate
     """
     ensure_string_not_empty(
-        my_octopus_api, "my_octopus_api must be the Octopus Url (get_certificates)."
+        octopus_url, "my_octopus_api must be the Octopus Url (get_certificates)."
     )
     ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (get_certificates)."
+        api_key, "my_api_key must be the Octopus Api key (get_certificates)."
     )
     ensure_string_not_empty(
         space_id, "space_id must be the space ID (get_certificates)."
     )
 
     api = build_url(
-        my_octopus_api,
+        octopus_url,
         f"/api/{quote_safe(space_id)}/Certificates",
         query=dict(take=TAKE_ALL),
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     json = resp.json()
@@ -723,30 +765,32 @@ def get_certificates(my_api_key, my_octopus_api, space_id):
 
 
 @logging_wrapper
-def get_environments(my_api_key, my_octopus_api, space_id):
+def get_environments(api_key, octopus_url, space_id):
     """
     Returns the environments in a space
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The list of environments
     """
     ensure_string_not_empty(
-        my_octopus_api, "my_octopus_api must be the Octopus Url (get_environments)."
+        octopus_url, "my_octopus_api must be the Octopus Url (get_environments)."
     )
     ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (get_environments)."
+        api_key, "my_api_key must be the Octopus Api key (get_environments)."
     )
     ensure_string_not_empty(
         space_id, "space_id must be the space ID (get_environments)."
     )
 
     api = build_url(
-        my_octopus_api,
+        octopus_url,
         f"/api/{quote_safe(space_id)}/Environments",
         query=dict(take=TAKE_ALL),
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     json = resp.json()
@@ -755,15 +799,15 @@ def get_environments(my_api_key, my_octopus_api, space_id):
 
 @logging_wrapper
 def get_runbook_environments_from_project(
-    space_id, project_id, runbook_id, my_api_key, my_octopus_api
+    space_id, project_id, runbook_id, api_key, octopus_url
 ):
     """
     Returns the runbook environments for a specified project
     :param space_id: The Octopus space id
     :param project_id: The Octopus project id
     :param runbook_id: The Octopus runbook id
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The list of environments
     """
     ensure_string_not_empty(
@@ -779,20 +823,22 @@ def get_runbook_environments_from_project(
         "runbook_id must be the runbook ID (get_runbook_environments_from_project).",
     )
     ensure_string_not_empty(
-        my_octopus_api,
+        octopus_url,
         "my_octopus_api must be the Octopus Url (get_runbook_environments_from_project).",
     )
     ensure_api_key(
-        my_api_key,
+        api_key,
         "my_api_key must be the Octopus Api key (get_runbook_environments_from_project).",
     )
 
     api = build_url(
-        my_octopus_api,
+        octopus_url,
         f"/api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/runbooks/{quote_safe(runbook_id)}/environments",
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     json = resp.json()
@@ -800,30 +846,32 @@ def get_runbook_environments_from_project(
 
 
 @logging_wrapper
-def get_tenants(my_api_key, my_octopus_api, space_id):
+def get_tenants(api_key, octopus_url, space_id):
     """
     Returns the environments in a space
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The list of environments
     """
     ensure_string_not_empty(
-        my_octopus_api, "my_octopus_api must be the Octopus Url (get_environments)."
+        octopus_url, "my_octopus_api must be the Octopus Url (get_environments)."
     )
     ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (get_environments)."
+        api_key, "my_api_key must be the Octopus Api key (get_environments)."
     )
     ensure_string_not_empty(
         space_id, "space_id must be the space ID (get_environments)."
     )
 
     api = build_url(
-        my_octopus_api,
+        octopus_url,
         f"/api/{quote_safe(space_id)}/Tenants",
         query=dict(take=TAKE_ALL),
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     json = resp.json()
@@ -831,29 +879,31 @@ def get_tenants(my_api_key, my_octopus_api, space_id):
 
 
 @logging_wrapper
-def get_project_channel(my_api_key, my_octopus_api, space_id, project_id):
+def get_project_channel(api_key, octopus_url, space_id, project_id):
     """
     Returns the channels associated with a project
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The channels associated with the project
     """
     ensure_string_not_empty(
-        my_octopus_api, "my_octopus_api must be the Octopus Url (get_project_channel)."
+        octopus_url, "my_octopus_api must be the Octopus Url (get_project_channel)."
     )
     ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (get_project_channel)."
+        api_key, "my_api_key must be the Octopus Api key (get_project_channel)."
     )
     ensure_string_not_empty(
         space_id, "space_id must be the space ID (get_project_channel)."
     )
 
     api = build_url(
-        my_octopus_api,
+        octopus_url,
         f"/api/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/Channels",
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     json = resp.json()
@@ -861,27 +911,27 @@ def get_project_channel(my_api_key, my_octopus_api, space_id, project_id):
 
 
 @logging_wrapper
-def get_lifecycle(my_api_key, my_octopus_api, space_id, lifecycle_id):
+def get_lifecycle(api_key, octopus_url, space_id, lifecycle_id):
     """
     Return the lifecycle with the given ID
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus URL
     :return: The list of projects
     """
     ensure_string_not_empty(
-        my_octopus_api, "my_octopus_api must be the Octopus Url (get_lifecycle)."
+        octopus_url, "my_octopus_api must be the Octopus Url (get_lifecycle)."
     )
-    ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (get_lifecycle)."
-    )
+    ensure_api_key(api_key, "my_api_key must be the Octopus Api key (get_lifecycle).")
     ensure_string_not_empty(space_id, "space_id must be the space ID (get_lifecycle).")
 
     api = build_url(
-        my_octopus_api,
+        octopus_url,
         f"/api/{quote_safe(space_id)}/Lifecycles/{quote_safe(lifecycle_id)}",
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     json = resp.json()
@@ -889,21 +939,21 @@ def get_lifecycle(my_api_key, my_octopus_api, space_id, lifecycle_id):
 
 
 @logging_wrapper
-def create_limited_api_key(user, my_api_key, my_octopus_api):
+def create_limited_api_key(user, api_key, octopus_url):
     """
     This function creates an API key that expires tomorrow.
     :param user: The current user
-    :param my_api_key: The API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The API key
+    :param octopus_url: The Octopus URL
     :return:
     """
 
     ensure_string_not_empty(
-        my_octopus_api,
+        octopus_url,
         "my_octopus_api must be the Octopus Url (create_limited_api_key).",
     )
     ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (create_limited_api_key)."
+        api_key, "my_api_key must be the Octopus Api key (create_limited_api_key)."
     )
     ensure_string_not_empty(
         user, "user must be the Octopus user ID (create_limited_api_key)."
@@ -916,10 +966,10 @@ def create_limited_api_key(user, my_api_key, my_octopus_api):
         "Expires": expires.isoformat(),
     }
 
-    api = build_url(my_octopus_api, f"/api/users/{quote_safe(user)}/apikeys")
+    api = build_url(octopus_url, f"/api/users/{quote_safe(user)}/apikeys")
     resp = handle_response(
         lambda: http.request(
-            "POST", api, json=api_key, headers=get_octopus_headers(my_api_key)
+            "POST", api, json=api_key, headers=get_request_headers(api_key, octopus_url)
         )
     )
 
@@ -928,21 +978,21 @@ def create_limited_api_key(user, my_api_key, my_octopus_api):
 
 
 @logging_wrapper
-def create_unlimited_api_key(user, my_api_key, my_octopus_api):
+def create_unlimited_api_key(user, api_key, octopus_url):
     """
     This function creates an API key that does not expire.
     :param user: The current user
-    :param my_api_key: The API key
-    :param my_octopus_api: The Octopus URL
+    :param api_key: The API key
+    :param octopus_url: The Octopus URL
     :return:
     """
 
     ensure_string_not_empty(
-        my_octopus_api,
+        octopus_url,
         "my_octopus_api must be the Octopus Url (create_limited_api_key).",
     )
     ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (create_limited_api_key)."
+        api_key, "my_api_key must be the Octopus Api key (create_limited_api_key)."
     )
     ensure_string_not_empty(
         user, "user must be the Octopus user ID (create_limited_api_key)."
@@ -952,10 +1002,10 @@ def create_unlimited_api_key(user, my_api_key, my_octopus_api):
 
     api_key = {"Purpose": "Octopus Copilot temporary API key", "Expires": None}
 
-    api = build_url(my_octopus_api, f"/api/users/{quote_safe(user)}/apikeys")
+    api = build_url(octopus_url, f"/api/users/{quote_safe(user)}/apikeys")
     resp = handle_response(
         lambda: http.request(
-            "POST", api, json=api_key, headers=get_octopus_headers(my_api_key)
+            "POST", api, json=api_key, headers=get_request_headers(api_key, octopus_url)
         )
     )
 
@@ -997,7 +1047,9 @@ def get_raw_deployment_process(space_name, project_name, api_key, octopus_url):
         f"api/{quote_safe(space_id)}/Projects/{quote_safe(project['Id'])}/DeploymentProcesses",
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     return resp.data.decode("utf-8")
@@ -1036,7 +1088,9 @@ def get_project_progression(space_name, project_name, api_key, octopus_url):
         f"api/{quote_safe(space_id)}/Projects/{quote_safe(project['Id'])}/Progression",
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     return resp.json()
@@ -1051,7 +1105,9 @@ def get_projects_batch(skip, take, space_id, api_key, octopus_url):
         octopus_url, f"api/{quote_safe(space_id)}/Projects", dict(take=take, skip=skip)
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     return resp.json()["Items"]
 
@@ -1090,7 +1146,9 @@ def get_environments_batch(skip, take, space_id, api_key, octopus_url):
         dict(take=take, skip=skip),
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     return resp.json()["Items"]
 
@@ -1127,7 +1185,9 @@ def get_tenants_batch(skip, take, space_id, api_key, octopus_url):
         octopus_url, f"api/{quote_safe(space_id)}/Tenants", dict(take=take, skip=skip)
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     return resp.json()["Items"]
 
@@ -1164,7 +1224,9 @@ def get_runbooks_batch(skip, take, space_id, project_id, api_key, octopus_url):
         dict(take=take, skip=skip),
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     return resp.json()["Items"]
 
@@ -1203,7 +1265,9 @@ def get_all_runbooks_batch(skip, take, space_id, api_key, octopus_url):
         octopus_url, f"api/{quote_safe(space_id)}/Runbooks", dict(take=take, skip=skip)
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     return resp.json()["Items"]
 
@@ -1253,7 +1317,9 @@ def get_space(space_id, api_key, octopus_url):
 
     api = build_url(octopus_url, base_url)
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     return resp.json()
 
@@ -1282,7 +1348,9 @@ def get_project(space_id, project_name, api_key, octopus_url):
         base_url = f"api/{quote_safe(space_id)}/Projects/{quote_safe(project_name)}"
         api = build_url(octopus_url, base_url)
         resp = handle_response(
-            lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+            lambda: http.request(
+                "GET", api, headers=get_request_headers(api_key, octopus_url)
+            )
         )
         return resp.json()
 
@@ -1290,14 +1358,18 @@ def get_project(space_id, project_name, api_key, octopus_url):
 
     api = build_url(octopus_url, base_url, dict(partialname=project_name))
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     project = get_item_fuzzy(resp.json()["Items"], project_name)
 
     if project is None:
         api = build_url(octopus_url, base_url, dict(take=TAKE_ALL))
         resp = handle_response(
-            lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+            lambda: http.request(
+                "GET", api, headers=get_request_headers(api_key, octopus_url)
+            )
         )
         project = get_item_fuzzy(resp.json()["Items"], project_name)
         if project is None:
@@ -1329,7 +1401,9 @@ def get_environment(space_id, environment_id, api_key, octopus_url):
 
     api = build_url(octopus_url, base_url)
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     return resp.json()
 
@@ -1361,7 +1435,9 @@ def get_project_releases(space_id, project_id, api_key, octopus_url, take=max_co
         query=dict(take=take),
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     return resp.json()
@@ -1393,7 +1469,9 @@ def get_release_deployments(space_id, release_id, api_key, octopus_url):
         f"api/{quote_safe(space_id)}/Releases/{quote_safe(release_id)}/Deployments",
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     return resp.json()
@@ -1424,7 +1502,9 @@ def get_release(space_id, release_id, api_key, octopus_url):
         octopus_url, f"api/{quote_safe(space_id)}/Releases/{quote_safe(release_id)}"
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     return resp.json()
@@ -1452,7 +1532,9 @@ def get_task(space_id, task_id, api_key, octopus_url):
         octopus_url, f"api/{quote_safe(space_id)}/Tasks/{quote_safe(task_id)}"
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     return resp.json()
@@ -1486,7 +1568,7 @@ async def get_task_details_async(space_id, task_id, api_key, octopus_url):
 
     async with sem:
         async with aiohttp.ClientSession(
-            headers=get_octopus_headers(api_key)
+            headers=get_request_headers(api_key, octopus_url)
         ) as session:
             async with session.get(str(api)) as response:
                 return await response.json()
@@ -1521,7 +1603,9 @@ def get_project_progression_from_ids(space_id, project_id, api_key, octopus_url)
         f"api/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/Progression",
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     return resp.json()
@@ -1572,7 +1656,9 @@ def get_deployment_status_base(
         f"api/{quote_safe(space_id)}/Projects/{quote_safe(project['Id'])}/Progression",
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     releases = list(
         filter(lambda r: environment["Id"] in r["Deployments"], resp.json()["Releases"])
@@ -1642,7 +1728,7 @@ def get_deployment_logs(
 
     # Find deployment count
     # api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Deployments", dict(take=0, projects=project['Id']))
-    # resp_json = handle_response(lambda: http.request("GET", api, headers=get_octopus_headers(api_key))).json()
+    # resp_json = handle_response(lambda: http.request("GET", api, headers=get_request_headers(api_key, octopus_url))).json()
     # total_results = resp_json["TotalResults"]
     # skip = max(0, total_results - 30)
 
@@ -1653,7 +1739,9 @@ def get_deployment_logs(
         dict(take=100, skip=0, projects=project["Id"]),
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     deployments = json.loads(resp.data.decode("utf-8")).get("Items")
@@ -1686,7 +1774,9 @@ def get_deployment_logs(
             dict(take=100),
         )
         resp = handle_response(
-            lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+            lambda: http.request(
+                "GET", api, headers=get_request_headers(api_key, octopus_url)
+            )
         )
         releases = json.loads(resp.data.decode("utf-8")).get("Items")
 
@@ -1712,7 +1802,9 @@ def get_deployment_logs(
 
     api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Tasks/{task_id}/details")
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     task = json.loads(resp.data.decode("utf-8"))
 
@@ -1799,7 +1891,9 @@ def get_runbook_deployment_logs(
 
     api = build_url(octopus_url, f"bff/tasks/list", query)
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     runs = json.loads(resp.data.decode("utf-8")).get("Items")
 
@@ -1810,7 +1904,9 @@ def get_runbook_deployment_logs(
 
     api = build_url(octopus_url, f"api/{quote_safe(space_id)}/Tasks/{task_id}/details")
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     task = json.loads(resp.data.decode("utf-8"))
 
@@ -1950,14 +2046,18 @@ def get_environment_fuzzy(space_id, environment_name, api_key, octopus_url):
     base_url = f"api/{quote_safe(space_id)}/Environments"
     api = build_url(octopus_url, base_url, dict(partialname=environment_name))
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     environment = get_item_fuzzy(resp.json()["Items"], environment_name)
 
     if environment is None:
         api = build_url(octopus_url, base_url)
         resp = handle_response(
-            lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+            lambda: http.request(
+                "GET", api, headers=get_request_headers(api_key, octopus_url)
+            )
         )
         environment = get_item_fuzzy(resp.json()["Items"], environment_name)
         if environment is None:
@@ -1974,7 +2074,9 @@ def get_team(team_id, api_key, octopus_url):
     base_url = f"api/teams/{quote_safe(team_id)}"
     api = build_url(octopus_url, base_url)
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     return resp.json()
 
@@ -1991,7 +2093,9 @@ def get_teams(space_id, api_key, octopus_url, include_system_teams=True):
         dict(spaces=space_id, includeSystem=include_system_teams, take=TAKE_ALL),
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     return resp.json()["Items"]
 
@@ -2043,14 +2147,18 @@ def get_tenant_fuzzy(space_id, tenant_name, api_key, octopus_url):
     base_url = f"api/{quote_safe(space_id)}/Tenants"
     api = build_url(octopus_url, base_url, dict(partialname=tenant_name))
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     tenant = get_item_fuzzy(resp.json()["Items"], tenant_name)
 
     if tenant is None:
         api = build_url(octopus_url, base_url)
         resp = handle_response(
-            lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+            lambda: http.request(
+                "GET", api, headers=get_request_headers(api_key, octopus_url)
+            )
         )
         tenant = get_item_fuzzy(resp.json()["Items"], tenant_name)
         if tenant is None:
@@ -2067,7 +2175,9 @@ def get_tenant(space_id, tenant_id, api_key, octopus_url):
     base_url = f"api/{quote_safe(space_id)}/Tenants/{quote_safe(tenant_id)}"
     api = build_url(octopus_url, base_url)
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     return resp.json()
 
@@ -2121,7 +2231,9 @@ def get_channel(space_id, channel_id, api_key, octopus_url):
         octopus_url, f"api/{quote_safe(space_id)}/Channels/{quote_safe(channel_id)}"
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     return resp.json()
@@ -2165,7 +2277,9 @@ def get_release_fuzzy(space_id, project_id, release_version, api_key, octopus_ur
     base_url = f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/releases"
     api = build_url(octopus_url, base_url, dict(searchByVersion=release_version))
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     releases = resp.json()
     matching_releases = [
@@ -2194,7 +2308,9 @@ def get_version_controlled_project_release_template(
         f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/{quote_safe(git_ref)}/deploymentprocesses/template?channel={quote_safe(channel_id)}",
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     return resp.json()
 
@@ -2214,7 +2330,9 @@ def get_database_project_release_template(
         f"api/{quote_safe(space_id)}/deploymentprocesses/deploymentprocess-{quote_safe(project_id)}/template?channel={quote_safe(channel_id)}",
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     return resp.json()
 
@@ -2264,7 +2382,9 @@ def get_releases_by_version(
         query=dict(searchByVersion=quote_safe(release_version)),
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     releases = resp.json()
     if len(releases["Items"]) == 0:
@@ -2288,7 +2408,9 @@ def get_project_version_controlled_branch(
         f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/git/branches/{quote_safe(branch_name)}",
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     return resp.json()
 
@@ -2323,7 +2445,9 @@ def get_packages(space_id, feed_id, package_id, api_key, octopus_url, take=1):
         octopus_url, base_url, dict(take=take, packageId=quote_safe(package_id))
     )
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     json = resp.json()
     return json["Items"]
@@ -2340,7 +2464,9 @@ def get_project_fuzzy(space_id, project_name, api_key, octopus_url):
     base_url = f"api/{quote_safe(space_id)}/Projects"
     api = build_url(octopus_url, base_url, dict(partialname=project_name))
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     project = get_item_fuzzy(resp.json()["Items"], project_name)
 
@@ -2348,7 +2474,9 @@ def get_project_fuzzy(space_id, project_name, api_key, octopus_url):
     if project is None:
         api = build_url(octopus_url, base_url)
         resp = handle_response(
-            lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+            lambda: http.request(
+                "GET", api, headers=get_request_headers(api_key, octopus_url)
+            )
         )
         project = get_item_fuzzy(resp.json()["Items"], project_name)
         if project is None:
@@ -2368,7 +2496,9 @@ def get_runbook_fuzzy(space_id, project_id, runbook_name, api_key, octopus_url):
     base_url = f"api/{quote_safe(space_id)}/Projects/{quote_safe(project_id)}/Runbooks"
     api = build_url(octopus_url, base_url, dict(partialname=runbook_name))
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     runbook = get_item_fuzzy(resp.json()["Items"], runbook_name)
 
@@ -2376,7 +2506,9 @@ def get_runbook_fuzzy(space_id, project_id, runbook_name, api_key, octopus_url):
     if runbook is None:
         api = build_url(octopus_url, base_url)
         resp = handle_response(
-            lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+            lambda: http.request(
+                "GET", api, headers=get_request_headers(api_key, octopus_url)
+            )
         )
         runbook = get_item_fuzzy(resp.json()["Items"], runbook_name)
         if runbook is None:
@@ -2393,19 +2525,19 @@ def run_published_runbook_fuzzy(
     environment_name,
     tenant_name,
     variables,
-    my_api_key,
-    my_octopus_api,
+    api_key,
+    octopus_url,
     log_query=None,
 ):
     """
     Runs a published runbook
     """
     ensure_string_not_empty(
-        my_octopus_api,
+        octopus_url,
         "my_octopus_api must be the Octopus Url (run_published_runbook_fuzzy).",
     )
     ensure_api_key(
-        my_api_key,
+        api_key,
         "my_api_key must be the Octopus Api key (run_published_runbook_fuzzy).",
     )
     ensure_string_not_empty(
@@ -2422,15 +2554,15 @@ def run_published_runbook_fuzzy(
         "environment_name must be the environment (run_published_runbook_fuzzy).",
     )
 
-    project = get_project_fuzzy(space_id, project_name, my_api_key, my_octopus_api)
+    project = get_project_fuzzy(space_id, project_name, api_key, octopus_url)
     runbook = get_runbook_fuzzy(
-        space_id, project["Id"], runbook_name, my_api_key, my_octopus_api
+        space_id, project["Id"], runbook_name, api_key, octopus_url
     )
     environment = get_environment_fuzzy(
-        space_id, environment_name, my_api_key, my_octopus_api
+        space_id, environment_name, api_key, octopus_url
     )
     tenant = (
-        get_tenant_fuzzy(space_id, tenant_name, my_api_key, my_octopus_api)
+        get_tenant_fuzzy(space_id, tenant_name, api_key, octopus_url)
         if tenant_name
         else None
     )
@@ -2447,14 +2579,14 @@ def run_published_runbook_fuzzy(
             runbook["PublishedRunbookSnapshotId"],
             environment_name,
             variables,
-            my_api_key,
-            my_octopus_api,
+            api_key,
+            octopus_url,
         )
         # Extract the key (UID) and value.
         matching_variables = {k: v["Value"] for k, v in prompted_variables.items()}
 
     base_url = f"api/{quote_safe(space_id)}/runbookRuns"
-    api = build_url(my_octopus_api, base_url)
+    api = build_url(octopus_url, base_url)
 
     runbook_run = {
         "RunbookId": runbook["Id"],
@@ -2486,7 +2618,10 @@ def run_published_runbook_fuzzy(
 
     response = handle_response(
         lambda: http.request(
-            "POST", api, json=runbook_run, headers=get_octopus_headers(my_api_key)
+            "POST",
+            api,
+            json=runbook_run,
+            headers=get_request_headers(api_key, octopus_url),
         )
     )
 
@@ -2500,18 +2635,18 @@ def create_release_fuzzy(
     git_ref,
     release_version,
     channel_name,
-    my_api_key,
-    my_octopus_api,
+    api_key,
+    octopus_url,
     log_query=None,
 ):
     """
     Creates a release
     """
     ensure_string_not_empty(
-        my_octopus_api, "my_octopus_api must be the Octopus Url (create_release_fuzzy)."
+        octopus_url, "my_octopus_api must be the Octopus Url (create_release_fuzzy)."
     )
     ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (create_release_fuzzy)."
+        api_key, "my_api_key must be the Octopus Api key (create_release_fuzzy)."
     )
     ensure_string_not_empty(
         space_id, "space_id must be the space ID (create_release_fuzzy)."
@@ -2524,22 +2659,20 @@ def create_release_fuzzy(
         "release_version must be the release version (create_release_fuzzy).",
     )
 
-    project = get_project_fuzzy(space_id, project_name, my_api_key, my_octopus_api)
+    project = get_project_fuzzy(space_id, project_name, api_key, octopus_url)
 
     base_url = f"api/{quote_safe(space_id)}/releases"
-    api = build_url(my_octopus_api, base_url)
+    api = build_url(octopus_url, base_url)
 
     if not channel_name:
-        channel = get_default_channel(
-            space_id, project["Id"], my_api_key, my_octopus_api
-        )
+        channel = get_default_channel(space_id, project["Id"], api_key, octopus_url)
     else:
         channel = get_channel_by_name_fuzzy(
-            space_id, project["Id"], channel_name, my_api_key, my_octopus_api
+            space_id, project["Id"], channel_name, api_key, octopus_url
         )
 
     release_template, default_branch = get_release_template_and_default_branch(
-        space_id, project, channel["Id"], git_ref, my_api_key, my_octopus_api
+        space_id, project, channel["Id"], git_ref, api_key, octopus_url
     )
     if not git_ref:
         git_ref = default_branch
@@ -2561,8 +2694,8 @@ def create_release_fuzzy(
             space_id,
             template_package["FeedId"],
             template_package["PackageId"],
-            my_api_key,
-            my_octopus_api,
+            api_key,
+            octopus_url,
         )
         selected_package = {
             "ActionName": template_package["ActionName"],
@@ -2586,7 +2719,10 @@ def create_release_fuzzy(
 
     response = handle_response(
         lambda: http.request(
-            "POST", api, json=release_request, headers=get_octopus_headers(my_api_key)
+            "POST",
+            api,
+            json=release_request,
+            headers=get_request_headers(api_key, octopus_url),
         )
     )
 
@@ -2601,18 +2737,18 @@ def deploy_release_fuzzy(
     environment_id,
     tenant_name,
     variables,
-    my_api_key,
-    my_octopus_api,
+    api_key,
+    octopus_url,
     log_query=None,
 ):
     """
     Deploys a release
     """
     ensure_string_not_empty(
-        my_octopus_api, "my_octopus_api must be the Octopus Url (deploy_release_fuzzy)."
+        octopus_url, "my_octopus_api must be the Octopus Url (deploy_release_fuzzy)."
     )
     ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (deploy_release_fuzzy)."
+        api_key, "my_api_key must be the Octopus Api key (deploy_release_fuzzy)."
     )
     ensure_string_not_empty(
         space_id, "space_id must be the space ID (deploy_release_fuzzy)."
@@ -2628,12 +2764,12 @@ def deploy_release_fuzzy(
     )
 
     base_url = f"api/{quote_safe(space_id)}/deployments"
-    api = build_url(my_octopus_api, base_url)
+    api = build_url(octopus_url, base_url)
 
     # Get tenant
     tenant = None
     if tenant_name:
-        tenant = get_tenant_fuzzy(space_id, tenant_name, my_api_key, my_octopus_api)
+        tenant = get_tenant_fuzzy(space_id, tenant_name, api_key, octopus_url)
 
     deploy_request = {
         "EnvironmentId": environment_id,
@@ -2658,7 +2794,10 @@ def deploy_release_fuzzy(
 
     response = handle_response(
         lambda: http.request(
-            "POST", api, json=deploy_request, headers=get_octopus_headers(my_api_key)
+            "POST",
+            api,
+            json=deploy_request,
+            headers=get_request_headers(api_key, octopus_url),
         )
     )
 
@@ -2683,7 +2822,7 @@ async def get_release_async(space_id, release_id, api_key, octopus_url):
 
     async with sem:
         async with aiohttp.ClientSession(
-            headers=get_octopus_headers(api_key)
+            headers=get_request_headers(api_key, octopus_url)
         ) as session:
             async with session.get(str(api)) as response:
                 return await response.json()
@@ -2736,7 +2875,9 @@ def get_artifacts(space_id, server_task, api_key, octopus_url):
     base_url = f"api/{quote_safe(space_id)}/artifacts"
     api = build_url(octopus_url, base_url, dict(regarding=server_task, take=TAKE_ALL))
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     return resp.json()
@@ -2762,7 +2903,9 @@ def get_task_interruptions(space_id, task_id, api_key, octopus_url):
     base_url = f"api/{quote_safe(space_id)}/interruptions"
     api = build_url(octopus_url, base_url, dict(regarding=task_id))
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     interruptions = resp.json()
     if len(interruptions["Items"]) == 0:
@@ -2865,8 +3008,8 @@ def handle_manual_intervention_for_task(
     tenant_name,
     task_id,
     interruption_action,
-    my_api_key,
-    my_octopus_api,
+    api_key,
+    octopus_url,
 ):
     """
 
@@ -2878,8 +3021,8 @@ def handle_manual_intervention_for_task(
     :param tenant_name: The (optional) Octopus tenant
     :param task_id: The Octopus task
     :param interruption_action: The action to take to handle the interruption. Should be either 'Proceed' or 'Abort'
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus server URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus server URL
     :return:
     """
 
@@ -2903,27 +3046,27 @@ def handle_manual_intervention_for_task(
         task_id, "task_id must be the task ID (approve_manual_intervention_for_task)."
     )
     ensure_api_key(
-        my_api_key,
+        api_key,
         "my_api_key must be the Octopus Api key (approve_manual_intervention_for_task).",
     )
     ensure_string_not_empty(
-        my_octopus_api,
+        octopus_url,
         "my_octopus_api must be the Octopus Url (approve_manual_intervention_for_task).",
     )
 
     if interruption_action not in ["Proceed", "Abort"]:
         raise ValueError(f'Invalid interruption_action "{interruption_action}". ')
 
-    space = get_space(space_id, my_api_key, my_octopus_api)
-    project = get_project(space_id, project_id, my_api_key, my_octopus_api)
-    task = get_task(space_id, task_id, my_api_key, my_octopus_api)
+    space = get_space(space_id, api_key, octopus_url)
+    project = get_project(space_id, project_id, api_key, octopus_url)
+    task = get_task(space_id, task_id, api_key, octopus_url)
 
     if task["HasPendingInterruptions"]:
         interruptions = get_task_interruptions(
-            space_id, task["Id"], my_api_key, my_octopus_api
+            space_id, task["Id"], api_key, octopus_url
         )
 
-        teams = get_teams(space_id, my_api_key, my_octopus_api)
+        teams = get_teams(space_id, api_key, octopus_url)
         valid, error_response = is_manual_intervention_valid(
             space["Name"],
             space_id,
@@ -2934,7 +3077,7 @@ def handle_manual_intervention_for_task(
             task_id,
             interruptions,
             teams,
-            my_octopus_api,
+            octopus_url,
             interruption_action,
         )
         if not valid:
@@ -2946,7 +3089,7 @@ def handle_manual_intervention_for_task(
         responsible_user_id = interruption["ResponsibleUserId"]
         if responsible_user_id is None:
             _ = take_responsibility_for_interruption(
-                space_id, interruption["Id"], my_api_key, my_octopus_api
+                space_id, interruption["Id"], api_key, octopus_url
             )
 
         # else we can assume we have taken responsibility already (validation checks this case already)
@@ -2957,14 +3100,14 @@ def handle_manual_intervention_for_task(
         }
 
         base_url = f"api/{quote_safe(space_id)}/interruptions/{quote_safe(interruption['Id'])}/submit"
-        api = build_url(my_octopus_api, base_url)
+        api = build_url(octopus_url, base_url)
 
         response = handle_response(
             lambda: http.request(
                 "POST",
                 api,
                 json=approval_request,
-                headers=get_octopus_headers(my_api_key),
+                headers=get_request_headers(api_key, octopus_url),
             )
         )
 
@@ -2988,21 +3131,23 @@ def take_responsibility_for_interruption(
     api = build_url(octopus_url, base_url)
 
     response = handle_response(
-        lambda: http.request("PUT", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "PUT", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     return response.json()
 
 
 @logging_wrapper
-def cancel_server_task(space_id, task_id, my_api_key, my_octopus_api):
+def cancel_server_task(space_id, task_id, api_key, octopus_url):
     """
     Cancels a server task in Octopus Deploy.
 
     :param space_id: The Octopus Space
     :param task_id: The Octopus Task ID
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus server URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus server URL
     :return: The Octopus Server task
 
     """
@@ -3014,17 +3159,19 @@ def cancel_server_task(space_id, task_id, my_api_key, my_octopus_api):
         task_id, "task_id must be the task ID (cancel_server_task)."
     )
     ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (cancel_server_task)."
+        api_key, "my_api_key must be the Octopus Api key (cancel_server_task)."
     )
     ensure_string_not_empty(
-        my_octopus_api, "my_octopus_api must be the Octopus Url (cancel_server_task)."
+        octopus_url, "my_octopus_api must be the Octopus Url (cancel_server_task)."
     )
 
     base_url = f"api/{quote_safe(space_id)}/tasks/{quote_safe(task_id)}/cancel"
-    api = build_url(my_octopus_api, base_url)
+    api = build_url(octopus_url, base_url)
 
     response = handle_response(
-        lambda: http.request("POST", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "POST", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     task = response.json()
@@ -3094,8 +3241,8 @@ def get_runbook_snapshot_preview(
     project_id,
     runbook_snapshot_id,
     environment_id,
-    my_api_key,
-    my_octopus_api,
+    api_key,
+    octopus_url,
 ):
     """
     Gets a Runbook Snapshot preview
@@ -3104,22 +3251,24 @@ def get_runbook_snapshot_preview(
     :param project_id: The Octopus project
     :param runbook_snapshot_id: The Octopus Runbook Snapshot
     :param environment_id: The Octopus Environment
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus server URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus server URL
     :return: The Octopus Runbook Snapshot preview
 
     """
 
     ensure_api_key(
-        my_api_key,
+        api_key,
         "my_api_key must be the Octopus Api key (get_runbook_snapshot_preview).",
     )
 
     base_url = f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/runbookSnapshots/{quote_safe(runbook_snapshot_id)}/runbookRuns/preview/{quote_safe(environment_id)}"
-    api = build_url(my_octopus_api, base_url, query=dict(includeDisabledSteps=True))
+    api = build_url(octopus_url, base_url, query=dict(includeDisabledSteps=True))
 
     response = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     runbook_snapshot_preview = response.json()
@@ -3198,30 +3347,30 @@ def match_runbook_variables(
 
 @logging_wrapper
 @retry(HTTPError, tries=3, delay=2)
-def get_deployment_preview(
-    space_id, release_id, environment_id, my_api_key, my_octopus_api
-):
+def get_deployment_preview(space_id, release_id, environment_id, api_key, octopus_url):
     """
     Gets a deployment preview
 
     :param space_id: The Octopus Space
     :param release_id: The Octopus release
     :param environment_id: The Octopus Environment
-    :param my_api_key: The Octopus API key
-    :param my_octopus_api: The Octopus server URL
+    :param api_key: The Octopus API key
+    :param octopus_url: The Octopus server URL
     :return: The Octopus deployment preview
 
     """
 
     ensure_api_key(
-        my_api_key, "my_api_key must be the Octopus Api key (get_deployment_preview)."
+        api_key, "my_api_key must be the Octopus Api key (get_deployment_preview)."
     )
 
     base_url = f"api/{quote_safe(space_id)}/releases/{quote_safe(release_id)}/deployments/preview/{quote_safe(environment_id)}"
-    api = build_url(my_octopus_api, base_url, query=dict(includeDisabledSteps=True))
+    api = build_url(octopus_url, base_url, query=dict(includeDisabledSteps=True))
 
     response = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(my_api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
 
     deployment_preview = response.json()
@@ -3372,7 +3521,9 @@ def get_users(api_key, octopus_url):
     base_url = f"api/users"
     api = build_url(octopus_url, base_url, dict(take=TAKE_ALL))
     resp = handle_response(
-        lambda: http.request("GET", api, headers=get_octopus_headers(api_key))
+        lambda: http.request(
+            "GET", api, headers=get_request_headers(api_key, octopus_url)
+        )
     )
     interruptions = resp.json()
     if len(interruptions["Items"]) == 0:
