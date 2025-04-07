@@ -1008,12 +1008,15 @@ def create_unlimited_api_key(user, api_key, octopus_url):
 
     tomorrow = datetime.datetime.now(pytz.UTC) + datetime.timedelta(days=1)
 
-    api_key = {"Purpose": "Octopus Copilot temporary API key", "Expires": None}
+    api_key_details = {"Purpose": "Octopus Copilot temporary API key", "Expires": None}
 
     api = build_url(octopus_url, f"/api/users/{quote_safe(user)}/apikeys")
     resp = handle_response(
         lambda: http.request(
-            "POST", api, json=api_key, headers=get_request_headers(api_key, octopus_url)
+            "POST",
+            api,
+            json=api_key_details,
+            headers=get_request_headers(api_key, octopus_url),
         )
     )
 
