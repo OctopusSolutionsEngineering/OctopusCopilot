@@ -345,6 +345,11 @@ step "deploy-with-cli" {
                       "name": "APPLICATION_OCTOLINT_URL",
                       "value": "#{Octolint.Application.Url}",
                       "slotSetting": false
+                   },
+                   {
+                      "name": "REDIRECTION_SERVICE_APIKEY",
+                      "value": "#{Redirection.Service.ApiKey}",
+                      "slotSetting": false
                    }
                 ] 
                 EOL
