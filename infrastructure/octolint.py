@@ -100,7 +100,7 @@ async def run_octolint_check_async(
 
     api = (
         os.environ["APPLICATION_OCTOLINT_URL"]
-        if redirections_are_enabled
+        if not redirections_are_enabled
         else f"https://{os.environ.get('REDIRECTION_HOST')}"
     )
 
