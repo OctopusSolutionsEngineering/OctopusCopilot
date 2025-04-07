@@ -55,14 +55,6 @@ terraform apply -var=octopus_server=https://yourinstance.octopus.app -var=octopu
 This creates a service account, team, and user role called `Copilot`. The role includes permissions to view Octopus
 resources, but not to modify them.
 
-# Azure Function outbound IPs
-
-The list of outbound IP addresses for the functions that make up this extension can be found
-in [outboundips.txt](outboundips.txt). These IP addresses must be placed into an allowlist for any Octopus instance the
-extension will interact with.
-
-Note that Octopus cloud instances do not need to take any additional action to grant the extension access.
-
 # Test web site
 
 The primary interface for this agent is via the GitHub Copilot chat. This requires individual users to be invited to
@@ -148,8 +140,3 @@ The testing is broken down into 3 categories:
 ## Test Coverage
 
 ![coverage badge](./coverage.svg)
-
-## Notes
-
-* This service needs to be deployed as an Azure Flex Consumption function using a [NAT Gateway](https://learn.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-nat-gateway) to ensure a fixed outbound IP address.
-
