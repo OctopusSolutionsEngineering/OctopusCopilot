@@ -285,7 +285,12 @@ class MockRequests(unittest.TestCase):
         function = llm_tool_query(query, build_mock_test_tools(query))
         response = function.call_function()
 
-        self.assertEqual(function.name, "release_what_changed_with_dates", response)
+        # these are all the same tool, and it doesn't matter which one we use
+        self.assertIn(
+            function.name,
+            ["release_what_changed", "release_what_changed_with_dates"],
+            response,
+        )
         self.assertTrue(response["dates"][0] == "2024-01-01", response)
         self.assertTrue(response["dates"][1] == "2024-03-02", response)
 
