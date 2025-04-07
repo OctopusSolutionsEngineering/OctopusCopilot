@@ -7,5 +7,5 @@ def get_codefresh_url():
     :return: The codefresh api url
     """
     default_value = "https://g.codefresh.io"
-    url = os.environ.get("CODEFRESH_URL", default_value)
-    return url if url else default_value
+    url = os.environ.get("CODEFRESH_URL")
+    return url if url.strip() else default_value
