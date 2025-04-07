@@ -61,6 +61,15 @@ logger = configure_logging(__name__)
 sem = asyncio.Semaphore(10)
 
 
+def redirections_enabled(redirections, redirections_apikey):
+    return (
+        redirections is not None
+        and redirections.strip()
+        and redirections_apikey is not None
+        and redirections_apikey.strip()
+    )
+
+
 @logging_wrapper
 async def run_octolint_check_async(
     api_key,
@@ -87,11 +96,11 @@ async def run_octolint_check_async(
         check_name, space_id, project_name
     )
 
-    redirections_enabled = redirections and redirections_apikey
+    redirections_are_enabled = redirections_enabled(redirections, redirections_apikey)
 
     api = (
         os.environ["APPLICATION_OCTOLINT_URL"]
-        if redirections_enabled
+        if redirections_are_enabled
         else f"https://{os.environ.get('REDIRECTION_HOST')}"
     )
 
@@ -103,7 +112,7 @@ async def run_octolint_check_async(
         "X-Octopus-AccessToken": access_token,
     }
 
-    if redirections_enabled:
+    if redirections_are_enabled:
         parsed_octolint_url = urlparse(os.environ["APPLICATION_OCTOLINT_URL"])
         headers["X_REDIRECTION_REDIRECTIONS"] = redirections
         headers["X_REDIRECTION_UPSTREAM_HOST"] = parsed_octolint_url.hostname
