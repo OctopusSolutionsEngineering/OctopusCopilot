@@ -62,6 +62,7 @@ def build_mock_test_tools(tool_query):
         FunctionDefinition(tool)
         for tool in how_to_wrapper(tool_query, how_to_callback, None)
     ]
+
     # Functions related to the default values
     (
         set_default_value,
@@ -72,6 +73,15 @@ def build_mock_test_tools(tool_query):
         load_defaults_from_profile,
         list_profiles,
     ) = default_value_callbacks(lambda: "1234567", get_functions_connection_string())
+
+    deployment_functions = [
+        FunctionDefinition(tool)
+        for tool in release_what_changed_wrapper(
+            tool_query,
+            release_what_changed_callback,
+        )
+    ]
+
     return FunctionDefinitions(
         [
             FunctionDefinition(
@@ -104,12 +114,7 @@ def build_mock_test_tools(tool_query):
                     os.environ["GH_TEST_TOKEN"],
                 )
             ),
-            FunctionDefinition(
-                release_what_changed_wrapper(
-                    tool_query,
-                    release_what_changed_callback,
-                )
-            ),
+            *deployment_functions,
         ],
         fallback=FunctionDefinitions(docs_functions),
     )

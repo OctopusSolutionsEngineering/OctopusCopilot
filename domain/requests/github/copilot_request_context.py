@@ -432,6 +432,23 @@ def build_form_tools(query, req: func.HttpRequest):
         )
     ]
 
+    deployment_functions = [
+        FunctionDefinition(tool)
+        for tool in release_what_changed_wrapper(
+            query,
+            release_what_changed_callback_wrapper(
+                is_admin_user(get_github_user_from_form(req), get_admin_users()),
+                get_github_user_from_form(req),
+                get_github_token(req),
+                get_zendesk_user(),
+                get_zendesk_token(),
+                lambda: get_api_key_and_url(req),
+                log_query,
+            ),
+            log_query,
+        )
+    ]
+
     # Functions related to the default values
     (
         set_default_value,
@@ -742,23 +759,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     get_github_user_from_form(req), get_admin_users()
                 ),
             ),
-            FunctionDefinition(
-                release_what_changed_wrapper(
-                    query,
-                    release_what_changed_callback_wrapper(
-                        is_admin_user(
-                            get_github_user_from_form(req), get_admin_users()
-                        ),
-                        get_github_user_from_form(req),
-                        get_github_token(req),
-                        get_zendesk_user(),
-                        get_zendesk_token(),
-                        lambda: get_api_key_and_url(req),
-                        log_query,
-                    ),
-                    log_query,
-                ),
-            ),
+            *deployment_functions,
             FunctionDefinition(
                 octolint_unused_projects_wrapper(
                     octolint_callback(

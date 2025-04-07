@@ -399,6 +399,17 @@ class MockRequests(unittest.TestCase):
         # Make sure we get some kind of response
         self.assertTrue(response.index("reduce the length of the messages") != -1)
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_help_me_understand_deployment_failed(self):
+        """
+        Tests that the llm can correctly identify the function to call when the prompt is
+        """
+
+        query = 'Help me understand why the deployment to the "Production" environment failed.'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "release_what_changed_help_me")
+
 
 if __name__ == "__main__":
     unittest.main()

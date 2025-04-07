@@ -119,6 +119,23 @@ def build_tools(tool_query):
         )
     ]
 
+    deployment_functions = [
+        FunctionDefinition(tool)
+        for tool in release_what_changed_wrapper(
+            tool_query,
+            release_what_changed_callback_wrapper(
+                True,
+                get_github_user(),
+                get_github_token(),
+                get_zendesk_user(),
+                get_zendesk_token(),
+                lambda: (get_api_key(), get_octopus_api()),
+                log_query,
+            ),
+            log_query,
+        )
+    ]
+
     return FunctionDefinitions(
         [
             FunctionDefinition(
@@ -225,21 +242,7 @@ def build_tools(tool_query):
                     log_query,
                 )
             ),
-            FunctionDefinition(
-                release_what_changed_wrapper(
-                    tool_query,
-                    release_what_changed_callback_wrapper(
-                        True,
-                        get_github_user(),
-                        get_github_token(),
-                        get_zendesk_user(),
-                        get_zendesk_token(),
-                        lambda: (get_api_key(), get_octopus_api()),
-                        log_query,
-                    ),
-                    log_query,
-                )
-            ),
+            *deployment_functions,
         ],
         fallback=FunctionDefinitions(help_functions),
     )
