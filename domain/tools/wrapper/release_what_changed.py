@@ -1,6 +1,44 @@
 def release_what_changed_wrapper(
     original_query, callback, additional_messages=None, logging=None
 ):
+    def release_what_changed_with_dates(
+        space=None,
+        project=None,
+        environment=None,
+        tenant=None,
+        channel=None,
+        release_version=None,
+        dates=None,
+        **kwargs,
+    ):
+        """
+        Get the details of releases or deployments based on a date range
+        Example prompts include:
+        * Find deployments after "1st Jan 2025" and before "2nd Mar 2025".
+        * Find deployments after "January 12, 2025".
+        * Find deployments before "2025 Mar 20".
+
+        Args:
+        space: The name of the space
+        project: The name of the project
+        environment: The name of the environment
+        tenant: The name of the tenant
+        channel: The name of the channel
+        dates: the dates in the query
+        release_version: The release version
+        """
+
+        return release_what_changed(
+            space=space,
+            project=project,
+            environment=environment,
+            tenant=tenant,
+            channel=channel,
+            release_version=release_version,
+            dates=dates,
+            **kwargs,
+        )
+
     def release_what_changed_help_me(
         space=None,
         project=None,

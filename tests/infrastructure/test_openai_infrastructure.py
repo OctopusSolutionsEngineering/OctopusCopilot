@@ -281,11 +281,11 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies the dates in the query
         """
 
-        query = 'Find deployments after "1st Jan 2024" and before "2nd Mar 2024"?'
+        query = 'Find deployments after "1st Jan 2024" and before "2nd Mar 2024".'
         function = llm_tool_query(query, build_mock_test_tools(query))
         response = function.call_function()
 
-        self.assertEqual(function.name, "release_what_changed", response)
+        self.assertEqual(function.name, "release_what_changed_with_dates", response)
         self.assertTrue(response["dates"][0] == "2024-01-01", response)
         self.assertTrue(response["dates"][1] == "2024-03-02", response)
 
