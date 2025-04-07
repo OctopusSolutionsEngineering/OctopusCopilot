@@ -160,6 +160,8 @@ jobs:
           APPLICATION_OCTOLINT_URL: http://localhost:8082
           GITHUB_CLIENT_REDIRECT: https://aiagent.octopus.com/api/oauth_callback
           GITHUB_CLIENT_ID: 4ae1ef506301902a41a5
+          REDIRECTION_HOST: https://redirection.example.org
+          CODEFRESH_URL: ${{ secrets.CODEFRESH_URL }}
         shell: /usr/bin/bash --noprofile --norc {0}
 
       - name: Upload coverage
