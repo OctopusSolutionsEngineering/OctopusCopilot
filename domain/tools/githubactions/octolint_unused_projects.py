@@ -7,7 +7,14 @@ from domain.tools.debug import get_params_message
 from infrastructure.octolint import run_octolint_check_async
 
 
-def octolint_callback(octopus_details, github_user, original_query, check_name):
+def octolint_callback(
+    octopus_details,
+    github_user,
+    original_query,
+    check_name,
+    redirections,
+    redirector_api_key,
+):
     def octolint(space, project=None):
         """
         This is a generic function that can call any Octolint check.
@@ -59,6 +66,8 @@ def octolint_callback(octopus_details, github_user, original_query, check_name):
                 space_resources["space_id"],
                 get_item_or_none(space_resources["project_names"], 0),
                 check_name,
+                redirections,
+                redirector_api_key,
             )
 
             # The plain text response needs to be tweaked slightly to support markdown

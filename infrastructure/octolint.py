@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from urllib.parse import urlparse
 
 import aiohttp
 from retry import retry
@@ -48,9 +49,11 @@ from domain.sanitizers.sanitized_list import (
     none_if_falesy_or_all,
     sanitize_variables,
 )
+from domain.url.build_url import is_octopus_cloud_local_or_example
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http
 from infrastructure.octopus import handle_response, logging_wrapper
+from infrastructure.redirector import get_redirect_headers
 
 logger = configure_logging(__name__)
 
@@ -66,6 +69,8 @@ async def run_octolint_check_async(
     space_id,
     project_name,
     check_name,
+    redirections,
+    redirections_apikey,
 ):
     ensure_string_not_empty(
         space_id, "space_id must be a non-empty string (run_octolint_check_async)."
@@ -82,12 +87,30 @@ async def run_octolint_check_async(
         check_name, space_id, project_name
     )
 
-    api = os.environ["APPLICATION_OCTOLINT_URL"] + "/api/octolint"
+    redirections_enabled = redirections and redirections_apikey
+
+    api = (
+        os.environ["APPLICATION_OCTOLINT_URL"]
+        if redirections_enabled
+        else f"https://{os.environ.get("REDIRECTION_HOST")}"
+    )
+
+    api += "/api/octolint"
+
     headers = {
         "X-Octopus-ApiKey": api_key,
         "X-Octopus-Url": octopus_url,
         "X-Octopus-AccessToken": access_token,
     }
+
+    if redirections_enabled:
+        parsed_octolint_url = urlparse(os.environ["APPLICATION_OCTOLINT_URL"])
+        headers["X_REDIRECTION_REDIRECTIONS"] = redirections
+        headers["X_REDIRECTION_UPSTREAM_HOST"] = parsed_octolint_url.hostname
+        headers["X_REDIRECTION_API_KEY"] = redirections_apikey
+        headers["X_REDIRECTION_SERVICE_API_KEY"] = os.environ.get(
+            "REDIRECTION_SERVICE_APIKEY", "Unknown"
+        )
 
     async with sem:
         async with aiohttp.ClientSession(headers=headers) as session:

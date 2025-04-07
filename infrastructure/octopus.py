@@ -1,7 +1,6 @@
 import asyncio
 import datetime
 import json
-import os
 import re
 from urllib.parse import urlparse
 
@@ -31,13 +30,14 @@ from domain.sanitizers.sanitized_list import (
     flatten_list,
 )
 from domain.sanitizers.url_sanitizer import quote_safe
-from domain.url.build_url import build_url, is_octopus_cloud_local_or_example
+from domain.url.build_url import build_url
 from domain.validation.argument_validation import (
     ensure_string_not_empty,
     ensure_api_key,
 )
 from domain.validation.octopus_validation import is_manual_intervention_valid
 from infrastructure.http_pool import http, TAKE_ALL
+from infrastructure.redirector import get_redirect_headers
 
 logger = configure_logging()
 channel_cache = {}
@@ -66,24 +66,6 @@ def get_request_headers(api_key, octopus_url):
     headers = get_octopus_headers(api_key)
     headers.update(get_redirect_headers(octopus_url))
     return headers
-
-
-def get_redirect_headers(octopus_url):
-    try:
-        parsed = urlparse(octopus_url)
-        if not is_octopus_cloud_local_or_example(parsed):
-            return {
-                "X_REDIRECTION_SERVICE_API_KEY": os.environ.get(
-                    "REDIRECTION_SERVICE_APIKEY", "Unknown"
-                ),
-                "X_REDIRECTION_UPSTREAM_HOST": parsed.hostname,
-            }
-    except Exception:
-        # If the URL is invalid, we don't need to add any headers.
-        # This shouldn't happen, but some of the tests might not have a valid URL.
-        pass
-
-    return {}
 
 
 def get_octopus_headers(api_key_or_access_token):

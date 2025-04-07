@@ -237,6 +237,14 @@ def get_github_user_from_form(req: func.HttpRequest):
         return None
 
 
+def get_redirections(req: func.HttpRequest):
+    return req.headers.get("X_REDIRECTION_REDIRECTIONS")
+
+
+def get_redirections_api_key(req: func.HttpRequest):
+    return req.headers.get("X_REDIRECTION_API_KEY")
+
+
 def get_api_key_and_url(req: func.HttpRequest):
     try:
         # First try to get the details from the headers
@@ -767,6 +775,8 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         query,
                         "OctoLintUnusedProjects",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
                     ),
                     log_query,
                 ),
@@ -778,6 +788,8 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         query,
                         "OctoLintUnusedTargets",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
                     ),
                     log_query,
                 ),
@@ -789,6 +801,8 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         query,
                         "OctoLintEmptyProject",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
                     ),
                     log_query,
                 ),
@@ -800,6 +814,8 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         query,
                         "OctoLintUnusedVariables",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
                     ),
                     log_query,
                 ),
@@ -811,6 +827,8 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         query,
                         "OctoLintDuplicatedVariables",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
                     ),
                     log_query,
                 ),
@@ -822,6 +840,8 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         query,
                         "OctoLintUnhealthyTargets",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
                     ),
                     log_query,
                 ),
