@@ -70,6 +70,39 @@ def redirections_enabled(redirections, redirections_apikey):
     )
 
 
+def get_api(use_redirections):
+    if use_redirections:
+        return f"https://{os.environ.get('REDIRECTION_HOST')}/api/octolint"
+    else:
+        return os.environ["APPLICATION_OCTOLINT_URL"] + "/api/octolint"
+
+
+def get_headers(
+    use_redirections,
+    api_key,
+    octopus_url,
+    access_token,
+    redirections,
+    redirections_apikey,
+):
+    headers = {
+        "X-Octopus-ApiKey": api_key,
+        "X-Octopus-Url": octopus_url,
+        "X-Octopus-AccessToken": access_token,
+    }
+
+    if use_redirections:
+        parsed_octolint_url = urlparse(os.environ["APPLICATION_OCTOLINT_URL"])
+        headers["X_REDIRECTION_REDIRECTIONS"] = redirections
+        headers["X_REDIRECTION_UPSTREAM_HOST"] = parsed_octolint_url.hostname
+        headers["X_REDIRECTION_API_KEY"] = redirections_apikey
+        headers["X_REDIRECTION_SERVICE_API_KEY"] = os.environ.get(
+            "REDIRECTION_SERVICE_APIKEY", "Unknown"
+        )
+
+    return headers
+
+
 @logging_wrapper
 async def run_octolint_check_async(
     api_key,
@@ -98,28 +131,18 @@ async def run_octolint_check_async(
 
     redirections_are_enabled = redirections_enabled(redirections, redirections_apikey)
 
-    api = (
-        os.environ["APPLICATION_OCTOLINT_URL"]
-        if not redirections_are_enabled
-        else f"https://{os.environ.get('REDIRECTION_HOST')}"
-    )
+    api = get_api(redirections_are_enabled)
 
     api += "/api/octolint"
 
-    headers = {
-        "X-Octopus-ApiKey": api_key,
-        "X-Octopus-Url": octopus_url,
-        "X-Octopus-AccessToken": access_token,
-    }
-
-    if redirections_are_enabled:
-        parsed_octolint_url = urlparse(os.environ["APPLICATION_OCTOLINT_URL"])
-        headers["X_REDIRECTION_REDIRECTIONS"] = redirections
-        headers["X_REDIRECTION_UPSTREAM_HOST"] = parsed_octolint_url.hostname
-        headers["X_REDIRECTION_API_KEY"] = redirections_apikey
-        headers["X_REDIRECTION_SERVICE_API_KEY"] = os.environ.get(
-            "REDIRECTION_SERVICE_APIKEY", "Unknown"
-        )
+    headers = get_headers(
+        redirections_are_enabled,
+        api_key,
+        octopus_url,
+        access_token,
+        redirections,
+        redirections_apikey,
+    )
 
     async with sem:
         async with aiohttp.ClientSession(headers=headers) as session:
