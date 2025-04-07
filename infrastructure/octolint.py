@@ -133,8 +133,6 @@ async def run_octolint_check_async(
 
     api = get_api(redirections_are_enabled)
 
-    api += "/api/octolint"
-
     headers = get_headers(
         redirections_are_enabled,
         api_key,
