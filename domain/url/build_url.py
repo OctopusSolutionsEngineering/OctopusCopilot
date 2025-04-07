@@ -24,7 +24,11 @@ def build_url(base_url, path, query=None):
     parsed = urlparse(base_url)
     query = urlencode(query) if query is not None else ""
 
-    if is_octopus_cloud_local_or_example(parsed):
+    disable_redirector = (
+        os.environ.get("DISABLE_REDIRECTION", "false").lower() == "true"
+    )
+
+    if disable_redirector or is_octopus_cloud_local_or_example(parsed):
         return urlunsplit((parsed.scheme, parsed.netloc, path, query, ""))
 
     # For everyone else, we have to route requests through the redirection service
