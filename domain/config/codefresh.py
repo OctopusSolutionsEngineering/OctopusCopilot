@@ -8,4 +8,4 @@ def get_codefresh_url():
     """
     default_value = "https://g.codefresh.io"
     url = os.environ.get("CODEFRESH_URL")
-    return url if url.strip() else default_value
+    return url.strip() if url and url.strip() else default_value
