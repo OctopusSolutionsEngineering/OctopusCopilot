@@ -8,6 +8,7 @@ from retry import retry
 from urllib3.exceptions import HTTPError
 
 from domain.config.openai import max_context
+from domain.exceptions.octolint import OctolintRequestFailed
 from domain.exceptions.octoterra import OctoterraRequestFailed
 from domain.logging.app_logging import configure_logging
 from domain.performance.timing import timing_wrapper
@@ -149,7 +150,7 @@ async def run_octolint_check_async(
             ) as response:
                 if response.status != 200:
                     body = await response.text()
-                    raise OctoterraRequestFailed(f"Request failed with " + body)
+                    raise OctolintRequestFailed(f"Request failed with " + body)
                 return await response.text()
 
 
