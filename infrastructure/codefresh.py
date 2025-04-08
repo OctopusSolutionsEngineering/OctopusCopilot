@@ -33,24 +33,24 @@ def handle_response(callback):
 
 
 def get_query(query_name, query_path="infrastructure/queries"):
-    query_file = os.path.join(query_path, f'{query_name}.graphql')
-    with open(query_file, 'r') as file:
+    query_file = os.path.join(query_path, f"{query_name}.graphql")
+    with open(query_file, "r") as file:
         query_content = file.read()
     return gql(query_content)
 
 
 @logging_wrapper
 def get_codefresh_user(base_url, token):
-    user_query = get_query('user')
+    user_query = get_query("user")
     return execute_graph_query(base_url, token, user_query)
 
 
 @logging_wrapper
-def execute_graph_query(url, token, query, path='/2.0/api/graphql'):
+def execute_graph_query(url, token, query, path="/2.0/api/graphql"):
     url = build_unredirected_url(url, path)
     transport = RequestsHTTPTransport(
         url=url,
-        headers={'authorization': token},
+        headers={"authorization": token},
         verify=True,
         retries=3,
     )
