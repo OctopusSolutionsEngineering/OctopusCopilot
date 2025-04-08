@@ -168,6 +168,11 @@ step "deploy-with-cli" {
                       "name": "REDIRECTION_HOST",
                       "value": "#{Redirection.Host}",
                       "slotSetting": false
+                   },
+                   {
+                     "name": "GITHUB_APP_PRIVATEKEY",
+                     "value": "#{GitHub.App.PrivateKey}",
+                     "slotSetting": false
                    }
                 ] 
                 EOL
