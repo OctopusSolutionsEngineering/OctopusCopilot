@@ -12,7 +12,7 @@ from domain.exceptions.request_failed import GitHubRequestFailed
 from domain.sanitizers.sanitize_logs import anonymize_message, sanitize_message
 from domain.sanitizers.url_sanitizer import quote_safe
 from domain.transformers.minify_strings import minify_strings
-from domain.url.build_url import build_url
+from domain.url.build_url import build_url, build_unredirected_url
 from domain.validation.argument_validation import (
     ensure_string_not_empty,
     ensure_not_falsy,
@@ -37,7 +37,7 @@ def exchange_github_code(code):
     # Exchange the code
     resp = http.request(
         "POST",
-        build_url(
+        build_unredirected_url(
             "https://github.com",
             "/login/oauth/access_token",
             dict(
