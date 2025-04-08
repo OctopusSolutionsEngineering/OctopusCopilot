@@ -51,7 +51,7 @@ def exchange_github_code(code):
 
     if resp.status != 200:
         raise GitHubRequestFailed(
-            f"Request failed with code {resp.status} and response {resp.data.decode("utf-8")}"
+            f"Request failed with code {resp.status} and response {resp.data.decode('utf-8')}"
         )
 
     response_json = resp.json()
