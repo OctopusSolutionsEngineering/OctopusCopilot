@@ -28,6 +28,29 @@ def how_to_wrapper(query, callback, logging):
 
         return provide_help_and_instructions(keywords, **kwargs)
 
+    def what_is(keywords=None, **kwargs):
+        """Answers a question about what an Octopus feature or concept is. Some example prompts include:
+        * What is a project?
+        * Explain tenants to me.
+        * Help me understand channels.
+        * What are feeds used for?
+        * Why would I use a runbook?
+        * What is the difference between a project and a runbook?
+        * What are project groups?
+        * What is a deployment?
+        * What is a release?
+        * How is a release different from a deployment?
+        * What is an account?
+        * Help me understand tenant variables.
+        * When would I use git credentials?
+        * Why would I use a deployment target?
+
+        Args:
+        keywords: The keywords extracted from the query
+        """
+
+        return provide_help_and_instructions(keywords, **kwargs)
+
     def provide_help_and_instructions(keywords=None, **kwargs):
         """Answers questions like how or where to create, use, add, remove, setup, enable, disable, configure, or find
         Octopus Deploy features like: Projects, Environments, Lifecycles, Channels, Deployments, Releases,
@@ -53,4 +76,4 @@ def how_to_wrapper(query, callback, logging):
         # This is just a passthrough to the original callback
         return callback(query, sanitize_list(keywords))
 
-    return how_do_i, provide_help_and_instructions
+    return how_do_i, provide_help_and_instructions, what_is
