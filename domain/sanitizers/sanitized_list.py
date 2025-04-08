@@ -225,8 +225,18 @@ def sanitize_dates(input_list):
         )
         for date in sanitize_list(input_list)
     ]
-    dates = [parse_unknown_format_date(item.strip()) for item in list]
+    split_dates = flatten_list([split_date(item.strip()) for item in list])
+    dates = [parse_unknown_format_date(item.strip()) for item in split_dates]
     return [datetime_to_str(date) for date in dates if date]
+
+
+def split_date(date):
+    """
+    Deal with dates that look like "2024-01-01 to 2024-03-02"
+    :param date: The raw date
+    :return: A date that has been split into two dates
+    """
+    return date.split("to")
 
 
 def sanitize_log_lines(lines, input_query):

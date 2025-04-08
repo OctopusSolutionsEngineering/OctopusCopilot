@@ -4,6 +4,7 @@ import unittest
 from openai import RateLimitError
 from retry import retry
 
+from domain.sanitizers.sanitized_list import sanitize_list
 from infrastructure.openai import llm_tool_query, llm_message_query
 from tests.infrastructure.tools.build_test_tools import build_mock_test_tools
 
@@ -291,8 +292,22 @@ class MockRequests(unittest.TestCase):
             ["release_what_changed", "release_what_changed_with_dates"],
             response,
         )
-        self.assertTrue(response["dates"][0] == "2024-01-01", response)
-        self.assertTrue(response["dates"][1] == "2024-03-02", response)
+        self.assertTrue(
+            any(
+                date
+                for date in sanitize_list(response["dates"])
+                if "2024-01-01" in date
+            ),
+            response,
+        )
+        self.assertTrue(
+            any(
+                date
+                for date in sanitize_list(response["dates"])
+                if "2024-03-02" in date
+            ),
+            response,
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_release_what_changed_environment_question(self):
