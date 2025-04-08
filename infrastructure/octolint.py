@@ -4,57 +4,11 @@ import os
 from urllib.parse import urlparse
 
 import aiohttp
-from retry import retry
-from urllib3.exceptions import HTTPError
 
-from domain.config.openai import max_context
 from domain.exceptions.octolint import OctolintRequestFailed
-from domain.exceptions.octoterra import OctoterraRequestFailed
 from domain.logging.app_logging import configure_logging
-from domain.performance.timing import timing_wrapper
-from domain.query.query_inspector import (
-    exclude_all_targets,
-    exclude_all_runbooks,
-    exclude_all_tenants,
-    exclude_all_projects,
-    exclude_all_library_variable_sets,
-    exclude_all_environments,
-    exclude_all_feeds,
-    exclude_all_accounts,
-    exclude_all_certificates,
-    exclude_all_lifecycles,
-    exclude_all_worker_pools,
-    exclude_all_machine_policies,
-    exclude_all_tagsets,
-    exclude_all_project_groups,
-    exclude_all_steps,
-    exclude_all_variables,
-)
-from domain.sanitizers.sanitized_list import (
-    sanitize_projects,
-    sanitize_tenants,
-    sanitize_targets,
-    sanitize_runbooks,
-    sanitize_library_variable_sets,
-    sanitize_environments,
-    sanitize_feeds,
-    sanitize_accounts,
-    sanitize_certificates,
-    sanitize_lifecycles,
-    sanitize_workerpools,
-    sanitize_machinepolicies,
-    sanitize_tenanttagsets,
-    sanitize_projectgroups,
-    none_if_falesy,
-    sanitize_steps,
-    none_if_falesy_or_all,
-    sanitize_variables,
-)
-from domain.url.build_url import is_octopus_cloud_local_or_example
 from domain.validation.argument_validation import ensure_string_not_empty
-from infrastructure.http_pool import http
-from infrastructure.octopus import handle_response, logging_wrapper
-from infrastructure.redirector import get_redirect_headers
+from infrastructure.octopus import logging_wrapper
 
 logger = configure_logging(__name__)
 
