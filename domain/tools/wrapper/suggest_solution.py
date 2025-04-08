@@ -7,6 +7,7 @@ from domain.context.octopus_context import max_chars_128
 from domain.exceptions.none_on_exception import (
     default_on_exception_async,
 )
+from domain.github.generate_jwt import generate_jwt_from_env
 from domain.logging.log_if_exception import log_if_exception
 from domain.sanitizers.escape_messages import escape_message
 from domain.sanitizers.sanitize_keywords import sanitize_keywords
@@ -378,10 +379,12 @@ def suggest_solution_wrapper(
 
 
 async def get_docs(keywords, github_token):
+    token = github_token or generate_jwt_from_env()
+
     # GitHub search does not support OR logic for keywords, so we have to search for each keyword individually
     keyword_results = await asyncio.gather(
         *[
-            search_repo_async("OctopusDeploy/docs", "markdown", [keyword], github_token)
+            search_repo_async("OctopusDeploy/docs", "markdown", [keyword], token)
             for keyword in keywords
         ]
     )
