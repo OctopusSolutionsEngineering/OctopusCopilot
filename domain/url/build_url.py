@@ -6,7 +6,7 @@ from domain.validation.argument_validation import ensure_string_not_empty
 
 def build_unredirected_url(base_url, path, query=None):
     """
-    Create a URL from the URL, additional path, and query params
+    Create a URL from the URL, additional path, and query params. This URL is not redirected.
     :param base_url: The base URL
     :param path: The additional path
     :param query: Additional query params

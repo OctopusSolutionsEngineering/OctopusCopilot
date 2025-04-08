@@ -7,7 +7,7 @@ from gql.transport.exceptions import TransportServerError
 from domain.exceptions.request_failed import CodefreshRequestFailed
 from domain.exceptions.user_not_loggedin import CodefreshTokenInvalid
 from domain.logging.app_logging import configure_logging
-from domain.url.build_url import build_url
+from domain.url.build_url import build_url, build_unredirected_url
 from infrastructure.octopus import logging_wrapper
 
 logger = configure_logging()
@@ -47,7 +47,7 @@ def get_codefresh_user(base_url, token):
 
 @logging_wrapper
 def execute_graph_query(url, token, query, path='/2.0/api/graphql'):
-    url = build_url(url, path)
+    url = build_unredirected_url(url, path)
     transport = RequestsHTTPTransport(
         url=url,
         headers={'authorization': token},

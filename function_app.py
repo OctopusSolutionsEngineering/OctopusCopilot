@@ -47,7 +47,7 @@ from domain.sanitizers.url_sanitizer import quote_safe
 from domain.tools.wrapper.function_call import FunctionCall
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.url.build_cookie import get_cookie_expiration
-from domain.url.build_url import build_url
+from domain.url.build_url import build_url, build_unredirected_url
 from domain.url.session import create_session_blob, extract_session_blob
 from domain.url.url_builder import base_request_url
 from domain.versions.octopus_version import octopus_version_at_least
@@ -271,7 +271,7 @@ def slack_oauth_callback_internal(req: func.HttpRequest) -> func.HttpResponse:
         # oauth permissions for a Slack app requires an OAuth login to succeed.
         resp = http.request(
             "POST",
-            build_url(
+            build_unredirected_url(
                 "https://slack.com",
                 "/api/oauth.v2.access",
                 dict(
