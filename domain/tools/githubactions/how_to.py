@@ -1,10 +1,6 @@
-import os
-
-from domain.b64.b64_encoder import decode_string_b64
 from domain.context.github_docs import get_docs_context
 from domain.exceptions.none_on_exception import none_on_exception
-from domain.exceptions.request_failed import GitHubRequestFailed
-from domain.github.generate_jwt import generate_github_jwt, generate_jwt_from_env
+from domain.github.generate_jwt import generate_jwt_from_env
 from domain.messages.docs_messages import docs_prompt
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message

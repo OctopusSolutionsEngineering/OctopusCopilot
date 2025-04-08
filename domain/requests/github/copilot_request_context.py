@@ -846,6 +846,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     log_query,
                 ),
             ),
+            *docs_functions,
         ],
         fallback=FunctionDefinitions(docs_functions),
         invalid=FunctionDefinition(
