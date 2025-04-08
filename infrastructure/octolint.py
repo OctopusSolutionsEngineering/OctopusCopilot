@@ -150,7 +150,7 @@ async def run_octolint_check_async(
             ) as response:
                 if response.status != 200:
                     body = await response.text()
-                    raise OctolintRequestFailed(f"Request failed with " + body)
+                    raise OctolintRequestFailed(f"Request to {api} failed with {body}")
                 return await response.text()
 
 
