@@ -808,6 +808,8 @@ class CopilotChatTestTwo(unittest.TestCase):
                 response.get_body().decode("utf8")
             )
 
+            print("Response was " + response_text)
+
             self.assertTrue(
                 "Sorry, I did not understand that request." not in response_text,
                 "Response was " + response_text,

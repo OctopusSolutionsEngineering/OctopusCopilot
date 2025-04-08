@@ -18,6 +18,20 @@ def none_on_exception(function):
         return None
 
 
+async def none_on_exception_async(function):
+    """
+    A wrapper function that returns none instead of throwing an exception
+    :param function: The function to call
+    :return: The return value of the function, or None if an exception was thrown
+    """
+    ensure_not_falsy(function, "function must not be None (none_on_exception_async).")
+    try:
+        return await function()
+    except Exception as e:
+        logger.error(e)
+        return None
+
+
 def default_on_exception(function, default):
     """
     A wrapper function that returns a default instead of throwing an exception
