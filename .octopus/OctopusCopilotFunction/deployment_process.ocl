@@ -371,31 +371,12 @@ step "remove-worker-access" {
     name = "Remove worker access"
 
     action {
-        action_type = "Octopus.AzurePowerShell"
         environments = ["production"]
         notes = "Deploy the application using the Azure Functions CLI"
         properties = {
             Octopus.Action.AutoRetry.MaximumCount = "3"
-            Octopus.Action.Azure.AccountId = "#{Octopus.Azure.Account}"
-            Octopus.Action.Script.ScriptBody = <<-EOT
-                # Clear any existing rule
-                
-                EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
-                if [[ $EXISTING -eq "1" ]]
-                then
-                  az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker"
-                fi
-                
-                EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --slot "staging" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
-                if [[ $EXISTING -eq "1" ]]
-                then
-                  az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --slot "staging"
-                fi
-                
-                EOT
-            Octopus.Action.Script.ScriptSource = "Inline"
-            Octopus.Action.Script.Syntax = "Bash"
-            OctopusUseBundledTooling = "False"
+            Octopus.Action.Template.Id = "ActionTemplates-4322"
+            Octopus.Action.Template.Version = "0"
         }
         worker_pool = "hosted-ubuntu"
 
