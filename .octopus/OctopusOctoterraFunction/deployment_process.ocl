@@ -6,13 +6,26 @@ step "deploy-with-cli" {
         notes = "Deploy the application using the Azure Functions CLI"
         properties = {
             Octopus.Action.Template.Id = "ActionTemplates-4321"
-            Octopus.Action.Template.Version = "0"
+            Octopus.Action.Template.Version = "2"
+            Packages.FunctionApp = "{\"PackageId\":\"octoterra_azure\",\"FeedId\":\"octopus-server-built-in\"}"
         }
         worker_pool = "hosted-ubuntu"
 
         container {
             feed = "docker-hub"
             image = "octopuslabs/azure-workertools"
+        }
+
+        packages "Packages.FunctionApp" {
+            acquisition_location = "Server"
+            feed = "octopus-server-built-in"
+            package_id = "octoterra_azure"
+            properties = {
+                Extract = "True"
+                PackageParameterName = "Packages.FunctionApp"
+                Purpose = ""
+                SelectionMode = "deferred"
+            }
         }
     }
 }
