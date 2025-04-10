@@ -58,3 +58,19 @@ resource "octopusdeploy_project" "project_project2" {
   # Validates that invalid metadata doesn't crash the agent
   description = "GitHub Owner: Nope\nGitHub Repo: DoesNotExist\nGitHub Workflow: blah.yaml"
 }
+
+resource "octopusdeploy_variable" "project2_variable_1" {
+  owner_id     = "${octopusdeploy_project.project_project2.id}"
+  value        = "TestVariable"
+  name         = "Test.Variable"
+  type         = "String"
+  is_sensitive = false
+}
+
+resource "octopusdeploy_variable" "project2_variable_2" {
+  owner_id     = "${octopusdeploy_project.project_project2.id}"
+  value        = "ATestVariable"
+  name         = "A.Test.Variable"
+  type         = "String"
+  is_sensitive = false
+}

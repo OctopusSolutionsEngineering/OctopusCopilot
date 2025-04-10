@@ -60,3 +60,10 @@ resource "octopusdeploy_project" "project_project3" {
     ignore_changes = []
   }
 }
+resource "octopusdeploy_variable" "project3_variable_1" {
+  owner_id     = "${octopusdeploy_project.project_project3.id}"
+  value        = "ATestVariable"
+  name         = "A.Test.Variable"
+  type         = "String"
+  is_sensitive = false
+}

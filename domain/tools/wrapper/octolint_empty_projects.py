@@ -1,9 +1,3 @@
-import asyncio
-
-from domain.lookup.octopus_multi_lookup import lookup_space_level_resources
-from infrastructure.octolint import run_octolint_check_async
-
-
 def octolint_empty_projects_wrapper(callback, logging):
     def octolint_empty_projects(space=None, projects=None, **kwargs):
         """

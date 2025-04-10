@@ -97,6 +97,9 @@ from domain.tools.wrapper.github_job_summary_wrapper import (
 )
 from domain.tools.wrapper.github_logs import answer_github_logs_wrapper
 from domain.tools.wrapper.how_to import how_to_wrapper
+from domain.tools.wrapper.octolint_direct_tenant_references import (
+    octolint_direct_tenant_references_wrapper,
+)
 from domain.tools.wrapper.octolint_duplicate_variables import (
     octolint_duplicate_variables_wrapper,
 )
@@ -104,10 +107,14 @@ from domain.tools.wrapper.octolint_empty_projects import octolint_empty_projects
 from domain.tools.wrapper.octolint_unhealthy_targets import (
     octolint_unhealthy_targets_wrapper,
 )
+from domain.tools.wrapper.octolint_unrotated_accounts import (
+    octolint_unrotated_accounts_wrapper,
+)
 from domain.tools.wrapper.octolint_unused_projects import (
     octolint_unused_projects_wrapper,
 )
 from domain.tools.wrapper.octolint_unused_targets import octolint_unused_targets_wrapper
+from domain.tools.wrapper.octolint_unused_tenants import octolint_unused_tenants_wrapper
 from domain.tools.wrapper.octolint_unused_variables import (
     octolint_unused_variables_wrapper,
 )
@@ -840,6 +847,45 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         query,
                         "OctoLintUnhealthyTargets",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    log_query,
+                ),
+            ),
+            FunctionDefinition(
+                octolint_unrotated_accounts_wrapper(
+                    octolint_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        query,
+                        "OctoLintUnrotatedAccounts",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    log_query,
+                ),
+            ),
+            FunctionDefinition(
+                octolint_direct_tenant_references_wrapper(
+                    octolint_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        query,
+                        "OctoLintDirectTenantReferences",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    log_query,
+                ),
+            ),
+            FunctionDefinition(
+                octolint_unused_tenants_wrapper(
+                    octolint_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        query,
+                        "OctoLintUnusedTenants",
                         get_redirections(req),
                         get_redirections_api_key(req),
                     ),

@@ -46,12 +46,7 @@ class CopilotChatOctolintTest(unittest.TestCase):
             save_default_values(
                 github_user, "space", "Simple", os.environ["AzureWebJobsStorage"]
             )
-            save_default_values(
-                github_user,
-                "project",
-                "Deploy Web App Container",
-                os.environ["AzureWebJobsStorage"],
-            )
+            # Note: Don't save default value for Project for use with Octolint. This can skew the octolint check results.
             save_default_values(
                 github_user,
                 "environment",
@@ -163,6 +158,50 @@ class CopilotChatOctolintTest(unittest.TestCase):
 
         print(response_text)
         self.assertIn("Deploy Web App Container", response_text, response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_find_octolint_unrotated_accounts(self):
+        prompt = 'Find accounts with unrotated credentials in the space "Simple" to improve security'
+
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+
+        print(response_text)
+        self.assertIn("AWS Account", response_text, response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_find_octolint_direct_tenant_references(self):
+        prompt = 'Find tenants that should be grouped by tags in the space "Simple"'
+
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+
+        print(response_text)
+        self.assertNotIn("Marketing", response_text, response_text)
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_find_octolint_duplicate_variables(self):
+        prompt = 'Find duplicate project variables in the space "Simple"'
+
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+
+        print(response_text)
+        self.assertTrue(
+            "Deploy AWS Lambda/A.Test.Variable"
+            and "Copilot manual approval/A.Test.Variable" in response_text,
+            "Response was " + response_text,
+        )
+
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_find_octolint_unused_tenants(self):
+        prompt = "Find tenants that have not performed a deployment to help manage licensing costs"
+
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+
+        print(response_text)
+        self.assertIn("Marketing", response_text, response_text)
 
 
 if __name__ == "__main__":

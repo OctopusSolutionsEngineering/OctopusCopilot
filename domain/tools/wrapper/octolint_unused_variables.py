@@ -1,9 +1,3 @@
-import asyncio
-
-from domain.lookup.octopus_multi_lookup import lookup_space_level_resources
-from infrastructure.octolint import run_octolint_check_async
-
-
 def octolint_unused_variables_wrapper(callback, logging):
     def octolint_unused_variables(space=None, project=None, **kwargs):
         """

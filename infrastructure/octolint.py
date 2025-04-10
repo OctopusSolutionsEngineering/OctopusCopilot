@@ -124,4 +124,7 @@ def get_octolint_request_body(check_name, space_id, project_name):
         "maxEmptyProjectCheckProjects": 1000,
         "maxUnusedTargets": 1000,
         "maxUnhealthyTargets": 1000,
+        "maxUnusedTenants": 1000,
+        "maxDuplicateVariableProjects": 1000,
+        "maxDuplicateVariables": 1000,
     }
