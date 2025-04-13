@@ -112,94 +112,94 @@ def default_help(github_user, api_key, url, log_query):
 
                     ## Example Queries
                     Here are some sample queries you can ask:
-                    * @octopus-ai-app Show me the dashboard for the space "{space_name}"
-                    * @octopus-ai-app Show me the project dashboard for "{first_project}" in the space "{space_name}"
-                    * @octopus-ai-app Show me the runbook dashboard for "{first_runbook}" in the project "{first_project}" in the space "{space_name}"
-                    * @octopus-ai-app Show me the task summary for release "1.4.3" of the project "{first_project}" in the "{first_environment}" environment in the space "{space_name}"
-                    * @octopus-ai-app List the projects in the space "{space_name}"
-                    * @octopus-ai-app What do the deployment steps in the "{first_project}" project in the "{space_name}" space do?
-                    * @octopus-ai-app Show me the status of the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the "{space_name}" space
-                    * @octopus-ai-app Show me any non-successful deployments for the "{first_project}" project in the space "{space_name}" for the "{first_environment}" environment in a markdown table. If all deployments are successful, say so.
-                    * @octopus-ai-app Summarize the deployment logs for the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the space called "{space_name}"
-                    * @octopus-ai-app List any URLs printed in the deployment logs for the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the space called "{space_name}"
-                    * @octopus-ai-app How do I enable server side apply?
+                    * Show me the dashboard for the space "{space_name}"
+                    * Show me the project dashboard for "{first_project}" in the space "{space_name}"
+                    * Show me the runbook dashboard for "{first_runbook}" in the project "{first_project}" in the space "{space_name}"
+                    * Show me the task summary for release "1.4.3" of the project "{first_project}" in the "{first_environment}" environment in the space "{space_name}"
+                    * List the projects in the space "{space_name}"
+                    * What do the deployment steps in the "{first_project}" project in the "{space_name}" space do?
+                    * Show me the status of the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the "{space_name}" space
+                    * Show me any non-successful deployments for the "{first_project}" project in the space "{space_name}" for the "{first_environment}" environment in a markdown table. If all deployments are successful, say so.
+                    * Summarize the deployment logs for the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the space called "{space_name}"
+                    * List any URLs printed in the deployment logs for the latest deployment for the project "{first_project}" in the "{first_environment}" environment in the space called "{space_name}"
+                    * How do I enable server side apply?
 
                     ## Runbooks
                     You can execute and monitor runbooks with prompts like these:
-                    * @octopus-ai-app Run the runbook "{first_runbook}" in the project "{first_project}" in the space "{space_name}" in the "{first_environment}" environment
-                    * @octopus-ai-app Summarize the execution logs of the runbook "{first_runbook}" in the project "{first_project}" in the space "{space_name}" in the "{first_environment}" environment
+                    * Run the runbook "{first_runbook}" in the project "{first_project}" in the space "{space_name}" in the "{first_environment}" environment
+                    * Summarize the execution logs of the runbook "{first_runbook}" in the project "{first_project}" in the space "{space_name}" in the "{first_environment}" environment
 
                     ## Releases and deployments
                     You can create and deploy a release with prompts like these:
-                    * @octopus-ai-app Create a release in the project "{first_project}" with version "1.0.12-hf" and channel "Hotfix in the space "{space_name}"
-                    * @octopus-ai-app Create a release in the project "{first_project}" in the space "{space_name}" and deploy to the "{first_environment}" environment
-                    * @octopus-ai-app Deploy release version "1.0.1" of project "{first_project}" in the space "{space_name}" to the "{first_environment}" environment
-                    * @octopus-ai-app Deploy release version "2.0.8" of project "{first_project}" in the space "{space_name}" to the environment "{first_environment}" for tenant "Contoso"
+                    * Create a release in the project "{first_project}" with version "1.0.12-hf" and channel "Hotfix in the space "{space_name}"
+                    * Create a release in the project "{first_project}" in the space "{space_name}" and deploy to the "{first_environment}" environment
+                    * Deploy release version "1.0.1" of project "{first_project}" in the space "{space_name}" to the "{first_environment}" environment
+                    * Deploy release version "2.0.8" of project "{first_project}" in the space "{space_name}" to the environment "{first_environment}" for tenant "Contoso"
 
                     ## Cancelling tasks
                     You can cancel a deployment, runbook or other task with prompts like these:
-                    * @octopus-ai-app Cancel the latest deployment for the project "{first_project}" to the "{first_environment}" environment
-                    * @octopus-ai-app Cancel the runbook run "{first_runbook}" in the project "{first_project}" in the space "{space_name}" in the "{first_environment}" environment
-                    * @octopus-ai-app Cancel task "ServerTasks-58479"
+                    * Cancel the latest deployment for the project "{first_project}" to the "{first_environment}" environment
+                    * Cancel the runbook run "{first_runbook}" in the project "{first_project}" in the space "{space_name}" in the "{first_environment}" environment
+                    * Cancel task "ServerTasks-58479"
 
                     ## Manual interventions
                     You can approve or reject manual interventions in a deployment with prompts like these:
-                    * @octopus-ai-app Approve release "0.81.5" in "{first_environment}" for the project "{first_project}"
-                    * @octopus-ai-app Reject release "1.6.19" in the "{first_environment}" environment for the project "{first_project}
+                    * Approve release "0.81.5" in "{first_environment}" for the project "{first_project}"
+                    * Reject release "1.6.19" in the "{first_environment}" environment for the project "{first_project}
 
                     ## Deployment history
                     You can describe deployments with prompts like these:
-                    * @octopus-ai-app Describe release "1.4.3" of the "{first_project}" project to the "{first_environment}" environment.
-                    * @octopus-ai-app Describe release "1.4.3" of the "{first_project}" project to the "{first_environment}" environment. Generate release notes that highlight customer facing changes.
-                    * @octopus-ai-app Describe release "1.4.3" of the "{first_project}" project to the "{first_environment}" environment. List any file changes that do not have matching tests.
-                    * @octopus-ai-app Describe release "1.4.3" of the "{first_project}" project to the "{first_environment}" environment. List any new dependencies or changes to dependency versions in the commits. If no dependencies were added or changed, say so.
+                    * Describe release "1.4.3" of the "{first_project}" project to the "{first_environment}" environment.
+                    * Describe release "1.4.3" of the "{first_project}" project to the "{first_environment}" environment. Generate release notes that highlight customer facing changes.
+                    * Describe release "1.4.3" of the "{first_project}" project to the "{first_environment}" environment. List any file changes that do not have matching tests.
+                    * Describe release "1.4.3" of the "{first_project}" project to the "{first_environment}" environment. List any new dependencies or changes to dependency versions in the commits. If no dependencies were added or changed, say so.
 
                     ## Default values
                     By setting default values for the space, project, environment, and other entities, you can omit them from your queries.
                     This way, you can write prompts without specifying the space, project, environment, runbook, or tenant each time.
                     You can also set defaults for GitHub options like owner, repository and workflow.
-                    * @octopus-ai-app Set the default space to "{space_name}"
-                    * @octopus-ai-app Set the default project to "{first_project}"
-                    * @octopus-ai-app Set the default environment to "{first_environment}"
-                    * @octopus-ai-app Set the default tenant to "Contoso"
-                    * @octopus-ai-app Set the default runbook to "{first_runbook}"
-                    * @octopus-ai-app Set the default owner to "my_organisation"
-                    * @octopus-ai-app Set the default repository to "my_repository"
-                    * @octopus-ai-app Set the default workflow to "build.yaml"
-                    * @octopus-ai-app Remove default values
-                    * @octopus-ai-app Show all the default values
-                    * @octopus-ai-app Show the default space
-                    * @octopus-ai-app Show the default project
-                    * @octopus-ai-app Show the default environment
-                    * @octopus-ai-app Show the default tenant
-                    * @octopus-ai-app Show the default runbook
-                    * @octopus-ai-app Show the default owner
-                    * @octopus-ai-app Show the default repository
-                    * @octopus-ai-app Show the default workflow
+                    * Set the default space to "{space_name}"
+                    * Set the default project to "{first_project}"
+                    * Set the default environment to "{first_environment}"
+                    * Set the default tenant to "Contoso"
+                    * Set the default runbook to "{first_runbook}"
+                    * Set the default owner to "my_organisation"
+                    * Set the default repository to "my_repository"
+                    * Set the default workflow to "build.yaml"
+                    * Remove default values
+                    * Show all the default values
+                    * Show the default space
+                    * Show the default project
+                    * Show the default environment
+                    * Show the default tenant
+                    * Show the default runbook
+                    * Show the default owner
+                    * Show the default repository
+                    * Show the default workflow
 
                     ## Profiles
                     Default values can be loaded and saved as profiles. This allows you to switch between sets of default values.
                     Saving a profile saves the current default values. Loading a profile replaces the current default values.
-                    * @octopus-ai-app Save the profile "MyValues"
-                    * @octopus-ai-app Load the profile "MyValues"
-                    * @octopus-ai-app List the profiles
+                    * Save the profile "MyValues"
+                    * Load the profile "MyValues"
+                    * List the profiles
 
                     ## Terraform
                     Generate sample Terraform modules for Octopus Deploy with prompts like these:
-                    * @octopus-ai-app create a sample terraform module with: three environments called "Development", "Test", and "Production"; a docker feed pointing to dockerhub; three tenants called "US", "Europe", and "Asia"; a project group called "Web App"; a project called "Audits" with a single powershell script step that echoes "Hello World"; and all tenants linked to the project and all environments
+                    * create a sample terraform module with: three environments called "Development", "Test", and "Production"; a docker feed pointing to dockerhub; three tenants called "US", "Europe", and "Asia"; a project group called "Web App"; a project called "Audits" with a single powershell script step that echoes "Hello World"; and all tenants linked to the project and all environments
 
                     ## Configuration Checks
                     These prompts check your Octopus Deploy space for common issues:
-                    * @octopus-ai-app Check my space for unused projects
-                    * @octopus-ai-app Check my space for empty projects
-                    * @octopus-ai-app Check my space for unused variables
-                    * @octopus-ai-app Check my space for unused targets
-                    * @octopus-ai-app Check my space for unhealthy targets
-                    * @octopus-ai-app Check my space for duplicate variables
+                    * Check my space for unused projects
+                    * Check my space for empty projects
+                    * Check my space for unused variables
+                    * Check my space for unused targets
+                    * Check my space for unhealthy targets
+                    * Check my space for duplicate variables
 
                     ## Logout
                     Logout of your session with:
-                    * @octopus-ai-app logout
+                    * logout
 
                     ## Documentation
                     See the [documentation](https://octopus.com/docs/administration/copilot) for more information.
