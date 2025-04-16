@@ -287,82 +287,12 @@ step "security-scan" {
     name = "Scan for Security Vulnerabilities"
 
     action {
-        action_type = "Octopus.Script"
         properties = {
             Octopus.Action.AutoRetry.MaximumCount = "3"
-            Octopus.Action.AutoRetry.MinimumBackoff = "15"
-            Octopus.Action.Script.ScriptBody = <<-EOT
-                echo "Pulling Trivy Docker Image"
-                echo "##octopus[stdout-verbose]"
-                docker pull ghcr.io/aquasecurity/trivy
-                echo "##octopus[stdout-default]"
-                
-                TIMESTAMP=$(date +%s%3N)
-                SUCCESS=0
-                for x in $(find . -name bom.json -type f -print); do
-                    echo "Scanning ${x}"
-                
-                    # Delete any existing report file
-                    if [[ -f "$PWD/depscan-bom.json" ]]; then
-                      rm "$PWD/depscan-bom.json"
-                    fi
-                
-                    # Generate the report, capturing the output, and ensuring $? is set to the exit code
-                    OUTPUT=$(bash -c "docker run --rm -v \"$PWD/${x}:/app/${x}\" ghcr.io/aquasecurity/trivy sbom -q \"/app/${x}\"; exit \$?" 2>&1)
-                
-                    # Run again to generate the JSON output (https://github.com/aquasecurity/trivy/issues/268)
-                    docker run --rm -v "$PWD:/app" ghcr.io/aquasecurity/trivy sbom -q -f json -o /app/depscan-bom.json "/app/${x}"
-                
-                    new_octopusartifact $PWD/depscan-bom.json
-                
-                    CRITICAL=$(jq '[.Results[] | .Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' depscan-bom.json)
-                    HIGH=$(jq '[.Results[] | .Vulnerabilities[]? | select(.Severity == "HIGH")] | length' depscan-bom.json)
-                
-                    if [[ "#{Octopus.Environment.Name}" == "Security" ]]
-                    then
-                      write_highlight "🟥 ${CRITICAL} critical vulnerabilities"
-                      write_highlight "🟧 ${HIGH} high vulnerabilities"
-                    fi
-                
-                    # Success is set to 1 if the exit code is not zero
-                    if [[ $? -ne 0 ]]; then
-                        SUCCESS=1
-                    fi
-                
-                    # Print the output stripped of ANSI colour codes
-                    echo -e "${OUTPUT}" | sed 's/\x1b\[[0-9;]*m//g'
-                done
-                
-                # Cleanup
-                for i in {1..10}
-                do
-                    chmod -R +rw bundle &> /dev/null
-                    rm -rf bundle &> /dev/null
-                    if [[ $? == 0 ]]; then break; fi
-                    echo "Attempting to clean up files"
-                    sleep 1
-                done
-                
-                set_octopusvariable "VerificationResult" $SUCCESS
-                
-                exit 0
-                
-                EOT
-            Octopus.Action.Script.ScriptSource = "Inline"
-            Octopus.Action.Script.Syntax = "Bash"
+            Octopus.Action.Template.Id = "ActionTemplates-4361"
+            Octopus.Action.Template.Version = "0"
         }
         worker_pool = "hosted-ubuntu"
-
-        packages "OctopusCopilot" {
-            acquisition_location = "Server"
-            feed = "octopus-server-built-in"
-            package_id = "OctopusCopilot"
-            properties = {
-                Extract = "True"
-                Purpose = ""
-                SelectionMode = "immediate"
-            }
-        }
     }
 }
 
