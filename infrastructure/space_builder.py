@@ -40,7 +40,7 @@ def get_space_builder_headers(
     headers = {
         "X-Octopus-ApiKey": api_key,
         "X-Octopus-Url": octopus_url,
-        "X-Octopus-AccessToken": access_token,
+        "Authorization": "Bearer " + access_token,
     }
 
     if use_redirections:
