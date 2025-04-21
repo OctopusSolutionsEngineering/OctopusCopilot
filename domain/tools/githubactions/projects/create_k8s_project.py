@@ -9,6 +9,7 @@ from domain.lookup.octopus_lookups import (
 from domain.octopus.authorization import get_auth
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.escape_messages import escape_message
+from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
 from infrastructure.openai import llm_message_query
@@ -104,7 +105,9 @@ def create_k8s_project_callback(
             # We need to call the LLM to get the Terraform configuration
             context = {"input": original_query}
             messages = k8s_project_context()
-            configuration = llm_message_query(messages, context, log_query)
+            configuration = remove_markdown_code_block(
+                llm_message_query(messages, context, log_query)
+            )
 
             # We can then save the Terraform plan as a callback
             callback_id = str(uuid.uuid4())
