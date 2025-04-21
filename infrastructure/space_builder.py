@@ -123,8 +123,8 @@ async def create_terraform_plan(
             async with session.post(
                 api, data=json.dumps(space_builder_request_body)
             ) as response:
-                if response.status != 200:
-                    body = await response.text()
+                if response.status != 200 and response.status != 201:
+                    body = await response.json()
                     raise SpaceBuilderRequestFailed(
                         f"Request to {api} failed with {body}"
                     )
@@ -165,7 +165,7 @@ async def create_terraform_apply(
             async with session.post(
                 api, data=json.dumps(space_builder_request_body)
             ) as response:
-                if response.status != 200:
+                if response.status != 200 and response.status != 201:
                     body = await response.text()
                     raise SpaceBuilderRequestFailed(
                         f"Request to {api} failed with {body}"
