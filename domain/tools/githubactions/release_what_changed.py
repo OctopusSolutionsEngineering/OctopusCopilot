@@ -15,6 +15,7 @@ from domain.counters.counters import count_items_with_data
 from domain.lookup.octopus_multi_lookup import lookup_space_level_resources
 from domain.messages.describe_deployment import build_deployment_overview_prompt
 from domain.nlp.nlp import nlp_get_keywords
+from domain.octopus.authorization import get_auth
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitize_strings import strip_leading_whitespace
@@ -557,13 +558,7 @@ def release_what_changed_callback_wrapper(
         original_query, space_resources, failed_step, deployments, logs
     ):
         auth, url = octopus_details()
-        api_key = ""
-        access_token = ""
-
-        if auth.startswith("API-"):
-            api_key = auth
-        else:
-            access_token = auth
+        api_key, access_token = get_auth(auth)
 
         if deployment_is_failure(deployments):
             keywords = nlp_get_keywords(logs[:max_chars_128])

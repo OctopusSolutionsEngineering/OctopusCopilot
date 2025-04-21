@@ -10,6 +10,7 @@ from domain.lookup.octopus_lookups import (
     lookup_environments,
     lookup_tenants,
 )
+from domain.octopus.authorization import get_auth
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -30,7 +31,8 @@ from infrastructure.octopus import (
 
 def create_k8s_project_callback_wrapper(github_user, octopus_details, log_query):
     def create_k8s_project_callback(space_id):
-        api_key, url = octopus_details()
+        auth, url = octopus_details()
+        api_key, access_token = get_auth(auth)
 
         debug_text = get_params_message(
             github_user, True, create_k8s_project_callback.__name__, space_id=space_id

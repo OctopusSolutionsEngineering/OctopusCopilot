@@ -1,6 +1,7 @@
 import asyncio
 
 from domain.lookup.octopus_multi_lookup import lookup_space_level_resources
+from domain.octopus.authorization import get_auth
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import get_item_or_none
 from domain.tools.debug import get_params_message
@@ -32,13 +33,7 @@ def octolint_callback(
             )
 
             auth, url = octopus_details()
-            api_key = ""
-            access_token = ""
-
-            if auth.startswith("API-"):
-                api_key = auth
-            else:
-                access_token = auth
+            api_key, access_token = get_auth(auth)
 
             space_resources = lookup_space_level_resources(
                 url, auth, github_user, original_query, space, project
