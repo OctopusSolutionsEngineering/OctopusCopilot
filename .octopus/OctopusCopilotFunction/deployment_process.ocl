@@ -173,7 +173,13 @@ step "deploy-with-cli" {
                      "name": "GITHUB_APP_PRIVATEKEY",
                      "value": "#{GitHub.App.PrivateKey | ToBase64}",
                      "slotSetting": false
+                   },
+                   {
+                     "name": "APPLICATION_SPACEBUILDER_URL",
+                     "value": "#{Application.SpaceBuilder.Url}",
+                     "slotSetting": false
                    }
+                   
                 ] 
                 EOL
                 
