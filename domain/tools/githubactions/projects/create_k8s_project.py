@@ -123,13 +123,13 @@ def create_k8s_project_callback(
             )
 
             arguments = {
-                "plan_id": space_id,
+                "plan_id": response["attributes"]["plan_id"],
             }
 
             log_query(
                 "create_k8s_project",
                 f"""
-                Space: {arguments["space_id"]}
+                Space: {arguments["plan_id"]}
                 Plan: {response["attributes"]["plan_text"]}""",
             )
 
