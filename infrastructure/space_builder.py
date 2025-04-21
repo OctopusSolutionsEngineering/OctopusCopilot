@@ -22,6 +22,13 @@ def get_space_builder_create_plan_api(use_redirections):
         return os.environ["APPLICATION_SPACEBUILDER_URL"] + "/api/terraformplan"
 
 
+def get_space_builder_create_apply_api(use_redirections):
+    if use_redirections:
+        return f"https://{os.environ.get('REDIRECTION_HOST')}/api/terraformapply"
+    else:
+        return os.environ["APPLICATION_SPACEBUILDER_URL"] + "/api/terraformapply"
+
+
 def get_space_builder_headers(
     use_redirections,
     api_key,
@@ -48,7 +55,7 @@ def get_space_builder_headers(
     return headers
 
 
-def get_space_builder_request_body(space_id, configuration):
+def get_space_builder_create_plan_request_body(space_id, configuration):
     """
     Returns the body of the request to create a Terraform plan in the space builder
     """
@@ -61,12 +68,26 @@ def get_space_builder_request_body(space_id, configuration):
     }
 
 
+def get_space_builder_create_apply_request_body(plan_id):
+    """
+    Returns the body of the request to create a Terraform apply in the space builder
+    """
+
+    return {
+        "data": {
+            "type": "terraformapply",
+            "attributes": {"plan_id": plan_id},
+        }
+    }
+
+
 @logging_wrapper
 async def create_terraform_plan(
     api_key,
     access_token,
     octopus_url,
     space_id,
+    configuration,
     redirections,
     redirections_apikey,
 ):
@@ -78,11 +99,55 @@ async def create_terraform_plan(
         "octopus_url must be a non-empty string (create_terraform_plan).",
     )
 
-    space_builder_request_body = get_space_builder_request_body(space_id, "")
+    space_builder_request_body = get_space_builder_create_plan_request_body(
+        space_id, configuration
+    )
 
     redirections_are_enabled = redirections_enabled(redirections, redirections_apikey)
 
     api = get_space_builder_create_plan_api(redirections_are_enabled)
+
+    headers = get_space_builder_headers(
+        redirections_are_enabled,
+        api_key,
+        octopus_url,
+        access_token,
+        redirections,
+        redirections_apikey,
+    )
+
+    async with sem:
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.post(
+                api, data=json.dumps(space_builder_request_body)
+            ) as response:
+                if response.status != 200:
+                    body = await response.text()
+                    raise SpaceBuilderRequestFailed(
+                        f"Request to {api} failed with {body}"
+                    )
+                return await response.text()
+
+
+@logging_wrapper
+async def create_terraform_apply(
+    api_key,
+    access_token,
+    octopus_url,
+    plan_id,
+    redirections,
+    redirections_apikey,
+):
+    ensure_string_not_empty(
+        plan_id,
+        "plan_id must be a non-empty string (create_terraform_apply).",
+    )
+
+    space_builder_request_body = get_space_builder_create_apply_request_body(plan_id)
+
+    redirections_are_enabled = redirections_enabled(redirections, redirections_apikey)
+
+    api = get_space_builder_create_apply_api(redirections_are_enabled)
 
     headers = get_space_builder_headers(
         redirections_are_enabled,
