@@ -187,6 +187,9 @@ def k8s_project_context():
     space_general_2 = load_terraform_context(
         "space_general_2", get_functions_connection_string()
     )
+    space_general_3 = load_terraform_context(
+        "space_general_3", get_functions_connection_string()
+    )
 
     # This context is an example k8s project
     project_kubernetes_raw_yaml = load_terraform_context(
@@ -213,6 +216,12 @@ def k8s_project_context():
             "system",
             "Example Octopus Terraform Configuration: ###\n"
             + escape_message(space_general_2)
+            + "\n###",
+        ),
+        (
+            "system",
+            "Example Octopus Terraform Configuration: ###\n"
+            + escape_message(space_general_3)
             + "\n###",
         ),
         (
