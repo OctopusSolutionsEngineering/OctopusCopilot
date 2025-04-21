@@ -51,6 +51,10 @@ from domain.tools.githubactions.octolint_unused_projects import (
     octolint_callback,
 )
 from domain.tools.githubactions.project_dashboard import get_project_dashboard_callback
+from domain.tools.githubactions.projects.create_k8s_project import (
+    create_k8s_project_callback,
+    create_k8s_project_confirm_callback_wrapper,
+)
 from domain.tools.githubactions.provide_help import provide_help_wrapper
 from domain.tools.githubactions.reject_manual_intervention import (
     reject_manual_intervention_confirm_callback_wrapper,
@@ -126,6 +130,7 @@ from domain.tools.wrapper.project_variables import (
     answer_project_variables_wrapper,
     answer_project_variables_usage_wrapper,
 )
+from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_wrapper
 from domain.tools.wrapper.reject_manual_intervention import (
     reject_manual_intervention_wrapper,
 )
@@ -893,6 +898,30 @@ def build_form_tools(query, req: func.HttpRequest):
                 ),
             ),
             *docs_functions,
+            FunctionDefinition(
+                create_k8s_project_wrapper(
+                    query,
+                    callback=create_k8s_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_k8s_project_confirm_callback_wrapper(
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+                is_enabled=is_admin_user(
+                    get_github_user_from_form(req), get_admin_users()
+                ),
+            ),
         ],
         fallback=FunctionDefinitions(docs_functions),
         invalid=FunctionDefinition(

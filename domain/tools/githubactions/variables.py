@@ -1,5 +1,6 @@
 from domain.context.octopus_context import collect_llm_context
 from domain.defaults.defaults import get_default_argument
+from domain.octopus.authorization import get_auth
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitized_list import (
     sanitize_name_fuzzy,
@@ -22,13 +23,7 @@ def variable_query_callback(github_user, octopus_details, log_query):
         original_query, messages, space, projects, variables
     ):
         auth, url = octopus_details()
-        api_key = ""
-        access_token = ""
-
-        if auth.startswith("API-"):
-            api_key = auth
-        else:
-            access_token = auth
+        api_key, access_token = get_auth(auth)
 
         debug_text = get_params_message(
             github_user,
