@@ -123,14 +123,14 @@ def create_k8s_project_callback(
             )
 
             arguments = {
-                "plan_id": response["attributes"]["plan_id"],
+                "plan_id": response["data"]["attributes"]["plan_id"],
             }
 
             log_query(
                 "create_k8s_project",
                 f"""
-                Space: {arguments["plan_id"]}
-                Plan: {response["attributes"]["plan_text"]}""",
+                Plan ID: {arguments["plan_id"]}
+                Plan: {response["data"]["attributes"]["plan_text"]}""",
             )
 
             debug_text.extend(
@@ -155,7 +155,7 @@ def create_k8s_project_callback(
             prompt_message = [
                 "Please confirm the details below are correct before proceeding:"
                 f"\n* Space: **{actual_space_name}**"
-                f"\n* Plan: **{response['attributes']['plan_text']}**"
+                f"\n* Plan: **{response["data"]['attributes']['plan_text']}**"
             ]
 
             response = ["Create a project"]
