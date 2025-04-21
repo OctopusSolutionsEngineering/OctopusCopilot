@@ -42,8 +42,8 @@ def get_space_builder_headers(
         "X-Octopus-Url": octopus_url,
     }
 
-    if access_token:
-        headers["Authorization"] = "Bearer " + access_token
+    if access_token.strip():
+        headers["Authorization"] = "Bearer " + access_token.strip()
 
     if use_redirections:
         parsed_octolint_url = urlparse(os.environ["APPLICATION_SPACEBUILDER_URL"])
