@@ -123,7 +123,7 @@ def create_k8s_project_callback(
             )
 
             arguments = {
-                "plan_id": response["data"]["attributes"]["plan_id"],
+                "plan_id": response["data"]["id"],
             }
 
             log_query(
