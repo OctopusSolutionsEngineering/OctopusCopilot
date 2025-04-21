@@ -112,6 +112,7 @@ def create_k8s_project_callback(
             response = await create_terraform_plan(
                 api_key,
                 access_token,
+                url,
                 space_id,
                 configuration,
                 redirections,
