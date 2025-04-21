@@ -5,6 +5,7 @@ from azure.data.tables import TableServiceClient
 
 from domain.errors.error_handling import handle_error
 from domain.logging.app_logging import configure_logging
+from domain.sanitizers.github_user import get_github_user_for_callback
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.octopus import logging_wrapper
 
@@ -35,9 +36,7 @@ def save_callback(
     table_client = table_service_client.create_table_if_not_exists("callback")
 
     # When called from OctoAI, we don't have a user, so we default to "Unknown"
-    sanitised_github_user = (
-        github_user.casefold().strip() if github_user.strip() else "Unknown"
-    )
+    sanitised_github_user = get_github_user_for_callback(github_user)
 
     callback = {
         "PartitionKey": "github.com",
@@ -70,9 +69,7 @@ def load_callback(github_user, callback_id, connection_string):
         callback = table_client.get_entity("github.com", callback_id)
 
         # When called from OctoAI, we don't have a user, so we default to "Unknown"
-        sanitised_github_user = (
-            github_user.casefold().strip() if github_user.strip() else "Unknown"
-        )
+        sanitised_github_user = get_github_user_for_callback(github_user)
 
         if not callback["GithubUser"] == sanitised_github_user:
             return None, None, None
