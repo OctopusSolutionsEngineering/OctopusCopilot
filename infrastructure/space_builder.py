@@ -126,7 +126,7 @@ async def create_terraform_plan(
                     raise SpaceBuilderRequestFailed(
                         f"Request to {api} failed with {body}"
                     )
-                return await response.text()
+                return await response.json()
 
 
 @logging_wrapper
@@ -168,4 +168,4 @@ async def create_terraform_apply(
                     raise SpaceBuilderRequestFailed(
                         f"Request to {api} failed with {body}"
                     )
-                return await response.text()
+                return await response.json()
