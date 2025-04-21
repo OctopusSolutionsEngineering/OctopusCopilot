@@ -2,33 +2,17 @@ import asyncio
 import json
 import uuid
 
-from domain.exceptions.prompted_variable_match_error import (
-    PromptedVariableMatchingError,
-)
+from domain.config.database import get_functions_connection_string
 from domain.lookup.octopus_lookups import (
     lookup_space,
-    lookup_projects,
-    lookup_environments,
-    lookup_tenants,
 )
 from domain.octopus.authorization import get_auth
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
-from infrastructure.octopus import (
-    get_project,
-    create_release_fuzzy,
-    get_default_channel,
-    get_channel_by_name_fuzzy,
-    get_release_template_and_default_branch,
-    get_environment,
-    get_lifecycle,
-    deploy_release_fuzzy,
-    get_releases_by_version,
-    match_deployment_variables,
-    get_environment_fuzzy,
-)
+from infrastructure.openai import llm_message_query
 from infrastructure.space_builder import create_terraform_plan, create_terraform_apply
+from infrastructure.terraform_context import load_terraform_context
 
 
 def create_k8s_project_confirm_callback_wrapper(
@@ -73,6 +57,8 @@ def create_k8s_project_confirm_callback_wrapper(
                 redirector_api_key,
             )
 
+            response_text.append(response["data"]["attributes"]["apply_text"])
+
             response_text.extend(debug_text)
             return CopilotResponse("\n\n".join(response_text))
 
@@ -115,7 +101,9 @@ def create_k8s_project_callback(
                 )
 
             # We need to call the LLM to get the Terraform configuration
-            configuration = ""
+            context = {"input": original_query}
+            messages = k8s_project_context()
+            configuration = llm_message_query(messages, context, log_query)
 
             # We can then save the Terraform plan as a callback
             callback_id = str(uuid.uuid4())
@@ -179,3 +167,54 @@ def create_k8s_project_callback(
         return asyncio.run(inner_function())
 
     return create_k8s_project
+
+
+def k8s_project_context():
+    """
+    Builds the messages used when building a k8s project
+    :return: The LLM messages
+    """
+
+    # The general space context is split into two rows because of a 32k limit on azure storage table rows
+    space_general_1 = load_terraform_context(
+        "space_general_1", get_functions_connection_string()
+    )
+    space_general_2 = load_terraform_context(
+        "space_general_2", get_functions_connection_string()
+    )
+
+    # This context is an example k8s project
+    project_kubernetes_raw_yaml = load_terraform_context(
+        "project_kubernetes_raw_yaml", get_functions_connection_string()
+    )
+
+    return [
+        (
+            "system",
+            """
+            You must respond with Terraform configuration to create an Octopus project deploying an application to Kubernetes using raw yaml based on examples provided. 
+            You must only respond with the Terraform configuration.
+            You will be penalized for returning any other text.
+            """,
+        ),
+        (
+            "system",
+            "Example Octopus Terraform Configuration: ###\n"
+            + space_general_1
+            + "\n###",
+        ),
+        (
+            "system",
+            "Example Octopus Terraform Configuration: ###\n"
+            + space_general_2
+            + "\n###",
+        ),
+        (
+            "system",
+            "Example Octopus Kubernetes Project Terraform Configuration: ###\n"
+            + project_kubernetes_raw_yaml
+            + "\n###",
+        ),
+        ("user", "Question: {input}"),
+        ("user", "Terraform Configuration:"),
+    ]
