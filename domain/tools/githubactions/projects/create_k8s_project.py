@@ -189,14 +189,15 @@ def k8s_project_context():
         "project_kubernetes_raw_yaml", get_functions_connection_string()
     )
 
+    # This is the system message
+    project_kubernetes_raw_yaml_system = load_terraform_context(
+        "project_kubernetes_raw_yaml_system", get_functions_connection_string()
+    )
+
     return [
         (
             "system",
-            """
-            You must respond with Terraform configuration to create an Octopus project deploying an application to Kubernetes using raw yaml based on examples provided.
-            You must only respond with the Terraform configuration.
-            You will be penalized for returning any other text.
-            """,
+            project_kubernetes_raw_yaml_system,
         ),
         (
             "system",
