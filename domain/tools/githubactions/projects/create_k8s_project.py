@@ -8,6 +8,7 @@ from domain.lookup.octopus_lookups import (
 )
 from domain.octopus.authorization import get_auth
 from domain.response.copilot_response import CopilotResponse
+from domain.sanitizers.escape_messages import escape_message
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
 from infrastructure.openai import llm_message_query
@@ -200,19 +201,19 @@ def k8s_project_context():
         (
             "system",
             "Example Octopus Terraform Configuration: ###\n"
-            + space_general_1
+            + escape_message(space_general_1)
             + "\n###",
         ),
         (
             "system",
             "Example Octopus Terraform Configuration: ###\n"
-            + space_general_2
+            + escape_message(space_general_2)
             + "\n###",
         ),
         (
             "system",
             "Example Octopus Kubernetes Project Terraform Configuration: ###\n"
-            + project_kubernetes_raw_yaml
+            + escape_message(project_kubernetes_raw_yaml)
             + "\n###",
         ),
         ("user", "Question: {input}"),
