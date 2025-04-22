@@ -86,7 +86,7 @@ step "deploy-with-cli" {
                    },
                    {
                       "name": "APPLICATION_SERVERS_ADMIN",
-                      "value": "#{Application.Servers.Admin}",
+                      "value": "#{Application.Servers.Admin | JsonEscape}",
                       "slotSetting": false
                    },
                    {
