@@ -158,7 +158,7 @@ def get_server(req: func.HttpRequest):
     api_key, server = get_apikey_and_server(req)
 
     if server and api_key:
-        # The api key and server have to be valid
+        # The api key and server have to be valid, which we validate with an API call
         return (
             server
             if none_on_exception(lambda: get_current_user(api_key, server))
@@ -168,9 +168,9 @@ def get_server(req: func.HttpRequest):
     access_token = req.headers.get("X-Octopus-AccessToken")
 
     if access_token:
-        parsed = parse_jwt(access_token, test_expired=False)
+        parsed = parse_jwt(access_token, test_expired=True)
         server = parsed.get("aud", "")
-        # The api key and server have to be valid
+        # The access token and server have to be valid, which we validate with an API call
         return (
             server
             if none_on_exception(lambda: get_current_user(access_token, server))
