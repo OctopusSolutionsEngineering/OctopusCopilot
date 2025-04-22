@@ -283,6 +283,8 @@ step "smoke-test-health-production-endpoint" {
         environments = ["production"]
         properties = {
             ExpectedCode = "200"
+            Octopus.Action.AutoRetry.MaximumCount = "3"
+            Octopus.Action.AutoRetry.MinimumBackoff = "15"
             Octopus.Action.Template.Id = "ActionTemplates-1741"
             Octopus.Action.Template.Version = "18"
             SecurityProtocol = "Tls12"
