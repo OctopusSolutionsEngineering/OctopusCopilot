@@ -155,30 +155,17 @@ logger = configure_logging(__name__)
 
 
 def get_server(req: func.HttpRequest):
-    api_key = req.headers.get("X-Octopus-ApiKey")
-    server = req.headers.get("X-Octopus-Server")
+    api_key, server = get_apikey_and_server(req)
 
-    if server and api_key:
-        # The api key and server have to be valid, which we validate with an API call
-        return (
-            server
-            if none_on_exception(lambda: get_current_user(api_key, server))
-            else ""
-        )
+    if api_key and server:
+        return server
 
-    access_token = req.headers.get("X-Octopus-AccessToken")
+    access_token, server = get_access_token_and_server(req)
 
-    if access_token:
-        parsed = parse_jwt(access_token, test_expired=True)
-        server = parsed.get("aud", "")
-        # The access token and server have to be valid, which we validate with an API call
-        return (
-            server
-            if none_on_exception(lambda: get_current_user(access_token, server))
-            else ""
-        )
+    if access_token and server:
+        return server
 
-    return ""
+    return None
 
 
 def get_apikey_and_server(req: func.HttpRequest):
@@ -186,21 +173,46 @@ def get_apikey_and_server(req: func.HttpRequest):
     When testing we supply the octopus details directly. This removes the need to use a GitHub token, as GitHub
     tokens have radiatively small rate limits. Load tests will pass these headers in to simulate a chat without
     triggering GitHub API rate limits
-    :return:
     """
     api_key = req.headers.get("X-Octopus-ApiKey")
-    server = get_server(req)
-    return api_key, server
+    server = req.headers.get("X-Octopus-Server")
+
+    if server and api_key:
+        # The api key and server have to be valid, which we validate with an API call
+        return (
+            api_key,
+            (
+                server
+                if none_on_exception(lambda: get_current_user(api_key, server))
+                else None
+            ),
+            None,
+        )
+
+    return None, None
 
 
 def get_access_token_and_server(req: func.HttpRequest):
     """
-    The OctoAI integration will pass through an access token and server URL in the headers.
-    :return:
+    The OctoAI integration will pass through an access token in the headers. We use the aud claim
+    in the access token to determine the server.
     """
-    api_key = req.headers.get("X-Octopus-AccessToken")
-    server = get_server(req)
-    return api_key, server
+    access_token = req.headers.get("X-Octopus-AccessToken")
+    if access_token:
+        parsed = parse_jwt(access_token, test_expired=True)
+        server = parsed.get("aud", "")
+        # The access token and server have to be valid, which we validate with an API call
+        return (
+            access_token,
+            (
+                server
+                if none_on_exception(lambda: get_current_user(access_token, server))
+                else None
+            ),
+            None,
+        )
+
+    return None, None
 
 
 def get_slack_token_from_request(req: func.HttpRequest):
