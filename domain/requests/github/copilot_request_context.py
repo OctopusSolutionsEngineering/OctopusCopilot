@@ -164,7 +164,7 @@ def get_apikey_and_server(req: func.HttpRequest):
     :return:
     """
     api_key = req.headers.get("X-Octopus-ApiKey")
-    server = get_server()
+    server = get_server(req)
     return api_key, server
 
 
@@ -174,7 +174,7 @@ def get_access_token_and_server(req: func.HttpRequest):
     :return:
     """
     api_key = req.headers.get("X-Octopus-AccessToken")
-    server = get_server()
+    server = get_server(req)
     return api_key, server
 
 
