@@ -179,15 +179,8 @@ def get_apikey_and_server(req: func.HttpRequest):
 
     if server and api_key:
         # The api key and server have to be valid, which we validate with an API call
-        return (
-            api_key,
-            (
-                server
-                if none_on_exception(lambda: get_current_user(api_key, server))
-                else None
-            ),
-            None,
-        )
+        if none_on_exception(lambda: get_current_user(api_key, server)):
+            return api_key, server
 
     return None, None
 
@@ -201,16 +194,9 @@ def get_access_token_and_server(req: func.HttpRequest):
     if access_token:
         parsed = parse_jwt(access_token, test_expired=True)
         server = parsed.get("aud", "")
-        # The access token and server have to be valid, which we validate with an API call
-        return (
-            access_token,
-            (
-                server
-                if none_on_exception(lambda: get_current_user(access_token, server))
-                else None
-            ),
-            None,
-        )
+
+        if none_on_exception(lambda: get_current_user(access_token, server)):
+            return access_token, server
 
     return None, None
 
