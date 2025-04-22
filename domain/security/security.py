@@ -4,6 +4,28 @@ import logging
 from domain.errors.error_handling import handle_error
 from domain.exceptions.invalid_admin_users import InvalidAdminUsers
 from domain.exceptions.not_authorized import NotAuthorized
+from domain.url.hostname import get_hostname_from_url
+
+
+def is_admin_server(server, admin_servers):
+    if not server or not admin_servers:
+        return False
+
+    try:
+        admin_users = list(map(lambda x: str(x), json.loads(admin_servers)))
+
+    except Exception as e:
+        handle_error(
+            InvalidAdminUsers(
+                "Failed to parse list of admin users: " + admin_servers, e
+            )
+        )
+        return False
+
+    if get_hostname_from_url(str(server)) not in admin_servers:
+        return False
+
+    return True
 
 
 def is_admin_user(user, get_admin_users):
@@ -21,7 +43,11 @@ def is_admin_user(user, get_admin_users):
         admin_users = list(map(lambda x: str(x), json.loads(get_admin_users)))
 
     except Exception as e:
-        handle_error(InvalidAdminUsers("Failed to parse list of admin users: " + get_admin_users, e))
+        handle_error(
+            InvalidAdminUsers(
+                "Failed to parse list of admin users: " + get_admin_users, e
+            )
+        )
         return False
 
     if str(user) not in admin_users:
@@ -49,7 +75,11 @@ def call_admin_function(user, get_admin_users, callback):
         admin_users = list(map(lambda x: str(x), json.loads(get_admin_users)))
 
     except Exception as e:
-        handle_error(InvalidAdminUsers("Failed to parse list of admin users: " + get_admin_users, e))
+        handle_error(
+            InvalidAdminUsers(
+                "Failed to parse list of admin users: " + get_admin_users, e
+            )
+        )
         raise NotAuthorized()
 
     if str(user) not in admin_users:

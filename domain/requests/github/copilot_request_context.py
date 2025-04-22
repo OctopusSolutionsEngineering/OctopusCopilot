@@ -7,6 +7,7 @@ from azure.core.exceptions import HttpResponseError
 
 from domain.b64.b64_encoder import decode_string_b64
 from domain.config.database import get_functions_connection_string
+from domain.config.servers import get_admin_servers
 from domain.config.storyblok import get_storyblok_token
 from domain.config.users import get_admin_users
 from domain.config.zendesk import get_zendesk_user, get_zendesk_token
@@ -17,7 +18,7 @@ from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_logging import log_query
-from domain.security.security import is_admin_user
+from domain.security.security import is_admin_user, is_admin_server
 from domain.tools.githubactions.approve_manual_intervention import (
     approve_manual_intervention_callback,
     approve_manual_intervention_confirm_callback_wrapper,
@@ -151,6 +152,10 @@ from infrastructure.users import get_users_details, get_users_slack_details
 logger = configure_logging(__name__)
 
 
+def get_server(req: func.HttpRequest):
+    return req.headers.get("X-Octopus-Server")
+
+
 def get_apikey_and_server(req: func.HttpRequest):
     """
     When testing we supply the octopus details directly. This removes the need to use a GitHub token, as GitHub
@@ -159,7 +164,7 @@ def get_apikey_and_server(req: func.HttpRequest):
     :return:
     """
     api_key = req.headers.get("X-Octopus-ApiKey")
-    server = req.headers.get("X-Octopus-Server")
+    server = get_server()
     return api_key, server
 
 
@@ -169,7 +174,7 @@ def get_access_token_and_server(req: func.HttpRequest):
     :return:
     """
     api_key = req.headers.get("X-Octopus-AccessToken")
-    server = req.headers.get("X-Octopus-Server")
+    server = get_server()
     return api_key, server
 
 
@@ -237,7 +242,10 @@ def get_github_token(req: func.HttpRequest):
     return None
 
 
-@logging_wrapper
+def get_server_from_form(req: func.HttpRequest):
+    return get_server(req)
+
+
 def get_github_user_from_form(req: func.HttpRequest):
     try:
         return get_github_user(get_github_token(req))
@@ -920,7 +928,9 @@ def build_form_tools(query, req: func.HttpRequest):
                 ),
                 is_enabled=is_admin_user(
                     get_github_user_from_form(req), get_admin_users()
-                ),
+                )
+                or is_admin_server(get_server(req), get_admin_servers())
+                or get_server_from_form(req),
             ),
         ],
         fallback=FunctionDefinitions(docs_functions),
