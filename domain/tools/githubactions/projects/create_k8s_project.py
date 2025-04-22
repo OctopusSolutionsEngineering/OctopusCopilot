@@ -59,7 +59,9 @@ def create_k8s_project_confirm_callback_wrapper(
                 redirector_api_key,
             )
 
-            response_text.append(response["data"]["attributes"]["apply_text"])
+            response_text.append(
+                "```\n" + response["data"]["attributes"]["apply_text"] + "\n```"
+            )
 
             response_text.extend(debug_text)
             return CopilotResponse("\n\n".join(response_text))
