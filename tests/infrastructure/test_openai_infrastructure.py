@@ -430,6 +430,17 @@ class MockRequests(unittest.TestCase):
 
         self.assertEqual(function.name, "release_what_changed_help_me")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_k8s_project(self):
+        """
+        Tests that the llm can correctly identify the function to call when the prompt is
+        """
+
+        query = 'Create a Kubernetes project in the space "Documentation" called "My K8s Project 1"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_k8s_project")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -7,6 +7,9 @@ from domain.tools.githubactions.default_values import default_value_callbacks
 from domain.tools.githubactions.generate_terraform import (
     generate_terraform_callback_wrapper,
 )
+from domain.tools.githubactions.projects.create_k8s_project import (
+    create_k8s_project_confirm_callback_wrapper,
+)
 from domain.tools.githubactions.release_what_changed import (
     release_what_changed_callback_wrapper,
 )
@@ -23,8 +26,18 @@ from domain.tools.wrapper.general_query import (
 )
 from domain.tools.wrapper.generate_terraform import generate_terraform_wrapper
 from domain.tools.wrapper.how_to import how_to_wrapper
+from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_wrapper
 from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
 from domain.tools.wrapper.suggest_solution import suggest_solution_wrapper
+from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
+
+
+def octopus_details():
+    return Octopus_Api_Key, Octopus_Url
+
+
+def log_query(query, message):
+    print(f"Query: {query}, Message: {message}")
 
 
 def general_query_handler(query, body, messages):
@@ -112,6 +125,19 @@ def build_mock_test_tools(tool_query):
                     tool_query,
                     generate_terraform_callback_wrapper(),
                     os.environ["GH_TEST_TOKEN"],
+                )
+            ),
+            FunctionDefinition(
+                create_k8s_project_wrapper(
+                    tool_query,
+                    create_k8s_project_confirm_callback_wrapper(
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
                 )
             ),
             *deployment_functions,
