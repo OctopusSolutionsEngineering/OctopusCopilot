@@ -7,17 +7,17 @@ from domain.exceptions.not_authorized import NotAuthorized
 from domain.url.hostname import get_hostname_from_url
 
 
-def is_admin_server(server, admin_servers):
-    if not server or not admin_servers:
+def is_admin_server(server, admin_servers_json):
+    if not server or not admin_servers_json:
         return False
 
     try:
-        admin_users = list(map(lambda x: str(x), json.loads(admin_servers)))
+        admin_servers = list(map(lambda x: str(x), json.loads(admin_servers_json)))
 
     except Exception as e:
         handle_error(
             InvalidAdminUsers(
-                "Failed to parse list of admin users: " + admin_servers, e
+                "Failed to parse list of admin servers: " + admin_servers_json, e
             )
         )
         return False
