@@ -1,0 +1,42 @@
+name = "__ 1. Serialize Project"
+default_guided_failure_mode = "EnvironmentDefault"
+description = ""
+environment_scope = "Specified"
+environments = ["sync"]
+multi_tenancy_mode = "TenantedOrUntenanted"
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    quantity_to_keep = 100
+}
+
+process {
+    step "octopus-serialize-project-to-terraform" {
+        name = "Octopus - Serialize Project to Terraform"
+
+        action {
+            properties = {
+                Exported.Project.IgnoredLibraryVariableSet = "Azure,Octopus"
+                Octopus.Action.RunOnServer = "true"
+                Octopus.Action.Template.Id = "ActionTemplates-1603"
+                Octopus.Action.Template.Version = "10"
+                SerializeProject.Exported.Project.ExcludeCacProjectValues = "False"
+                SerializeProject.Exported.Project.IgnoreAllChanges = "False"
+                SerializeProject.Exported.Project.IgnoreCacValues = "False"
+                SerializeProject.Exported.Project.IgnoredAccounts = ""
+                SerializeProject.Exported.Project.IgnoreVariableChanges = "True"
+                SerializeProject.Exported.Project.IncludeStepTemplates = "False"
+                SerializeProject.Exported.Project.LookupProjectLinkTenants = "False"
+                SerializeProject.Exported.Project.Name = "#{Octopus.Project.Name}"
+                SerializeProject.Exported.Space.Id = "#{Octopus.Space.Id}"
+                SerializeProject.ThisInstance.Api.Key = "#{Octopus.Octoterra.ApiKey}"
+                SerializeProject.ThisInstance.Server.Url = "#{Octopus.Web.ServerUri}"
+                SerializeProject.ThisInstance.Terraform.Backend = "azurerm"
+            }
+            worker_pool_variable = ""
+        }
+    }
+}
