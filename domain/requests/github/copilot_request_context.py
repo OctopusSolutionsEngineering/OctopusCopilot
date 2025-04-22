@@ -155,7 +155,8 @@ logger = configure_logging(__name__)
 
 
 def get_server(req: func.HttpRequest):
-    api_key, server = get_apikey_and_server(req)
+    api_key = req.headers.get("X-Octopus-ApiKey")
+    server = req.headers.get("X-Octopus-Server")
 
     if server and api_key:
         # The api key and server have to be valid, which we validate with an API call
