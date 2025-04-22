@@ -6,7 +6,10 @@ from urllib.parse import urlparse
 import aiohttp
 
 from domain.exceptions.spacebuilder import SpaceBuilderRequestFailed
-from domain.validation.argument_validation import ensure_string_not_empty
+from domain.validation.argument_validation import (
+    ensure_string_not_empty,
+    ensure_one_string_not_empty,
+)
 from infrastructure.octolint import redirections_enabled
 from infrastructure.octopus import logging_wrapper
 
@@ -100,6 +103,11 @@ async def create_terraform_plan(
         octopus_url,
         "octopus_url must be a non-empty string (create_terraform_plan).",
     )
+    ensure_one_string_not_empty(
+        "api_key or access_token must be a non-empty string (create_terraform_plan).",
+        api_key,
+        access_token,
+    )
 
     space_builder_request_body = get_space_builder_create_plan_request_body(
         space_id, configuration
@@ -143,6 +151,11 @@ async def create_terraform_apply(
     ensure_string_not_empty(
         plan_id,
         "plan_id must be a non-empty string (create_terraform_apply).",
+    )
+    ensure_one_string_not_empty(
+        "api_key or access_token must be a non-empty string (create_terraform_plan).",
+        api_key,
+        access_token,
     )
 
     space_builder_request_body = get_space_builder_create_apply_request_body(plan_id)

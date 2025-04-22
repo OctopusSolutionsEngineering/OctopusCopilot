@@ -23,6 +23,19 @@ def ensure_string_not_empty(value, error_message):
         raise ValueError(error_message)
 
 
+def ensure_one_string_not_empty(error_message, *values):
+    """
+    Ensures one of the values is a non-empty string
+    :param value: The arguments to test
+    :param error_message: The error message to raise if the test fails
+    """
+    for value in values:
+        if value and isinstance(value, str) and value.strip():
+            return True
+
+    raise ValueError(error_message)
+
+
 def ensure_string_starts_with(value, prefix, error_message):
     """
     Ensures the value is string with a given prefix
