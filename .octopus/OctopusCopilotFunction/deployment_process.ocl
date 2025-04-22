@@ -85,6 +85,11 @@ step "deploy-with-cli" {
                       "slotSetting": false
                    },
                    {
+                      "name": "APPLICATION_SERVERS_ADMIN",
+                      "value": "#{Application.Servers.Admin}",
+                      "slotSetting": false
+                   },
+                   {
                       "name": "SLACK_WEBHOOK_URL",
                       "value": "#{Slack.Webhook.Url}",
                       "slotSetting": false
