@@ -929,8 +929,7 @@ def build_form_tools(query, req: func.HttpRequest):
                 is_enabled=is_admin_user(
                     get_github_user_from_form(req), get_admin_users()
                 )
-                or is_admin_server(get_server(req), get_admin_servers())
-                or get_server_from_form(req),
+                or is_admin_server(get_server(req), get_admin_servers()),
             ),
         ],
         fallback=FunctionDefinitions(docs_functions),
