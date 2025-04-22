@@ -12,10 +12,12 @@ from domain.config.storyblok import get_storyblok_token
 from domain.config.users import get_admin_users
 from domain.config.zendesk import get_zendesk_user, get_zendesk_token
 from domain.encryption.encryption import decrypt_eax, generate_password
+from domain.exceptions.none_on_exception import none_on_exception
 from domain.exceptions.request_failed import GitHubRequestFailed
 from domain.exceptions.slack_not_logged_in import SlackTokenInvalid
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyInvalid
+from domain.jwt.oidc import parse_jwt
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_logging import log_query
 from domain.security.security import is_admin_user, is_admin_server
@@ -146,14 +148,36 @@ from domain.tools.wrapper.suggest_solution import suggest_solution_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.tools.wrapper.task_summary_wrapper import show_task_summary_wrapper
 from infrastructure.github import get_github_user
-from infrastructure.octopus import logging_wrapper
+from infrastructure.octopus import logging_wrapper, get_current_user
 from infrastructure.users import get_users_details, get_users_slack_details
 
 logger = configure_logging(__name__)
 
 
 def get_server(req: func.HttpRequest):
-    return req.headers.get("X-Octopus-Server")
+    api_key, server = get_apikey_and_server(req)
+
+    if server and api_key:
+        # The api key and server have to be valid
+        return (
+            server
+            if none_on_exception(lambda: get_current_user(api_key, server))
+            else ""
+        )
+
+    access_token = req.headers.get("X-Octopus-AccessToken")
+
+    if access_token:
+        parsed = parse_jwt(access_token, test_expired=False)
+        server = parsed.get("aud", "")
+        # The api key and server have to be valid
+        return (
+            server
+            if none_on_exception(lambda: get_current_user(access_token, server))
+            else ""
+        )
+
+    return ""
 
 
 def get_apikey_and_server(req: func.HttpRequest):

@@ -5,7 +5,7 @@ from domain.validation.argument_validation import ensure_string_not_empty
 instance = PyJWT()
 
 
-def parse_jwt(token):
+def parse_jwt(token, test_expired=True, verify_signature=False):
     """
     Parse the ID token, failing if the token has expired, but otherwise don't validate the token.
     We assume Octopus does any validation required to ensure this is a signed OIDC token, while
@@ -14,6 +14,10 @@ def parse_jwt(token):
     :return: The parsed token
     """
 
-    ensure_string_not_empty(token, 'token must be the JWT to decode (parse_jwt).')
+    ensure_string_not_empty(token, "token must be the JWT to decode (parse_jwt).")
 
-    return instance.decode(jwt=token, options={"verify_signature": False, "verify_exp": True}, algorithms=["HS256"])
+    return instance.decode(
+        jwt=token,
+        options={"verify_signature": verify_signature, "verify_exp": test_expired},
+        algorithms=["HS256"],
+    )
