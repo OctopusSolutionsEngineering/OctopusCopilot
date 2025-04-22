@@ -153,8 +153,8 @@ def create_k8s_project_callback(
 
             prompt_title = "Do you want to continue to create the project?"
             prompt_message = [
-                "Please confirm the details below are correct before proceeding:"
-                f"\nSpace: **{actual_space_name}**"
+                "Please confirm the details below are correct before proceeding."
+                f"\n\nSpace: **{actual_space_name}**"
                 f"\n\nPlan:\n\n```{response['data']['attributes']['plan_text']}```"
             ]
 
