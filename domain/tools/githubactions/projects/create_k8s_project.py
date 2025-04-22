@@ -94,7 +94,7 @@ def create_k8s_project_callback(
             )
 
             space_id, actual_space_name, warnings = lookup_space(
-                url, api_key, github_user, original_query, space_name
+                url, auth, github_user, original_query, space_name
             )
 
             if not space_id:
