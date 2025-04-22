@@ -20,7 +20,11 @@ process {
             action_type = "Octopus.AzurePowerShell"
             properties = {
                 Octopus.Action.Azure.AccountId = "azure-copilot"
-                Octopus.Action.Script.ScriptBody = "az functionapp restart --name \"#{Azure.Function.Name}\" --resource-group \"#{Azure.ResourceGroup.Name}\""
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    echo "Restarting #{Azure.Function.Name} in #{Azure.ResourceGroup.Name}"
+                    
+                    az functionapp restart --name "#{Azure.Function.Name}" --resource-group "#{Azure.ResourceGroup.Name}"
+                    EOT
                 Octopus.Action.Script.ScriptSource = "Inline"
                 Octopus.Action.Script.Syntax = "Bash"
                 OctopusUseBundledTooling = "False"
