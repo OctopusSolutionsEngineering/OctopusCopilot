@@ -23,3 +23,7 @@ variable "TestMessage" {
 variable "OctopusPrintEvaluatedVariables" {
     value "False" {}
 }
+
+variable "Application.Servers.Admin" {
+    value "[\"mattc.octopus.app\"]" {}
+}
