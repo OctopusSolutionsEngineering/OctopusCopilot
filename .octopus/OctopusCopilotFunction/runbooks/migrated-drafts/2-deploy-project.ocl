@@ -1,0 +1,73 @@
+name = "__ 2. Deploy Project"
+default_guided_failure_mode = "EnvironmentDefault"
+description = ""
+environment_scope = "Specified"
+environments = ["sync"]
+multi_tenancy_mode = "Tenanted"
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    quantity_to_keep = 100
+}
+
+process {
+    step "expose-storage-account-to-worker" {
+        name = "Expose Storage Account to Worker"
+
+        action {
+            properties = {
+                Octopus.Action.RunOnServer = "true"
+                Octopus.Action.Template.Id = "ActionTemplates-1604"
+                Octopus.Action.Template.Version = "1"
+            }
+            worker_pool_variable = ""
+
+            container {
+                feed = "docker-hub"
+                image = "octopusdeploy/worker-tools:6.1.1-ubuntu.22.04"
+            }
+        }
+    }
+
+    step "octopus-populate-octoterra-space-azure-backend" {
+        name = "Octopus - Populate Octoterra Space (Azure Backend)"
+
+        action {
+            properties = {
+                Octopus.Action.RunOnServer = "true"
+                Octopus.Action.Template.Id = "ActionTemplates-1602"
+                Octopus.Action.Template.Version = "1"
+                OctopusUseBundledTooling = "False"
+                OctoterraApply.Azure.Account = "Octopus.Azure.Account"
+                OctoterraApply.Azure.Storage.AccountName = "#{Azure.StorageAccount.Name}"
+                OctoterraApply.Azure.Storage.Container = "#{Azure.StorageAccount.Container}"
+                OctoterraApply.Azure.Storage.Key = "Project_#{Octopus.Project.Name | Replace \"[^A-Za-z0-9]\" \"_\"}"
+                OctoterraApply.Azure.Storage.ResourceGroup = "#{Azure.StorageAccount.ResourceGroup}"
+                OctoterraApply.Octopus.ApiKey = "#{Octopus.Deploy.ApiKey}"
+                OctoterraApply.Octopus.ServerUrl = "https://deploy.octopus.app"
+                OctoterraApply.Octopus.SpaceID = "#{Octopus.Deploy.SpaceID}"
+                OctoterraApply.Terraform.Package.Id = "{\"PackageId\":\"Octopus_Copilot_Function\",\"FeedId\":\"octopus-server-built-in\"}"
+                OctoterraApply.Terraform.Workspace.Name = "#{OctoterraApply.Octopus.SpaceID}"
+            }
+            worker_pool_variable = ""
+
+            container {
+                feed = "docker-hub"
+                image = "octopuslabs/terraform-workertools"
+            }
+
+            packages {
+                acquisition_location = "Server"
+                feed = "octopus-server-built-in"
+                package_id = "Octopus_Copilot_Function"
+                properties = {
+                    PackageParameterName = "OctoterraApply.Terraform.Package.Id"
+                    SelectionMode = "deferred"
+                }
+            }
+        }
+    }
+}

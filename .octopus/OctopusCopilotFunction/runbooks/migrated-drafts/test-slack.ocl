@@ -1,0 +1,32 @@
+name = "Test Slack"
+default_guided_failure_mode = "EnvironmentDefault"
+description = ""
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    quantity_to_keep = 100
+}
+
+process {
+    step "slack-send-simple-notification-bash" {
+        name = "Slack - Send Simple Notification - Bash"
+
+        action {
+            properties = {
+                Octopus.Action.Template.Id = "ActionTemplates-4022"
+                Octopus.Action.Template.Version = "2"
+                ssn_Channel = "se-tool-requests"
+                ssn_Color = "good"
+                ssn_HookUrl = "#{Slack.WebHook}"
+                ssn_IconUrl = "https://octopus.com/content/resources/favicon.png"
+                ssn_Message = "#{TestMessage | JsonEscape}"
+                ssn_Title = "title"
+                ssn_Username = "Octopus Deploy"
+            }
+            worker_pool = "hosted-ubuntu"
+        }
+    }
+}

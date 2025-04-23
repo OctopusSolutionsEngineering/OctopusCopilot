@@ -1,0 +1,40 @@
+name = "Restart Azure Function"
+default_guided_failure_mode = "EnvironmentDefault"
+description = ""
+environment_scope = "Specified"
+environments = ["production"]
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    quantity_to_keep = 100
+}
+
+process {
+    step "restart-azure-function" {
+        name = "Restart Azure Function"
+
+        action {
+            action_type = "Octopus.AzurePowerShell"
+            properties = {
+                Octopus.Action.Azure.AccountId = "azure-copilot"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    echo "Restarting #{Azure.Function.Name} in #{Azure.ResourceGroup.Name}"
+                    
+                    az functionapp restart --name "#{Azure.Function.Name}" --resource-group "#{Azure.ResourceGroup.Name}"
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "Bash"
+                OctopusUseBundledTooling = "False"
+            }
+            worker_pool = "hosted-ubuntu"
+
+            container {
+                feed = "ghcr"
+                image = "ghcr.io/octopusdeploylabs/azure-workertools"
+            }
+        }
+    }
+}

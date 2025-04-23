@@ -1,0 +1,38 @@
+name = "Find Outbound IPs"
+default_guided_failure_mode = "EnvironmentDefault"
+description = "Finds the outbound IP addresses associated with the Azure function."
+environment_scope = "Specified"
+environments = ["administration"]
+multi_tenancy_mode = "TenantedOrUntenanted"
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    quantity_to_keep = 100
+}
+
+process {
+    step "run-an-azure-script" {
+        name = "Run an Azure Script"
+
+        action {
+            action_type = "Octopus.AzurePowerShell"
+            properties = {
+                Octopus.Action.Azure.AccountId = "azure-solutions-engineering"
+                Octopus.Action.RunOnServer = "true"
+                Octopus.Action.Script.ScriptBody = "az webapp show --resource-group OctopusCopilot --name octopuscopilotproduction --query outboundIpAddresses --output tsv"
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "PowerShell"
+                OctopusUseBundledTooling = "False"
+            }
+            worker_pool_variable = ""
+
+            container {
+                feed = "docker-hub"
+                image = "octopusdeploy/worker-tools:6.1.1-ubuntu.22.04"
+            }
+        }
+    }
+}

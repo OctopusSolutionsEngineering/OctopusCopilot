@@ -1,0 +1,52 @@
+name = "Create Function App"
+default_guided_failure_mode = "EnvironmentDefault"
+description = "Deploys the function app and supporting infrastructure"
+environment_scope = "Specified"
+environments = ["production"]
+multi_tenancy_mode = "TenantedOrUntenanted"
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    quantity_to_keep = 100
+}
+
+process {
+    step "deploy-an-azure-resource-manager-template" {
+        name = "Deploy an Azure Resource Manager template"
+
+        action {
+            action_type = "Octopus.AzureResourceGroup"
+            properties = {
+                Octopus.Action.Azure.AccountId = "azure-solutions-engineering"
+                Octopus.Action.Azure.ResourceGroupDeploymentMode = "Incremental"
+                Octopus.Action.Azure.ResourceGroupName = "OctopusCopilot"
+                Octopus.Action.Azure.ResourceGroupTemplate = "azure/functions/template.json"
+                Octopus.Action.Azure.ResourceGroupTemplateParameters = "azure/functions/parameters.json"
+                Octopus.Action.Azure.TemplateSource = "Package"
+                Octopus.Action.Package.DownloadOnTentacle = "False"
+                Octopus.Action.Package.FeedId = "github-releases"
+                Octopus.Action.Package.PackageId = "OctopusSolutionsEngineering/OctopusCopilot"
+                Octopus.Action.RunOnServer = "true"
+                OctopusUseBundledTooling = "False"
+            }
+            worker_pool_variable = ""
+
+            container {
+                feed = "docker-hub"
+                image = "octopusdeploy/worker-tools:6.1.1-ubuntu.22.04"
+            }
+
+            packages {
+                acquisition_location = "Server"
+                feed = "github-releases"
+                package_id = "OctopusSolutionsEngineering/OctopusCopilot"
+                properties = {
+                    SelectionMode = "immediate"
+                }
+            }
+        }
+    }
+}
