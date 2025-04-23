@@ -80,6 +80,21 @@ step "deploy-with-cli" {
                       "slotSetting": false
                    },
                    {
+                     "name": "AISERVICES_ENDPOINT",
+                     "value": "#{Azure.US.AIServices.Endpoint}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_KEY",
+                     "value": "#{Azure.US.AIServices.Key}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT",
+                     "value": "#{Azure.US.AIServices.Deployment}",
+                     "slotSetting": false
+                   },
+                   {
                       "name": "APPLICATION_USERS_ADMIN",
                       "value": "#{Application.Users.Admin}",
                       "slotSetting": false
