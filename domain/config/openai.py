@@ -9,12 +9,13 @@ max_context = 20
 max_deployments = 10
 
 # "Adversarial" queries can tie up a LLM for a long time. The Copilot interface times out after 60 seconds.
-# Our timeout is set to 45 seconds to allow for some additional processing time.
+# Some requests, such as generating a project template, can take some time and we need to allow for that, even if it
+# means the requests can not be returned to the Copilot interface.
 # Another issue here is the Azure event driven scaling.
 # As noted at https://learn.microsoft.com/en-us/azure/azure-functions/event-driven-scaling?tabs=azure-cli#understanding-scaling-behaviors
 # HTTP triggers will scale out once per second. We may be in a position of having HTTP requests queued behind a
 # long-running query.
-llm_timeout = 60
+llm_timeout = 240
 
 # Testing revealed that the GPT 3.5 LLM struggles to extract meaningful values from large blobs of log outputs. For example,
 # this query fails:
