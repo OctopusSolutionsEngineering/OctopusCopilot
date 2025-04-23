@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import uuid
 
 from domain.config.database import get_functions_connection_string
@@ -108,7 +109,14 @@ def create_k8s_project_callback(
             context = {"input": original_query}
             messages = k8s_project_context()
             configuration = remove_markdown_code_block(
-                llm_message_query(messages, context, log_query)
+                llm_message_query(
+                    messages,
+                    context,
+                    log_query,
+                    os.getenv("AISERVICES_DEPLOYMENT"),
+                    os.getenv("AISERVICES_KEY"),
+                    os.getenv("AISERVICES_ENDPOINT"),
+                )
             )
 
             # We can then save the Terraform plan as a callback

@@ -32,7 +32,7 @@ NO_FUNCTION_RESPONSE = (
 
 @retry(RateLimitError, tries=3, delay=5)
 def llm_message_query(
-    message_prompt, context, log_query=None, deployment=None, apiKey=None, endpoint=None
+    message_prompt, context, log_query=None, deployment=None, api_key=None, endpoint=None
 ):
     # We can use a specific deployment to answer a query, or fallback to the default
     deployment = (
@@ -45,7 +45,7 @@ def llm_message_query(
     llm = AzureChatOpenAI(
         temperature=0,
         azure_deployment=deployment,
-        openai_api_key=(apiKey or os.environ["OPENAI_API_KEY"]),
+        openai_api_key=(api_key or os.environ["OPENAI_API_KEY"]),
         azure_endpoint=(endpoint or os.environ["OPENAI_ENDPOINT"]),
         api_version=version,
         request_timeout=llm_timeout,
