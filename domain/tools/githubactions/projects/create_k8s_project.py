@@ -214,7 +214,7 @@ def k8s_project_context():
     return [
         (
             "system",
-            project_kubernetes_raw_yaml_system,
+            escape_message(project_kubernetes_raw_yaml_system),
         ),
         (
             "system",
