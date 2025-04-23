@@ -32,7 +32,13 @@ NO_FUNCTION_RESPONSE = (
 
 @retry(RateLimitError, tries=3, delay=5)
 def llm_message_query(
-    message_prompt, context, log_query=None, deployment=None, api_key=None, endpoint=None
+    message_prompt,
+    context,
+    log_query=None,
+    deployment=None,
+    api_key=None,
+    endpoint=None,
+    custom_version=None,
 ):
     # We can use a specific deployment to answer a query, or fallback to the default
     deployment = (
@@ -40,7 +46,11 @@ def llm_message_query(
         or os.environ.get("OPENAI_API_DEPLOYMENT_QUERY")
         or os.environ["OPENAI_API_DEPLOYMENT"]
     )
-    version = os.environ.get("OPENAI_API_DEPLOYMENT_QUERY_VERSION") or "2024-06-01"
+    version = (
+        custom_version
+        or os.environ.get("OPENAI_API_DEPLOYMENT_QUERY_VERSION")
+        or "2024-06-01"
+    )
 
     llm = AzureChatOpenAI(
         temperature=0,
