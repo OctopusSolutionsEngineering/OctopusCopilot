@@ -138,6 +138,10 @@ def create_template_project_callback(
                 project_example_context_name,
                 system_message,
             )
+
+            # We use the new AI services resource in Azure to build the sample Terarform. This gives us access to
+            # a wider range of models. See https://learn.microsoft.com/en-us/azure/ai-services/openai/overview#comparing-azure-openai-and-openai
+            # for the differences between OpenAI and AI Services.
             configuration = remove_markdown_code_block(
                 llm_message_query(
                     messages,
