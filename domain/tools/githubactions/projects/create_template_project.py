@@ -87,6 +87,24 @@ def create_template_project_callback(
     redirections,
     redirector_api_key,
 ):
+    """
+    This function is used to create a template project in Octopus Deploy. This function is generic and can be used
+    to build any type of project in Octopus Deploy. All the sample Terraform and LLM messages are stored in the
+    database to make it easy to add and edit examples.
+
+    :param octopus_details: A function to get the Octopus server URL and credentials
+    :param github_user: The github user id
+    :param connection_string: The connection string to the storage account
+    :param log_query: A logging function
+    :param general_examples: The RowKeys that contain general examples of Octopus projects in Terraform
+    :param project_example: The RowKey that contains an example of a project in Terraform
+    :param project_example_context_name: The name of the context item that contains the project example
+    :param system_message: The system message to pass to the LLM when generating the Terraform configuration
+    :param redirections: Any redirection headers
+    :param redirector_api_key: The redirection api key
+    :return: The response to send to the client
+    """
+
     def create_template_project(
         original_query,
         space_name=None,
