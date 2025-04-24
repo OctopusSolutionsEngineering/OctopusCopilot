@@ -191,10 +191,9 @@ def get_access_token_and_server(req: func.HttpRequest):
     in the access token to determine the server.
     """
     access_token = req.headers.get("X-Octopus-AccessToken")
-    if access_token:
-        parsed = parse_jwt(access_token, test_expired=True)
-        server = parsed.get("aud", "")
+    server = req.headers.get("X-Octopus-Server")
 
+    if access_token and server:
         if none_on_exception(lambda: get_current_user(access_token, server)):
             return access_token, server
 
