@@ -7,8 +7,8 @@ from domain.tools.githubactions.default_values import default_value_callbacks
 from domain.tools.githubactions.generate_terraform import (
     generate_terraform_callback_wrapper,
 )
-from domain.tools.githubactions.projects.create_k8s_project import (
-    create_k8s_project_confirm_callback_wrapper,
+from domain.tools.githubactions.projects.create_template_project import (
+    create_template_project_confirm_callback_wrapper,
 )
 from domain.tools.githubactions.release_what_changed import (
     release_what_changed_callback_wrapper,
@@ -130,7 +130,7 @@ def build_mock_test_tools(tool_query):
             FunctionDefinition(
                 create_k8s_project_wrapper(
                     tool_query,
-                    create_k8s_project_confirm_callback_wrapper(
+                    create_template_project_confirm_callback_wrapper(
                         os.environ["TEST_GH_USER"],
                         octopus_details,
                         log_query,

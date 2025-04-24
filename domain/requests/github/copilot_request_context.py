@@ -54,9 +54,9 @@ from domain.tools.githubactions.octolint_unused_projects import (
     octolint_callback,
 )
 from domain.tools.githubactions.project_dashboard import get_project_dashboard_callback
-from domain.tools.githubactions.projects.create_k8s_project import (
-    create_k8s_project_callback,
-    create_k8s_project_confirm_callback_wrapper,
+from domain.tools.githubactions.projects.create_template_project import (
+    create_template_project_callback,
+    create_template_project_confirm_callback_wrapper,
 )
 from domain.tools.githubactions.provide_help import provide_help_wrapper
 from domain.tools.githubactions.reject_manual_intervention import (
@@ -932,17 +932,21 @@ def build_form_tools(query, req: func.HttpRequest):
             FunctionDefinition(
                 create_k8s_project_wrapper(
                     query,
-                    callback=create_k8s_project_callback(
+                    callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
                         get_functions_connection_string(),
                         log_query,
+                        ["space_general_1", "space_general_2", "space_general_3"],
+                        "project_kubernetes_raw_yaml",
+                        "Example Octopus Kubernetes Project Terraform Configuration",
+                        "project_kubernetes_raw_yaml_system",
                         get_redirections(req),
                         get_redirections_api_key(req),
                     ),
                     logging=log_query,
                 ),
-                callback=create_k8s_project_confirm_callback_wrapper(
+                callback=create_template_project_confirm_callback_wrapper(
                     get_github_user_from_form(req),
                     lambda: get_api_key_and_url(req),
                     log_query,

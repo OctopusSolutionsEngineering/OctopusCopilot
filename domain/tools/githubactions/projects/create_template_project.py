@@ -18,24 +18,27 @@ from infrastructure.space_builder import create_terraform_plan, create_terraform
 from infrastructure.terraform_context import load_terraform_context
 
 
-def create_k8s_project_confirm_callback_wrapper(
+def create_template_project_confirm_callback_wrapper(
     github_user,
     octopus_details,
     log_query,
     redirections,
     redirector_api_key,
 ):
-    def create_k8s_project_confirm_callback(plan_id):
+    def create_template_project_confirm_callback(plan_id):
         async def inner_function():
             auth, url = octopus_details()
             api_key, access_token = get_auth(auth)
 
             debug_text = get_params_message(
-                github_user, True, create_k8s_project_callback.__name__, plan_id=plan_id
+                github_user,
+                True,
+                create_template_project_callback.__name__,
+                plan_id=plan_id,
             )
 
             log_query(
-                "create_k8s_project_callback",
+                create_template_project_callback.__name__,
                 f"""
                 Plan ID: {plan_id}""",
             )
@@ -46,7 +49,7 @@ def create_k8s_project_confirm_callback_wrapper(
                 get_params_message(
                     github_user,
                     False,
-                    create_k8s_project_callback.__name__,
+                    create_template_project_callback.__name__,
                     plan_id=plan_id,
                 )
             )
@@ -69,18 +72,22 @@ def create_k8s_project_confirm_callback_wrapper(
 
         return asyncio.run(inner_function())
 
-    return create_k8s_project_confirm_callback
+    return create_template_project_confirm_callback
 
 
-def create_k8s_project_callback(
+def create_template_project_callback(
     octopus_details,
     github_user,
     connection_string,
     log_query,
+    general_examples,
+    project_example,
+    project_example_context_name,
+    system_message,
     redirections,
     redirector_api_key,
 ):
-    def create_k8s_project(
+    def create_template_project(
         original_query,
         space_name=None,
     ):
@@ -92,7 +99,7 @@ def create_k8s_project_callback(
             debug_text = get_params_message(
                 github_user,
                 True,
-                create_k8s_project.__name__,
+                create_template_project.__name__,
                 space_name=space_name,
             )
 
@@ -107,7 +114,12 @@ def create_k8s_project_callback(
 
             # We need to call the LLM to get the Terraform configuration
             context = {"input": original_query}
-            messages = k8s_project_context()
+            messages = project_context(
+                general_examples,
+                project_example,
+                project_example_context_name,
+                system_message,
+            )
             configuration = remove_markdown_code_block(
                 llm_message_query(
                     messages,
@@ -137,7 +149,7 @@ def create_k8s_project_callback(
             }
 
             log_query(
-                "create_k8s_project",
+                create_template_project.__name__,
                 f"""
                 Plan ID: {arguments["plan_id"]}
                 Plan: {response["data"]["attributes"]["plan_text"]}""",
@@ -147,14 +159,14 @@ def create_k8s_project_callback(
                 get_params_message(
                     github_user,
                     False,
-                    create_k8s_project.__name__,
+                    create_template_project.__name__,
                     space_name=actual_space_name,
                     space_id=space_id,
                 )
             )
             save_callback(
                 github_user,
-                create_k8s_project.__name__,
+                create_template_project.__name__,
                 callback_id,
                 json.dumps(arguments),
                 original_query,
@@ -181,65 +193,52 @@ def create_k8s_project_callback(
 
         return asyncio.run(inner_function())
 
-    return create_k8s_project
+    return create_template_project
 
 
-def k8s_project_context():
+def project_context(
+    general_examples, project_example, project_example_context_name, system_message
+):
     """
-    Builds the messages used when building a k8s project
+    Builds the messages used when building an octopus project
     :return: The LLM messages
     """
 
-    # The general space context is split into two rows because of a 32k limit on azure storage table rows
-    space_general_1 = load_terraform_context(
-        "space_general_1", get_functions_connection_string()
+    general_examples = [
+        load_terraform_context(context, get_functions_connection_string())
+        for context in general_examples
+    ]
+    project_example = load_terraform_context(
+        project_example, get_functions_connection_string()
     )
-    space_general_2 = load_terraform_context(
-        "space_general_2", get_functions_connection_string()
-    )
-    space_general_3 = load_terraform_context(
-        "space_general_3", get_functions_connection_string()
-    )
-
-    # This context is an example k8s project
-    project_kubernetes_raw_yaml = load_terraform_context(
-        "project_kubernetes_raw_yaml", get_functions_connection_string()
+    system_message = load_terraform_context(
+        system_message, get_functions_connection_string()
     )
 
-    # This is the system message
-    project_kubernetes_raw_yaml_system = load_terraform_context(
-        "project_kubernetes_raw_yaml_system", get_functions_connection_string()
+    general_examples_messages = [
+        (
+            "system",
+            "Example Octopus Terraform Configuration: ###\n"
+            + escape_message(example)
+            + "\n###",
+        )
+        for example in general_examples
+    ]
+    project_example_message = (
+        "system",
+        project_example_context_name
+        + ": ###\n"
+        + escape_message(project_example)
+        + "\n###",
     )
 
     return [
         (
             "system",
-            escape_message(project_kubernetes_raw_yaml_system),
+            escape_message(system_message),
         ),
-        (
-            "system",
-            "Example Octopus Terraform Configuration: ###\n"
-            + escape_message(space_general_1)
-            + "\n###",
-        ),
-        (
-            "system",
-            "Example Octopus Terraform Configuration: ###\n"
-            + escape_message(space_general_2)
-            + "\n###",
-        ),
-        (
-            "system",
-            "Example Octopus Terraform Configuration: ###\n"
-            + escape_message(space_general_3)
-            + "\n###",
-        ),
-        (
-            "system",
-            "Example Octopus Kubernetes Project Terraform Configuration: ###\n"
-            + escape_message(project_kubernetes_raw_yaml)
-            + "\n###",
-        ),
+        *general_examples_messages,
+        project_example_message,
         ("user", "Question: {input}"),
         ("user", "Terraform Configuration:"),
     ]
