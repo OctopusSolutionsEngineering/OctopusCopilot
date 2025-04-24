@@ -167,8 +167,8 @@ def create_template_project_callback(
                 messages = project_context(
                     general_examples_values,
                     project_example_values,
+                    project_example_context_name,
                     system_message_values,
-                    system_message,
                 )
 
                 # We use the new AI services resource in Azure to build the sample Terarform. This gives us access to
