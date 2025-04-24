@@ -5,6 +5,7 @@ import os
 import uuid
 
 from domain.config.database import get_functions_connection_string
+from domain.exceptions.none_on_exception import none_on_exception
 from domain.lookup.octopus_lookups import (
     lookup_space,
 )
@@ -196,8 +197,10 @@ def create_template_project_callback(
                 redirector_api_key,
             )
 
-            # Cache the template if it resulted in a valid plan
-            cache_terraform(cache_sha, configuration)
+            # Cache the template if it resulted in a valid plan.
+            # If the plan is particularly big (over the limit of 32K characters), the save operation might fail.
+            # This is a best effort operation, so we silently ignore exceptions.
+            none_on_exception(lambda: cache_terraform(cache_sha, configuration))
 
             arguments = {
                 "plan_id": response["data"]["id"],
