@@ -151,13 +151,14 @@ def create_template_project_callback(
             )
 
             # We build a unique sha for the inputs that generate a terraform configuration
-            cache_sha = hashlib.sha256(
+            cache_key = (
                 " ".join(general_examples_values)
                 + " "
                 + project_example_values
                 + " "
                 + system_message_values
             )
+            cache_sha = hashlib.sha256(cache_key.encode("utf-8"))
 
             # Attempt to load a previously cached terraform configuration
             configuration = load_terraform_cache(cache_sha, connection_string)
