@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import json
 import os
 import uuid
@@ -15,7 +16,11 @@ from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
 from infrastructure.openai import llm_message_query
 from infrastructure.space_builder import create_terraform_plan, create_terraform_apply
-from infrastructure.terraform_context import load_terraform_context
+from infrastructure.terraform_context import (
+    load_terraform_context,
+    load_terraform_cache,
+    cache_terraform,
+)
 
 
 def create_template_project_confirm_callback_wrapper(
@@ -132,26 +137,51 @@ def create_template_project_callback(
 
             # We need to call the LLM to get the Terraform configuration
             context = {"input": original_query}
-            messages = project_context(
-                general_examples,
-                project_example,
-                project_example_context_name,
-                system_message,
+
+            general_examples_values = [
+                load_terraform_context(context, get_functions_connection_string())
+                for context in general_examples
+            ]
+            project_example_values = load_terraform_context(
+                project_example, get_functions_connection_string()
+            )
+            system_message_values = load_terraform_context(
+                system_message, get_functions_connection_string()
             )
 
-            # We use the new AI services resource in Azure to build the sample Terarform. This gives us access to
-            # a wider range of models. See https://learn.microsoft.com/en-us/azure/ai-services/openai/overview#comparing-azure-openai-and-openai
-            # for the differences between OpenAI and AI Services.
-            configuration = remove_markdown_code_block(
-                llm_message_query(
-                    messages,
-                    context,
-                    log_query,
-                    os.getenv("AISERVICES_DEPLOYMENT"),
-                    os.getenv("AISERVICES_KEY"),
-                    os.getenv("AISERVICES_ENDPOINT"),
-                )
+            # We build a unique sha for the inputs that generate a terraform configuration
+            cache_sha = hashlib.sha256(
+                " ".join(general_examples_values)
+                + " "
+                + project_example_values
+                + " "
+                + system_message_values
             )
+
+            # Attempt to load a previously cached terraform configuration
+            configuration = load_terraform_cache(cache_sha, connection_string)
+
+            if not configuration:
+                messages = project_context(
+                    general_examples_values,
+                    project_example_values,
+                    system_message_values,
+                    system_message,
+                )
+
+                # We use the new AI services resource in Azure to build the sample Terarform. This gives us access to
+                # a wider range of models. See https://learn.microsoft.com/en-us/azure/ai-services/openai/overview#comparing-azure-openai-and-openai
+                # for the differences between OpenAI and AI Services.
+                configuration = remove_markdown_code_block(
+                    llm_message_query(
+                        messages,
+                        context,
+                        log_query,
+                        os.getenv("AISERVICES_DEPLOYMENT"),
+                        os.getenv("AISERVICES_KEY"),
+                        os.getenv("AISERVICES_ENDPOINT"),
+                    )
+                )
 
             # We can then save the Terraform plan as a callback
             callback_id = str(uuid.uuid4())
@@ -165,6 +195,9 @@ def create_template_project_callback(
                 redirections,
                 redirector_api_key,
             )
+
+            # Cache the template if it resulted in a valid plan
+            cache_terraform(cache_sha, configuration)
 
             arguments = {
                 "plan_id": response["data"]["id"],
@@ -225,17 +258,6 @@ def project_context(
     Builds the messages used when building an octopus project
     :return: The LLM messages
     """
-
-    general_examples = [
-        load_terraform_context(context, get_functions_connection_string())
-        for context in general_examples
-    ]
-    project_example = load_terraform_context(
-        project_example, get_functions_connection_string()
-    )
-    system_message = load_terraform_context(
-        system_message, get_functions_connection_string()
-    )
 
     general_examples_messages = [
         (

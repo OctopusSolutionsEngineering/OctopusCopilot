@@ -31,3 +31,51 @@ def load_terraform_context(row_key, connection_string):
 
     except HttpResponseError as e:
         return None
+
+
+@logging_wrapper
+def load_terraform_cache(sha, connection_string):
+    ensure_string_not_empty(
+        sha, "sha must be the connection string (load_terraform_cache)."
+    )
+    ensure_string_not_empty(
+        connection_string,
+        "connection_string must be the connection string (load_terraform_context).",
+    )
+
+    try:
+        table_service_client = TableServiceClient.from_connection_string(
+            conn_str=connection_string
+        )
+        table_client = table_service_client.create_table_if_not_exists("terraformcache")
+        terraform_context = table_client.get_entity("octopus", sha)
+
+        return terraform_context["Template"]
+
+    except HttpResponseError as e:
+        return None
+
+
+@logging_wrapper
+def cache_terraform(sha, template, connection_string):
+    ensure_string_not_empty(
+        sha,
+        "sha must be the connection string (cache_terraform).",
+    )
+    ensure_string_not_empty(
+        template,
+        "template must be the name of the function that generated the callback (cache_terraform).",
+    )
+
+    table_service_client = TableServiceClient.from_connection_string(
+        conn_str=connection_string
+    )
+    table_client = table_service_client.create_table_if_not_exists("terraformcache")
+
+    cached_templates = {
+        "PartitionKey": "octopus",
+        "RowKey": sha,
+        "Template": template,
+    }
+
+    table_client.upsert_entity(cached_templates)
