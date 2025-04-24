@@ -158,7 +158,7 @@ def create_template_project_callback(
                 + " "
                 + system_message_values
             )
-            cache_sha = hashlib.sha256(cache_key.encode("utf-8"))
+            cache_sha = hashlib.sha256(cache_key.encode("utf-8")).hexdigest()
 
             # Attempt to load a previously cached terraform configuration
             configuration = load_terraform_cache(cache_sha, connection_string)
