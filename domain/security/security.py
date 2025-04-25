@@ -22,10 +22,7 @@ def is_admin_server(server, admin_servers_json):
         )
         return False
 
-    if get_hostname_from_url(str(server)) not in admin_servers:
-        return False
-
-    return True
+    return get_hostname_from_url(str(server)) in admin_servers
 
 
 def is_admin_user(user, get_admin_users):

@@ -152,7 +152,9 @@ def create_template_project_callback(
 
             # We build a unique sha for the inputs that generate a terraform configuration
             cache_key = (
-                " ".join(general_examples_values)
+                original_query
+                + " "
+                + " ".join(general_examples_values)
                 + " "
                 + project_example_values
                 + " "
