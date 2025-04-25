@@ -30,6 +30,7 @@ class FunctionDefinition:
         self.tool = StructuredTool.from_function(function, schema)
         self.enabled = is_enabled
         self.callback = callback
+        self.callback_name = callback.__name__ if callback else None
 
 
 class FunctionDefinitions:
@@ -78,7 +79,9 @@ class FunctionDefinitions:
             "function_name must be a non-empty string (get_callback_function).",
         )
 
-        function = list(filter(lambda f: f.name == function_name, self.functions))
+        function = list(
+            filter(lambda f: f.callback_name == function_name, self.functions)
+        )
         if len(function) == 1:
             if function[0].enabled:
                 return function[0].callback
