@@ -21,6 +21,7 @@ def create_k8s_project_wrapper(query, callback, logging):
 
         # This is just a passthrough to the original callback
         return callback(
+            create_k8s_project.__name__,
             query,
             space_name,
         )

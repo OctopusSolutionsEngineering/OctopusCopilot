@@ -112,6 +112,7 @@ def create_template_project_callback(
     """
 
     def create_template_project(
+        callback_name,
         original_query,
         space_name=None,
     ):
@@ -229,7 +230,7 @@ def create_template_project_callback(
             )
             save_callback(
                 github_user,
-                create_template_project.__name__,
+                callback_name,
                 callback_id,
                 json.dumps(arguments),
                 original_query,
