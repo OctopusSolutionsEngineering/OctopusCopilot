@@ -115,6 +115,7 @@ def create_template_project_callback(
         callback_name,
         original_query,
         space_name=None,
+        project_name=None,
     ):
         """
 
@@ -185,6 +186,11 @@ def create_template_project_callback(
                 # We use the new AI services resource in Azure to build the sample Terarform. This gives us access to
                 # a wider range of models. See https://learn.microsoft.com/en-us/azure/ai-services/openai/overview#comparing-azure-openai-and-openai
                 # for the differences between OpenAI and AI Services.
+                # The important thing to note about this LLM call is that we do not pass any of the Octopus configuration
+                # to it in order to generate the Terraform configuration. This means there is essentially a one-to-one
+                # relationship between the prompt, the sample Terraform (which is provided by the system, not by the client),
+                # and the generated Terraform. This is why we cache the result as it does not rely on any of the clients
+                # unique configuration.
                 configuration = remove_markdown_code_block(
                     llm_message_query(
                         messages,
@@ -204,6 +210,7 @@ def create_template_project_callback(
                 access_token,
                 url,
                 space_id,
+                project_name,
                 configuration,
                 redirections,
                 redirector_api_key,

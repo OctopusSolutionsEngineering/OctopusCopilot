@@ -92,6 +92,7 @@ async def create_terraform_plan(
     access_token,
     octopus_url,
     space_id,
+    project_name,
     configuration,
     redirections,
     redirections_apikey,
