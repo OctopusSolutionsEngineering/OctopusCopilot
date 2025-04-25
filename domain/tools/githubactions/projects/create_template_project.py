@@ -116,6 +116,14 @@ def create_template_project_callback(
         original_query,
         space_name=None,
     ):
+        """
+
+        :param callback_name: The name of the tool that is calling this function. This is used to ensure approvals are linked up correctly, as there are multiple tools calling the same callback
+        :param original_query: The prompt that was used to call this function
+        :param space_name: The name of the space
+        :return: An response for approval
+        """
+
         async def inner_function():
 
             auth, url = octopus_details()
