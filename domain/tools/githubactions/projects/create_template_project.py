@@ -201,7 +201,9 @@ def create_template_project_callback(
             # Cache the template if it resulted in a valid plan.
             # If the plan is particularly big (over the limit of 32K characters), the save operation might fail.
             # This is a best effort operation, so we silently ignore exceptions.
-            none_on_exception(lambda: cache_terraform(cache_sha, configuration))
+            none_on_exception(
+                lambda: cache_terraform(cache_sha, configuration, connection_string)
+            )
 
             arguments = {
                 "plan_id": response["data"]["id"],
