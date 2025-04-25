@@ -1,5 +1,7 @@
 from langchain_core.tools import StructuredTool
 
+from domain.validation.argument_validation import ensure_string_not_empty
+
 
 class FunctionDefinition:
     """
@@ -18,10 +20,10 @@ class FunctionDefinition:
         """
 
         if function is None:
-            raise ValueError('function must reference a valid function.')
+            raise ValueError("function must reference a valid function.")
 
         if not callable(function):
-            raise ValueError('function is not callable: ' + str(function))
+            raise ValueError("function is not callable: " + str(function))
 
         self.name = function.__name__
         self.function = function
@@ -71,13 +73,19 @@ class FunctionDefinitions:
         :return: The callback function associated with the name
         """
 
-        if not function_name:
-            raise ValueError('function_name must be a non-empty string.')
+        ensure_string_not_empty(
+            function_name,
+            "function_name must be a non-empty string (get_callback_function).",
+        )
 
-        enabled_functions = filter(lambda f: f.enabled, self.functions)
-        function = list(filter(lambda f: f.name == function_name, enabled_functions))
+        function = list(filter(lambda f: f.name == function_name, self.functions))
         if len(function) == 1:
-            return function[0].callback
+            if function[0].enabled:
+                return function[0].callback
+            else:
+                raise Exception(
+                    f"Function {function_name} is not enabled. Please check the function definition."
+                )
 
         raise Exception(f"Callback for function {function_name} was not found")
 
@@ -89,7 +97,7 @@ class FunctionDefinitions:
         """
 
         if not function_name:
-            raise ValueError('function_name must be a non-empty string.')
+            raise ValueError("function_name must be a non-empty string.")
 
         enabled_functions = filter(lambda f: f.enabled, self.functions)
         function = list(filter(lambda f: f.name == function_name, enabled_functions))
