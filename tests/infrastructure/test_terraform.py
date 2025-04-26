@@ -1,7 +1,11 @@
 import hashlib
 import unittest
 
-from infrastructure.terraform_context import cache_terraform, load_terraform_cache
+from infrastructure.terraform_context import (
+    cache_terraform,
+    load_terraform_cache,
+    load_terraform_context,
+)
 
 connection_string = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
 
@@ -20,3 +24,12 @@ class TerraformTests(unittest.TestCase):
         template = load_terraform_cache(sha, connection_string)
 
         self.assertEqual(template, "template")
+
+    @unittest.skip(
+        "This test is skipped because it requires a prepopulated field in the storage tables."
+    )
+    def test_load_context(self):
+        template = load_terraform_context(
+            "project_kubernetes_raw_yaml", connection_string
+        )
+        self.assertIsNotNone(template)

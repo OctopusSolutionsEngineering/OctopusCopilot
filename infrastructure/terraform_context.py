@@ -30,12 +30,7 @@ def load_terraform_context(row_key, connection_string):
 
         context = terraform_context["Context"]
 
-        try:
-            # The value might be a binary string as this is more efficient to store
-            return decode_string_b64(context)
-        except Exception as e:
-            # Otherwise just return the value
-            return context
+        return context if isinstance(context, str) else context.decode("utf-8")
 
     except HttpResponseError as e:
         return None
@@ -60,12 +55,7 @@ def load_terraform_cache(sha, connection_string):
 
         template = terraform_context["Template"]
 
-        try:
-            # The value might be a binary string as this is more efficient to store
-            return decode_string_b64(template)
-        except Exception as e:
-            # Otherwise just return the value
-            return template
+        return template if isinstance(template, str) else template.decode("utf-8")
 
     except HttpResponseError as e:
         return None
@@ -87,10 +77,12 @@ def cache_terraform(sha, template, connection_string):
     )
     table_client = table_service_client.create_table_if_not_exists("terraformcache")
 
+    template = template.encode("utf-8")
+
     cached_templates = {
         "PartitionKey": "octopus",
         "RowKey": sha,
-        "Template": encode_string_b64(template),
+        "Template": template,
     }
 
     table_client.upsert_entity(cached_templates)
