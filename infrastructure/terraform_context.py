@@ -1,6 +1,7 @@
 from azure.core.exceptions import HttpResponseError
 from azure.data.tables import TableServiceClient
 
+from domain.b64.b64_encoder import decode_string_b64, encode_string_b64
 from domain.logging.app_logging import configure_logging
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.octopus import logging_wrapper
@@ -27,7 +28,14 @@ def load_terraform_context(row_key, connection_string):
         )
         terraform_context = table_client.get_entity("octopus", row_key)
 
-        return terraform_context["Context"]
+        context = terraform_context["Context"]
+
+        try:
+            # The value might be a binary string as this is more efficient to store
+            return decode_string_b64(context)
+        except Exception as e:
+            # Otherwise just return the value
+            return context
 
     except HttpResponseError as e:
         return None
@@ -50,7 +58,14 @@ def load_terraform_cache(sha, connection_string):
         table_client = table_service_client.create_table_if_not_exists("terraformcache")
         terraform_context = table_client.get_entity("octopus", sha)
 
-        return terraform_context["Template"]
+        template = terraform_context["Template"]
+
+        try:
+            # The value might be a binary string as this is more efficient to store
+            return decode_string_b64(template)
+        except Exception as e:
+            # Otherwise just return the value
+            return template
 
     except HttpResponseError as e:
         return None
@@ -75,7 +90,7 @@ def cache_terraform(sha, template, connection_string):
     cached_templates = {
         "PartitionKey": "octopus",
         "RowKey": sha,
-        "Template": template,
+        "Template": encode_string_b64(template),
     }
 
     table_client.upsert_entity(cached_templates)
