@@ -1,12 +1,15 @@
-from azure.core.exceptions import HttpResponseError
+from azure.core.exceptions import HttpResponseError, ResourceExistsError
 from azure.data.tables import TableServiceClient
 
-from domain.b64.b64_encoder import decode_string_b64, encode_string_b64
 from domain.logging.app_logging import configure_logging
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.octopus import logging_wrapper
+from azure.storage.blob import (
+    BlobServiceClient,
+)
 
 logger = configure_logging(__name__)
+terraform_context_container_name = "terraformcontext"
 
 
 @logging_wrapper
@@ -74,15 +77,24 @@ def load_terraform_cache(sha, connection_string):
     )
 
     try:
-        table_service_client = TableServiceClient.from_connection_string(
-            conn_str=connection_string
+        blob_service_client = BlobServiceClient.from_connection_string(
+            connection_string
         )
-        table_client = table_service_client.create_table_if_not_exists("terraformcache")
-        terraform_context = table_client.get_entity("octopus", sha)
 
-        template = terraform_context["Template"]
+        try:
+            blob_service_client.create_container(terraform_context_container_name)
+        except ResourceExistsError as e:
+            pass
 
-        return template if isinstance(template, str) else template.decode("utf-8")
+        container_client = blob_service_client.get_container_client(
+            container=terraform_context_container_name
+        )
+
+        configuration_file = container_client.download_blob(
+            "configuration." + sha + ".tf"
+        ).readall()
+
+        return str(configuration_file.decode("utf-8"))
 
     except HttpResponseError as e:
         return None
@@ -99,17 +111,21 @@ def cache_terraform(sha, template, connection_string):
         "template must be the name of the function that generated the callback (cache_terraform).",
     )
 
-    table_service_client = TableServiceClient.from_connection_string(
-        conn_str=connection_string
-    )
-    table_client = table_service_client.create_table_if_not_exists("terraformcache")
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
 
-    template = template.encode("utf-8")
+    try:
+        blob_service_client.create_container(terraform_context_container_name)
+    except ResourceExistsError as e:
+        pass
 
-    cached_templates = {
-        "PartitionKey": "octopus",
-        "RowKey": sha,
-        "Template": template,
-    }
+    try:
+        container_client = blob_service_client.get_container_client(
+            container=terraform_context_container_name
+        )
 
-    table_client.upsert_entity(cached_templates)
+        container_client.upload_blob(
+            name="configuration." + sha + ".tf", data=template, overwrite=True
+        )
+    except HttpResponseError as e:
+        # Saving a cached item is a best effort operation, so we don't raise an error if it fails.
+        pass
