@@ -14,6 +14,10 @@ from domain.tools.cli.resource_specific import resource_specific_cli_callback
 from domain.tools.cli.task_summary import get_task_summary_cli_callback
 from domain.tools.cli.variable_query_cli import variable_query_cli_callback
 from domain.tools.githubactions.project_dashboard import get_project_dashboard_callback
+from domain.tools.githubactions.projects.create_template_project import (
+    create_template_project_callback,
+    create_template_project_confirm_callback_wrapper,
+)
 from domain.tools.githubactions.release_what_changed import (
     release_what_changed_callback_wrapper,
 )
@@ -38,10 +42,13 @@ from domain.tools.wrapper.project_variables import (
     answer_project_variables_wrapper,
     answer_project_variables_usage_wrapper,
 )
+from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_wrapper
 from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.tools.wrapper.task_summary_wrapper import show_task_summary_wrapper
 from infrastructure.openai import llm_tool_query
+
+azurite_connection_string = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
 
 
 def init_argparse():
@@ -243,6 +250,31 @@ def build_tools(tool_query):
                 )
             ),
             *deployment_functions,
+            FunctionDefinition(
+                create_k8s_project_wrapper(
+                    tool_query,
+                    callback=create_template_project_callback(
+                        lambda: (get_api_key(), get_octopus_api()),
+                        get_github_user(),
+                        azurite_connection_string,
+                        log_query,
+                        ["space_general_1", "space_general_2", "space_general_3"],
+                        "project_kubernetes_raw_yaml",
+                        "Example Octopus Kubernetes Project Terraform Configuration",
+                        "project_kubernetes_raw_yaml_system",
+                        None,
+                        None,
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    get_github_user(),
+                    lambda: (get_api_key(), get_octopus_api()),
+                    log_query,
+                    None,
+                    None,
+                ),
+            ),
         ],
         fallback=FunctionDefinitions(help_functions),
     )
