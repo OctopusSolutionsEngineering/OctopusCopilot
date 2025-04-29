@@ -936,7 +936,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         get_functions_connection_string(),
                         log_query,
-                        ["context.tf", "context2.tf", "context3.tf"],
+                        ["context.tf", "everystep.tf"],
                         "k8s.tf",
                         "Example Octopus Kubernetes Project Terraform Configuration",
                         "k8ssystemprompt.txt",
