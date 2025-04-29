@@ -48,33 +48,6 @@ def load_terraform_context(filename, connection_string):
 
 
 @logging_wrapper
-def load_terraform_context_table(row_key, connection_string):
-    ensure_string_not_empty(
-        row_key, "row_key must be the connection string (load_terraform_context_table)."
-    )
-    ensure_string_not_empty(
-        connection_string,
-        "connection_string must be the connection string (load_terraform_context_table).",
-    )
-
-    try:
-        table_service_client = TableServiceClient.from_connection_string(
-            conn_str=connection_string
-        )
-        table_client = table_service_client.create_table_if_not_exists(
-            "terraformcontext"
-        )
-        terraform_context = table_client.get_entity("octopus", row_key)
-
-        context = terraform_context["Context"]
-
-        return context if isinstance(context, str) else context.decode("utf-8")
-
-    except HttpResponseError as e:
-        return None
-
-
-@logging_wrapper
 def save_terraform_context(name, template, connection_string):
     ensure_string_not_empty(
         name,
@@ -85,20 +58,22 @@ def save_terraform_context(name, template, connection_string):
         "template must be the name of the function that generated the callback (save_terraform_context).",
     )
 
-    table_service_client = TableServiceClient.from_connection_string(
-        conn_str=connection_string
-    )
-    table_client = table_service_client.create_table_if_not_exists("terraformcontext")
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
 
-    template = template.encode("utf-8")
+    try:
+        blob_service_client.create_container(sample_terraform_context_container_name)
+    except ResourceExistsError as e:
+        pass
 
-    cached_templates = {
-        "PartitionKey": "octopus",
-        "RowKey": name,
-        "Context": template,
-    }
+    try:
+        container_client = blob_service_client.get_container_client(
+            container=sample_terraform_context_container_name
+        )
 
-    table_client.upsert_entity(cached_templates)
+        container_client.upload_blob(name=name, data=template, overwrite=True)
+    except HttpResponseError as e:
+        # Saving a cached item is a best effort operation, so we don't raise an error if it fails.
+        pass
 
 
 @logging_wrapper

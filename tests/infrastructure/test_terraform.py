@@ -27,10 +27,6 @@ class TerraformTests(unittest.TestCase):
         self.assertEqual(template, "template")
 
     def test_load_context(self):
-        save_terraform_context(
-            "project_kubernetes_raw_yaml", "template", connection_string
-        )
-        template = load_terraform_context(
-            "project_kubernetes_raw_yaml", connection_string
-        )
+        save_terraform_context("example.tf", "template", connection_string)
+        template = load_terraform_context("example.tf", connection_string)
         self.assertEqual(template, "template")
