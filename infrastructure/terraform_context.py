@@ -10,16 +10,51 @@ from azure.storage.blob import (
 
 logger = configure_logging(__name__)
 terraform_context_container_name = "terraformcontext"
+sample_terraform_context_container_name = "sampleterraformcontext"
 
 
 @logging_wrapper
-def load_terraform_context(row_key, connection_string):
+def load_terraform_context(filename, connection_string):
     ensure_string_not_empty(
-        row_key, "row_key must be the connection string (load_terraform_context)."
+        filename, "filename must be the connection string (load_terraform_cache)."
     )
     ensure_string_not_empty(
         connection_string,
         "connection_string must be the connection string (load_terraform_context).",
+    )
+
+    try:
+        blob_service_client = BlobServiceClient.from_connection_string(
+            connection_string
+        )
+
+        try:
+            blob_service_client.create_container(
+                sample_terraform_context_container_name
+            )
+        except ResourceExistsError as e:
+            pass
+
+        container_client = blob_service_client.get_container_client(
+            container=sample_terraform_context_container_name
+        )
+
+        configuration_file = container_client.download_blob(filename).readall()
+
+        return str(configuration_file.decode("utf-8"))
+
+    except HttpResponseError as e:
+        return None
+
+
+@logging_wrapper
+def load_terraform_context_table(row_key, connection_string):
+    ensure_string_not_empty(
+        row_key, "row_key must be the connection string (load_terraform_context_table)."
+    )
+    ensure_string_not_empty(
+        connection_string,
+        "connection_string must be the connection string (load_terraform_context_table).",
     )
 
     try:
