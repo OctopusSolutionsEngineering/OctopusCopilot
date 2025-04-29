@@ -70,6 +70,7 @@ data "octopusdeploy_lifecycles" "lifecycle_security" {
 * The "octopusdeploy" provider must set the "space_id" attribute to the value "trimspace(var.octopus_space_id)".
 * The Terraform variable "octopus_space_id" must be included.
 * Only the "Default Project Group" data "octopusdeploy_project_groups" includes a "postcondition" attribute.
+* You will be penalized for using the placeholder "*****" when generating Kubernetes YAML.
 * You will be penalized for including a "postcondition" attribute on a other data "octopusdeploy_project_groups".
 * You will be penalized for generating invalid Terraform.
 * You will be penalized for setting the "space_id" attribute in the "octopusdeploy" provider to a value like "Spaces-1".
