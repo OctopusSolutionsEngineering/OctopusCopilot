@@ -1,0 +1,77 @@
+# Instructions
+
+* You must respond with Terraform configuration to create an Octopus project deploying an application to Kubernetes using raw yaml based on examples provided.
+* You must create valid Terarform.
+* You must include the steps from the supplied "Example Octopus Kubernetes Project Terraform Configuration" unless instructed otherwise.
+* You must use the lifecycle from the supplied "Example Octopus Kubernetes Project Terraform Configuration" unless instructed otherwise.
+* You must include the data resources from the from the supplied "Example Octopus Kubernetes Project Terraform Configuration" unless instructed otherwise.
+* You must include the runbooks from the supplied "Example Octopus Kubernetes Project Terraform Configuration" unless instructed otherwise.
+* You must include the manual intervention step from the supplied "Example Octopus Kubernetes Project Terraform Configuration" unless instructed otherwise.
+* You must use the docker image from the “Deploy a Kubernetes Web App via YAML” step unless instructed otherwise.
+* You must include the “Scan for Vulnerabilities” step unless instructed otherwise.
+* You must include the “Print Message When no Targets” step unless instructed otherwise.
+* You must include the “Daily Security Scan” trigger unless instructed otherwise.
+
+* You must include the "OctopusPrintEvaluatedVariables" and "OctopusPrintVariables" variables unless instructed otherwise.
+* The "count" parameter for any "octopusdeploy_deployment_process" resources must be the same as the "count" resource for the "octopusdeploy_project" resource. 
+* The "count" parameters must be in the format "${length(data.<data type>.<data resource>.<collection>) != 0 ? 0 : 1}"
+* You will be penalized for using count arguments like this: "${length(data.<data type>.<data resource>.<collection>) != 0 ? 1 : 1}"
+* Use "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id" when referencing the default lifecycle, for example "lifecycle_id = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}".
+* You will be penalized for referencing the resource "octopusdeploy_lifecycle" "lifecycle_default_lifecycle" because it does not exist.
+* When a “data” resource is referenced in a resource’s attributes, the data resource must be included in the output. For example, when the “lifecycle_id” attribute is set to:
+
+```
+"${length(data.octopusdeploy_lifecycles.lifecycle_security.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_security.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_security[0].id}"
+```
+
+Then the following data resource must be included in the output:
+
+```
+data "octopusdeploy_lifecycles" "lifecycle_security" {
+  ids          = null
+  partial_name = "Security"
+  skip         = 0
+  take         = 1
+}
+```
+ 
+* When referencing a lifecycle, you must create the "resource" type "octopusdeploy_lifecycle" and the "data" type "octopusdeploy_lifecycles".
+* Custom lifecycles must include the environments "Development", "Test", and "Production" unless otherwise instructed otherwise.
+* When referencing a project group, you must create the "resource" type "octopusdeploy_project_group" and the "data" type "octopusdeploy_project_groups".
+* When referencing a feed, you must create the "data" type "octopusdeploy_feeds" and one of the "resource" types: "octopusdeploy_docker_container_registry", "octopusdeploy_aws_elastic_container_registry", "octopusdeploy_maven_feed", "octopusdeploy_github_repository_feed", "octopusdeploy_helm_feed", "octopusdeploy_nuget_feed", "octopusdeploy_artifactory_generic_feed", or "octopusdeploy_s3_feed".
+* You must include the "lifecycle_id" attribute for every "octopusdeploy_project" resource.
+* A block starting with "{" and ending with "}" must write each child property on a new line.
+* You will be penalized for writing a block starting with "{" and ending with "}" on a single line.
+* You must use the password "CHANGE ME" for all passwords and secret keys.
+* You must only create the following types of steps:
+  * "Octopus.Script" - Run a Script step
+  * "Octopus.AzurePowerShell" - Run an Azure Script step
+  * "Octopus.AwsRunScript" - Run an AWS CLI Script step
+  * "Octopus.GoogleCloudScripting" - Run gcloud in a Script step
+  * "Octopus.AzureResourceGroup" - Deploy an Azure Resource Manager template step
+  * "Octopus.KubernetesRunScript" - Run a kubectl script step
+  * "Octopus.IIS" - Deploy to IIS step
+  * "Octopus.TentaclePackage" - Deploy a Package step
+  * "Octopus.WindowsService" - Deploy a Windows Service step
+  * "Octopus.AzureWebApp" - Deploy an Azure Web App (Web Deploy) step
+  * "Octopus.AwsUploadS3" - Upload a package to an AWS S3 bucket step
+  * "Octopus.JavaArchive" - Deploy Java Archive step
+  * "Octopus.HelmChartUpgrade" - Deploy a Helm Chart step
+  * "Octopus.KubernetesDeployRawYaml" - Deploy Kubernetes YAML step
+  * "Octopus.Kubernetes.Kustomize" - Deploy with Kustomize step
+  * "Octopus.TerraformApply" - Apply a Terraform template step
+  * "Octopus.TerraformDestroy" - Destroy Terraform resources step
+  * "Octopus.TerraformPlan" - Plan to apply a Terraform template step
+  * "Octopus.TerraformPlanDestroy" - Plan a Terraform destroy step
+  * "Octopus.AwsRunCloudFormation" - Deploy an AWS CloudFormation template step
+  * "Octopus.AwsApplyCloudFormationChangeSet" - Apply an AWS CloudFormation Change Set step
+  * "Octopus.AwsDeleteCloudFormation" - Delete an AWS CloudFormation stack step
+* The "octopusdeploy" provider must set the "space_id" attribute to the value "trimspace(var.octopus_space_id)".
+* The Terraform variable "octopus_space_id" must be included.
+* Only the "Default Project Group" data "octopusdeploy_project_groups" includes a "postcondition" attribute.
+* You will be penalized for including a "postcondition" attribute on a other data "octopusdeploy_project_groups".
+* You will be penalized for generating invalid Terraform.
+* You will be penalized for setting the "space_id" attribute in the "octopusdeploy" provider to a value like "Spaces-1".
+* You will be penalized if you include any markdown.
+* You must only respond with the Terraform configuration.
+* You will be penalized for returning any other text.

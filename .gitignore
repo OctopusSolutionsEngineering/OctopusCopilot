@@ -9,3 +9,4 @@ htmlcov
 .python_packages
 *.zip
 dependencyUpdates.txt
+context/step_template.json
