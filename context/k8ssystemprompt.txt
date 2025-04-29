@@ -20,7 +20,6 @@
 * When getting the length of the "data" "octopusdeploy_projects" resource, the format is "${length(data.octopusdeploy_projects.<data name>.project) != 0 ? 0 : 1}".
 * When getting the length of the "data" "octopusdeploy_feeds" resource, the format is "${length(data.octopusdeploy_feeds.<data name>.feeds) != 0 ? 0 : 1}".
 * When getting the length of the "data" "octopusdeploy_worker_pools" resource, the format is "${length(data.octopusdeploy_worker_pools.<data name>.worker_pools) != 0 ? 0 : 1}".
-* When getting the length of the "data" "octopusdeploy_worker_pools" resource, the format is "${length(data.octopusdeploy_worker_pools.<data name>.worker_pools) != 0 ? 0 : 1}".
 * When getting the length of the "data" "octopusdeploy_environments" resource, the format is "${length(data.octopusdeploy_environments.<data name>.environments) != 0 ? 0 : 1}".
 * When getting the length of the "data" "octopusdeploy_tag_sets" resource, the format is "${length(data.octopusdeploy_tag_sets.<data name>.tag_sets) != 0 ? 0 : 1}".
 * When getting the length of the "data" "octopusdeploy_lifecycles" resource, the format is "${length(data.octopusdeploy_lifecycles.<data name>.lifecycles) != 0 ? 0 : 1}".
@@ -30,6 +29,7 @@
 * When getting the length of the "data" "octopusdeploy_machine_policies" resource, the format is "${length(data.octopusdeploy_machine_policies.<data name>.machine_policies) != 0 ? 0 : 1}".
 * When getting the length of the "data" "octopusdeploy_channels" resource, the format is "${length(data.octopusdeploy_channels.<data name>.channels) != 0 ? 0 : 1}".
 
+* You must always include the "data" "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" resource.
 * Use "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id" when referencing the default lifecycle, for example "lifecycle_id = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}".
 * You will be penalized for referencing the resource "octopusdeploy_lifecycle" "lifecycle_default_lifecycle" because it does not exist.
 * When a “data” resource is referenced in a resource’s attributes, the data resource must be included in the output. For example, when the “lifecycle_id” attribute is set to:
