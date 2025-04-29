@@ -38,7 +38,7 @@
 "${length(data.octopusdeploy_lifecycles.lifecycle_security.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_security.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_security[0].id}"
 ```
 
-Then the following data resource must be included in the output:
+Then the following "octopusdeploy_lifecycles" data resource must be included in the output:
 
 ```
 data "octopusdeploy_lifecycles" "lifecycle_security" {
@@ -46,6 +46,35 @@ data "octopusdeploy_lifecycles" "lifecycle_security" {
   partial_name = "Security"
   skip         = 0
   take         = 1
+}
+```
+
+When the "project_group_id" attribute is set to:
+
+```
+"${length(data.octopusdeploy_project_groups.project_group_frontend_services.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_frontend_services.project_groups[0].id : octopusdeploy_project_group.project_group_frontend_services[0].id}"
+```
+
+Then the following data resource must be included in the output:
+
+```
+data "octopusdeploy_project_groups" "project_group_frontend_services" {
+  ids          = null
+  partial_name = "Frontend Services"
+  skip         = 0
+  take         = 1
+}
+```
+
+And the following "octopusdeploy_project_group" resource must be defined:
+
+```
+resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
+  count = "${length(data.octopusdeploy_project_groups.project_group_frontend_services.project_groups) != 0 ? 0 : 1}"
+  name  = "Frontend Services"
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 ```
 
@@ -64,7 +93,15 @@ data "octopusdeploy_lifecycles" "lifecycle_security" {
 
 * When referencing a lifecycle, you must create the "resource" type "octopusdeploy_lifecycle" and the "data" type "octopusdeploy_lifecycles".
 * When referencing a project group, you must create the "resource" type "octopusdeploy_project_group" and the "data" type "octopusdeploy_project_groups".
-* When referencing a feed, you must create the "data" type "octopusdeploy_feeds" and one of the "resource" types: "octopusdeploy_docker_container_registry", "octopusdeploy_aws_elastic_container_registry", "octopusdeploy_maven_feed", "octopusdeploy_github_repository_feed", "octopusdeploy_helm_feed", "octopusdeploy_nuget_feed", "octopusdeploy_artifactory_generic_feed", or "octopusdeploy_s3_feed".
+* When referencing a feed, you must create the "data" type "octopusdeploy_feeds" and one of the "resource" types:
+  * "octopusdeploy_docker_container_registry"
+  * "octopusdeploy_aws_elastic_container_registry"
+  * "octopusdeploy_maven_feed"
+  * "octopusdeploy_github_repository_feed"
+  * "octopusdeploy_helm_feed"
+  * "octopusdeploy_nuget_feed"
+  * "octopusdeploy_artifactory_generic_feed"
+  * "octopusdeploy_s3_feed"
 
 ## Project Instructions
 
