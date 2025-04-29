@@ -15,6 +15,12 @@
 * You must include the “Daily Security Scan” trigger unless instructed otherwise.
 * You must include the "OctopusPrintEvaluatedVariables" and "OctopusPrintVariables" variables unless instructed otherwise.
 
+## Default Lifecycle Instructions
+
+* You must always include the "data" "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" resource.
+* Use "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id" when referencing the default lifecycle, for example "lifecycle_id = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}".
+* You will be penalized for referencing the resource "octopusdeploy_lifecycle" "lifecycle_default_lifecycle" because it does not exist.
+
 ## Data Resources Instructions
 
 * When getting the length of the "data" "octopusdeploy_projects" resource, the format is "${length(data.octopusdeploy_projects.<data name>.project) != 0 ? 0 : 1}".
@@ -29,9 +35,6 @@
 * When getting the length of the "data" "octopusdeploy_machine_policies" resource, the format is "${length(data.octopusdeploy_machine_policies.<data name>.machine_policies) != 0 ? 0 : 1}".
 * When getting the length of the "data" "octopusdeploy_channels" resource, the format is "${length(data.octopusdeploy_channels.<data name>.channels) != 0 ? 0 : 1}".
 
-* You must always include the "data" "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" resource.
-* Use "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id" when referencing the default lifecycle, for example "lifecycle_id = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}".
-* You will be penalized for referencing the resource "octopusdeploy_lifecycle" "lifecycle_default_lifecycle" because it does not exist.
 * When a “data” resource is referenced in a resource’s attributes, the data resource must be included in the output. For example, when the “lifecycle_id” attribute is set to:
 
 ```
@@ -55,7 +58,7 @@ When the "project_group_id" attribute is set to:
 "${length(data.octopusdeploy_project_groups.project_group_frontend_services.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_frontend_services.project_groups[0].id : octopusdeploy_project_group.project_group_frontend_services[0].id}"
 ```
 
-Then the following data resource must be included in the output:
+Then the following "octopusdeploy_project_groups" data resource must be included in the output:
 
 ```
 data "octopusdeploy_project_groups" "project_group_frontend_services" {
@@ -145,9 +148,19 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
 * The "octopusdeploy" provider must set the "space_id" attribute to the value "trimspace(var.octopus_space_id)".
 * The Terraform variable "octopus_space_id" must be included.
 
+## Kubernetes YAML Instructions
+
+* You will be penalized for using asterisks as placeholders in the "Octopus.Action.KubernetesContainers.CustomResourceYaml" property.
+* You will be penalized for using "*****" as a placeholder in the "Octopus.Action.KubernetesContainers.CustomResourceYaml" property.
+* You will be penalized for generating invalid Kubernetes YAML.
+* Sample Kubernetes names must follow these rules:
+  * contain at most 63 characters
+  * contain only lowercase alphanumeric characters or '-'
+  * start with an alphabetic character
+  * end with an alphanumeric character
+
 ## Penalties
 
-* You will be penalized for using asterisks as placeholders when generating Kubernetes YAML.
 * You will be penalized for generating invalid Terraform.
 * You will be penalized for setting the "space_id" attribute in the "octopusdeploy" provider to a value like "Spaces-1".
 * You will be penalized if you include any markdown.
