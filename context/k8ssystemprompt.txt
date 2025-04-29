@@ -34,7 +34,7 @@ data "octopusdeploy_lifecycles" "lifecycle_security" {
   take         = 1
 }
 ```
- 
+
 * When referencing a lifecycle, you must create the "resource" type "octopusdeploy_lifecycle" and the "data" type "octopusdeploy_lifecycles".
 * Custom lifecycles must include the environments "Development", "Test", and "Production" unless otherwise instructed otherwise.
 * When referencing a project group, you must create the "resource" type "octopusdeploy_project_group" and the "data" type "octopusdeploy_project_groups".
@@ -43,6 +43,7 @@ data "octopusdeploy_lifecycles" "lifecycle_security" {
 * A block starting with "{" and ending with "}" must write each child property on a new line.
 * You will be penalized for writing a block starting with "{" and ending with "}" on a single line.
 * You must use the password "CHANGE ME" for all passwords and secret keys.
+* You must use username "CHANGE ME" for all usernames.
 * You must only create the following types of steps:
   * "Octopus.Script" - Run a Script step
   * "Octopus.AzurePowerShell" - Run an Azure Script step
