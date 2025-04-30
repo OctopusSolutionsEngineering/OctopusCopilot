@@ -67,11 +67,17 @@ def fix_single_line_lifecycle(config):
     The LLM kept insisting on using a single line lifecycle block. This is not valid HCL2 syntax.
     """
 
-    if (
-        config
-        == "lifecycle { ignore_changes = [sensitive_value] prevent_destroy = true }"
-    ):
-        return "lifecycle {\n  ignore_changes = [sensitive_value]\n  prevent_destroy = true\n}"
+    match = re.match(
+        r"lifecycle { ignore_changes = \[([^]]+)] prevent_destroy = true }", config
+    )
+    if match:
+        # If we get a single line lifecycle block, just replace it with a multi-line one
+        return (
+            "lifecycle {\n"
+            f"  ignore_changes = [{match.group(1)}]\n"
+            "  prevent_destroy = true\n"
+            "}"
+        )
 
     return config
 
