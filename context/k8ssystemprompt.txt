@@ -105,6 +105,17 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   * "octopusdeploy_nuget_feed"
   * "octopusdeploy_artifactory_generic_feed"
   * "octopusdeploy_s3_feed"
+* The data "octopusdeploy_feeds" resource must have a "feed_type" attribute set to one of the following:
+  * "AwsElasticContainerRegistry"
+  * "BuiltIn"
+  * "Docker"
+  * "GitHub"
+  * "Helm"
+  * "Maven"
+  * "NuGet"
+  * "S3"
+  * "OciRegistry"
+  * "OctopusProject"
 
 ## Project Instructions
 
