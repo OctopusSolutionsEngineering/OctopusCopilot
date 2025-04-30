@@ -139,6 +139,11 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   * "octopusdeploy_token_account"
   * "octopusdeploy_username_password_account"
 * The resource "octopusdeploy_aws_openid_connect_account" must have a "role_arn" property set to "arn:aws:iam::123456789012:role/S3Access"
+* The resource "octopusdeploy_azure_openid_connect" must have a "azure_environment" attribute set to one of:
+  * "AzureCloud"
+  * "AzureChinaCloud"
+  * "AzureGermanCloud"
+  * "AzureUSGovernment"
 
 ## Octopus Variable Instructions
 
@@ -151,6 +156,7 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   * "Sensitive"
   * "String"
   * "WorkerPool"
+* You will be penalized for setting the resource "octopusdeploy_variable" "type" attribute to "Token".
 
 ## Terraform Instructions
 
