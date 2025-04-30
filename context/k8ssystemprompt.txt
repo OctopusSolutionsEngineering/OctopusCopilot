@@ -131,13 +131,13 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   * "UsernamePassword"
 * You will be penalized for using an "account_type" of "AzureOidc". It must be "AzureOIDC".
 * Account resources types must be one of the following:
-    * "octopusdeploy_aws_openid_connect_account"
-    * "octopusdeploy_azure_openid_connect"
-    * "octopusdeploy_gcp_account"
-    * "octopusdeploy_azure_service_principal"
-    * "octopusdeploy_ssh_key_account"
-    * "octopusdeploy_token_account"
-    * "octopusdeploy_username_password_account"
+  * "octopusdeploy_aws_openid_connect_account"
+  * "octopusdeploy_azure_openid_connect"
+  * "octopusdeploy_gcp_account"
+  * "octopusdeploy_azure_service_principal"
+  * "octopusdeploy_ssh_key_account"
+  * "octopusdeploy_token_account"
+  * "octopusdeploy_username_password_account"
 
 
 ## Terraform Instructions
