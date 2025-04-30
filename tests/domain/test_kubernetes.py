@@ -185,7 +185,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
         # Input with slashes in name
         input_config = """
         resource "octopusdeploy_project" "project" {
-          name = "#{var.whatever[0]}"
+          name = "${var.whatever[0]}"
           description = "This is a Blue/Green deployment project"
         }
         """
