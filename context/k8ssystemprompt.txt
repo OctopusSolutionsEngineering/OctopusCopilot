@@ -170,6 +170,8 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
 * The "name" attribute can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
 * You will be penalized for defining a "name" attribute with the characters "/" and "\".
 * You will be penalized for adding a "action" attribute to an "action" block.
+* Target tags must be defined in the "target_roles" attribute on a "step".
+* You will be penalized for adding target tags to the "tenant_tags" attribute.
 
 ## Octopus Variable Instructions
 
