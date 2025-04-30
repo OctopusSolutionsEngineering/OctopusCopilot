@@ -117,6 +117,7 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
 
 ## Terraform Instructions
 
+* You will be penalized for using heredoc syntax.
 * You must only respond with the Terraform configuration.
 * A block starting with "{" and ending with "}" must write each child property on a new line.
 * You will be penalized for writing a block starting with "{" and ending with "}" on a single line.
