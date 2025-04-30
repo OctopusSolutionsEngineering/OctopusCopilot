@@ -183,6 +183,7 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   * "WorkerPool"
 * You will be penalized for setting the resource "octopusdeploy_variable" "type" attribute to "Token".
 * When defining the value for a resource "octopusdeploy_variable" with a "type" of "Sensitive", the "sensitive_value" attribute must be set to "CHANGE ME".
+* You will be penalized for setting the "value" and "sensitive_value" attributes in the same resource.
 * You will be penalized for setting the "sensitive_value" attribute to anything other than "CHANGE ME".
 
 ## Terraform Instructions
