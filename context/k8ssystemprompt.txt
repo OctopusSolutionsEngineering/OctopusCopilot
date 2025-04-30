@@ -142,6 +142,7 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   * "Token"
   * "UsernamePassword"
 * You will be penalized for using an "account_type" of "AzureOidc". It must be "AzureOIDC".
+* You will be penalized for using an "account_type" of "Certificate".
 * Account resources types must be one of the following:
   * "octopusdeploy_aws_openid_connect_account"
   * "octopusdeploy_azure_openid_connect"
