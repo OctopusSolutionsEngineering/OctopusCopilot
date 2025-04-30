@@ -19,7 +19,8 @@ def sanitize_kuberenetes_yaml_step_config(config):
         # name: *****
         # with
         # name: placeholder
-        line = re.sub(r':\s*(")?\*+(")?', r": \1placeholder\2", yaml_config)
+        line = re.sub(r':\s*(")\*+(.*?")', r": \1placeholder\2", yaml_config)
+        line = re.sub(r":\s*\*+", r": placeholder", line)
 
         fixed_config = fixed_config.replace(yaml_config, line)
 
