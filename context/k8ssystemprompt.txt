@@ -154,6 +154,8 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   * "Failure"
   * "Success"
   * "Variable"
+* The "name" attribute can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
+* You will be penalized for defining a "name" attribute with the characters "/" and "\".
 
 ## Octopus Variable Instructions
 
