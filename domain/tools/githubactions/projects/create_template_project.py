@@ -17,6 +17,7 @@ from domain.sanitizers.terraform import (
     sanitize_account_type,
     sanitize_name_attributes,
     fix_single_line_lifecycle,
+    fix_account_type,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
