@@ -158,6 +158,7 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   * contain only lowercase alphanumeric characters or '-'
   * start with an alphabetic character
   * end with an alphanumeric character
+* You will be penalized for creating a Kubernetes resource with a name that starts with "*****".
 
 ## Penalties
 
