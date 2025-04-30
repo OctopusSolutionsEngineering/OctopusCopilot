@@ -261,11 +261,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
+        "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"Hello World!\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
       }
       environments                       = []
       excluded_environments              = []
@@ -331,15 +331,15 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.Script.ScriptBody" = "echo \"Hi\""
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Aws.Region" = "us-east-1"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 
       container {
@@ -372,16 +372,16 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GoogleCloud.Region" = "australia-southeast1"
-        "Octopus.Action.Script.ScriptBody" = "echo \"Hi\""
         "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.GoogleCloud.Zone" = "australia-southeast1-a"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "Bash"
-        "Octopus.Action.GoogleCloud.Project" = "ProjectID"
         "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.GoogleCloud.Region" = "australia-southeast1"
+        "Octopus.Action.Script.Syntax" = "Bash"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.GoogleCloud.Zone" = "australia-southeast1-a"
+        "Octopus.Action.GoogleCloud.Project" = "ProjectID"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptBody" = "echo \"Hi\""
       }
 
       container {
@@ -420,9 +420,9 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
         "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? data.octopusdeploy_accounts.account_azure.accounts[0].id : octopusdeploy_azure_openid_connect.account_azure[0].id}"
         "Octopus.Action.Azure.ResourceGroupName" = "my-resource-group"
         "Octopus.Action.Azure.ResourceGroupTemplate" = jsonencode({
+        "resources" = []
         "$schema" = "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#"
         "contentVersion" = "1.0.0.0"
-        "resources" = []
                 })
         "OctopusUseBundledTooling" = "False"
       }
@@ -451,12 +451,12 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.KubernetesContainers.Namespace" = "mynamespace"
         "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "Write-Host \"Hello World\""
+        "Octopus.Action.KubernetesContainers.Namespace" = "mynamespace"
       }
 
       container {
@@ -489,34 +489,34 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
+        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
+        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "True"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.IISWebSite.StartWebSite" = "True"
         "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
-        "Octopus.Action.IISWebSite.ApplicationPoolName" = "apppool"
         "Octopus.Action.IISWebSite.Bindings" = jsonencode([
         {
+        "requireSni" = "False"
+        "enabled" = "True"
+        "protocol" = "http"
         "port" = "80"
         "host" = ""
         "thumbprint" = null
         "certificateVariable" = null
-        "requireSni" = "False"
-        "enabled" = "True"
-        "protocol" = "http"
                 },
         ])
-        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
         "Octopus.Action.IISWebSite.EnableAnonymousAuthentication" = "False"
-        "Octopus.Action.IISWebSite.WebSiteName" = "webapp"
-        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion" = "v4.0"
-        "Octopus.Action.IISWebSite.StartWebSite" = "True"
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
-        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
-        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
-        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "True"
         "Octopus.Action.IISWebSite.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
+        "Octopus.Action.IISWebSite.WebSiteName" = "webapp"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
+        "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
+        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
+        "Octopus.Action.IISWebSite.ApplicationPoolName" = "apppool"
+        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
+        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
       }
       environments                       = []
       excluded_environments              = []
@@ -551,9 +551,9 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
+        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
         "Octopus.Action.Package.DownloadOnTentacle" = "False"
         "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
       }
       environments                       = []
       excluded_environments              = []
@@ -588,17 +588,17 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
         "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
         "Octopus.Action.WindowsService.StartMode" = "auto"
-        "Octopus.Action.WindowsService.DisplayName" = "My sample Windows service"
-        "Octopus.Action.WindowsService.DesiredStatus" = "Default"
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
         "Octopus.Action.WindowsService.ExecutablePath" = "myapp.exe"
+        "Octopus.Action.WindowsService.DesiredStatus" = "Default"
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
         "Octopus.Action.WindowsService.Description" = "This is a sample deployment of a Windows service"
+        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
+        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
         "Octopus.Action.WindowsService.ServiceName" = "My Service"
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
+        "Octopus.Action.WindowsService.DisplayName" = "My sample Windows service"
       }
       environments                       = []
       excluded_environments              = []
@@ -677,25 +677,25 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
+        "Octopus.Action.Aws.Region" = "ap-southeast-2"
         "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
-        "Octopus.Action.RunOnServer" = "false"
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
-        "Octopus.Action.Aws.S3.BucketName" = "my-s3-bucket"
         "Octopus.Action.Aws.S3.PackageOptions" = jsonencode({
-        "metadata" = []
         "bucketKey" = "mybucket"
-        "bucketKeyBehaviour" = "Custom"
         "bucketKeyPrefix" = ""
+        "storageClass" = "STANDARD"
         "cannedAcl" = "private"
         "variableSubstitutionPatterns" = ""
+        "bucketKeyBehaviour" = "Custom"
         "structuredVariableSubstitutionPatterns" = ""
+        "metadata" = []
         "tags" = []
-        "storageClass" = "STANDARD"
                 })
-        "Octopus.Action.Aws.Region" = "ap-southeast-2"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
+        "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.S3.BucketName" = "my-s3-bucket"
+        "Octopus.Action.RunOnServer" = "false"
       }
       environments                       = []
       excluded_environments              = []
@@ -730,11 +730,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.JavaArchive.DeployExploded" = "False"
         "Octopus.Action.Package.UseCustomInstallationDirectory" = "False"
-        "Octopus.Action.Package.JavaArchiveCompression" = "True"
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
         "Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment" = "False"
+        "Octopus.Action.JavaArchive.DeployExploded" = "False"
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
+        "Octopus.Action.Package.JavaArchiveCompression" = "True"
       }
       environments                       = []
       excluded_environments              = []
@@ -769,11 +769,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.Helm.Namespace" = "mycustomnamespace"
         "Octopus.Action.Package.DownloadOnTentacle" = "False"
         "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
         "Octopus.Action.Script.ScriptSource" = "Package"
         "Octopus.Action.Helm.ResetValues" = "True"
+        "Octopus.Action.Helm.Namespace" = "mycustomnamespace"
       }
       environments                       = []
       excluded_environments              = []
@@ -808,14 +808,14 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
         "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\n  labels:\n    app: nginx\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: nginx\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80"
         "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
         "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
       }
 
       container {
@@ -848,14 +848,14 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = false
       is_required                        = false
       properties                         = {
-        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "Octopus.Action.Kubernetes.Kustomize.OverlayPath" = "overlays/#{Octopus.Environment.Name}"
         "Octopus.Action.SubstituteInFiles.TargetFiles" = " **/*.env"
         "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
         "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
+        "Octopus.Action.Kubernetes.Kustomize.OverlayPath" = "overlays/#{Octopus.Environment.Name}"
       }
       environments                       = []
       excluded_environments              = []
@@ -890,23 +890,23 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
         "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
         "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
         "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
         "test2" = "{\n  val1 = [\n    \"hi\"\n  ]\n}"
         "test3" = "{\n  val1 = {\n    val2 = \"hi\"\n  }\n}"
         "test4" = "{\n  val1 = {\n    val2 = [\n      \"hi\"\n    ]\n  }\n}"
                 })
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
       }
 
       container {
@@ -939,23 +939,23 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
-        "test2" = "{\n  val1 = [\n    \"hi\"\n  ]\n}"
         "test3" = "{\n  val1 = {\n    val2 = \"hi\"\n  }\n}"
         "test4" = "{\n  val1 = {\n    val2 = [\n      \"hi\"\n    ]\n  }\n}"
+        "test2" = "{\n  val1 = [\n    \"hi\"\n  ]\n}"
                 })
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.Terraform.PlanJsonOutput" = "False"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
       }
 
       container {
@@ -988,23 +988,23 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
-        "test4" = "{\n  val1 = {\n    val2 = [\n      \"hi\"\n    ]\n  }\n}"
         "test2" = "{\n  val1 = [\n    \"hi\"\n  ]\n}"
         "test3" = "{\n  val1 = {\n    val2 = \"hi\"\n  }\n}"
+        "test4" = "{\n  val1 = {\n    val2 = [\n      \"hi\"\n    ]\n  }\n}"
                 })
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
       }
 
       container {
@@ -1037,23 +1037,23 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
         "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
+        "test2" = "{\n  val1 = [\n    \"hi\"\n  ]\n}"
         "test3" = "{\n  val1 = {\n    val2 = \"hi\"\n  }\n}"
         "test4" = "{\n  val1 = {\n    val2 = [\n      \"hi\"\n    ]\n  }\n}"
-        "test2" = "{\n  val1 = [\n    \"hi\"\n  ]\n}"
                 })
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
       }
 
       container {
@@ -1072,10 +1072,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
     target_roles = []
   }
   step {
-    condition           = "Success"
-    name                = "Deploy an AWS CloudFormation template"
-    package_requirement = "LetOctopusDecide"
-    start_trigger       = "StartAfterPrevious"
+    condition            = "Variable"
+    condition_expression = "#{Step.Run}"
+    name                 = "Deploy an AWS CloudFormation template"
+    package_requirement  = "LetOctopusDecide"
+    start_trigger        = "StartAfterPrevious"
 
     action {
       action_type                        = "Octopus.AwsRunCloudFormation"
@@ -1087,16 +1088,16 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       is_required                        = false
       properties                         = {
         "Octopus.Action.Aws.CloudFormationTemplate" = "AWSTemplateFormatVersion: '2010-09-09'\nDescription: 'CloudFormation exports'\n \nConditions:\n  HasNot: !Equals [ 'true', 'false' ]\n \n# dummy (null) resource, never created\nResources:\n  NullResource:\n    Type: 'Custom::NullResource'\n    Condition: HasNot\n \nOutputs:\n  ExportsStackName:\n    Value: !Ref 'AWS::StackName'\n    Export:\n      Name: !Sub 'ExportsStackName-$${AWS::StackName}'"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])
-        "Octopus.Action.Aws.Region" = "us-east-2"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Aws.TemplateSource" = "Inline"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.Aws.WaitForCompletion" = "True"
+        "Octopus.Action.Aws.Region" = "us-east-2"
+        "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])
         "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
         "Octopus.Action.Aws.CloudFormationStackName" = "mystackname"
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "OctopusUseBundledTooling" = "False"
       }
 
       container {
@@ -1115,7 +1116,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
     target_roles = []
   }
   step {
-    condition           = "Success"
+    condition           = "Always"
     name                = "Apply an AWS CloudFormation Change Set"
     package_requirement = "LetOctopusDecide"
     start_trigger       = "StartAfterPrevious"
@@ -1129,15 +1130,15 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Aws.CloudFormationStackName" = "mystack"
-        "Octopus.Action.Aws.Region" = "ap-southeast-1"
-        "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.CloudFormation.ChangeSet.Arn" = "mychangeset"
         "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
-        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Aws.CloudFormationStackName" = "mystack"
+        "Octopus.Action.Aws.WaitForCompletion" = "True"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.Aws.Region" = "ap-southeast-1"
+        "OctopusUseBundledTooling" = "False"
       }
 
       container {
@@ -1156,7 +1157,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
     target_roles = []
   }
   step {
-    condition           = "Success"
+    condition           = "Failure"
     name                = "Delete an AWS CloudFormation stack"
     package_requirement = "LetOctopusDecide"
     start_trigger       = "StartAfterPrevious"
@@ -1170,14 +1171,14 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
+        "Octopus.Action.Aws.WaitForCompletion" = "True"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
         "Octopus.Action.Aws.Region" = "us-east-2"
         "Octopus.Action.Aws.CloudFormationStackName" = "my-stack-name"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
       }
 
       container {
@@ -1231,6 +1232,27 @@ resource "octopusdeploy_variable" "every_step_project_account_aws_1" {
   value        = "${length(data.octopusdeploy_accounts.account_aws_oidc.accounts) != 0 ? data.octopusdeploy_accounts.account_aws_oidc.accounts[0].id : octopusdeploy_aws_openid_connect_account.account_aws_oidc[0].id}"
   name         = "Account.AWS"
   type         = "AmazonWebServicesAccount"
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+variable "variable_99b08078ba47238c5e4abfae90c644746cdea2cdeb685fbf8010dbf63ecd3563_value" {
+  type        = string
+  nullable    = true
+  sensitive   = false
+  description = "The value associated with the variable Step.Run"
+  default     = "True"
+}
+resource "octopusdeploy_variable" "every_step_project_step_run_1" {
+  count        = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_every_step_project.projects) == 0 ?octopusdeploy_project.project_every_step_project[0].id : data.octopusdeploy_projects.project_every_step_project.projects[0].id}"
+  value        = "${var.variable_99b08078ba47238c5e4abfae90c644746cdea2cdeb685fbf8010dbf63ecd3563_value}"
+  name         = "Step.Run"
+  type         = "String"
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
