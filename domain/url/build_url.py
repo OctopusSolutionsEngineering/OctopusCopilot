@@ -61,7 +61,8 @@ def build_url(base_url, path, query=None):
 
 def is_octopus_cloud_local_or_example(url):
     """
-    Check if the URL is a cloud octopus URL, localhost, or the example domain
+    Check if the URL is a cloud octopus URL, localhost, or the example domain. We also consider
+    ngrok domains to be cloud accessible.
     :param url: The URL
     :return: True if the URL is a cloud octopus URL, localhost, or the example domain, and False otherwise
     """
@@ -72,4 +73,6 @@ def is_octopus_cloud_local_or_example(url):
         or url.hostname == "example.org"
         or url.hostname == "127.0.0.1"
         or url.hostname == "g.codefresh.io"
+        or url.hostname == "ngrok-free.app"
+        or url.hostname == "ngrok.app"
     )
