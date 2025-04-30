@@ -140,6 +140,18 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   * "octopusdeploy_username_password_account"
 * The resource "octopusdeploy_aws_openid_connect_account" must have a "role_arn" property set to "arn:aws:iam::123456789012:role/S3Access"
 
+## Octopus Variable Instructions
+
+* Variables defined as resource "octopusdeploy_variable" must have a "type" attribute set to one of the following:
+  * "AmazonWebServicesAccount"
+  * "AzureAccount"
+  * "GoogleCloudAccount"
+  * "UsernamePasswordAccount"
+  * "Certificate"
+  * "Sensitive"
+  * "String"
+  * "WorkerPool"
+
 ## Terraform Instructions
 
 * You will be penalized for using heredoc syntax.
