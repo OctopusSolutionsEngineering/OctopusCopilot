@@ -44,7 +44,7 @@ def sanitize_name_attributes(config):
         # name: "Blue/Green deployment"
         # with
         # name: "Blue_Green deployment"
-        line = re.sub(r'[^a-zA-Z0-9.,_#"\'= \-]', r"_", yaml_config)
+        line = re.sub(r'[^a-zA-Z0-9.,_#"\'= \-{}\[\]]', r"_", yaml_config)
 
         fixed_config = fixed_config.replace(yaml_config, line)
 

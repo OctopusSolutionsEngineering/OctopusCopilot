@@ -180,6 +180,18 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = sanitize_name_attributes(input_config)
         self.assertEqual(result, expected_output)
 
+    def test_sanitize_name_attributes_allow_interpolation(self):
+        # Input with slashes in name
+        input_config = """
+        resource "octopusdeploy_project" "project" {
+          name = "#{var.whatever[0]}"
+          description = "This is a Blue/Green deployment project"
+        }
+        """
+
+        result = sanitize_name_attributes(input_config)
+        self.assertEqual(result, input_config)
+
     def test_sanitize_name_attributes_replaces_backslashes(self):
         # Input with backslashes in name
         input_config = """
