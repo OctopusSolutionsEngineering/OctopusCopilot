@@ -3,7 +3,7 @@ import re
 
 def sanitize_kuberenetes_yaml_step_config(config):
     """
-    Sanitize Kubernetes config by removing sensitive information. This is because GTP4 kept introducing placeholders
+    Sanitize Kubernetes config by removing invalid masks information. This is because GTP4 kept introducing placeholders
     into K8s sample steps.
     """
 
@@ -25,3 +25,14 @@ def sanitize_kuberenetes_yaml_step_config(config):
         fixed_config = fixed_config.replace(yaml_config, line)
 
     return fixed_config
+
+
+def sanitize_account_type(config):
+    """
+    Sanitize Kubernetes config by fixing the account type capitalisation. This is because GTP4 kept trying to set the
+    account_type of an account data resource to "AzureOidc"
+    """
+
+    return re.sub(
+        r'account_type\s*=\s*"AzureOidc"', 'account_type = "AzureOIDC"', config
+    )

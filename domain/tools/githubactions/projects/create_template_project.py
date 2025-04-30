@@ -12,7 +12,10 @@ from domain.lookup.octopus_lookups import (
 from domain.octopus.authorization import get_auth
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.escape_messages import escape_message
-from domain.sanitizers.kubernetes import sanitize_kuberenetes_yaml_step_config
+from domain.sanitizers.kubernetes import (
+    sanitize_kuberenetes_yaml_step_config,
+    sanitize_account_type,
+)
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -206,6 +209,9 @@ def create_template_project_callback(
 
                 # Deal with the LLM adding asterisks as placeholders in K8s configuration
                 configuration = sanitize_kuberenetes_yaml_step_config(configuration)
+
+                # Deal with the LLM using the wrong capitalisation for the account type
+                configuration = sanitize_account_type(configuration)
 
             # We can then save the Terraform plan as a callback
             callback_id = str(uuid.uuid4())

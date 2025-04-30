@@ -1,5 +1,8 @@
 import unittest
-from domain.sanitizers.kubernetes import sanitize_kuberenetes_yaml_step_config
+from domain.sanitizers.kubernetes import (
+    sanitize_kuberenetes_yaml_step_config,
+    sanitize_account_type,
+)
 
 
 class TestKubernetesSanitizer(unittest.TestCase):
@@ -78,6 +81,83 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
         # The result should be unchanged
         self.assertEqual(result, input_config)
+
+    def test_sanitize_account_type_fixes_capitalization(self):
+        # Input with incorrect capitalization
+        input_config = """
+                resource "octopusdeploy_azure_service_principal" "account" {
+                  name          = "Azure Service Principal"
+                  account_type  = "AzureOidc"
+                  application_id = "00000000-0000-0000-0000-000000000000"
+                }
+                """
+
+        expected_output = """
+                resource "octopusdeploy_azure_service_principal" "account" {
+                  name          = "Azure Service Principal"
+                  account_type = "AzureOIDC"
+                  application_id = "00000000-0000-0000-0000-000000000000"
+                }
+                """
+
+        # Call the function (would need to fix implementation first)
+        result = sanitize_account_type(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_sanitize_account_type_with_whitespace_variations(self):
+        # Test with different whitespace formatting
+        input_config = """
+                resource "octopusdeploy_azure_service_principal" "account" {
+                  account_type="AzureOidc"
+                }
+                """
+
+        expected_output = """
+                        resource "octopusdeploy_azure_service_principal" "account" {
+                          account_type="AzureOIDC"
+                        }
+                        """
+
+        result = sanitize_account_type(input_config)
+
+        self.assertTrue(expected_output, result)
+
+    def test_no_changes_needed(self):
+        # Input with correct capitalization already
+        input_config = """
+                resource "octopusdeploy_azure_service_principal" "account" {
+                  name          = "Azure Service Principal"
+                  account_type  = "AzureOIDC"
+                  application_id = "00000000-0000-0000-0000-000000000000"
+                }
+                """
+
+        result = sanitize_account_type(input_config)
+        self.assertEqual(result, input_config)
+
+    def test_multiple_occurrences(self):
+        # Input with multiple occurrences of incorrect capitalization
+        input_config = """
+                resource "octopusdeploy_azure_service_principal" "account1" {
+                  account_type = "AzureOidc"
+                }
+                resource "octopusdeploy_azure_service_principal" "account2" {
+                  account_type = "AzureOidc"
+                }
+                """
+
+        expected_output = """
+                resource "octopusdeploy_azure_service_principal" "account1" {
+                  account_type = "AzureOIDC"
+                }
+                resource "octopusdeploy_azure_service_principal" "account2" {
+                  account_type = "AzureOIDC"
+                }
+                """
+
+        result = sanitize_account_type(input_config)
+
+        self.assertEqual(expected_output, result)
 
 
 if __name__ == "__main__":
