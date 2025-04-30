@@ -12,9 +12,10 @@ from domain.lookup.octopus_lookups import (
 from domain.octopus.authorization import get_auth
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.escape_messages import escape_message
-from domain.sanitizers.kubernetes import (
+from domain.sanitizers.terraform import (
     sanitize_kuberenetes_yaml_step_config,
     sanitize_account_type,
+    sanitize_name_attributes,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
@@ -212,6 +213,9 @@ def create_template_project_callback(
 
                 # Deal with the LLM using the wrong capitalisation for the account type
                 configuration = sanitize_account_type(configuration)
+
+                # Deal with the LLM using invalid characters for names
+                configuration = sanitize_name_attributes(configuration)
 
             # We can then save the Terraform plan as a callback
             callback_id = str(uuid.uuid4())

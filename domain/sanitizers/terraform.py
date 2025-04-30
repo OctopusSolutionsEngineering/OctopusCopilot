@@ -27,6 +27,30 @@ def sanitize_kuberenetes_yaml_step_config(config):
     return fixed_config
 
 
+def sanitize_name_attributes(config):
+    """
+    Sanitize the names assigned to resources.
+    """
+
+    yaml_configs = re.findall(
+        r"name\s*=\s*.*",
+        config,
+    )
+
+    fixed_config = config
+    for yaml_config in yaml_configs:
+
+        # replace string that look like
+        # name: "Blue/Green deployment"
+        # with
+        # name: "Blue_Green deployment"
+        line = re.sub(r'[^a-zA-Z0-9.,_#"\'= \-]', r"_", yaml_config)
+
+        fixed_config = fixed_config.replace(yaml_config, line)
+
+    return fixed_config
+
+
 def sanitize_account_type(config):
     """
     Sanitize Kubernetes config by fixing the account type capitalisation. This is because GTP4 kept trying to set the

@@ -1,7 +1,8 @@
 import unittest
-from domain.sanitizers.kubernetes import (
+from domain.sanitizers.terraform import (
     sanitize_kuberenetes_yaml_step_config,
     sanitize_account_type,
+    sanitize_name_attributes,
 )
 
 
@@ -158,6 +159,100 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = sanitize_account_type(input_config)
 
         self.assertEqual(expected_output, result)
+
+    def test_sanitize_name_attributes_replaces_slashes(self):
+        # Input with slashes in name
+        input_config = """
+        resource "octopusdeploy_project" "project" {
+          name = "Blue/Green deployment"
+          description = "This is a Blue/Green deployment project"
+        }
+        """
+
+        expected_output = """
+        resource "octopusdeploy_project" "project" {
+          name = "Blue_Green deployment"
+          description = "This is a Blue/Green deployment project"
+        }
+        """
+
+        result = sanitize_name_attributes(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_sanitize_name_attributes_replaces_backslashes(self):
+        # Input with backslashes in name
+        input_config = """
+        resource "octopusdeploy_project" "project" {
+          name = "Test\\Project"
+        }
+        """
+
+        expected_output = """
+        resource "octopusdeploy_project" "project" {
+          name = "Test_Project"
+        }
+        """
+
+        result = sanitize_name_attributes(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_preserves_allowed_characters(self):
+        # Input with allowed characters in name
+        input_config = """
+        resource "octopusdeploy_project" "project" {
+          name = "Test-Project.1,2_#3"
+        }
+        """
+
+        # Should be unchanged
+        result = sanitize_name_attributes(input_config)
+        self.assertEqual(result, input_config)
+
+    def test_multiple_name_attributes(self):
+        # Input with multiple name attributes
+        input_config = """
+        resource "octopusdeploy_project" "project1" {
+          name = "Project/1"
+        }
+        resource "octopusdeploy_project" "project2" {
+          name = "Project\\2"
+        }
+        """
+
+        expected_output = """
+        resource "octopusdeploy_project" "project1" {
+          name = "Project_1"
+        }
+        resource "octopusdeploy_project" "project2" {
+          name = "Project_2"
+        }
+        """
+
+        result = sanitize_name_attributes(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_quotes_preserved(self):
+        # Input with different quote styles
+        input_config = """
+        resource "octopusdeploy_project" "project1" {
+          name = "Project/1"
+        }
+        resource "octopusdeploy_project" "project2" {
+          name = 'Project\\2'
+        }
+        """
+
+        expected_output = """
+        resource "octopusdeploy_project" "project1" {
+          name = "Project_1"
+        }
+        resource "octopusdeploy_project" "project2" {
+          name = 'Project_2'
+        }
+        """
+
+        result = sanitize_name_attributes(input_config)
+        self.assertEqual(result, expected_output)
 
 
 if __name__ == "__main__":
