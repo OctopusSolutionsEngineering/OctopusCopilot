@@ -25,6 +25,28 @@ class TestKubernetesSanitizer(unittest.TestCase):
         # Assert the result matches expected output
         self.assertEqual(result, expected_output)
 
+    def test_sanitize_kuberenetes_yaml_step_config_with_quotes(self):
+        # Sample Kubernetes config with sensitive information
+        input_config = """
+        resource "octopusdeploy_kubernetes_cluster_deployment_target" "test" {
+          name = "Test Kubernetes"
+          "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: v1\\nkind: Secret\\nmetadata:\\n  name: "*****-secret"\\n  namespace: default\\ndata:\\n  API_KEY: \"*****\"\\n  PASSWORD: \"*****\"\\n  TOKEN: \"sensitive-token\""
+        }
+        """
+
+        expected_output = """
+        resource "octopusdeploy_kubernetes_cluster_deployment_target" "test" {
+          name = "Test Kubernetes"
+          "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: v1\\nkind: Secret\\nmetadata:\\n  name: "placeholder-secret"\\n  namespace: default\\ndata:\\n  API_KEY: \"placeholder\"\\n  PASSWORD: \"placeholder\"\\n  TOKEN: \"sensitive-token\""
+        }
+        """
+
+        # Call the function
+        result = sanitize_kuberenetes_yaml_step_config(input_config)
+
+        # Assert the result matches expected output
+        self.assertEqual(result, expected_output)
+
     def test_sanitize_multiple_yaml_configs(self):
         # Sample with multiple YAML configs
         input_config = """
