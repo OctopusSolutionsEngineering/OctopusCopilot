@@ -116,6 +116,7 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   * "S3"
   * "OciRegistry"
   * "OctopusProject"
+  * "ArtifactoryGeneric"
 
 ## Project Instructions
 
