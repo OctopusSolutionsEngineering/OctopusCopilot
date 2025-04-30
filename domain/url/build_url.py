@@ -69,10 +69,10 @@ def is_octopus_cloud_local_or_example(url):
     return (
         url.hostname.endswith(".octopus.app")
         or url.hostname.endswith(".testoctopus.com")
+        or url.hostname.endswith(".ngrok-free.app")
+        or url.hostname.endswith(".ngrok.app")
         or url.hostname == "localhost"
         or url.hostname == "example.org"
         or url.hostname == "127.0.0.1"
         or url.hostname == "g.codefresh.io"
-        or url.hostname == "ngrok-free.app"
-        or url.hostname == "ngrok.app"
     )
