@@ -74,3 +74,29 @@ def fix_single_line_lifecycle(config):
         return "lifecycle {\n  ignore_changes = [sensitive_value]\n  prevent_destroy = true\n}"
 
     return config
+
+
+def fix_account_type(config):
+    """
+    Fix up invalid account_type values.
+    """
+    valid_types = [
+        "AmazonWebServicesAccount",
+        "AmazonWebServicesRoleAccount",
+        "AmazonWebServicesOidcAccount",
+        "AzureServicePrincipal",
+        "AzureOIDC",
+        "AzureSubscription",
+        "GenericOidcAccount",
+        "None",
+        "SshKeyPair",
+        "Token",
+        "UsernamePassword",
+    ]
+    match = re.match(r'account_type\s*=\s*"([^"]+)"', config)
+
+    # If we get an invalid account type, just remove it
+    if match and match.group(1) not in valid_types:
+        return config.replace(match.group(1), "")
+
+    return config

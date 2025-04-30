@@ -4,6 +4,7 @@ from domain.sanitizers.terraform import (
     sanitize_account_type,
     sanitize_name_attributes,
     fix_single_line_lifecycle,
+    fix_account_type,
 )
 
 
@@ -302,6 +303,48 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
         result = fix_single_line_lifecycle(input_config)
         self.assertEqual(result, input_config)
+
+    def test_invalid_account_type_removal(self):
+        # Test with invalid account type
+        input_config = 'account_type = "InvalidType"'
+        expected_output = 'account_type = ""'
+
+        result = fix_account_type(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_valid_account_type_preservation(self):
+        # Test with valid account type
+        input_config = 'account_type = "AzureOIDC"'
+
+        result = fix_account_type(input_config)
+        self.assertEqual(result, input_config)
+
+    def test_no_account_type(self):
+        # Test with no account type
+        input_config = 'name = "Test Account"'
+
+        result = fix_account_type(input_config)
+        self.assertEqual(result, input_config)
+
+    def test_multiple_valid_account_types(self):
+        # Test with multiple valid account types
+        for valid_type in [
+            "AmazonWebServicesAccount",
+            "AzureServicePrincipal",
+            "Token",
+            "UsernamePassword",
+        ]:
+            input_config = f'account_type = "{valid_type}"'
+            result = fix_account_type(input_config)
+            self.assertEqual(result, input_config)
+
+    def test_with_whitespace_variations(self):
+        # Test with different whitespace formatting
+        input_config = 'account_type="InvalidType"'
+        expected_output = 'account_type=""'
+
+        result = fix_account_type(input_config)
+        self.assertEqual(result, expected_output)
 
 
 if __name__ == "__main__":

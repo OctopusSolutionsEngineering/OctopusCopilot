@@ -221,6 +221,9 @@ def create_template_project_callback(
                 # Deal with the LLM returning a single line for a lifecycle block
                 configuration = fix_single_line_lifecycle(configuration)
 
+                # Deal with invalid account_types in data blocks
+                configuration = fix_account_type(configuration)
+
             # We can then save the Terraform plan as a callback
             callback_id = str(uuid.uuid4())
 
