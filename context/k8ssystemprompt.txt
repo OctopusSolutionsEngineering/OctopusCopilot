@@ -138,7 +138,7 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   * "octopusdeploy_ssh_key_account"
   * "octopusdeploy_token_account"
   * "octopusdeploy_username_password_account"
-
+* The resource "octopusdeploy_aws_openid_connect_account" must have a "role_arn" property.
 
 ## Terraform Instructions
 
