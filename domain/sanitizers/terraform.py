@@ -60,3 +60,17 @@ def sanitize_account_type(config):
     return re.sub(
         r'account_type\s*=\s*"AzureOidc"', 'account_type = "AzureOIDC"', config
     )
+
+
+def fix_single_line_lifecycle(config):
+    """
+    The LLM kept insisting on using a single line lifecycle block. This is not valid HCL2 syntax.
+    """
+
+    if (
+        config
+        == "lifecycle { ignore_changes = [sensitive_value] prevent_destroy = true }"
+    ):
+        return "lifecycle {\n  ignore_changes = [sensitive_value]\n  prevent_destroy = true\n}"
+
+    return config

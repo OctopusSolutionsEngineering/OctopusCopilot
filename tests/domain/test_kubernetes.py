@@ -3,6 +3,7 @@ from domain.sanitizers.terraform import (
     sanitize_kuberenetes_yaml_step_config,
     sanitize_account_type,
     sanitize_name_attributes,
+    fix_single_line_lifecycle,
 )
 
 
@@ -253,6 +254,42 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
         result = sanitize_name_attributes(input_config)
         self.assertEqual(result, expected_output)
+
+    def test_fix_exact_match_single_line_lifecycle(self):
+        # Test the exact match case
+        input_config = (
+            "lifecycle { ignore_changes = [sensitive_value] prevent_destroy = true }"
+        )
+        expected_output = "lifecycle {\n  ignore_changes = [sensitive_value]\n  prevent_destroy = true\n}"
+
+        result = fix_single_line_lifecycle(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_no_change_for_multiline_lifecycle(self):
+        # Test a properly formatted multiline lifecycle block
+        input_config = """lifecycle {
+  ignore_changes = [sensitive_value]
+  prevent_destroy = true
+}"""
+
+        result = fix_single_line_lifecycle(input_config)
+        self.assertEqual(result, input_config)
+
+    def test_no_change_for_other_content(self):
+        # Test content that isn't a lifecycle block
+        input_config = (
+            'resource "octopusdeploy_variable" "test" {\n  name = "test-variable"\n}'
+        )
+
+        result = fix_single_line_lifecycle(input_config)
+        self.assertEqual(result, input_config)
+
+    def test_no_change_for_similar_but_different_lifecycle(self):
+        # Test a lifecycle block with different content
+        input_config = "lifecycle { ignore_changes = [tags] }"
+
+        result = fix_single_line_lifecycle(input_config)
+        self.assertEqual(result, input_config)
 
 
 if __name__ == "__main__":

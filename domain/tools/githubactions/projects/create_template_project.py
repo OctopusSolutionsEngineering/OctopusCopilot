@@ -16,6 +16,7 @@ from domain.sanitizers.terraform import (
     sanitize_kuberenetes_yaml_step_config,
     sanitize_account_type,
     sanitize_name_attributes,
+    fix_single_line_lifecycle,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
@@ -216,6 +217,9 @@ def create_template_project_callback(
 
                 # Deal with the LLM using invalid characters for names
                 configuration = sanitize_name_attributes(configuration)
+
+                # Deal with the LLM returning a single line for a lifecycle block
+                configuration = fix_single_line_lifecycle(configuration)
 
             # We can then save the Terraform plan as a callback
             callback_id = str(uuid.uuid4())
