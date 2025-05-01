@@ -186,7 +186,7 @@ jobs:
           GITHUB_CLIENT_ID: 4ae1ef506301902a41a5
           REDIRECTION_HOST: https://redirection.example.org
           CODEFRESH_URL: ${{ secrets.CODEFRESH_URL }}
-          AISERVICES_DEPLOYMENT: ${{ sercrets.AISERVICES_DEPLOYMENT }}
+          AISERVICES_DEPLOYMENT: ${{ secrets.AISERVICES_DEPLOYMENT }}
           AISERVICES_KEY: ${{ secrets.AISERVICES_KEY }}
           AISERVICES_ENDPOINT: ${{ secrets.AISERVICES_ENDPOINT }}
         shell: /usr/bin/bash --noprofile --norc {0}
