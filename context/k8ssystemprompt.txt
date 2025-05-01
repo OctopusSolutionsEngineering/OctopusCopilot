@@ -121,6 +121,7 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
 ## Project Instructions
 
 * You must include the "lifecycle_id" attribute for every "octopusdeploy_project" resource.
+* The "is_version_controlled" attribute must always be "false".
 
 ## Project Group Instructions
 
@@ -174,7 +175,7 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
 * The "name" attribute can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
 * You will be penalized for defining a "name" attribute with the characters "/" and "\".
 * You will be penalized for adding a "action" attribute to an "action" block.
-* Target tags must be defined in the "target_roles" attribute on a "step".
+* Target tags must only be defined in the "target_roles" attribute on a "step".
 * You will be penalized for using target tags with the format "name=value" in the "target_roles" attribute.
 * You will be penalized for adding the "target_roles" attribute on an "action".
 * You will be penalized for adding target tags to the "tenant_tags" attribute.
