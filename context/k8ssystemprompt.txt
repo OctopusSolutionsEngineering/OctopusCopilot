@@ -224,6 +224,8 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   * "Octopus.AwsDeleteCloudFormation" - Delete an AWS CloudFormation stack step
 * The "octopusdeploy" provider must set the "space_id" attribute to the value "trimspace(var.octopus_space_id)".
 * The Terraform variable "octopus_space_id" must be included.
+* Terraform string interpolation must be implemented as "${}".
+* You will be penalized for using two curly brackets for string interpolation like "${{}}".
 
 ## Kubernetes YAML Instructions
 
