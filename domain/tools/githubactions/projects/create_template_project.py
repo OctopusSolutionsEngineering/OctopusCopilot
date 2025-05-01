@@ -18,6 +18,7 @@ from domain.sanitizers.terraform import (
     sanitize_name_attributes,
     fix_single_line_lifecycle,
     fix_account_type,
+    fix_single_line_retention_policy,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
@@ -221,6 +222,9 @@ def create_template_project_callback(
 
                 # Deal with the LLM returning a single line for a lifecycle block
                 configuration = fix_single_line_lifecycle(configuration)
+
+                # Deal with the LLM returning a single line for a release_retention_policy block
+                configuration = fix_single_line_retention_policy(configuration)
 
                 # Deal with invalid account_types in data blocks
                 configuration = fix_account_type(configuration)

@@ -5,6 +5,7 @@ from domain.sanitizers.terraform import (
     sanitize_name_attributes,
     fix_single_line_lifecycle,
     fix_account_type,
+    fix_single_line_retention_policy,
 )
 
 
@@ -345,6 +346,59 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
         result = fix_account_type(input_config)
         self.assertEqual(result, expected_output)
+
+    def test_fix_single_line_retention_policy(self):
+        # Test with a single-line retention policy
+        input_config = (
+            'release_retention_policy { quantity_to_keep = 30 unit = "Days" }'
+        )
+        expected_output = (
+            'release_retention_policy {\n quantity_to_keep = 30\n unit = "Days"\n}'
+        )
+
+        result = fix_single_line_retention_policy(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_different_values(self):
+        # Test with different values
+        input_config = (
+            'release_retention_policy { quantity_to_keep = 10 unit = "Items" }'
+        )
+        expected_output = (
+            'release_retention_policy {\n quantity_to_keep = 10\n unit = "Items"\n}'
+        )
+
+        result = fix_single_line_retention_policy(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_with_whitespace_variations(self):
+        # Test with different whitespace formatting
+        input_config = 'release_retention_policy{quantity_to_keep=5 unit="Weeks"}'
+        expected_output = (
+            'release_retention_policy {\n quantity_to_keep = 5\n unit = "Weeks"\n}'
+        )
+
+        result = fix_single_line_retention_policy(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_no_change_for_multiline_policy(self):
+        # Test a properly formatted multiline policy block
+        input_config = """release_retention_policy {
+ quantity_to_keep = 30
+ unit = "Days"
+}"""
+
+        result = fix_single_line_retention_policy(input_config)
+        self.assertEqual(result, input_config)
+
+    def test_no_change_for_other_content(self):
+        # Test content that isn't a retention policy block
+        input_config = (
+            'resource "octopusdeploy_project" "test" { name = "test-project" }'
+        )
+
+        result = fix_single_line_retention_policy(input_config)
+        self.assertEqual(result, input_config)
 
 
 if __name__ == "__main__":

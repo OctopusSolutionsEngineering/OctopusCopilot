@@ -82,6 +82,27 @@ def fix_single_line_lifecycle(config):
     return config
 
 
+def fix_single_line_retention_policy(config):
+    """
+    The LLM kept insisting on using a single line release_retention_policy block. This is not valid HCL2 syntax.
+    """
+
+    match = re.match(
+        r"release_retention_policy\s*{\s*quantity_to_keep\s*=\s*(\d+)\s*unit\s*=\s*\"([^\"]+)\"\s*}",
+        config,
+    )
+    if match:
+        # If we get a single line lifecycle block, just replace it with a multi-line one
+        return (
+            "release_retention_policy {\n"
+            f" quantity_to_keep = {match.group(1)}\n"
+            f' unit = "{match.group(2)}"\n'
+            "}"
+        )
+
+    return config
+
+
 def fix_account_type(config):
     """
     Fix up invalid account_type values.
