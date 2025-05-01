@@ -265,28 +265,33 @@ def build_confirmation_request(body):
 
 
 def populate_blob_storage():
-    with open("../../context/context.tf", "r") as file:
+    # The path changes depending on where the tests are run from.
+    context_path = (
+        "../../context/" if os.path.exists("../../context/context.tf") else "context/"
+    )
+
+    with open(context_path + "context.tf", "r") as file:
         file_content = file.read()
 
         save_terraform_context(
             "context.tf", file_content, os.environ["AzureWebJobsStorage"]
         )
 
-    with open("../../context/k8ssystemprompt.txt", "r") as file:
+    with open(context_path + "k8ssystemprompt.txt", "r") as file:
         file_content = file.read()
 
         save_terraform_context(
             "k8ssystemprompt.txt", file_content, os.environ["AzureWebJobsStorage"]
         )
 
-    with open("../../context/everystep.tf", "r") as file:
+    with open(context_path + "k8ssystemprompt.text", "r") as file:
         file_content = file.read()
 
         save_terraform_context(
             "everystep.tf", file_content, os.environ["AzureWebJobsStorage"]
         )
 
-    with open("../../context/k8s.tf", "r") as file:
+    with open(context_path + "k8s.tf", "r") as file:
         file_content = file.read()
 
         save_terraform_context(
