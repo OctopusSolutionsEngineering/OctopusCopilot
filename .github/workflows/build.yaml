@@ -75,6 +75,13 @@ jobs:
           latest: true
           fileName: "octolint_linux_amd64_azure.zip"
 
+
+      - uses: robinraju/release-downloader@v1.9
+        with:
+          repository: "OctopusSolutionsEngineering/OctoAISpaceBuilder"
+          latest: true
+          fileName: "spacebuilder_linux_amd64_azure.zip "
+
       - name: Start Octoterra
         run: |
           # Start the octoterra microservice
@@ -101,6 +108,20 @@ jobs:
         env:
           # The port used when running the octolint microservice
           FUNCTIONS_CUSTOMHANDLER_PORT: 8082
+        shell: bash
+
+      - name: Start SpaceBuilder
+        run: |
+          # Start the spacebuilder microservice
+          mkdir spacebuilder
+          mv spacebuilder_linux_amd64_azure.zip spacebuilder
+          cd spacebuilder
+          unzip spacebuilder_linux_amd64_azure.zip
+          chmod +x spacebuilder_linux_amd64_azure
+          ./spacebuilder_linux_amd64_azure &
+        env:
+          # The port used when running the octolint microservice
+          FUNCTIONS_CUSTOMHANDLER_PORT: 8083
         shell: bash
 
       - name: Install Dependencies
@@ -159,6 +180,8 @@ jobs:
           APPLICATION_OCTOTERRA_URL: http://localhost:8081
           # The location of the octolint microservice
           APPLICATION_OCTOLINT_URL: http://localhost:8082
+            # The location of the spacebuilder microservice
+          APPLICATION_SPACEBUILDER_URL: http://localhost:8083
           GITHUB_CLIENT_REDIRECT: https://aiagent.octopus.com/api/oauth_callback
           GITHUB_CLIENT_ID: 4ae1ef506301902a41a5
           REDIRECTION_HOST: https://redirection.example.org
