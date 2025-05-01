@@ -191,6 +191,8 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   * "#{Octopus.Deployment.Changes}"
   * "#{Octopus.Deployment.WorkItems}"
  * You will be penalized for using the syntax "${<variable name>}" in the "condition_expression" attribute.
+ * When the "Octopus.Action.Script.ScriptSource" property is set to "Package", the "Octopus.Action.Script.Syntax" property must not be defined.
+ * You will be penalized for using the "Octopus.Action.Script.Syntax" property when the "Octopus.Action.Script.ScriptSource" property is set to "Package".
 
 ## Octopus Variable Instructions
 
