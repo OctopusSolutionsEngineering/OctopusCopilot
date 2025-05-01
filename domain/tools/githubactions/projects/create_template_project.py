@@ -279,7 +279,7 @@ def create_template_project_callback(
                 connection_string,
             )
 
-            prompt_title = "Do you want to continue to create the project?"
+            prompt_title = "Do you want to continue to create the resources?"
             prompt_message = [
                 "Please confirm the details below are correct before proceeding."
                 f"\n\nSpace: **{actual_space_name}**"
