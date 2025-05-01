@@ -91,8 +91,12 @@ class CopilotChatCancelTest(unittest.TestCase):
             )
         except Exception as e:
             print(
-                "The tests will fail because Azurite is not running. Run Azureite with: "
-                + "docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite"
+                "The tests will fail because Azurite is not running. Run Azurite with: "
+                + "docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 --restart unless-stopped mcr.microsoft.com/azure-storage/azurite"
+            )
+            print(
+                "Then set the AzureWebJobsStorage environment variable to: "
+                + "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
             )
             print(e)
             return

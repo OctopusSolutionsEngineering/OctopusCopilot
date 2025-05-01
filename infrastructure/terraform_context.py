@@ -1,5 +1,4 @@
 from azure.core.exceptions import HttpResponseError, ResourceExistsError
-from azure.data.tables import TableServiceClient
 
 from domain.logging.app_logging import configure_logging
 from domain.validation.argument_validation import ensure_string_not_empty
@@ -65,15 +64,11 @@ def save_terraform_context(name, template, connection_string):
     except ResourceExistsError as e:
         pass
 
-    try:
-        container_client = blob_service_client.get_container_client(
-            container=sample_terraform_context_container_name
-        )
+    container_client = blob_service_client.get_container_client(
+        container=sample_terraform_context_container_name
+    )
 
-        container_client.upload_blob(name=name, data=template, overwrite=True)
-    except HttpResponseError as e:
-        # Saving a cached item is a best effort operation, so we don't raise an error if it fails.
-        pass
+    container_client.upload_blob(name=name, data=template, overwrite=True)
 
 
 @logging_wrapper

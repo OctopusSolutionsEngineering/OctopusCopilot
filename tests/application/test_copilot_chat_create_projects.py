@@ -1,6 +1,10 @@
 import json
 import os
+import re
+import time
 import unittest
+import uuid
+from datetime import datetime
 
 import azure.functions as func
 from openai import RateLimitError
@@ -9,14 +13,36 @@ from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
-from domain.transformers.sse_transformers import convert_from_sse_response
-from function_app import copilot_handler_internal
+from domain.lookup.octopus_lookups import (
+    lookup_space,
+    lookup_projects,
+    lookup_environments,
+    lookup_tenants,
+    lookup_runbooks,
+)
+from domain.transformers.sse_transformers import (
+    convert_from_sse_response,
+    get_confirmation_id,
+)
+from domain.url.session import create_session_blob
+from function_app import copilot_handler_internal, health_internal
+from infrastructure.octopus import (
+    run_published_runbook_fuzzy,
+    get_space_id_and_name_from_name,
+    get_project,
+)
+from infrastructure.terraform_context import save_terraform_context
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
+from tests.infrastructure.create_and_deploy_release import (
+    create_and_deploy_release,
+    wait_for_task,
+)
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
+from tests.infrastructure.publish_runbook import publish_runbook
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
-class CopilotChatOctolintTest(unittest.TestCase):
+class CopilotChatTestCreateProjects(unittest.TestCase):
     """
     End-to-end tests that verify the complete query including:
     * Persisting user details such as Octopus URL and API key
@@ -32,6 +58,8 @@ class CopilotChatOctolintTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        populate_blob_storage()
+
         # Simulate the result of a user login and saving their Octopus details
         try:
             github_user = os.environ["TEST_GH_USER"]
@@ -46,7 +74,12 @@ class CopilotChatOctolintTest(unittest.TestCase):
             save_default_values(
                 github_user, "space", "Simple", os.environ["AzureWebJobsStorage"]
             )
-            # Note: Don't save default value for Project for use with Octolint. This can skew the octolint check results.
+            save_default_values(
+                github_user,
+                "project",
+                "Deploy Web App Container",
+                os.environ["AzureWebJobsStorage"],
+            )
             save_default_values(
                 github_user,
                 "environment",
@@ -154,58 +187,45 @@ class CopilotChatOctolintTest(unittest.TestCase):
         finally:
             cls.mssql = None
 
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_find_unused_projects(self):
-        prompt = "Find unused projects."
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_k8s_project(self):
+        prompt = 'Create a Kubernetes project called "My K8s Project".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        print(response_text)
-        self.assertIn("Deploy Web App Container", response_text, response_text)
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
 
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_find_octolint_unrotated_accounts(self):
-        prompt = 'Find accounts with unrotated credentials in the space "Simple" to improve security'
-
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        print(response_text)
-        self.assertIn("AWS Account", response_text, response_text)
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_find_octolint_direct_tenant_references(self):
-        prompt = 'Find tenants that should be grouped by tags in the space "Simple"'
-
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        print(response_text)
-        self.assertNotIn("Marketing", response_text, response_text)
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_find_octolint_duplicate_variables(self):
-        prompt = 'Find duplicate project variables in the space "Simple"'
-
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
         print(response_text)
         self.assertTrue(
-            "Deploy AWS Lambda/A.Test.Variable"
-            and "Copilot manual approval/A.Test.Variable" in response_text,
-            "Response was " + response_text,
+            f"The following resources were created:" in response_text,
         )
 
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_find_octolint_unused_tenants(self):
-        prompt = "Find tenants that have not performed a deployment to help manage licensing costs"
+        space_id, space_name = get_space_id_and_name_from_name(
+            "Simple", Octopus_Api_Key, Octopus_Url
+        )
 
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        print(response_text)
-        self.assertIn("Marketing", response_text, response_text)
+        project = get_project(space_id, "My K8s Project", Octopus_Api_Key, Octopus_Url)
+        self.assertTrue(
+            project["Name"] == "My K8s Project",
+        )
 
 
 if __name__ == "__main__":
@@ -224,5 +244,51 @@ def build_request(message):
         body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
         url="/api/form_handler",
         params=None,
-        headers={"X-GitHub-Token": os.environ["GH_TEST_TOKEN"]},
+        headers={
+            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"],
+            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
+        },
     )
+
+
+def build_confirmation_request(body):
+    return func.HttpRequest(
+        method="POST",
+        body=json.dumps(body).encode("utf8"),
+        url="/api/form_handler",
+        params=None,
+        headers={
+            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"],
+            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
+        },
+    )
+
+
+def populate_blob_storage():
+    with open("../../context/context.tf", "r") as file:
+        file_content = file.read()
+
+        save_terraform_context(
+            "context.tf", file_content, os.environ["AzureWebJobsStorage"]
+        )
+
+    with open("../../context/k8ssystemprompt.txt", "r") as file:
+        file_content = file.read()
+
+        save_terraform_context(
+            "k8ssystemprompt.txt", file_content, os.environ["AzureWebJobsStorage"]
+        )
+
+    with open("../../context/everystep.tf", "r") as file:
+        file_content = file.read()
+
+        save_terraform_context(
+            "everystep.tf", file_content, os.environ["AzureWebJobsStorage"]
+        )
+
+    with open("../../context/k8s.tf", "r") as file:
+        file_content = file.read()
+
+        save_terraform_context(
+            "k8s.tf", file_content, os.environ["AzureWebJobsStorage"]
+        )

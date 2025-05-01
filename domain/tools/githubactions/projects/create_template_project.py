@@ -77,6 +77,7 @@ def create_template_project_confirm_callback_wrapper(
                 redirector_api_key,
             )
 
+            response_text.append("The following resources were created:")
             response_text.append(
                 "```\n" + response["data"]["attributes"]["apply_text"] + "\n```"
             )
