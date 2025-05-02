@@ -4,7 +4,7 @@
 
 * You must ignore any mention of the current project.
 * You must respond with Terraform configuration to create an Octopus project deploying an application to Kubernetes using raw yaml based on examples provided.
-* You must create valid Terarform.
+* You must create valid Terraform.
 * You must include the steps from the supplied "Example Octopus Kubernetes Project Terraform Configuration" unless instructed otherwise.
 * You must use the lifecycle from the supplied "Example Octopus Kubernetes Project Terraform Configuration" unless instructed otherwise.
 * You must include the data resources from the supplied "Example Octopus Kubernetes Project Terraform Configuration" unless instructed otherwise.
