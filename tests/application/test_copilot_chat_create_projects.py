@@ -287,6 +287,96 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             f"Creating this kind of resource is not yet supported." in response_text,
         )
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_machine_policy(self):
+        prompt = 'Create a machine policy target called "Linux Server".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_worker(self):
+        prompt = 'Create a worker called "Linux Server".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_worker_pool(self):
+        prompt = 'Create a worker pool called "Linux Server".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_lifecycle(self):
+        prompt = 'Create a lifecycle target called "DevSecOps".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_script_module(self):
+        prompt = 'Create a script module called "Sort Array".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_step_template(self):
+        prompt = 'Create a step template called "Sort Array".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_git_credential(self):
+        prompt = 'Create a git credential called "GitLab".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_github_connection(self):
+        prompt = 'Create a github connection called "GitLab".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_machine_proxy(self):
+        prompt = 'Create a machine proxy called "Squid".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

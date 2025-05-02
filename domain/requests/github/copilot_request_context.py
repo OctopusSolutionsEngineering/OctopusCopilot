@@ -7,7 +7,6 @@ from azure.core.exceptions import HttpResponseError
 
 from domain.b64.b64_encoder import decode_string_b64
 from domain.config.database import get_functions_connection_string
-from domain.config.servers import get_admin_servers
 from domain.config.storyblok import get_storyblok_token
 from domain.config.users import get_admin_users
 from domain.config.zendesk import get_zendesk_user, get_zendesk_token
@@ -17,10 +16,9 @@ from domain.exceptions.request_failed import GitHubRequestFailed
 from domain.exceptions.slack_not_logged_in import SlackTokenInvalid
 from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyInvalid
-from domain.jwt.oidc import parse_jwt
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_logging import log_query
-from domain.security.security import is_admin_user, is_admin_server
+from domain.security.security import is_admin_user
 from domain.tools.githubactions.approve_manual_intervention import (
     approve_manual_intervention_callback,
     approve_manual_intervention_confirm_callback_wrapper,
@@ -128,6 +126,9 @@ from domain.tools.wrapper.octolint_unused_tenants import octolint_unused_tenants
 from domain.tools.wrapper.octolint_unused_variables import (
     octolint_unused_variables_wrapper,
 )
+from domain.tools.wrapper.octopusresources.create_machine_proxy import (
+    create_machine_proxy_wrapper,
+)
 from domain.tools.wrapper.project_dashboard_wrapper import (
     show_project_dashboard_wrapper,
 )
@@ -136,13 +137,39 @@ from domain.tools.wrapper.project_variables import (
     answer_project_variables_wrapper,
     answer_project_variables_usage_wrapper,
 )
-from domain.tools.wrapper.projects.create_account import create_account_wrapper
-from domain.tools.wrapper.projects.create_certificate import create_certificate_wrapper
-from domain.tools.wrapper.projects.create_environment import create_environment_wrapper
-from domain.tools.wrapper.projects.create_feed import create_feed_wrapper
+from domain.tools.wrapper.octopusresources.create_account import create_account_wrapper
+from domain.tools.wrapper.octopusresources.create_certificate import (
+    create_certificate_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_environment import (
+    create_environment_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_feed import create_feed_wrapper
+from domain.tools.wrapper.octopusresources.create_git_credential import (
+    create_git_credential_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_github_connection import (
+    create_github_connection_wrapper,
+)
 from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_wrapper
-from domain.tools.wrapper.projects.create_target import create_target_wrapper
-from domain.tools.wrapper.projects.create_tenant import create_tenant_wrapper
+from domain.tools.wrapper.octopusresources.create_lifecycle import (
+    create_lifecycle_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_machine_policy import (
+    create_machine_policy_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_script_module import (
+    create_script_module_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_step_template import (
+    create_step_template_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_target import create_target_wrapper
+from domain.tools.wrapper.octopusresources.create_tenant import create_tenant_wrapper
+from domain.tools.wrapper.octopusresources.create_worker import create_worker_wrapper
+from domain.tools.wrapper.octopusresources.create_worker_pool import (
+    create_worker_pool_wrapper,
+)
 from domain.tools.wrapper.reject_manual_intervention import (
     reject_manual_intervention_wrapper,
 )
@@ -157,7 +184,7 @@ from domain.tools.wrapper.suggest_solution import suggest_solution_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.tools.wrapper.task_summary_wrapper import show_task_summary_wrapper
 from infrastructure.github import get_github_user
-from infrastructure.octopus import logging_wrapper, get_current_user
+from infrastructure.octopus import get_current_user
 from infrastructure.users import get_users_details, get_users_slack_details
 
 logger = configure_logging(__name__)
@@ -978,6 +1005,69 @@ def build_form_tools(query, req: func.HttpRequest):
             ),
             FunctionDefinition(
                 create_environment_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
+            ),
+            FunctionDefinition(
+                create_machine_policy_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
+            ),
+            FunctionDefinition(
+                create_worker_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
+            ),
+            FunctionDefinition(
+                create_worker_pool_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
+            ),
+            FunctionDefinition(
+                create_lifecycle_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
+            ),
+            FunctionDefinition(
+                create_script_module_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
+            ),
+            FunctionDefinition(
+                create_git_credential_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
+            ),
+            FunctionDefinition(
+                create_github_connection_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
+            ),
+            FunctionDefinition(
+                create_machine_proxy_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
+            ),
+            FunctionDefinition(
+                create_step_template_wrapper(
                     query,
                     callback=unsupported_resource,
                     logging=log_query,
