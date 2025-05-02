@@ -446,7 +446,7 @@ class CopilotChatTest(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_count_projects(self):
-        prompt = "How many projects are there in this space?"
+        prompt = "How many octopusresources are there in this space?"
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 

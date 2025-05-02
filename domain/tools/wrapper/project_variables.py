@@ -2,7 +2,9 @@ from domain.messages.general import build_hcl_prompt
 
 
 def answer_project_variables_usage_wrapper(original_query, callback, logging=None):
-    def answer_project_variables_usage(space=None, projects=None, variables=None, **kwargs):
+    def answer_project_variables_usage(
+        space=None, projects=None, variables=None, **kwargs
+    ):
         """Answers a question where variables are used in a project or if they are unused.
 
         Args:

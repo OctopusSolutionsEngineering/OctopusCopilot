@@ -3,25 +3,35 @@ from domain.query.query_inspector import exclude_all_environments
 
 
 def answer_certificates_wrapper(original_query, callback, logging=None):
-    def answer_certificates(space=None, projects=None, runbooks=None, targets=None,
-                            tenants=None, environments=None,
-                            accounts=None, certificates=None,
-                            workerpools=None, machinepolicies=None, tagsets=None,
-                            steps=None, **kwargs):
+    def answer_certificates(
+        space=None,
+        projects=None,
+        runbooks=None,
+        targets=None,
+        tenants=None,
+        environments=None,
+        accounts=None,
+        certificates=None,
+        workerpools=None,
+        machinepolicies=None,
+        tagsets=None,
+        steps=None,
+        **kwargs,
+    ):
         """Answers a general query about certificates in an Octopus space.
-Args:
-space: Space name
-projects: project names
-runbooks: runbook names
-targets: target/machine names
-tenants: tenant names
-environments: environment names
-accounts: account names
-certificates: certificate names
-workerpools: worker pool names
-machinepolicies: machine policy names
-tagsets: tenant tag set names
-steps: step names"""
+        Args:
+        space: Space name
+        projects: project names
+        runbooks: runbook names
+        targets: target/machine names
+        tenants: tenant names
+        environments: environment names
+        accounts: account names
+        certificates: certificate names
+        workerpools: worker pool names
+        machinepolicies: machine policy names
+        tagsets: tenant tag set names
+        steps: step names"""
 
         if logging:
             logging("Enter:", "answer_targets")
@@ -194,22 +204,45 @@ The targets that belong to the "Demo" space are:
             if logging:
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
-        messages = build_hcl_prompt([
-            ("system",
-             "Certificates that have an empty \"environments\" attribute are not scoped to any environment and therefore belong to all environments."),
-            ("system",
-             "Questions asking about certificates that are scoped to a specific environment must include unscoped certificates in the answer."),
-            ("user", few_shot)
-        ])
+        messages = build_hcl_prompt(
+            [
+                (
+                    "system",
+                    'Certificates that have an empty "environments" attribute are not scoped to any environment and therefore belong to all environments.',
+                ),
+                (
+                    "system",
+                    "Questions asking about certificates that are scoped to a specific environment must include unscoped certificates in the answer.",
+                ),
+                ("user", few_shot),
+            ]
+        )
 
         # Certificates are scoped the named environments or unscoped. However, the context will appear the same
         # for an unscoped certificate and a scoped certificate that does not have the associated environments in the
         # context - both certificates will have empty environments array.
         # So if the query mentioned environments, include the environments in the context.
-        include_environments = ["<all>"] if not exclude_all_environments(original_query, environments) else []
+        include_environments = (
+            ["<all>"]
+            if not exclude_all_environments(original_query, environments)
+            else []
+        )
 
-        return callback(original_query, messages, space, projects, runbooks, targets,
-                        tenants, include_environments, accounts, certificates, workerpools, machinepolicies, tagsets,
-                        steps)
+        return callback(
+            original_query,
+            messages,
+            space,
+            projects,
+            runbooks,
+            targets,
+            tenants,
+            include_environments,
+            accounts,
+            certificates,
+            workerpools,
+            machinepolicies,
+            tagsets,
+            steps,
+        )
 
     return answer_certificates

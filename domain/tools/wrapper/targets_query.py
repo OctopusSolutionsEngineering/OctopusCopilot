@@ -2,27 +2,37 @@ from domain.messages.general import build_hcl_prompt
 
 
 def answer_machines_wrapper(original_query, callback, logging=None):
-    def answer_machines(space=None, projects=None, runbooks=None, targets=None,
-                        tenants=None, environments=None,
-                        accounts=None, certificates=None,
-                        workerpools=None, machinepolicies=None, tagsets=None,
-                        steps=None, **kwargs):
+    def answer_machines(
+        space=None,
+        projects=None,
+        runbooks=None,
+        targets=None,
+        tenants=None,
+        environments=None,
+        accounts=None,
+        certificates=None,
+        workerpools=None,
+        machinepolicies=None,
+        tagsets=None,
+        steps=None,
+        **kwargs,
+    ):
         """Answers a general query about machines, targets, agents, or machine policies in an Octopus space.
-           This does not provide details about channels.
+                   This does not provide details about channels.
 
-Args:
-space: Space name
-projects: project names
-runbooks: runbook names
-targets: target/machine names
-tenants: tenant names
-environments: environment names
-accounts: account names
-certificates: certificate names
-workerpools: worker pool names
-machinepolicies: machine policy names
-tagsets: tenant tag set names
-steps: step names"""
+        Args:
+        space: Space name
+        projects: project names
+        runbooks: runbook names
+        targets: target/machine names
+        tenants: tenant names
+        environments: environment names
+        accounts: account names
+        certificates: certificate names
+        workerpools: worker pool names
+        machinepolicies: machine policy names
+        tagsets: tenant tag set names
+        steps: step names"""
 
         if logging:
             logging("Enter:", "answer_machines")
@@ -207,7 +217,21 @@ The targets that belong to the "Demo" space are:
 
         messages = build_hcl_prompt([("user", few_shot)])
 
-        return callback(original_query, messages, space, projects, runbooks, targets,
-                        tenants, environments, accounts, certificates, workerpools, machinepolicies, tagsets, steps)
+        return callback(
+            original_query,
+            messages,
+            space,
+            projects,
+            runbooks,
+            targets,
+            tenants,
+            environments,
+            accounts,
+            certificates,
+            workerpools,
+            machinepolicies,
+            tagsets,
+            steps,
+        )
 
     return answer_machines

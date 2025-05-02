@@ -33,7 +33,9 @@ def retry_func(retry_state):
 
     # Calculate the results on the last test
     if retry_state.retry_object.statistics["attempt_number"] == test_count:
-        success_percent = retry_state.retry_object.statistics['success_count'] / test_count * 100
+        success_percent = (
+            retry_state.retry_object.statistics["success_count"] / test_count * 100
+        )
         print("")
         if test_count == 0:
             print("Success percent: 0.0%")
@@ -79,28 +81,33 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "The supplied HCL context provides details on projects, environments, channels, and tenants. "
-             + "The supplied JSON context provides details on deployments and releases. "
-             + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
-             + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
-             + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
-             + "I’m going to tip $500 for a better solution!"),
+            (
+                "system",
+                "The supplied HCL context provides details on projects, environments, channels, and tenants. "
+                + "The supplied JSON context provides details on deployments and releases. "
+                + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
+                + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
+                + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
+                + "I’m going to tip $500 for a better solution!",
+            ),
             ("user", "{input}"),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
             ("user", "JSON: ###\n{json}\n###"),
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/octofx_production_deployments.tf', 'r') as file:
+        with open("context/octofx_production_deployments.tf", "r") as file:
             hcl = file.read()
 
-        with open('context/octofx_production_deployments.json', 'r') as file:
+        with open("context/octofx_production_deployments.json", "r") as file:
             json = file.read()
 
-        query = "What is the release version of the latest deployment to the \"Production\" environment for the project \"OctoFX\"?"
+        query = 'What is the release version of the latest deployment to the "Production" environment for the project "OctoFX"?'
 
-        result = llm_message_query(messages, {"json": json, "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": json, "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
@@ -128,29 +135,34 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "The supplied HCL context provides details on projects, environments, channels, and tenants. "
-             + "The supplied JSON context provides details on deployments and releases. "
-             + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
-             + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
-             + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
-             + "I’m going to tip $500 for a better solution! "
-             + "Let's think about this step by step."),
+            (
+                "system",
+                "The supplied HCL context provides details on projects, environments, channels, and tenants. "
+                + "The supplied JSON context provides details on deployments and releases. "
+                + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
+                + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
+                + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
+                + "I’m going to tip $500 for a better solution! "
+                + "Let's think about this step by step.",
+            ),
             ("user", "{input}"),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
             ("user", "JSON: ###\n{json}\n###"),
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/octofx_production_deployments.tf', 'r') as file:
+        with open("context/octofx_production_deployments.tf", "r") as file:
             hcl = file.read()
 
-        with open('context/octofx_production_deployments.json', 'r') as file:
+        with open("context/octofx_production_deployments.json", "r") as file:
             json = file.read()
 
-        query = "What is the release version of the latest deployment to the \"Production\" environment for the project \"OctoFX\"?"
+        query = 'What is the release version of the latest deployment to the "Production" environment for the project "OctoFX"?'
 
-        result = llm_message_query(messages, {"json": json, "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": json, "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
@@ -178,29 +190,34 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "The supplied HCL context provides details on projects, environments, channels, and tenants. "
-             + "The supplied JSON context provides details on deployments and releases. "
-             + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
-             + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
-             + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
-             + "I’m going to tip $500 for a better solution! "
-             + "Let's think about this step by step."),
+            (
+                "system",
+                "The supplied HCL context provides details on projects, environments, channels, and tenants. "
+                + "The supplied JSON context provides details on deployments and releases. "
+                + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
+                + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
+                + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
+                + "I’m going to tip $500 for a better solution! "
+                + "Let's think about this step by step.",
+            ),
             ("user", "{input}"),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
             ("user", "JSON: ###\n{json}\n###"),
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/octofx_production_deployments.tf', 'r') as file:
+        with open("context/octofx_production_deployments.tf", "r") as file:
             hcl = file.read()
 
-        with open('context/octofx_production_deployments.json', 'r') as file:
+        with open("context/octofx_production_deployments.json", "r") as file:
             json = file.read()
 
-        query = "What is the version of the latest deployment to the \"Production\" environment for the project \"OctoFX\"?"
+        query = 'What is the version of the latest deployment to the "Production" environment for the project "OctoFX"?'
 
-        result = llm_message_query(messages, {"json": json, "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": json, "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
@@ -229,29 +246,34 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "The supplied HCL context provides details on projects, environments, channels, and tenants. "
-             + "The supplied JSON context provides details on deployments and releases. "
-             + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
-             + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
-             + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
-             + "I’m going to tip $500 for a better solution! "
-             + "Let's think about this step by step."),
+            (
+                "system",
+                "The supplied HCL context provides details on projects, environments, channels, and tenants. "
+                + "The supplied JSON context provides details on deployments and releases. "
+                + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
+                + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
+                + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
+                + "I’m going to tip $500 for a better solution! "
+                + "Let's think about this step by step.",
+            ),
             ("user", "{input}"),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
             ("user", "JSON: ###\n{json}\n###"),
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/octofx_development_deployments.tf', 'r') as file:
+        with open("context/octofx_development_deployments.tf", "r") as file:
             hcl = file.read()
 
-        with open('context/octofx_development_deployments.json', 'r') as file:
+        with open("context/octofx_development_deployments.json", "r") as file:
             json = file.read()
 
-        query = "What is the version of the latest deployment to the \"Development\" environment for the project \"OctoFX\"?"
+        query = 'What is the version of the latest deployment to the "Development" environment for the project "OctoFX"?'
 
-        result = llm_message_query(messages, {"json": json, "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": json, "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
@@ -278,29 +300,34 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "The supplied HCL context provides details on projects, environments, channels, and tenants. "
-             + "The supplied JSON context provides details on deployments and releases. "
-             + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
-             + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
-             + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
-             + "I’m going to tip $500 for a better solution! "
-             + "Let's think about this step by step."),
+            (
+                "system",
+                "The supplied HCL context provides details on projects, environments, channels, and tenants. "
+                + "The supplied JSON context provides details on deployments and releases. "
+                + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
+                + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
+                + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
+                + "I’m going to tip $500 for a better solution! "
+                + "Let's think about this step by step.",
+            ),
             ("user", "{input}"),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
             ("user", "JSON: ###\n{json}\n###"),
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/octofx_development_deployments.tf', 'r') as file:
+        with open("context/octofx_development_deployments.tf", "r") as file:
             hcl = file.read()
 
-        with open('context/octofx_development_deployments.json', 'r') as file:
+        with open("context/octofx_development_deployments.json", "r") as file:
             json = file.read()
 
-        query = "What is the latest deployment to the \"Development\" environment for the project \"OctoFX\"?"
+        query = 'What is the latest deployment to the "Development" environment for the project "OctoFX"?'
 
-        result = llm_message_query(messages, {"json": json, "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": json, "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
@@ -330,29 +357,34 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "The supplied HCL context provides details on projects, environments, channels, and tenants. "
-             + "The supplied JSON context provides details on deployments and releases. "
-             + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
-             + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
-             + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
-             + "I’m going to tip $500 for a better solution! "
-             + "Let's think about this step by step."),
+            (
+                "system",
+                "The supplied HCL context provides details on projects, environments, channels, and tenants. "
+                + "The supplied JSON context provides details on deployments and releases. "
+                + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
+                + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
+                + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
+                + "I’m going to tip $500 for a better solution! "
+                + "Let's think about this step by step.",
+            ),
             ("user", "{input}"),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
             ("user", "JSON: ###\n{json}\n###"),
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/octofx_development_deployments_corrupted.tf', 'r') as file:
+        with open("context/octofx_development_deployments_corrupted.tf", "r") as file:
             hcl = file.read()
 
-        with open('context/octofx_development_deployments.json', 'r') as file:
+        with open("context/octofx_development_deployments.json", "r") as file:
             json = file.read()
 
-        query = "What is the version of the latest deployment to the \"Development\" environment for the project \"OctoFX\"?"
+        query = 'What is the version of the latest deployment to the "Development" environment for the project "OctoFX"?'
 
-        result = llm_message_query(messages, {"json": json, "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": json, "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
@@ -386,29 +418,34 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "The supplied HCL context provides details on projects, environments, channels, and tenants. "
-             + "The supplied JSON context provides details on deployments and releases. "
-             + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
-             + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
-             + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
-             + "I’m going to tip $500 for a better solution! "
-             + "Let's think about this step by step."),
+            (
+                "system",
+                "The supplied HCL context provides details on projects, environments, channels, and tenants. "
+                + "The supplied JSON context provides details on deployments and releases. "
+                + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
+                + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
+                + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
+                + "I’m going to tip $500 for a better solution! "
+                + "Let's think about this step by step.",
+            ),
             ("user", "{input}"),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
             ("user", "JSON: ###\n{json}\n###"),
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/octofx_development_deployments_corrupted.tf', 'r') as file:
+        with open("context/octofx_development_deployments_corrupted.tf", "r") as file:
             hcl = file.read()
 
-        with open('context/octofx_development_deployments.json', 'r') as file:
+        with open("context/octofx_development_deployments.json", "r") as file:
             json = file.read()
 
-        query = "What is the latest deployment to the \"Development\" environment for the project \"OctoFX\"?"
+        query = 'What is the latest deployment to the "Development" environment for the project "OctoFX"?'
 
-        result = llm_message_query(messages, {"json": json, "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": json, "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
@@ -434,26 +471,29 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "The supplied HCL context provides details on projects, environments, channels, and tenants. "
-             + "The supplied JSON context provides details on deployments and releases. "
-             + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
-             + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
-             + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
-             + "I’m going to tip $500 for a better solution!"),
+            (
+                "system",
+                "The supplied HCL context provides details on projects, environments, channels, and tenants. "
+                + "The supplied JSON context provides details on deployments and releases. "
+                + "You must link the deployments and releases in the JSON to the projects, environments, channels, and tenants in the HCL. "
+                + "You must assume the resources in the HCL and JSON belong to the same space as each other. "
+                + "You will be penalized for mentioning Terraform or HCL in the answer or showing any Terraform snippets in the answer. "
+                + "I’m going to tip $500 for a better solution!",
+            ),
             ("user", "{input}"),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
             ("user", "JSON: ###\n{json}\n###"),
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/octofx_production_deployments.tf', 'r') as file:
+        with open("context/octofx_production_deployments.tf", "r") as file:
             hcl = file.read()
 
-        with open('context/octofx_production_deployments.json', 'r') as file:
+        with open("context/octofx_production_deployments.json", "r") as file:
             json = file.read()
 
-        query = "What is the release version of the latest deployment to the \"Production\" environment for the project \"OctoFX\"?"
+        query = 'What is the release version of the latest deployment to the "Production" environment for the project "OctoFX"?'
 
         few_shot = f"""
 Task: What is the release version of the latest deployment of the "My Project" project to the "MyEnvironment" environment for the "MyChannel" channel and the "My Tenant" tenant?
@@ -529,7 +569,9 @@ The release version of the latest deployment of the "My Project" project to the 
 Question: {query}
         """
 
-        result = llm_message_query(messages, {"json": json, "hcl": hcl, "context": None, "input": few_shot})
+        result = llm_message_query(
+            messages, {"json": json, "hcl": hcl, "context": None, "input": few_shot}
+        )
 
         print("")
         print(result)

@@ -58,6 +58,9 @@ from domain.tools.githubactions.projects.create_template_project import (
     create_template_project_callback,
     create_template_project_confirm_callback_wrapper,
 )
+from domain.tools.githubactions.projects.unsupported_resource import (
+    unsupported_resource,
+)
 from domain.tools.githubactions.provide_help import provide_help_wrapper
 from domain.tools.githubactions.reject_manual_intervention import (
     reject_manual_intervention_confirm_callback_wrapper,
@@ -133,7 +136,13 @@ from domain.tools.wrapper.project_variables import (
     answer_project_variables_wrapper,
     answer_project_variables_usage_wrapper,
 )
+from domain.tools.wrapper.projects.create_account import create_account_wrapper
+from domain.tools.wrapper.projects.create_certificate import create_certificate_wrapper
+from domain.tools.wrapper.projects.create_environment import create_environment_wrapper
+from domain.tools.wrapper.projects.create_feed import create_feed_wrapper
 from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_wrapper
+from domain.tools.wrapper.projects.create_target import create_target_wrapper
+from domain.tools.wrapper.projects.create_tenant import create_tenant_wrapper
 from domain.tools.wrapper.reject_manual_intervention import (
     reject_manual_intervention_wrapper,
 )
@@ -951,8 +960,49 @@ def build_form_tools(query, req: func.HttpRequest):
                     log_query,
                     get_redirections(req),
                     get_redirections_api_key(req),
-                )
-                or is_admin_server(get_server(req), get_admin_servers()),
+                ),
+            ),
+            FunctionDefinition(
+                create_feed_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
+            ),
+            FunctionDefinition(
+                create_tenant_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
+            ),
+            FunctionDefinition(
+                create_environment_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
+            ),
+            FunctionDefinition(
+                create_certificate_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
+            ),
+            FunctionDefinition(
+                create_target_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
+            ),
+            FunctionDefinition(
+                create_account_wrapper(
+                    query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
             ),
         ],
         fallback=FunctionDefinitions(docs_functions),

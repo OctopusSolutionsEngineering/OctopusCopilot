@@ -33,7 +33,9 @@ def retry_func(retry_state):
 
     # Calculate the results on the last test
     if retry_state.retry_object.statistics["attempt_number"] == test_count:
-        success_percent = retry_state.retry_object.statistics['success_count'] / test_count * 100
+        success_percent = (
+            retry_state.retry_object.statistics["success_count"] / test_count * 100
+        )
         print("")
         if test_count == 0:
             print("Success percent: 0.0%")
@@ -92,56 +94,90 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "You are methodical agent who understands Terraform modules defining Octopus Deploy resources."),
-            ("system",
-             "The supplied HCL context provides details on Octopus resources like "
-             + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
-             + "library variable sets etc."),
-            ("system",
-             "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space."),
-            ("system",
-             "You must assume the supplied HCL is a complete and accurate representation of the Octopus space."),
-            ("system",
-             "You must assume all resources in the supplied HCL belong to the space mentioned in the question."),
+            (
+                "system",
+                "You are methodical agent who understands Terraform modules defining Octopus Deploy resources.",
+            ),
+            (
+                "system",
+                "The supplied HCL context provides details on Octopus resources like "
+                + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
+                + "library variable sets etc.",
+            ),
+            (
+                "system",
+                "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume the supplied HCL is a complete and accurate representation of the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume all resources in the supplied HCL belong to the space mentioned in the question.",
+            ),
             # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
             # resulted in the LLM providing instructions on how to find the information rather than presenting
             # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
             # The phrase "what" seems to be important in the question.
-            ("system",
-             "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
-             + "are asking you to return 'what' the value of the requested information is."),
+            (
+                "system",
+                "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
+                + "are asking you to return 'what' the value of the requested information is.",
+            ),
             # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
             # guide the LLM to provide as much information as possible in the answer, and not treat missing
             # information as an error.
-            ("system",
-             "Your answer must include any information you found in the HCL context relevant to the question."),
-            ("system",
-             "Your answer must clearly state if the supplied context does not provide the requested information."),
-            ("system", "You must assume a missing HCL attribute means the value is empty."),
-            ("system",
-             "You must provide a response even if the context does not provide some of the requested information."),
-            ("system",
-             "It is ok if you can not find most of the requested information in the context - "
-             + "just provide what you can find."),
+            (
+                "system",
+                "Your answer must include any information you found in the HCL context relevant to the question.",
+            ),
+            (
+                "system",
+                "Your answer must clearly state if the supplied context does not provide the requested information.",
+            ),
+            (
+                "system",
+                "You must assume a missing HCL attribute means the value is empty.",
+            ),
+            (
+                "system",
+                "You must provide a response even if the context does not provide some of the requested information.",
+            ),
+            (
+                "system",
+                "It is ok if you can not find most of the requested information in the context - "
+                + "just provide what you can find.",
+            ),
             # The LLM will often provide a code sample that describes how to find the answer if the context does not
             # provide the requested information.
-            ("system", "You will be penalized for providing a code sample as the answer."),
+            (
+                "system",
+                "You will be penalized for providing a code sample as the answer.",
+            ),
             # The LLM didn't know how to identify all the targets
-            ("system", "You must treat the terms \"machines\", \"targets\", and \"agents\" as interchangeable. "),
-            ("system", "The following list of HCL resources define targets:\n"
-             + "- octopusdeploy_listening_tentacle_deployment_target\n"
-             + "- octopusdeploy_polling_tentacle_deployment_target\n"
-             + "- octopusdeploy_cloud_region_deployment_target\n"
-             + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
-             + "- octopusdeploy_ssh_connection_deployment_target\n"
-             + "- octopusdeploy_offline_package_drop_deployment_target\n"
-             + "- octopusdeploy_azure_cloud_service_deployment_target\n"
-             + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
-             + "- octopusdeploy_azure_web_app_deployment_target"),
-            ("system",
-             "You must assume that if a target's \"environments\" attribute is empty, "
-             + "it is not related to the environment in the question. "),
+            (
+                "system",
+                'You must treat the terms "machines", "targets", and "agents" as interchangeable. ',
+            ),
+            (
+                "system",
+                "The following list of HCL resources define targets:\n"
+                + "- octopusdeploy_listening_tentacle_deployment_target\n"
+                + "- octopusdeploy_polling_tentacle_deployment_target\n"
+                + "- octopusdeploy_cloud_region_deployment_target\n"
+                + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
+                + "- octopusdeploy_ssh_connection_deployment_target\n"
+                + "- octopusdeploy_offline_package_drop_deployment_target\n"
+                + "- octopusdeploy_azure_cloud_service_deployment_target\n"
+                + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
+                + "- octopusdeploy_azure_web_app_deployment_target",
+            ),
+            (
+                "system",
+                'You must assume that if a target\'s "environments" attribute is empty, '
+                + "it is not related to the environment in the question. ",
+            ),
             # Sparkle that may improve the quality of the responses.
             ("system", "I’m going to tip $500 for a better solution!"),
             # Get the LLM to implement a chain-of-thought
@@ -149,24 +185,35 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "Answer the question using the HCL below."),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/matthew_casperson_development_machines.tf', 'r') as file:
+        with open("context/matthew_casperson_development_machines.tf", "r") as file:
             hcl = file.read()
 
-        query = (
-            f"List the unique names and IDs of all machines belonging to the \"Development\" environment")
+        query = f'List the unique names and IDs of all machines belonging to the "Development" environment'
 
-        result = llm_message_query(messages, {"json": "", "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": "", "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
-                    "pos-dev-client-5", "pos-dev-server"]
+        machines = [
+            "azure-iis",
+            "pos-dev-client-1",
+            "pos-dev-client-2",
+            "pos-dev-client-3",
+            "pos-dev-client-4",
+            "pos-dev-client-5",
+            "pos-dev-server",
+        ]
 
         for machine in machines:
-            self.assertTrue(machine in result, f"Expected \"{machine}\" in result:\n{result}")
+            self.assertTrue(
+                machine in result, f'Expected "{machine}" in result:\n{result}'
+            )
 
     @retry(retry=retry_func)
     def test_get_development_machines_2(self):
@@ -191,56 +238,90 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "You are methodical agent who understands Terraform modules defining Octopus Deploy resources."),
-            ("system",
-             "The supplied HCL context provides details on Octopus resources like "
-             + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
-             + "library variable sets etc."),
-            ("system",
-             "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space."),
-            ("system",
-             "You must assume the supplied HCL is a complete and accurate representation of the Octopus space."),
-            ("system",
-             "You must assume all resources in the supplied HCL belong to the space mentioned in the question."),
+            (
+                "system",
+                "You are methodical agent who understands Terraform modules defining Octopus Deploy resources.",
+            ),
+            (
+                "system",
+                "The supplied HCL context provides details on Octopus resources like "
+                + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
+                + "library variable sets etc.",
+            ),
+            (
+                "system",
+                "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume the supplied HCL is a complete and accurate representation of the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume all resources in the supplied HCL belong to the space mentioned in the question.",
+            ),
             # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
             # resulted in the LLM providing instructions on how to find the information rather than presenting
             # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
             # The phrase "what" seems to be important in the question.
-            ("system",
-             "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
-             + "are asking you to return 'what' the value of the requested information is."),
+            (
+                "system",
+                "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
+                + "are asking you to return 'what' the value of the requested information is.",
+            ),
             # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
             # guide the LLM to provide as much information as possible in the answer, and not treat missing
             # information as an error.
-            ("system",
-             "Your answer must include any information you found in the HCL context relevant to the question."),
-            ("system",
-             "Your answer must clearly state if the supplied context does not provide the requested information."),
-            ("system", "You must assume a missing HCL attribute means the value is empty."),
-            ("system",
-             "You must provide a response even if the context does not provide some of the requested information."),
-            ("system",
-             "It is ok if you can not find most of the requested information in the context - "
-             + "just provide what you can find."),
+            (
+                "system",
+                "Your answer must include any information you found in the HCL context relevant to the question.",
+            ),
+            (
+                "system",
+                "Your answer must clearly state if the supplied context does not provide the requested information.",
+            ),
+            (
+                "system",
+                "You must assume a missing HCL attribute means the value is empty.",
+            ),
+            (
+                "system",
+                "You must provide a response even if the context does not provide some of the requested information.",
+            ),
+            (
+                "system",
+                "It is ok if you can not find most of the requested information in the context - "
+                + "just provide what you can find.",
+            ),
             # The LLM will often provide a code sample that describes how to find the answer if the context does not
             # provide the requested information.
-            ("system", "You will be penalized for providing a code sample as the answer."),
+            (
+                "system",
+                "You will be penalized for providing a code sample as the answer.",
+            ),
             # The LLM didn't know how to identify all the targets
-            ("system", "You must treat the terms \"machines\", \"targets\", and \"agents\" as interchangeable. "),
-            ("system", "The following list of HCL resources define targets:\n"
-             + "- octopusdeploy_listening_tentacle_deployment_target\n"
-             + "- octopusdeploy_polling_tentacle_deployment_target\n"
-             + "- octopusdeploy_cloud_region_deployment_target\n"
-             + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
-             + "- octopusdeploy_ssh_connection_deployment_target\n"
-             + "- octopusdeploy_offline_package_drop_deployment_target\n"
-             + "- octopusdeploy_azure_cloud_service_deployment_target\n"
-             + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
-             + "- octopusdeploy_azure_web_app_deployment_target"),
-            ("system",
-             "You must assume that if a target's \"environments\" attribute is empty, "
-             + "it is not related to the environment in the question. "),
+            (
+                "system",
+                'You must treat the terms "machines", "targets", and "agents" as interchangeable. ',
+            ),
+            (
+                "system",
+                "The following list of HCL resources define targets:\n"
+                + "- octopusdeploy_listening_tentacle_deployment_target\n"
+                + "- octopusdeploy_polling_tentacle_deployment_target\n"
+                + "- octopusdeploy_cloud_region_deployment_target\n"
+                + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
+                + "- octopusdeploy_ssh_connection_deployment_target\n"
+                + "- octopusdeploy_offline_package_drop_deployment_target\n"
+                + "- octopusdeploy_azure_cloud_service_deployment_target\n"
+                + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
+                + "- octopusdeploy_azure_web_app_deployment_target",
+            ),
+            (
+                "system",
+                'You must assume that if a target\'s "environments" attribute is empty, '
+                + "it is not related to the environment in the question. ",
+            ),
             # Sparkle that may improve the quality of the responses.
             ("system", "I’m going to tip $500 for a better solution!"),
             # Get the LLM to implement a chain-of-thought
@@ -248,24 +329,37 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "Answer the question using the HCL below."),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/matthew_casperson_development_machines_azure_second.tf', 'r') as file:
+        with open(
+            "context/matthew_casperson_development_machines_azure_second.tf", "r"
+        ) as file:
             hcl = file.read()
 
-        query = (
-            f"List the unique names and IDs of all machines belonging to the \"Development\" environment")
+        query = f'List the unique names and IDs of all machines belonging to the "Development" environment'
 
-        result = llm_message_query(messages, {"json": "", "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": "", "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
-                    "pos-dev-client-5", "pos-dev-server"]
+        machines = [
+            "azure-iis",
+            "pos-dev-client-1",
+            "pos-dev-client-2",
+            "pos-dev-client-3",
+            "pos-dev-client-4",
+            "pos-dev-client-5",
+            "pos-dev-server",
+        ]
 
         for machine in machines:
-            self.assertTrue(machine in result, f"Expected \"{machine}\" in result:\n{result}")
+            self.assertTrue(
+                machine in result, f'Expected "{machine}" in result:\n{result}'
+            )
 
     @retry(retry=retry_func)
     def test_get_development_machines_3(self):
@@ -288,56 +382,90 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "You are methodical agent who understands Terraform modules defining Octopus Deploy resources."),
-            ("system",
-             "The supplied HCL context provides details on Octopus resources like "
-             + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
-             + "library variable sets etc."),
-            ("system",
-             "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space."),
-            ("system",
-             "You must assume the supplied HCL is a complete and accurate representation of the Octopus space."),
-            ("system",
-             "You must assume all resources in the supplied HCL belong to the space mentioned in the question."),
+            (
+                "system",
+                "You are methodical agent who understands Terraform modules defining Octopus Deploy resources.",
+            ),
+            (
+                "system",
+                "The supplied HCL context provides details on Octopus resources like "
+                + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
+                + "library variable sets etc.",
+            ),
+            (
+                "system",
+                "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume the supplied HCL is a complete and accurate representation of the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume all resources in the supplied HCL belong to the space mentioned in the question.",
+            ),
             # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
             # resulted in the LLM providing instructions on how to find the information rather than presenting
             # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
             # The phrase "what" seems to be important in the question.
-            ("system",
-             "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
-             + "are asking you to return 'what' the value of the requested information is."),
+            (
+                "system",
+                "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
+                + "are asking you to return 'what' the value of the requested information is.",
+            ),
             # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
             # guide the LLM to provide as much information as possible in the answer, and not treat missing
             # information as an error.
-            ("system",
-             "Your answer must include any information you found in the HCL context relevant to the question."),
-            ("system",
-             "Your answer must clearly state if the supplied context does not provide the requested information."),
-            ("system", "You must assume a missing HCL attribute means the value is empty."),
-            ("system",
-             "You must provide a response even if the context does not provide some of the requested information."),
-            ("system",
-             "It is ok if you can not find most of the requested information in the context - "
-             + "just provide what you can find."),
+            (
+                "system",
+                "Your answer must include any information you found in the HCL context relevant to the question.",
+            ),
+            (
+                "system",
+                "Your answer must clearly state if the supplied context does not provide the requested information.",
+            ),
+            (
+                "system",
+                "You must assume a missing HCL attribute means the value is empty.",
+            ),
+            (
+                "system",
+                "You must provide a response even if the context does not provide some of the requested information.",
+            ),
+            (
+                "system",
+                "It is ok if you can not find most of the requested information in the context - "
+                + "just provide what you can find.",
+            ),
             # The LLM will often provide a code sample that describes how to find the answer if the context does not
             # provide the requested information.
-            ("system", "You will be penalized for providing a code sample as the answer."),
+            (
+                "system",
+                "You will be penalized for providing a code sample as the answer.",
+            ),
             # The LLM didn't know how to identify all the targets
-            ("system", "You must treat the terms \"machines\", \"targets\", and \"agents\" as interchangeable. "),
-            ("system", "The following list of HCL resources define targets:\n"
-             + "- octopusdeploy_listening_tentacle_deployment_target\n"
-             + "- octopusdeploy_polling_tentacle_deployment_target\n"
-             + "- octopusdeploy_cloud_region_deployment_target\n"
-             + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
-             + "- octopusdeploy_ssh_connection_deployment_target\n"
-             + "- octopusdeploy_offline_package_drop_deployment_target\n"
-             + "- octopusdeploy_azure_cloud_service_deployment_target\n"
-             + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
-             + "- octopusdeploy_azure_web_app_deployment_target"),
-            ("system",
-             "You must assume that if a target's \"environments\" attribute is empty, "
-             + "it is not related to the environment in the question. "),
+            (
+                "system",
+                'You must treat the terms "machines", "targets", and "agents" as interchangeable. ',
+            ),
+            (
+                "system",
+                "The following list of HCL resources define targets:\n"
+                + "- octopusdeploy_listening_tentacle_deployment_target\n"
+                + "- octopusdeploy_polling_tentacle_deployment_target\n"
+                + "- octopusdeploy_cloud_region_deployment_target\n"
+                + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
+                + "- octopusdeploy_ssh_connection_deployment_target\n"
+                + "- octopusdeploy_offline_package_drop_deployment_target\n"
+                + "- octopusdeploy_azure_cloud_service_deployment_target\n"
+                + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
+                + "- octopusdeploy_azure_web_app_deployment_target",
+            ),
+            (
+                "system",
+                'You must assume that if a target\'s "environments" attribute is empty, '
+                + "it is not related to the environment in the question. ",
+            ),
             # Sparkle that may improve the quality of the responses.
             ("system", "I’m going to tip $500 for a better solution!"),
             # Get the LLM to implement a chain-of-thought
@@ -345,24 +473,37 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "Answer the question using the HCL below."),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/matthew_casperson_development_machines_trimmed.tf', 'r') as file:
+        with open(
+            "context/matthew_casperson_development_machines_trimmed.tf", "r"
+        ) as file:
             hcl = file.read()
 
-        query = (
-            f"List the unique names and IDs of all machines belonging to the \"Development\" environment")
+        query = f'List the unique names and IDs of all machines belonging to the "Development" environment'
 
-        result = llm_message_query(messages, {"json": "", "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": "", "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
-                    "pos-dev-client-5", "pos-dev-server"]
+        machines = [
+            "azure-iis",
+            "pos-dev-client-1",
+            "pos-dev-client-2",
+            "pos-dev-client-3",
+            "pos-dev-client-4",
+            "pos-dev-client-5",
+            "pos-dev-server",
+        ]
 
         for machine in machines:
-            self.assertTrue(machine in result, f"Expected \"{machine}\" in result:\n{result}")
+            self.assertTrue(
+                machine in result, f'Expected "{machine}" in result:\n{result}'
+            )
 
     @retry(retry=retry_func)
     def test_get_development_machines_4(self):
@@ -385,56 +526,90 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "You are methodical agent who understands Terraform modules defining Octopus Deploy resources."),
-            ("system",
-             "The supplied HCL context provides details on Octopus resources like "
-             + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
-             + "library variable sets etc."),
-            ("system",
-             "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space."),
-            ("system",
-             "You must assume the supplied HCL is a complete and accurate representation of the Octopus space."),
-            ("system",
-             "You must assume all resources in the supplied HCL belong to the space mentioned in the question."),
+            (
+                "system",
+                "You are methodical agent who understands Terraform modules defining Octopus Deploy resources.",
+            ),
+            (
+                "system",
+                "The supplied HCL context provides details on Octopus resources like "
+                + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
+                + "library variable sets etc.",
+            ),
+            (
+                "system",
+                "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume the supplied HCL is a complete and accurate representation of the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume all resources in the supplied HCL belong to the space mentioned in the question.",
+            ),
             # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
             # resulted in the LLM providing instructions on how to find the information rather than presenting
             # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
             # The phrase "what" seems to be important in the question.
-            ("system",
-             "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
-             + "are asking you to return 'what' the value of the requested information is."),
+            (
+                "system",
+                "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
+                + "are asking you to return 'what' the value of the requested information is.",
+            ),
             # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
             # guide the LLM to provide as much information as possible in the answer, and not treat missing
             # information as an error.
-            ("system",
-             "Your answer must include any information you found in the HCL context relevant to the question."),
-            ("system",
-             "Your answer must clearly state if the supplied context does not provide the requested information."),
-            ("system", "You must assume a missing HCL attribute means the value is empty."),
-            ("system",
-             "You must provide a response even if the context does not provide some of the requested information."),
-            ("system",
-             "It is ok if you can not find most of the requested information in the context - "
-             + "just provide what you can find."),
+            (
+                "system",
+                "Your answer must include any information you found in the HCL context relevant to the question.",
+            ),
+            (
+                "system",
+                "Your answer must clearly state if the supplied context does not provide the requested information.",
+            ),
+            (
+                "system",
+                "You must assume a missing HCL attribute means the value is empty.",
+            ),
+            (
+                "system",
+                "You must provide a response even if the context does not provide some of the requested information.",
+            ),
+            (
+                "system",
+                "It is ok if you can not find most of the requested information in the context - "
+                + "just provide what you can find.",
+            ),
             # The LLM will often provide a code sample that describes how to find the answer if the context does not
             # provide the requested information.
-            ("system", "You will be penalized for providing a code sample as the answer."),
+            (
+                "system",
+                "You will be penalized for providing a code sample as the answer.",
+            ),
             # The LLM didn't know how to identify all the targets
-            ("system", "You must treat the terms \"machines\", \"targets\", and \"agents\" as interchangeable. "),
-            ("system", "The following list of HCL resources define targets:\n"
-             + "- octopusdeploy_listening_tentacle_deployment_target\n"
-             + "- octopusdeploy_polling_tentacle_deployment_target\n"
-             + "- octopusdeploy_cloud_region_deployment_target\n"
-             + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
-             + "- octopusdeploy_ssh_connection_deployment_target\n"
-             + "- octopusdeploy_offline_package_drop_deployment_target\n"
-             + "- octopusdeploy_azure_cloud_service_deployment_target\n"
-             + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
-             + "- octopusdeploy_azure_web_app_deployment_target"),
-            ("system",
-             "You must assume that if a target's \"environments\" attribute is empty, "
-             + "it is not related to the environment in the question. "),
+            (
+                "system",
+                'You must treat the terms "machines", "targets", and "agents" as interchangeable. ',
+            ),
+            (
+                "system",
+                "The following list of HCL resources define targets:\n"
+                + "- octopusdeploy_listening_tentacle_deployment_target\n"
+                + "- octopusdeploy_polling_tentacle_deployment_target\n"
+                + "- octopusdeploy_cloud_region_deployment_target\n"
+                + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
+                + "- octopusdeploy_ssh_connection_deployment_target\n"
+                + "- octopusdeploy_offline_package_drop_deployment_target\n"
+                + "- octopusdeploy_azure_cloud_service_deployment_target\n"
+                + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
+                + "- octopusdeploy_azure_web_app_deployment_target",
+            ),
+            (
+                "system",
+                'You must assume that if a target\'s "environments" attribute is empty, '
+                + "it is not related to the environment in the question. ",
+            ),
             # Sparkle that may improve the quality of the responses.
             ("system", "I’m going to tip $500 for a better solution!"),
             # Get the LLM to implement a chain-of-thought
@@ -442,24 +617,37 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "Answer the question using the HCL below."),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/matthew_casperson_development_machines_trimmed_2.tf', 'r') as file:
+        with open(
+            "context/matthew_casperson_development_machines_trimmed_2.tf", "r"
+        ) as file:
             hcl = file.read()
 
-        query = (
-            f"List the unique names and IDs of all machines belonging to the \"Development\" environment")
+        query = f'List the unique names and IDs of all machines belonging to the "Development" environment'
 
-        result = llm_message_query(messages, {"json": "", "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": "", "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
-                    "pos-dev-client-5", "pos-dev-server"]
+        machines = [
+            "azure-iis",
+            "pos-dev-client-1",
+            "pos-dev-client-2",
+            "pos-dev-client-3",
+            "pos-dev-client-4",
+            "pos-dev-client-5",
+            "pos-dev-server",
+        ]
 
         for machine in machines:
-            self.assertTrue(machine in result, f"Expected \"{machine}\" in result:\n{result}")
+            self.assertTrue(
+                machine in result, f'Expected "{machine}" in result:\n{result}'
+            )
 
     @retry(retry=retry_func)
     def test_get_development_machines_5(self):
@@ -486,56 +674,90 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "You are methodical agent who understands Terraform modules defining Octopus Deploy resources."),
-            ("system",
-             "The supplied HCL context provides details on Octopus resources like "
-             + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
-             + "library variable sets etc."),
-            ("system",
-             "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space."),
-            ("system",
-             "You must assume the supplied HCL is a complete and accurate representation of the Octopus space."),
-            ("system",
-             "You must assume all resources in the supplied HCL belong to the space mentioned in the question."),
+            (
+                "system",
+                "You are methodical agent who understands Terraform modules defining Octopus Deploy resources.",
+            ),
+            (
+                "system",
+                "The supplied HCL context provides details on Octopus resources like "
+                + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
+                + "library variable sets etc.",
+            ),
+            (
+                "system",
+                "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume the supplied HCL is a complete and accurate representation of the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume all resources in the supplied HCL belong to the space mentioned in the question.",
+            ),
             # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
             # resulted in the LLM providing instructions on how to find the information rather than presenting
             # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
             # The phrase "what" seems to be important in the question.
-            ("system",
-             "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
-             + "are asking you to return 'what' the value of the requested information is."),
+            (
+                "system",
+                "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
+                + "are asking you to return 'what' the value of the requested information is.",
+            ),
             # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
             # guide the LLM to provide as much information as possible in the answer, and not treat missing
             # information as an error.
-            ("system",
-             "Your answer must include any information you found in the HCL context relevant to the question."),
-            ("system",
-             "Your answer must clearly state if the supplied context does not provide the requested information."),
-            ("system", "You must assume a missing HCL attribute means the value is empty."),
-            ("system",
-             "You must provide a response even if the context does not provide some of the requested information."),
-            ("system",
-             "It is ok if you can not find most of the requested information in the context - "
-             + "just provide what you can find."),
+            (
+                "system",
+                "Your answer must include any information you found in the HCL context relevant to the question.",
+            ),
+            (
+                "system",
+                "Your answer must clearly state if the supplied context does not provide the requested information.",
+            ),
+            (
+                "system",
+                "You must assume a missing HCL attribute means the value is empty.",
+            ),
+            (
+                "system",
+                "You must provide a response even if the context does not provide some of the requested information.",
+            ),
+            (
+                "system",
+                "It is ok if you can not find most of the requested information in the context - "
+                + "just provide what you can find.",
+            ),
             # The LLM will often provide a code sample that describes how to find the answer if the context does not
             # provide the requested information.
-            ("system", "You will be penalized for providing a code sample as the answer."),
+            (
+                "system",
+                "You will be penalized for providing a code sample as the answer.",
+            ),
             # The LLM didn't know how to identify all the targets
-            ("system", "You must treat the terms \"machines\", \"targets\", and \"agents\" as interchangeable. "),
-            ("system", "The following list of HCL resources define targets:\n"
-             + "- octopusdeploy_listening_tentacle_deployment_target\n"
-             + "- octopusdeploy_polling_tentacle_deployment_target\n"
-             + "- octopusdeploy_cloud_region_deployment_target\n"
-             + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
-             + "- octopusdeploy_ssh_connection_deployment_target\n"
-             + "- octopusdeploy_offline_package_drop_deployment_target\n"
-             + "- octopusdeploy_azure_cloud_service_deployment_target\n"
-             + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
-             + "- octopusdeploy_azure_web_app_deployment_target"),
-            ("system",
-             "You must assume that if a target's \"environments\" attribute is empty, "
-             + "it is not related to the environment in the question. "),
+            (
+                "system",
+                'You must treat the terms "machines", "targets", and "agents" as interchangeable. ',
+            ),
+            (
+                "system",
+                "The following list of HCL resources define targets:\n"
+                + "- octopusdeploy_listening_tentacle_deployment_target\n"
+                + "- octopusdeploy_polling_tentacle_deployment_target\n"
+                + "- octopusdeploy_cloud_region_deployment_target\n"
+                + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
+                + "- octopusdeploy_ssh_connection_deployment_target\n"
+                + "- octopusdeploy_offline_package_drop_deployment_target\n"
+                + "- octopusdeploy_azure_cloud_service_deployment_target\n"
+                + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
+                + "- octopusdeploy_azure_web_app_deployment_target",
+            ),
+            (
+                "system",
+                'You must assume that if a target\'s "environments" attribute is empty, '
+                + "it is not related to the environment in the question. ",
+            ),
             # Sparkle that may improve the quality of the responses.
             ("system", "I’m going to tip $500 for a better solution!"),
             # Get the LLM to implement a chain-of-thought
@@ -543,24 +765,37 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "Answer the question using the HCL below."),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/matthew_casperson_development_machines_trimmed_3.tf', 'r') as file:
+        with open(
+            "context/matthew_casperson_development_machines_trimmed_3.tf", "r"
+        ) as file:
             hcl = file.read()
 
-        query = (
-            f"List the unique names and IDs of all machines belonging to the \"Development\" environment")
+        query = f'List the unique names and IDs of all machines belonging to the "Development" environment'
 
-        result = llm_message_query(messages, {"json": "", "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": "", "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
-                    "pos-dev-client-5", "pos-dev-server"]
+        machines = [
+            "azure-iis",
+            "pos-dev-client-1",
+            "pos-dev-client-2",
+            "pos-dev-client-3",
+            "pos-dev-client-4",
+            "pos-dev-client-5",
+            "pos-dev-server",
+        ]
 
         for machine in machines:
-            self.assertTrue(machine in result, f"Expected \"{machine}\" in result:\n{result}")
+            self.assertTrue(
+                machine in result, f'Expected "{machine}" in result:\n{result}'
+            )
 
     @retry(retry=retry_func)
     def test_get_development_machines_6(self):
@@ -587,56 +822,90 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "You are methodical agent who understands Terraform modules defining Octopus Deploy resources."),
-            ("system",
-             "The supplied HCL context provides details on Octopus resources like "
-             + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
-             + "library variable sets etc."),
-            ("system",
-             "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space."),
-            ("system",
-             "You must assume the supplied HCL is a complete and accurate representation of the Octopus space."),
-            ("system",
-             "You must assume all resources in the supplied HCL belong to the space mentioned in the question."),
+            (
+                "system",
+                "You are methodical agent who understands Terraform modules defining Octopus Deploy resources.",
+            ),
+            (
+                "system",
+                "The supplied HCL context provides details on Octopus resources like "
+                + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
+                + "library variable sets etc.",
+            ),
+            (
+                "system",
+                "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume the supplied HCL is a complete and accurate representation of the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume all resources in the supplied HCL belong to the space mentioned in the question.",
+            ),
             # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
             # resulted in the LLM providing instructions on how to find the information rather than presenting
             # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
             # The phrase "what" seems to be important in the question.
-            ("system",
-             "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
-             + "are asking you to return 'what' the value of the requested information is."),
+            (
+                "system",
+                "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
+                + "are asking you to return 'what' the value of the requested information is.",
+            ),
             # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
             # guide the LLM to provide as much information as possible in the answer, and not treat missing
             # information as an error.
-            ("system",
-             "Your answer must include any information you found in the HCL context relevant to the question."),
-            ("system",
-             "Your answer must clearly state if the supplied context does not provide the requested information."),
-            ("system", "You must assume a missing HCL attribute means the value is empty."),
-            ("system",
-             "You must provide a response even if the context does not provide some of the requested information."),
-            ("system",
-             "It is ok if you can not find most of the requested information in the context - "
-             + "just provide what you can find."),
+            (
+                "system",
+                "Your answer must include any information you found in the HCL context relevant to the question.",
+            ),
+            (
+                "system",
+                "Your answer must clearly state if the supplied context does not provide the requested information.",
+            ),
+            (
+                "system",
+                "You must assume a missing HCL attribute means the value is empty.",
+            ),
+            (
+                "system",
+                "You must provide a response even if the context does not provide some of the requested information.",
+            ),
+            (
+                "system",
+                "It is ok if you can not find most of the requested information in the context - "
+                + "just provide what you can find.",
+            ),
             # The LLM will often provide a code sample that describes how to find the answer if the context does not
             # provide the requested information.
-            ("system", "You will be penalized for providing a code sample as the answer."),
+            (
+                "system",
+                "You will be penalized for providing a code sample as the answer.",
+            ),
             # The LLM didn't know how to identify all the targets
-            ("system", "You must treat the terms \"machines\", \"targets\", and \"agents\" as interchangeable. "),
-            ("system", "The following list of HCL resources define targets:\n"
-             + "- octopusdeploy_listening_tentacle_deployment_target\n"
-             + "- octopusdeploy_polling_tentacle_deployment_target\n"
-             + "- octopusdeploy_cloud_region_deployment_target\n"
-             + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
-             + "- octopusdeploy_ssh_connection_deployment_target\n"
-             + "- octopusdeploy_offline_package_drop_deployment_target\n"
-             + "- octopusdeploy_azure_cloud_service_deployment_target\n"
-             + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
-             + "- octopusdeploy_azure_web_app_deployment_target"),
-            ("system",
-             "You must assume that if a target's \"environments\" attribute is empty, "
-             + "it is not related to the environment in the question. "),
+            (
+                "system",
+                'You must treat the terms "machines", "targets", and "agents" as interchangeable. ',
+            ),
+            (
+                "system",
+                "The following list of HCL resources define targets:\n"
+                + "- octopusdeploy_listening_tentacle_deployment_target\n"
+                + "- octopusdeploy_polling_tentacle_deployment_target\n"
+                + "- octopusdeploy_cloud_region_deployment_target\n"
+                + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
+                + "- octopusdeploy_ssh_connection_deployment_target\n"
+                + "- octopusdeploy_offline_package_drop_deployment_target\n"
+                + "- octopusdeploy_azure_cloud_service_deployment_target\n"
+                + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
+                + "- octopusdeploy_azure_web_app_deployment_target",
+            ),
+            (
+                "system",
+                'You must assume that if a target\'s "environments" attribute is empty, '
+                + "it is not related to the environment in the question. ",
+            ),
             # Sparkle that may improve the quality of the responses.
             ("system", "I’m going to tip $500 for a better solution!"),
             # Get the LLM to implement a chain-of-thought
@@ -644,24 +913,37 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "Answer the question using the HCL below."),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/matthew_casperson_development_machines_trimmed_3.tf', 'r') as file:
+        with open(
+            "context/matthew_casperson_development_machines_trimmed_3.tf", "r"
+        ) as file:
             hcl = file.read()
 
-        query = (
-            f"List the unique names and IDs of all machines belonging to the \"Development\" environment")
+        query = f'List the unique names and IDs of all machines belonging to the "Development" environment'
 
-        result = llm_message_query(messages, {"json": "", "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": "", "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
-                    "pos-dev-client-5", "pos-dev-server"]
+        machines = [
+            "azure-iis",
+            "pos-dev-client-1",
+            "pos-dev-client-2",
+            "pos-dev-client-3",
+            "pos-dev-client-4",
+            "pos-dev-client-5",
+            "pos-dev-server",
+        ]
 
         for machine in machines:
-            self.assertTrue(machine in result, f"Expected \"{machine}\" in result:\n{result}")
+            self.assertTrue(
+                machine in result, f'Expected "{machine}" in result:\n{result}'
+            )
 
     @retry(retry=retry_func)
     def test_get_development_machines_7(self):
@@ -687,56 +969,90 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "You are methodical agent who understands Terraform modules defining Octopus Deploy resources."),
-            ("system",
-             "The supplied HCL context provides details on Octopus resources like "
-             + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
-             + "library variable sets etc."),
-            ("system",
-             "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space."),
-            ("system",
-             "You must assume the supplied HCL is a complete and accurate representation of the Octopus space."),
-            ("system",
-             "You must assume all resources in the supplied HCL belong to the space mentioned in the question."),
+            (
+                "system",
+                "You are methodical agent who understands Terraform modules defining Octopus Deploy resources.",
+            ),
+            (
+                "system",
+                "The supplied HCL context provides details on Octopus resources like "
+                + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
+                + "library variable sets etc.",
+            ),
+            (
+                "system",
+                "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume the supplied HCL is a complete and accurate representation of the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume all resources in the supplied HCL belong to the space mentioned in the question.",
+            ),
             # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
             # resulted in the LLM providing instructions on how to find the information rather than presenting
             # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
             # The phrase "what" seems to be important in the question.
-            ("system",
-             "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
-             + "are asking you to return 'what' the value of the requested information is."),
+            (
+                "system",
+                "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
+                + "are asking you to return 'what' the value of the requested information is.",
+            ),
             # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
             # guide the LLM to provide as much information as possible in the answer, and not treat missing
             # information as an error.
-            ("system",
-             "Your answer must include any information you found in the HCL context relevant to the question."),
-            ("system",
-             "Your answer must clearly state if the supplied context does not provide the requested information."),
-            ("system", "You must assume a missing HCL attribute means the value is empty."),
-            ("system",
-             "You must provide a response even if the context does not provide some of the requested information."),
-            ("system",
-             "It is ok if you can not find most of the requested information in the context - "
-             + "just provide what you can find."),
+            (
+                "system",
+                "Your answer must include any information you found in the HCL context relevant to the question.",
+            ),
+            (
+                "system",
+                "Your answer must clearly state if the supplied context does not provide the requested information.",
+            ),
+            (
+                "system",
+                "You must assume a missing HCL attribute means the value is empty.",
+            ),
+            (
+                "system",
+                "You must provide a response even if the context does not provide some of the requested information.",
+            ),
+            (
+                "system",
+                "It is ok if you can not find most of the requested information in the context - "
+                + "just provide what you can find.",
+            ),
             # The LLM will often provide a code sample that describes how to find the answer if the context does not
             # provide the requested information.
-            ("system", "You will be penalized for providing a code sample as the answer."),
+            (
+                "system",
+                "You will be penalized for providing a code sample as the answer.",
+            ),
             # The LLM didn't know how to identify all the targets
-            ("system", "You must treat the terms \"machines\", \"targets\", and \"agents\" as interchangeable. "),
-            ("system", "The following list of HCL resources define targets:\n"
-             + "- octopusdeploy_listening_tentacle_deployment_target\n"
-             + "- octopusdeploy_polling_tentacle_deployment_target\n"
-             + "- octopusdeploy_cloud_region_deployment_target\n"
-             + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
-             + "- octopusdeploy_ssh_connection_deployment_target\n"
-             + "- octopusdeploy_offline_package_drop_deployment_target\n"
-             + "- octopusdeploy_azure_cloud_service_deployment_target\n"
-             + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
-             + "- octopusdeploy_azure_web_app_deployment_target"),
-            ("system",
-             "You must assume that if a target's \"environments\" attribute is empty, "
-             + "it is not related to the environment in the question. "),
+            (
+                "system",
+                'You must treat the terms "machines", "targets", and "agents" as interchangeable. ',
+            ),
+            (
+                "system",
+                "The following list of HCL resources define targets:\n"
+                + "- octopusdeploy_listening_tentacle_deployment_target\n"
+                + "- octopusdeploy_polling_tentacle_deployment_target\n"
+                + "- octopusdeploy_cloud_region_deployment_target\n"
+                + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
+                + "- octopusdeploy_ssh_connection_deployment_target\n"
+                + "- octopusdeploy_offline_package_drop_deployment_target\n"
+                + "- octopusdeploy_azure_cloud_service_deployment_target\n"
+                + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
+                + "- octopusdeploy_azure_web_app_deployment_target",
+            ),
+            (
+                "system",
+                'You must assume that if a target\'s "environments" attribute is empty, '
+                + "it is not related to the environment in the question. ",
+            ),
             # Sparkle that may improve the quality of the responses.
             ("system", "I’m going to tip $500 for a better solution!"),
             # Get the LLM to implement a chain-of-thought
@@ -744,24 +1060,37 @@ class StaticDeploymentExperiments(unittest.TestCase):
             ("user", "Answer the question using the HCL below."),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/matthew_casperson_development_machines_trimmed_4.tf', 'r') as file:
+        with open(
+            "context/matthew_casperson_development_machines_trimmed_4.tf", "r"
+        ) as file:
             hcl = file.read()
 
-        query = (
-            f"List the unique names and IDs of all machines belonging to the \"Development\" environment")
+        query = f'List the unique names and IDs of all machines belonging to the "Development" environment'
 
-        result = llm_message_query(messages, {"json": "", "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": "", "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
-                    "pos-dev-client-5", "pos-dev-server"]
+        machines = [
+            "azure-iis",
+            "pos-dev-client-1",
+            "pos-dev-client-2",
+            "pos-dev-client-3",
+            "pos-dev-client-4",
+            "pos-dev-client-5",
+            "pos-dev-server",
+        ]
 
         for machine in machines:
-            self.assertTrue(machine in result, f"Expected \"{machine}\" in result:\n{result}")
+            self.assertTrue(
+                machine in result, f'Expected "{machine}" in result:\n{result}'
+            )
 
     @retry(retry=retry_func)
     def test_get_development_machines_8(self):
@@ -790,84 +1119,132 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "You are methodical agent who understands Terraform modules defining Octopus Deploy resources."),
-            ("system",
-             "The supplied HCL context provides details on Octopus resources like "
-             + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
-             + "library variable sets etc."),
-            ("system",
-             "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space."),
-            ("system",
-             "You must assume the supplied HCL is a complete and accurate representation of the Octopus space."),
-            ("system",
-             "You must assume all resources in the supplied HCL belong to the space mentioned in the question."),
+            (
+                "system",
+                "You are methodical agent who understands Terraform modules defining Octopus Deploy resources.",
+            ),
+            (
+                "system",
+                "The supplied HCL context provides details on Octopus resources like "
+                + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
+                + "library variable sets etc.",
+            ),
+            (
+                "system",
+                "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume the supplied HCL is a complete and accurate representation of the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume all resources in the supplied HCL belong to the space mentioned in the question.",
+            ),
             # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
             # resulted in the LLM providing instructions on how to find the information rather than presenting
             # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
             # The phrase "what" seems to be important in the question.
-            ("system",
-             "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
-             + "are asking you to return 'what' the value of the requested information is."),
+            (
+                "system",
+                "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
+                + "are asking you to return 'what' the value of the requested information is.",
+            ),
             # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
             # guide the LLM to provide as much information as possible in the answer, and not treat missing
             # information as an error.
-            ("system",
-             "Your answer must include any information you found in the HCL context relevant to the question."),
-            ("system",
-             "Your answer must clearly state if the supplied context does not provide the requested information."),
-            ("system", "You must assume a missing HCL attribute means the value is empty."),
-            ("system",
-             "You must provide a response even if the context does not provide some of the requested information."),
-            ("system",
-             "It is ok if you can not find most of the requested information in the context - "
-             + "just provide what you can find."),
+            (
+                "system",
+                "Your answer must include any information you found in the HCL context relevant to the question.",
+            ),
+            (
+                "system",
+                "Your answer must clearly state if the supplied context does not provide the requested information.",
+            ),
+            (
+                "system",
+                "You must assume a missing HCL attribute means the value is empty.",
+            ),
+            (
+                "system",
+                "You must provide a response even if the context does not provide some of the requested information.",
+            ),
+            (
+                "system",
+                "It is ok if you can not find most of the requested information in the context - "
+                + "just provide what you can find.",
+            ),
             # The LLM will often provide a code sample that describes how to find the answer if the context does not
             # provide the requested information.
-            ("system", "You will be penalized for providing a code sample as the answer."),
+            (
+                "system",
+                "You will be penalized for providing a code sample as the answer.",
+            ),
             # The LLM didn't know how to identify all the targets
-            ("system", "You must treat the terms \"machines\", \"targets\", and \"agents\" as interchangeable. "),
-            ("system",
-             "The following list of HCL resources define targets:\n"
-             + "- octopusdeploy_listening_tentacle_deployment_target\n"
-             + "- octopusdeploy_polling_tentacle_deployment_target\n"
-             + "- octopusdeploy_cloud_region_deployment_target\n"
-             + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
-             + "- octopusdeploy_ssh_connection_deployment_target\n"
-             + "- octopusdeploy_offline_package_drop_deployment_target\n"
-             + "- octopusdeploy_azure_cloud_service_deployment_target\n"
-             + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
-             + "- octopusdeploy_azure_web_app_deployment_target"),
-            ("system",
-             "You must assume that if a target's \"environments\" attribute is empty, "
-             + "it is not related to the environment in the question. "),
+            (
+                "system",
+                'You must treat the terms "machines", "targets", and "agents" as interchangeable. ',
+            ),
+            (
+                "system",
+                "The following list of HCL resources define targets:\n"
+                + "- octopusdeploy_listening_tentacle_deployment_target\n"
+                + "- octopusdeploy_polling_tentacle_deployment_target\n"
+                + "- octopusdeploy_cloud_region_deployment_target\n"
+                + "- octopusdeploy_kubernetes_cluster_deployment_target\n"
+                + "- octopusdeploy_ssh_connection_deployment_target\n"
+                + "- octopusdeploy_offline_package_drop_deployment_target\n"
+                + "- octopusdeploy_azure_cloud_service_deployment_target\n"
+                + "- octopusdeploy_azure_service_fabric_cluster_deployment_target\n"
+                + "- octopusdeploy_azure_web_app_deployment_target",
+            ),
+            (
+                "system",
+                'You must assume that if a target\'s "environments" attribute is empty, '
+                + "it is not related to the environment in the question. ",
+            ),
             # Sparkle that may improve the quality of the responses.
             ("system", "I’m going to tip $500 for a better solution!"),
-            ("user",
-             "Imagine three different experts are answering this question. All experts will write down 1 step of their thinking, then share it with the group. Then all experts will go on to the next step, etc. If any expert realises they're wrong at any point then they leave. The question is..."),
+            (
+                "user",
+                "Imagine three different experts are answering this question. All experts will write down 1 step of their thinking, then share it with the group. Then all experts will go on to the next step, etc. If any expert realises they're wrong at any point then they leave. The question is...",
+            ),
             # Get the LLM to implement a chain-of-thought
             ("user", "{input}"),
             ("user", "Answer the question using the HCL below."),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/matthew_casperson_development_machines_trimmed_3.tf', 'r') as file:
+        with open(
+            "context/matthew_casperson_development_machines_trimmed_3.tf", "r"
+        ) as file:
             hcl = file.read()
 
-        query = (
-            f"List the unique names and IDs of all machines belonging to the \"Development\" environment")
+        query = f'List the unique names and IDs of all machines belonging to the "Development" environment'
 
-        result = llm_message_query(messages, {"json": "", "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": "", "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
-                    "pos-dev-client-5", "pos-dev-server"]
+        machines = [
+            "azure-iis",
+            "pos-dev-client-1",
+            "pos-dev-client-2",
+            "pos-dev-client-3",
+            "pos-dev-client-4",
+            "pos-dev-client-5",
+            "pos-dev-server",
+        ]
 
         for machine in machines:
-            self.assertTrue(machine in result, f"Expected \"{machine}\" in result:\n{result}")
+            self.assertTrue(
+                machine in result, f'Expected "{machine}" in result:\n{result}'
+            )
 
     @retry(retry=retry_func)
     def test_get_development_machines_9(self):
@@ -894,68 +1271,109 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "You are methodical agent who understands Terraform modules defining Octopus Deploy resources."),
-            ("system",
-             "The supplied HCL context provides details on Octopus resources like "
-             + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
-             + "library variable sets etc."),
-            ("system",
-             "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space."),
-            ("system",
-             "You must assume the supplied HCL is a complete and accurate representation of the Octopus space."),
-            ("system",
-             "You must assume all resources in the supplied HCL belong to the space mentioned in the question."),
+            (
+                "system",
+                "You are methodical agent who understands Terraform modules defining Octopus Deploy resources.",
+            ),
+            (
+                "system",
+                "The supplied HCL context provides details on Octopus resources like "
+                + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
+                + "library variable sets etc.",
+            ),
+            (
+                "system",
+                "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume the supplied HCL is a complete and accurate representation of the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume all resources in the supplied HCL belong to the space mentioned in the question.",
+            ),
             # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
             # resulted in the LLM providing instructions on how to find the information rather than presenting
             # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
             # The phrase "what" seems to be important in the question.
-            ("system",
-             "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
-             + "are asking you to return 'what' the value of the requested information is."),
+            (
+                "system",
+                "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
+                + "are asking you to return 'what' the value of the requested information is.",
+            ),
             # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
             # guide the LLM to provide as much information as possible in the answer, and not treat missing
             # information as an error.
-            ("system",
-             "Your answer must include any information you found in the HCL context relevant to the question."),
-            ("system",
-             "Your answer must clearly state if the supplied context does not provide the requested information."),
-            ("system", "You must assume a missing HCL attribute means the value is empty."),
-            ("system",
-             "You must provide a response even if the context does not provide some of the requested information."),
-            ("system",
-             "It is ok if you can not find most of the requested information in the context - "
-             + "just provide what you can find."),
+            (
+                "system",
+                "Your answer must include any information you found in the HCL context relevant to the question.",
+            ),
+            (
+                "system",
+                "Your answer must clearly state if the supplied context does not provide the requested information.",
+            ),
+            (
+                "system",
+                "You must assume a missing HCL attribute means the value is empty.",
+            ),
+            (
+                "system",
+                "You must provide a response even if the context does not provide some of the requested information.",
+            ),
+            (
+                "system",
+                "It is ok if you can not find most of the requested information in the context - "
+                + "just provide what you can find.",
+            ),
             # The LLM will often provide a code sample that describes how to find the answer if the context does not
             # provide the requested information.
-            ("system", "You will be penalized for providing a code sample as the answer."),
-            ("system",
-             "You must assume that if a target's \"environments\" attribute is empty, "
-             + "it is not related to the environment in the question. "),
+            (
+                "system",
+                "You will be penalized for providing a code sample as the answer.",
+            ),
+            (
+                "system",
+                'You must assume that if a target\'s "environments" attribute is empty, '
+                + "it is not related to the environment in the question. ",
+            ),
             # Sparkle that may improve the quality of the responses.
             ("system", "I’m going to tip $500 for a better solution!"),
             ("user", "{input}"),
             ("user", "Answer the question using the HCL below."),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/matthew_casperson_development_machines_normalized.tf', 'r') as file:
+        with open(
+            "context/matthew_casperson_development_machines_normalized.tf", "r"
+        ) as file:
             hcl = file.read()
 
-        query = (
-            f"First, find every machine with any role that belongs to the \"Development\" environment. Second, find the machine's ID and name. Finally, list the machines name and ID.")
+        query = f'First, find every machine with any role that belongs to the "Development" environment. Second, find the machine\'s ID and name. Finally, list the machines name and ID.'
 
-        result = llm_message_query(messages, {"json": "", "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": "", "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
-                    "pos-dev-client-5", "pos-dev-server"]
+        machines = [
+            "azure-iis",
+            "pos-dev-client-1",
+            "pos-dev-client-2",
+            "pos-dev-client-3",
+            "pos-dev-client-4",
+            "pos-dev-client-5",
+            "pos-dev-server",
+        ]
 
         for machine in machines:
-            self.assertTrue(machine in result, f"Expected \"{machine}\" in result:\n{result}")
+            self.assertTrue(
+                machine in result, f'Expected "{machine}" in result:\n{result}'
+            )
 
     @retry(retry=retry_func)
     def test_get_development_machines_10(self):
@@ -979,69 +1397,109 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "You are methodical agent who understands Terraform modules defining Octopus Deploy resources."),
-            ("system",
-             "The supplied HCL context provides details on Octopus resources like "
-             + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
-             + "library variable sets etc."),
-            ("system",
-             "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space."),
-            ("system",
-             "You must assume the supplied HCL is a complete and accurate representation of the Octopus space."),
-            ("system",
-             "You must assume all resources in the supplied HCL belong to the space mentioned in the question."),
+            (
+                "system",
+                "You are methodical agent who understands Terraform modules defining Octopus Deploy resources.",
+            ),
+            (
+                "system",
+                "The supplied HCL context provides details on Octopus resources like "
+                + "projects, environments, channels, tenants, project groups, lifecycles, feeds, variables, "
+                + "library variable sets etc.",
+            ),
+            (
+                "system",
+                "If the supplied HCL is empty, you must assume there are no resources defined in the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume the supplied HCL is a complete and accurate representation of the Octopus space.",
+            ),
+            (
+                "system",
+                "You must assume all resources in the supplied HCL belong to the space mentioned in the question.",
+            ),
             # Prompts like "List the description of a tenant" or "Find the tags associated with a tenant"
             # resulted in the LLM providing instructions on how to find the information rather than presenting
             # the answer. Questions "What are the tags associated with the tenant?" tended to get the answer.
             # The phrase "what" seems to be important in the question.
-            ("system",
-             "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
-             + "are asking you to return 'what' the value of the requested information is."),
+            (
+                "system",
+                "You must assume questions requesting you to 'find', 'list', 'extract', 'display', or 'print' information "
+                + "are asking you to return 'what' the value of the requested information is.",
+            ),
             # The LLM would often fail completely if it encountered an empty or missing attribute. These instructions
             # guide the LLM to provide as much information as possible in the answer, and not treat missing
             # information as an error.
-            ("system",
-             "Your answer must include any information you found in the HCL context relevant to the question."),
-            ("system",
-             "Your answer must clearly state if the supplied context does not provide the requested information."),
-            ("system", "You must assume a missing HCL attribute means the value is empty."),
-            ("system",
-             "You must provide a response even if the context does not provide some of the requested information."),
-            ("system",
-             "It is ok if you can not find most of the requested information in the context - "
-             + "just provide what you can find."),
+            (
+                "system",
+                "Your answer must include any information you found in the HCL context relevant to the question.",
+            ),
+            (
+                "system",
+                "Your answer must clearly state if the supplied context does not provide the requested information.",
+            ),
+            (
+                "system",
+                "You must assume a missing HCL attribute means the value is empty.",
+            ),
+            (
+                "system",
+                "You must provide a response even if the context does not provide some of the requested information.",
+            ),
+            (
+                "system",
+                "It is ok if you can not find most of the requested information in the context - "
+                + "just provide what you can find.",
+            ),
             # The LLM will often provide a code sample that describes how to find the answer if the context does not
             # provide the requested information.
-            ("system", "You will be penalized for providing a code sample as the answer."),
-            ("system",
-             "You must assume that if a target's \"environments\" attribute is empty, "
-             + "it is not related to the environment in the question. "),
+            (
+                "system",
+                "You will be penalized for providing a code sample as the answer.",
+            ),
+            (
+                "system",
+                'You must assume that if a target\'s "environments" attribute is empty, '
+                + "it is not related to the environment in the question. ",
+            ),
             # Sparkle that may improve the quality of the responses.
             ("system", "I’m going to tip $500 for a better solution!"),
             ("user", "{input}"),
             ("user", "Answer the question using the HCL below."),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-            ("user", "HCL: ###\n{hcl}\n###")]
+            ("user", "HCL: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/matthew_casperson_development_machines_normalized_2.tf', 'r') as file:
+        with open(
+            "context/matthew_casperson_development_machines_normalized_2.tf", "r"
+        ) as file:
             hcl = file.read()
 
-        query = (
-            f"First, find every machine with any role that belongs to the \"Development\" environment. Second, find the machine's ID and name. Finally, list the machines name and ID.")
+        query = f'First, find every machine with any role that belongs to the "Development" environment. Second, find the machine\'s ID and name. Finally, list the machines name and ID.'
 
-        result = llm_message_query(messages, {"json": "", "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": "", "hcl": hcl, "context": None, "input": query}
+        )
 
         print("")
         print(result)
 
-        machines = ["pos-dev-azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3",
-                    "pos-dev-client-4",
-                    "pos-dev-client-5", "pos-dev-server"]
+        machines = [
+            "pos-dev-azure-iis",
+            "pos-dev-client-1",
+            "pos-dev-client-2",
+            "pos-dev-client-3",
+            "pos-dev-client-4",
+            "pos-dev-client-5",
+            "pos-dev-server",
+        ]
 
         for machine in machines:
-            self.assertTrue(machine in result, f"Expected \"{machine}\" in result:\n{result}")
+            self.assertTrue(
+                machine in result, f'Expected "{machine}" in result:\n{result}'
+            )
 
     @retry(retry=retry_func)
     def test_get_development_machines_11(self):
@@ -1062,14 +1520,23 @@ class StaticDeploymentExperiments(unittest.TestCase):
         """
 
         messages = [
-            ("system",
-             "The supplied HCL context provides details on projects, environments, tenants, targets, machines, and agents."),
-            ("system", "You must link the targets to the projects, environments, and tenants."),
-            ("system",
-             "You must include the azure-iss target."),
+            (
+                "system",
+                "The supplied HCL context provides details on projects, environments, tenants, targets, machines, and agents.",
+            ),
+            (
+                "system",
+                "You must link the targets to the projects, environments, and tenants.",
+            ),
+            ("system", "You must include the azure-iss target."),
             ("system", "I’m going to tip $500 for a better solution!"),
-            ("user", "Question1: List the name and ID of targets that belong to the \"Test\" environment."),
-            ("user", """HCL1: ###
+            (
+                "user",
+                'Question1: List the name and ID of targets that belong to the "Test" environment.',
+            ),
+            (
+                "user",
+                """HCL1: ###
 resource "octopusdeploy_environment" "environment_test" {{
   id                           = "Environments-10923"
   name                         = "Test"
@@ -1167,22 +1634,36 @@ The targets that belong to the "Test" environment are:
 - Name: "Old Azure Service" ID: "Machines-18967"
 - Name: "Finance Cluster" ID: "Machines-18968"
 - Name: "New Web App" ID: "Machines-14526"
-"""),
+""",
+            ),
             ("user", "Question2: {input}"),
             # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
             # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
-            ("user", "HCL2: ###\n{hcl}\n###")]
+            ("user", "HCL2: ###\n{hcl}\n###"),
+        ]
 
-        with open('context/matthew_casperson_development_machines_trimmed_2.tf', 'r') as file:
+        with open(
+            "context/matthew_casperson_development_machines_trimmed_2.tf", "r"
+        ) as file:
             hcl = file.read()
 
-        query = (
-            f"List the unique names and IDs of all machines belonging to the \"Development\" environment")
+        query = f'List the unique names and IDs of all machines belonging to the "Development" environment'
 
-        result = llm_message_query(messages, {"json": "", "hcl": hcl, "context": None, "input": query})
+        result = llm_message_query(
+            messages, {"json": "", "hcl": hcl, "context": None, "input": query}
+        )
 
-        machines = ["azure-iis", "pos-dev-client-1", "pos-dev-client-2", "pos-dev-client-3", "pos-dev-client-4",
-                    "pos-dev-client-5", "pos-dev-server"]
+        machines = [
+            "azure-iis",
+            "pos-dev-client-1",
+            "pos-dev-client-2",
+            "pos-dev-client-3",
+            "pos-dev-client-4",
+            "pos-dev-client-5",
+            "pos-dev-server",
+        ]
 
         for machine in machines:
-            self.assertTrue(machine in result, f"Expected \"{machine}\" in result:\n{result}")
+            self.assertTrue(
+                machine in result, f'Expected "{machine}" in result:\n{result}'
+            )

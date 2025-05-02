@@ -1,6 +1,13 @@
 def answer_literal_logs_wrapper(query, callback, logging):
-    def answer_literal_logs_usage(space=None, project=None, environment=None, channel=None, tenant=None, release=None,
-                                  **kwargs):
+    def answer_literal_logs_usage(
+        space=None,
+        project=None,
+        environment=None,
+        channel=None,
+        tenant=None,
+        release=None,
+        **kwargs,
+    ):
         """Prints, writes, or outputs the deployment logs without any processing.
 
         Args:

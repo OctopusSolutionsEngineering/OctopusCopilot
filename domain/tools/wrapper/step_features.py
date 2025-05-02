@@ -1,35 +1,70 @@
 from domain.messages.general import build_hcl_prompt
-from domain.sanitizers.sanitized_list import sanitize_projects, sanitize_runbooks, sanitize_targets, sanitize_tenants, \
-    sanitize_library_variable_sets, sanitize_environments, sanitize_feeds, sanitize_accounts, sanitize_certificates, \
-    sanitize_lifecycles, sanitize_workerpools, sanitize_tenanttagsets, sanitize_steps, sanitize_space, \
-    sanitize_machinepolicies, sanitize_projectgroups, sanitize_releases, sanitize_channels, sanitize_gitcredentials, \
-    sanitize_dates
+from domain.sanitizers.sanitized_list import (
+    sanitize_projects,
+    sanitize_runbooks,
+    sanitize_targets,
+    sanitize_tenants,
+    sanitize_library_variable_sets,
+    sanitize_environments,
+    sanitize_feeds,
+    sanitize_accounts,
+    sanitize_certificates,
+    sanitize_lifecycles,
+    sanitize_workerpools,
+    sanitize_tenanttagsets,
+    sanitize_steps,
+    sanitize_space,
+    sanitize_machinepolicies,
+    sanitize_projectgroups,
+    sanitize_releases,
+    sanitize_channels,
+    sanitize_gitcredentials,
+    sanitize_dates,
+)
 
 
 def answer_step_features_wrapper(query, callback, logging=None):
-    def answer_step_features(space=None, projects=None, runbooks=None, targets=None,
-                             tenants=None, library_variable_sets=None, environments=None,
-                             feeds=None, accounts=None, certificates=None, lifecycles=None,
-                             worker_pools=None, machine_policies=None, tag_sets=None, project_groups=None,
-                             channels=None, releases=None, steps=None, variables=None, git_credentials=None, dates=None,
-                             **kwargs):
+    def answer_step_features(
+        space=None,
+        projects=None,
+        runbooks=None,
+        targets=None,
+        tenants=None,
+        library_variable_sets=None,
+        environments=None,
+        feeds=None,
+        accounts=None,
+        certificates=None,
+        lifecycles=None,
+        worker_pools=None,
+        machine_policies=None,
+        tag_sets=None,
+        project_groups=None,
+        channels=None,
+        releases=None,
+        steps=None,
+        variables=None,
+        git_credentials=None,
+        dates=None,
+        **kwargs,
+    ):
         """A query about step features like retries.
-Args:
-space: Space name
-projects: project names
-runbooks: runbook names
-targets: target/machine names
-tenants: tenant names
-library_variable_sets: library variable set names
-environments: environment names
-feeds: feed names
-accounts: account names
-certificates: certificate names
-lifecycles: lifecycle names
-workerpools: worker pool names
-tagsets: tenant tag set names
-steps: step names
-variables: variable names"""
+        Args:
+        space: Space name
+        projects: project names
+        runbooks: runbook names
+        targets: target/machine names
+        tenants: tenant names
+        library_variable_sets: library variable set names
+        environments: environment names
+        feeds: feed names
+        accounts: account names
+        certificates: certificate names
+        lifecycles: lifecycle names
+        workerpools: worker pool names
+        tagsets: tenant tag set names
+        steps: step names
+        variables: variable names"""
 
         # Note that the function description does not list every argument because the length of the string
         # causes an error with GPT 3.5. Only the arguments that are relevant to steps are documented. This
@@ -46,7 +81,9 @@ variables: variable names"""
             "runbook_names": sanitize_runbooks(runbooks),
             "target_names": sanitize_targets(targets),
             "tenant_names": sanitize_tenants(tenants),
-            "library_variable_sets": sanitize_library_variable_sets(library_variable_sets),
+            "library_variable_sets": sanitize_library_variable_sets(
+                library_variable_sets
+            ),
             "environment_names": sanitize_environments(query, environments),
             "feed_names": sanitize_feeds(feeds),
             "account_names": sanitize_accounts(accounts),
@@ -61,7 +98,7 @@ variables: variable names"""
             "step_names": sanitize_steps(steps),
             "variable_names": sanitize_steps(variables),
             "gitcredential_names": sanitize_gitcredentials(git_credentials),
-            "dates": sanitize_dates(dates)
+            "dates": sanitize_dates(dates),
         }
 
         for key, value in kwargs.items():

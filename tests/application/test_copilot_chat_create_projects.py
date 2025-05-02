@@ -227,6 +227,66 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             project["Name"] == "My K8s Project",
         )
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_feed(self):
+        prompt = 'Create a Docker feed called "Docker Hub".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_account(self):
+        prompt = 'Create an AWS account called "AWS".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_certificate(self):
+        prompt = 'Create a certificate account called "HTTPS".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_tenant(self):
+        prompt = 'Create a tenant account called "ZAB65395".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_environment(self):
+        prompt = 'Create a environment account called "Whatever".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_target(self):
+        prompt = 'Create a SSH target called "Linux Server".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"Creating this kind of resource is not yet supported." in response_text,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
