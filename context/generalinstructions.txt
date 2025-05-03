@@ -71,6 +71,47 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
 }
 ```
 
+When the "environment_id" attribute is set to:
+
+```
+"${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"
+```
+
+Then the following "octopusdeploy_environments" data resource must be included in the output:
+
+```
+data "octopusdeploy_environments" "environment_production" {
+  ids          = null
+  partial_name = "Production"
+  skip         = 0
+  take         = 1
+}
+```
+
+And the following "octopusdeploy_environment" resource must be defined:
+
+```
+resource "octopusdeploy_environment" "environment_production" {
+  name                         = "Production"
+  description                  = ""
+  allow_dynamic_infrastructure = true
+  use_guided_failure           = false
+  sort_order                   = 0
+
+  jira_extension_settings {
+    environment_type = "unmapped"
+  }
+
+  jira_service_management_extension_settings {
+    is_enabled = false
+  }
+
+  servicenow_extension_settings {
+    is_enabled = false
+  }
+}
+```
+
 ## Count Properties Instructions
 
 * The "count" parameter for any "octopusdeploy_deployment_process" resources must be the same as the "count" resource for the "octopusdeploy_project" resource.
