@@ -255,4 +255,6 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
 * You will be penalized for generating invalid Terraform.
 * You will be penalized for setting the "space_id" attribute in the "octopusdeploy" provider to a value like "Spaces-1".
 * You will be penalized if you include any markdown.
+* You will be penalized for including any code blocks.
+* You will be penalized for including any instructions.
 * You will be penalized for returning any other text.

@@ -1,1 +1,4 @@
 ## Azure Web App Instructions
+
+* You must only return the HCL code for the Azure Web App project.
+* You will be penalized for returning any markdown or code block.
