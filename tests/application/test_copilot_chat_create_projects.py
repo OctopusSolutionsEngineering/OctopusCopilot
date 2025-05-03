@@ -476,6 +476,15 @@ def populate_blob_storage():
             "k8ssystemprompt.txt", file_content, os.environ["AzureWebJobsStorage"]
         )
 
+    with open(context_path + "azurewebappsystemprompt.txt", "r") as file:
+        file_content = file.read()
+
+        save_terraform_context(
+            "azurewebappsystemprompt.txt",
+            file_content,
+            os.environ["AzureWebJobsStorage"],
+        )
+
     with open(context_path + "generalinstructions.txt", "r") as file:
         file_content = file.read()
 

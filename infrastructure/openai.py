@@ -49,7 +49,7 @@ def llm_message_query(
     version = (
         custom_version
         or os.environ.get("OPENAI_API_DEPLOYMENT_QUERY_VERSION")
-        or "2024-06-01"
+        or "2024-12-01-preview"
     )
 
     llm = AzureChatOpenAI(
