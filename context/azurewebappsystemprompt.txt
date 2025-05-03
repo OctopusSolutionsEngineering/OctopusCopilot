@@ -4,7 +4,33 @@
 * You must use the lifecycle from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
 * You must include the data resources from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
 * You must include the runbooks from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
-* You must include the "octopusdeploy_variable" resources from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+* You must include all the "octopusdeploy_variable" resources from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise. For example, when you see the following "octopusdeploy_variable" resources:
+
+```
+resource "octopusdeploy_variable" "project_azure_account_primary" { ... }
+resource "octopusdeploy_variable" "web_app_connection_string" { ... }
+resource "octopusdeploy_variable" "function_api_key" { ... }
+resource "octopusdeploy_variable" "deployment_region_var" { ... }
+resource "octopusdeploy_variable" "app_service_plan_tier" { ... }
+resource "octopusdeploy_variable" "staging_slot_settings" { ... }
+resource "octopusdeploy_variable" "production_credentials" { ... }
+resource "octopusdeploy_variable" "app_insights_instrumentation" { ... }
+resource "octopusdeploy_variable" "resource_group_name_var" { ... }
+resource "octopusdeploy_variable" "deployment_environment_tag" { ... }
+```
+
+You must include the following "octopusdeploy_variable" resources in the output:
+
+* "project_azure_account_primary"
+* "web_app_connection_string"
+* "function_api_key"
+* "deployment_region_var"
+* "app_service_plan_tier"
+* "staging_slot_settings"
+* "production_credentials"
+* "app_insights_instrumentation"
+* "resource_group_name_var"
+* "deployment_environment_tag"
 
 ## Azure Web App Deployment Process Instructions
 
