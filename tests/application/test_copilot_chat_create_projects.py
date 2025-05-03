@@ -228,6 +228,48 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_azure_web_app_project(self):
+        prompt = 'Create an Azure Web App project called "My Azure Project".'
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        print(response_text)
+        self.assertTrue(
+            f"The following resources were created:" in response_text,
+        )
+
+        space_id, space_name = get_space_id_and_name_from_name(
+            "Simple", Octopus_Api_Key, Octopus_Url
+        )
+
+        project = get_project(
+            space_id, "My Azure Project", Octopus_Api_Key, Octopus_Url
+        )
+        self.assertTrue(
+            project["Name"] == "My Azure Project",
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_feed(self):
         prompt = 'Create a Docker feed called "Docker Hub".'
         response = copilot_handler_internal(build_request(prompt))
@@ -453,4 +495,11 @@ def populate_blob_storage():
 
         save_terraform_context(
             "k8s.tf", file_content, os.environ["AzureWebJobsStorage"]
+        )
+
+    with open(context_path + "azurewebapp.tf", "r") as file:
+        file_content = file.read()
+
+        save_terraform_context(
+            "azurewebapp.tf", file_content, os.environ["AzureWebJobsStorage"]
         )
