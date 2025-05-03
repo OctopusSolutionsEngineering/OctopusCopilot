@@ -40,5 +40,16 @@ You must include the following "octopusdeploy_variable" resources in the output:
 * You must include the "Deploy process_message Azure App Service - Staging Slot" step from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
 * You must include the "Deploy accept_message Azure Function - Production Slot" step from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
 * You must include the "Deploy process_message Azure App Service - Production Slot" step from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
-* You must include the “Verify setup” step from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise unless instructed otherwise. The "Verify setup" step must include the script from the supplied "Example Octopus Azure Web App Project Terraform Configuration".
+* You must include the “Verify setup” step with the "Octopus.Action.Script.ScriptBody" property from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise unless instructed otherwise.
 * You must include the “Manual Intervention” step from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise unless instructed otherwise.
+
+## Azure Web App Runbook Process Instructions
+
+* You must include the "Verify Setup" step with the "Octopus.Action.Script.ScriptBody" property from the "Create Infrastructure" runbook from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+* You must include the "Create Resource Group" step with the "Octopus.Action.Script.ScriptBody" property from the "Create Infrastructure" runbook from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+* You must include the "Create Storage Account" step with the "Octopus.Action.Script.ScriptBody" property from the "Create Infrastructure" runbook from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+* You must include the "Create Accept-Message Function App" step with the "Octopus.Action.Script.ScriptBody" property from the "Create Infrastructure" runbook from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+* You must include the "Create Process-Message Function App" step with the "Octopus.Action.Script.ScriptBody" property from the "Create Infrastructure" runbook from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+* You must include the "Update Storage Account Connection String" step with the "Octopus.Action.Script.ScriptBody" property from the "Create Infrastructure" runbook from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+
+* You must include the "Destroy resource group" step with the "Octopus.Action.Script.ScriptBody" property from the "Destroy Infrastructure" runbook from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
