@@ -98,7 +98,8 @@ def create_template_project_callback(
     general_examples,
     project_example,
     project_example_context_name,
-    system_message,
+    general_system_message,
+    project_system_message,
     redirections,
     redirector_api_key,
 ):
@@ -114,7 +115,8 @@ def create_template_project_callback(
     :param general_examples: The RowKeys that contain general examples of Octopus projects in Terraform
     :param project_example: The RowKey that contains an example of a project in Terraform
     :param project_example_context_name: The name of the context item that contains the project example
-    :param system_message: The system message to pass to the LLM when generating the Terraform configuration
+    :param general_system_message: The system message to pass to the LLM when generating the Terraform configuration
+    :param project_system_message: The system message to pass to the LLM describing a specific project type
     :param redirections: Any redirection headers
     :param redirector_api_key: The redirection api key
     :return: The response to send to the client
@@ -165,19 +167,24 @@ def create_template_project_callback(
             project_example_values = load_terraform_context(
                 project_example, get_functions_connection_string()
             )
-            system_message_values = load_terraform_context(
-                system_message, get_functions_connection_string()
+            general_system_message_values = load_terraform_context(
+                general_system_message, get_functions_connection_string()
+            )
+            project_system_message_values = load_terraform_context(
+                project_system_message, get_functions_connection_string()
             )
 
             # We build a unique sha for the inputs that generate a terraform configuration
             cache_key = (
                 original_query
-                + " "
-                + " ".join(general_examples_values)
-                + " "
+                + "\n"
+                + "\n".join(general_examples_values)
+                + "\n"
                 + project_example_values
-                + " "
-                + system_message_values
+                + "\n"
+                + general_system_message_values
+                + "\n"
+                + project_system_message_values
             )
             cache_sha = hashlib.sha256(cache_key.encode("utf-8")).hexdigest()
 
@@ -189,7 +196,7 @@ def create_template_project_callback(
                     general_examples_values,
                     project_example_values,
                     project_example_context_name,
-                    system_message_values,
+                    project_system_message_values,
                 )
 
                 # We use the new AI services resource in Azure to build the sample Terarform. This gives us access to

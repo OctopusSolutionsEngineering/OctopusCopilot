@@ -975,6 +975,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         ["context.tf", "everystep.tf"],
                         "k8s.tf",
                         "Example Octopus Kubernetes Project Terraform Configuration",
+                        "generalinstructions.txt",
                         "k8ssystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
