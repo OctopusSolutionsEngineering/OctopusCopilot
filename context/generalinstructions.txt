@@ -184,6 +184,7 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
  * You will be penalized for using the "Octopus.Action.Script.Syntax" property when the "Octopus.Action.Script.ScriptSource" property is set to "Package".
  * When the "Octopus.Action.Script.ScriptSource" property is set to "Inline", the "primary_package" property must not be defined.
  * You will be penalized for using the "primary_package" property when the "Octopus.Action.Script.ScriptSource" property is set to "Inline".
+ * You will be penalized for defining a script step with no script.
 
 ## Octopus Variable Instructions
 
