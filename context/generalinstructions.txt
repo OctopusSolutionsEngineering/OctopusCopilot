@@ -193,9 +193,9 @@ resource "octopusdeploy_environment" "environment_production" {
   * "AzureChinaCloud"
   * "AzureGermanCloud"
   * "AzureUSGovernment"
-* The "application_id" attribute for the resource "octopusdeploy_azure_service_principal" must be set to "11111111-1111-1111-1111-111111111111"
-* The "subscription_id" attribute for the resource "octopusdeploy_azure_service_principal" must be set to "11111111-1111-1111-1111-111111111111"
-* The "tenant_id" attribute for the resource "octopusdeploy_azure_service_principal" must be set to "11111111-1111-1111-1111-111111111111"
+* The "application_id" attribute for the resource "octopusdeploy_azure_service_principal" must be set to "00000000-0000-0000-0000-000000000000"
+* The "subscription_id" attribute for the resource "octopusdeploy_azure_service_principal" must be set to "00000000-0000-0000-0000-000000000000"
+* The "tenant_id" attribute for the resource "octopusdeploy_azure_service_principal" must be set to "00000000-0000-0000-0000-000000000000"
 
 ## Octopus Deployment Process Instructions
 
