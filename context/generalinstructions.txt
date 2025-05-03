@@ -4,6 +4,7 @@
 
 * You must ignore any mention of the current project.
 * You must create valid Terraform.
+* The supplied "Example Octopus Terraform Configuration" is used as a general guide for the configuration. You must use the primary source of truth when building the project.
 
 ## Default Lifecycle Instructions
 
