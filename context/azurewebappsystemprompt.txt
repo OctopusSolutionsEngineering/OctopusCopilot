@@ -4,6 +4,7 @@
 * You must use the lifecycle from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
 * You must include the data resources from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
 * You must include the runbooks from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+* You must include the "octopusdeploy_variable" resources from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
 
 ## Azure Web App Deployment Process Instructions
 
