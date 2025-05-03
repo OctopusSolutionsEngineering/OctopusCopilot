@@ -196,6 +196,7 @@ def create_template_project_callback(
                     general_examples_values,
                     project_example_values,
                     project_example_context_name,
+                    general_system_message_values,
                     project_system_message_values,
                 )
 
@@ -311,7 +312,11 @@ def create_template_project_callback(
 
 
 def project_context(
-    general_examples, project_example, project_example_context_name, system_message
+    general_examples,
+    project_example,
+    project_example_context_name,
+    general_system_message_values,
+    system_message,
 ):
     """
     Builds the messages used when building an octopus project
@@ -332,6 +337,8 @@ def project_context(
         project_example_context_name
         + ": ###\n"
         + escape_message(project_example)
+        + "\n"
+        + escape_message(general_system_message_values)
         + "\n###",
     )
 
