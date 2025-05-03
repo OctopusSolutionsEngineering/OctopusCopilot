@@ -204,6 +204,7 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
 
 ## Terraform Instructions
 
+* Every resource must have a "count" attribute.
 * You will be penalized for using heredoc syntax.
 * You must only respond with the Terraform configuration.
 * A block starting with "{" and ending with "}" must write each child property on a new line.
