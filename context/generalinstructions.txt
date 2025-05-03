@@ -25,7 +25,11 @@
 * When getting the length of the "data" "octopusdeploy_machine_policies" resource, the format is "${length(data.octopusdeploy_machine_policies.<data name>.machine_policies) != 0 ? 0 : 1}".
 * When getting the length of the "data" "octopusdeploy_channels" resource, the format is "${length(data.octopusdeploy_channels.<data name>.channels) != 0 ? 0 : 1}".
 
-* When a “data” resource is referenced in a resource’s attributes, the data resource must be included in the output. For example, when the “lifecycle_id” attribute is set to:
+## Data and Resource pairing instructions
+
+When a “data” resource is referenced in a resource’s attributes, the data resource must be included in the output.
+
+For example, when the “lifecycle_id” attribute is set to:
 
 ```
 "${length(data.octopusdeploy_lifecycles.lifecycle_security.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_security.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_security[0].id}"
