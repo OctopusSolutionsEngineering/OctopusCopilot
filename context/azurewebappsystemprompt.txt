@@ -1,8 +1,16 @@
 ## Azure Web App Instructions
 
 * You must respond with Terraform configuration to create an Octopus project deploying an application to an Azure Web App based on examples provided.
-* You must include the steps from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
 * You must use the lifecycle from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
 * You must include the data resources from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
 * You must include the runbooks from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
-* You must include the “Verify setup” step unless instructed otherwise.
+
+## Azure Web App Deployment Process Instructions
+
+* You must use the packages from the steps in the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+* You must include the "Deploy accept_message Azure Function - Staging Slot" step from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+* You must include the "Deploy process_message Azure App Service - Staging Slot" step from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+* You must include the "Deploy accept_message Azure Function - Production Slot" step from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+* You must include the "Deploy process_message Azure App Service - Production Slot" step from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+* You must include the “Verify setup” step from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise unless instructed otherwise.
+* You must include the “Manual Intervention” step from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise unless instructed otherwise.
