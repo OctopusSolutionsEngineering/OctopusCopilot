@@ -33,15 +33,15 @@ When a “data” resource is referenced in a resource’s attributes, the data 
 For example, when the “lifecycle_id” attribute is set to:
 
 ```
-"${length(data.octopusdeploy_lifecycles.lifecycle_security.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_security.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_security[0].id}"
+"${length(data.octopusdeploy_lifecycles.lifecycle_<data ame>.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_<data name>.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_<name>[0].id}"
 ```
 
 Then the following "octopusdeploy_lifecycles" data resource must be included in the output:
 
 ```
-data "octopusdeploy_lifecycles" "lifecycle_security" {
+data "octopusdeploy_lifecycles" "lifecycle_<data name>" {
   ids          = null
-  partial_name = "Security"
+  partial_name = "<Name>"
   skip         = 0
   take         = 1
 }
@@ -50,15 +50,15 @@ data "octopusdeploy_lifecycles" "lifecycle_security" {
 When the "project_group_id" attribute is set to:
 
 ```
-"${length(data.octopusdeploy_project_groups.project_group_frontend_services.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_frontend_services.project_groups[0].id : octopusdeploy_project_group.project_group_frontend_services[0].id}"
+"${length(data.octopusdeploy_project_groups.project_group_<data name>.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_<data name>.project_groups[0].id : octopusdeploy_project_group.project_group_<name>[0].id}"
 ```
 
 Then the following "octopusdeploy_project_groups" data resource must be included in the output:
 
 ```
-data "octopusdeploy_project_groups" "project_group_frontend_services" {
+data "octopusdeploy_project_groups" "project_group_<data name>" {
   ids          = null
-  partial_name = "Frontend Services"
+  partial_name = "<Name>"
   skip         = 0
   take         = 1
 }
@@ -67,8 +67,8 @@ data "octopusdeploy_project_groups" "project_group_frontend_services" {
 And the following "octopusdeploy_project_group" resource must be defined:
 
 ```
-resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
-  count = "${length(data.octopusdeploy_project_groups.project_group_frontend_services.project_groups) != 0 ? 0 : 1}"
+resource "octopusdeploy_project_group" "project_group_<name>" {
+  count = "${length(data.octopusdeploy_project_groups.project_group_<name>.project_groups) != 0 ? 0 : 1}"
   name  = "Frontend Services"
   lifecycle {
     prevent_destroy = true
@@ -79,13 +79,13 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
 When the "environment_id" attribute is set to:
 
 ```
-"${length(data.octopusdeploy_environments.environment_<name>.environments) != 0 ? data.octopusdeploy_environments.environment_<name>.environments[0].id : octopusdeploy_environment.environment_<name>[0].id}"
+"${length(data.octopusdeploy_environments.environment_<data name>.environments) != 0 ? data.octopusdeploy_environments.environment_<data name>.environments[0].id : octopusdeploy_environment.environment_<name>[0].id}"
 ```
 
 Then the following "octopusdeploy_environments" data resource must be included in the output:
 
 ```
-data "octopusdeploy_environments" "environment_<name>" {
+data "octopusdeploy_environments" "environment_<data name>" {
   ids          = null
   partial_name = "<Name>"
   skip         = 0
@@ -126,7 +126,7 @@ resource "octopusdeploy_environment" "environment_<name>" {
 
 ## Lifecycle Instructions
 
-* Custom lifecycles must include the environments "Development", "Test", and "Production" unless otherwise instructed otherwise.
+* Custom lifecycles must include the environments "Development", "Test", and "Production" unless otherwise instructed.
 
 ## Resource and Data Instructions
 
