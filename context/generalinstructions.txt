@@ -79,7 +79,7 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
 When the "environment_id" attribute is set to:
 
 ```
-"${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"
+"${length(data.octopusdeploy_environments.environment_<name>.environments) != 0 ? data.octopusdeploy_environments.environment_<name>.environments[0].id : octopusdeploy_environment.environment_<name>[0].id}"
 ```
 
 Then the following "octopusdeploy_environments" data resource must be included in the output:
