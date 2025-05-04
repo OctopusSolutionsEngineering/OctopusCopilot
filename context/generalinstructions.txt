@@ -85,9 +85,9 @@ When the "environment_id" attribute is set to:
 Then the following "octopusdeploy_environments" data resource must be included in the output:
 
 ```
-data "octopusdeploy_environments" "environment_production" {
+data "octopusdeploy_environments" "environment_<name>" {
   ids          = null
-  partial_name = "Production"
+  partial_name = "<Name>"
   skip         = 0
   take         = 1
 }
@@ -96,8 +96,8 @@ data "octopusdeploy_environments" "environment_production" {
 And the following "octopusdeploy_environment" resource must be defined:
 
 ```
-resource "octopusdeploy_environment" "environment_production" {
-  name                         = "Production"
+resource "octopusdeploy_environment" "environment_<name>" {
+  name                         = "<Name>"
   description                  = ""
   allow_dynamic_infrastructure = true
   use_guided_failure           = false
