@@ -17,7 +17,7 @@ def find_octopus_variables(filename):
                 # Check if the line matches our pattern
                 match = re.match(pattern, line)
                 if match:
-                    print(f'* "{match.group(0)}"')
+                    print(f"* {match.group(0)}")
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
