@@ -10,6 +10,8 @@
   * end with an alphanumeric character
 * You will be penalized for creating a Kubernetes resource with a name that starts with "*****".
 * You must respond with Terraform configuration to create an Octopus project deploying an application to Kubernetes using raw yaml based on examples provided.
+* You must use define the "package" block in the "action" block for any image deployed by the project.
+* You will be penalized for directly referencing an image in the YAML.
 
 ## Kubernetes Web App Project Variable Instructions
 
