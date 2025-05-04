@@ -182,11 +182,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function_d
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
+        "Octopus.Action.Script.ScriptBody" = "# Define variables\n$errorCollection = @()\n\ntry\n{\n  $azureConfigured = $true\n\n  # Ensure Azure account is configured\n  Write-Host \"Verifying Azure Account has been configured ...\"\n\n  # Check the Azure Account properties\n  if ($OctopusParameters['Project.Azure.Account.SubscriptionNumber'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Subscription Number has not been configured.\")\n    $azureConfigured = $false\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.Client'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Client Id has not been configured.\")\n    $azureConfigured = $false\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.TenantId'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Tenant Id has not been configured.\")\n    $azureConfigured = $false\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.Password'] -eq \"dummy\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Password has not been configured.\")\n    $azureConfigured = $false\n  }\n\n  if (-not $azureConfigured) {\n    $errorCollection += @(\"See the [documentation](https://octopus.com/docs/infrastructure/accounts/azure#azure-service-principal) for details on configuring an Azure Service Principal\")\n  }\n\n  Write-Host \"Checking to see if Project variables have been configured ...\"\n\n  # Check Project variables\n\n  if ($OctopusParameters['Project.Slack.Url'] -eq \"CHANGE ME\")\n  {\n    $errorCollection += @(\n      \"The project variable Project.Slack.Url has not been configured.\",\n      \"See the [Slack documentation](https://api.slack.com/messaging/webhooks) for details on configuraing a Slack webhook URL.\"  \n    )\n  }\n\n  if ($OctopusParameters['Project.Azure.Queue.ConnectionString'] -eq \"CHANGE ME\")\n  {\n    $errorCollection += @(\"The project variable Project.Azure.Queue.ConnectionString has not been updated, have you run the Create Infrastructure runbook?\")\n  }\n\n  if ($OctopusParameters['Project.Octopus.Api.Key'] -eq \"CHANGE ME\")\n  {\n    $errorCollection += @(\n      \"The project variable Project.Octopus.Api.Key has not been configured.\",\n      \"See the [Octopus documentation](https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key) for details on creating an API key.\"\n    )\n    throw \"The Api Key has not been configured, unable to proceed with checks!\"\n  }\n\n  Write-Host \"Checking for deployment targets ...\"\n\n  # Check to make sure targets have been created\n  if ([string]::IsNullOrWhitespace($OctopusParameters['Octopus.Web.ServerUri']))\n  {\n    $octopusUrl = $OctopusParameters['Octopus.Web.BaseUrl']\n  }\n  else\n  {\n    $octopusUrl = $OctopusParameters['Octopus.Web.ServerUri']\n  }\n  $apiKey = $OctopusParameters['Project.Octopus.Api.Key']\n  $spaceId = $OctopusParameters['Octopus.Space.Id']\n  $headers = @{\"X-Octopus-ApiKey\"=\"$apiKey\"}\n\n  $azureFunctionTargets = Invoke-RestMethod -Method Get -Uri \"$octopusUrl/api/$spaceId/machines?roles=accept-message,process-message\" -Headers $headers\n  \n  if ($azureFunctionTargets.Items.Count -lt 2)\n  {\n    $errorCollection += @(\"Expected 2 targets, one for the accept-message role and one for the process-message role, but found $($azureFunctionTargets.Items.Count).  Have you run the Create Infrastructure runbook?\")\n  }\n}\ncatch\n{\n  Write-Verbose \"Fatal error occurred:\"\n  Write-Verbose \"$($_.Exception.Message)\"\n}\nfinally\n{\n  # Check to see if any errors were recorded\n  if ($errorCollection.Count -gt 0)\n  {\n    # Display the messages\n    Write-Highlight \"$($errorCollection -join \"`r`n\")\"\n  }\n  else\n  {\n    Write-Host \"All checks succeeded!\"\n  }\n}"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "# Define variables\n$errorCollection = @()\n\ntry\n{\n  $azureConfigured = $true\n\n  # Ensure Azure account is configured\n  Write-Host \"Verifying Azure Account has been configured ...\"\n\n  # Check the Azure Account properties\n  if ($OctopusParameters['Project.Azure.Account.SubscriptionNumber'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Subscription Number has not been configured.\")\n    $azureConfigured = $false\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.Client'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Client Id has not been configured.\")\n    $azureConfigured = $false\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.TenantId'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Tenant Id has not been configured.\")\n    $azureConfigured = $false\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.Password'] -eq \"dummy\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Password has not been configured.\")\n    $azureConfigured = $false\n  }\n\n  if (-not $azureConfigured) {\n    $errorCollection += @(\"See the [documentation](https://octopus.com/docs/infrastructure/accounts/azure#azure-service-principal) for details on configuring an Azure Service Principal\")\n  }\n\n  Write-Host \"Checking to see if Project variables have been configured ...\"\n\n  # Check Project variables\n\n  if ($OctopusParameters['Project.Slack.Url'] -eq \"CHANGE ME\")\n  {\n    $errorCollection += @(\n      \"The project variable Project.Slack.Url has not been configured.\",\n      \"See the [Slack documentation](https://api.slack.com/messaging/webhooks) for details on configuraing a Slack webhook URL.\"  \n    )\n  }\n\n  if ($OctopusParameters['Project.Azure.Queue.ConnectionString'] -eq \"CHANGE ME\")\n  {\n    $errorCollection += @(\"The project variable Project.Azure.Queue.ConnectionString has not been updated, have you run the Create Infrastructure runbook?\")\n  }\n\n  if ($OctopusParameters['Project.Octopus.Api.Key'] -eq \"CHANGE ME\")\n  {\n    $errorCollection += @(\n      \"The project variable Project.Octopus.Api.Key has not been configured.\",\n      \"See the [Octopus documentation](https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key) for details on creating an API key.\"\n    )\n    throw \"The Api Key has not been configured, unable to proceed with checks!\"\n  }\n\n  Write-Host \"Checking for deployment targets ...\"\n\n  # Check to make sure targets have been created\n  if ([string]::IsNullOrWhitespace($OctopusParameters['Octopus.Web.ServerUri']))\n  {\n    $octopusUrl = $OctopusParameters['Octopus.Web.BaseUrl']\n  }\n  else\n  {\n    $octopusUrl = $OctopusParameters['Octopus.Web.ServerUri']\n  }\n  $apiKey = $OctopusParameters['Project.Octopus.Api.Key']\n  $spaceId = $OctopusParameters['Octopus.Space.Id']\n  $headers = @{\"X-Octopus-ApiKey\"=\"$apiKey\"}\n\n  $azureFunctionTargets = Invoke-RestMethod -Method Get -Uri \"$octopusUrl/api/$spaceId/machines?roles=accept-message,process-message\" -Headers $headers\n  \n  if ($azureFunctionTargets.Items.Count -lt 2)\n  {\n    $errorCollection += @(\"Expected 2 targets, one for the accept-message role and one for the process-message role, but found $($azureFunctionTargets.Items.Count).  Have you run the Create Infrastructure runbook?\")\n  }\n}\ncatch\n{\n  Write-Verbose \"Fatal error occurred:\"\n  Write-Verbose \"$($_.Exception.Message)\"\n}\nfinally\n{\n  # Check to see if any errors were recorded\n  if ($errorCollection.Count -gt 0)\n  {\n    # Display the messages\n    Write-Highlight \"$($errorCollection -join \"`r`n\")\"\n  }\n  else\n  {\n    Write-Host \"All checks succeeded!\"\n  }\n}"
-        "OctopusUseBundledTooling" = "False"
       }
       environments                       = []
       excluded_environments              = []
@@ -214,9 +214,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function_d
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
-        "Octopus.Action.Azure.DeploymentSlot" = "staging"
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Azure.AppSettings" = jsonencode([
         {
         "name" = "AZURE_STORAGE_CONNECTION_STRING"
@@ -224,13 +221,16 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function_d
         "slotSetting" = "false"
                 },
         {
-        "slotSetting" = "false"
         "name" = "QUEUE_NAME"
         "value" = "#{Project.Queue.Name}"
+        "slotSetting" = "false"
                 },
         ])
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.DeploymentType" = "Package"
+        "Octopus.Action.Azure.DeploymentSlot" = "staging"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
       }
       environments                       = []
       excluded_environments              = []
@@ -266,23 +266,23 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function_d
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Azure.DeploymentSlot" = "staging"
-        "Octopus.Action.Azure.DeploymentType" = "Package"
         "Octopus.Action.Package.DownloadOnTentacle" = "False"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Azure.AppSettings" = jsonencode([
         {
-        "value" = "#{Project.Slack.Url}"
         "slotSetting" = "false"
         "name" = "SlackUrl"
+        "value" = "#{Project.Slack.Url}"
                 },
         {
-        "slotSetting" = "false"
         "name" = "SlackChannel"
         "value" = "#{Project.Slack.Channel}"
+        "slotSetting" = "false"
                 },
         ])
+        "Octopus.Action.Azure.DeploymentSlot" = "staging"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Azure.DeploymentType" = "Package"
       }
       environments                       = []
       excluded_environments              = []
@@ -348,10 +348,9 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function_d
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
+        "Octopus.Action.Azure.DeploymentSlot" = "production"
         "Octopus.Action.Package.DownloadOnTentacle" = "False"
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Azure.DeploymentType" = "Package"
         "Octopus.Action.Azure.AppSettings" = jsonencode([
         {
         "name" = "AZURE_STORAGE_CONNECTION_STRING"
@@ -359,12 +358,13 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function_d
         "slotSetting" = "false"
                 },
         {
-        "slotSetting" = "false"
         "name" = "QUEUE_NAME"
         "value" = "#{Project.Queue.Name}"
+        "slotSetting" = "false"
                 },
         ])
-        "Octopus.Action.Azure.DeploymentSlot" = "production"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Azure.DeploymentType" = "Package"
       }
       environments                       = []
       excluded_environments              = []
@@ -400,8 +400,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function_d
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Azure.AppSettings" = jsonencode([
         {
@@ -410,13 +408,15 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function_d
         "slotSetting" = "false"
                 },
         {
+        "slotSetting" = "false"
         "name" = "SlackChannel"
         "value" = "#{Project.Slack.Channel}"
-        "slotSetting" = "false"
                 },
         ])
         "Octopus.Action.Azure.DeploymentType" = "Package"
         "Octopus.Action.Azure.DeploymentSlot" = "production"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
       }
       environments                       = []
       excluded_environments              = []
@@ -439,17 +439,10 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function_d
   depends_on = []
 }
 
-variable "variable_b1265e86961e0e00b739c8f23b865191b557efcc80872944135dab94c81d19a9_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Queue.Name"
-  default     = "octopusdeploy"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_queue_name_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_b1265e86961e0e00b739c8f23b865191b557efcc80872944135dab94c81d19a9_value}"
+  value        = "octopusdeploy"
   name         = "Project.Queue.Name"
   type         = "String"
   is_sensitive = false
@@ -460,17 +453,10 @@ resource "octopusdeploy_variable" "azure_function_demo_project_queue_name_1" {
   depends_on = []
 }
 
-variable "variable_6dfa5a8a0f8799a12f1d31a6721b1abd20001341a17205c5999bc9aea5276d1b_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Slack.Channel"
-  default     = "random"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_slack_channel_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_6dfa5a8a0f8799a12f1d31a6721b1abd20001341a17205c5999bc9aea5276d1b_value}"
+  value        = "random"
   name         = "Project.Slack.Channel"
   type         = "String"
   is_sensitive = false
@@ -481,17 +467,10 @@ resource "octopusdeploy_variable" "azure_function_demo_project_slack_channel_1" 
   depends_on = []
 }
 
-variable "variable_5311a1596189415f94649d3af13af5b905c75d8b8284ef60d12bf36a9949be36_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Azure.Location"
-  default     = "canadacentral"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_location_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_5311a1596189415f94649d3af13af5b905c75d8b8284ef60d12bf36a9949be36_value}"
+  value        = "canadacentral"
   name         = "Project.Azure.Location"
   type         = "String"
   is_sensitive = false
@@ -502,17 +481,10 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_location_1"
   depends_on = []
 }
 
-variable "variable_279ce87ec8dce873a931fff855044aeaa68a7322bbb4af2cb717beebc85d555b_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Azure.Function.Process-Message.OS"
-  default     = "Windows"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_process_message_os_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_279ce87ec8dce873a931fff855044aeaa68a7322bbb4af2cb717beebc85d555b_value}"
+  value        = "Windows"
   name         = "Project.Azure.Function.Process-Message.OS"
   type         = "String"
   is_sensitive = false
@@ -523,17 +495,10 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_pr
   depends_on = []
 }
 
-variable "variable_40b659ece9fb7672267c8233068236eba69b968e9cd8fc65ee1134471de925c1_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Azure.Function.Accept-Message.OS"
-  default     = "Windows"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_accept_message_os_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_40b659ece9fb7672267c8233068236eba69b968e9cd8fc65ee1134471de925c1_value}"
+  value        = "Windows"
   name         = "Project.Azure.Function.Accept-Message.OS"
   type         = "String"
   is_sensitive = false
@@ -544,17 +509,10 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_ac
   depends_on = []
 }
 
-variable "variable_59f58221260a7583d34d305bc65c9fde838099dcc843ebf4ff55af9b7d5e0930_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Azure.Function.Accept-Message.Version"
-  default     = "4"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_accept_message_version_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_59f58221260a7583d34d305bc65c9fde838099dcc843ebf4ff55af9b7d5e0930_value}"
+  value        = "4"
   name         = "Project.Azure.Function.Accept-Message.Version"
   type         = "String"
   is_sensitive = false
@@ -565,17 +523,10 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_ac
   depends_on = []
 }
 
-variable "variable_5dc79ed48513b373bdba5476507cde505137cfd7a037c28c34f00d9f1f216df8_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Azure.Function.Accept-Message.Runtime"
-  default     = "node"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_accept_message_runtime_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_5dc79ed48513b373bdba5476507cde505137cfd7a037c28c34f00d9f1f216df8_value}"
+  value        = "node"
   name         = "Project.Azure.Function.Accept-Message.Runtime"
   type         = "String"
   is_sensitive = false
@@ -586,17 +537,10 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_ac
   depends_on = []
 }
 
-variable "variable_61d1dd1eabc07fa97e041a462f9047e9f467b3704241abfecd5dd57430bc91a9_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Azure.Function.Process-Message.Version"
-  default     = "4"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_process_message_version_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_61d1dd1eabc07fa97e041a462f9047e9f467b3704241abfecd5dd57430bc91a9_value}"
+  value        = "4"
   name         = "Project.Azure.Function.Process-Message.Version"
   type         = "String"
   is_sensitive = false
@@ -607,17 +551,10 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_pr
   depends_on = []
 }
 
-variable "variable_6e27ff4a889981d031f60cd0a65064486359f398d9df3bbfaf31d6bd7cb26e0a_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Azure.Function.Process-Message.Runtime"
-  default     = "dotnet"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_process_message_runtime_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_6e27ff4a889981d031f60cd0a65064486359f398d9df3bbfaf31d6bd7cb26e0a_value}"
+  value        = "dotnet"
   name         = "Project.Azure.Function.Process-Message.Runtime"
   type         = "String"
   is_sensitive = false
@@ -713,17 +650,10 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_account_1" 
   depends_on = []
 }
 
-variable "variable_58302637156700682ac8076197e4d199e26df6761d8b021fe141e3308079eaaa_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Azure.ResourceGroup.Name"
-  default     = "Azure-Function-Development"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_resourcegroup_name_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_58302637156700682ac8076197e4d199e26df6761d8b021fe141e3308079eaaa_value}"
+  value        = "Azure-Function-Development"
   name         = "Project.Azure.ResourceGroup.Name"
   type         = "String"
   is_sensitive = false
@@ -743,17 +673,10 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_resourcegro
   depends_on = []
 }
 
-variable "variable_45045cca08ef6d30274d17c7575c621bd78f3c357de24140ca7d80fe1b24c9d1_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Azure.ResourceGroup.Name"
-  default     = "Azure-Function-Test"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_resourcegroup_name_2" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_45045cca08ef6d30274d17c7575c621bd78f3c357de24140ca7d80fe1b24c9d1_value}"
+  value        = "Azure-Function-Test"
   name         = "Project.Azure.ResourceGroup.Name"
   type         = "String"
   description  = ""
@@ -774,17 +697,10 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_resourcegro
   depends_on = []
 }
 
-variable "variable_b504c66f6fc2b6d9d9a913dfb3b58a243bcebb8e84d10beb912c99ddc87b64f8_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Azure.ResourceGroup.Name"
-  default     = "Azure-Function-Production"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_resourcegroup_name_3" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_b504c66f6fc2b6d9d9a913dfb3b58a243bcebb8e84d10beb912c99ddc87b64f8_value}"
+  value        = "Azure-Function-Production"
   name         = "Project.Azure.ResourceGroup.Name"
   type         = "String"
   description  = ""
@@ -805,17 +721,10 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_resourcegro
   depends_on = []
 }
 
-variable "variable_5e8ab411a534f7a1d07ffb1f8253d73df0012b91170773d7e69e119cdfe235d9_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Azure.StorageAccount.Name"
-  default     = "azfunc#{Octopus.Environment.Name | ToLower}"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_storageaccount_name_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_5e8ab411a534f7a1d07ffb1f8253d73df0012b91170773d7e69e119cdfe235d9_value}"
+  value        = "azfunc#{Octopus.Environment.Name | ToLower}"
   name         = "Project.Azure.StorageAccount.Name"
   type         = "String"
   is_sensitive = false
@@ -826,17 +735,10 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_storageacco
   depends_on = []
 }
 
-variable "variable_5c915e264ca69b81e07b74a9eb630edd0a7383d8b7574b2204ff82c9a649d7c0_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Azure.Function.Accept-Message.Name"
-  default     = "octo-accept-message-#{Octopus.Environment.Name | ToLower}"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_accept_message_name_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_5c915e264ca69b81e07b74a9eb630edd0a7383d8b7574b2204ff82c9a649d7c0_value}"
+  value        = "octo-accept-message-#{Octopus.Environment.Name | ToLower}"
   name         = "Project.Azure.Function.Accept-Message.Name"
   type         = "String"
   is_sensitive = false
@@ -847,17 +749,10 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_ac
   depends_on = []
 }
 
-variable "variable_b86758c2f39de20fbe4ab8712c174ca9fa602013498757d67e32287421f273ae_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Project.Azure.Function.Process-Message.Name"
-  default     = "octo-process-message-#{Octopus.Environment.Name | ToLower}"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_process_message_name_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
-  value        = "${var.variable_b86758c2f39de20fbe4ab8712c174ca9fa602013498757d67e32287421f273ae_value}"
+  value        = "octo-process-message-#{Octopus.Environment.Name | ToLower}"
   name         = "Project.Azure.Function.Process-Message.Name"
   type         = "String"
   is_sensitive = false
@@ -868,13 +763,6 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_pr
   depends_on = []
 }
 
-variable "variable_51c044c15dc0b8e2bfd3fa80fb75a89d0e47f87f9fb4021ab6360fe941c7447e_sensitive_value" {
-  type        = string
-  nullable    = true
-  sensitive   = true
-  description = "The secret variable value associated with the variable Project.Azure.Queue.ConnectionString"
-  default     = "Change Me!"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_queue_connectionstring_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
@@ -890,7 +778,7 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_queue_conne
     roles        = null
     tenant_tags  = null
   }
-  sensitive_value = var.variable_51c044c15dc0b8e2bfd3fa80fb75a89d0e47f87f9fb4021ab6360fe941c7447e_sensitive_value
+  sensitive_value = "Change Me!"
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true
@@ -898,13 +786,6 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_queue_conne
   depends_on = []
 }
 
-variable "variable_b4f56b4f4c1b093fb105f467616c80cca39e92cf9dbdac296866e9fe32b17142_sensitive_value" {
-  type        = string
-  nullable    = true
-  sensitive   = true
-  description = "The secret variable value associated with the variable Project.Azure.Queue.ConnectionString"
-  default     = "Change Me!"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_queue_connectionstring_2" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
@@ -921,7 +802,7 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_queue_conne
     roles        = null
     tenant_tags  = null
   }
-  sensitive_value = var.variable_b4f56b4f4c1b093fb105f467616c80cca39e92cf9dbdac296866e9fe32b17142_sensitive_value
+  sensitive_value = "Change Me!"
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true
@@ -929,13 +810,6 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_queue_conne
   depends_on = []
 }
 
-variable "variable_5becf794f76509c2c5760df3d84d656608d31223173dcfe720a38a98d7461271_sensitive_value" {
-  type        = string
-  nullable    = true
-  sensitive   = true
-  description = "The secret variable value associated with the variable Project.Azure.Queue.ConnectionString"
-  default     = "Change Me!"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_azure_queue_connectionstring_3" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
@@ -952,7 +826,7 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_queue_conne
     roles        = null
     tenant_tags  = null
   }
-  sensitive_value = var.variable_5becf794f76509c2c5760df3d84d656608d31223173dcfe720a38a98d7461271_sensitive_value
+  sensitive_value = "Change Me!"
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true
@@ -960,20 +834,13 @@ resource "octopusdeploy_variable" "azure_function_demo_project_azure_queue_conne
   depends_on = []
 }
 
-variable "variable_17294f014988bb0b5ac60d5df05478394bcbd467c6dab16d1ac4a3a771458a4f_sensitive_value" {
-  type        = string
-  nullable    = true
-  sensitive   = true
-  description = "The secret variable value associated with the variable Project.Octopus.Api.Key"
-  default     = "Change Me!"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_octopus_api_key_1" {
   count           = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
   name            = "Project.Octopus.Api.Key"
   type            = "Sensitive"
   is_sensitive    = true
-  sensitive_value = var.variable_17294f014988bb0b5ac60d5df05478394bcbd467c6dab16d1ac4a3a771458a4f_sensitive_value
+  sensitive_value = "Change Me!"
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true
@@ -981,20 +848,13 @@ resource "octopusdeploy_variable" "azure_function_demo_project_octopus_api_key_1
   depends_on = []
 }
 
-variable "variable_412aa72e51cf8a4cefe165f35a02952018f36675775f8ac6d1af29bd34721280_sensitive_value" {
-  type        = string
-  nullable    = true
-  sensitive   = true
-  description = "The secret variable value associated with the variable Project.Slack.Url"
-  default     = "Change Me!"
-}
 resource "octopusdeploy_variable" "azure_function_demo_project_slack_url_1" {
   count           = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) != 0 ? 0 : 1}"
   owner_id        = "${length(data.octopusdeploy_projects.project_azure_function_demo.projects) == 0 ?octopusdeploy_project.project_azure_function_demo[0].id : data.octopusdeploy_projects.project_azure_function_demo.projects[0].id}"
   name            = "Project.Slack.Url"
   type            = "Sensitive"
   is_sensitive    = true
-  sensitive_value = var.variable_412aa72e51cf8a4cefe165f35a02952018f36675775f8ac6d1af29bd34721280_sensitive_value
+  sensitive_value = "Change Me!"
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true
@@ -1051,11 +911,11 @@ resource "octopusdeploy_runbook_process" "runbook_process_create_infrastructure"
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "# Define variables\n$errorCollection = @()\n\ntry\n{\n  # Ensure Azure account is configured\n  Write-Host \"Verifying Azure Account has been configured ...\"\n\n  # Check the Azure Account properties\n  if ($OctopusParameters['Project.Azure.Account.SubscriptionNumber'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Subscription Number has not been configured.\")\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.Client'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Client Id has not been configured.\")\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.TenantId'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Tenant Id has not been configured.\")\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.Password'] -eq \"dummy\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Password has not been configured.\")\n  }\n\n  Write-Host \"Checking to see if Project variables have been configured ...\"\n\n  # Check Project variables\n\n  if ($OctopusParameters['Project.Slack.Url'] -eq \"dummy\")\n  {\n    $errorCollection += @(\"The project variable Project.Slack.Url has not been configured.\")\n  }\n\n  if ($OctopusParameters['Project.Azure.Queue.ConnectionString'] -eq \"dummy\")\n  {\n    $errorCollection += @(\"The project variable Project.Azure.Queue.ConnectionString has not been updated, have you run the Create Infrastructure runbook?\")\n  }\n\n  if ($OctopusParameters['Project.Octopus.Api.Key'] -eq \"dummy\")\n  {\n    $errorCollection += @(\"The project variable Project.Octopus.Api.Key has not been configured.\")\n    throw \"The Api Key has not been configured, unable to proceed with checks!\"\n  }\n\n  Write-Host \"Checking for deployment targets ...\"\n\n  # Check to make sure targets have been created\n  if ([string]::IsNullOrWhitespace($OctopusParameters['Octopus.Web.ServerUri']))\n  {\n    $octopusUrl = $OctopusParameters['Octopus.Web.BaseUrl']\n  }\n  else\n  {\n    $octopusUrl = $OctopusParameters['Octopus.Web.ServerUri']\n  }\n  $apiKey = $OctopusParameters['Project.Octopus.Api.Key']\n  $spaceId = $OctopusParameters['Octopus.Space.Id']\n  $headers = @{\"X-Octopus-ApiKey\"=\"$apiKey\"}\n\n  $azureFunctionTargets = Invoke-RestMethod -Method Get -Uri \"$octopusUrl/api/$spaceId/machines?roles=accept-message,process-message\" -Headers $headers\n  \n  if ($azureFunctionTargets.Items.Count -lt 2)\n  {\n    $errorCollection += @(\"Expected 2 targets, one for the accept-message role and one for the process-message role, but found $($azureFunctionTargets.Items.Count).  Have you run the Create Infrastructure runbook?\")\n  }\n\n}\ncatch\n{\n  Write-Warning \"Fatal error occurred:\"\n  Write-Warning \"$($_.Exception.Message)\"\n}\nfinally\n{\n  # Check to see if any errors were recorded\n  if ($errorCollection.Count -gt 0)\n  {\n    # Display the messages\n    Write-Error \"$($errorCollection -join \"`r`n\")\"\n  }\n  else\n  {\n    Write-Host \"All checks succeeded!\"\n  }\n}"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
       environments                       = []
       excluded_environments              = []
@@ -1083,12 +943,12 @@ resource "octopusdeploy_runbook_process" "runbook_process_create_infrastructure"
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = $OctopusParameters['Project.Azure.ResourceGroup.Name']\n$azureLocation = $OctopusParameters['Project.Azure.Location']\n\n# Create resourece group\nWrite-Host \"Creating resource group $resourceGroupName in $azureLocation...\"\naz group create --location $azureLocation --name $resourceGroupName"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.RunOnServer" = "true"
       }
 
       container {
@@ -1122,12 +982,12 @@ resource "octopusdeploy_runbook_process" "runbook_process_create_infrastructure"
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
+        "Octopus.Action.Script.ScriptBody" = "# Get variables\n$storageAccountName = $OctopusParameters['Project.Azure.StorageAccount.Name']\n$queueName = $OctopusParameters['Project.Queue.Name']\n$resourceGroupName = $OctopusParameters['Project.Azure.ResourceGroup.Name']\n$azureLocation = $OctopusParameters['Project.Azure.Location']\n\n# Create Azure storage account\nWrite-Host \"Creating storage account ...\"\naz storage account create --name $storageAccountName --resource-group $resourceGroupName --location $azureLocation\n\n# Get account keys\n$accountKeys = (az storage account keys list --account-name $storageAccountName --resource-group $resourceGroupName) | ConvertFrom-JSON\n\n# Create Azure storage queue\nWrite-Host \"Creating queue ...\"\naz storage queue create --name $queueName --account-name $storageAccountName --account-key $accountKeys[0].Value"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
-        "Octopus.Action.Script.ScriptBody" = "# Get variables\n$storageAccountName = $OctopusParameters['Project.Azure.StorageAccount.Name']\n$queueName = $OctopusParameters['Project.Queue.Name']\n$resourceGroupName = $OctopusParameters['Project.Azure.ResourceGroup.Name']\n$azureLocation = $OctopusParameters['Project.Azure.Location']\n\n# Create Azure storage account\nWrite-Host \"Creating storage account ...\"\naz storage account create --name $storageAccountName --resource-group $resourceGroupName --location $azureLocation\n\n# Get account keys\n$accountKeys = (az storage account keys list --account-name $storageAccountName --resource-group $resourceGroupName) | ConvertFrom-JSON\n\n# Create Azure storage queue\nWrite-Host \"Creating queue ...\"\naz storage queue create --name $queueName --account-name $storageAccountName --account-key $accountKeys[0].Value"
       }
 
       container {
@@ -1161,12 +1021,12 @@ resource "octopusdeploy_runbook_process" "runbook_process_create_infrastructure"
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
-        "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = $OctopusParameters['Project.Azure.ResourceGroup.Name']\n$appServiceName = $OctopusParameters['Project.Azure.Function.Accept-Message.Name']\n$appServiceRuntime = $OctopusParameters['Project.Azure.Function.Accept-Message.Runtime']\n#$appServicePlanName = $octopusParameters['Azure.AppServicePlan.Name']\n$storageAccountName = $OctopusParameters['Project.Azure.StorageAccount.Name']\n$osType = $OctopusParameters['Project.Azure.Function.Accept-Message.OS']\n$functionsVersion = [int]$OctopusParameters['Project.Azure.Function.Accept-Message.Version']\n$azureLocation = $OctopusParameters['Project.Azure.Location']\n$azureAccount = $OctopusParameters['Project.Azure.Account']\n\n# Fix ANSI Color on PWSH Core issues when displaying objects\nif ($PSEdition -eq \"Core\") {\n    $PSStyle.OutputRendering = \"PlainText\"\n}\n\n# Create App Service\nWrite-Host \"Creating Accept function app service ...\"\n$functionApp = (az functionapp create --name $appServiceName --consumption-plan-location $azureLocation --resource-group $resourceGroupName --runtime $appServiceRuntime --storage-account $storageAccountName --os-type $osType --functions-version $functionsVersion | ConvertFrom-Json)\n\n# Consumption plans are created automatically in the resource group, however, take a bit show up\n$planName = $functionApp.serverfarmId.SubString($functionApp.serverFarmId.LastIndexOf(\"/\") + 1)\n$functionAppPlans = (az functionapp plan list --resource-group $resourceGroupName | ConvertFrom-Json)\n\nWrite-Host \"Consumption based plans auto create and will sometimes take a bit to show up in the resource group, this loop will wait until it's available so the Slot creation doesn't fail ...\"\nwhile ($null -eq ($functionAppPlans | Where-Object {$_.Name -eq $planName}))\n{\n  Write-Host \"Waiting 10 seconds for app plan to show up ...\"\n  Start-Sleep -Seconds 10\n  $functionAppPlans = (az functionapp plan list --resource-group $resourceGroupName | ConvertFrom-Json)\n}\n\nWrite-Host \"It showed up!\"\n\n# Create deployment slots\nWrite-Host \"Creating deployment slots ...\"\naz functionapp deployment slot create --resource-group $resourceGroupName --name $appServiceName --slot \"staging\"\n\nWrite-Host \"Creating Octopus Azure Web App target for $appServiceName\"\nNew-OctopusAzureWebAppTarget -Name $appServiceName -AzureWebApp $appServiceName -AzureResourceGroupName $resourceGroupName -OctopusAccountIdOrName $azureAccount -OctopusRoles \"accept-message\" -updateIfExisting"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
+        "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = $OctopusParameters['Project.Azure.ResourceGroup.Name']\n$appServiceName = $OctopusParameters['Project.Azure.Function.Accept-Message.Name']\n$appServiceRuntime = $OctopusParameters['Project.Azure.Function.Accept-Message.Runtime']\n#$appServicePlanName = $octopusParameters['Azure.AppServicePlan.Name']\n$storageAccountName = $OctopusParameters['Project.Azure.StorageAccount.Name']\n$osType = $OctopusParameters['Project.Azure.Function.Accept-Message.OS']\n$functionsVersion = [int]$OctopusParameters['Project.Azure.Function.Accept-Message.Version']\n$azureLocation = $OctopusParameters['Project.Azure.Location']\n$azureAccount = $OctopusParameters['Project.Azure.Account']\n\n# Fix ANSI Color on PWSH Core issues when displaying objects\nif ($PSEdition -eq \"Core\") {\n    $PSStyle.OutputRendering = \"PlainText\"\n}\n\n# Create App Service\nWrite-Host \"Creating Accept function app service ...\"\n$functionApp = (az functionapp create --name $appServiceName --consumption-plan-location $azureLocation --resource-group $resourceGroupName --runtime $appServiceRuntime --storage-account $storageAccountName --os-type $osType --functions-version $functionsVersion | ConvertFrom-Json)\n\n# Consumption plans are created automatically in the resource group, however, take a bit show up\n$planName = $functionApp.serverfarmId.SubString($functionApp.serverFarmId.LastIndexOf(\"/\") + 1)\n$functionAppPlans = (az functionapp plan list --resource-group $resourceGroupName | ConvertFrom-Json)\n\nWrite-Host \"Consumption based plans auto create and will sometimes take a bit to show up in the resource group, this loop will wait until it's available so the Slot creation doesn't fail ...\"\nwhile ($null -eq ($functionAppPlans | Where-Object {$_.Name -eq $planName}))\n{\n  Write-Host \"Waiting 10 seconds for app plan to show up ...\"\n  Start-Sleep -Seconds 10\n  $functionAppPlans = (az functionapp plan list --resource-group $resourceGroupName | ConvertFrom-Json)\n}\n\nWrite-Host \"It showed up!\"\n\n# Create deployment slots\nWrite-Host \"Creating deployment slots ...\"\naz functionapp deployment slot create --resource-group $resourceGroupName --name $appServiceName --slot \"staging\"\n\nWrite-Host \"Creating Octopus Azure Web App target for $appServiceName\"\nNew-OctopusAzureWebAppTarget -Name $appServiceName -AzureWebApp $appServiceName -AzureResourceGroupName $resourceGroupName -OctopusAccountIdOrName $azureAccount -OctopusRoles \"accept-message\" -updateIfExisting"
       }
 
       container {
@@ -1200,12 +1060,12 @@ resource "octopusdeploy_runbook_process" "runbook_process_create_infrastructure"
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = $OctopusParameters['Project.Azure.ResourceGroup.Name']\n$appServiceName = $OctopusParameters['Project.Azure.Function.Process-Message.Name']\n$appServiceRuntime = $OctopusParameters['Project.Azure.Function.Process-Message.Runtime']\n#$appServicePlanName = $octopusParameters['Azure.AppServicePlan.Name']\n$storageAccountName = $OctopusParameters['Project.Azure.StorageAccount.Name']\n$osType = $OctopusParameters['Project.Azure.Function.Process-Message.OS']\n#$functionsVersion = [int]$OctopusParameters['Project.Azure.Function.Process-Message.Version']\n$functionsVersion = $OctopusParameters['Project.Azure.Function.Process-Message.Version']\n$azureLocation = $OctopusParameters['Project.Azure.Location']\n$azureAccount = $OctopusParameters['Project.Azure.Account']\n\n# Fix ANSI Color on PWSH Core issues when displaying objects\nif ($PSEdition -eq \"Core\") {\n    $PSStyle.OutputRendering = \"PlainText\"\n}\n\n# Create App Service\nWrite-Host \"Creating Process function app service ...\"\n$functionApp = (az functionapp create --name $appServiceName --consumption-plan-location $azureLocation --resource-group $resourceGroupName --runtime $appServiceRuntime --storage-account $storageAccountName --os-type $osType --functions-version $functionsVersion | ConvertFrom-Json)\n\n# Create deployment slots\nWrite-Host \"Creating deployment slots ...\"\naz functionapp deployment slot create --resource-group $resourceGroupName --name $appServiceName --slot \"staging\"\n\nNew-OctopusAzureWebAppTarget -Name $appServiceName -AzureWebApp $appServiceName -AzureResourceGroupName $resourceGroupName -OctopusAccountIdOrName $azureAccount -OctopusRoles \"process-message\" -updateIfExisting"
-        "OctopusUseBundledTooling" = "False"
       }
 
       container {
@@ -1341,12 +1201,12 @@ resource "octopusdeploy_runbook_process" "runbook_process_destroy_infrastructure
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
-        "Octopus.Action.Script.ScriptFileName" = "DestroyAzureInfrastructure.ps1"
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Package"
+        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptFileName" = "DestroyAzureInfrastructure.ps1"
       }
 
       container {

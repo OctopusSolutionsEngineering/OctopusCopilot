@@ -309,9 +309,9 @@ resource "octopusdeploy_deployment_process" "deployment_process_kubernetes_web_a
       is_required                        = false
       worker_pool_id                     = ""
       properties                         = {
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "false"
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
       }
       environments                       = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
       excluded_environments              = []
@@ -340,15 +340,15 @@ resource "octopusdeploy_deployment_process" "deployment_process_kubernetes_web_a
       is_required                        = false
       worker_pool_variable               = "Octopus.Project.WorkerPool"
       properties                         = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
-        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"1\"\n            memory: \"512Mi\"\n          requests:\n            cpu: \"0.5\"\n            memory: \"256Mi\"\n        livenessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
         "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
         "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"1\"\n            memory: \"512Mi\"\n          requests:\n            cpu: \"0.5\"\n            memory: \"256Mi\"\n        livenessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
+        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "OctopusUseBundledTooling" = "False"
       }
 
       container {
@@ -392,11 +392,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_kubernetes_web_a
       is_required                        = false
       worker_pool_variable               = "Octopus.Project.WorkerPool"
       properties                         = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy a Kubernetes Web App via YAML].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Kubernetes target with the tag 'Kubernetes'.\"\n  Write-Highlight \"We recommend the [Kubernetes Agent](https://octopus.com/docs/kubernetes/targets/kubernetes-agent).\"\n}"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
       }
       environments                       = []
       excluded_environments              = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
@@ -451,17 +451,10 @@ resource "octopusdeploy_deployment_process" "deployment_process_kubernetes_web_a
   depends_on = []
 }
 
-variable "variable_06e1298a6b448c42c52466647770012776889b9fd03777616984b6737d0d4a9c_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Kubernetes.Deployment.Name"
-  default     = "octopub"
-}
 resource "octopusdeploy_variable" "kubernetes_web_app_kubernetes_deployment_name_1" {
   count        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
-  value        = "${var.variable_06e1298a6b448c42c52466647770012776889b9fd03777616984b6737d0d4a9c_value}"
+  value        = "octopub"
   name         = "Kubernetes.Deployment.Name"
   type         = "String"
   description  = "This is the name of the Kubernetes deployment. It is exposed as a variable to allow the name to be shared between the deployment process and the runbooks."
@@ -502,17 +495,10 @@ resource "octopusdeploy_variable" "kubernetes_web_app_octopus_project_workerpool
   depends_on = []
 }
 
-variable "variable_0c5050f146b8c3c60013cbd83e1f4c5146e0cbd70d63e18d2fed539a3717c129_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable OctopusPrintEvaluatedVariables"
-  default     = "False"
-}
 resource "octopusdeploy_variable" "kubernetes_web_app_octopusprintevaluatedvariables_1" {
   count        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
-  value        = "${var.variable_0c5050f146b8c3c60013cbd83e1f4c5146e0cbd70d63e18d2fed539a3717c129_value}"
+  value        = "False"
   name         = "OctopusPrintEvaluatedVariables"
   type         = "String"
   description  = "Set this variable to true to log the evaluated value of variables available at the beginning of each step in the deployment as Verbose messages. See https://octopus.com/docs/support/debug-problems-with-octopus-variables for more details."
@@ -524,17 +510,10 @@ resource "octopusdeploy_variable" "kubernetes_web_app_octopusprintevaluatedvaria
   depends_on = []
 }
 
-variable "variable_661cf577e84dfa02eac136deec93000f9cee60a23514aaf7d40f3b5de3994542_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable OctopusPrintVariables"
-  default     = "False"
-}
 resource "octopusdeploy_variable" "kubernetes_web_app_octopusprintvariables_1" {
   count        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
-  value        = "${var.variable_661cf577e84dfa02eac136deec93000f9cee60a23514aaf7d40f3b5de3994542_value}"
+  value        = "False"
   name         = "OctopusPrintVariables"
   type         = "String"
   description  = "Set this variable to true to log the variables available at the beginning of each step in the deployment as Verbose messages. See https://octopus.com/docs/support/debug-problems-with-octopus-variables for more details."
@@ -546,17 +525,10 @@ resource "octopusdeploy_variable" "kubernetes_web_app_octopusprintvariables_1" {
   depends_on = []
 }
 
-variable "variable_7add937f062edc4fa93f49c47d6c12e1b02e581ad5a8f84f7367bd4e9858f434_value" {
-  type        = string
-  nullable    = true
-  sensitive   = false
-  description = "The value associated with the variable Application.Image"
-  default     = "ghcr.io/#{Octopus.Action[Deploy a Kubernetes Web App via YAML].Package[octopub-selfcontained].PackageId}:#{Octopus.Action[Deploy a Kubernetes Web App via YAML].Package[octopub-selfcontained].PackageVersion}"
-}
 resource "octopusdeploy_variable" "kubernetes_web_app_application_image_1" {
   count        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
-  value        = "${var.variable_7add937f062edc4fa93f49c47d6c12e1b02e581ad5a8f84f7367bd4e9858f434_value}"
+  value        = "ghcr.io/#{Octopus.Action[Deploy a Kubernetes Web App via YAML].Package[octopub-selfcontained].PackageId}:#{Octopus.Action[Deploy a Kubernetes Web App via YAML].Package[octopub-selfcontained].PackageVersion}"
   name         = "Application.Image"
   type         = "String"
   description  = "The image name is in the format \"ghcr.io/#{Octopus.Action[<Name of the step applying the Kubernetes deployment resource>].Package[<Name of the referenced package>].PackageId}:#{Octopus.Action[<Name of the step applying the Kubernetes deployment resource>].Package[Name of the referenced package>].PackageVersion}\". This variable allows the packages used by the \"Deploy a Kubernetes Web App via YAML\" step to be referenced in subsequent steps."

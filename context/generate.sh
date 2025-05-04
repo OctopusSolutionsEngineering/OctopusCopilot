@@ -9,6 +9,7 @@ docker run -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octo
     -dummySecretVariableValues \
     -includeProviderServerDetails=false \
     -includeOctopusOutputVars=false \
+    -inlineVariableValues \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > context.tf
 
@@ -25,6 +26,7 @@ docker run -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octo
     -ignoreCacManagedValues=false \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
+    -inlineVariableValues \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > everystep.tf
 
@@ -41,6 +43,7 @@ docker run -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octo
     -ignoreCacManagedValues=false \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
+    -inlineVariableValues \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > k8s.tf
 
@@ -59,6 +62,7 @@ docker run -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octo
     -ignoreCacManagedValues=false \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
+    -inlineVariableValues \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > azurewebapp.tf
 
