@@ -340,15 +340,15 @@ resource "octopusdeploy_deployment_process" "deployment_process_kubernetes_web_a
       is_required                        = false
       worker_pool_variable               = "Octopus.Project.WorkerPool"
       properties                         = {
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
         "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"1\"\n            memory: \"512Mi\"\n          requests:\n            cpu: \"0.5\"\n            memory: \"256Mi\"\n        livenessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
       }
 
       container {
@@ -392,11 +392,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_kubernetes_web_a
       is_required                        = false
       worker_pool_variable               = "Octopus.Project.WorkerPool"
       properties                         = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy a Kubernetes Web App via YAML].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Kubernetes target with the tag 'Kubernetes'.\"\n  Write-Highlight \"We recommend the [Kubernetes Agent](https://octopus.com/docs/kubernetes/targets/kubernetes-agent).\"\n}"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
       environments                       = []
       excluded_environments              = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
@@ -425,17 +425,24 @@ resource "octopusdeploy_deployment_process" "deployment_process_kubernetes_web_a
       is_required                        = false
       worker_pool_variable               = "Octopus.Project.WorkerPool"
       properties                         = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptBody" = "Write-Host \"Pulling Trivy Docker Image\"\nWrite-Host \"##octopus[stdout-verbose]\"\ndocker pull ghcr.io/aquasecurity/trivy\nWrite-Host \"##octopus[stdout-default]\"\n\n# Extract files from the Docker image\nWrite-Host \"Extracting files from Docker image...\"\n# The IMAGE_NAME variable must be in the format\n# ghcr.io/#{Octopus.Action[\u003cName of the step applying the Kubernetes deployment resource\u003e].Package[\u003cName of the referenced package\u003e].PackageId}:#{Octopus.Action[\u003cName of the step applying the Kubernetes deployment resource\u003e].Package[Name of the referenced package\u003e].PackageVersion}\n$IMAGE_NAME = \"ghcr.io/#{Octopus.Action[Deploy a Kubernetes Web App via YAML].Package[octopub-selfcontained].PackageId}:#{Octopus.Action[Deploy a Kubernetes Web App via YAML].Package[octopub-selfcontained].PackageVersion}\"\n$CONTAINER_NAME = \"temporary\"\n\n# Create directory if it doesn't exist\nNew-Item -Path \"extracted_files\" -ItemType Directory -Force | Out-Null\n\nWrite-Host \"##octopus[stdout-verbose]\"\n# Create a temporary container\ndocker create --name $CONTAINER_NAME $IMAGE_NAME 2\u003e\u00261\n\n# Export the container's root filesystem\n# PowerShell equivalent for tar extraction\ndocker export $CONTAINER_NAME | tar \"--wildcards-match-slash\" \"--wildcards\" \"*/bom.json\" -C \"extracted_files\" -xvf - 2\u003e\u00261\n\n# Remove the temporary container\ndocker rm $CONTAINER_NAME 2\u003e\u00261\nWrite-Host \"##octopus[stdout-default]\"\n\n$TIMESTAMP = [DateTimeOffset]::Now.ToUnixTimeMilliseconds()\n$SUCCESS = 0\n\n# Find all bom.json files\n$bomFiles = Get-ChildItem -Path \".\" -Filter \"bom.json\" -Recurse -File\n\nforeach ($file in $bomFiles) {\n    Write-Host \"Scanning $($file.FullName)\"\n\n    # Delete any existing report file\n    if (Test-Path \"$PWD/depscan-bom.json\") {\n        Remove-Item \"$PWD/depscan-bom.json\" -Force\n    }\n\n    # Generate the report, capturing the output\n    try {\n        $OUTPUT = docker run --rm -v \"$($file.FullName):/input/$($file.Name)\" ghcr.io/aquasecurity/trivy sbom -q \"/input/$($file.Name)\"\n        $exitCode = $LASTEXITCODE\n    }\n    catch {\n        $OUTPUT = $_.Exception.Message\n        $exitCode = 1\n    }\n\n    # Run again to generate the JSON output\n    docker run --rm -v \"$${PWD}:/output\" -v \"$($file.FullName):/input/$($file.Name)\" ghcr.io/aquasecurity/trivy sbom -q -f json -o /output/depscan-bom.json \"/input/$($file.Name)\"\n\n    # Octopus Deploy artifact\n    New-OctopusArtifact \"$PWD/depscan-bom.json\"\n\n    # Parse JSON output to count vulnerabilities\n    $jsonContent = Get-Content -Path \"depscan-bom.json\" | ConvertFrom-Json\n    $CRITICAL = ($jsonContent.Results | ForEach-Object { $_.Vulnerabilities } | Where-Object { $_.Severity -eq \"CRITICAL\" }).Count\n    $HIGH = ($jsonContent.Results | ForEach-Object { $_.Vulnerabilities } | Where-Object { $_.Severity -eq \"HIGH\" }).Count\n\n    if (\"#{Octopus.Environment.Name}\" -eq \"Security\") {\n        Write-Highlight \"🟥 $CRITICAL critical vulnerabilities\"\n        Write-Highlight \"🟧 $HIGH high vulnerabilities\"\n    }\n\n    # Set success to 1 if exit code is not zero\n    if ($exitCode -ne 0) {\n        $SUCCESS = 1\n    }\n\n    # Print the output\n    $OUTPUT | ForEach-Object {\n        if ($_.Length -gt 0) {\n            Write-Host $_\n        }\n    }\n}\n\n# Cleanup\nfor ($i = 1; $i -le 10; $i++) {\n    try {\n        if (Test-Path \"bundle\") {\n            Set-ItemProperty -Path \"bundle\" -Name IsReadOnly -Value $false -Recurse -ErrorAction SilentlyContinue\n            Remove-Item -Path \"bundle\" -Recurse -Force -ErrorAction Stop\n            break\n        }\n    }\n    catch {\n        Write-Host \"Attempting to clean up files\"\n        Start-Sleep -Seconds 1\n    }\n}\n\n# Set Octopus variable\nSet-OctopusVariable -Name \"VerificationResult\" -Value $SUCCESS\n\nexit 0"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/DockerImageSbomScan.ps1"
       }
       environments                       = []
       excluded_environments              = []
       channels                           = []
       tenant_tags                        = []
       features                           = []
+
+      git_dependency {
+        repository_uri      = "https://github.com/OctopusSolutionsEngineering/Octopub.git"
+        default_branch      = "main"
+        git_credential_type = "Anonymous"
+        git_credential_id   = ""
+      }
     }
 
     properties   = {}
@@ -531,6 +538,28 @@ resource "octopusdeploy_variable" "kubernetes_web_app_octopusprintvariables_1" {
   name         = "OctopusPrintVariables"
   type         = "String"
   description  = "Set this variable to true to log the variables available at the beginning of each step in the deployment as Verbose messages. See https://octopus.com/docs/support/debug-problems-with-octopus-variables for more details."
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+variable "variable_7add937f062edc4fa93f49c47d6c12e1b02e581ad5a8f84f7367bd4e9858f434_value" {
+  type        = string
+  nullable    = true
+  sensitive   = false
+  description = "The value associated with the variable Application.Image"
+  default     = "ghcr.io/#{Octopus.Action[Deploy a Kubernetes Web App via YAML].Package[octopub-selfcontained].PackageId}:#{Octopus.Action[Deploy a Kubernetes Web App via YAML].Package[octopub-selfcontained].PackageVersion}"
+}
+resource "octopusdeploy_variable" "kubernetes_web_app_application_image_1" {
+  count        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
+  value        = "${var.variable_7add937f062edc4fa93f49c47d6c12e1b02e581ad5a8f84f7367bd4e9858f434_value}"
+  name         = "Application.Image"
+  type         = "String"
+  description  = "The image name is in the format \"ghcr.io/#{Octopus.Action[<Name of the step applying the Kubernetes deployment resource>].Package[<Name of the referenced package>].PackageId}:#{Octopus.Action[<Name of the step applying the Kubernetes deployment resource>].Package[Name of the referenced package>].PackageVersion}\""
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]

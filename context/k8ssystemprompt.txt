@@ -10,13 +10,20 @@
   * end with an alphanumeric character
 * You will be penalized for creating a Kubernetes resource with a name that starts with "*****".
 * You must respond with Terraform configuration to create an Octopus project deploying an application to Kubernetes using raw yaml based on examples provided.
-* You must include the steps from the supplied "Example Octopus Kubernetes Project Terraform Configuration" unless instructed otherwise.
-* You must use the lifecycle from the supplied "Example Octopus Kubernetes Project Terraform Configuration" unless instructed otherwise.
-* You must include the data resources from the supplied "Example Octopus Kubernetes Project Terraform Configuration" unless instructed otherwise.
-* You must include the runbooks from the supplied "Example Octopus Kubernetes Project Terraform Configuration" unless instructed otherwise.
-* You must include the manual intervention step from the supplied "Example Octopus Kubernetes Project Terraform Configuration" unless instructed otherwise.
-* You must use the docker image from the “Deploy a Kubernetes Web App via YAML” step unless instructed otherwise.
-* You must include the “Scan for Vulnerabilities” step unless instructed otherwise.
-* You must include the “Print Message When no Targets” step unless instructed otherwise.
-* You must include the “Daily Security Scan” trigger unless instructed otherwise.
-* You must include the "OctopusPrintEvaluatedVariables" and "OctopusPrintVariables" variables unless instructed otherwise.
+
+## Kubernetes Web App Project Variable Instructions
+
+You must include all the following variables once unless otherwise specified:
+* resource "octopusdeploy_variable" "kubernetes_web_app_kubernetes_deployment_name_1"
+* resource "octopusdeploy_variable" "kubernetes_web_app_octopus_project_workerpool_1"
+* resource "octopusdeploy_variable" "kubernetes_web_app_octopusprintevaluatedvariables_1"
+* resource "octopusdeploy_variable" "kubernetes_web_app_octopusprintvariables_1"
+* resource "octopusdeploy_variable" "kubernetes_web_app_application_image_1"
+
+## Kubernetes Web App Project Deployment Process Instructions
+
+You must include all the following steps unless otherwise specified:
+* "Approve Production Deployment"
+* "Deploy a Kubernetes Web App via YAML"
+* "Print Message When no Targets"
+* "Scan for Vulnerabilities"

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # This is a script used to generate instructions for creating projects in Octopus Deploy.
 # It does just enough to scan a Terraform file for the relevant resources and variables,
 # without having to actually parse HCL.
@@ -6,13 +8,13 @@ import re
 import sys
 
 
-def find_octopus_variables(filename):
+def find_octopus_variables(filename, label):
     # Pattern to match the resource declarations for octopusdeploy_variable
     pattern = r'resource\s+"octopusdeploy_variable"\s+"[^"]+"'
 
     try:
         # Open and read the file
-        print("## Azure Web App Project Variable Instructions\n")
+        print(f"## {label} Project Variable Instructions\n")
         print(
             "You must include all the following variables once unless otherwise specified:"
         )
@@ -28,10 +30,10 @@ def find_octopus_variables(filename):
         print(f"Error processing file: {e}")
 
 
-def find_step_names(filename):
+def find_step_names(filename, label):
     try:
         # Open and read the file
-        print("\n## Azure Web App Project Deployment Process Instructions\n")
+        print(f"\n## {label} Project Deployment Process Instructions\n")
         print("You must include all the following steps unless otherwise specified:")
         with open(filename, "r") as file:
             lines = file.readlines()
@@ -75,10 +77,10 @@ def find_step_names(filename):
         print(f"Error processing file: {e}")
 
 
-def find_runbook_names(filename):
+def find_runbook_names(filename, label):
     try:
         # Open and read the file
-        print("\n## Azure Web App Project Runbook Instructions\n")
+        print(f"\n## {label} Project Runbook Instructions\n")
         print("You must include all the following runbooks unless otherwise specified:")
         with open(filename, "r") as file:
             lines = file.readlines()
@@ -163,10 +165,10 @@ def find_variable_value(filename, variable):
     return None
 
 
-def find_runbook_step_names(filename):
+def find_runbook_step_names(filename, label):
     try:
         # Open and read the file
-        print("\n## Azure Web App Project Runbook Deployment Process Instructions")
+        print(f"\n## {label} Project Runbook Deployment Process Instructions")
         with open(filename, "r") as file:
             lines = file.readlines()
 
@@ -235,10 +237,11 @@ def main():
         return
 
     filename = sys.argv[1]
-    find_octopus_variables(filename)
-    find_step_names(filename)
-    find_runbook_names(filename)
-    find_runbook_step_names(filename)
+    label = sys.argv[2]
+    find_octopus_variables(filename, label)
+    find_step_names(filename, label)
+    find_runbook_names(filename, label)
+    find_runbook_step_names(filename, label)
 
 
 if __name__ == "__main__":
