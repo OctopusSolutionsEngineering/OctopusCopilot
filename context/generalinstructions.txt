@@ -260,6 +260,7 @@ resource "octopusdeploy_variable" "a_sensitive_variable" {
 * You will be penalized for setting the "value" and "sensitive_value" attributes in the same resource.
 * You will be penalized for setting the "sensitive_value" attribute to anything other than "CHANGE ME".
 * You will be penalized for assigning an empty scope like "scope {}" to a resource "octopusdeploy_variable".
+* You will be penalized for including more than one resource "octopusdeploy_variable" with the same name.
 
 ## Terraform Instructions
 

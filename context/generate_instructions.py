@@ -10,14 +10,14 @@ def find_octopus_variables(filename):
         # Open and read the file
         print("## Azure Web App Project Variable Instructions\n")
         print(
-            "You must include all the following variables unless otherwise specified:"
+            "You must include all the following variables once unless otherwise specified:"
         )
         with open(filename, "r") as file:
             for line_number, line in enumerate(file, 1):
                 # Check if the line matches our pattern
                 match = re.match(pattern, line)
                 if match:
-                    print("* " + match.group(0))
+                    print(f'* "{match.group(0)}"')
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
@@ -63,7 +63,7 @@ def find_step_names(filename):
                             # Extract the name part (remove quotes if present)
                             name_match = re.match(r'name\s*=\s*"([^"]*)"', next_line)
                             if name_match:
-                                print(f"* {name_match.group(1)}")
+                                print(f'* "{name_match.group(1)}"')
                             break
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
@@ -128,7 +128,7 @@ def find_runbook_step_names(filename):
                             # Extract the name part (remove quotes if present)
                             name_match = re.match(r'name\s*=\s*"([^"]*)"', next_line)
                             if name_match:
-                                print(f"* {name_match.group(1)}")
+                                print(f'* "{name_match.group(1)}"')
                             break
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
