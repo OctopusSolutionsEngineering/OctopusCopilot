@@ -39,6 +39,12 @@ You must include all the following steps unless otherwise specified:
 * "Deploy accept_message Azure Function - Production Slot"
 * "Deploy process_message Azure App Service - Production Slot"
 
+## Azure Web App Project Runbook Instructions
+
+You must include all the following runbooks unless otherwise specified:
+* "Create Infrastructure"
+* "Destroy Infrastructure"
+
 ## Azure Web App Project Runbook Deployment Process Instructions
 
 You must include all the following runbook steps from the runbook_azure_function_demo_create_infrastructure runbook unless otherwise specified:
