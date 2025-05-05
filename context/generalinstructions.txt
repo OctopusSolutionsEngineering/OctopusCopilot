@@ -331,6 +331,11 @@ resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
  * You will be penalized for defining a script step with no script.
  * Steps of type "Octopus.AzureAppService" must have at least one item in the "target_roles" attribute.
 
+## Octopus Variable Syntax Instructions
+
+* Octopus variable syntax must be defined as "#{<variable name>}"
+* You will be penalized for using the syntax "${<variable name>}".
+
 ## Octopus Variable Instructions
 
 * Variables defined as resource "octopusdeploy_variable" must have a "type" attribute set to one of the following:
