@@ -137,7 +137,7 @@ resource "octopusdeploy_tenant" "tenant_australian_office" {
   count       = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
   name        = "Australian Office"
   description = "An example tenant that represents an Australian office"
-  tenant_tags = ["Cities/Sydney"]
+  tenant_tags = []
   depends_on  = []
   lifecycle {
     prevent_destroy = true
