@@ -32,6 +32,8 @@ from infrastructure.terraform_context import (
     cache_terraform,
 )
 
+project_prompt_error_message = "The project could not be generated from the prompt. This is usually because the prompt is too complex or the LLM is not able to generate a valid Terraform configuration. Please try again with a simpler prompt."
+
 
 def create_template_project_confirm_callback_wrapper(
     github_user,
@@ -79,9 +81,7 @@ def create_template_project_confirm_callback_wrapper(
                     redirector_api_key,
                 )
             except SpaceBuilderRequestFailed as e:
-                return CopilotResponse(
-                    "The project could not be generated from the prompt. This is usually because the prompts is too complex or the LLM is not able to generate a valid Terraform configuration. Please try again with a simpler prompt."
-                )
+                return CopilotResponse(project_prompt_error_message)
 
             response_text.append("The following resources were created:")
             response_text.append(
@@ -259,9 +259,7 @@ def create_template_project_callback(
                     redirector_api_key,
                 )
             except SpaceBuilderRequestFailed as e:
-                return CopilotResponse(
-                    "The project could not be generated from the prompt. This is usually because the prompts is too complex or the LLM is not able to generate a valid Terraform configuration. Please try again with a simpler prompt."
-                )
+                return CopilotResponse(project_prompt_error_message)
 
             # Cache the template if it resulted in a valid plan.
             # If the plan is particularly big (over the limit of 32K characters), the save operation might fail.
