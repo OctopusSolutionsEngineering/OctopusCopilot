@@ -158,7 +158,28 @@ data "octopusdeploy_tenants" "tenant_australian_office" {
 }
 ```
 
+## Library Variable Set Instructions
 
+* Each resource "octopusdeploy_library_variable_set" must have an associated data "octopusdeploy_library_variable_sets". For example, if the following resource is defined:
+
+```
+resource "octopusdeploy_library_variable_set" "library_variable_set_variables_example_variable_set" {
+  count       = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? 0 : 1}"
+  name        = "Example Variable Set"
+  description = ""
+}
+```
+
+Then the associated data resource must be defined as follows:
+
+```
+data "octopusdeploy_library_variable_sets" "library_variable_set_variables_example_variable_set" {
+  ids          = null
+  partial_name = "Example Variable Set"
+  skip         = 0
+  take         = 1
+}
+```
 
 ## Tenant Tag Instructions
 
