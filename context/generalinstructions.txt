@@ -331,7 +331,9 @@ resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
  * You will be penalized for using the "primary_package" property when the "Octopus.Action.Script.ScriptSource" property is set to "Inline".
  * You will be penalized for defining a script step with no script.
  * Steps of type "Octopus.AzureAppService" must have at least one item in the "target_roles" attribute.
- * Steps of type "Octopus.AzureWebApp" must have a "primary_package" block.
+ * Steps of the following types must have a "primary_package" block:
+   * "Octopus.IIS"
+   * "Octopus.AzureWebApp"
 
 ## Octopus Variable Syntax Instructions
 

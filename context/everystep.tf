@@ -351,37 +351,13 @@ resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable3_australia
 
 resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable4_australian_office" {
   library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[5] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[5].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[8] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[8].id}"
   tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "Option1"
+  value                   = ""
   depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
 }
 
 resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable5_australian_office" {
-  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[6] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[6].id}"
-  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "Accounts-21"
-  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
-}
-
-resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable6_australian_office" {
-  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[7] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[7].id}"
-  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "Accounts-3003"
-  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
-}
-
-resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable7_australian_office" {
-  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[9] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[9].id}"
-  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "single line of text"
-  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
-}
-
-resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable8_australian_office" {
   library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
   template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[10] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[10].id}"
   tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
@@ -389,7 +365,15 @@ resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable8_australia
   depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
 }
 
-resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable9_australian_office" {
+resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable6_australian_office" {
+  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[11] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[11].id}"
+  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
+  value                   = "WorkerPools-3788"
+  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
+}
+
+resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable7_australian_office" {
   library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
   template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[3] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[3].id}"
   tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
@@ -397,7 +381,7 @@ resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable9_australia
   depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
 }
 
-resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable10_australian_office" {
+resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable8_australian_office" {
   library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
   template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[4] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[4].id}"
   tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
@@ -405,19 +389,35 @@ resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable10_australi
   depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
 }
 
+resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable9_australian_office" {
+  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[5] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[5].id}"
+  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
+  value                   = "Option1"
+  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
+}
+
+resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable10_australian_office" {
+  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[6] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[6].id}"
+  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
+  value                   = "Accounts-21"
+  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
+}
+
 resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable11_australian_office" {
   library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[8] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[8].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[7] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[7].id}"
   tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = ""
+  value                   = "Accounts-3003"
   depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
 }
 
 resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable12_australian_office" {
   library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[11] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[11].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[9] : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[9].id}"
   tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "WorkerPools-3788"
+  value                   = "single line of text"
   depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
 }
 
@@ -708,6 +708,13 @@ variable "gitcredential_github_sensitive_value" {
   default     = "Change Me!"
 }
 
+variable "project_every_step_project_step_run_a_script_from_a_package_packageid" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The package ID for the package named  from step Run a Script from a package in project Every Step Project"
+  default     = "scripts"
+}
 variable "project_every_step_project_step_run_a_script___from_a_package_packageid" {
   type        = string
   nullable    = false
@@ -784,17 +791,58 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "Bash"
         "Octopus.Action.Script.ScriptBody" = "echo \"Hello World!\"\n\nVARIABLE=\"test\"\n\n# Pay attention to how the $ character is escaped when defined in Terraform\necho \"$${VARIABLE}\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
       environments                       = []
       excluded_environments              = []
       channels                           = []
       tenant_tags                        = ["Cities/London"]
       features                           = []
+    }
+
+    properties   = {}
+    target_roles = []
+  }
+  step {
+    condition           = "Success"
+    name                = "Run a Script from a package"
+    package_requirement = "LetOctopusDecide"
+    start_trigger       = "StartAfterPrevious"
+
+    action {
+      action_type                        = "Octopus.Script"
+      name                               = "Run a Script from a package"
+      notes                              = "An example step that is configured to run a script from a package."
+      condition                          = "Success"
+      run_on_server                      = true
+      is_disabled                        = false
+      can_be_used_for_project_versioning = true
+      is_required                        = false
+      worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+      properties                         = {
+        "Octopus.Action.Script.ScriptFileName" = "MyScript.ps1"
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Package"
+      }
+      environments                       = []
+      excluded_environments              = []
+      channels                           = []
+      tenant_tags                        = ["Cities/London"]
+
+      primary_package {
+        package_id           = "${var.project_every_step_project_step_run_a_script_from_a_package_packageid}"
+        acquisition_location = "Server"
+        feed_id              = "${data.octopusdeploy_feeds.feed_octopus_server__built_in_.feeds[0].id}"
+        properties           = { SelectionMode = "immediate" }
+      }
+
+      features = []
     }
 
     properties   = {}
@@ -817,11 +865,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Package"
         "Octopus.Action.Script.ScriptFileName" = "ScriptName.ps1"
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
+        "OctopusUseBundledTooling" = "False"
       }
       environments                       = []
       excluded_environments              = []
@@ -857,12 +905,12 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Script.ScriptBody" = "echo \"Hello World!\""
         "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "Bash"
         "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? data.octopusdeploy_accounts.account_azure.accounts[0].id : octopusdeploy_azure_openid_connect.account_azure[0].id}"
+        "Octopus.Action.Script.ScriptBody" = "echo \"Hello World!\""
       }
 
       container {
@@ -895,15 +943,15 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.Region" = "us-east-1"
         "Octopus.Action.Script.ScriptBody" = "echo \"Hi\""
+        "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Aws.Region" = "us-east-1"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 
       container {
@@ -936,16 +984,16 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.GoogleCloud.Project" = "ProjectID"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GoogleCloud.Zone" = "australia-southeast1-a"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.Script.Syntax" = "Bash"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.ScriptBody" = "echo \"Hi\""
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.GoogleCloud.Project" = "ProjectID"
+        "Octopus.Action.GoogleCloud.Zone" = "australia-southeast1-a"
+        "Octopus.Action.Script.Syntax" = "Bash"
         "Octopus.Action.GoogleCloud.Region" = "australia-southeast1"
+        "Octopus.Action.Script.ScriptBody" = "echo \"Hi\""
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 
       container {
@@ -985,9 +1033,9 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
         "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? data.octopusdeploy_accounts.account_azure.accounts[0].id : octopusdeploy_azure_openid_connect.account_azure[0].id}"
         "Octopus.Action.Azure.ResourceGroupName" = "my-resource-group"
         "Octopus.Action.Azure.ResourceGroupTemplate" = jsonencode({
+        "resources" = []
         "$schema" = "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#"
         "contentVersion" = "1.0.0.0"
-        "resources" = []
                 })
       }
       environments                       = []
@@ -1015,12 +1063,12 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "Write-Host \"Hello World\""
         "Octopus.Action.KubernetesContainers.Namespace" = "mynamespace"
         "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 
       container {
@@ -1053,34 +1101,34 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
-        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "True"
+        "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
+        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
+        "Octopus.Action.IISWebSite.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
+        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
         "Octopus.Action.IISWebSite.Bindings" = jsonencode([
         {
-        "requireSni" = "False"
-        "enabled" = "True"
-        "protocol" = "http"
         "port" = "80"
         "host" = ""
         "thumbprint" = null
         "certificateVariable" = null
+        "requireSni" = "False"
+        "enabled" = "True"
+        "protocol" = "http"
                 },
         ])
-        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
-        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
-        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
+        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "True"
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
+        "Octopus.Action.IISWebSite.WebSiteName" = "webapp"
         "Octopus.Action.IISWebSite.EnableAnonymousAuthentication" = "False"
         "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
         "Octopus.Action.IISWebSite.ApplicationPoolName" = "apppool"
         "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion" = "v4.0"
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
+        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
         "Octopus.Action.IISWebSite.StartWebSite" = "True"
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
-        "Octopus.Action.IISWebSite.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
-        "Octopus.Action.IISWebSite.WebSiteName" = "webapp"
       }
       environments                       = []
       excluded_environments              = []
@@ -1115,9 +1163,9 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
         "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
         "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
       }
       environments                       = []
       excluded_environments              = []
@@ -1152,17 +1200,17 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
-        "Octopus.Action.WindowsService.DisplayName" = "My sample Windows service"
-        "Octopus.Action.WindowsService.Description" = "This is a sample deployment of a Windows service"
-        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
-        "Octopus.Action.WindowsService.ExecutablePath" = "myapp.exe"
         "Octopus.Action.WindowsService.DesiredStatus" = "Default"
+        "Octopus.Action.WindowsService.Description" = "This is a sample deployment of a Windows service"
         "Octopus.Action.WindowsService.StartMode" = "auto"
-        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
         "Octopus.Action.WindowsService.ServiceName" = "My Service"
+        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
+        "Octopus.Action.WindowsService.DisplayName" = "My sample Windows service"
         "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
+        "Octopus.Action.WindowsService.ExecutablePath" = "myapp.exe"
+        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
+        "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
       }
       environments                       = []
       excluded_environments              = []
@@ -1242,24 +1290,24 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       is_required                        = false
       properties                         = {
         "Octopus.Action.Aws.S3.PackageOptions" = jsonencode({
-        "bucketKeyBehaviour" = "Custom"
-        "storageClass" = "STANDARD"
-        "metadata" = []
         "bucketKey" = "mybucket"
         "bucketKeyPrefix" = ""
         "cannedAcl" = "private"
         "variableSubstitutionPatterns" = ""
-        "structuredVariableSubstitutionPatterns" = ""
         "tags" = []
+        "bucketKeyBehaviour" = "Custom"
+        "storageClass" = "STANDARD"
+        "structuredVariableSubstitutionPatterns" = ""
+        "metadata" = []
                 })
-        "Octopus.Action.RunOnServer" = "false"
-        "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.Aws.Region" = "ap-southeast-2"
         "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
+        "Octopus.Action.Aws.Region" = "ap-southeast-2"
         "Octopus.Action.Aws.S3.BucketName" = "my-s3-bucket"
+        "Octopus.Action.RunOnServer" = "false"
         "Octopus.Action.Package.DownloadOnTentacle" = "False"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
       }
       environments                       = []
       excluded_environments              = []
@@ -1294,11 +1342,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.JavaArchive.DeployExploded" = "False"
         "Octopus.Action.Package.DownloadOnTentacle" = "False"
-        "Octopus.Action.Package.JavaArchiveCompression" = "True"
         "Octopus.Action.Package.UseCustomInstallationDirectory" = "False"
         "Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment" = "False"
+        "Octopus.Action.JavaArchive.DeployExploded" = "False"
+        "Octopus.Action.Package.JavaArchiveCompression" = "True"
       }
       environments                       = []
       excluded_environments              = []
@@ -1372,7 +1420,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
         "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
@@ -1380,6 +1427,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
         "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\n  labels:\n    app: nginx\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: nginx\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80"
         "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
       }
 
       container {
@@ -1412,7 +1460,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = false
       is_required                        = false
       properties                         = {
-        "Octopus.Action.SubstituteInFiles.TargetFiles" = " **/*.env"
         "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
         "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
@@ -1420,6 +1467,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
         "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
         "Octopus.Action.Kubernetes.Kustomize.OverlayPath" = "overlays/#{Octopus.Environment.Name}"
+        "Octopus.Action.SubstituteInFiles.TargetFiles" = " **/*.env"
       }
       environments                       = []
       excluded_environments              = []
@@ -1454,23 +1502,23 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Terraform.PlanJsonOutput" = "False"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
         "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
         "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
         "test2" = "{\n  val1 = [\n    \"hi\"\n  ]\n}"
         "test3" = "{\n  val1 = {\n    val2 = \"hi\"\n  }\n}"
         "test4" = "{\n  val1 = {\n    val2 = [\n      \"hi\"\n    ]\n  }\n}"
                 })
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
         "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
       }
 
       container {
@@ -1503,23 +1551,23 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
         "Octopus.Action.Terraform.PlanJsonOutput" = "False"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
         "test2" = "{\n  val1 = [\n    \"hi\"\n  ]\n}"
         "test3" = "{\n  val1 = {\n    val2 = \"hi\"\n  }\n}"
         "test4" = "{\n  val1 = {\n    val2 = [\n      \"hi\"\n    ]\n  }\n}"
                 })
-        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
       }
 
       container {
@@ -1552,24 +1600,24 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
         "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.ExecutionTimeout.Minutes" = "5"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
         "test2" = "{\n  val1 = [\n    \"hi\"\n  ]\n}"
         "test3" = "{\n  val1 = {\n    val2 = \"hi\"\n  }\n}"
         "test4" = "{\n  val1 = {\n    val2 = [\n      \"hi\"\n    ]\n  }\n}"
                 })
+        "Octopus.Action.Terraform.AzureAccount" = "False"
         "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.ExecutionTimeout.Minutes" = "5"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
       }
 
       container {
@@ -1602,25 +1650,25 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
         "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
         "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
         "test2" = "{\n  val1 = [\n    \"hi\"\n  ]\n}"
         "test3" = "{\n  val1 = {\n    val2 = \"hi\"\n  }\n}"
         "test4" = "{\n  val1 = {\n    val2 = [\n      \"hi\"\n    ]\n  }\n}"
                 })
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
         "Octopus.Action.AutoRetry.MaximumCount" = "3"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
         "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
+        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
+        "OctopusUseBundledTooling" = "False"
       }
 
       container {
@@ -1654,17 +1702,17 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "Octopus.Action.Aws.TemplateSource" = "Inline"
-        "Octopus.Action.Aws.CloudFormationStackName" = "mystackname"
         "Octopus.Action.Aws.CloudFormationTemplate" = "AWSTemplateFormatVersion: '2010-09-09'\nDescription: 'CloudFormation exports'\n \nConditions:\n  HasNot: !Equals [ 'true', 'false' ]\n \n# dummy (null) resource, never created\nResources:\n  NullResource:\n    Type: 'Custom::NullResource'\n    Condition: HasNot\n \nOutputs:\n  ExportsStackName:\n    Value: !Ref 'AWS::StackName'\n    Export:\n      Name: !Sub 'ExportsStackName-$${AWS::StackName}'"
         "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
-        "Octopus.Action.Aws.Region" = "us-east-2"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Aws.CloudFormationStackName" = "mystackname"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.Aws.TemplateSource" = "Inline"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Aws.Region" = "us-east-2"
+        "Octopus.Action.Aws.WaitForCompletion" = "True"
       }
 
       container {
@@ -1697,15 +1745,15 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.Aws.CloudFormation.ChangeSet.Arn" = "mychangeset"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
         "Octopus.Action.Aws.Region" = "ap-southeast-1"
+        "Octopus.Action.Aws.CloudFormation.ChangeSet.Arn" = "mychangeset"
+        "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
+        "Octopus.Action.Aws.CloudFormationStackName" = "mystack"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Aws.WaitForCompletion" = "True"
         "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Aws.CloudFormationStackName" = "mystack"
       }
 
       container {
@@ -1763,7 +1811,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_every_step_proje
     properties   = {}
     target_roles = []
   }
-  depends_on = [octopusdeploy_tag_set.tagset_cities,octopusdeploy_tag.tagset_cities_tag_sydney,octopusdeploy_tag.tagset_cities_tag_london,octopusdeploy_tag.tagset_cities_tag_london,octopusdeploy_tag.tagset_cities_tag_washington,octopusdeploy_tag.tagset_cities_tag_madrid,octopusdeploy_tag.tagset_cities_tag_wellington]
+  depends_on = [octopusdeploy_tag_set.tagset_cities,octopusdeploy_tag.tagset_cities_tag_sydney,octopusdeploy_tag.tagset_cities_tag_london,octopusdeploy_tag.tagset_cities_tag_london,octopusdeploy_tag.tagset_cities_tag_london,octopusdeploy_tag.tagset_cities_tag_washington,octopusdeploy_tag.tagset_cities_tag_madrid,octopusdeploy_tag.tagset_cities_tag_wellington]
 }
 
 data "octopusdeploy_accounts" "account_aws_oidc" {
