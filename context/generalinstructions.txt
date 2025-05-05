@@ -294,6 +294,7 @@ resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
 ## Octopus Project Instructions
 
 * You will be penalized for adding a "retention_policy" block to a resource "octopusdeploy_project".
+* The "skip_machine_behavior" property can be set to "None" or "SkipUnavailableMachines"
 
 ## Octopus Deployment Process Instructions
 
