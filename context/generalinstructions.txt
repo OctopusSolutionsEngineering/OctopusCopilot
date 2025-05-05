@@ -128,6 +128,38 @@ resource "octopusdeploy_environment" "environment_<name>" {
 
 * Custom lifecycles must include the environments "Development", "Test", and "Production" unless otherwise instructed.
 
+## Tenant Instructions
+
+* Each resource "octopusdeploy_tenant" must have an associated data "octopusdeploy_tenants". For example, if the following resource is defined:
+```
+
+resource "octopusdeploy_tenant" "tenant_australian_office" {
+  count       = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
+  name        = "Australian Office"
+  description = "An example tenant that represents an Australian office"
+  tenant_tags = ["Cities/Sydney"]
+  depends_on  = []
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
+Then the associated data resource must be defined as follows:
+
+```
+data "octopusdeploy_tenants" "tenant_australian_office" {
+  ids          = null
+  partial_name = "Australian Office"
+  skip         = 0
+  take         = 1
+  project_id   = ""
+  tags         = null
+}
+```
+
+
+
 ## Tenant Tag Instructions
 
 * The "tenant_tags" attribute must be an array with strings that looks like "<tag set name>/<tag name>".
