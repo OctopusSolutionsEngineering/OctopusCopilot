@@ -407,6 +407,7 @@ resource "octopusdeploy_variable" "a_sensitive_variable" {
 * The Terraform variable "octopus_space_id" must be included.
 * Terraform string interpolation must be implemented as "${}".
 * You will be penalized for using two curly brackets for string interpolation like "${{}}".
+* Script steps that reference variables like "${VARIABLE}" must escape the dollar sign like "$${VARIABLE}".
 
 ## Penalties
 
