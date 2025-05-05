@@ -287,6 +287,10 @@ resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
 * The "subscription_id" attribute for the resource "octopusdeploy_azure_service_principal" must be set to "00000000-0000-0000-0000-000000000000"
 * The "tenant_id" attribute for the resource "octopusdeploy_azure_service_principal" must be set to "00000000-0000-0000-0000-000000000000"
 
+## Octopus Runbook Instructions
+
+* The "retention_policy" block can only be defined for a resource "octopusdeploy_runbook".
+
 ## Octopus Project Instructions
 
 * You will be penalized for adding a "retention_policy" block to a resource "octopusdeploy_project".
