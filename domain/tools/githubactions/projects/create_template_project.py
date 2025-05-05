@@ -6,6 +6,7 @@ import uuid
 
 from domain.config.database import get_functions_connection_string
 from domain.exceptions.none_on_exception import none_on_exception
+from domain.exceptions.spacebuilder import SpaceBuilderRequestFailed
 from domain.lookup.octopus_lookups import (
     lookup_space,
 )
@@ -68,14 +69,19 @@ def create_template_project_confirm_callback_wrapper(
                 )
             )
 
-            response = await create_terraform_apply(
-                api_key,
-                access_token,
-                url,
-                plan_id,
-                redirections,
-                redirector_api_key,
-            )
+            try:
+                response = await create_terraform_apply(
+                    api_key,
+                    access_token,
+                    url,
+                    plan_id,
+                    redirections,
+                    redirector_api_key,
+                )
+            except SpaceBuilderRequestFailed as e:
+                return CopilotResponse(
+                    "The project could not be generated from the prompt. This is usually because the prompts is too complex or the LLM is not able to generate a valid Terraform configuration. Please try again with a simpler prompt."
+                )
 
             response_text.append("The following resources were created:")
             response_text.append(
@@ -241,16 +247,21 @@ def create_template_project_callback(
             # We can then save the Terraform plan as a callback
             callback_id = str(uuid.uuid4())
 
-            response = await create_terraform_plan(
-                api_key,
-                access_token,
-                url,
-                space_id,
-                project_name,
-                configuration,
-                redirections,
-                redirector_api_key,
-            )
+            try:
+                response = await create_terraform_plan(
+                    api_key,
+                    access_token,
+                    url,
+                    space_id,
+                    project_name,
+                    configuration,
+                    redirections,
+                    redirector_api_key,
+                )
+            except SpaceBuilderRequestFailed as e:
+                return CopilotResponse(
+                    "The project could not be generated from the prompt. This is usually because the prompts is too complex or the LLM is not able to generate a valid Terraform configuration. Please try again with a simpler prompt."
+                )
 
             # Cache the template if it resulted in a valid plan.
             # If the plan is particularly big (over the limit of 32K characters), the save operation might fail.
