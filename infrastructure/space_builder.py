@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 
 import aiohttp
 
+from domain.exceptions.none_on_exception import none_on_exception_async
 from domain.exceptions.spacebuilder import SpaceBuilderRequestFailed
 from domain.validation.argument_validation import (
     ensure_string_not_empty,
@@ -12,7 +13,7 @@ from domain.validation.argument_validation import (
 )
 from infrastructure.octolint import redirections_enabled
 from infrastructure.octopus import logging_wrapper
-
+from infrastructure.ratings import create_feedback_async
 
 # Semaphore to limit the number of concurrent requests to the octopus space builder
 sem = asyncio.Semaphore(10)
@@ -133,6 +134,19 @@ async def create_terraform_plan(
                 api, data=json.dumps(space_builder_request_body)
             ) as response:
                 if response.status != 200 and response.status != 201:
+                    # Send feedback to the feedback service if the request fails
+                    # This allows us to capture prompts that fail to generate a plan
+                    # This is a best-effort operation, and we don't fail on an exception
+                    await none_on_exception_async(
+                        lambda: create_feedback_async(
+                            api_key,
+                            access_token,
+                            octopus_url,
+                            configuration,
+                            False,
+                            "Failed to create terraform plan",
+                        )
+                    )
                     body = await response.text()
                     raise SpaceBuilderRequestFailed(
                         f"Request to {api} failed with {body}"
