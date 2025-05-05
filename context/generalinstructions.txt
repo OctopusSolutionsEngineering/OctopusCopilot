@@ -128,6 +128,12 @@ resource "octopusdeploy_environment" "environment_<name>" {
 
 * Custom lifecycles must include the environments "Development", "Test", and "Production" unless otherwise instructed.
 
+## Tenant Tag Instructions
+
+* The "tenant_tags" attribute must be an array with strings that looks like "<tag set name>/<tag name>".
+* The <tag set name> must match the name of a resource "octopusdeploy_tag_set".
+* The <tag name> must match the name of a resource "octopusdeploy_tag".
+
 ## Resource and Data Instructions
 
 * When referencing a lifecycle, you must create the "resource" type "octopusdeploy_lifecycle" and the "data" type "octopusdeploy_lifecycles".
