@@ -338,6 +338,7 @@ resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
    * "Octopus.WindowsService"
    * "Octopus.AwsUploadS3"
    * "Octopus.JavaArchive"
+ * The "start_trigger" attribute must only be defined once.
 
 ## Octopus Variable Syntax Instructions
 
