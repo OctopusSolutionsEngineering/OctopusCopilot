@@ -133,6 +133,8 @@ resource "octopusdeploy_environment" "environment_<name>" {
 * The "tenant_tags" attribute must be an array with strings that looks like "<tag set name>/<tag name>".
 * The <tag set name> must match the name of a resource "octopusdeploy_tag_set".
 * The <tag name> must match the name of a resource "octopusdeploy_tag".
+* The "tenant_tags" attribute must only be defined in an "action" block.
+* You will be penalized for using the "tenant_tags" attribute in a resource "octopusdeploy_deployment_process".
 
 ## Resource and Data Instructions
 
