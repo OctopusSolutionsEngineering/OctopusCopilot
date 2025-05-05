@@ -334,7 +334,7 @@ resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
 ## Octopus Variable Syntax Instructions
 
 * Octopus variable syntax must be defined as "#{<variable name>}"
-* You will be penalized for using the syntax "${<variable name>}".
+* You will be penalized for using the syntax "${<variable name>}" for Octopus variables.
 
 ## Octopus Variable Instructions
 
