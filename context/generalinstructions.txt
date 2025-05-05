@@ -370,6 +370,7 @@ resource "octopusdeploy_variable" "a_sensitive_variable" {
 
 ## Terraform Instructions
 
+* You will be penalized for defining resources or adding attributes that are not included in the sample Terraform configurations.
 * Every resource must have a "count" attribute.
 * You will be penalized for using heredoc syntax.
 * You must only respond with the Terraform configuration.
