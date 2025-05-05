@@ -334,6 +334,10 @@ resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
  * Steps of the following types must have a "primary_package" block:
    * "Octopus.IIS"
    * "Octopus.AzureWebApp"
+   * "Octopus.TentaclePackage"
+   * "Octopus.WindowsService"
+   * "Octopus.AwsUploadS3"
+   * "Octopus.JavaArchive"
 
 ## Octopus Variable Syntax Instructions
 
