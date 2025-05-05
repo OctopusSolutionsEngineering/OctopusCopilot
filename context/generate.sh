@@ -53,7 +53,7 @@ docker run -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octo
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
-    -projectName "Azure Function Demo" \
+    -projectName "Azure Function" \
     -stepTemplate \
     -stepTemplateName "Space Context" \
     -stepTemplateKey "SpaceContext" \

@@ -36,6 +36,7 @@ project_prompt_error_message = "The project could not be generated from the prom
 
 
 def create_template_project_confirm_callback_wrapper(
+    original_prompt,
     github_user,
     octopus_details,
     log_query,
@@ -77,6 +78,7 @@ def create_template_project_confirm_callback_wrapper(
                     access_token,
                     url,
                     plan_id,
+                    original_prompt,
                     redirections,
                     redirector_api_key,
                 )
@@ -254,6 +256,7 @@ def create_template_project_callback(
                     url,
                     space_id,
                     project_name,
+                    original_query,
                     configuration,
                     redirections,
                     redirector_api_key,

@@ -131,6 +131,7 @@ def build_mock_test_tools(tool_query):
                 create_k8s_project_wrapper(
                     tool_query,
                     create_template_project_confirm_callback_wrapper(
+                        tool_query,
                         os.environ["TEST_GH_USER"],
                         octopus_details,
                         log_query,

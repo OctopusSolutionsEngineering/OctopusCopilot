@@ -94,6 +94,7 @@ async def create_terraform_plan(
     octopus_url,
     space_id,
     project_name,
+    prompt,
     configuration,
     redirections,
     redirections_apikey,
@@ -142,7 +143,7 @@ async def create_terraform_plan(
                             api_key,
                             access_token,
                             octopus_url,
-                            configuration,
+                            prompt,
                             False,
                             "Failed to create terraform plan",
                         )
@@ -160,6 +161,7 @@ async def create_terraform_apply(
     access_token,
     octopus_url,
     plan_id,
+    prompt,
     redirections,
     redirections_apikey,
 ):
@@ -194,6 +196,19 @@ async def create_terraform_apply(
                 api, data=json.dumps(space_builder_request_body)
             ) as response:
                 if response.status != 200 and response.status != 201:
+                    # Send feedback to the feedback service if the request fails
+                    # This allows us to capture prompts that fail to generate a plan
+                    # This is a best-effort operation, and we don't fail on an exception
+                    await none_on_exception_async(
+                        lambda: create_feedback_async(
+                            api_key,
+                            access_token,
+                            octopus_url,
+                            prompt,
+                            False,
+                            "Failed to apply terraform plan",
+                        )
+                    )
                     body = await response.text()
                     raise SpaceBuilderRequestFailed(
                         f"Request to {api} failed with {body}"
