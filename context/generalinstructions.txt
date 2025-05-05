@@ -183,7 +183,8 @@ data "octopusdeploy_library_variable_sets" "library_variable_set_variables_examp
 
 ## Tenant Tag Instructions
 
-* The "tenant_tags" attribute must be an array with strings that looks like "<tag set name>/<tag name>".
+* The "tenant_tags" attribute must be an array with strings that looks like "<tag set name>/<tag name>", for example "Cities/Sydney" or "BU/Sales".
+* You will be penalized for defining an item in the "tenant_tags" array as a single string like "Sydney".
 * The <tag set name> must match the name of a resource "octopusdeploy_tag_set".
 * The <tag name> must match the name of a resource "octopusdeploy_tag".
 * The "tenant_tags" attribute must only be defined in an "action" block.
