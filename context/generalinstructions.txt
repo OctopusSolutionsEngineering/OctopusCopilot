@@ -349,7 +349,33 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 * The "name" attribute can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
 * You will be penalized for defining a "name" attribute with the characters "/" and "\".
 * You will be penalized for adding a "action" attribute to an "action" block.
-* Target tags must only be defined in the "target_roles" attribute on a "step".
+* Target tags must only be defined in the "target_roles" attribute on a "step", for example:
+
+```
+resource "octopusdeploy_deployment_process" "deployment_process_myproject" {
+  project_id = "${octopusdeploy_project.project_myproject.id}"
+
+  step {
+    condition           = "Success"
+    name                = "Approve deployment"
+    package_requirement = "LetOctopusDecide"
+    start_trigger       = "StartAfterPrevious"
+
+    action {
+      # The action is defined here
+      # You will be penalized for adding a "target_roles" attribute in the "action" block
+    }
+
+    properties   = {}
+
+    # The target roles are defined only here in the "step" block
+    target_roles = []
+  }
+
+  depends_on = []
+}
+```
+
 * You will be penalized for using target tags with the format "name=value" in the "target_roles" attribute.
 * You will be penalized for adding the "target_roles" attribute on an "action".
 * You will be penalized for adding target tags to the "tenant_tags" attribute.
