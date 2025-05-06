@@ -304,6 +304,10 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
   * "OctopusProject"
   * "ArtifactoryGeneric"
 
+## Feed Instructions
+
+* The data "octopusdeploy_feeds" with "type" set to "BuiltIn" must have an empty "partial_name" arrribute.
+
 ## Project Instructions
 
 * You must include the "lifecycle_id" attribute for every "octopusdeploy_project" resource.
