@@ -235,6 +235,27 @@ resource "octopusdeploy_tag" "tagset_cities_tag_brisbane" {
 }
 ```
 
+## Lifecycle Instructions
+
+* When using a lifecycle other than the "Default Lifecycle", you must include a data "octopusdeploy_lifecycles" and a resource "octopusdeploy_lifecycle", for example:
+
+```
+data "octopusdeploy_lifecycles" "lifecycle_application" {
+  ids          = null
+  partial_name = "Application"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_lifecycle" "lifecycle_application" {
+  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_application.lifecycles) != 0 ? 0 : 1}"
+  name        = "Application"
+  description = "This is an example lifecycle that automatically deploys to the first environment"
+
+  # phases are defined here
+}
+```
+
 ## Resource and Data Instructions
 
 * When referencing a lifecycle, you must create the "resource" type "octopusdeploy_lifecycle" and the "data" type "octopusdeploy_lifecycles".
