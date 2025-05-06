@@ -7,37 +7,25 @@
 ## Azure Web App Project Variable Instructions
 
 You must include all the following variables once unless otherwise specified:
-* resource "octopusdeploy_variable" "azure_function_demo_project_queue_name_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_slack_channel_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_location_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_process_message_os_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_accept_message_os_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_accept_message_version_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_accept_message_runtime_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_process_message_version_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_process_message_runtime_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_account_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_resourcegroup_name_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_resourcegroup_name_2"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_resourcegroup_name_3"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_storageaccount_name_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_accept_message_name_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_function_process_message_name_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_queue_connectionstring_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_queue_connectionstring_2"
-* resource "octopusdeploy_variable" "azure_function_demo_project_azure_queue_connectionstring_3"
-* resource "octopusdeploy_variable" "azure_function_demo_project_octopus_api_key_1"
-* resource "octopusdeploy_variable" "azure_function_demo_project_slack_url_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_location_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_account_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_2"
+* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_3"
+* resource "octopusdeploy_variable" "azure_function_project_octopus_api_key_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_name_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_os_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_runtime_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_version_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_storageaccount_name_1"
 
 ## Azure Web App Project Deployment Process Instructions
 
 You must include all the following steps unless otherwise specified:
 * "Verify setup"
-* "Deploy accept_message Azure Function - Staging Slot"
-* "Deploy process_message Azure App Service - Staging Slot"
+* "Deploy products-microservice-azurefunction-jvm Azure Function - Staging Slot"
 * "Manual approval"
-* "Deploy accept_message Azure Function - Production Slot"
-* "Deploy process_message Azure App Service - Production Slot"
+* "Deploy products-microservice-azurefunction-jvm Azure Function - Production Slot"
 
 ## Azure Web App Project Runbook Instructions
 
@@ -47,13 +35,12 @@ You must include all the following runbooks unless otherwise specified:
 
 ## Azure Web App Project Runbook Deployment Process Instructions
 
-You must include all the following runbook steps from the runbook_azure_function_demo_create_infrastructure runbook unless otherwise specified:
+You must include all the following runbook steps from the runbook_azure_function_create_infrastructure runbook unless otherwise specified:
 * "Verify setup"
 * "Create Resource Group"
 * "Create Storage Account"
-* "Create Accept-Message Function App"
-* "Create Process-Message Function App"
-* "Update Storage Account Connection String"
+* "Create Octopub Products Function App"
 
-You must include all the following runbook steps from the runbook_azure_function_demo_destroy_infrastructure runbook unless otherwise specified:
+You must include all the following runbook steps from the runbook_azure_function_destroy_infrastructure runbook unless otherwise specified:
+* "Deregister target"
 * "Destroy resource group"
