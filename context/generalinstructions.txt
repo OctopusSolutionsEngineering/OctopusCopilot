@@ -466,3 +466,4 @@ resource "octopusdeploy_variable" "a_sensitive_variable" {
 * You will be penalized for including any code blocks.
 * You will be penalized for including any instructions.
 * You will be penalized for returning any other text.
+* You will be penalized for including any comments.
