@@ -445,6 +445,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_myproject" {
 
  * Steps with actions of the following types must have at least one role defined in the "target_roles" array:
    * "Octopus.AzureWebApp"
+   * "Octopus.KubernetesDeployRawYaml"
 
 ## Octopus Variable Syntax Instructions
 
