@@ -262,6 +262,22 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 * The resource "octopusdeploy_lifecycle" must have "phase" blocks with environments listed in either the "automatic_deployment_targets" array or the "optional_deployment_targets" array.
 * You will be penalized for defining a lifecycle phase with no environments.
 
+## Variable Template Instructions
+
+* You must set the "default_value" in a "template" block to "null" when there is no default value, for example:
+
+```
+  template {
+    name             = "ConnectionString"
+    label            = "Database Connection String"
+    help_text        = "Provide the connection string for the API Gateway database."
+    default_value    = null
+    display_settings = { "Octopus.ControlType" = "SingleLineText" }
+  }
+```
+
+* You will be penalized for setting the "default_value" to an empty string.
+
 ## Resource and Data Instructions
 
 * When referencing a lifecycle, you must create the "resource" type "octopusdeploy_lifecycle" and the "data" type "octopusdeploy_lifecycles".
