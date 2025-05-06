@@ -76,6 +76,43 @@ resource "octopusdeploy_project_group" "project_group_<name>" {
 }
 ```
 
+When the "feed_id" attribute is set to:
+
+```
+"${length(data.octopusdeploy_feeds.feed_docker_hub.feeds) != 0 ? data.octopusdeploy_feeds.feed_docker_hub.feeds[0].id : octopusdeploy_docker_container_registry.feed_docker_hub[0].id}"
+```
+
+Then the following "octopusdeploy_feeds" data resource must be included in the output:
+
+```
+data "octopusdeploy_feeds" "feed_docker_hub" {
+  feed_type    = "Docker"
+  ids          = null
+  partial_name = "Docker Hub"
+  skip         = 0
+  take         = 1
+}
+```
+
+And the following "octopusdeploy_docker_container_registry" resource must be defined:
+
+```
+resource "octopusdeploy_docker_container_registry" "feed_docker_hub" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_docker_hub.feeds) != 0 ? 0 : 1}"
+  name                                 = "Docker Hub"
+  password                             = "${var.feed_docker_hub_password}"
+  registry_path                        = ""
+  username                             = "username"
+  api_version                          = ""
+  feed_uri                             = "https://index.docker.io"
+  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+```
+
 When the "environment_id" attribute is set to:
 
 ```
