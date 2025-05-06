@@ -539,6 +539,13 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 * You will be penalized for assigning an empty scope like "scope {}" to a resource "octopusdeploy_variable".
 * You will be penalized for defining a "tenants" attribute in the "scope" block.
 * You will be penalized for including more than one resource "octopusdeploy_variable" with the same name.
+* The only valid attributes for the "scope" block are:
+  * "actions"
+  * "channels"
+  * "environments"
+  * "machines"
+  * "roles"
+  * "tenant_tags"
 
 ## Terraform Instructions
 
