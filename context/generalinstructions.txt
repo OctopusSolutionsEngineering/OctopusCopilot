@@ -552,6 +552,10 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 
 * The "runbook_id" attribute of resource "octopusdeploy_runbook_process" is in the format "${length(data.octopusdeploy_projects.<project>.projects) != 0 ? null : octopusdeploy_runbook.<runbook>[0].id}"
 
+## Worker Pool Instructions
+
+* You must include the data "octopusdeploy_worker_pools" "workerpool_default_worker_pool".
+
 ## Terraform Instructions
 
 * You will be penalized for defining resources or adding attributes that are not included in the sample Terraform configurations.
