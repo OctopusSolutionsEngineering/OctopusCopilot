@@ -192,6 +192,8 @@ data "octopusdeploy_library_variable_sets" "library_variable_set_variables_examp
 * For example, if the "tenant_tags" attribute is set to "Cities/Sydney", then the following data "octopusdeploy_tag_sets", resource "octopusdeploy_tag_set" and resource "octopusdeploy_tag" must be included in the output:
 
 ```
+# A data resource to find the existing tag set
+# There is a one-to-one relationship between this resource and the data resource
 data "octopusdeploy_tag_sets" "tagset_cities" {
   ids          = null
   partial_name = "Cities"
@@ -199,6 +201,8 @@ data "octopusdeploy_tag_sets" "tagset_cities" {
   take         = 1
 }
 
+# If there is no existing tag set, create one with this resource
+# There is a one-to-one relationship between this resource and the data resource
 resource "octopusdeploy_tag_set" "tagset_cities" {
   count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
   name        = "Cities"
@@ -208,12 +212,25 @@ resource "octopusdeploy_tag_set" "tagset_cities" {
   }
 }
 
+# If there is no existing tag set, create the tag with this resource
+# There is a one-to-many relationship between tag sets and tags
 resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
   count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
   name        = "Sydney"
   tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
   # The colours are random
   color       = "#333333"
+  description = ""
+}
+
+# If there is no existing tag set, create the tag with this resource
+# There is a one-to-many relationship between tag sets and tags
+resource "octopusdeploy_tag" "tagset_cities_tag_brisbane" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
+  name        = "Brisbane"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
+  # The colours are random
+  color       = "#C5AEEE"
   description = ""
 }
 ```
