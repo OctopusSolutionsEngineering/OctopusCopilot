@@ -38,6 +38,176 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   }
 }
 
+data "octopusdeploy_environments" "environment_development" {
+  ids          = null
+  partial_name = "Development"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_environment" "environment_development" {
+  count                        = "${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? 0 : 1}"
+  name                         = "Development"
+  description                  = ""
+  allow_dynamic_infrastructure = true
+  use_guided_failure           = false
+
+  jira_extension_settings {
+    environment_type = "unmapped"
+  }
+
+  jira_service_management_extension_settings {
+    is_enabled = false
+  }
+
+  servicenow_extension_settings {
+    is_enabled = false
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_environments" "environment_test" {
+  ids          = null
+  partial_name = "Test"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_environment" "environment_test" {
+  count                        = "${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? 0 : 1}"
+  name                         = "Test"
+  description                  = ""
+  allow_dynamic_infrastructure = true
+  use_guided_failure           = false
+
+  jira_extension_settings {
+    environment_type = "unmapped"
+  }
+
+  jira_service_management_extension_settings {
+    is_enabled = false
+  }
+
+  servicenow_extension_settings {
+    is_enabled = false
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_environments" "environment_production" {
+  ids          = null
+  partial_name = "Production"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_environment" "environment_production" {
+  count                        = "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? 0 : 1}"
+  name                         = "Production"
+  description                  = ""
+  allow_dynamic_infrastructure = true
+  use_guided_failure           = false
+
+  jira_extension_settings {
+    environment_type = "unmapped"
+  }
+
+  jira_service_management_extension_settings {
+    is_enabled = false
+  }
+
+  servicenow_extension_settings {
+    is_enabled = false
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_environments" "environment_security" {
+  ids          = null
+  partial_name = "Security"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_environment" "environment_security" {
+  count                        = "${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? 0 : 1}"
+  name                         = "Security"
+  description                  = ""
+  allow_dynamic_infrastructure = true
+  use_guided_failure           = false
+
+  jira_extension_settings {
+    environment_type = "unmapped"
+  }
+
+  jira_service_management_extension_settings {
+    is_enabled = false
+  }
+
+  servicenow_extension_settings {
+    is_enabled = false
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_lifecycles" "lifecycle_security" {
+  ids          = null
+  partial_name = "Security"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_lifecycle" "lifecycle_security" {
+  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_security.lifecycles) != 0 ? 0 : 1}"
+  name        = "Security"
+  description = "This lifecycle automatically deploys to the Development environment, progresses through the Test and Production environments, and then automatically deploys to the Security environment. The Security environment is used to scan SBOMs for any vulnerabilities and deployments to the Security environment are initiated by triggers on a daily basis."
+
+  phase {
+    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+    optional_deployment_targets           = []
+    name                                  = "Development"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
+    name                                  = "Test"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+    name                                  = "Production"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+    optional_deployment_targets           = []
+    name                                  = "Security"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+
+  release_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
   ids          = null
   partial_name = "Default Lifecycle"
@@ -106,35 +276,6 @@ data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
   take         = 1
 }
 
-data "octopusdeploy_environments" "environment_production" {
-  ids          = null
-  partial_name = "Production"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_environment" "environment_production" {
-  count                        = "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? 0 : 1}"
-  name                         = "Production"
-  description                  = ""
-  allow_dynamic_infrastructure = true
-  use_guided_failure           = false
-
-  jira_extension_settings {
-    environment_type = "unmapped"
-  }
-
-  jira_service_management_extension_settings {
-    is_enabled = false
-  }
-
-  servicenow_extension_settings {
-    is_enabled = false
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
 variable "project_azure_function_step_deploy_products_microservice_azurefunction_jvm_azure_function___staging_slot_packageid" {
   type        = string
   nullable    = false
@@ -147,6 +288,13 @@ variable "project_azure_function_step_deploy_products_microservice_azurefunction
   nullable    = false
   sensitive   = false
   description = "The package ID for the package named  from step Deploy products-microservice-azurefunction-jvm Azure Function - Production Slot in project Azure Function"
+  default     = "com.octopus:products-microservice-azurefunction-jvm"
+}
+variable "project_azure_function_step_scan_for_vulnerabilities_package_products_microservice_azurefunction_jvm_packageid" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The package ID for the package named products-microservice-azurefunction-jvm from step Scan for Vulnerabilities in project Azure Function"
   default     = "com.octopus:products-microservice-azurefunction-jvm"
 }
 resource "octopusdeploy_deployment_process" "deployment_process_azure_function" {
@@ -202,13 +350,13 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function" 
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.DeploymentType" = "Package"
         "Octopus.Action.Azure.AppSettings" = jsonencode([
         {
-        "value" = "#{Project.Azure.Queue.ConnectionString}"
         "slotSetting" = "false"
         "name" = "AZURE_STORAGE_CONNECTION_STRING"
+        "value" = "#{Project.Azure.Queue.ConnectionString}"
                 },
         {
         "name" = "QUEUE_NAME"
@@ -216,11 +364,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function" 
         "slotSetting" = "false"
                 },
         ])
-        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
         "Octopus.Action.Azure.DeploymentSlot" = "staging"
       }
       environments                       = []
-      excluded_environments              = []
+      excluded_environments              = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
       channels                           = []
       tenant_tags                        = []
 
@@ -253,9 +401,9 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function" 
       is_required                        = false
       worker_pool_id                     = ""
       properties                         = {
-        "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-managers"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Please review the Staging slot for the function apps"
+        "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-managers"
       }
       environments                       = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
       excluded_environments              = []
@@ -283,11 +431,8 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function" 
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Azure.DeploymentType" = "Package"
         "Octopus.Action.RunOnServer" = "true"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Azure.DeploymentSlot" = "production"
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
+        "Octopus.Action.Azure.DeploymentType" = "Package"
         "Octopus.Action.Azure.AppSettings" = jsonencode([
         {
         "name" = "AZURE_STORAGE_CONNECTION_STRING"
@@ -300,9 +445,12 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function" 
         "slotSetting" = "false"
                 },
         ])
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Azure.DeploymentSlot" = "production"
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
       }
       environments                       = []
-      excluded_environments              = []
+      excluded_environments              = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
       channels                           = []
       tenant_tags                        = []
 
@@ -318,6 +466,55 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function" 
 
     properties   = {}
     target_roles = ["Octopub-Products-Function"]
+  }
+  step {
+    condition           = "Success"
+    name                = "Scan for Vulnerabilities"
+    package_requirement = "LetOctopusDecide"
+    start_trigger       = "StartAfterPrevious"
+
+    action {
+      action_type                        = "Octopus.Script"
+      name                               = "Scan for Vulnerabilities"
+      notes                              = "This step extracts the Docker image, finds any bom.json files, and scans them for vulnerabilities using Trivy. \n\nThis step is expected to be run with each deployment to ensure vulnerabilities are discovered as early as possible. \n\nIt is also run daily via a project trigger that reruns the deployment in the Security environment. This allows unknown vulnerabilities to be discovered after a production deployment."
+      condition                          = "Success"
+      run_on_server                      = true
+      is_disabled                        = false
+      can_be_used_for_project_versioning = true
+      is_required                        = false
+      worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+      properties                         = {
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+      }
+      environments                       = []
+      excluded_environments              = []
+      channels                           = []
+      tenant_tags                        = []
+
+      package {
+        name                      = "products-microservice-azurefunction-jvm"
+        package_id                = "${var.project_azure_function_step_scan_for_vulnerabilities_package_products_microservice_azurefunction_jvm_packageid}"
+        acquisition_location      = "Server"
+        extract_during_deployment = false
+        feed_id                   = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
+        properties                = { Extract = "True", Purpose = "", SelectionMode = "immediate" }
+      }
+      features = []
+
+      git_dependency {
+        repository_uri      = "https://github.com/OctopusSolutionsEngineering/Octopub.git"
+        default_branch      = "main"
+        git_credential_type = "Anonymous"
+        git_credential_id   = ""
+      }
+    }
+
+    properties   = {}
+    target_roles = []
   }
   depends_on = []
 }
@@ -336,44 +533,6 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
   depends_on = []
 }
 
-resource "octopusdeploy_environment" "environment_development" {
-  name                         = "Development"
-  description                  = ""
-  allow_dynamic_infrastructure = true
-  use_guided_failure           = false
-
-  jira_extension_settings {
-    environment_type = "unmapped"
-  }
-
-  jira_service_management_extension_settings {
-    is_enabled = false
-  }
-
-  servicenow_extension_settings {
-    is_enabled = false
-  }
-}
-
-resource "octopusdeploy_environment" "environment_test" {
-  name                         = "Test"
-  description                  = ""
-  allow_dynamic_infrastructure = true
-  use_guided_failure           = false
-
-  jira_extension_settings {
-    environment_type = "unmapped"
-  }
-
-  jira_service_management_extension_settings {
-    is_enabled = false
-  }
-
-  servicenow_extension_settings {
-    is_enabled = false
-  }
-}
-
 data "octopusdeploy_accounts" "account_octopussamples_azure_account" {
   ids          = null
   partial_name = "OctopusSamples Azure Account"
@@ -385,7 +544,7 @@ resource "octopusdeploy_azure_service_principal" "account_octopussamples_azure_a
   count                             = "${length(data.octopusdeploy_accounts.account_octopussamples_azure_account.accounts) != 0 ? 0 : 1}"
   name                              = "OctopusSamples Azure Account"
   description                       = "This account was added to give the Octopus Samples projects an account to work with.  It is initially set with dummy values and will need to be configured."
-  environments                      = ["${octopusdeploy_environment.environment_development.id}", "${octopusdeploy_environment.environment_test.id}", "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}", "${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}", "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
   tenant_tags                       = []
   tenants                           = []
   tenanted_deployment_participation = "Untenanted"
@@ -432,7 +591,7 @@ resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_na
   scope {
     actions      = null
     channels     = null
-    environments = ["${octopusdeploy_environment.environment_development.id}"]
+    environments = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
     machines     = null
     roles        = null
     tenant_tags  = null
@@ -456,7 +615,7 @@ resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_na
   scope {
     actions      = null
     channels     = null
-    environments = ["${octopusdeploy_environment.environment_test.id}"]
+    environments = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
     machines     = null
     roles        = null
     tenant_tags  = null
@@ -625,11 +784,11 @@ resource "octopusdeploy_runbook_process" "runbook_process_create_infrastructure"
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "# Define variables\n$errorCollection = @()\n\ntry\n{\n  # Ensure Azure account is configured\n  Write-Host \"Verifying Azure Account has been configured ...\"\n\n  # Check the Azure Account properties\n  if (\"#{Project.Azure.Account.SubscriptionNumber}\" -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Subscription Number has not been configured.\")\n  }\n\n  if (\"#{Project.Azure.Account.Client}\" -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Client Id has not been configured.\")\n  }\n\n  if (\"#{Project.Azure.Account.TenantId}\" -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Tenant Id has not been configured.\")\n  }\n\n  if (\"#{Project.Azure.Account.Password}\" -eq \"dummy\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Password has not been configured.\")\n  }\n\n  Write-Host \"Checking to see if Project variables have been configured ...\"\n\n  if (\"#{Project.Octopus.Api.Key}\" -eq \"CHANGE ME\")\n  {\n    $errorCollection += @(\"The project variable Project.Octopus.Api.Key has not been configured.\")\n    throw \"The Api Key has not been configured, unable to proceed with checks!\"\n  }\n\n  Write-Host \"Checking for deployment targets ...\"\n\n  # Check to make sure targets have been created\n  if ([string]::IsNullOrWhitespace(\"#{Octopus.Web.ServerUri}\"))\n  {\n    $octopusUrl = \"#{Octopus.Web.BaseUrl}\"\n  }\n  else\n  {\n    $octopusUrl = \"#{Octopus.Web.ServerUri}\"\n  }\n  $apiKey = \"#{Project.Octopus.Api.Key}\"\n  $spaceId = \"#{Octopus.Space.Id}\"\n  $headers = @{\"X-Octopus-ApiKey\"=\"$apiKey\"}\n\n  $azureFunctionTargets = Invoke-RestMethod -Method Get -Uri $octopusUrl + \"/api/\" + $spaceId + \"/machines?roles=Octopub-Products-Function\" -Headers $headers\n  \n  if ($azureFunctionTargets.Items.Count -lt 1)\n  {\n    $errorCollection += @(\"Expected 1 targets for role Octopub-Products-Function, but found \" + $azureFunctionTargets.Items.Count + \".  Have you run the Create Infrastructure runbook?\")\n  }\n\n}\ncatch\n{\n  Write-Warning \"Fatal error occurred:\"\n  Write-Warning \"$($_.Exception.Message)\"\n}\nfinally\n{\n  # Check to see if any errors were recorded\n  if ($errorCollection.Count -gt 0)\n  {\n    # Display the messages\n    Write-Error \"$($errorCollection -join \"`r`n\")\"\n  }\n  else\n  {\n    Write-Host \"All checks succeeded!\"\n  }\n}"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
       environments                       = []
       excluded_environments              = []
@@ -657,12 +816,12 @@ resource "octopusdeploy_runbook_process" "runbook_process_create_infrastructure"
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = \"#{Project.Azure.ResourceGroup.Name}\"\n$azureLocation = \"#{Project.Azure.Location}\"\n\n# Create resourece group\nWrite-Host \"Creating resource group \" + $resourceGroupName + \" in \" + $azureLocation + \"...\"\naz group create --location $azureLocation --name $resourceGroupName"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
+        "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = \"#{Project.Azure.ResourceGroup.Name}\"\n$azureLocation = \"#{Project.Azure.Location}\"\n\n# Create resourece group\nWrite-Host \"Creating resource group \" + $resourceGroupName + \" in \" + $azureLocation + \"...\"\naz group create --location $azureLocation --name $resourceGroupName"
       }
 
       container {
@@ -696,12 +855,12 @@ resource "octopusdeploy_runbook_process" "runbook_process_create_infrastructure"
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "# Get variables\n$storageAccountName = \"#{Project.Azure.StorageAccount.Name}\"\n$queueName = \"#{Project.Queue.Name}\"\n$resourceGroupName = \"#{Project.Azure.ResourceGroup.Name}\"\n$azureLocation = \"#{Project.Azure.Location}\"\n\n# Create Azure storage account\nWrite-Host \"Creating storage account ...\"\naz storage account create --name $storageAccountName --resource-group $resourceGroupName --location $azureLocation\n\n# Get account keys\n$accountKeys = (az storage account keys list --account-name $storageAccountName --resource-group $resourceGroupName) | ConvertFrom-JSON\n\n# Create Azure storage queue\nWrite-Host \"Creating queue ...\"\naz storage queue create --name $queueName --account-name $storageAccountName --account-key $accountKeys[0].Value"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
       }
 
       container {
@@ -816,11 +975,11 @@ resource "octopusdeploy_runbook_process" "runbook_process_destroy_infrastructure
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "$appServiceName = \"#{Project.Azure.Function.Octopub.Products.Name}\"\n$apiKey = \"#{Project.Octopus.Api.Key}\"\n$spaceId = \"#{Octopus.Space.Id}\"\n$headers = @{\"X-Octopus-ApiKey\"=$apiKey}\n\nif ([String]::IsNullOrWhitespace(\"#{Octopus.Web.ServerUri}\"))\n{\n  $octopusUrl = \"#{Octopus.Web.BaseUrl}\"\n}\nelse\n{\n  $octopusUrl = \"#{Octopus.Web.ServerUri}\"\n}\n\n$uriBuilder = New-Object System.UriBuilder($octopusUrl + \"/api/\" + $spaceId + \"/machines\")\n$query = [System.Web.HttpUtility]::ParseQueryString(\"\")\n$query[\"name\"] = $appServiceName\n$uriBuilder.Query = $query.ToString()\n$uri = $uriBuilder.ToString()\n\n$octopubTarget = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers\n\nforeach ($target in $octopubTarget.Items)\n{\n  Write-Host \"Deregistering\" + $target.Name\n  $uri = $octopusUrl + \"/api/\" + $spaceId + \"/machines/\" + $item.Id\n  Invoke-RestMethod -Method Delete -Uri $uri -Headers $headers\n}"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
       environments                       = []
       excluded_environments              = []
@@ -848,12 +1007,12 @@ resource "octopusdeploy_runbook_process" "runbook_process_destroy_infrastructure
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = \"#{Project.Azure.ResourceGroup.Name}\"\n\n# Destroy the resource group\naz group delete --name $resourceGroupName --yes"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = \"#{Project.Azure.ResourceGroup.Name}\"\n\n# Destroy the resource group\naz group delete --name $resourceGroupName --yes"
       }
 
       container {
@@ -959,7 +1118,7 @@ resource "octopusdeploy_project" "project_azure_function" {
   discrete_channel_release             = false
   is_disabled                          = false
   is_version_controlled                = false
-  lifecycle_id                         = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}"
+  lifecycle_id                         = "${length(data.octopusdeploy_lifecycles.lifecycle_security.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_security.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_security[0].id}"
   project_group_id                     = "${length(data.octopusdeploy_project_groups.project_group_demo_apps_cloud.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_demo_apps_cloud.project_groups[0].id : octopusdeploy_project_group.project_group_demo_apps_cloud[0].id}"
   included_library_variable_sets       = []
   tenanted_deployment_participation    = "${var.project_azure_function_tenanted}"

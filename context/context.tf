@@ -17,105 +17,6 @@ variable "octopus_space_id" {
   description = "The ID of the Octopus space to populate."
 }
 
-data "octopusdeploy_git_credentials" "gitcredential_github" {
-  name = "GitHub"
-  skip = 0
-  take = 1
-}
-resource "octopusdeploy_git_credential" "gitcredential_github" {
-  count    = "${length(data.octopusdeploy_git_credentials.gitcredential_github.git_credentials) != 0 ? 0 : 1}"
-  name     = "GitHub"
-  type     = "UsernamePassword"
-  username = "x-access-token"
-  password = "${var.gitcredential_github_sensitive_value}"
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-variable "gitcredential_github_sensitive_value" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The secret variable value associated with the git credential \"GitHub\""
-  default     = "Change Me!"
-}
-
-data "octopusdeploy_tag_sets" "tagset_tag_set" {
-  ids          = null
-  partial_name = "Tag Set"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_tag_set" "tagset_tag_set" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? 0 : 1}"
-  name        = "Tag Set"
-  description = "An example of a tenant tag set"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_tag" "tagset_tag_set_tag_tag" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? 0 : 1}"
-  name        = "tag"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets[0].id : octopusdeploy_tag_set.tagset_tag_set[0].id}"
-  color       = "#333333"
-  description = "An example of a tag"
-}
-
-resource "octopusdeploy_tag" "tagset_tag_set_tag_tag2" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? 0 : 1}"
-  name        = "tag2"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets[0].id : octopusdeploy_tag_set.tagset_tag_set[0].id}"
-  color       = "#C5AEEE"
-  description = "Another example of a tag"
-}
-
-data "octopusdeploy_tag_sets" "tagset_cities" {
-  ids          = null
-  partial_name = "Cities"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_tag_set" "tagset_cities" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
-  name        = "Cities"
-  description = "An example tag set that captures cities"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_environments" "environment_development" {
-  ids          = null
-  partial_name = "Development"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_environment" "environment_development" {
-  count                        = "${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? 0 : 1}"
-  name                         = "Development"
-  description                  = ""
-  allow_dynamic_infrastructure = true
-  use_guided_failure           = false
-
-  jira_extension_settings {
-    environment_type = "unmapped"
-  }
-
-  jira_service_management_extension_settings {
-    is_enabled = false
-  }
-
-  servicenow_extension_settings {
-    is_enabled = false
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
 variable "project_group_default_project_group_name" {
   type        = string
   nullable    = false
@@ -157,35 +58,6 @@ resource "octopusdeploy_project_group" "project_group_demo_apps_cloud" {
   }
 }
 
-data "octopusdeploy_environments" "environment_test" {
-  ids          = null
-  partial_name = "Test"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_environment" "environment_test" {
-  count                        = "${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? 0 : 1}"
-  name                         = "Test"
-  description                  = ""
-  allow_dynamic_infrastructure = true
-  use_guided_failure           = false
-
-  jira_extension_settings {
-    environment_type = "unmapped"
-  }
-
-  jira_service_management_extension_settings {
-    is_enabled = false
-  }
-
-  servicenow_extension_settings {
-    is_enabled = false
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
 data "octopusdeploy_project_groups" "project_group_kubernetes" {
   ids          = null
   partial_name = "${var.project_group_kubernetes_name}"
@@ -202,349 +74,6 @@ variable "project_group_kubernetes_name" {
 resource "octopusdeploy_project_group" "project_group_kubernetes" {
   count = "${length(data.octopusdeploy_project_groups.project_group_kubernetes.project_groups) != 0 ? 0 : 1}"
   name  = "${var.project_group_kubernetes_name}"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_environments" "environment_production" {
-  ids          = null
-  partial_name = "Production"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_environment" "environment_production" {
-  count                        = "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? 0 : 1}"
-  name                         = "Production"
-  description                  = ""
-  allow_dynamic_infrastructure = true
-  use_guided_failure           = false
-
-  jira_extension_settings {
-    environment_type = "unmapped"
-  }
-
-  jira_service_management_extension_settings {
-    is_enabled = false
-  }
-
-  servicenow_extension_settings {
-    is_enabled = false
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_environments" "environment_security" {
-  ids          = null
-  partial_name = "Security"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_environment" "environment_security" {
-  count                        = "${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? 0 : 1}"
-  name                         = "Security"
-  description                  = ""
-  allow_dynamic_infrastructure = true
-  use_guided_failure           = false
-
-  jira_extension_settings {
-    environment_type = "unmapped"
-  }
-
-  jira_service_management_extension_settings {
-    is_enabled = false
-  }
-
-  servicenow_extension_settings {
-    is_enabled = false
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
-  name        = "Sydney"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
-  color       = "#333333"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_cities_tag_london" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
-  name        = "London"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
-  color       = "#87BFEC"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_cities_tag_washington" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
-  name        = "Washington"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
-  color       = "#5ECD9E"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_cities_tag_madrid" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
-  name        = "Madrid"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
-  color       = "#FFA461"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_cities_tag_wellington" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
-  name        = "Wellington"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
-  color       = "#C5AEEE"
-  description = ""
-}
-
-data "octopusdeploy_lifecycles" "lifecycle_application" {
-  ids          = null
-  partial_name = "Application"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_lifecycle" "lifecycle_application" {
-  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_application.lifecycles) != 0 ? 0 : 1}"
-  name        = "Application"
-  description = "This is an example lifecycle that automatically deploys to the first environment"
-
-  phase {
-    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-    optional_deployment_targets           = []
-    name                                  = "Development"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-  phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
-    name                                  = "Test"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-  phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-    name                                  = "Production"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-
-  release_retention_policy {
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-
-  tentacle_retention_policy {
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_tag_sets" "tagset_business_units" {
-  ids          = null
-  partial_name = "Business Units"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_tag_set" "tagset_business_units" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
-  name        = "Business Units"
-  description = "An example tag set that defined business units"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
-  ids          = null
-  partial_name = "Default Lifecycle"
-  skip         = 0
-  take         = 1
-  lifecycle {
-    postcondition {
-      error_message = "Failed to resolve a lifecycle called \"Default Lifecycle\". This resource must exist in the space before this Terraform configuration is applied."
-      condition     = length(self.lifecycles) != 0
-    }
-  }
-}
-
-resource "octopusdeploy_tag" "tagset_business_units_tag_billing" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
-  name        = "Billing"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
-  color       = "#333333"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_business_units_tag_insurance" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
-  name        = "Insurance"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
-  color       = "#87BFEC"
-  description = ""
-}
-
-data "octopusdeploy_lifecycles" "lifecycle_security" {
-  ids          = null
-  partial_name = "Security"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_lifecycle" "lifecycle_security" {
-  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_security.lifecycles) != 0 ? 0 : 1}"
-  name        = "Security"
-  description = "This lifecycle automatically deploys to the Development environment, progresses through the Test and Production environments, and then automatically deploys to the Security environment. The Security environment is used to scan SBOMs for any vulnerabilities and deployments to the Security environment are initiated by triggers on a daily basis."
-
-  phase {
-    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-    optional_deployment_targets           = []
-    name                                  = "Development"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-  phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
-    name                                  = "Test"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-  phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-    name                                  = "Production"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-  phase {
-    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
-    optional_deployment_targets           = []
-    name                                  = "Security"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-
-  release_retention_policy {
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-
-  tentacle_retention_policy {
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_tag" "tagset_business_units_tag_engineering" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
-  name        = "Engineering"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
-  color       = "#C5AEEE"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_business_units_tag_hr" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
-  name        = "HR"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
-  color       = "#FFA461"
-  description = ""
-}
-
-data "octopusdeploy_tag_sets" "tagset_regions" {
-  ids          = null
-  partial_name = "Regions"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_tag_set" "tagset_regions" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
-  name        = "Regions"
-  description = "A sample tag set that captures geographical regions"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_tag" "tagset_regions_tag_us" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
-  name        = "US"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
-  color       = "#333333"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_regions_tag_europe" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
-  name        = "Europe"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
-  color       = "#5ECD9E"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_regions_tag_asia" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
-  name        = "Asia"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
-  color       = "#FF9F9F"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_regions_tag_anz" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
-  name        = "ANZ"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
-  color       = "#C5AEEE"
-  description = ""
-}
-
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
-  ids          = null
-  partial_name = "Default Worker Pool"
-  skip         = 0
-  take         = 1
-}
-
-data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
-  ids          = null
-  partial_name = "Hosted Ubuntu"
-  skip         = 0
-  take         = 1
-}
-
-data "octopusdeploy_worker_pools" "workerpool_hosted_windows" {
-  ids          = null
-  partial_name = "Hosted Windows"
-  skip         = 0
-  take         = 1
-}
-
-data "octopusdeploy_worker_pools" "workerpool_worker_pool" {
-  ids          = null
-  partial_name = "Worker Pool"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_static_worker_pool" "workerpool_worker_pool" {
-  count       = "${length(data.octopusdeploy_worker_pools.workerpool_worker_pool.worker_pools) != 0 ? 0 : 1}"
-  name        = "Worker Pool"
-  description = "An example of a worker pool"
-  is_default  = false
   lifecycle {
     prevent_destroy = true
   }
@@ -905,306 +434,475 @@ resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
   }
 }
 
-data "octopusdeploy_accounts" "account_aws" {
+data "octopusdeploy_environments" "environment_development" {
   ids          = null
-  partial_name = "AWS"
+  partial_name = "Development"
   skip         = 0
   take         = 1
-  account_type = "AmazonWebServicesOidcAccount"
 }
-resource "octopusdeploy_aws_openid_connect_account" "account_aws" {
-  count                             = "${length(data.octopusdeploy_accounts.account_aws.accounts) != 0 ? 0 : 1}"
-  name                              = "AWS"
-  description                       = "This is an example of an unscoped OIDC AWS account available to all environments."
-  role_arn                          = "arn:aws:iam::123456789012:role/S3Access"
-  account_test_subject_keys         = []
-  environments                      = []
-  execution_subject_keys            = []
-  health_subject_keys               = []
-  session_duration                  = 3600
-  tenant_tags                       = []
-  tenants                           = []
-  tenanted_deployment_participation = "Untenanted"
-  depends_on                        = []
+resource "octopusdeploy_environment" "environment_development" {
+  count                        = "${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? 0 : 1}"
+  name                         = "Development"
+  description                  = ""
+  allow_dynamic_infrastructure = true
+  use_guided_failure           = false
+
+  jira_extension_settings {
+    environment_type = "unmapped"
+  }
+
+  jira_service_management_extension_settings {
+    is_enabled = false
+  }
+
+  servicenow_extension_settings {
+    is_enabled = false
+  }
   lifecycle {
-    ignore_changes  = []
     prevent_destroy = true
   }
 }
 
-data "octopusdeploy_accounts" "account_aws_oidc" {
+data "octopusdeploy_environments" "environment_test" {
   ids          = null
-  partial_name = "AWS OIDC"
+  partial_name = "Test"
   skip         = 0
   take         = 1
-  account_type = "AmazonWebServicesOidcAccount"
 }
-resource "octopusdeploy_aws_openid_connect_account" "account_aws_oidc" {
-  count                             = "${length(data.octopusdeploy_accounts.account_aws_oidc.accounts) != 0 ? 0 : 1}"
-  name                              = "AWS OIDC"
-  description                       = "An AWS OIDC account. See https://octopus.com/docs/infrastructure/accounts/aws for more information."
-  role_arn                          = "arn:aws:iam::381713788115:role/OIDCAdminAccess"
-  account_test_subject_keys         = ["space"]
-  environments                      = []
-  execution_subject_keys            = ["space"]
-  health_subject_keys               = ["space"]
-  session_duration                  = 3600
-  tenant_tags                       = []
-  tenants                           = []
-  tenanted_deployment_participation = "Untenanted"
-  depends_on                        = []
+resource "octopusdeploy_environment" "environment_test" {
+  count                        = "${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? 0 : 1}"
+  name                         = "Test"
+  description                  = ""
+  allow_dynamic_infrastructure = true
+  use_guided_failure           = false
+
+  jira_extension_settings {
+    environment_type = "unmapped"
+  }
+
+  jira_service_management_extension_settings {
+    is_enabled = false
+  }
+
+  servicenow_extension_settings {
+    is_enabled = false
+  }
   lifecycle {
-    ignore_changes  = []
     prevent_destroy = true
   }
 }
 
-data "octopusdeploy_accounts" "account_azure" {
+data "octopusdeploy_environments" "environment_production" {
   ids          = null
-  partial_name = "Azure"
+  partial_name = "Production"
   skip         = 0
   take         = 1
-  account_type = "AzureOidc"
 }
-resource "octopusdeploy_azure_openid_connect" "account_azure" {
-  count                             = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? 0 : 1}"
-  name                              = "Azure"
-  description                       = "An example of an unscoped Azure OIDC account available to all environments"
-  environments                      = []
-  tenant_tags                       = []
-  tenants                           = []
-  tenanted_deployment_participation = "Untenanted"
-  subscription_id                   = "11111111-1111-1111-1111-111111111111"
-  azure_environment                 = ""
-  tenant_id                         = "11111111-1111-1111-1111-111111111111"
-  application_id                    = "11111111-1111-1111-1111-111111111111"
-  audience                          = "api://AzureADTokenExchange"
-  account_test_subject_keys         = ["space"]
-  execution_subject_keys            = ["space"]
-  health_subject_keys               = ["space"]
-  depends_on                        = []
+resource "octopusdeploy_environment" "environment_production" {
+  count                        = "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? 0 : 1}"
+  name                         = "Production"
+  description                  = ""
+  allow_dynamic_infrastructure = true
+  use_guided_failure           = false
+
+  jira_extension_settings {
+    environment_type = "unmapped"
+  }
+
+  jira_service_management_extension_settings {
+    is_enabled = false
+  }
+
+  servicenow_extension_settings {
+    is_enabled = false
+  }
   lifecycle {
-    ignore_changes  = []
     prevent_destroy = true
   }
 }
 
-data "octopusdeploy_accounts" "account_azure_service_principal" {
+data "octopusdeploy_environments" "environment_security" {
   ids          = null
-  partial_name = "Azure Service Principal"
+  partial_name = "Security"
   skip         = 0
   take         = 1
-  account_type = "AzureServicePrincipal"
 }
-resource "octopusdeploy_azure_service_principal" "account_azure_service_principal" {
-  count                             = "${length(data.octopusdeploy_accounts.account_azure_service_principal.accounts) != 0 ? 0 : 1}"
-  name                              = "Azure Service Principal"
-  description                       = "An example Azure service principal account"
-  environments                      = []
-  tenant_tags                       = []
-  tenants                           = []
-  tenanted_deployment_participation = "Untenanted"
-  application_id                    = "b0676d9e-8d3e-457d-844a-ab77deda4916"
-  password                          = "${var.account_azure_service_principal}"
-  subscription_id                   = "7dae5466-90fb-4bf7-b0ee-7194033a1fde"
-  tenant_id                         = "b8fc95ef-da51-4d9e-9921-714292b30e20"
-  depends_on                        = []
+resource "octopusdeploy_environment" "environment_security" {
+  count                        = "${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? 0 : 1}"
+  name                         = "Security"
+  description                  = ""
+  allow_dynamic_infrastructure = true
+  use_guided_failure           = false
+
+  jira_extension_settings {
+    environment_type = "unmapped"
+  }
+
+  jira_service_management_extension_settings {
+    is_enabled = false
+  }
+
+  servicenow_extension_settings {
+    is_enabled = false
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_tag_sets" "tagset_tag_set" {
+  ids          = null
+  partial_name = "Tag Set"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_tag_set" "tagset_tag_set" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? 0 : 1}"
+  name        = "Tag Set"
+  description = "An example of a tenant tag set"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "octopusdeploy_tag" "tagset_tag_set_tag_tag" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? 0 : 1}"
+  name        = "tag"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets[0].id : octopusdeploy_tag_set.tagset_tag_set[0].id}"
+  color       = "#333333"
+  description = "An example of a tag"
+}
+
+resource "octopusdeploy_tag" "tagset_tag_set_tag_tag2" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? 0 : 1}"
+  name        = "tag2"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets[0].id : octopusdeploy_tag_set.tagset_tag_set[0].id}"
+  color       = "#C5AEEE"
+  description = "Another example of a tag"
+}
+
+data "octopusdeploy_tag_sets" "tagset_cities" {
+  ids          = null
+  partial_name = "Cities"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_tag_set" "tagset_cities" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
+  name        = "Cities"
+  description = "An example tag set that captures cities"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
+  name        = "Sydney"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
+  color       = "#333333"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_cities_tag_london" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
+  name        = "London"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
+  color       = "#87BFEC"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_cities_tag_washington" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
+  name        = "Washington"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
+  color       = "#5ECD9E"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_cities_tag_madrid" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
+  name        = "Madrid"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
+  color       = "#FFA461"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_cities_tag_wellington" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
+  name        = "Wellington"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
+  color       = "#C5AEEE"
+  description = ""
+}
+
+data "octopusdeploy_tag_sets" "tagset_business_units" {
+  ids          = null
+  partial_name = "Business Units"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_tag_set" "tagset_business_units" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
+  name        = "Business Units"
+  description = "An example tag set that defined business units"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "octopusdeploy_tag" "tagset_business_units_tag_billing" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
+  name        = "Billing"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
+  color       = "#333333"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_business_units_tag_insurance" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
+  name        = "Insurance"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
+  color       = "#87BFEC"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_business_units_tag_engineering" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
+  name        = "Engineering"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
+  color       = "#C5AEEE"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_business_units_tag_hr" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
+  name        = "HR"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
+  color       = "#FFA461"
+  description = ""
+}
+
+data "octopusdeploy_tag_sets" "tagset_regions" {
+  ids          = null
+  partial_name = "Regions"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_tag_set" "tagset_regions" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
+  name        = "Regions"
+  description = "A sample tag set that captures geographical regions"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "octopusdeploy_tag" "tagset_regions_tag_us" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
+  name        = "US"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
+  color       = "#333333"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_regions_tag_europe" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
+  name        = "Europe"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
+  color       = "#5ECD9E"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_regions_tag_asia" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
+  name        = "Asia"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
+  color       = "#FF9F9F"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_regions_tag_anz" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
+  name        = "ANZ"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
+  color       = "#C5AEEE"
+  description = ""
+}
+
+data "octopusdeploy_git_credentials" "gitcredential_github" {
+  name = "GitHub"
+  skip = 0
+  take = 1
+}
+resource "octopusdeploy_git_credential" "gitcredential_github" {
+  count    = "${length(data.octopusdeploy_git_credentials.gitcredential_github.git_credentials) != 0 ? 0 : 1}"
+  name     = "GitHub"
+  type     = "UsernamePassword"
+  username = "x-access-token"
+  password = "${var.gitcredential_github_sensitive_value}"
   lifecycle {
     ignore_changes  = [password]
     prevent_destroy = true
   }
 }
-variable "account_azure_service_principal" {
+variable "gitcredential_github_sensitive_value" {
   type        = string
   nullable    = false
   sensitive   = true
-  description = "The Azure secret associated with the account Azure Service Principal"
+  description = "The secret variable value associated with the git credential \"GitHub\""
   default     = "Change Me!"
 }
 
-data "octopusdeploy_accounts" "account_generic_oidc" {
+data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
   ids          = null
-  partial_name = "Generic OIDC"
+  partial_name = "Default Worker Pool"
   skip         = 0
   take         = 1
-  account_type = "GenericOidcAccount"
 }
-resource "octopusdeploy_aws_openid_connect_account" "account_generic_oidc" {
-  count                             = "${length(data.octopusdeploy_accounts.account_generic_oidc.accounts) != 0 ? 0 : 1}"
-  name                              = "Generic OIDC"
-  description                       = "An example of an unscoped generic OIDC account"
-  environments                      = []
-  tenant_tags                       = []
-  tenants                           = []
-  execution_subject_keys            = ["space"]
-  tenanted_deployment_participation = "Untenanted"
-  depends_on                        = []
+
+data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
+  ids          = null
+  partial_name = "Hosted Ubuntu"
+  skip         = 0
+  take         = 1
+}
+
+data "octopusdeploy_worker_pools" "workerpool_hosted_windows" {
+  ids          = null
+  partial_name = "Hosted Windows"
+  skip         = 0
+  take         = 1
+}
+
+data "octopusdeploy_lifecycles" "lifecycle_application" {
+  ids          = null
+  partial_name = "Application"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_lifecycle" "lifecycle_application" {
+  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_application.lifecycles) != 0 ? 0 : 1}"
+  name        = "Application"
+  description = "This is an example lifecycle that automatically deploys to the first environment"
+
+  phase {
+    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+    optional_deployment_targets           = []
+    name                                  = "Development"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
+    name                                  = "Test"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+    name                                  = "Production"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+
+  release_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
   lifecycle {
-    ignore_changes  = []
     prevent_destroy = true
   }
 }
 
-data "octopusdeploy_accounts" "account_google_cloud_account" {
+data "octopusdeploy_worker_pools" "workerpool_worker_pool" {
   ids          = null
-  partial_name = "Google Cloud Account"
+  partial_name = "Worker Pool"
   skip         = 0
   take         = 1
 }
-resource "octopusdeploy_gcp_account" "account_google_cloud_account" {
-  count                             = "${length(data.octopusdeploy_accounts.account_google_cloud_account.accounts) != 0 ? 0 : 1}"
-  name                              = "Google Cloud Account"
-  description                       = "An example of a Google Cloud (GCP) Account scoped to the Development environment"
-  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-  tenant_tags                       = []
-  tenants                           = []
-  tenanted_deployment_participation = "Untenanted"
-  json_key                          = "${var.account_google_cloud_account}"
-  depends_on                        = []
+resource "octopusdeploy_static_worker_pool" "workerpool_worker_pool" {
+  count       = "${length(data.octopusdeploy_worker_pools.workerpool_worker_pool.worker_pools) != 0 ? 0 : 1}"
+  name        = "Worker Pool"
+  description = "An example of a worker pool"
+  is_default  = false
   lifecycle {
-    ignore_changes  = [json_key]
     prevent_destroy = true
   }
-}
-variable "account_google_cloud_account" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The GCP JSON key associated with the account Google Cloud Account"
-  default     = "Change Me!"
 }
 
-data "octopusdeploy_accounts" "account_octopussamples_azure_account" {
+data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
   ids          = null
-  partial_name = "OctopusSamples Azure Account"
+  partial_name = "Default Lifecycle"
   skip         = 0
   take         = 1
-  account_type = "AzureServicePrincipal"
-}
-resource "octopusdeploy_azure_service_principal" "account_octopussamples_azure_account" {
-  count                             = "${length(data.octopusdeploy_accounts.account_octopussamples_azure_account.accounts) != 0 ? 0 : 1}"
-  name                              = "OctopusSamples Azure Account"
-  description                       = "This account was added to give the Octopus Samples projects an account to work with.  It is initially set with dummy values and will need to be configured."
-  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}", "${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}", "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-  tenant_tags                       = []
-  tenants                           = []
-  tenanted_deployment_participation = "Untenanted"
-  application_id                    = "00000000-0000-0000-0000-000000000000"
-  password                          = "${var.account_octopussamples_azure_account}"
-  subscription_id                   = "00000000-0000-0000-0000-000000000000"
-  tenant_id                         = "00000000-0000-0000-0000-000000000000"
-  depends_on                        = []
   lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
+    postcondition {
+      error_message = "Failed to resolve a lifecycle called \"Default Lifecycle\". This resource must exist in the space before this Terraform configuration is applied."
+      condition     = length(self.lifecycles) != 0
+    }
   }
-}
-variable "account_octopussamples_azure_account" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The Azure secret associated with the account OctopusSamples Azure Account"
-  default     = "Change Me!"
 }
 
-data "octopusdeploy_accounts" "account_ssh_key_pair" {
+data "octopusdeploy_lifecycles" "lifecycle_security" {
   ids          = null
-  partial_name = "SSH Key Pair"
+  partial_name = "Security"
   skip         = 0
   take         = 1
-  account_type = "SshKeyPair"
 }
-resource "octopusdeploy_ssh_key_account" "account_ssh_key_pair" {
-  count                             = "${length(data.octopusdeploy_accounts.account_ssh_key_pair.accounts) != 0 ? 0 : 1}"
-  name                              = "SSH Key Pair"
-  description                       = "An example of a SSH Key Pair account scoped to the Test environemtn"
-  environments                      = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
-  tenant_tags                       = []
-  tenants                           = []
-  tenanted_deployment_participation = "Untenanted"
-  private_key_file                  = "${var.account_ssh_key_pair_cert}"
-  username                          = "username"
-  private_key_passphrase            = "${var.account_ssh_key_pair}"
-  depends_on                        = []
-  lifecycle {
-    ignore_changes  = [private_key_passphrase, private_key_file]
-    prevent_destroy = true
-  }
-}
-variable "account_ssh_key_pair" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The password associated with the certificate for account SSH Key Pair"
-  default     = "LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzFyWlhrdGRqRUFBQUFBQkc1dmJtVUFBQUFFYm05dVpRQUFBQUFBQUFBQkFBQUJGd0FBQUFkemMyZ3RjbgpOaEFBQUFBd0VBQVFBQUFRRUF5c25PVXhjN0tJK2pIRUc5RVEwQXFCMllGRWE5ZnpZakZOY1pqY1dwcjJQRkRza25oOUpTCm1NVjVuZ2VrbTRyNHJVQU5tU2dQMW1ZTGo5TFR0NUVZa0N3OUdyQ0paNitlQTkzTEowbEZUamFkWEJuQnNmbmZGTlFWYkcKZ2p3U1o4SWdWQ2oySXE0S1hGZm0vbG1ycEZQK2Jqa2V4dUxwcEh5dko2ZmxZVjZFMG13YVlneVNHTWdLYy9ubXJaMTY0WApKMStJL1M5NkwzRWdOT0hNZmo4QjM5eEhZQ0ZUTzZEQ0pLQ3B0ZUdRa0gwTURHam84d3VoUlF6c0IzVExsdXN6ZG0xNmRZCk16WXZBSWR3emZ3bzh1ajFBSFFOendDYkIwRmR6bnFNOEpLV2ZrQzdFeVVrZUl4UXZmLzJGd1ZyS0xEZC95ak5PUmNoa3EKb2owNncySXFad0FBQThpS0tqT3dpaW96c0FBQUFBZHpjMmd0Y25OaEFBQUJBUURLeWM1VEZ6c29qNk1jUWIwUkRRQ29IWgpnVVJyMS9OaU1VMXhtTnhhbXZZOFVPeVNlSDBsS1l4WG1lQjZTYml2aXRRQTJaS0EvV1pndVAwdE8za1JpUUxEMGFzSWxuCnI1NEQzY3NuU1VWT05wMWNHY0d4K2Q4VTFCVnNhQ1BCSm53aUJVS1BZaXJncGNWK2IrV2F1a1UvNXVPUjdHNHVta2ZLOG4KcCtWaFhvVFNiQnBpREpJWXlBcHorZWF0blhyaGNuWDRqOUwzb3ZjU0EwNGN4K1B3SGYzRWRnSVZNN29NSWtvS20xNFpDUQpmUXdNYU9qekM2RkZET3dIZE11VzZ6TjJiWHAxZ3pOaThBaDNETi9Dank2UFVBZEEzUEFKc0hRVjNPZW96d2twWitRTHNUCkpTUjRqRkM5Ly9ZWEJXc29zTjMvS00wNUZ5R1NxaVBUckRZaXBuQUFBQUF3RUFBUUFBQVFFQXdRZzRqbitlb0kyYUJsdk4KVFYzRE1rUjViMU9uTG1DcUpEeGM1c2N4THZNWnNXbHBaN0NkVHk4ckJYTGhEZTdMcUo5QVVub0FHV1lwdTA1RW1vaFRpVwptVEFNVHJCdmYwd2xsdCtJZVdvVXo3bmFBbThQT1psb29MbXBYRzh5VmZKRU05aUo4NWtYNDY4SkF6VDRYZ1JXUFRYQ1JpCi9abCtuWUVUZVE4WTYzWlJhTVE3SUNmK2FRRWxRenBYb21idkxYM1RaNmNzTHh5Z3Eza01aSXNJU0lUcEk3Y0tsQVJ0Rm4KcWxKRitCL2JlUEJkZ3hIRVpqZDhDV0NIR1ZRUDh3Z3B0d0Rrak9NTzh2b2N4YVpOT0hZZnBwSlBCTkVjMEVKbmduN1BXSgorMVZSTWZKUW5SemVubmE3VHdSUSsrclZmdkVaRmhqamdSUk85RitrMUZvSWdRQUFBSUVBbFFybXRiV2V0d3RlWlZLLys4CklCUDZkcy9MSWtPb3pXRS9Wckx6cElBeHEvV1lFTW1QK24wK1dXdWRHNWpPaTFlZEJSYVFnU0owdTRxcE5JMXFGYTRISFYKY2oxL3pzenZ4RUtSRElhQkJGaU81Y3QvRVQvUTdwanozTnJaZVdtK0dlUUJKQ0diTEhSTlQ0M1ZpWVlLVG82ZGlGVTJteApHWENlLzFRY2NqNjVZQUFBQ0JBUHZodmgzb2Q1MmY4SFVWWGoxeDNlL1ZFenJPeVloTi9UQzNMbWhHYnRtdHZ0L0J2SUhxCndxWFpTT0lWWkZiRnVKSCtORHNWZFFIN29yUW1VcGJxRllDd0IxNUZNRGw0NVhLRm0xYjFyS1c1emVQK3d0M1hyM1p0cWsKRkdlaUlRMklSZklBQjZneElvNTZGemdMUmx6QnB0bzhkTlhjMXhtWVgyU2Rhb3ZwSkRBQUFBZ1FET0dwVE9oOEFRMFoxUwpzUm9vVS9YRTRkYWtrSU5vMDdHNGI3M01maG9xbkV1T01LM0ZRVStRRWUwYWpvdWs5UU1QNWJzZU1CYnJNZVNNUjBRWVBCClQ4Z0Z2S2VISWN6ZUtJTjNPRkRaRUF4TEZNMG9LbjR2bmdHTUFtTXUva2QwNm1PZnJUNDRmUUh1ajdGNWx1QVJHejRwYUwKLzRCTUVkMnFTRnFBYzZ6L0RRQUFBQTF0WVhSMGFFQk5ZWFIwYUdWM0FRSURCQT09Ci0tLS0tRU5EIE9QRU5TU0ggUFJJVkFURSBLRVktLS0tLQo="
-}
-variable "account_ssh_key_pair_cert" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The certificate file for account SSH Key Pair"
-  default     = "LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzFyWlhrdGRqRUFBQUFBQkc1dmJtVUFBQUFFYm05dVpRQUFBQUFBQUFBQkFBQUJGd0FBQUFkemMyZ3RjbgpOaEFBQUFBd0VBQVFBQUFRRUF5c25PVXhjN0tJK2pIRUc5RVEwQXFCMllGRWE5ZnpZakZOY1pqY1dwcjJQRkRza25oOUpTCm1NVjVuZ2VrbTRyNHJVQU5tU2dQMW1ZTGo5TFR0NUVZa0N3OUdyQ0paNitlQTkzTEowbEZUamFkWEJuQnNmbmZGTlFWYkcKZ2p3U1o4SWdWQ2oySXE0S1hGZm0vbG1ycEZQK2Jqa2V4dUxwcEh5dko2ZmxZVjZFMG13YVlneVNHTWdLYy9ubXJaMTY0WApKMStJL1M5NkwzRWdOT0hNZmo4QjM5eEhZQ0ZUTzZEQ0pLQ3B0ZUdRa0gwTURHam84d3VoUlF6c0IzVExsdXN6ZG0xNmRZCk16WXZBSWR3emZ3bzh1ajFBSFFOendDYkIwRmR6bnFNOEpLV2ZrQzdFeVVrZUl4UXZmLzJGd1ZyS0xEZC95ak5PUmNoa3EKb2owNncySXFad0FBQThpS0tqT3dpaW96c0FBQUFBZHpjMmd0Y25OaEFBQUJBUURLeWM1VEZ6c29qNk1jUWIwUkRRQ29IWgpnVVJyMS9OaU1VMXhtTnhhbXZZOFVPeVNlSDBsS1l4WG1lQjZTYml2aXRRQTJaS0EvV1pndVAwdE8za1JpUUxEMGFzSWxuCnI1NEQzY3NuU1VWT05wMWNHY0d4K2Q4VTFCVnNhQ1BCSm53aUJVS1BZaXJncGNWK2IrV2F1a1UvNXVPUjdHNHVta2ZLOG4KcCtWaFhvVFNiQnBpREpJWXlBcHorZWF0blhyaGNuWDRqOUwzb3ZjU0EwNGN4K1B3SGYzRWRnSVZNN29NSWtvS20xNFpDUQpmUXdNYU9qekM2RkZET3dIZE11VzZ6TjJiWHAxZ3pOaThBaDNETi9Dank2UFVBZEEzUEFKc0hRVjNPZW96d2twWitRTHNUCkpTUjRqRkM5Ly9ZWEJXc29zTjMvS00wNUZ5R1NxaVBUckRZaXBuQUFBQUF3RUFBUUFBQVFFQXdRZzRqbitlb0kyYUJsdk4KVFYzRE1rUjViMU9uTG1DcUpEeGM1c2N4THZNWnNXbHBaN0NkVHk4ckJYTGhEZTdMcUo5QVVub0FHV1lwdTA1RW1vaFRpVwptVEFNVHJCdmYwd2xsdCtJZVdvVXo3bmFBbThQT1psb29MbXBYRzh5VmZKRU05aUo4NWtYNDY4SkF6VDRYZ1JXUFRYQ1JpCi9abCtuWUVUZVE4WTYzWlJhTVE3SUNmK2FRRWxRenBYb21idkxYM1RaNmNzTHh5Z3Eza01aSXNJU0lUcEk3Y0tsQVJ0Rm4KcWxKRitCL2JlUEJkZ3hIRVpqZDhDV0NIR1ZRUDh3Z3B0d0Rrak9NTzh2b2N4YVpOT0hZZnBwSlBCTkVjMEVKbmduN1BXSgorMVZSTWZKUW5SemVubmE3VHdSUSsrclZmdkVaRmhqamdSUk85RitrMUZvSWdRQUFBSUVBbFFybXRiV2V0d3RlWlZLLys4CklCUDZkcy9MSWtPb3pXRS9Wckx6cElBeHEvV1lFTW1QK24wK1dXdWRHNWpPaTFlZEJSYVFnU0owdTRxcE5JMXFGYTRISFYKY2oxL3pzenZ4RUtSRElhQkJGaU81Y3QvRVQvUTdwanozTnJaZVdtK0dlUUJKQ0diTEhSTlQ0M1ZpWVlLVG82ZGlGVTJteApHWENlLzFRY2NqNjVZQUFBQ0JBUHZodmgzb2Q1MmY4SFVWWGoxeDNlL1ZFenJPeVloTi9UQzNMbWhHYnRtdHZ0L0J2SUhxCndxWFpTT0lWWkZiRnVKSCtORHNWZFFIN29yUW1VcGJxRllDd0IxNUZNRGw0NVhLRm0xYjFyS1c1emVQK3d0M1hyM1p0cWsKRkdlaUlRMklSZklBQjZneElvNTZGemdMUmx6QnB0bzhkTlhjMXhtWVgyU2Rhb3ZwSkRBQUFBZ1FET0dwVE9oOEFRMFoxUwpzUm9vVS9YRTRkYWtrSU5vMDdHNGI3M01maG9xbkV1T01LM0ZRVStRRWUwYWpvdWs5UU1QNWJzZU1CYnJNZVNNUjBRWVBCClQ4Z0Z2S2VISWN6ZUtJTjNPRkRaRUF4TEZNMG9LbjR2bmdHTUFtTXUva2QwNm1PZnJUNDRmUUh1ajdGNWx1QVJHejRwYUwKLzRCTUVkMnFTRnFBYzZ6L0RRQUFBQTF0WVhSMGFFQk5ZWFIwYUdWM0FRSURCQT09Ci0tLS0tRU5EIE9QRU5TU0ggUFJJVkFURSBLRVktLS0tLQo="
-}
+resource "octopusdeploy_lifecycle" "lifecycle_security" {
+  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_security.lifecycles) != 0 ? 0 : 1}"
+  name        = "Security"
+  description = "This lifecycle automatically deploys to the Development environment, progresses through the Test and Production environments, and then automatically deploys to the Security environment. The Security environment is used to scan SBOMs for any vulnerabilities and deployments to the Security environment are initiated by triggers on a daily basis."
 
-data "octopusdeploy_accounts" "account_token" {
-  ids          = null
-  partial_name = "Token"
-  skip         = 0
-  take         = 1
-  account_type = "Token"
-}
-resource "octopusdeploy_token_account" "account_token" {
-  count                             = "${length(data.octopusdeploy_accounts.account_token.accounts) != 0 ? 0 : 1}"
-  name                              = "Token"
-  description                       = "An example of an unscoped Token account"
-  environments                      = []
-  tenant_tags                       = []
-  tenants                           = []
-  tenanted_deployment_participation = "Untenanted"
-  token                             = "${var.account_token}"
-  depends_on                        = []
-  lifecycle {
-    ignore_changes  = [token]
-    prevent_destroy = true
+  phase {
+    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+    optional_deployment_targets           = []
+    name                                  = "Development"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
   }
-}
-variable "account_token" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The token associated with the account Token"
-  default     = "Change Me!"
-}
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
+    name                                  = "Test"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+    name                                  = "Production"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+    optional_deployment_targets           = []
+    name                                  = "Security"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
 
-data "octopusdeploy_accounts" "account_username_password" {
-  ids          = null
-  partial_name = "Username Password"
-  skip         = 0
-  take         = 1
-  account_type = "UsernamePassword"
-}
-resource "octopusdeploy_username_password_account" "account_username_password" {
-  count                             = "${length(data.octopusdeploy_accounts.account_username_password.accounts) != 0 ? 0 : 1}"
-  name                              = "Username Password"
-  description                       = "An example of a username password account scoped to the Production environment"
-  environments                      = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-  tenant_tags                       = []
-  tenants                           = []
-  tenanted_deployment_participation = "Untenanted"
-  username                          = "username"
-  password                          = "${var.account_username_password}"
-  depends_on                        = []
+  release_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
   lifecycle {
-    ignore_changes  = [password]
     prevent_destroy = true
   }
-}
-variable "account_username_password" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The password associated with the account Username Password"
-  default     = "Change Me!"
 }
 
 data "octopusdeploy_tenants" "tenant_australian_office" {
@@ -1220,7 +918,7 @@ resource "octopusdeploy_tenant" "tenant_australian_office" {
   name        = "Australian Office"
   description = "An example tenant that represents an Australian office"
   tenant_tags = ["Cities/Sydney"]
-  depends_on  = [octopusdeploy_tag.tagset_cities_tag_sydney,octopusdeploy_tag_set.tagset_cities]
+  depends_on  = [octopusdeploy_tag_set.tagset_cities,octopusdeploy_tag.tagset_cities_tag_sydney]
   lifecycle {
     prevent_destroy = true
   }
@@ -1647,72 +1345,306 @@ resource "octopusdeploy_listening_tentacle_deployment_target" "target_listening_
   depends_on = []
 }
 
-data "octopusdeploy_deployment_targets" "target_cloud_region" {
-  ids                  = null
-  partial_name         = "Cloud Region"
-  skip                 = 0
-  take                 = 1
-  health_statuses      = null
-  communication_styles = null
-  environments         = null
-  roles                = null
-  shell_names          = null
-  tenant_tags          = null
-  tenants              = null
+data "octopusdeploy_accounts" "account_aws" {
+  ids          = null
+  partial_name = "AWS"
+  skip         = 0
+  take         = 1
+  account_type = "AmazonWebServicesOidcAccount"
 }
-resource "octopusdeploy_cloud_region_deployment_target" "target_cloud_region" {
-  count                             = "${length(data.octopusdeploy_deployment_targets.target_cloud_region.deployment_targets) != 0 ? 0 : 1}"
-  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}", "${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}", "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-  name                              = "Cloud Region"
-  roles                             = ["us-east-1"]
-  default_worker_pool_id            = "WorkerPools-3788"
-  health_status                     = "Healthy"
-  is_disabled                       = false
-  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
-  shell_name                        = "Unknown"
-  shell_version                     = "Unknown"
+resource "octopusdeploy_aws_openid_connect_account" "account_aws" {
+  count                             = "${length(data.octopusdeploy_accounts.account_aws.accounts) != 0 ? 0 : 1}"
+  name                              = "AWS"
+  description                       = "This is an example of an unscoped OIDC AWS account available to all environments."
+  role_arn                          = "arn:aws:iam::123456789012:role/S3Access"
+  account_test_subject_keys         = []
+  environments                      = []
+  execution_subject_keys            = []
+  health_subject_keys               = []
+  session_duration                  = 3600
   tenant_tags                       = []
-  tenanted_deployment_participation = "TenantedOrUntenanted"
   tenants                           = []
-  thumbprint                        = ""
+  tenanted_deployment_participation = "Untenanted"
+  depends_on                        = []
   lifecycle {
+    ignore_changes  = []
     prevent_destroy = true
   }
-  depends_on = []
 }
 
-data "octopusdeploy_deployment_targets" "target_offline_package_drop" {
-  ids                  = null
-  partial_name         = "Offline Package Drop"
-  skip                 = 0
-  take                 = 1
-  health_statuses      = null
-  communication_styles = null
-  environments         = null
-  roles                = null
-  shell_names          = null
-  tenant_tags          = null
-  tenants              = null
+data "octopusdeploy_accounts" "account_aws_oidc" {
+  ids          = null
+  partial_name = "AWS OIDC"
+  skip         = 0
+  take         = 1
+  account_type = "AmazonWebServicesOidcAccount"
 }
-resource "octopusdeploy_offline_package_drop_deployment_target" "target_offline_package_drop" {
-  count                             = "${length(data.octopusdeploy_deployment_targets.target_offline_package_drop.deployment_targets) != 0 ? 0 : 1}"
-  applications_directory            = "C:\\Applications"
-  working_directory                 = "C:\\Octopus"
-  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}", "${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}", "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-  name                              = "Offline Package Drop"
-  roles                             = ["offline-web-server"]
-  health_status                     = "Healthy"
-  is_disabled                       = false
-  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
-  shell_name                        = "Unknown"
-  shell_version                     = "Unknown"
-  tenant_tags                       = ["Tag Set/tag"]
-  tenanted_deployment_participation = "Tenanted"
+resource "octopusdeploy_aws_openid_connect_account" "account_aws_oidc" {
+  count                             = "${length(data.octopusdeploy_accounts.account_aws_oidc.accounts) != 0 ? 0 : 1}"
+  name                              = "AWS OIDC"
+  description                       = "An AWS OIDC account. See https://octopus.com/docs/infrastructure/accounts/aws for more information."
+  role_arn                          = "arn:aws:iam::381713788115:role/OIDCAdminAccess"
+  account_test_subject_keys         = ["space"]
+  environments                      = []
+  execution_subject_keys            = ["space"]
+  health_subject_keys               = ["space"]
+  session_duration                  = 3600
+  tenant_tags                       = []
   tenants                           = []
+  tenanted_deployment_participation = "Untenanted"
+  depends_on                        = []
   lifecycle {
+    ignore_changes  = []
     prevent_destroy = true
   }
-  depends_on = [octopusdeploy_tag_set.tagset_tag_set,octopusdeploy_tag.tagset_tag_set_tag_tag]
+}
+
+data "octopusdeploy_accounts" "account_azure" {
+  ids          = null
+  partial_name = "Azure"
+  skip         = 0
+  take         = 1
+  account_type = "AzureOidc"
+}
+resource "octopusdeploy_azure_openid_connect" "account_azure" {
+  count                             = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? 0 : 1}"
+  name                              = "Azure"
+  description                       = "An example of an unscoped Azure OIDC account available to all environments"
+  environments                      = []
+  tenant_tags                       = []
+  tenants                           = []
+  tenanted_deployment_participation = "Untenanted"
+  subscription_id                   = "11111111-1111-1111-1111-111111111111"
+  azure_environment                 = ""
+  tenant_id                         = "11111111-1111-1111-1111-111111111111"
+  application_id                    = "11111111-1111-1111-1111-111111111111"
+  audience                          = "api://AzureADTokenExchange"
+  account_test_subject_keys         = ["space"]
+  execution_subject_keys            = ["space"]
+  health_subject_keys               = ["space"]
+  depends_on                        = []
+  lifecycle {
+    ignore_changes  = []
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_accounts" "account_azure_service_principal" {
+  ids          = null
+  partial_name = "Azure Service Principal"
+  skip         = 0
+  take         = 1
+  account_type = "AzureServicePrincipal"
+}
+resource "octopusdeploy_azure_service_principal" "account_azure_service_principal" {
+  count                             = "${length(data.octopusdeploy_accounts.account_azure_service_principal.accounts) != 0 ? 0 : 1}"
+  name                              = "Azure Service Principal"
+  description                       = "An example Azure service principal account"
+  environments                      = []
+  tenant_tags                       = []
+  tenants                           = []
+  tenanted_deployment_participation = "Untenanted"
+  application_id                    = "b0676d9e-8d3e-457d-844a-ab77deda4916"
+  password                          = "${var.account_azure_service_principal}"
+  subscription_id                   = "7dae5466-90fb-4bf7-b0ee-7194033a1fde"
+  tenant_id                         = "b8fc95ef-da51-4d9e-9921-714292b30e20"
+  depends_on                        = []
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+variable "account_azure_service_principal" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The Azure secret associated with the account Azure Service Principal"
+  default     = "Change Me!"
+}
+
+data "octopusdeploy_accounts" "account_generic_oidc" {
+  ids          = null
+  partial_name = "Generic OIDC"
+  skip         = 0
+  take         = 1
+  account_type = "GenericOidcAccount"
+}
+resource "octopusdeploy_aws_openid_connect_account" "account_generic_oidc" {
+  count                             = "${length(data.octopusdeploy_accounts.account_generic_oidc.accounts) != 0 ? 0 : 1}"
+  name                              = "Generic OIDC"
+  description                       = "An example of an unscoped generic OIDC account"
+  environments                      = []
+  tenant_tags                       = []
+  tenants                           = []
+  execution_subject_keys            = ["space"]
+  tenanted_deployment_participation = "Untenanted"
+  depends_on                        = []
+  lifecycle {
+    ignore_changes  = []
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_accounts" "account_google_cloud_account" {
+  ids          = null
+  partial_name = "Google Cloud Account"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_gcp_account" "account_google_cloud_account" {
+  count                             = "${length(data.octopusdeploy_accounts.account_google_cloud_account.accounts) != 0 ? 0 : 1}"
+  name                              = "Google Cloud Account"
+  description                       = "An example of a Google Cloud (GCP) Account scoped to the Development environment"
+  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+  tenant_tags                       = []
+  tenants                           = []
+  tenanted_deployment_participation = "Untenanted"
+  json_key                          = "${var.account_google_cloud_account}"
+  depends_on                        = []
+  lifecycle {
+    ignore_changes  = [json_key]
+    prevent_destroy = true
+  }
+}
+variable "account_google_cloud_account" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The GCP JSON key associated with the account Google Cloud Account"
+  default     = "Change Me!"
+}
+
+data "octopusdeploy_accounts" "account_octopussamples_azure_account" {
+  ids          = null
+  partial_name = "OctopusSamples Azure Account"
+  skip         = 0
+  take         = 1
+  account_type = "AzureServicePrincipal"
+}
+resource "octopusdeploy_azure_service_principal" "account_octopussamples_azure_account" {
+  count                             = "${length(data.octopusdeploy_accounts.account_octopussamples_azure_account.accounts) != 0 ? 0 : 1}"
+  name                              = "OctopusSamples Azure Account"
+  description                       = "This account was added to give the Octopus Samples projects an account to work with.  It is initially set with dummy values and will need to be configured."
+  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}", "${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}", "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+  tenant_tags                       = []
+  tenants                           = []
+  tenanted_deployment_participation = "Untenanted"
+  application_id                    = "00000000-0000-0000-0000-000000000000"
+  password                          = "${var.account_octopussamples_azure_account}"
+  subscription_id                   = "00000000-0000-0000-0000-000000000000"
+  tenant_id                         = "00000000-0000-0000-0000-000000000000"
+  depends_on                        = []
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+variable "account_octopussamples_azure_account" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The Azure secret associated with the account OctopusSamples Azure Account"
+  default     = "Change Me!"
+}
+
+data "octopusdeploy_accounts" "account_ssh_key_pair" {
+  ids          = null
+  partial_name = "SSH Key Pair"
+  skip         = 0
+  take         = 1
+  account_type = "SshKeyPair"
+}
+resource "octopusdeploy_ssh_key_account" "account_ssh_key_pair" {
+  count                             = "${length(data.octopusdeploy_accounts.account_ssh_key_pair.accounts) != 0 ? 0 : 1}"
+  name                              = "SSH Key Pair"
+  description                       = "An example of a SSH Key Pair account scoped to the Test environemtn"
+  environments                      = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
+  tenant_tags                       = []
+  tenants                           = []
+  tenanted_deployment_participation = "Untenanted"
+  private_key_file                  = "${var.account_ssh_key_pair_cert}"
+  username                          = "username"
+  private_key_passphrase            = "${var.account_ssh_key_pair}"
+  depends_on                        = []
+  lifecycle {
+    ignore_changes  = [private_key_passphrase, private_key_file]
+    prevent_destroy = true
+  }
+}
+variable "account_ssh_key_pair" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The password associated with the certificate for account SSH Key Pair"
+  default     = "LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzFyWlhrdGRqRUFBQUFBQkc1dmJtVUFBQUFFYm05dVpRQUFBQUFBQUFBQkFBQUJGd0FBQUFkemMyZ3RjbgpOaEFBQUFBd0VBQVFBQUFRRUF5c25PVXhjN0tJK2pIRUc5RVEwQXFCMllGRWE5ZnpZakZOY1pqY1dwcjJQRkRza25oOUpTCm1NVjVuZ2VrbTRyNHJVQU5tU2dQMW1ZTGo5TFR0NUVZa0N3OUdyQ0paNitlQTkzTEowbEZUamFkWEJuQnNmbmZGTlFWYkcKZ2p3U1o4SWdWQ2oySXE0S1hGZm0vbG1ycEZQK2Jqa2V4dUxwcEh5dko2ZmxZVjZFMG13YVlneVNHTWdLYy9ubXJaMTY0WApKMStJL1M5NkwzRWdOT0hNZmo4QjM5eEhZQ0ZUTzZEQ0pLQ3B0ZUdRa0gwTURHam84d3VoUlF6c0IzVExsdXN6ZG0xNmRZCk16WXZBSWR3emZ3bzh1ajFBSFFOendDYkIwRmR6bnFNOEpLV2ZrQzdFeVVrZUl4UXZmLzJGd1ZyS0xEZC95ak5PUmNoa3EKb2owNncySXFad0FBQThpS0tqT3dpaW96c0FBQUFBZHpjMmd0Y25OaEFBQUJBUURLeWM1VEZ6c29qNk1jUWIwUkRRQ29IWgpnVVJyMS9OaU1VMXhtTnhhbXZZOFVPeVNlSDBsS1l4WG1lQjZTYml2aXRRQTJaS0EvV1pndVAwdE8za1JpUUxEMGFzSWxuCnI1NEQzY3NuU1VWT05wMWNHY0d4K2Q4VTFCVnNhQ1BCSm53aUJVS1BZaXJncGNWK2IrV2F1a1UvNXVPUjdHNHVta2ZLOG4KcCtWaFhvVFNiQnBpREpJWXlBcHorZWF0blhyaGNuWDRqOUwzb3ZjU0EwNGN4K1B3SGYzRWRnSVZNN29NSWtvS20xNFpDUQpmUXdNYU9qekM2RkZET3dIZE11VzZ6TjJiWHAxZ3pOaThBaDNETi9Dank2UFVBZEEzUEFKc0hRVjNPZW96d2twWitRTHNUCkpTUjRqRkM5Ly9ZWEJXc29zTjMvS00wNUZ5R1NxaVBUckRZaXBuQUFBQUF3RUFBUUFBQVFFQXdRZzRqbitlb0kyYUJsdk4KVFYzRE1rUjViMU9uTG1DcUpEeGM1c2N4THZNWnNXbHBaN0NkVHk4ckJYTGhEZTdMcUo5QVVub0FHV1lwdTA1RW1vaFRpVwptVEFNVHJCdmYwd2xsdCtJZVdvVXo3bmFBbThQT1psb29MbXBYRzh5VmZKRU05aUo4NWtYNDY4SkF6VDRYZ1JXUFRYQ1JpCi9abCtuWUVUZVE4WTYzWlJhTVE3SUNmK2FRRWxRenBYb21idkxYM1RaNmNzTHh5Z3Eza01aSXNJU0lUcEk3Y0tsQVJ0Rm4KcWxKRitCL2JlUEJkZ3hIRVpqZDhDV0NIR1ZRUDh3Z3B0d0Rrak9NTzh2b2N4YVpOT0hZZnBwSlBCTkVjMEVKbmduN1BXSgorMVZSTWZKUW5SemVubmE3VHdSUSsrclZmdkVaRmhqamdSUk85RitrMUZvSWdRQUFBSUVBbFFybXRiV2V0d3RlWlZLLys4CklCUDZkcy9MSWtPb3pXRS9Wckx6cElBeHEvV1lFTW1QK24wK1dXdWRHNWpPaTFlZEJSYVFnU0owdTRxcE5JMXFGYTRISFYKY2oxL3pzenZ4RUtSRElhQkJGaU81Y3QvRVQvUTdwanozTnJaZVdtK0dlUUJKQ0diTEhSTlQ0M1ZpWVlLVG82ZGlGVTJteApHWENlLzFRY2NqNjVZQUFBQ0JBUHZodmgzb2Q1MmY4SFVWWGoxeDNlL1ZFenJPeVloTi9UQzNMbWhHYnRtdHZ0L0J2SUhxCndxWFpTT0lWWkZiRnVKSCtORHNWZFFIN29yUW1VcGJxRllDd0IxNUZNRGw0NVhLRm0xYjFyS1c1emVQK3d0M1hyM1p0cWsKRkdlaUlRMklSZklBQjZneElvNTZGemdMUmx6QnB0bzhkTlhjMXhtWVgyU2Rhb3ZwSkRBQUFBZ1FET0dwVE9oOEFRMFoxUwpzUm9vVS9YRTRkYWtrSU5vMDdHNGI3M01maG9xbkV1T01LM0ZRVStRRWUwYWpvdWs5UU1QNWJzZU1CYnJNZVNNUjBRWVBCClQ4Z0Z2S2VISWN6ZUtJTjNPRkRaRUF4TEZNMG9LbjR2bmdHTUFtTXUva2QwNm1PZnJUNDRmUUh1ajdGNWx1QVJHejRwYUwKLzRCTUVkMnFTRnFBYzZ6L0RRQUFBQTF0WVhSMGFFQk5ZWFIwYUdWM0FRSURCQT09Ci0tLS0tRU5EIE9QRU5TU0ggUFJJVkFURSBLRVktLS0tLQo="
+}
+variable "account_ssh_key_pair_cert" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The certificate file for account SSH Key Pair"
+  default     = "LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzFyWlhrdGRqRUFBQUFBQkc1dmJtVUFBQUFFYm05dVpRQUFBQUFBQUFBQkFBQUJGd0FBQUFkemMyZ3RjbgpOaEFBQUFBd0VBQVFBQUFRRUF5c25PVXhjN0tJK2pIRUc5RVEwQXFCMllGRWE5ZnpZakZOY1pqY1dwcjJQRkRza25oOUpTCm1NVjVuZ2VrbTRyNHJVQU5tU2dQMW1ZTGo5TFR0NUVZa0N3OUdyQ0paNitlQTkzTEowbEZUamFkWEJuQnNmbmZGTlFWYkcKZ2p3U1o4SWdWQ2oySXE0S1hGZm0vbG1ycEZQK2Jqa2V4dUxwcEh5dko2ZmxZVjZFMG13YVlneVNHTWdLYy9ubXJaMTY0WApKMStJL1M5NkwzRWdOT0hNZmo4QjM5eEhZQ0ZUTzZEQ0pLQ3B0ZUdRa0gwTURHam84d3VoUlF6c0IzVExsdXN6ZG0xNmRZCk16WXZBSWR3emZ3bzh1ajFBSFFOendDYkIwRmR6bnFNOEpLV2ZrQzdFeVVrZUl4UXZmLzJGd1ZyS0xEZC95ak5PUmNoa3EKb2owNncySXFad0FBQThpS0tqT3dpaW96c0FBQUFBZHpjMmd0Y25OaEFBQUJBUURLeWM1VEZ6c29qNk1jUWIwUkRRQ29IWgpnVVJyMS9OaU1VMXhtTnhhbXZZOFVPeVNlSDBsS1l4WG1lQjZTYml2aXRRQTJaS0EvV1pndVAwdE8za1JpUUxEMGFzSWxuCnI1NEQzY3NuU1VWT05wMWNHY0d4K2Q4VTFCVnNhQ1BCSm53aUJVS1BZaXJncGNWK2IrV2F1a1UvNXVPUjdHNHVta2ZLOG4KcCtWaFhvVFNiQnBpREpJWXlBcHorZWF0blhyaGNuWDRqOUwzb3ZjU0EwNGN4K1B3SGYzRWRnSVZNN29NSWtvS20xNFpDUQpmUXdNYU9qekM2RkZET3dIZE11VzZ6TjJiWHAxZ3pOaThBaDNETi9Dank2UFVBZEEzUEFKc0hRVjNPZW96d2twWitRTHNUCkpTUjRqRkM5Ly9ZWEJXc29zTjMvS00wNUZ5R1NxaVBUckRZaXBuQUFBQUF3RUFBUUFBQVFFQXdRZzRqbitlb0kyYUJsdk4KVFYzRE1rUjViMU9uTG1DcUpEeGM1c2N4THZNWnNXbHBaN0NkVHk4ckJYTGhEZTdMcUo5QVVub0FHV1lwdTA1RW1vaFRpVwptVEFNVHJCdmYwd2xsdCtJZVdvVXo3bmFBbThQT1psb29MbXBYRzh5VmZKRU05aUo4NWtYNDY4SkF6VDRYZ1JXUFRYQ1JpCi9abCtuWUVUZVE4WTYzWlJhTVE3SUNmK2FRRWxRenBYb21idkxYM1RaNmNzTHh5Z3Eza01aSXNJU0lUcEk3Y0tsQVJ0Rm4KcWxKRitCL2JlUEJkZ3hIRVpqZDhDV0NIR1ZRUDh3Z3B0d0Rrak9NTzh2b2N4YVpOT0hZZnBwSlBCTkVjMEVKbmduN1BXSgorMVZSTWZKUW5SemVubmE3VHdSUSsrclZmdkVaRmhqamdSUk85RitrMUZvSWdRQUFBSUVBbFFybXRiV2V0d3RlWlZLLys4CklCUDZkcy9MSWtPb3pXRS9Wckx6cElBeHEvV1lFTW1QK24wK1dXdWRHNWpPaTFlZEJSYVFnU0owdTRxcE5JMXFGYTRISFYKY2oxL3pzenZ4RUtSRElhQkJGaU81Y3QvRVQvUTdwanozTnJaZVdtK0dlUUJKQ0diTEhSTlQ0M1ZpWVlLVG82ZGlGVTJteApHWENlLzFRY2NqNjVZQUFBQ0JBUHZodmgzb2Q1MmY4SFVWWGoxeDNlL1ZFenJPeVloTi9UQzNMbWhHYnRtdHZ0L0J2SUhxCndxWFpTT0lWWkZiRnVKSCtORHNWZFFIN29yUW1VcGJxRllDd0IxNUZNRGw0NVhLRm0xYjFyS1c1emVQK3d0M1hyM1p0cWsKRkdlaUlRMklSZklBQjZneElvNTZGemdMUmx6QnB0bzhkTlhjMXhtWVgyU2Rhb3ZwSkRBQUFBZ1FET0dwVE9oOEFRMFoxUwpzUm9vVS9YRTRkYWtrSU5vMDdHNGI3M01maG9xbkV1T01LM0ZRVStRRWUwYWpvdWs5UU1QNWJzZU1CYnJNZVNNUjBRWVBCClQ4Z0Z2S2VISWN6ZUtJTjNPRkRaRUF4TEZNMG9LbjR2bmdHTUFtTXUva2QwNm1PZnJUNDRmUUh1ajdGNWx1QVJHejRwYUwKLzRCTUVkMnFTRnFBYzZ6L0RRQUFBQTF0WVhSMGFFQk5ZWFIwYUdWM0FRSURCQT09Ci0tLS0tRU5EIE9QRU5TU0ggUFJJVkFURSBLRVktLS0tLQo="
+}
+
+data "octopusdeploy_accounts" "account_token" {
+  ids          = null
+  partial_name = "Token"
+  skip         = 0
+  take         = 1
+  account_type = "Token"
+}
+resource "octopusdeploy_token_account" "account_token" {
+  count                             = "${length(data.octopusdeploy_accounts.account_token.accounts) != 0 ? 0 : 1}"
+  name                              = "Token"
+  description                       = "An example of an unscoped Token account"
+  environments                      = []
+  tenant_tags                       = []
+  tenants                           = []
+  tenanted_deployment_participation = "Untenanted"
+  token                             = "${var.account_token}"
+  depends_on                        = []
+  lifecycle {
+    ignore_changes  = [token]
+    prevent_destroy = true
+  }
+}
+variable "account_token" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The token associated with the account Token"
+  default     = "Change Me!"
+}
+
+data "octopusdeploy_accounts" "account_username_password" {
+  ids          = null
+  partial_name = "Username Password"
+  skip         = 0
+  take         = 1
+  account_type = "UsernamePassword"
+}
+resource "octopusdeploy_username_password_account" "account_username_password" {
+  count                             = "${length(data.octopusdeploy_accounts.account_username_password.accounts) != 0 ? 0 : 1}"
+  name                              = "Username Password"
+  description                       = "An example of a username password account scoped to the Production environment"
+  environments                      = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+  tenant_tags                       = []
+  tenants                           = []
+  tenanted_deployment_participation = "Untenanted"
+  username                          = "username"
+  password                          = "${var.account_username_password}"
+  depends_on                        = []
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+variable "account_username_password" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The password associated with the account Username Password"
+  default     = "Change Me!"
 }
 
 resource "octopusdeploy_variable" "variables_example_variable_set_database_password_1" {
@@ -1864,6 +1796,74 @@ resource "octopusdeploy_library_variable_set" "library_variable_set_variables_ex
   lifecycle {
     prevent_destroy = true
   }
+}
+
+data "octopusdeploy_deployment_targets" "target_cloud_region" {
+  ids                  = null
+  partial_name         = "Cloud Region"
+  skip                 = 0
+  take                 = 1
+  health_statuses      = null
+  communication_styles = null
+  environments         = null
+  roles                = null
+  shell_names          = null
+  tenant_tags          = null
+  tenants              = null
+}
+resource "octopusdeploy_cloud_region_deployment_target" "target_cloud_region" {
+  count                             = "${length(data.octopusdeploy_deployment_targets.target_cloud_region.deployment_targets) != 0 ? 0 : 1}"
+  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}", "${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}", "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+  name                              = "Cloud Region"
+  roles                             = ["us-east-1"]
+  default_worker_pool_id            = "WorkerPools-3788"
+  health_status                     = "Healthy"
+  is_disabled                       = false
+  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
+  shell_name                        = "Unknown"
+  shell_version                     = "Unknown"
+  tenant_tags                       = []
+  tenanted_deployment_participation = "TenantedOrUntenanted"
+  tenants                           = []
+  thumbprint                        = ""
+  lifecycle {
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+data "octopusdeploy_deployment_targets" "target_offline_package_drop" {
+  ids                  = null
+  partial_name         = "Offline Package Drop"
+  skip                 = 0
+  take                 = 1
+  health_statuses      = null
+  communication_styles = null
+  environments         = null
+  roles                = null
+  shell_names          = null
+  tenant_tags          = null
+  tenants              = null
+}
+resource "octopusdeploy_offline_package_drop_deployment_target" "target_offline_package_drop" {
+  count                             = "${length(data.octopusdeploy_deployment_targets.target_offline_package_drop.deployment_targets) != 0 ? 0 : 1}"
+  applications_directory            = "C:\\Applications"
+  working_directory                 = "C:\\Octopus"
+  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}", "${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}", "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+  name                              = "Offline Package Drop"
+  roles                             = ["offline-web-server"]
+  health_status                     = "Healthy"
+  is_disabled                       = false
+  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
+  shell_name                        = "Unknown"
+  shell_version                     = "Unknown"
+  tenant_tags                       = ["Tag Set/tag"]
+  tenanted_deployment_participation = "Tenanted"
+  tenants                           = []
+  lifecycle {
+    prevent_destroy = true
+  }
+  depends_on = [octopusdeploy_tag_set.tagset_tag_set,octopusdeploy_tag.tagset_tag_set_tag_tag]
 }
 
 data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {

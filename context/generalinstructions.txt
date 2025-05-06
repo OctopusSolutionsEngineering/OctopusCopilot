@@ -441,6 +441,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_myproject" {
 
 * You will be penalized for using target tags with the format "name=value" in the "target_roles" attribute.
 * You will be penalized for adding the "target_roles" attribute on an "action".
+* You will be penalized for adding the "excluded_environments" attribute on an "step".
 * You will be penalized for adding target tags to the "tenant_tags" attribute.
 * If the "condition_expression" attribute is defined in a "step" block, it must use one of the following variables:
   * "#{Octopus.Deployment.Tenant.Name}"
