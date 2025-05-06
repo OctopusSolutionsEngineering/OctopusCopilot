@@ -150,6 +150,7 @@ variable "project_azure_function_step_deploy_products_microservice_azurefunction
   default     = "com.octopus:products-microservice-azurefunction-jvm"
 }
 resource "octopusdeploy_deployment_process" "deployment_process_azure_function" {
+  count      = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
   project_id = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? data.octopusdeploy_projects.project_azure_function.projects[0].id : octopusdeploy_project.project_azure_function[0].id}"
 
   step {
@@ -168,11 +169,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function" 
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "# Define variables\n$errorCollection = @()\n\ntry\n{\n  $azureConfigured = $true\n\n  # Ensure Azure account is configured\n  Write-Host \"Verifying Azure Account has been configured ...\"\n\n  # Check the Azure Account properties\n  if ($OctopusParameters['Project.Azure.Account.SubscriptionNumber'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Subscription Number has not been configured.\")\n    $azureConfigured = $false\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.Client'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Client Id has not been configured.\")\n    $azureConfigured = $false\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.TenantId'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Tenant Id has not been configured.\")\n    $azureConfigured = $false\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.Password'] -eq \"dummy\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Password has not been configured.\")\n    $azureConfigured = $false\n  }\n\n  if (-not $azureConfigured) {\n    $errorCollection += @(\"See the [documentation](https://octopus.com/docs/infrastructure/accounts/azure#azure-service-principal) for details on configuring an Azure Service Principal\")\n  }\n\n  Write-Host \"Checking to see if Project variables have been configured ...\"\n\n  # Check Project variables\n\u003c#\n  if ($OctopusParameters['Project.Slack.Url'] -eq \"CHANGE ME\")\n  {\n    $errorCollection += @(\n      \"The project variable Project.Slack.Url has not been configured.\",\n      \"See the [Slack documentation](https://api.slack.com/messaging/webhooks) for details on configuraing a Slack webhook URL.\"  \n    )\n  }\n\n  if ($OctopusParameters['Project.Azure.Queue.ConnectionString'] -eq \"CHANGE ME\")\n  {\n    $errorCollection += @(\"The project variable Project.Azure.Queue.ConnectionString has not been updated, have you run the Create Infrastructure runbook?\")\n  }\n#\u003e\n  if ($OctopusParameters['Project.Octopus.Api.Key'] -eq \"CHANGE ME\")\n  {\n    $errorCollection += @(\n      \"The project variable Project.Octopus.Api.Key has not been configured.\",\n      \"See the [Octopus documentation](https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key) for details on creating an API key.\"\n    )\n    throw \"The Api Key has not been configured, unable to proceed with checks!\"\n  }\n\n  Write-Host \"Checking for deployment targets ...\"\n\n  # Check to make sure targets have been created\n  if ([string]::IsNullOrWhitespace($OctopusParameters['Octopus.Web.ServerUri']))\n  {\n    $octopusUrl = $OctopusParameters['Octopus.Web.BaseUrl']\n  }\n  else\n  {\n    $octopusUrl = $OctopusParameters['Octopus.Web.ServerUri']\n  }\n  $apiKey = $OctopusParameters['Project.Octopus.Api.Key']\n  $spaceId = $OctopusParameters['Octopus.Space.Id']\n  $headers = @{\"X-Octopus-ApiKey\"=\"$apiKey\"}\n\n  $azureFunctionTargets = Invoke-RestMethod -Method Get -Uri \"$octopusUrl/api/$spaceId/machines?roles=Octopub-Products-Function\" -Headers $headers\n  \n  if ($azureFunctionTargets.Items.Count -lt 1)\n  {\n    $errorCollection += @(\"Expected 1 targets for role Octopub-Products-Function, but found $($azureFunctionTargets.Items.Count).  Have you run the Create Infrastructure runbook?\")\n  }\n}\ncatch\n{\n  Write-Verbose \"Fatal error occurred:\"\n  Write-Verbose \"$($_.Exception.Message)\"\n}\nfinally\n{\n  # Check to see if any errors were recorded\n  if ($errorCollection.Count -gt 0)\n  {\n    # Display the messages\n    Write-Highlight \"$($errorCollection -join \"`r`n\")\"\n  }\n  else\n  {\n    Write-Host \"All checks succeeded!\"\n  }\n}"
-        "OctopusUseBundledTooling" = "False"
       }
       environments                       = []
       excluded_environments              = []
@@ -200,23 +201,23 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function" 
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.DeploymentType" = "Package"
-        "Octopus.Action.Azure.DeploymentSlot" = "staging"
         "Octopus.Action.Azure.AppSettings" = jsonencode([
         {
+        "name" = "AZURE_STORAGE_CONNECTION_STRING"
         "value" = "#{Project.Azure.Queue.ConnectionString}"
         "slotSetting" = "false"
-        "name" = "AZURE_STORAGE_CONNECTION_STRING"
                 },
         {
+        "slotSetting" = "false"
         "name" = "QUEUE_NAME"
         "value" = "#{Project.Queue.Name}"
-        "slotSetting" = "false"
                 },
         ])
+        "Octopus.Action.Azure.DeploymentSlot" = "staging"
+        "Octopus.Action.Package.DownloadOnTentacle" = "False"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
       environments                       = []
       excluded_environments              = []
@@ -282,7 +283,6 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function" 
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Azure.AppSettings" = jsonencode([
         {
         "name" = "AZURE_STORAGE_CONNECTION_STRING"
@@ -295,9 +295,10 @@ resource "octopusdeploy_deployment_process" "deployment_process_azure_function" 
         "slotSetting" = "false"
                 },
         ])
-        "Octopus.Action.Azure.DeploymentSlot" = "production"
         "Octopus.Action.Package.DownloadOnTentacle" = "False"
         "Octopus.Action.Azure.DeploymentType" = "Package"
+        "Octopus.Action.Azure.DeploymentSlot" = "production"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
       }
       environments                       = []
@@ -624,11 +625,11 @@ resource "octopusdeploy_runbook_process" "runbook_process_create_infrastructure"
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "# Define variables\n$errorCollection = @()\n\ntry\n{\n  # Ensure Azure account is configured\n  Write-Host \"Verifying Azure Account has been configured ...\"\n\n  # Check the Azure Account properties\n  if ($OctopusParameters['Project.Azure.Account.SubscriptionNumber'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Subscription Number has not been configured.\")\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.Client'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Client Id has not been configured.\")\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.TenantId'] -eq \"00000000-0000-0000-0000-000000000000\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Tenant Id has not been configured.\")\n  }\n\n  if ($OctopusParameters['Project.Azure.Account.Password'] -eq \"dummy\")\n  {\n    # Add to error messages\n    $errorCollection += @(\"The Azure Account Password has not been configured.\")\n  }\n\n  Write-Host \"Checking to see if Project variables have been configured ...\"\n\n  # Check Project variables\n\u003c#\n  if ($OctopusParameters['Project.Slack.Url'] -eq \"dummy\")\n  {\n    $errorCollection += @(\"The project variable Project.Slack.Url has not been configured.\")\n  }\n\n  if ($OctopusParameters['Project.Azure.Queue.ConnectionString'] -eq \"dummy\")\n  {\n    $errorCollection += @(\"The project variable Project.Azure.Queue.ConnectionString has not been updated, have you run the Create Infrastructure runbook?\")\n  }\n#\u003e\n  if ($OctopusParameters['Project.Octopus.Api.Key'] -eq \"dummy\")\n  {\n    $errorCollection += @(\"The project variable Project.Octopus.Api.Key has not been configured.\")\n    throw \"The Api Key has not been configured, unable to proceed with checks!\"\n  }\n\n  Write-Host \"Checking for deployment targets ...\"\n\n  # Check to make sure targets have been created\n  if ([string]::IsNullOrWhitespace($OctopusParameters['Octopus.Web.ServerUri']))\n  {\n    $octopusUrl = $OctopusParameters['Octopus.Web.BaseUrl']\n  }\n  else\n  {\n    $octopusUrl = $OctopusParameters['Octopus.Web.ServerUri']\n  }\n  $apiKey = $OctopusParameters['Project.Octopus.Api.Key']\n  $spaceId = $OctopusParameters['Octopus.Space.Id']\n  $headers = @{\"X-Octopus-ApiKey\"=\"$apiKey\"}\n\n  $azureFunctionTargets = Invoke-RestMethod -Method Get -Uri \"$octopusUrl/api/$spaceId/machines?roles=Octopub-Products-Function\" -Headers $headers\n  \n  if ($azureFunctionTargets.Items.Count -lt 1)\n  {\n    $errorCollection += @(\"Expected 1 targets for role Octopub-Products-Function, but found $($azureFunctionTargets.Items.Count).  Have you run the Create Infrastructure runbook?\")\n  }\n\n}\ncatch\n{\n  Write-Warning \"Fatal error occurred:\"\n  Write-Warning \"$($_.Exception.Message)\"\n}\nfinally\n{\n  # Check to see if any errors were recorded\n  if ($errorCollection.Count -gt 0)\n  {\n    # Display the messages\n    Write-Error \"$($errorCollection -join \"`r`n\")\"\n  }\n  else\n  {\n    Write-Host \"All checks succeeded!\"\n  }\n}"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
       environments                       = []
       excluded_environments              = []
@@ -656,12 +657,12 @@ resource "octopusdeploy_runbook_process" "runbook_process_create_infrastructure"
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = $OctopusParameters['Project.Azure.ResourceGroup.Name']\n$azureLocation = $OctopusParameters['Project.Azure.Location']\n\n# Create resourece group\nWrite-Host \"Creating resource group $resourceGroupName in $azureLocation...\"\naz group create --location $azureLocation --name $resourceGroupName"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
       }
 
       container {
@@ -695,12 +696,12 @@ resource "octopusdeploy_runbook_process" "runbook_process_create_infrastructure"
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "# Get variables\n$storageAccountName = $OctopusParameters['Project.Azure.StorageAccount.Name']\n$queueName = $OctopusParameters['Project.Queue.Name']\n$resourceGroupName = $OctopusParameters['Project.Azure.ResourceGroup.Name']\n$azureLocation = $OctopusParameters['Project.Azure.Location']\n\n# Create Azure storage account\nWrite-Host \"Creating storage account ...\"\naz storage account create --name $storageAccountName --resource-group $resourceGroupName --location $azureLocation\n\n# Get account keys\n$accountKeys = (az storage account keys list --account-name $storageAccountName --resource-group $resourceGroupName) | ConvertFrom-JSON\n\n# Create Azure storage queue\nWrite-Host \"Creating queue ...\"\naz storage queue create --name $queueName --account-name $storageAccountName --account-key $accountKeys[0].Value"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
       }
 
       container {
@@ -734,12 +735,12 @@ resource "octopusdeploy_runbook_process" "runbook_process_create_infrastructure"
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = $OctopusParameters['Project.Azure.ResourceGroup.Name']\n$appServiceName = $OctopusParameters['Project.Azure.Function.Octopub.Products.Name']\n$appServiceRuntime = $OctopusParameters['Project.Azure.Function.Octopub.Products.Runtime']\n$osType = $OctopusParameters['Project.Azure.Function.Octopub.Products.OS']\n$functionsVersion = [int]$OctopusParameters['Project.Azure.Function.Octopub.Products.Version']\n$azureLocation = $OctopusParameters['Project.Azure.Location']\n$azureAccount = $OctopusParameters['Project.Azure.Account']\n$storageAccountName = $OctopusParameters['Project.Azure.StorageAccount.Name']\n\n# Fix ANSI Color on PWSH Core issues when displaying objects\nif ($PSEdition -eq \"Core\") {\n    $PSStyle.OutputRendering = \"PlainText\"\n}\n\n# Create App Service\nWrite-Host \"Creating $appServiceName app service ...\"\n$functionApp = (az functionapp create --name $appServiceName --consumption-plan-location $azureLocation --resource-group $resourceGroupName --runtime $appServiceRuntime --storage-account $storageAccountName --os-type $osType --functions-version $functionsVersion | ConvertFrom-Json)\n\n# Consumption plans are created automatically in the resource group, however, take a bit show up\n$planName = $functionApp.serverfarmId.SubString($functionApp.serverFarmId.LastIndexOf(\"/\") + 1)\n$functionAppPlans = (az functionapp plan list --resource-group $resourceGroupName | ConvertFrom-Json)\n\nWrite-Host \"Consumption based plans auto create and will sometimes take a bit to show up in the resource group, this loop will wait until it's available so the Slot creation doesn't fail ...\"\nwhile ($null -eq ($functionAppPlans | Where-Object {$_.Name -eq $planName}))\n{\n  Write-Host \"Waiting 10 seconds for app plan to show up ...\"\n  Start-Sleep -Seconds 10\n  $functionAppPlans = (az functionapp plan list --resource-group $resourceGroupName | ConvertFrom-Json)\n}\n\nWrite-Host \"It showed up!\"\n\n# Create deployment slots\nWrite-Host \"Creating deployment slots ...\"\naz functionapp deployment slot create --resource-group $resourceGroupName --name $appServiceName --slot \"staging\"\n\nWrite-Host \"Creating Octopus Azure Web App target for $appServiceName\"\nNew-OctopusAzureWebAppTarget -Name $appServiceName -AzureWebApp $appServiceName -AzureResourceGroupName $resourceGroupName -OctopusAccountIdOrName $azureAccount -OctopusRoles \"Octopub-Products-Function\" -updateIfExisting"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
+        "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = $OctopusParameters['Project.Azure.ResourceGroup.Name']\n$appServiceName = $OctopusParameters['Project.Azure.Function.Octopub.Products.Name']\n$appServiceRuntime = $OctopusParameters['Project.Azure.Function.Octopub.Products.Runtime']\n$osType = $OctopusParameters['Project.Azure.Function.Octopub.Products.OS']\n$functionsVersion = [int]$OctopusParameters['Project.Azure.Function.Octopub.Products.Version']\n$azureLocation = $OctopusParameters['Project.Azure.Location']\n$azureAccount = $OctopusParameters['Project.Azure.Account']\n$storageAccountName = $OctopusParameters['Project.Azure.StorageAccount.Name']\n\n# Fix ANSI Color on PWSH Core issues when displaying objects\nif ($PSEdition -eq \"Core\") {\n    $PSStyle.OutputRendering = \"PlainText\"\n}\n\n# Create App Service\nWrite-Host \"Creating $appServiceName app service ...\"\n$functionApp = (az functionapp create --name $appServiceName --consumption-plan-location $azureLocation --resource-group $resourceGroupName --runtime $appServiceRuntime --storage-account $storageAccountName --os-type $osType --functions-version $functionsVersion | ConvertFrom-Json)\n\n# Consumption plans are created automatically in the resource group, however, take a bit show up\n$planName = $functionApp.serverfarmId.SubString($functionApp.serverFarmId.LastIndexOf(\"/\") + 1)\n$functionAppPlans = (az functionapp plan list --resource-group $resourceGroupName | ConvertFrom-Json)\n\nWrite-Host \"Consumption based plans auto create and will sometimes take a bit to show up in the resource group, this loop will wait until it's available so the Slot creation doesn't fail ...\"\nwhile ($null -eq ($functionAppPlans | Where-Object {$_.Name -eq $planName}))\n{\n  Write-Host \"Waiting 10 seconds for app plan to show up ...\"\n  Start-Sleep -Seconds 10\n  $functionAppPlans = (az functionapp plan list --resource-group $resourceGroupName | ConvertFrom-Json)\n}\n\nWrite-Host \"It showed up!\"\n\n# Create deployment slots\nWrite-Host \"Creating deployment slots ...\"\naz functionapp deployment slot create --resource-group $resourceGroupName --name $appServiceName --slot \"staging\"\n\nWrite-Host \"Creating Octopus Azure Web App target for $appServiceName\"\nNew-OctopusAzureWebAppTarget -Name $appServiceName -AzureWebApp $appServiceName -AzureResourceGroupName $resourceGroupName -OctopusAccountIdOrName $azureAccount -OctopusRoles \"Octopub-Products-Function\" -updateIfExisting"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 
       container {
@@ -815,11 +816,11 @@ resource "octopusdeploy_runbook_process" "runbook_process_destroy_infrastructure
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "$appServiceName = $OctopusParameters['Project.Azure.Function.Octopub.Products.Name']\n$apiKey = $OctopusParameters['Project.Octopus.Api.Key']\n$spaceId = $OctopusParameters['Octopus.Space.Id']\n$environmentId = $OctopusParameters['Octopus.Environment.Id']\n$headers = @{\"X-Octopus-ApiKey\"=\"$apiKey\"}\n\nif ([String]::IsNullOrWhitespace($OctopusParameters['Octopus.Web.ServerUri']))\n{\n  $octopusUrl = $OctopusParameters['Octopus.Web.BaseUrl']\n}\nelse\n{\n  $octopusUrl = $OctopusParameters['Octopus.Web.ServerUri']\n}\n\n$octopubTarget = Invoke-RestMethod -Method Get -Uri \"$octopusUrl/api/$spaceId/machines?name=$appServiceName\" -Headers $headers\n\nforeach ($target in $octopubTarget.Items)\n{\n  Write-Host \"Deregistering $($target.Name)\"\n  Invoke-RestMethod -Method Delete -Uri -Uri \"$octopusUrl/api/$spaceId/machines/$($item.Id)\" -Headers $headers\n}"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
       environments                       = []
       excluded_environments              = []

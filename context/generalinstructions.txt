@@ -252,9 +252,15 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
   name        = "Application"
   description = "This is an example lifecycle that automatically deploys to the first environment"
 
-  # phases are defined here
+  # You must define one or more "phase" blocks
+  phase {
+    # the phase is defined here
+  }
 }
 ```
+
+* The resource "octopusdeploy_lifecycle" must have "phase" blocks with environments listed in either the "automatic_deployment_targets" array or the "optional_deployment_targets" array.
+* You will be penalized for defining a lifecycle phase with no environments.
 
 ## Resource and Data Instructions
 
