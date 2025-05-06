@@ -441,6 +441,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_myproject" {
  * You will be penalized for defining a "version" attribute on the "primary_package" block.
  * The "start_trigger" attribute must only be defined once.
  * You will be penalized for defining an empty "properties" block, for example "properties = {}".
+ * You will be penalized for defining a "properties_additional" block.
 
 ## Octopus Variable Syntax Instructions
 
