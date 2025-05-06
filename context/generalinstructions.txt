@@ -378,6 +378,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
    * "Octopus.WindowsService"
    * "Octopus.AwsUploadS3"
    * "Octopus.JavaArchive"
+ * You will be penalized for adding the property "Octopus.Action.Azure.AccountId" to steps of type "Octopus.AzureWebApp".
  * You will be penalized for defining a "version" attribute on the "primary_package" block.
  * The "start_trigger" attribute must only be defined once.
 
