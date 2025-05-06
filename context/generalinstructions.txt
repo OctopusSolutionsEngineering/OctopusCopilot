@@ -427,6 +427,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_myproject" {
    * "Octopus.AwsUploadS3"
    * "Octopus.JavaArchive"
    * "Octopus.HelmChartUpgrade"
+   * "Octopus.AzureAppService"
  * You will be penalized for defining a "package" block in steps with the types:
    * "Octopus.IIS"
    * "Octopus.AzureWebApp"
@@ -435,6 +436,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_myproject" {
    * "Octopus.AwsUploadS3"
    * "Octopus.JavaArchive"
    * "Octopus.HelmChartUpgrade"
+   * "Octopus.AzureAppService"
  * You will be penalized for adding the property "Octopus.Action.Azure.AccountId" to steps of type "Octopus.AzureWebApp".
  * You will be penalized for defining a "version" attribute on the "primary_package" block.
  * The "start_trigger" attribute must only be defined once.
