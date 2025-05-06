@@ -8,6 +8,7 @@
 
 * You must set the variable called "Project.Azure.Function.Octopub.Products.Name" to "octopub-111111-products-#{Octopus.Environment.Name | ToLower}", replacing the "111111" with a random number between 100000 and 999999.
 * You must set the variable called "Project.Azure.StorageAccount.Name" to "octopub111111#{Octopus.Environment.Name | ToLower}", replacing the "111111" with a random number between 100000 and 999999.
+* You will be penalized for using the resource "random_integer".
 
 ## Azure Web App Project Variable Instructions
 
