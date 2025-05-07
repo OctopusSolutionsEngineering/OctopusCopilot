@@ -5,7 +5,7 @@
 * You must ignore any mention of the current project.
 * You must create valid Terraform.
 * The supplied "Example Octopus Terraform Configuration" is used as a general guide for the configuration. You must use the primary source of truth when building the project.
-* If the prompt contains an instruction to add a new step, you must use the sample liifecycle, include the same runbooks, include the sample steps, include the sample variables, and then add the new step to the deployment process.
+* If the prompt contains an instruction to add a new step, you must use the sample lifecycle, include the same runbooks, include the sample steps, include the sample variables, and then add the new step to the deployment process.
 
 ## Default Lifecycle Instructions
 
