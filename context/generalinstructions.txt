@@ -70,10 +70,8 @@ And the following "octopusdeploy_project_group" resource must be defined:
 ```
 resource "octopusdeploy_project_group" "project_group_<name>" {
   count = "${length(data.octopusdeploy_project_groups.project_group_<name>.project_groups) != 0 ? 0 : 1}"
-  name  = "Frontend Services"
-  lifecycle {
-    prevent_destroy = true
-  }
+  name  = "<Name>"
+  # Populate the rest of the project group attributes here
 }
 ```
 
@@ -86,10 +84,10 @@ When the "feed_id" attribute is set to:
 Then the following "octopusdeploy_feeds" data resource must be included in the output:
 
 ```
-data "octopusdeploy_feeds" "feed_docker_hub" {
+data "octopusdeploy_feeds" ""<name>" {
   feed_type    = "Docker"
   ids          = null
-  partial_name = "Docker Hub"
+  partial_name = "<Name>"
   skip         = 0
   take         = 1
 }
@@ -98,19 +96,10 @@ data "octopusdeploy_feeds" "feed_docker_hub" {
 And the following "octopusdeploy_docker_container_registry" resource must be defined:
 
 ```
-resource "octopusdeploy_docker_container_registry" "feed_docker_hub" {
+resource "octopusdeploy_docker_container_registry" "<name>" {
   count                                = "${length(data.octopusdeploy_feeds.feed_docker_hub.feeds) != 0 ? 0 : 1}"
-  name                                 = "Docker Hub"
-  password                             = "${var.feed_docker_hub_password}"
-  registry_path                        = ""
-  username                             = "username"
-  api_version                          = ""
-  feed_uri                             = "https://index.docker.io"
-  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
+  name                                 = "<Name>"
+  # Populate the rest of the feed attributes here
 }
 ```
 
@@ -135,27 +124,13 @@ And the following "octopusdeploy_environment" resource must be defined:
 
 ```
 resource "octopusdeploy_environment" "environment_<name>" {
+  count                        = "${length(data.octopusdeploy_environments.environment_<name>.environments) != 0 ? 0 : 1}"
   name                         = "<Name>"
-  description                  = ""
-  allow_dynamic_infrastructure = true
-  use_guided_failure           = false
-  sort_order                   = 0
-
-  jira_extension_settings {
-    environment_type = "unmapped"
-  }
-
-  jira_service_management_extension_settings {
-    is_enabled = false
-  }
-
-  servicenow_extension_settings {
-    is_enabled = false
-  }
+  # Populate the rest of the environment attributes here
 }
 ```
 
-When the "project_id" attribute is set to "${length(data.octopusdeploy_projects.<name>.projects) != 0 ? 0 : 1}"
+When the "project_id" attribute is set to "${length(data.octopusdeploy_projects.project_<name>.projects) != 0 ? 0 : 1}"
 
 ```
 data "octopusdeploy_projects" "<name>" {
@@ -170,6 +145,7 @@ And the following "octopusdeploy_project" resource must be defined:
 
 ```
 resource "octopusdeploy_project" "<name>" {
+    count = "${length(data.octopusdeploy_projects.project_<name>.projects) != 0 ? 0 : 1}"
     name = "<Name>"
     # Populate the rest of the project attributes here
 }
