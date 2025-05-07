@@ -480,6 +480,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_myproject" {
    * "Octopus.JavaArchive"
    * "Octopus.HelmChartUpgrade"
    * "Octopus.AzureAppService"
+* The step of type "Octopus.HelmChartUpgrade" must define a property "Octopus.Action.Helm.ClientVersion" with the value of "V3".
 * You will be penalized for adding the property "Octopus.Action.Azure.AccountId" to steps of type "Octopus.AzureWebApp".
 * You will be penalized for defining a "version" attribute on the "primary_package" block.
 * The "start_trigger" attribute must only be defined once.
