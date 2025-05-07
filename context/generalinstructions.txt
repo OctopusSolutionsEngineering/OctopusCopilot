@@ -596,6 +596,7 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 * Terraform string interpolation must be implemented as "${}".
 * You will be penalized for using two curly brackets for string interpolation like "${{}}".
 * Script steps that reference variables like "${VARIABLE}" must escape the dollar sign like "$${VARIABLE}".
+* Dollar signs in script steps must be escaped with a second dollar sign like "$$".
 
 ## Penalties
 
