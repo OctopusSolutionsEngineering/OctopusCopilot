@@ -155,6 +155,26 @@ resource "octopusdeploy_environment" "environment_<name>" {
 }
 ```
 
+When the "project_id" attribute is set to "${length(data.octopusdeploy_projects.<name>.projects) != 0 ? 0 : 1}"
+
+```
+data "octopusdeploy_projects" "<name>" {
+  ids          = null
+  partial_name = "<Name>"
+  skip         = 0
+  take         = 1
+}
+```
+
+And the following "octopusdeploy_project" resource must be defined:
+
+```
+resource "octopusdeploy_project" "<name>" {
+    name = "<Name>"
+    # Populate the rest of the project attributes here
+}
+```
+
 ## Count Properties Instructions
 
 * The "count" parameter for any "octopusdeploy_deployment_process" resources must be the same as the "count" resource for the "octopusdeploy_project" resource.
