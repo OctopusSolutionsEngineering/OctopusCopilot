@@ -599,6 +599,7 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 * You will be penalized for using two curly brackets for string interpolation like "${{}}".
 * Script steps that reference variables like "${VARIABLE}" must escape the dollar sign like "$${VARIABLE}".
 * Dollar signs in script steps must be escaped with a second dollar sign like "$$".
+* Percent signs in script steps must be escaped with a second percent sign like "%%".
 
 ## Penalties
 
