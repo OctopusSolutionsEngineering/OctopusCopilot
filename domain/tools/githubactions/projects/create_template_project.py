@@ -83,9 +83,7 @@ def create_template_project_confirm_callback_wrapper(
                     redirector_api_key,
                 )
             except SpaceBuilderRequestFailed as e:
-                log_query(
-                    create_template_project_confirm_callback_wrapper.__name__, response
-                )
+                log_query(create_template_project_confirm_callback_wrapper.__name__, e)
                 return CopilotResponse(project_prompt_error_message)
 
             response_text.append("The following resources were created:")
@@ -265,7 +263,7 @@ def create_template_project_callback(
                     redirector_api_key,
                 )
             except SpaceBuilderRequestFailed as e:
-                log_query(create_template_project_callback.__name__, response)
+                log_query(create_template_project_callback.__name__, e)
                 return CopilotResponse(project_prompt_error_message)
 
             # Cache the template if it resulted in a valid plan.
