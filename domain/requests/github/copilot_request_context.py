@@ -173,6 +173,9 @@ from domain.tools.wrapper.octopusresources.create_worker import create_worker_wr
 from domain.tools.wrapper.octopusresources.create_worker_pool import (
     create_worker_pool_wrapper,
 )
+from domain.tools.wrapper.projects.create_lambda_project import (
+    create_lambda_project_wrapper,
+)
 from domain.tools.wrapper.reject_manual_intervention import (
     reject_manual_intervention_wrapper,
 )
@@ -1007,6 +1010,33 @@ def build_form_tools(query, req: func.HttpRequest):
                         "Example Octopus Azure Web App Project Terraform Configuration",
                         "generalinstructions.txt",
                         "azurewebappsystemprompt.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+            ),
+            FunctionDefinition(
+                create_lambda_project_wrapper(
+                    query,
+                    callback=create_template_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        ["context.tf", "everystep.tf"],
+                        "awslambda.tf",
+                        "Example Octopus AWS Lambda Function Project Terraform Configuration",
+                        "generalinstructions.txt",
+                        "awslambdaystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
                     ),
