@@ -405,15 +405,15 @@ resource "octopusdeploy_deployment_process" "deployment_process_aws_lambda" {
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.RunOnServer" = "true"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
-        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
         "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/aws-lambda-products-deploy.ps1"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
       }
 
       container {
@@ -464,11 +464,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_aws_lambda" {
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the lambda\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy AWS Lambda function].Status.Code}\" -ieq \"Skipped\") {\n  Write-Highlight \"To complete the deployment, you must have the necessary AWS Lambda configuration.\"\n  Write-Highlight \"See details of the [required configuration](https://library.octopus.com/step-templates/9b5ee984-bdd2-49f0-a78a-07e21e60da8a/actiontemplate-aws-deploy-lambda-function).\"\n}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
       environments                       = []
       excluded_environments              = []
@@ -497,11 +497,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_aws_lambda" {
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
+        "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
       }
       environments                       = []
       excluded_environments              = []
@@ -604,21 +604,6 @@ resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_functionrole_1"
   depends_on = []
 }
 
-resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_memorysize_1" {
-  count        = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) == 0 ?octopusdeploy_project.project_aws_lambda[0].id : data.octopusdeploy_projects.project_aws_lambda.projects[0].id}"
-  value        = "128"
-  name         = "Project.AWS.Lambda.MemorySize"
-  type         = "String"
-  description  = "The amount of memory to allocate to the AWS Lambda Function."
-  is_sensitive = false
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
 resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_runtime_1" {
   count        = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) == 0 ?octopusdeploy_project.project_aws_lambda[0].id : data.octopusdeploy_projects.project_aws_lambda.projects[0].id}"
@@ -671,6 +656,21 @@ resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_functionhandler
   name         = "Project.AWS.Lambda.FunctionHandler"
   type         = "String"
   description  = "The path to the Handler for the AWS Lambda"
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_memorysize_1" {
+  count        = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) == 0 ?octopusdeploy_project.project_aws_lambda[0].id : data.octopusdeploy_projects.project_aws_lambda.projects[0].id}"
+  value        = "256"
+  name         = "Project.AWS.Lambda.MemorySize"
+  type         = "String"
+  description  = "The amount of memory to allocate to the AWS Lambda Function."
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
