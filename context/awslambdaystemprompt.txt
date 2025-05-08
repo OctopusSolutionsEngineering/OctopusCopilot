@@ -7,44 +7,20 @@
 ## AWS Lambda Project Variable Instructions
 
 You must include all the following variables once unless otherwise specified:
-* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_name_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_2"
-* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_3"
-* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_os_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_runtime_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_version_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_location_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_storageaccount_name_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_account_1"
-* resource "octopusdeploy_variable" "azure_function_project_octopus_api_key_1"
+* resource "octopusdeploy_variable" "aws_lambda_project_aws_account_1"
+* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_functionname_1"
+* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_functionrole_1"
+* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_runtime_1"
+* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_bucketname_1"
+* resource "octopusdeploy_variable" "aws_lambda_project_aws_region_1"
+* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_functionhandler_1"
+* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_memorysize_1"
 
 ## AWS Lambda Project Deployment Process Instructions
 
 You must include all the following steps unless otherwise specified:
-* "Verify setup"
-* "Deploy products-microservice-azurefunction-jvm Azure Function - Staging Slot"
-* "Manual approval"
-* "Deploy products-microservice-azurefunction-jvm Azure Function - Production Slot"
+* "Validate setup"
+* "Approve Production Deployment"
+* "Deploy AWS Lambda function"
+* "Print Message When no Targets"
 * "Scan for Vulnerabilities"
-
-## AWS Lambda Project Runbook Instructions
-
-You must include all the following runbooks unless otherwise specified:
-* "Create Infrastructure"
-* "Destroy Infrastructure"
-
-## AWS Lambda Project Runbook Deployment Process Instructions
-
-You must include all the following runbook steps from the runbook_azure_function_create_infrastructure runbook unless otherwise specified:
-* "Validate Setup"
-* "Get Azure Access Token"
-* "Validate Function Name Availability"
-* "Create Resource Group"
-* "Create Storage Account"
-* "Create Octopub Products Function App"
-
-You must include all the following runbook steps from the runbook_azure_function_destroy_infrastructure runbook unless otherwise specified:
-* "Validate Setup"
-* "Deregister target"
-* "Destroy resource group"

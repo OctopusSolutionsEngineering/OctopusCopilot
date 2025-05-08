@@ -373,9 +373,9 @@ resource "octopusdeploy_deployment_process" "deployment_process_aws_lambda" {
       is_required                        = false
       worker_pool_id                     = ""
       properties                         = {
-        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "false"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
       }
       environments                       = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
       excluded_environments              = []
@@ -405,15 +405,15 @@ resource "octopusdeploy_deployment_process" "deployment_process_aws_lambda" {
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.Script.ScriptFileName" = "octopus/aws-lambda-products-deploy.ps1"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/aws-lambda-products-deploy.ps1"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
       }
 
       container {
@@ -464,11 +464,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_aws_lambda" {
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the lambda\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy AWS Lambda function].Status.Code}\" -ieq \"Skipped\") {\n  Write-Highlight \"To complete the deployment, you must have the necessary AWS Lambda configuration.\"\n  Write-Highlight \"See details of the [required configuration](https://library.octopus.com/step-templates/9b5ee984-bdd2-49f0-a78a-07e21e60da8a/actiontemplate-aws-deploy-lambda-function).\"\n}"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the lambda\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy AWS Lambda function].Status.Code}\" -ieq \"Skipped\") {\n  Write-Highlight \"To complete the deployment, you must have the necessary AWS Lambda configuration.\"\n  Write-Highlight \"See details of the [required configuration](https://library.octopus.com/step-templates/9b5ee984-bdd2-49f0-a78a-07e21e60da8a/actiontemplate-aws-deploy-lambda-function).\"\n}"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
       environments                       = []
       excluded_environments              = []
@@ -497,11 +497,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_aws_lambda" {
       is_required                        = false
       worker_pool_id                     = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
       properties                         = {
-        "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
       }
       environments                       = []
       excluded_environments              = []

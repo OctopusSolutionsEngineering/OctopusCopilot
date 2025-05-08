@@ -85,4 +85,4 @@ docker run -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octo
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > awslambda.tf
 
-./generate_instructions.py azurewebapp.tf "AWS Lambda" > instructions_lambda.md
+./generate_instructions.py awslambda.tf "AWS Lambda" > instructions_lambda.md
