@@ -5,6 +5,7 @@
 * You must ignore any mention of the current project.
 * You must create valid Terraform.
 * The supplied "Example Octopus Terraform Configuration" is used as a general guide for the configuration. You must use the primary source of truth when building the project.
+* If the prompt contains an instruction to add a new step, you must use the sample lifecycle, include the same runbooks, include the sample steps, include the sample variables, and then add the new step to the deployment process.
 
 ## Default Lifecycle Instructions
 
@@ -69,10 +70,36 @@ And the following "octopusdeploy_project_group" resource must be defined:
 ```
 resource "octopusdeploy_project_group" "project_group_<name>" {
   count = "${length(data.octopusdeploy_project_groups.project_group_<name>.project_groups) != 0 ? 0 : 1}"
-  name  = "Frontend Services"
-  lifecycle {
-    prevent_destroy = true
-  }
+  name  = "<Name>"
+  # Populate the rest of the project group attributes here
+}
+```
+
+When the "feed_id" attribute is set to:
+
+```
+"${length(data.octopusdeploy_feeds.feed_docker_hub.feeds) != 0 ? data.octopusdeploy_feeds.feed_docker_hub.feeds[0].id : octopusdeploy_docker_container_registry.feed_docker_hub[0].id}"
+```
+
+Then the following "octopusdeploy_feeds" data resource must be included in the output:
+
+```
+data "octopusdeploy_feeds" ""<name>" {
+  feed_type    = "Docker"
+  ids          = null
+  partial_name = "<Name>"
+  skip         = 0
+  take         = 1
+}
+```
+
+And the following "octopusdeploy_docker_container_registry" resource must be defined:
+
+```
+resource "octopusdeploy_docker_container_registry" "<name>" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_docker_hub.feeds) != 0 ? 0 : 1}"
+  name                                 = "<Name>"
+  # Populate the rest of the feed attributes here
 }
 ```
 
@@ -97,23 +124,30 @@ And the following "octopusdeploy_environment" resource must be defined:
 
 ```
 resource "octopusdeploy_environment" "environment_<name>" {
+  count                        = "${length(data.octopusdeploy_environments.environment_<name>.environments) != 0 ? 0 : 1}"
   name                         = "<Name>"
-  description                  = ""
-  allow_dynamic_infrastructure = true
-  use_guided_failure           = false
-  sort_order                   = 0
+  # Populate the rest of the environment attributes here
+}
+```
 
-  jira_extension_settings {
-    environment_type = "unmapped"
-  }
+When the "project_id" attribute is set to "${length(data.octopusdeploy_projects.project_<name>.projects) != 0 ? 0 : 1}"
 
-  jira_service_management_extension_settings {
-    is_enabled = false
-  }
+```
+data "octopusdeploy_projects" "<name>" {
+  ids          = null
+  partial_name = "<Name>"
+  skip         = 0
+  take         = 1
+}
+```
 
-  servicenow_extension_settings {
-    is_enabled = false
-  }
+And the following "octopusdeploy_project" resource must be defined:
+
+```
+resource "octopusdeploy_project" "<name>" {
+    count = "${length(data.octopusdeploy_projects.project_<name>.projects) != 0 ? 0 : 1}"
+    name = "<Name>"
+    # Populate the rest of the project attributes here
 }
 ```
 
@@ -192,6 +226,8 @@ data "octopusdeploy_library_variable_sets" "library_variable_set_variables_examp
 * For example, if the "tenant_tags" attribute is set to "Cities/Sydney", then the following data "octopusdeploy_tag_sets", resource "octopusdeploy_tag_set" and resource "octopusdeploy_tag" must be included in the output:
 
 ```
+# A data resource to find the existing tag set
+# There is a one-to-one relationship between this resource and the data resource
 data "octopusdeploy_tag_sets" "tagset_cities" {
   ids          = null
   partial_name = "Cities"
@@ -199,6 +235,8 @@ data "octopusdeploy_tag_sets" "tagset_cities" {
   take         = 1
 }
 
+# If there is no existing tag set, create one with this resource
+# There is a one-to-one relationship between this resource and the data resource
 resource "octopusdeploy_tag_set" "tagset_cities" {
   count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
   name        = "Cities"
@@ -208,6 +246,8 @@ resource "octopusdeploy_tag_set" "tagset_cities" {
   }
 }
 
+# If there is no existing tag set, create the tag with this resource
+# There is a one-to-many relationship between tag sets and tags
 resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
   count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
   name        = "Sydney"
@@ -216,7 +256,61 @@ resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
   color       = "#333333"
   description = ""
 }
+
+# If there is no existing tag set, create the tag with this resource
+# There is a one-to-many relationship between tag sets and tags
+resource "octopusdeploy_tag" "tagset_cities_tag_brisbane" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
+  name        = "Brisbane"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
+  # The colours are random
+  color       = "#C5AEEE"
+  description = ""
+}
 ```
+
+## Lifecycle Instructions
+
+* When using a lifecycle other than the "Default Lifecycle", you must include a data "octopusdeploy_lifecycles" and a resource "octopusdeploy_lifecycle", for example:
+
+```
+data "octopusdeploy_lifecycles" "lifecycle_application" {
+  ids          = null
+  partial_name = "Application"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_lifecycle" "lifecycle_application" {
+  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_application.lifecycles) != 0 ? 0 : 1}"
+  name        = "Application"
+  description = "This is an example lifecycle that automatically deploys to the first environment"
+
+  # You must define one or more "phase" blocks
+  phase {
+    # the phase is defined here
+  }
+}
+```
+
+* The resource "octopusdeploy_lifecycle" must have "phase" blocks with environments listed in either the "automatic_deployment_targets" array or the "optional_deployment_targets" array.
+* You will be penalized for defining a lifecycle phase with no environments.
+
+## Variable Template Instructions
+
+* You must set the "default_value" in a "template" block to "null" when there is no default value, for example:
+
+```
+  template {
+    name             = "ConnectionString"
+    label            = "Database Connection String"
+    help_text        = "Provide the connection string for the API Gateway database."
+    default_value    = null
+    display_settings = { "Octopus.ControlType" = "SingleLineText" }
+  }
+```
+
+* You will be penalized for setting the "default_value" to an empty string.
 
 ## Resource and Data Instructions
 
@@ -243,6 +337,12 @@ resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
   * "OciRegistry"
   * "OctopusProject"
   * "ArtifactoryGeneric"
+
+## Feed Instructions
+
+* The data "octopusdeploy_feeds" with "type" set to "BuiltIn" must have an empty "partial_name" attribute.
+* You must define the data "octopusdeploy_feeds" "feed_docker_hub" at most once.
+* You will be penalized for defining the data "octopusdeploy_feeds" "feed_docker_hub" more than once.
 
 ## Project Instructions
 
@@ -311,9 +411,36 @@ resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
 * The "name" attribute can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
 * You will be penalized for defining a "name" attribute with the characters "/" and "\".
 * You will be penalized for adding a "action" attribute to an "action" block.
-* Target tags must only be defined in the "target_roles" attribute on a "step".
+* Target tags must only be defined in the "target_roles" attribute on a "step", for example:
+
+```
+resource "octopusdeploy_deployment_process" "deployment_process_myproject" {
+  project_id = "${octopusdeploy_project.project_myproject.id}"
+
+  step {
+    condition           = "Success"
+    name                = "Approve deployment"
+    package_requirement = "LetOctopusDecide"
+    start_trigger       = "StartAfterPrevious"
+
+    action {
+      # The action is defined here
+      # You will be penalized for adding a "target_roles" attribute in the "action" block
+    }
+
+    properties   = {}
+
+    # The target roles are defined only here in the "step" block
+    target_roles = []
+  }
+
+  depends_on = []
+}
+```
+
 * You will be penalized for using target tags with the format "name=value" in the "target_roles" attribute.
 * You will be penalized for adding the "target_roles" attribute on an "action".
+* You will be penalized for adding the "excluded_environments" attribute on a "step".
 * You will be penalized for adding target tags to the "tenant_tags" attribute.
 * If the "condition_expression" attribute is defined in a "step" block, it must use one of the following variables:
   * "#{Octopus.Deployment.Tenant.Name}"
@@ -326,21 +453,42 @@ resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
   * "#{Octopus.Release.Channel.Name}"
   * "#{Octopus.Deployment.Changes}"
   * "#{Octopus.Deployment.WorkItems}"
- * You will be penalized for using the syntax "${<variable name>}" in the "condition_expression" attribute.
- * When the "Octopus.Action.Script.ScriptSource" property is set to "Package", the "Octopus.Action.Script.Syntax" property must not be defined.
- * You will be penalized for using the "Octopus.Action.Script.Syntax" property when the "Octopus.Action.Script.ScriptSource" property is set to "Package".
- * When the "Octopus.Action.Script.ScriptSource" property is set to "Inline", the "primary_package" property must not be defined.
- * You will be penalized for using the "primary_package" property when the "Octopus.Action.Script.ScriptSource" property is set to "Inline".
- * You will be penalized for defining a script step with no script.
- * Steps of type "Octopus.AzureAppService" must have at least one item in the "target_roles" attribute.
- * Steps of the following types must have a "primary_package" block:
+* You will be penalized for using the syntax "${<variable name>}" in the "condition_expression" attribute.
+* When the "Octopus.Action.Script.ScriptSource" property is set to "Package", the "Octopus.Action.Script.Syntax" property must not be defined.
+* You will be penalized for using the "Octopus.Action.Script.Syntax" property when the "Octopus.Action.Script.ScriptSource" property is set to "Package".
+* When the "Octopus.Action.Script.ScriptSource" property is set to "Inline", the "primary_package" property must not be defined.
+* You will be penalized for using the "primary_package" property when the "Octopus.Action.Script.ScriptSource" property is set to "Inline".
+* You will be penalized for defining a script step with no script.
+* Steps of type "Octopus.AzureAppService" must have at least one item in the "target_roles" attribute.
+* Steps of the following types must have a "primary_package" block:
    * "Octopus.IIS"
    * "Octopus.AzureWebApp"
    * "Octopus.TentaclePackage"
    * "Octopus.WindowsService"
    * "Octopus.AwsUploadS3"
    * "Octopus.JavaArchive"
- * The "start_trigger" attribute must only be defined once.
+   * "Octopus.HelmChartUpgrade"
+   * "Octopus.AzureAppService"
+* You will be penalized for defining a "package" block in steps with the types:
+   * "Octopus.IIS"
+   * "Octopus.AzureWebApp"
+   * "Octopus.TentaclePackage"
+   * "Octopus.WindowsService"
+   * "Octopus.AwsUploadS3"
+   * "Octopus.JavaArchive"
+   * "Octopus.HelmChartUpgrade"
+   * "Octopus.AzureAppService"
+* The step of type "Octopus.HelmChartUpgrade" must define a property "Octopus.Action.Helm.ClientVersion" with the value of "V3".
+* You will be penalized for adding the property "Octopus.Action.Azure.AccountId" to steps of type "Octopus.AzureWebApp".
+* You will be penalized for defining a "version" attribute on the "primary_package" block.
+* The "start_trigger" attribute must only be defined once.
+* You will be penalized for defining an empty "properties" block, for example "properties = {}".
+* You will be penalized for defining a "properties_additional" block.
+* You will be penalized for defining multiple "features" attributes.
+
+* Steps with actions of the following types must have at least one role defined in the "target_roles" array:
+   * "Octopus.AzureWebApp"
+   * "Octopus.KubernetesDeployRawYaml"
 
 ## Octopus Variable Syntax Instructions
 
@@ -360,7 +508,9 @@ resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
   * "String"
   * "WorkerPool"
 * You will be penalized for setting the resource "octopusdeploy_variable" "type" attribute to "Token".
-* When defining the value for a resource "octopusdeploy_variable" with a "type" of "Sensitive", the "sensitive_value" attribute must be set to "CHANGE ME", and the "value" attribute must not be defined, for example:
+* When defining the value for a resource "octopusdeploy_variable" with a "type" of "Sensitive", the "sensitive_value" attribute must be set to "CHANGE ME", and the "value" attribute must not be defined.
+
+For example, this is a sensitive variable:
 
 ```
 resource "octopusdeploy_variable" "a_sensitive_variable" {
@@ -373,15 +523,46 @@ resource "octopusdeploy_variable" "a_sensitive_variable" {
 }
 ```
 
-* You will be penalized for setting the "value" and "sensitive_value" attributes in the same resource.
+This is an example of a regular variable:
+
+```
+resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
+  count        = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_azure_function.projects) == 0 ?octopusdeploy_project.project_azure_function[0].id : data.octopusdeploy_projects.project_azure_function.projects[0].id}"
+  value        = "canadacentral"
+  name         = "Project.Azure.Location"
+  type         = "String"
+  is_sensitive = false
+}
+```
+
+* You will be penalized for setting the "value" and "sensitive_value" attributes in the same resource "octopusdeploy_variable".
 * You will be penalized for setting the "sensitive_value" attribute to anything other than "CHANGE ME".
 * You will be penalized for assigning an empty scope like "scope {}" to a resource "octopusdeploy_variable".
+* You will be penalized for defining a "tenants" attribute in the "scope" block.
 * You will be penalized for including more than one resource "octopusdeploy_variable" with the same name.
+* The only valid attributes for the "scope" block are:
+  * "actions"
+  * "channels"
+  * "environments"
+  * "machines"
+  * "roles"
+  * "tenant_tags"
+
+## Runbook Instructions
+
+* The "runbook_id" attribute of resource "octopusdeploy_runbook_process" is in the format "${length(data.octopusdeploy_projects.<project>.projects) != 0 ? null : octopusdeploy_runbook.<runbook>[0].id}"
+
+## Worker Pool Instructions
+
+* You must include the data "octopusdeploy_worker_pools" "workerpool_default_worker_pool".
 
 ## Terraform Instructions
 
 * You will be penalized for defining resources or adding attributes that are not included in the sample Terraform configurations.
 * Every resource must have a "count" attribute.
+* Each "count" attribute must be defined in the format "${length(data.<data type>.<data resource>.<collection>) != 0 ? 0 : 1}".
+* You will be penalized for defining a "count" attribute with the value of "1".
 * You will be penalized for using heredoc syntax.
 * You must only respond with the Terraform configuration.
 * A block starting with "{" and ending with "}" must write each child property on a new line.
@@ -417,6 +598,12 @@ resource "octopusdeploy_variable" "a_sensitive_variable" {
 * Terraform string interpolation must be implemented as "${}".
 * You will be penalized for using two curly brackets for string interpolation like "${{}}".
 * Script steps that reference variables like "${VARIABLE}" must escape the dollar sign like "$${VARIABLE}".
+* Dollar signs in script steps must be escaped with a second dollar sign like "$$".
+* Percent signs in script steps must be escaped with a second percent sign like "%%", for example:
+
+```
+"Octopus.Action.Script.ScriptBody" = "curl -w \"%%{http_code}\" http://example.org"
+```
 
 ## Penalties
 
@@ -426,3 +613,4 @@ resource "octopusdeploy_variable" "a_sensitive_variable" {
 * You will be penalized for including any code blocks.
 * You will be penalized for including any instructions.
 * You will be penalized for returning any other text.
+* You will be penalized for including any comments.

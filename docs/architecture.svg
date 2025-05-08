@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="80cm" height="44cm" viewBox="-224 -81 1585 862" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg width="80cm" height="54cm" viewBox="-224 -81 1585 1062" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g id="Background"/>
+  <g id="Background"/>
   <g id="Background"/>
   <g id="Background">
     <g>
@@ -148,17 +150,17 @@
       <tspan x="700" y="656">Instance</tspan>
     </text>
     <g>
-      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" x1="900" y1="730" x2="1241.86" y2="505.347"/>
-      <polygon style="fill: #1e90ff; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" fill-rule="evenodd" points="1248.13,501.228 1242.52,510.898 1241.86,505.347 1237.03,502.541 "/>
+      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" x1="900" y1="730" x2="1178.64" y2="507.087"/>
+      <polygon style="fill: #1e90ff; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" fill-rule="evenodd" points="1184.5,502.401 1179.81,512.553 1178.64,507.087 1173.57,504.744 "/>
     </g>
-    <text font-size="12.8" style="fill: #1e90ff; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="960" y="620">
-      <tspan x="960" y="620">Scan Instance</tspan>
+    <text font-size="12.8" style="fill: #1e90ff; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="940" y="620">
+      <tspan x="940" y="620">Scan Instance</tspan>
     </text>
     <g>
       <path style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" d="M 700,380 A 572.5,572.5 0 0 0 697.529,670.584"/>
       <polygon style="fill: #1e90ff; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" fill-rule="evenodd" points="699.414,677.842 691.969,669.501 697.449,670.604 701.619,666.881 "/>
     </g>
-    <text font-size="12.7998" style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="800" y="730">
+    <text font-size="12.8" style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="800" y="730">
       <tspan x="800" y="730"></tspan>
     </text>
     <g>
@@ -174,6 +176,30 @@
     </g>
     <text font-size="12.8" style="fill: #1e90ff; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="560" y="80">
       <tspan x="560" y="80">Send Prompt</tspan>
+    </text>
+    <g>
+      <rect style="fill: #e6194b; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #800000" x="700" y="880" width="200" height="100" rx="0" ry="0"/>
+      <text font-size="12.8" style="fill: #ffffff; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="800" y="927.7">
+        <tspan x="800" y="927.7">Azure Function, Go,</tspan>
+        <tspan x="800" y="943.7">Tofu Service</tspan>
+      </text>
+    </g>
+    <g>
+      <path style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" d="M 700,355 A 386.695,386.695 0 0 0 693.483,872.77"/>
+      <polygon style="fill: #1e90ff; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" fill-rule="evenodd" points="698.482,878.358 688.022,874.409 693.391,872.851 695.365,867.621 "/>
+    </g>
+    <text font-size="12.8" style="fill: #1e90ff; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="700" y="860">
+      <tspan x="700" y="860">Plan and apply Terraform</tspan>
+    </text>
+    <g>
+      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" x1="900" y1="900" x2="1204.36" y2="508.675"/>
+      <polygon style="fill: #1e90ff; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #1e90ff" fill-rule="evenodd" points="1208.97,502.755 1206.78,513.719 1204.36,508.675 1198.88,507.579 "/>
+    </g>
+    <text font-size="12.8" style="fill: #1e90ff; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="1020" y="780">
+      <tspan x="1020" y="780">Apply Terraform</tspan>
+    </text>
+    <text font-size="12.8" style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="960" y="760">
+      <tspan x="960" y="760"></tspan>
     </text>
   </g>
 </svg>
