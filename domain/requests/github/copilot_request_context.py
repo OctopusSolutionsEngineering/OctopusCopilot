@@ -151,7 +151,9 @@ from domain.tools.wrapper.octopusresources.create_git_credential import (
 from domain.tools.wrapper.octopusresources.create_github_connection import (
     create_github_connection_wrapper,
 )
-from domain.tools.wrapper.projects.create_azure_function_project import create_azure_function_project_wrapper
+from domain.tools.wrapper.projects.create_azure_function_project import (
+    create_azure_function_project_wrapper,
+)
 from domain.tools.wrapper.projects.create_azure_web_app_project import (
     create_azure_web_app_project_wrapper,
 )
