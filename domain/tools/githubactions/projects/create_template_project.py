@@ -51,12 +51,12 @@ def create_template_project_confirm_callback_wrapper(
             debug_text = get_params_message(
                 github_user,
                 True,
-                create_template_project_callback.__name__,
+                create_template_project_confirm_callback_wrapper.__name__,
                 plan_id=plan_id,
             )
 
             log_query(
-                create_template_project_callback.__name__,
+                create_template_project_confirm_callback_wrapper.__name__,
                 f"""
                 Plan ID: {plan_id}""",
             )
@@ -67,7 +67,7 @@ def create_template_project_confirm_callback_wrapper(
                 get_params_message(
                     github_user,
                     False,
-                    create_template_project_callback.__name__,
+                    create_template_project_confirm_callback_wrapper.__name__,
                     plan_id=plan_id,
                 )
             )
@@ -83,6 +83,9 @@ def create_template_project_confirm_callback_wrapper(
                     redirector_api_key,
                 )
             except SpaceBuilderRequestFailed as e:
+                log_query(
+                    create_template_project_confirm_callback_wrapper.__name__, response
+                )
                 return CopilotResponse(project_prompt_error_message)
 
             response_text.append("The following resources were created:")
@@ -262,6 +265,7 @@ def create_template_project_callback(
                     redirector_api_key,
                 )
             except SpaceBuilderRequestFailed as e:
+                log_query(create_template_project_callback.__name__, response)
                 return CopilotResponse(project_prompt_error_message)
 
             # Cache the template if it resulted in a valid plan.
