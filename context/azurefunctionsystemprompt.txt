@@ -1,0 +1,51 @@
+## Azure Function Instructions
+
+* The supplied "Example Octopus Azure Function Project Terraform Configuration" is the primary source of truth for the configuration.
+* You must respond with Terraform configuration to create an Octopus project deploying an application to an Azure Web App based on examples provided.
+* You must use the lifecycle from the supplied "Example Octopus Azure Function Project Terraform Configuration" unless instructed otherwise.
+
+## Azure Function Project Variable Instructions
+
+You must include all the following variables once unless otherwise specified:
+* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_name_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_os_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_runtime_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_version_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_location_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_storageaccount_name_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_account_1"
+* resource "octopusdeploy_variable" "azure_function_project_octopus_api_key_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_2"
+* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_3"
+
+## Azure Function Project Deployment Process Instructions
+
+You must include all the following steps unless otherwise specified:
+* "Verify setup"
+* "Deploy products-microservice-azurefunction-jvm Azure Function - Staging Slot"
+* "Manual approval"
+* "Deploy products-microservice-azurefunction-jvm Azure Function - Production Slot"
+* "Scan for Vulnerabilities"
+
+## Azure Function Project Runbook Instructions
+
+You must include all the following runbooks unless otherwise specified:
+* "Create Infrastructure"
+* "Destroy Infrastructure"
+
+## Azure Function Project Runbook Deployment Process Instructions
+
+You must include all the following runbook steps from the runbook_azure_function_create_infrastructure runbook unless otherwise specified:
+* "Validate Setup"
+* "Get Azure Access Token"
+* "Validate Function Name Availability"
+* "Create Resource Group"
+* "Create Storage Account"
+* "Create Octopub Products Function App"
+
+You must include all the following runbook steps from the runbook_azure_function_destroy_infrastructure runbook unless otherwise specified:
+* "Validate Setup"
+* "Deregister target"
+* "Destroy resource group"
+
