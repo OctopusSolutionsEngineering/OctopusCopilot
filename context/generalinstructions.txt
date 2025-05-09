@@ -411,6 +411,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 * The "name" attribute can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
 * You will be penalized for defining a "name" attribute with the characters "/" and "\".
 * You will be penalized for adding a "action" attribute to an "action" block.
+* You will be penalized for adding a "excluded_environments" attribute to a "step".
 * Target tags must only be defined in the "target_roles" attribute on a "step", for example:
 
 ```
