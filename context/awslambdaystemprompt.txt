@@ -8,13 +8,10 @@
 
 You must include all the following variables once unless otherwise specified:
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_account_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_functionname_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_functionrole_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_runtime_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_bucketname_1"
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_region_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_functionhandler_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_memorysize_1"
+* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_bucketname_1"
+* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_filename_1"
+* resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1"
 
 ## AWS Lambda Project Deployment Process Instructions
 
@@ -22,6 +19,7 @@ You must include all the following steps unless otherwise specified:
 * "Attempt Login"
 * "Validate setup"
 * "Approve Production Deployment"
-* "Deploy AWS Lambda function"
+* "Upload Lambda"
+* "Deploy Lambda SAM template"
 * "Print Message When no Targets"
 * "Scan for Vulnerabilities"
