@@ -1,7 +1,7 @@
 ## AWS Lambda Instructions
 
 * The supplied "Example Octopus AWS Lambda Function Project Terraform Configuration" is the primary source of truth for the configuration.
-* You must respond with Terraform configuration to create an Octopus project deploying an application to an Azure Web App based on examples provided.
+* You must respond with Terraform configuration to create an Octopus project deploying an application to an AWS Lambda Function based on examples provided.
 * You must use the lifecycle from the supplied "Example Octopus AWS Lambda Function Project Terraform Configuration" unless instructed otherwise.
 
 ## AWS Lambda Project Variable Instructions
