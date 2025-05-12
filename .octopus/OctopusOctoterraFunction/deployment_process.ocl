@@ -6,7 +6,7 @@ step "deploy-with-cli" {
         notes = "Deploy the application using the Azure Functions CLI"
         properties = {
             Octopus.Action.Template.Id = "ActionTemplates-4321"
-            Octopus.Action.Template.Version = "2"
+            Octopus.Action.Template.Version = "6"
             Packages.FunctionApp = "{\"PackageId\":\"octoterra_azure\",\"FeedId\":\"octopus-server-built-in\"}"
         }
         worker_pool = "hosted-ubuntu"
