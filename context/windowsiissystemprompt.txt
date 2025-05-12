@@ -3,6 +3,7 @@
 * The supplied "Example Octopus Windows IIS Project Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project deploying an application to an Windows IIS server based on examples provided.
 * You must use the lifecycle from the supplied "Example Octopus Windows IIS Project Terraform Configuration" unless instructed otherwise.
+* You must use the package ID "com.octopus:octopub-frontend" unless instructed otherwise.
 
 ## AWS Lambda Project Deployment Process Instructions
 
