@@ -3,6 +3,8 @@
 * The supplied "Example Octopus AWS Lambda Function Project Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project deploying an application to an AWS Lambda Function based on examples provided.
 * You must use the lifecycle from the supplied "Example Octopus AWS Lambda Function Project Terraform Configuration" unless instructed otherwise.
+* You must use the "name" attribute value in the resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1" the supplied "Example Octopus AWS Lambda Function Project Terraform Configuration".
+* You will be penalized if you change the "name" attribute value in the resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1".
 
 ## AWS Lambda Project Variable Instructions
 
@@ -12,9 +14,6 @@ You must include all the following variables once unless otherwise specified:
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_bucketname_1"
 * resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1"
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_filename_1"
-
-* When defining the value for the resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1" you must set the "name" attribute with a ":" delimiting each word in title case
-* You will be penalized if the "name" attribute value in the resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1" has had any ":" replaced with "_".
 
 ## AWS Lambda Project Deployment Process Instructions
 
