@@ -3,7 +3,7 @@
 * The supplied "Example Octopus AWS Lambda Function Project Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project deploying an application to an AWS Lambda Function based on examples provided.
 * You must use the lifecycle from the supplied "Example Octopus AWS Lambda Function Project Terraform Configuration" unless instructed otherwise.
-* You must use the "name" attribute value in the resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1" the supplied "Example Octopus AWS Lambda Function Project Terraform Configuration".
+* You must use the "name" attribute value in the resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1" from the supplied "Example Octopus AWS Lambda Function Project Terraform Configuration".
 * You will be penalized if you change the "name" attribute value in the resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1".
 
 ## AWS Lambda Project Variable Instructions
