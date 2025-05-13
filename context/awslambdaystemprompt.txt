@@ -10,8 +10,11 @@ You must include all the following variables once unless otherwise specified:
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_account_1"
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_region_1"
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_bucketname_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_filename_1"
 * resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1"
+* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_filename_1"
+
+* When defining the value for the resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1" you must set the "name" attribute with a ":" delimiting each word in title case
+* You will be penalized if the "name" attribute value in the resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1" has had any ":" replaced with "_".
 
 ## AWS Lambda Project Deployment Process Instructions
 

@@ -537,6 +537,25 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 }
 ```
 
+* When defining a resource "octopusdeploy_variable", the "name" attribute that includes either a ":" or an XPath expression indicates it is a "Structured Configuration Variable".
+* The "name" attribute for a structured configuration variable is used to target and replace values in config files (like JSON, YAML, or XML) during deployment.
+* In JSON and YAML files, each location is identified by the sequence of keys leading to it from the root level, separated by ":"
+* In XML files, structures can be identified by defining the resource "octopusdeploy_variable" with the "name" attribute to an XPath expression.
+
+For example, this is a structured configuration variable for a JSON or YAML file:
+
+```
+resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1" {
+  count        = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) == 0 ?octopusdeploy_project.project_aws_lambda[0].id : data.octopusdeploy_projects.project_aws_lambda.projects[0].id}"
+  value        = "#{Octopus.Action[Upload Lambda].Output.Package.S3Uri}"
+  name         = "Resources:ProductsMicroservice:Properties:CodeUri"
+  type         = "String"
+  is_sensitive = false
+}
+```
+
+* You will be penalized for setting the "name" attribute for a structured configuration variable that doesn't include either ":" or a valid xpath expression.
 * You will be penalized for setting the "value" and "sensitive_value" attributes in the same resource "octopusdeploy_variable".
 * You will be penalized for setting the "sensitive_value" attribute to anything other than "CHANGE ME".
 * You will be penalized for assigning an empty scope like "scope {}" to a resource "octopusdeploy_variable".
