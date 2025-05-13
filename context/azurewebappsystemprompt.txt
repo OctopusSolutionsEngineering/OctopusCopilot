@@ -21,7 +21,7 @@ You must include all the following variables once unless otherwise specified:
 ## Azure Web App Project Deployment Process Instructions
 
 You must include all the following steps unless otherwise specified:
-* "Verify setup"
+* "Validate setup"
 * "Deploy Azure Web App Container"
 * "Manual approval"
 * "Swap Production Slot"
