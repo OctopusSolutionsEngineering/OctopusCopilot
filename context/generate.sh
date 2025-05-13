@@ -123,4 +123,4 @@ docker run -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octo
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > windowsiis.tf
 
-./generate_instructions.py windowsiis.tf "AWS Lambda" > instructions_iis.md
+./generate_instructions.py windowsiis.tf "IIS" > instructions_iis.md

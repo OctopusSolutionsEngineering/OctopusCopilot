@@ -4,35 +4,27 @@
 * You must respond with Terraform configuration to create an Octopus project deploying an application to an Azure Web App based on examples provided.
 * You must use the lifecycle from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
 
-## Variable Override
-
-* You must set the variable called "Project.Azure.Function.Octopub.Products.Name" to "octopub-111111-products-#{Octopus.Environment.Name | ToLower}", replacing the "111111" with a random number between 100000 and 999999.
-* You must set the variable called "Project.Azure.StorageAccount.Name" to "octopub111111#{Octopus.Environment.Name | ToLower}", replacing the "111111" with a random number between 100000 and 999999.
-* You will be penalized for using the resource "random_integer".
-* You will be penalized for picking the number "123456".
-
 ## Azure Web App Project Variable Instructions
 
 You must include all the following variables once unless otherwise specified:
-* resource "octopusdeploy_variable" "azure_function_project_azure_location_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_account_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_2"
-* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_3"
-* resource "octopusdeploy_variable" "azure_function_project_octopus_api_key_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_name_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_os_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_runtime_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_version_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_storageaccount_name_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_2"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_3"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_name_1"
+* resource "octopusdeploy_variable" "azure_web_app_application_image_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_location_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_name_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_sku_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_octopus_api_key_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_account_1"
 
 ## Azure Web App Project Deployment Process Instructions
 
 You must include all the following steps unless otherwise specified:
 * "Verify setup"
-* "Deploy products-microservice-azurefunction-jvm Azure Function - Staging Slot"
+* "Deploy Azure Web App Container"
 * "Manual approval"
-* "Deploy products-microservice-azurefunction-jvm Azure Function - Production Slot"
+* "Swap Production Slot"
 * "Scan for Vulnerabilities"
 
 ## Azure Web App Project Runbook Instructions
@@ -43,12 +35,15 @@ You must include all the following runbooks unless otherwise specified:
 
 ## Azure Web App Project Runbook Deployment Process Instructions
 
-You must include all the following runbook steps from the runbook_azure_function_create_infrastructure runbook unless otherwise specified:
-* "Verify setup"
+You must include all the following runbook steps from the runbook_azure_web_app_create_infrastructure runbook unless otherwise specified:
+* "Validate Setup"
+* "Get Azure Access Token"
+* "Validate WebApp Name Availability"
 * "Create Resource Group"
-* "Create Storage Account"
-* "Create Octopub Products Function App"
+* "Create Web App Service Plan"
+* "Create Octopub Web App"
 
-You must include all the following runbook steps from the runbook_azure_function_destroy_infrastructure runbook unless otherwise specified:
+You must include all the following runbook steps from the runbook_azure_web_app_destroy_infrastructure runbook unless otherwise specified:
+* "Validate Setup"
 * "Deregister target"
 * "Destroy resource group"
