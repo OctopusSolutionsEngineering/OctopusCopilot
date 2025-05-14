@@ -217,6 +217,10 @@ class TestKubernetesSanitizer(unittest.TestCase):
         resource "octopusdeploy_project" "project" {
           name = "Test-Project.1,2_#3"
         }
+        
+        resource "octopusdeploy_variable" "variable_1" {
+          name = "A:Path:To:A:YamlOrJson:Structure"
+        }
         """
 
         # Should be unchanged
