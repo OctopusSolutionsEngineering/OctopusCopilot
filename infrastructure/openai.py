@@ -110,17 +110,17 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
 
     # We can use a specific deployment to select a tool, or fallback to the default
     deployment = (
-        os.environ.get("AISERVICES_DEPLOYMENTMINI")
-        or os.environ["AISERVICES_DEPLOYMENT"]
+        os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS")
+        or os.environ["OPENAI_API_DEPLOYMENT"]
     )
-    version = os.environ.get("AISERVICES_DEPLOYMENTMINI_VERSION") or "2024-06-01"
+    version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-06-01"
 
     agent = OpenAIFunctionsAgent.from_llm_and_tools(
         llm=AzureChatOpenAIWithTooling(
             temperature=0,
             azure_deployment=deployment,
-            openai_api_key=os.environ["AISERVICES_KEY"],
-            azure_endpoint=os.environ["AISERVICES_ENDPOINT"],
+            openai_api_key=os.environ["OPENAI_API_KEY"],
+            azure_endpoint=os.environ["OPENAI_ENDPOINT"],
             api_version=version,
         ),
         tools=tools,
