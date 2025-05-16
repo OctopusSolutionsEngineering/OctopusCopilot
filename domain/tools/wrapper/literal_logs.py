@@ -8,7 +8,9 @@ def answer_literal_logs_wrapper(query, callback, logging):
         release=None,
         **kwargs,
     ):
-        """Prints, writes, or outputs the deployment logs without any processing.
+        """Prints, writes, or outputs the deployment logs without any processing. Examples include:
+
+        * Print the deployment logs of the latest project deployment.
 
         Args:
         space: Space name
@@ -20,7 +22,7 @@ def answer_literal_logs_wrapper(query, callback, logging):
         """
 
         if logging:
-            logging("Enter:", "answer_literal_logs_usage")
+            logging("Enter:", answer_literal_logs_usage.__name__)
 
         for key, value in kwargs.items():
             if logging:
