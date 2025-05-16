@@ -564,7 +564,7 @@ class CopilotChatTestTwo(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_describe_git_creds(self):
-        prompt = 'What is the username for the "GitHub Credentials" git credentials?'
+        prompt = 'What is the username for the "GitHub Credentials" git credential?'
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 

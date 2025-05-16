@@ -25,9 +25,3 @@ llm_timeout = 240
 # A max_log_lines limit of 250 is appropriate for GPT 3.5.
 # The GPT-4o was better though. We set a much higher limit before displaying a warning.
 max_log_lines = 1000
-
-# This is the small model used for generating responses to queries
-mini_model = "gpt-4o-mini"
-
-# This is the full model used for generating responses to queries
-full_model = "gpt-4o"

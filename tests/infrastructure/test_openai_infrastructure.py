@@ -212,7 +212,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the machine policy name in the query
         """
 
-        query = 'Show the powershell health check script for the "Windows VM Policy" machine policy.'
+        query = 'Given the "Windows VM Policy" machine policy, show the powershell health check script.'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
@@ -395,6 +395,7 @@ class MockRequests(unittest.TestCase):
         # Make sure we get some kind of response
         self.assertTrue(response)
 
+    @unittest.skip("GPt 4.1 has a much longer context and no longer fails")
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_long_prompt(self):
         """

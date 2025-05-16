@@ -160,7 +160,7 @@ def get_octoterra_space(
     access_token,
     octopus_url,
     log_query,
-    max_attribute_length=1000,
+    max_attribute_length,
 ):
     """
     Returns the terraform representation of a space
@@ -245,7 +245,7 @@ def get_octoterra_request_body(
     projectgroup_names,
     step_names,
     variable_names,
-    max_attribute_length=1000,
+    max_attribute_length,
 ):
     """
     Returns the body of the request to get the terraform representation of a space
@@ -360,7 +360,7 @@ def get_octoterra_request_body(
     )
     include_all_resources += resources
 
-    return {
+    request = {
         "space": space_id,
         "ignoreCacManagedValues": False,
         "excludeCaCProjectSettings": True,
@@ -396,7 +396,6 @@ def get_octoterra_request_body(
         "excludeAllSteps": exclude_all_steps_value,
         "excludeAllProjectVariables": exclude_all_projectvariables_value,
         "excludeProjectVariablesExcept": exclude_projectvariables_except,
-        "limitAttributeLength": max_attribute_length,
         # This setting ensures that any project, tenant, runbook, or target names are valid.
         # If not, the assumption is made that the LLM incorrectly identified the resource in the query,
         # and the results must not be limited by that incorrect assumption.
@@ -415,7 +414,15 @@ def get_octoterra_request_body(
         "includeDefaultChannel": True,
         # Ignore any errors with projects that have bad CaC settings
         "ignoreCacErrors": True,
-    }, include_all_resources
+    }
+
+    # The practical use of max_attribute_length is used to limit the length of a script step when converted to Terraform.
+    # This is important for LLMs with a limited context length.
+    # This is less important for modern LLMs with large context windows.
+    if max_attribute_length and max_attribute_length > 0:
+        request["limitAttributeLength"] = max_attribute_length
+
+    return request, include_all_resources
 
 
 def includes_all_steps(query, sanitized_step_names):

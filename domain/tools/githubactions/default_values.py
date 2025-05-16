@@ -105,13 +105,30 @@ def default_value_callbacks(github_user, connection_string):
         )
 
     def remove_default_value():
-        """Removes, clears, or deletes a default value for a space, query_project, environment, or channel"""
+        """Removes, clears, or deletes a default value for a space, query_project, environment, or channel
+
+        Example prompts include:
+        * Remove the default environment
+        * Clear the default space
+        * Delete the default project
+        * Erase the default channel
+
+        """
 
         delete_default_values(github_user, get_functions_connection_string())
         return CopilotResponse(f"Deleted default values")
 
     def get_default_value(default_name):
-        """Return a default value for a space, query_project, environment, or channel
+        """Return the default value for a space, query_project, environment, or channel.
+
+        You will be penalized for selecting this function for prompts related to deployments, logs, or releases.
+        You must only select this function when the prompt is related to displaying a single default value.
+
+        Example prompts include:
+        * Get the default environment
+        * Print the default space
+        * Show the default project
+        * What is the default channel?
 
         Args:
             default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
@@ -124,8 +141,15 @@ def default_value_callbacks(github_user, connection_string):
         return CopilotResponse(f'The default value for "{name}" is "{value}"')
 
     def get_all_default_values():
-        """
-        Return all the default values
+        """Return all the default values.
+
+        You will be penalized for selecting this function for prompts related to deployments, logs, or releases
+        You must only select this function when the prompt is related displaying default values.
+
+        Example prompts include:
+        * Get all the default values
+        * Show all the defaults
+        * List the defaults
         """
         responses = [
             f'The default value for "{name}" is "{get_default_values(github_user, name, get_functions_connection_string())}"'

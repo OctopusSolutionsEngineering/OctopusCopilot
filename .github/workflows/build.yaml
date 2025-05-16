@@ -189,6 +189,7 @@ jobs:
           REDIRECTION_HOST: https://redirection.example.org
           CODEFRESH_URL: ${{ secrets.CODEFRESH_URL }}
           AISERVICES_DEPLOYMENT: ${{ secrets.AISERVICES_DEPLOYMENT }}
+          AISERVICES_DEPLOYMENT_FUNCTIONS: gpt-4o-mini
           AISERVICES_KEY: ${{ secrets.AISERVICES_KEY }}
           AISERVICES_ENDPOINT: ${{ secrets.AISERVICES_ENDPOINT }}
         shell: /usr/bin/bash --noprofile --norc {0}

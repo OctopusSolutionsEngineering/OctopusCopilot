@@ -43,20 +43,20 @@ def llm_message_query(
     # We can use a specific deployment to answer a query, or fallback to the default
     deployment = (
         deployment
-        or os.environ.get("OPENAI_API_DEPLOYMENT_QUERY")
-        or os.environ["OPENAI_API_DEPLOYMENT"]
+        or os.environ.get("AISERVICES_DEPLOYMENT_QUERY")
+        or os.environ["AISERVICES_DEPLOYMENT"]
     )
     version = (
         custom_version
-        or os.environ.get("OPENAI_API_DEPLOYMENT_QUERY_VERSION")
+        or os.environ.get("AISERVICES_DEPLOYMENT_QUERY_VERSION")
         or "2024-10-21"  # https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-preview-api-releases
     )
 
     llm = AzureChatOpenAI(
         temperature=0,
         azure_deployment=deployment,
-        openai_api_key=(api_key or os.environ["OPENAI_API_KEY"]),
-        azure_endpoint=(endpoint or os.environ["OPENAI_ENDPOINT"]),
+        openai_api_key=(api_key or os.environ["AISERVICES_KEY"]),
+        azure_endpoint=(endpoint or os.environ["AISERVICES_ENDPOINT"]),
         api_version=version,
         request_timeout=llm_timeout,
     )
@@ -110,17 +110,17 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
 
     # We can use a specific deployment to select a tool, or fallback to the default
     deployment = (
-        os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS")
-        or os.environ["OPENAI_API_DEPLOYMENT"]
+        os.environ.get("AISERVICES_DEPLOYMENT_FUNCTIONS")
+        or os.environ["AISERVICES_DEPLOYMENT"]
     )
-    version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-06-01"
+    version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-10-21"
 
     agent = OpenAIFunctionsAgent.from_llm_and_tools(
-        llm=AzureChatOpenAIWithTooling(
+        llm=AzureChatOpenAI(
             temperature=0,
             azure_deployment=deployment,
-            openai_api_key=os.environ["OPENAI_API_KEY"],
-            azure_endpoint=os.environ["OPENAI_ENDPOINT"],
+            openai_api_key=os.environ["AISERVICES_KEY"],
+            azure_endpoint=os.environ["AISERVICES_ENDPOINT"],
             api_version=version,
         ),
         tools=tools,

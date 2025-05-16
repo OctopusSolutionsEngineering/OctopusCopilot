@@ -13,7 +13,7 @@ def generate_terraform_wrapper(query, callback, github_token, logging=None):
         """
 
         if logging:
-            logging("Enter:", "generate_terraform_wrapper")
+            logging("Enter:", generate_terraform.__name__)
 
         return callback(query, generate_hcl_messages(github_token, logging))
 

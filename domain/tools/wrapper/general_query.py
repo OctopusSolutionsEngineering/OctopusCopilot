@@ -51,8 +51,19 @@ def answer_general_query_wrapper(query, callback, logging=None):
         **kwargs,
     ):
         """Inspect the configuration or state of an Octopus space.
-        You will be penalized for selecting this function if a more specific function is available,
-        or for releases, deployments, and cancelling tasks.
+
+        Use this function when the prompt asks a general question about projects, runbooks, targets, machines, tenants,
+        library variable sets, environments, feeds, accounts, certificates, lifecycles, worker pools, machine policies,
+        health check script, tag sets, project groups, channels, releases, steps, variables, or git credentials.
+
+        Example prompts:
+
+        * Show me the username for the git credential called "GitHub Creds".
+        * List the certificates in the space "MySpace".
+        * Which targets deploy to the "Production" environment in the space "MySpace"?
+        * Show a table of the library variable sets that contain database connection strings.
+        * Which runbooks create infrastructure with Terraform?
+
         Args:
         space: Space name
         projects: project names

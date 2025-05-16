@@ -307,7 +307,7 @@ class CopilotChatDashboardTest(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         self.assertTrue(
-            "Configure the load balancer" in response_text,
+            "Simple / Deploy Web App Container" in response_text,
             "Response was " + response_text,
         )
         print(response_text)

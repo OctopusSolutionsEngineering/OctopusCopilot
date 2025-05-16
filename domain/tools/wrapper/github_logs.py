@@ -2,13 +2,19 @@ from domain.messages.github_logs import build_github_logs_prompt
 
 
 def answer_github_logs_wrapper(query, callback, logging):
-    def answer_github_logs(owner=None, repo=None, workflow=None, steps=None, lines=None, **kwargs):
-        """Answers a query about the logs of a github workflow run.
-        Use this function when the prompt asks anything about logs for github, repos, or workflows. Some example prompts are:
+    def answer_github_logs(
+        owner=None, repo=None, workflow=None, steps=None, lines=None, **kwargs
+    ):
+        """Answers a query about the logs of a GitHub workflow run.
+        Some example prompts are:
         * Print the last 30 lines of text from the logs of the "build.yaml" workflow in the "MyOrganisation/MyRepo" repository.
         * Print the last 30 lines of text from the logs of the "build.yaml" workflow in the "MyOrganisation" organisation and "MyRepo" repository.
         * Summarize the deployment logs of the latest logs of the "build.yaml" workflow in the "MyOrganisation/MyRepo" repository.
         * Show the errors from the deployment logs of the latest logs of the "build.yaml" workflow in the "MyOrganisation/MyRepo" repository.
+
+        You will be penalized for selecting this function when the prompt is related to "git credentials".
+        You will be penalized for selecting this function when the prompt is related to Octopus configration.
+        You will be penalized for selecting this function when the prompt does not mention logs or a GitHub workflow.
 
         Args:
         owner: GitHub owner
