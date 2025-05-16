@@ -212,7 +212,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm correctly identifies the machine policy name in the query
         """
 
-        query = 'Show the powershell health check script for the "Windows VM Policy" machine policy.'
+        query = 'Given the "Windows VM Policy" machine policy, show the powershell health check script.'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 

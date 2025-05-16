@@ -51,8 +51,11 @@ def answer_general_query_wrapper(query, callback, logging=None):
         **kwargs,
     ):
         """Inspect the configuration or state of an Octopus space.
-        You will be penalized for selecting this function if a more specific function is available,
-        or for releases, deployments, and cancelling tasks.
+
+        Use this function when the prompt asks a general question about projects, runbooks, targets, machines, tenants,
+        library variable sets, environments, feeds, accounts, certificates, lifecycles, worker pools, machine policies,
+        tag sets, project groups, channels, releases, steps, variables, or git credentials.
+
         Args:
         space: Space name
         projects: project names
