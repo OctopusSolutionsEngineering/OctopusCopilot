@@ -395,6 +395,7 @@ class MockRequests(unittest.TestCase):
         # Make sure we get some kind of response
         self.assertTrue(response)
 
+    @unittest.skip("GPt 4.1 has a much longer context and no longer fails")
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_long_prompt(self):
         """

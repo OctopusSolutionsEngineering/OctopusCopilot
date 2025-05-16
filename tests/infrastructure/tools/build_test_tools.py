@@ -114,7 +114,7 @@ def build_mock_test_tools(tool_query):
                     os.environ["GH_TEST_TOKEN"],
                     get_zendesk_user(),
                     get_zendesk_token(),
-                    os.environ.get("SLACK_TEST_TOKEN"),
+                    lambda: os.environ.get("SLACK_TEST_TOKEN"),
                     get_storyblok_token(),
                     os.environ.get("ENCRYPTION_PASSWORD"),
                     os.environ.get("ENCRYPTION_SALT"),

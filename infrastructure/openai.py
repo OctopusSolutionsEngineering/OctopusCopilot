@@ -116,7 +116,7 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
     version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-10-21"
 
     agent = OpenAIFunctionsAgent.from_llm_and_tools(
-        llm=AzureChatOpenAIWithTooling(
+        llm=AzureChatOpenAI(
             temperature=0,
             azure_deployment=deployment,
             openai_api_key=os.environ["AISERVICES_KEY"],
