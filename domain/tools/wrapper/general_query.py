@@ -54,7 +54,7 @@ def answer_general_query_wrapper(query, callback, logging=None):
 
         Use this function when the prompt asks a general question about projects, runbooks, targets, machines, tenants,
         library variable sets, environments, feeds, accounts, certificates, lifecycles, worker pools, machine policies,
-        tag sets, project groups, channels, releases, steps, variables, or git credentials.
+        health check script, tag sets, project groups, channels, releases, steps, variables, or git credentials.
 
         Args:
         space: Space name
