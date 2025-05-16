@@ -20,6 +20,9 @@ def answer_project_deployment_logs_wrapper(query, callback, logging):
         * Summarize the deployment logs of the latest deployment.
         * Find any urls in the deployment logs of release version "1.0.2" to the "Development" environment for the "Contoso" tenant for the "Web App" project in the "Hotfix" channel.
 
+        You will be penalized for selecting the function when the prompt is asking about release versions.
+        You must only select this function when the prompt is related to deployment logs.
+
         Args:
         space: Space name
         project: project names
