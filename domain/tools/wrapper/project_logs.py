@@ -2,11 +2,21 @@ from domain.messages.deployment_logs import build_plain_text_prompt
 
 
 def answer_project_deployment_logs_wrapper(query, callback, logging):
-    def answer_project_deployment_logs(space=None, project=None, environment=None, channel=None, tenant=None,
-                                       release=None, steps=None, lines=None, **kwargs):
+    def answer_project_deployment_logs(
+        space=None,
+        project=None,
+        environment=None,
+        channel=None,
+        tenant=None,
+        release=None,
+        steps=None,
+        lines=None,
+        **kwargs,
+    ):
         """Answers a query about the contents of the deployment logs of a project to an environment.
         Use this function when the prompt asks anything about deployment or project logs. Some example prompts are:
         * Print the last 30 lines of text from the deployment logs of the latest project deployment to the "Production" environment.
+        * Print the deployment logs of the latest project deployment.
         * Summarize the deployment logs of the latest deployment.
         * Find any urls in the deployment logs of release version "1.0.2" to the "Development" environment for the "Contoso" tenant for the "Web App" project in the "Hotfix" channel.
 
@@ -22,7 +32,7 @@ def answer_project_deployment_logs_wrapper(query, callback, logging):
         """
 
         if logging:
-            logging("Enter:", "answer_project_deployment_logs")
+            logging("Enter:", answer_project_deployment_logs.__name__)
 
         for key, value in kwargs.items():
             if logging:
@@ -31,6 +41,17 @@ def answer_project_deployment_logs_wrapper(query, callback, logging):
         messages = build_plain_text_prompt()
 
         # This is just a passthrough to the original callback
-        return callback(query, messages, space, project, environment, channel, tenant, release, steps, lines)
+        return callback(
+            query,
+            messages,
+            space,
+            project,
+            environment,
+            channel,
+            tenant,
+            release,
+            steps,
+            lines,
+        )
 
     return answer_project_deployment_logs

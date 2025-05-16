@@ -111,7 +111,13 @@ def default_value_callbacks(github_user, connection_string):
         return CopilotResponse(f"Deleted default values")
 
     def get_default_value(default_name):
-        """Return a default value for a space, query_project, environment, or channel
+        """Return the default value for a space, query_project, environment, or channel.
+
+        Example prompts include:
+        * Get the default environment
+        * Print the default space
+        * Show the default project
+        * What is the default channel?
 
         Args:
             default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
