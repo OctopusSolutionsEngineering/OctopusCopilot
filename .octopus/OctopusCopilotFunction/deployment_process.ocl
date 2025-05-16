@@ -95,11 +95,6 @@ step "deploy-with-cli" {
                      "slotSetting": false
                    },
                    {
-                     "name": "AISERVICES_DEPLOYMENTMINI",
-                     "value": "#{Azure.US.AIServices.DeploymentMini}",
-                     "slotSetting": false
-                   },
-                   {
                      "name": "AISERVICES_DEPLOYMENT_FUNCTIONS",
                      "value": "#{Azure.US.AIServices.Deployment.Functions}",
                      "slotSetting": false
