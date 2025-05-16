@@ -100,6 +100,11 @@ step "deploy-with-cli" {
                      "slotSetting": false
                    },
                    {
+                     "name": "AISERVICES_DEPLOYMENT_FUNCTIONS",
+                     "value": "#{Azure.US.AIServices.Deployment.Functions}",
+                     "slotSetting": false
+                   },
+                   {
                       "name": "APPLICATION_USERS_ADMIN",
                       "value": "#{Application.Users.Admin}",
                       "slotSetting": false
