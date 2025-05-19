@@ -399,6 +399,10 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 * You will be penalized for adding a "retention_policy" block to a resource "octopusdeploy_project".
 * The "skip_machine_behavior" property can be set to "None" or "SkipUnavailableMachines"
 
+## Octopus Project Trigger Instructions
+
+* You must include a "octopusdeploy_project_scheduled_trigger" resource if one is supplied in the primary source of truth for the configuration.
+
 ## Octopus Deployment Process Instructions
 
 * The "condition_expression" attribute can only be defined on the "step" blocks under a resource "octopusdeploy_deployment_process".
