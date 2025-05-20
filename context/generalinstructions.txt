@@ -294,6 +294,8 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 ```
 
 * The resource "octopusdeploy_lifecycle" must have "phase" blocks with environments listed in either the "automatic_deployment_targets" array or the "optional_deployment_targets" array.
+* You must use the "optional_deployment_targets" array over the "automatic_deployment_targets" array unless instructed that the Environment should be deployed to automatically.
+* You will be penalized if you include environments in the "automatic_deployment_targets" array unless otherwise instructed.
 * You will be penalized for defining a lifecycle phase with no environments.
 
 ## Variable Template Instructions
@@ -401,7 +403,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 
 ## Octopus Project Trigger Instructions
 
-* You should create an "octopusdeploy_project_scheduled_trigger" resource if the following is true:
+* You should create an "octopusdeploy_project_scheduled_trigger" resource if either of the following are true:
   * An example is included in the primary source of truth for the configuration.
   * You have been told specifically to create one.
 * You will be penalized for building an "octopusdeploy_project_scheduled_trigger" resource when the above rules aren't met.
@@ -434,7 +436,7 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_da
 }
 ```
 
-* You will be penalized for providing an attribute value for "timezone" that isn't a valid Windows Time Zone Identifier"
+* You will be penalized for providing an attribute value for "timezone" that isn't a valid "Windows Time Zone Identifier".
 
 ## Octopus Deployment Process Instructions
 
