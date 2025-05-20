@@ -401,7 +401,10 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 
 ## Octopus Project Trigger Instructions
 
-* You must include an "octopusdeploy_project_scheduled_trigger" resource if one is included in the primary source of truth for the configuration, unless otherwise specified
+* You should create an "octopusdeploy_project_scheduled_trigger" resource if the following is true:
+  * An example is included in the primary source of truth for the configuration.
+  * You have been told specifically to create one.
+* You will be penalized for building an "octopusdeploy_project_scheduled_trigger" resource when the above rules aren't met.
 * When defining the "once_daily_schedule" block in the resource "octopusdeploy_project_scheduled_trigger" adhere to the following rules:
   * The "start_time" attribute value should be set to an ISO 8601 formatted string
   * The "timezone" attribute value should be set to a valid "Windows Time Zone Identifier" string.
