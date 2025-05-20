@@ -3,7 +3,6 @@
 * The supplied "Example Octopus AWS Lambda Function Project Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project deploying an application to an AWS Lambda Function based on examples provided.
 * You must use the lifecycle from the supplied "Example Octopus AWS Lambda Function Project Terraform Configuration" unless instructed otherwise.
-* You must include the "resource" "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_daily_security_scan" resource unless instructed otherwise.
 
 ## AWS Lambda Project Variable Instructions
 
