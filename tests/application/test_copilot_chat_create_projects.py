@@ -512,3 +512,10 @@ def populate_blob_storage():
         save_terraform_context(
             "azurewebapp.tf", file_content, os.environ["AzureWebJobsStorage"]
         )
+
+    with open(context_path + "projectsettings1.tf", "r") as file:
+        file_content = file.read()
+
+        save_terraform_context(
+            "projectsettings1.tf", file_content, os.environ["AzureWebJobsStorage"]
+        )
