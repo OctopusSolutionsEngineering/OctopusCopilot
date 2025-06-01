@@ -83,7 +83,7 @@ docker run -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octo
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > azurefunction.tf
 
-./generate_instructions.py azurewebapp.tf "Azure Function" > instructions_azurefunction.md
+./generate_instructions.py azurefunction.tf "Azure Function" > instructions_azurefunction.md
 
 docker run -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
     -url https://mattc.octopus.app \

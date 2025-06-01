@@ -296,34 +296,34 @@ resource "octopusdeploy_deployment_process" "deployment_process_iis" {
       can_be_used_for_project_versioning = true
       is_required                        = false
       properties                         = {
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
+        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "False"
+        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
+        "Octopus.Action.IISWebSite.StartWebSite" = "True"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
         "Octopus.Action.IISWebSite.Bindings" = jsonencode([
         {
-        "port" = "80"
-        "host" = ""
-        "thumbprint" = null
         "certificateVariable" = null
         "requireSni" = "False"
         "enabled" = "True"
         "protocol" = "http"
+        "port" = "80"
+        "host" = ""
+        "thumbprint" = null
                 },
         ])
+        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
+        "Octopus.Action.IISWebSite.WebSiteName" = "MyWebApp"
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
+        "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
         "Octopus.Action.IISWebSite.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
-        "Octopus.Action.IISWebSite.StartWebSite" = "True"
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
+        "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
         "Octopus.Action.IISWebSite.ApplicationPoolName" = "WebApps"
         "Octopus.Action.Package.DownloadOnTentacle" = "False"
-        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.IISWebSite.WebSiteName" = "MyWebApp"
-        "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion" = "v4.0"
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
-        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "False"
         "Octopus.Action.IISWebSite.EnableAnonymousAuthentication" = "True"
-        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
-        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
-        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
-        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
       }
       environments                       = []
       excluded_environments              = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
@@ -393,11 +393,11 @@ resource "octopusdeploy_deployment_process" "deployment_process_iis" {
       is_required                        = false
       worker_pool_variable               = "Project.WorkerPool"
       properties                         = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
+        "OctopusUseBundledTooling" = "False"
       }
       environments                       = []
       excluded_environments              = []
