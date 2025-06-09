@@ -2320,7 +2320,7 @@ def get_database_project_release_template(
 
     api = build_url(
         octopus_url,
-        f"api/{quote_safe(space_id)}/deploymentprocesses/deploymentprocess-{quote_safe(project_id)}/template?channel={quote_safe(channel_id)}",
+        f"api/{quote_safe(space_id)}/projects/{quote_safe(project_id)}/deploymentprocesses/template?channel={quote_safe(channel_id)}",
     )
     resp = handle_response(
         lambda: http.request(
