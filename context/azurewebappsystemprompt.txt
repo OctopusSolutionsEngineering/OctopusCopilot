@@ -22,10 +22,15 @@ You must include all the following variables once unless otherwise specified:
 
 You must include all the following steps unless otherwise specified:
 * "Validate setup"
+* "Check SMTP configuration"
+* "Send deployment start notification"
 * "Deploy Azure Web App Container"
+* "Smoke test"
 * "Manual approval"
 * "Swap Production Slot"
 * "Scan for Vulnerabilities"
+* "Send deployment success notification"
+* "Send deployment failure notification"
 
 ## Azure Web App Project Runbook Instructions
 

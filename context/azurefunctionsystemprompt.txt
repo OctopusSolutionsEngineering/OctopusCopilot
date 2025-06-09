@@ -23,6 +23,7 @@ You must include all the following variables once unless otherwise specified:
 
 You must include all the following steps unless otherwise specified:
 * "Validate setup"
+* "Check SMTP configuration"
 * "Send deployment start notification"
 * "Deploy products-microservice-azurefunction-jvm Azure Function - Staging Slot"
 * "Manual approval"
