@@ -137,6 +137,29 @@ The testing is broken down into 3 categories:
 * End-to-end tests that validate the ability to call web endpoints exposed by the Azure Functions app in the
   `tests/application` directory. These tests are split across multiple files to allow CI systems to run them in parallel.
 
+## Verifying connections via the router
+
+To support on-prem installations, all network requests from this service and other supporting services can be routed through
+the [Azure Router Function](https://github.com/OctopusSolutionsEngineering/AzureFunctionRouter). This provides a single
+IP address for all connections to an Octopus instance, making it easier to configure firewalls and security groups.
+
+To simulate working on a restricted network, do the following:
+
+1. Create an IP Policy in NGROK to allow your home IP address and `51.8.40.170`, which is the IP address of the Azure Router Function.
+2. Start a local instance of Octopus.
+3. Create a policy file `policy.yml` with the following content, replacing `ipp_2yF83XsF1CQ8YjXHq9VQQztByU2` with your IP policy ID:
+```yaml
+on_tcp_connect:
+  - actions:
+      - type: restrict-ips
+        config:
+          enforce: true
+          ip_policies:
+            - ipp_2yF83XsF1CQ8YjXHq9VQQztByU2
+```
+4. Open an NGROK tunnel using the IP filter: `ngrok http --url=yourhostnames.ngrok.dev --traffic-policy-file policy.yml 8083`
+5. Traffic to `yourhostnames.ngrok.dev` will only work from your home IP address and the Azure Router Function IP address. All connections from the AI platform must automatically route through the Azure Router Function, meaning all traffic will appear to come from the Azure Router Function IP address.
+
 ## Test Coverage
 
 ![coverage badge](./coverage.svg)
