@@ -228,6 +228,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    @unittest.skip("Project creation is broken until octoterra is updated to support version 1 of the TF provider")
     def test_create_azure_web_app_project(self):
         prompt = 'Create an Azure Web App project called "My Azure Project".'
         response = copilot_handler_internal(build_request(prompt))
