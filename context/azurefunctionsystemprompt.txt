@@ -26,6 +26,7 @@ You must include all the following steps unless otherwise specified:
 * "Check SMTP configuration"
 * "Send deployment start notification"
 * "Deploy products-microservice-azurefunction-jvm Azure Function - Staging Slot"
+* "Smoke test"
 * "Manual approval"
 * "Swap deployment slots"
 * "Scan for Vulnerabilities"
