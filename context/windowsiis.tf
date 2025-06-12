@@ -262,6 +262,12 @@ resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
   }
 }
 
+resource "octopusdeploy_process" "process_iis" {
+  count      = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? data.octopusdeploy_projects.project_iis.projects[0].id : octopusdeploy_project.project_iis[0].id}"
+  depends_on = []
+}
+
 variable "project_iis_step_deploy_to_iis_packageid" {
   type        = string
   nullable    = false
@@ -269,6 +275,82 @@ variable "project_iis_step_deploy_to_iis_packageid" {
   description = "The package ID for the package named  from step Deploy to IIS in project IIS"
   default     = "com.octopus:octopub-frontend"
 }
+resource "octopusdeploy_process_step" "process_step_iis_deploy_to_iis" {
+  count                 = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
+  name                  = "Deploy to IIS"
+  type                  = "Octopus.IIS"
+  process_id            = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? null : octopusdeploy_process.process_iis[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  notes                 = "This step deploys a website to IIS"
+  package_requirement   = "LetOctopusDecide"
+  primary_package       = { acquisition_location = "Server", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_iis_step_deploy_to_iis_packageid}", properties = { SelectionMode = "immediate" } }
+  slug                  = "deploy-to-iis"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  properties            = {
+        "Octopus.Action.TargetRoles" = "OctoPub-Windows-IIS"
+      }
+  execution_properties  = {
+        "Octopus.Action.IISWebSite.StartWebSite" = "True"
+        "Octopus.Action.IISWebSite.EnableAnonymousAuthentication" = "True"
+        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
+        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
+        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
+        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
+        "Octopus.Action.IISWebSite.Bindings" = jsonencode([
+        {
+        "certificateVariable" = null
+        "requireSni" = "False"
+        "enabled" = "True"
+        "protocol" = "http"
+        "port" = "80"
+        "host" = ""
+        "thumbprint" = null
+                },
+        ])
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
+        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
+        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.IISWebSite,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
+        "Octopus.Action.IISWebSite.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
+        "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
+        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "False"
+        "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.IISWebSite.WebSiteName" = "MyWebApp"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.IISWebSite.ApplicationPoolName" = "WebApps"
+      }
+}
+
+resource "octopusdeploy_process_step" "process_step_iis_print_message_when_no_targets" {
+  count                 = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
+  name                  = "Print Message when No Targets"
+  type                  = "Octopus.Script"
+  process_id            = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? null : octopusdeploy_process.process_iis[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  notes                 = "This step detects when the previous steps were skipped due to no targets being defined and prints a message with a link to documentation for creating targets."
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "print-message-when-no-targets"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_variable  = "Project.WorkerPool"
+  properties            = {
+      }
+  execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy to IIS].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Windows target with the tag 'Octopub-Windows-IIS'.\"\n  Write-Highlight \"We recommend the [Polling Tentacle](https://octopus.com/docs/infrastructure/deployment-targets/tentacle/tentacle-communication).\"\n}"
+        "OctopusUseBundledTooling" = "False"
+      }
+}
+
 variable "project_iis_step_scan_for_vulnerabilities_package_webapp_packageid" {
   type        = string
   nullable    = false
@@ -276,156 +358,38 @@ variable "project_iis_step_scan_for_vulnerabilities_package_webapp_packageid" {
   description = "The package ID for the package named webapp from step Scan for Vulnerabilities in project IIS"
   default     = "com.octopus:octopub-frontend"
 }
-resource "octopusdeploy_deployment_process" "deployment_process_iis" {
-  count      = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
-  project_id = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? data.octopusdeploy_projects.project_iis.projects[0].id : octopusdeploy_project.project_iis[0].id}"
-
-  step {
-    condition           = "Success"
-    name                = "Deploy to IIS"
-    package_requirement = "LetOctopusDecide"
-    start_trigger       = "StartAfterPrevious"
-
-    action {
-      action_type                        = "Octopus.IIS"
-      name                               = "Deploy to IIS"
-      notes                              = "This step deploys a website to IIS"
-      condition                          = "Success"
-      run_on_server                      = true
-      is_disabled                        = false
-      can_be_used_for_project_versioning = true
-      is_required                        = false
-      properties                         = {
-        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
-        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
-        "Octopus.Action.IISWebSite.WebSiteName" = "MyWebApp"
-        "Octopus.Action.IISWebSite.ApplicationPoolName" = "WebApps"
-        "Octopus.Action.IISWebSite.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
-        "Octopus.Action.IISWebSite.EnableAnonymousAuthentication" = "True"
-        "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion" = "v4.0"
-        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
-        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "False"
-        "Octopus.Action.IISWebSite.StartWebSite" = "True"
-        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
-        "Octopus.Action.Package.DownloadOnTentacle" = "False"
-        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.IISWebSite.Bindings" = jsonencode([
-        {
-        "thumbprint" = null
-        "certificateVariable" = null
-        "requireSni" = "False"
-        "enabled" = "True"
-        "protocol" = "http"
-        "port" = "80"
-        "host" = ""
-                },
-        ])
-        "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
+resource "octopusdeploy_process_step" "process_step_iis_scan_for_vulnerabilities" {
+  count                 = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
+  name                  = "Scan for Vulnerabilities"
+  type                  = "Octopus.Script"
+  process_id            = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? null : octopusdeploy_process.process_iis[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = null
+  git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
+  notes                 = "This step extracts the application package, finds any bom.json files, and scans them for vulnerabilities using Trivy. \n\nThis step is expected to be run with each deployment to ensure vulnerabilities are discovered as early as possible. \n\nIt is also run daily via a project trigger that reruns the deployment in the Security environment. This allows unknown vulnerabilities to be discovered after a production deployment."
+  package_requirement   = "LetOctopusDecide"
+  packages              = { webapp = { acquisition_location = "Server", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_iis_step_scan_for_vulnerabilities_package_webapp_packageid}", properties = { Extract = "True", Purpose = "", SelectionMode = "immediate" } } }
+  slug                  = "scan-for-vulnerabilities"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_variable  = "Project.WorkerPool"
+  properties            = {
       }
-      environments                       = []
-      excluded_environments              = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
-      channels                           = []
-      tenant_tags                        = []
-
-      primary_package {
-        package_id           = "${var.project_iis_step_deploy_to_iis_packageid}"
-        acquisition_location = "Server"
-        feed_id              = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
-        properties           = { SelectionMode = "immediate" }
-      }
-
-      features = ["", "Octopus.Features.IISWebSite", "Octopus.Features.ConfigurationTransforms", "Octopus.Features.ConfigurationVariables"]
-    }
-
-    properties   = {}
-    target_roles = ["OctoPub-Windows-IIS"]
-  }
-  step {
-    condition           = "Success"
-    name                = "Print Message when No Targets"
-    package_requirement = "LetOctopusDecide"
-    start_trigger       = "StartAfterPrevious"
-
-    action {
-      action_type                        = "Octopus.Script"
-      name                               = "Print Message when No Targets"
-      notes                              = "This step detects when the previous steps were skipped due to no targets being defined and prints a message with a link to documentation for creating targets."
-      condition                          = "Success"
-      run_on_server                      = true
-      is_disabled                        = false
-      can_be_used_for_project_versioning = false
-      is_required                        = false
-      worker_pool_variable               = "Project.WorkerPool"
-      properties                         = {
-        "OctopusUseBundledTooling" = "False"
+  execution_properties  = {
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy to IIS].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Windows target with the tag 'Octopub-Windows-IIS'.\"\n  Write-Highlight \"We recommend the [Polling Tentacle](https://octopus.com/docs/infrastructure/deployment-targets/tentacle/tentacle-communication).\"\n}"
-      }
-      environments                       = []
-      excluded_environments              = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
-      channels                           = []
-      tenant_tags                        = []
-      features                           = []
-    }
-
-    properties   = {}
-    target_roles = []
-  }
-  step {
-    condition           = "Success"
-    name                = "Scan for Vulnerabilities"
-    package_requirement = "LetOctopusDecide"
-    start_trigger       = "StartAfterPrevious"
-
-    action {
-      action_type                        = "Octopus.Script"
-      name                               = "Scan for Vulnerabilities"
-      notes                              = "This step extracts the application package, finds any bom.json files, and scans them for vulnerabilities using Trivy. \n\nThis step is expected to be run with each deployment to ensure vulnerabilities are discovered as early as possible. \n\nIt is also run daily via a project trigger that reruns the deployment in the Security environment. This allows unknown vulnerabilities to be discovered after a production deployment."
-      condition                          = "Success"
-      run_on_server                      = true
-      is_disabled                        = false
-      can_be_used_for_project_versioning = true
-      is_required                        = false
-      worker_pool_variable               = "Project.WorkerPool"
-      properties                         = {
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
       }
-      environments                       = []
-      excluded_environments              = []
-      channels                           = []
-      tenant_tags                        = []
+}
 
-      package {
-        name                      = "webapp"
-        package_id                = "${var.project_iis_step_scan_for_vulnerabilities_package_webapp_packageid}"
-        acquisition_location      = "Server"
-        extract_during_deployment = false
-        feed_id                   = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
-        properties                = { Extract = "True", Purpose = "", SelectionMode = "immediate" }
-      }
-      features = []
-
-      git_dependency {
-        repository_uri      = "https://github.com/OctopusSolutionsEngineering/Octopub.git"
-        default_branch      = "main"
-        git_credential_type = "Anonymous"
-        git_credential_id   = ""
-      }
-    }
-
-    properties   = {}
-    target_roles = []
-  }
-  depends_on = []
+resource "octopusdeploy_process_steps_order" "process_step_order_iis" {
+  count      = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
+  process_id = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? null : octopusdeploy_process.process_iis[0].id}"
+  steps      = ["${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_iis_deploy_to_iis[0].id}", "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_iis_print_message_when_no_targets[0].id}", "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_iis_scan_for_vulnerabilities[0].id}"]
 }
 
 data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {

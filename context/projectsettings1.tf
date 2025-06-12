@@ -71,10 +71,16 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
   }
 }
 
-resource "octopusdeploy_deployment_process" "deployment_process_project_settings_example" {
+resource "octopusdeploy_process" "process_project_settings_example" {
   count      = "${length(data.octopusdeploy_projects.project_project_settings_example.projects) != 0 ? 0 : 1}"
   project_id = "${length(data.octopusdeploy_projects.project_project_settings_example.projects) != 0 ? data.octopusdeploy_projects.project_project_settings_example.projects[0].id : octopusdeploy_project.project_project_settings_example[0].id}"
   depends_on = []
+}
+
+resource "octopusdeploy_process_steps_order" "process_step_order_project_settings_example" {
+  count      = "${length(data.octopusdeploy_projects.project_project_settings_example.projects) != 0 ? 0 : 1}"
+  process_id = "${length(data.octopusdeploy_projects.project_project_settings_example.projects) != 0 ? null : octopusdeploy_process.process_project_settings_example[0].id}"
+  steps      = []
 }
 
 variable "project_project_settings_example_name" {
