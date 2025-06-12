@@ -13,12 +13,6 @@ You must include all the following variables once unless otherwise specified:
 ## Windows IIS Project Deployment Process Instructions
 
 You must include all the following steps unless otherwise specified:
-* "Deploy to IIS"
-* "Print Message when No Targets"
-* "Scan for Vulnerabilities"
-
-## Windows IIS Project Runbook Instructions
-
-You must include all the following runbooks unless otherwise specified:
-
-## Windows IIS Project Runbook Deployment Process Instructions
+* resource "octopusdeploy_process_step" "process_step_iis_deploy_to_iis"
+* resource "octopusdeploy_process_step" "process_step_iis_print_message_when_no_targets"
+* resource "octopusdeploy_process_step" "process_step_iis_scan_for_vulnerabilities"

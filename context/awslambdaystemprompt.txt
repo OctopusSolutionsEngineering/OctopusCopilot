@@ -17,22 +17,22 @@ You must include all the following variables once unless otherwise specified:
 ## AWS Lambda Project Deployment Process Instructions
 
 You must include all the following steps unless otherwise specified:
-* "Attempt Login"
-* "Validate setup"
-* "Check SMTP configuration"
-* "Send deployment start notification"
-* "Approve Production Deployment"
-* "Upload Lambda"
-* "Deploy Lambda SAM template"
-* "Print Message When no Targets"
-* "Scan for Vulnerabilities"
+* resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login"
+* resource "octopusdeploy_process_step" "process_step_aws_lambda_validate_setup"
+* resource "octopusdeploy_process_step" "process_step_aws_lambda_check_smtp_configuration"
+* resource "octopusdeploy_process_step" "process_step_aws_lambda_send_deployment_start_notification"
+* resource "octopusdeploy_process_step" "process_step_aws_lambda_approve_production_deployment"
+* resource "octopusdeploy_process_step" "process_step_aws_lambda_upload_lambda"
+* resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam_template"
+* resource "octopusdeploy_process_step" "process_step_aws_lambda_print_message_when_no_targets"
+* resource "octopusdeploy_process_step" "process_step_aws_lambda_scan_for_vulnerabilities"
 
 ## AWS Lambda Project Runbook Instructions
 
 You must include all the following runbooks unless otherwise specified:
-* "Checkov SAM Static Analysis"
+* resource "octopusdeploy_runbook" "runbook_aws_lambda_checkov_sam_static_analysis"
 
 ## AWS Lambda Project Runbook Deployment Process Instructions
 
 You must include all the following runbook steps from the runbook_aws_lambda_checkov_sam_static_analysis runbook unless otherwise specified:
-* "Run Checkov static analysis scan"
+* resource "octopusdeploy_process_step" "process_step_aws_lambda_checkov_sam_static_analysis_run_checkov_static_analysis_scan"

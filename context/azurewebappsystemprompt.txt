@@ -21,34 +21,35 @@ You must include all the following variables once unless otherwise specified:
 ## Azure Web App Project Deployment Process Instructions
 
 You must include all the following steps unless otherwise specified:
-* "Validate setup"
-* "Check SMTP configuration"
-* "Send deployment start notification"
-* "Deploy Azure Web App Container"
-* "Smoke test"
-* "Manual approval"
-* "Swap Production Slot"
-* "Scan for Vulnerabilities"
-* "Send deployment success notification"
-* "Send deployment failure notification"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_check_smtp_configuration"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deployment_start_notification"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_deploy_azure_web_app_container"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_smoke_test"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_manual_approval"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_swap_production_slot"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_scan_for_vulnerabilities"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deployment_success_notification"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deployment_failure_notification"
 
 ## Azure Web App Project Runbook Instructions
 
 You must include all the following runbooks unless otherwise specified:
-* "Create Infrastructure"
-* "Destroy Infrastructure"
+* resource "octopusdeploy_runbook" "runbook_azure_web_app_create_infrastructure"
+* resource "octopusdeploy_runbook" "runbook_azure_web_app_destroy_infrastructure"
 
 ## Azure Web App Project Runbook Deployment Process Instructions
 
 You must include all the following runbook steps from the runbook_azure_web_app_create_infrastructure runbook unless otherwise specified:
-* "Validate Setup"
-* "Get Azure Access Token"
-* "Validate WebApp Name Availability"
-* "Create Resource Group"
-* "Create Web App Service Plan"
-* "Create Octopub Web App"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_create_infrastructure_validate_setup"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_create_infrastructure_get_azure_access_token"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_create_infrastructure_validate_webapp_name_availability"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_create_infrastructure_create_resource_group"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_create_infrastructure_create_web_app_service_plan"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_create_infrastructure_create_octopub_web_app"
 
 You must include all the following runbook steps from the runbook_azure_web_app_destroy_infrastructure runbook unless otherwise specified:
-* "Validate Setup"
-* "Deregister target"
-* "Destroy resource group"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_validate_setup"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_deregister_target"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_destroy_resource_group"
+

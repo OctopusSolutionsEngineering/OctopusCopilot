@@ -34,7 +34,9 @@ def find_step_names(filename, label):
     try:
         # Open and read the file
         print(f"\n## {label} Project Deployment Process Instructions\n")
-        print("You must include all the following steps unless otherwise specified:")
+        print(
+            "You must include all the following step resources unless otherwise specified:"
+        )
         with open(filename, "r") as file:
             content = file.read()
 
@@ -89,7 +91,11 @@ def find_step_names(filename, label):
 
                             if parent_process_tf_name:
                                 all_step_details.append(
-                                    (human_readable_name, parent_process_tf_name)
+                                    (
+                                        human_readable_name,
+                                        current_block_tf_name,
+                                        parent_process_tf_name,
+                                    )
                                 )
 
                         current_block_type = None
@@ -114,9 +120,15 @@ def find_step_names(filename, label):
 
             for process_tf_name, process_info in all_processes_data.items():
                 if not process_info["is_runbook"]:
-                    for human_readable_name, parent_tf_name_ref in all_step_details:
+                    for (
+                        human_readable_name,
+                        current_block_tf_name,
+                        parent_tf_name_ref,
+                    ) in all_step_details:
                         if parent_tf_name_ref == process_tf_name:
-                            print(f'* "{human_readable_name}"')
+                            print(
+                                f'* resource "octopusdeploy_process_step" "{current_block_tf_name}"'
+                            )
 
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
@@ -125,45 +137,22 @@ def find_step_names(filename, label):
 
 
 def find_runbook_names(filename, label):
+    # Pattern to match the resource declarations for octopusdeploy_variable
+    pattern = r'resource\s+"octopusdeploy_runbook"\s+"([^"]+)"'
+
     try:
         # Open and read the file
         print(f"\n## {label} Project Runbook Instructions\n")
-        print("You must include all the following runbooks unless otherwise specified:")
+        print(
+            "You must include all the following runbook resources unless otherwise specified:"
+        )
         with open(filename, "r") as file:
             lines = file.readlines()
 
-            # Flag to track if we're inside a runbook resource
-            inside_runbook = False
-
             for i, line in enumerate(lines):
-                # Check if we're entering an octopusdeploy_runbook resource
-                if re.search(r'resource\s+"octopusdeploy_runbook"', line):
-                    inside_runbook = True
-                    continue
-
-                # Check if we're exiting the deployment_process resource
-                # A closing brace with no indentation indicates the end of the resource
-                if inside_runbook and line.strip() == "}" and not line.startswith(" "):
-                    inside_runbook = False
-                    continue
-
-                # Only look for the runbook name inside a runbook resource
-                if inside_runbook:
-                    for j in range(1, 6):
-                        if i + j >= len(lines):
-                            break
-
-                        next_line = lines[i + j].strip()
-                        if re.match(r"\s*name\s*=", next_line):
-                            # Extract the name part (remove quotes if present)
-                            name_match = re.match(
-                                r'name\s*=\s*"\$\{var\.([^}]*)}"', next_line
-                            )
-                            if name_match:
-                                print(
-                                    f'* "{find_variable_value(filename, name_match.group(1))}"'
-                                )
-                            break
+                match = re.match(pattern, line)
+                if match:
+                    print(f'* resource "octopusdeploy_runbook" "{match.group(1)}"')
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
@@ -266,7 +255,11 @@ def find_runbook_step_names(filename, label):
                             if name_match:
                                 human_readable_name = name_match.group(1)
                                 all_process_steps_data.append(
-                                    (current_block_tf_name, human_readable_name)
+                                    (
+                                        current_block_tf_name,
+                                        current_block_tf_name,
+                                        human_readable_name,
+                                    )
                                 )
 
                         # Reset block state
@@ -299,10 +292,16 @@ def find_runbook_step_names(filename, label):
                 # Define the prefix that steps for this runbook should start with.
                 step_name_prefix = f"process_step_{runbook_base_name}_"
 
-                for step_tf_name, human_readable_name in all_process_steps_data:
+                for (
+                    step_tf_name,
+                    current_block_tf_name,
+                    human_readable_name,
+                ) in all_process_steps_data:
                     # Check if the step's Terraform resource name starts with the expected prefix.
                     if step_tf_name.startswith(step_name_prefix):
-                        print(f'* "{human_readable_name}"')
+                        print(
+                            f'* resource "octopusdeploy_process_step" "{current_block_tf_name}"'
+                        )
 
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
