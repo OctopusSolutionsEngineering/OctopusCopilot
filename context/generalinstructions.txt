@@ -443,9 +443,7 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_da
 
 ## Octopus Deployment Process Instructions
 
-* The "condition_expression" attribute can only be defined on the "step" blocks under a resource "octopusdeploy_process_step".
-* You will be penalized for adding the "condition_expression" attribute to an "action" block.
-* The "condition" attribute on an "action" block must be set to one of the following:
+* The "condition" attribute on an "octopusdeploy_process_step" block must be set to one of the following:
   * "Always"
   * "Failure"
   * "Success"
@@ -486,18 +484,6 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
 * You will be penalized for adding the "target_roles" attribute on an "action".
 * You will be penalized for adding the "excluded_environments" attribute on a "step".
 * You will be penalized for adding target tags to the "tenant_tags" attribute.
-* If the "condition_expression" attribute is defined in a "step" block, it must use one of the following variables:
-  * "#{Octopus.Deployment.Tenant.Name}"
-  * "#{Octopus.Deployment.Tenant.Tags}"
-  * "#{Octopus.Deployment.Trigger.Name}"
-  * "#{Octopus.Environment.Name}"
-  * "#{Octopus.Machine.Name}"
-  * "#{Octopus.Machine.Roles}"
-  * "#{Octopus.Machine.Hostname}"
-  * "#{Octopus.Release.Channel.Name}"
-  * "#{Octopus.Deployment.Changes}"
-  * "#{Octopus.Deployment.WorkItems}"
-* You will be penalized for using the syntax "${<variable name>}" in the "condition_expression" attribute.
 * When the "Octopus.Action.Script.ScriptSource" property is set to "Package", the "Octopus.Action.Script.Syntax" property must not be defined.
 * You will be penalized for using the "Octopus.Action.Script.Syntax" property when the "Octopus.Action.Script.ScriptSource" property is set to "Package".
 * When the "Octopus.Action.Script.ScriptSource" property is set to "Inline", the "primary_package" property must not be defined.
