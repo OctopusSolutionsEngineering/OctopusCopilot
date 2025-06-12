@@ -153,7 +153,11 @@ resource "octopusdeploy_project" "<name>" {
 
 ## Count Properties Instructions
 
-* The "count" parameter for any "octopusdeploy_deployment_process" resources must be the same as the "count" resource for the "octopusdeploy_project" resource.
+* The "count" parameter for any "octopusdeploy_process" resources must be the same as the "count" resource for the "octopusdeploy_project" resource.
+* The "count" parameter for any "octopusdeploy_process_step" resources must be the same as the "count" resource for the "octopusdeploy_project" resource.
+* The "count" parameter for any "octopusdeploy_process_steps_order" resources must be the same as the "count" resource for the "octopusdeploy_project" resource.
+* The "count" parameter for any "octopusdeploy_process_child_step" resources must be the same as the "count" resource for the "octopusdeploy_project" resource.
+* The "count" parameter for any "octopusdeploy_process_child_steps_order" resources must be the same as the "count" resource for the "octopusdeploy_project" resource.
 * The "count" parameters must be in the format "${length(data.<data type>.<data resource>.<collection>) != 0 ? 0 : 1}"
 * You will be penalized for using count arguments like this: "${length(data.<data type>.<data resource>.<collection>) != 0 ? 1 : 1}"
 * You will be penalized for using ternary operators that return the same value for both cases.
@@ -221,8 +225,7 @@ data "octopusdeploy_library_variable_sets" "library_variable_set_variables_examp
 * You will be penalized for defining an item in the "tenant_tags" array as a single string like "Sydney".
 * The <tag set name> must match the name of a resource "octopusdeploy_tag_set".
 * The <tag name> must match the name of a resource "octopusdeploy_tag".
-* The "tenant_tags" attribute must only be defined in an "action" block.
-* You will be penalized for using the "tenant_tags" attribute in a resource "octopusdeploy_deployment_process".
+* The "tenant_tags" attribute must only be defined in an "octopusdeploy_process_step" block.
 * For example, if the "tenant_tags" attribute is set to "Cities/Sydney", then the following data "octopusdeploy_tag_sets", resource "octopusdeploy_tag_set" and resource "octopusdeploy_tag" must be included in the output:
 
 ```
@@ -440,7 +443,7 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_da
 
 ## Octopus Deployment Process Instructions
 
-* The "condition_expression" attribute can only be defined on the "step" blocks under a resource "octopusdeploy_deployment_process".
+* The "condition_expression" attribute can only be defined on the "step" blocks under a resource "octopusdeploy_process_step".
 * You will be penalized for adding the "condition_expression" attribute to an "action" block.
 * The "condition" attribute on an "action" block must be set to one of the following:
   * "Always"
@@ -451,30 +454,31 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_da
 * You will be penalized for defining a "name" attribute with the characters "/" and "\".
 * You will be penalized for adding a "action" attribute to an "action" block.
 * You will be penalized for adding a "excluded_environments" attribute to a "step".
-* Target tags must only be defined in the "target_roles" attribute on a "step", for example:
+* Target tags must only be defined in the "Octopus.Action.TargetRoles" properties on a "octopusdeploy_process_step", for example:
 
 ```
-resource "octopusdeploy_deployment_process" "deployment_process_myproject" {
-  project_id = "${octopusdeploy_project.project_myproject.id}"
-
-  step {
-    condition           = "Success"
-    name                = "Approve deployment"
-    package_requirement = "LetOctopusDecide"
-    start_trigger       = "StartAfterPrevious"
-
-    action {
-      # The action is defined here
-      # You will be penalized for adding a "target_roles" attribute in the "action" block
-    }
-
-    properties   = {}
-
-    # The target roles are defined only here in the "step" block
-    target_roles = []
-  }
-
-  depends_on = []
+resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an_azure_web_app__web_deploy_" {
+  count                 = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? 0 : 1}"
+  name                  = "Deploy an Azure Web App (Web Deploy)"
+  type                  = "Octopus.AzureWebApp"
+  process_id            = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? null : octopusdeploy_process.process_every_step_project[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = null
+  notes                 = "Note the Octopus.Action.TargetRoles key in the properties attribute which defines the target tags."
+  primary_package       = { acquisition_location = "Server", feed_id = "${data.octopusdeploy_feeds.feed_octopus_server__built_in_.feeds[0].id}", id = null, package_id = "WebAppPackage", properties = { SelectionMode = "immediate" } }
+  package_requirement   = "LetOctopusDecide"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  properties            = {
+        "Octopus.Action.TargetRoles" = "AzureWebApp"
+      }
+  execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Azure.UseChecksum" = "False"
+      }
 }
 ```
 
