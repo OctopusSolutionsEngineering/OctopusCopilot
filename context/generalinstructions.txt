@@ -443,15 +443,16 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_da
 
 ## Octopus Deployment Process Instructions
 
+* Steps are defined in the "octopusdeploy_process_step" and "octopusdeploy_process_child_step" resources.
+* The order of the steps are defined in the "octopusdeploy_process_steps_order" resource.
+* The order of child steps are defined in the "octopusdeploy_process_child_steps_order" resource.
 * The "condition" attribute on an "octopusdeploy_process_step" block must be set to one of the following:
   * "Always"
   * "Failure"
   * "Success"
   * "Variable"
-* The "name" attribute can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
+* The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
 * You will be penalized for defining a "name" attribute with the characters "/" and "\".
-* You will be penalized for adding a "action" attribute to an "action" block.
-* You will be penalized for adding a "excluded_environments" attribute to a "step".
 * Target tags must only be defined in the "Octopus.Action.TargetRoles" properties on a "octopusdeploy_process_step", for example:
 
 ```
