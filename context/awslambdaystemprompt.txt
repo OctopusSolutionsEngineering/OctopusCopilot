@@ -11,8 +11,8 @@ You must include all the following variables once unless otherwise specified:
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_account_1"
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_region_1"
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_bucketname_1"
-* resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1"
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_filename_1"
+* resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1"
 
 ## AWS Lambda Project Deployment Process Instructions
 
@@ -26,3 +26,13 @@ You must include all the following steps unless otherwise specified:
 * "Deploy Lambda SAM template"
 * "Print Message When no Targets"
 * "Scan for Vulnerabilities"
+
+## AWS Lambda Project Runbook Instructions
+
+You must include all the following runbooks unless otherwise specified:
+* "Checkov SAM Static Analysis"
+
+## AWS Lambda Project Runbook Deployment Process Instructions
+
+You must include all the following runbook steps from the runbook_aws_lambda_checkov_sam_static_analysis runbook unless otherwise specified:
+* "Run Checkov static analysis scan"

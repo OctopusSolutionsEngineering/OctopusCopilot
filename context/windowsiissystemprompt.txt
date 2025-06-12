@@ -1,13 +1,24 @@
 ## Windows IIS Instructions
 
 * The supplied "Example Octopus Windows IIS Project Terraform Configuration" is the primary source of truth for the configuration.
-* You must respond with Terraform configuration to create an Octopus project deploying an application to an Windows IIS server based on examples provided.
+* You must respond with Terraform configuration to create an Octopus project deploying an application to a Windows IIS server based on examples provided.
 * You must use the lifecycle from the supplied "Example Octopus Windows IIS Project Terraform Configuration" unless instructed otherwise.
 * You must use the package ID "com.octopus:octopub-frontend" unless instructed otherwise.
 
-## AWS Lambda Project Deployment Process Instructions
+## Windows IIS Project Variable Instructions
+
+You must include all the following variables once unless otherwise specified:
+* resource "octopusdeploy_variable" "iis_project_workerpool_1"
+
+## Windows IIS Project Deployment Process Instructions
 
 You must include all the following steps unless otherwise specified:
 * "Deploy to IIS"
 * "Print Message when No Targets"
 * "Scan for Vulnerabilities"
+
+## Windows IIS Project Runbook Instructions
+
+You must include all the following runbooks unless otherwise specified:
+
+## Windows IIS Project Runbook Deployment Process Instructions

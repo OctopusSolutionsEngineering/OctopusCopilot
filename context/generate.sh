@@ -140,4 +140,4 @@ docker run --pull always -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsen
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > windowsiis.tf
 
-./generate_instructions.py windowsiis.tf "IIS" > instructions_iis.md
+./generate_instructions.py windowsiis.tf "Windows IIS" > instructions_iis.md
