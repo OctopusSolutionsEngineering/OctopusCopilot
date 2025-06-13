@@ -1,7 +1,7 @@
 ## Azure Function Instructions
 
 * The supplied "Example Octopus Azure Function Project Terraform Configuration" is the primary source of truth for the configuration.
-* You must respond with Terraform configuration to create an Octopus project deploying an application to an Azure Web App based on examples provided.
+* You must respond with Terraform configuration to create an Octopus project deploying an application to an Azure Function based on examples provided.
 * You must use the lifecycle from the supplied "Example Octopus Azure Function Project Terraform Configuration" unless instructed otherwise.
 
 ## Azure Function Project Variable Instructions
