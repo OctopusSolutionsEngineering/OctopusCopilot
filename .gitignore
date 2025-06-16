@@ -10,3 +10,4 @@ htmlcov
 *.zip
 dependencyUpdates.txt
 context/step_template.json
+.DS_Store
