@@ -5,13 +5,14 @@ def create_feed_wrapper(query, callback, logging):
         feed_type=None,
         **kwargs,
     ):
-        """Creates a feed in Octopus Deploy. Example prompts include:
-            * Create a NuGet feed called "My Feed" in the space "My Space"
-            * Create a Docker feed called "DockerHub" in the space "My Space"
-            * Create a Maven feed called "Java Apps" in the space "My Space"
-            * Create a Helm feed called "Helm" in the space "My Space"
+        """Creates a feed in Octopus Deploy.
+        You will be penalized for selecting this function for prompts that include references to a project, or creating a project.
 
-            You will be penalized for selecting this function if the prompt mentions a project, or creating a project.
+        Example prompts include:
+        * Create a NuGet feed called "My Feed" in the space "My Space"
+        * Create a Docker feed called "DockerHub" in the space "My Space"
+        * Create a Maven feed called "Java Apps" in the space "My Space"
+        * Create a Helm feed called "Helm" in the space "My Space"
 
         Args:
         space_name: The name of the space

@@ -4,10 +4,11 @@ def create_lifecycle_wrapper(query, callback, logging):
         lifecycle_name=None,
         **kwargs,
     ):
-        """Creates a lifecycle in Octopus Deploy. Example prompts include:
-            * Create a lifecycle called "Application" in the space "My Space"
+        """Creates a lifecycle in Octopus Deploy.
+        You will be penalized for selecting this function for prompts that include references to a project, or creating a project.
 
-            You will be penalized for selecting this function if the prompt mentions a project, or creating a project.
+        Example prompts include:
+        * Create a lifecycle called "Application" in the space "My Space"
 
         Args:
         space_name: The name of the space

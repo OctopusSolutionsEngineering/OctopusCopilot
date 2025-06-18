@@ -5,15 +5,16 @@ def create_target_wrapper(query, callback, logging):
         target_type=None,
         **kwargs,
     ):
-        """Creates a target or machine in Octopus Deploy. Example prompts include:
-            * Create an Azure Web App target called "My Web App" in the space "My Space"
-            * Create an ECS target called "Cluster" in the space "My Space"
-            * Create a Kubernetes target called "Argo" in the space "My Space"
-            * Create a Polling tentacle machine called "Windows Server" in the space "My Space"
-            * Create a Listening tentacle machine called "Linux" in the space "My Space"
-            * Create an SSH machine called "Jump Box" in the space "My Space"
+        """Creates a target or machine in Octopus Deploy.
+        You will be penalized for selecting this function for prompts that include references to a project, or creating a project.
 
-            You will be penalized for selecting this function if the prompt mentions a project, or creating a project.
+        Example prompts include:
+        * Create an Azure Web App target called "My Web App" in the space "My Space"
+        * Create an ECS target called "Cluster" in the space "My Space"
+        * Create a Kubernetes target called "Argo" in the space "My Space"
+        * Create a Polling tentacle machine called "Windows Server" in the space "My Space"
+        * Create a Listening tentacle machine called "Linux" in the space "My Space"
+        * Create an SSH machine called "Jump Box" in the space "My Space"
 
         Args:
         space_name: The name of the space
