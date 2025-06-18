@@ -201,9 +201,6 @@ def find_variable_value(filename, variable):
     return None
 
 
-import re
-
-
 def find_runbook_step_names(filename, label):
     try:
         print(f"\n## {label} Project Runbook Deployment Process Instructions")
