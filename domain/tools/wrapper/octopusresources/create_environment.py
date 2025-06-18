@@ -7,6 +7,8 @@ def create_environment_wrapper(query, callback, logging):
         """Creates an environment in Octopus Deploy. Example prompts include:
             * Create an environment called "PreProd" in the space "My Space"
 
+            You will be penalised for selecting this function if the prompt mentions a project, or creating a project.
+
         Args:
         space_name: The name of the space
         environment_name: The name of the environment

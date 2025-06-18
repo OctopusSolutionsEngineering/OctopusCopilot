@@ -7,6 +7,8 @@ def create_lifecycle_wrapper(query, callback, logging):
         """Creates a lifecycle in Octopus Deploy. Example prompts include:
             * Create a lifecycle called "Application" in the space "My Space"
 
+            You will be penalised for selecting this function if the prompt mentions a project, or creating a project.
+
         Args:
         space_name: The name of the space
         lifecycle_name: The name of the lifecycle

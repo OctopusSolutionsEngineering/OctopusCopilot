@@ -7,6 +7,8 @@ def create_worker_pool_wrapper(query, callback, logging):
         """Creates a worker_pool in Octopus Deploy. Example prompts include:
             * Create a worker_pool called "Linux" in the space "My Space"
 
+            You will be penalised for selecting this function if the prompt mentions a project, or creating a project.
+
         Args:
         space_name: The name of the space
         worker_pool_name: The name of the worker pool

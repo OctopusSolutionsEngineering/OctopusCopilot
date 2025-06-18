@@ -7,6 +7,8 @@ def create_github_connection_wrapper(query, callback, logging):
         """Creates a github_connection in Octopus Deploy. Example prompts include:
             * Create a github_connection called "Engineering" in the space "My Space"
 
+            You will be penalised for selecting this function if the prompt mentions a project, or creating a project.
+
         Args:
         space_name: The name of the space
         github_connection_name: The name of the github connection

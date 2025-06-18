@@ -7,6 +7,8 @@ def create_machine_policy_wrapper(query, callback, logging):
         """Creates a machine policy in Octopus Deploy. Example prompts include:
             * Create a machine policy called "Virtual Machines" in the space "My Space"
 
+            You will be penalised for selecting this function if the prompt mentions a project, or creating a project.
+
         Args:
         space_name: The name of the space
         machine_policy_name: The name of the machine policy

@@ -7,6 +7,8 @@ def create_certificate_wrapper(query, callback, logging):
         """Creates a certificate in Octopus Deploy. Example prompts include:
             * Create a Certificate called "Web Server" in the space "My Space"
 
+            You will be penalised for selecting this function if the prompt mentions a project, or creating a project.
+
         Args:
         space_name: The name of the space
         certificate_name: The name of the certificate
