@@ -7,7 +7,7 @@ def create_tenant_wrapper(query, callback, logging):
         """Creates a tenant in Octopus Deploy. Example prompts include:
             * Create a tenant called "Europe" in the space "My Space"
 
-            You will be penalised for selecting this function if the prompt mentions a project, or creating a project.
+            You will be penalized for selecting this function if the prompt mentions a project, or creating a project.
 
         Args:
         space_name: The name of the space

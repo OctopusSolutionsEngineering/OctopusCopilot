@@ -13,7 +13,7 @@ def create_account_wrapper(query, callback, logging):
             * Create a Username/password account called "production" in the space "My Space"
             * Create a Token account called "K8s Cluster" in the space "My Space"
 
-            You will be penalised for selecting this function if the prompt mentions a project, or creating a project.
+            You will be penalized for selecting this function if the prompt mentions a project, or creating a project.
 
         Args:
         space_name: The name of the space

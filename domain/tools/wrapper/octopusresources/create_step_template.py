@@ -7,7 +7,7 @@ def create_step_template_wrapper(query, callback, logging):
         """Creates a step_template in Octopus Deploy. Example prompts include:
             * Create a step_template called "Deploy Web App" in the space "My Space"
 
-            You will be penalised for selecting this function if the prompt mentions a project, or creating a project.
+            You will be penalized for selecting this function if the prompt mentions a project, or creating a project.
 
         Args:
         space_name: The name of the space

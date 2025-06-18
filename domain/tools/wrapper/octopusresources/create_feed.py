@@ -11,7 +11,7 @@ def create_feed_wrapper(query, callback, logging):
             * Create a Maven feed called "Java Apps" in the space "My Space"
             * Create a Helm feed called "Helm" in the space "My Space"
 
-            You will be penalised for selecting this function if the prompt mentions a project, or creating a project.
+            You will be penalized for selecting this function if the prompt mentions a project, or creating a project.
 
         Args:
         space_name: The name of the space
