@@ -468,60 +468,16 @@ def populate_blob_storage():
         "../../context/" if os.path.exists("../../context/context.tf") else "context/"
     )
 
-    with open(context_path + "context.tf", "r") as file:
-        file_content = file.read()
+    pattern_tf = os.path.join(context_path, "*.tf")
+    pattern_txt = os.path.join(context_path, "*.txt")
 
-        save_terraform_context(
-            "context.tf", file_content, os.environ["AzureWebJobsStorage"]
-        )
+    all_files = glob.glob(pattern_tf) + glob.glob(pattern_txt)
+    all_files.sort()
 
-    with open(context_path + "k8ssystemprompt.txt", "r") as file:
-        file_content = file.read()
-
-        save_terraform_context(
-            "k8ssystemprompt.txt", file_content, os.environ["AzureWebJobsStorage"]
-        )
-
-    with open(context_path + "azurewebappsystemprompt.txt", "r") as file:
-        file_content = file.read()
-
-        save_terraform_context(
-            "azurewebappsystemprompt.txt",
-            file_content,
-            os.environ["AzureWebJobsStorage"],
-        )
-
-    with open(context_path + "generalinstructions.txt", "r") as file:
-        file_content = file.read()
-
-        save_terraform_context(
-            "generalinstructions.txt", file_content, os.environ["AzureWebJobsStorage"]
-        )
-
-    with open(context_path + "everystep.tf", "r") as file:
-        file_content = file.read()
-
-        save_terraform_context(
-            "everystep.tf", file_content, os.environ["AzureWebJobsStorage"]
-        )
-
-    with open(context_path + "k8s.tf", "r") as file:
-        file_content = file.read()
-
-        save_terraform_context(
-            "k8s.tf", file_content, os.environ["AzureWebJobsStorage"]
-        )
-
-    with open(context_path + "azurewebapp.tf", "r") as file:
-        file_content = file.read()
-
-        save_terraform_context(
-            "azurewebapp.tf", file_content, os.environ["AzureWebJobsStorage"]
-        )
-
-    with open(context_path + "projectsettings1.tf", "r") as file:
-        file_content = file.read()
-
-        save_terraform_context(
-            "projectsettings1.tf", file_content, os.environ["AzureWebJobsStorage"]
-        )
+    for file_path in all_files:
+        with open(file_path, "r") as file:
+            file_content = file.read()
+            filename = os.path.basename(file_path)
+            save_terraform_context(
+                filename, file_content, os.environ["AzureWebJobsStorage"]
+            )
