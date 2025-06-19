@@ -440,6 +440,60 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_da
 
 * You will be penalized for providing an attribute value for "timezone" that isn't a valid "Windows Time Zone Identifier".
 
+## Octopus Project Channel Instructions
+
+* Channels defined as resource "octopusdeploy_channel" have the following required properties:
+    * "name"
+    * "project_id"
+* Channels can also have a number of optional properties:
+    * A "description"
+    * An "is_default" property that indicates whether this channel is the default resource. It should be set to "false" unless otherwise specified.
+    * A "lifecycle_id"
+    * A "rule" block is an optional nested block used to define package versioning rules per deployment step or package.
+    * A "space_id"
+    * A "tenant_tags" property is a list of strings, used to associate a channel with specific tenant tags
+* A project can have multiple "octopusdeploy_channel" resources.
+* Here is an example of a channel resource without a "rule" block:
+
+```
+resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
+  count         = "${length(data.octopusdeploy_projects.project_lambda_hotfixing.projects) != 0 ? 0 : 1}"
+  name          = "Hotfix"
+  project_id    = "${length(data.octopusdeploy_projects.project_lambda_hotfixing.projects) != 0 ? data.octopusdeploy_projects.project_lambda_hotfixing.projects[0].id : octopusdeploy_project.project_lambda_hotfixing[0].id}"
+  description   = "Hotfix channel for Lambda hotfixing"
+  is_default    = false
+  lifecycle_id  = "${length(data.octopusdeploy_lifecycles.lifecycle_lambda_hotfix.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_lambda_hotfix.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_lambda_hotfix[0].id}"
+  space_id      = "${trimspace(var.octopus_space_id)}"
+}
+```
+
+Here is an example of a channel resource with a "rule" block that applies when the release version matches the tag hotfix (using the regex ^hotfix$), and it targets specific deployment actions (steps):
+
+```
+resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
+  count         = "${length(data.octopusdeploy_projects.project_lambda_hotfixing.projects) != 0 ? 0 : 1}"
+  name          = "Hotfix"
+  project_id    = "${length(data.octopusdeploy_projects.project_lambda_hotfixing.projects) != 0 ? data.octopusdeploy_projects.project_lambda_hotfixing.projects[0].id : octopusdeploy_project.project_lambda_hotfixing[0].id}"
+  description   = "Hotfix channel for Lambda hotfixing"
+  is_default    = false
+  lifecycle_id  = "${length(data.octopusdeploy_lifecycles.lifecycle_lambda_hotfix.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_lambda_hotfix.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_lambda_hotfix[0].id}"
+  space_id      = "${trimspace(var.octopus_space_id)}"
+  rule {
+        action_package {
+          deployment_action = "deploy-database-changes"
+        }
+        action_package {
+          deployment_action = "deploy-rate-service"
+        }
+        action_package {
+          deployment_action = "deploy-trading-site"
+        }
+        tag           = "^hotfix$"
+        version_range = ""
+    }
+}
+```
+
 ## Octopus Deployment Process Instructions
 
 * Steps are defined in the "octopusdeploy_process_step" and "octopusdeploy_process_child_step" resources.
