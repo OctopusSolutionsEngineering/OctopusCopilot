@@ -10,9 +10,20 @@
 You must include all the following variables once unless otherwise specified:
 * resource "octopusdeploy_variable" "iis_project_workerpool_1"
 
+## Windows IIS Project Scheduled Triggers Instructions
+
+You must include all the following project scheduled trigger resources unless otherwise specified:
+* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_iis_daily_security_scan"
+
 ## Windows IIS Project Deployment Process Instructions
 
-You must include all the following steps unless otherwise specified:
+You must include all the following step resources unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_iis_deploy_to_iis"
 * resource "octopusdeploy_process_step" "process_step_iis_print_message_when_no_targets"
 * resource "octopusdeploy_process_step" "process_step_iis_scan_for_vulnerabilities"
+
+## Windows IIS Project Runbook Instructions
+
+You must include all the following runbook resources unless otherwise specified:
+
+## Windows IIS Project Runbook Deployment Process Instructions

@@ -18,9 +18,13 @@ You must include all the following variables once unless otherwise specified:
 * resource "octopusdeploy_variable" "azure_web_app_project_octopus_api_key_1"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_account_1"
 
+## Azure Web App Project Scheduled Triggers Instructions
+
+You must include all the following project scheduled trigger resources unless otherwise specified:
+
 ## Azure Web App Project Deployment Process Instructions
 
-You must include all the following steps unless otherwise specified:
+You must include all the following step resources unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_check_smtp_configuration"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deployment_start_notification"
@@ -34,7 +38,7 @@ You must include all the following steps unless otherwise specified:
 
 ## Azure Web App Project Runbook Instructions
 
-You must include all the following runbooks unless otherwise specified:
+You must include all the following runbook resources unless otherwise specified:
 * resource "octopusdeploy_runbook" "runbook_azure_web_app_create_infrastructure"
 * resource "octopusdeploy_runbook" "runbook_azure_web_app_destroy_infrastructure"
 
@@ -52,4 +56,5 @@ You must include all the following runbook steps from the runbook_azure_web_app_
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_validate_setup"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_deregister_target"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_destroy_resource_group"
+
 

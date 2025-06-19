@@ -322,12 +322,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_validate_setu
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $true"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
+        "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $true"
       }
 }
 
@@ -350,11 +350,11 @@ resource "octopusdeploy_process_step" "process_step_azure_function_check_smtp_co
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptFileName" = "octopus/CheckSMTPConfigured.ps1"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/CheckSMTPConfigured.ps1"
       }
 }
 
@@ -364,7 +364,7 @@ resource "octopusdeploy_process_step" "process_step_azure_function_send_deployme
   type                  = "Octopus.Email"
   process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function[0].id}"
   channels              = null
-  condition             = "Variable"
+  condition             = "Success"
   environments          = null
   excluded_environments = null
   notes                 = "This step sends an email notification that the deployment has started.  It only runs when the output variable `Octopus.Action[Check SMTP configuration].Output.SmtpConfigured` is set to true."
@@ -376,9 +376,9 @@ resource "octopusdeploy_process_step" "process_step_azure_function_send_deployme
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Action[Check SMTP configuration].Output.SmtpConfigured == \"True\"}true#{/if}"
       }
   execution_properties  = {
+        "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} is deploying to #{Octopus.Environment.Name}"
         "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
         "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} is deploying to #{Octopus.Environment.Name}"
-        "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} is deploying to #{Octopus.Environment.Name}"
       }
 }
 
@@ -423,7 +423,7 @@ resource "octopusdeploy_process_step" "process_step_azure_function_smoke_test" {
   type                  = "Octopus.AzurePowerShell"
   process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function[0].id}"
   channels              = null
-  condition             = "Variable"
+  condition             = "Success"
   environments          = null
   excluded_environments = null
   package_requirement   = "LetOctopusDecide"
@@ -435,12 +435,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_smoke_test" {
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
+        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
+        "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = \"#{Project.Azure.ResourceGroup.Name}\"\n$functionName = \"#{Project.Azure.Function.Octopub.Products.Name}\"\n\n# Get list of deployment slots\n$deploymentSlots = (az functionapp deployment slot list --resource-group $resourceGroupName --name $functionName | ConvertFrom-JSON)\n\n# Check to see if anything was returned\nif ($null -ne $deploymentSlots -and $null -ne ($deploymentSlots | Where-Object {$_.Name -eq \"staging\"}))\n{\n  # Assing the hostname of the deployment slot\n  $testUrl = ($deploymentSlots | Where-Object {$_.Name -eq \"staging\"}).defaultHostName\n}\nelse\n{\n  # No deployments slots are available, use the function app instead\n  $testUrl = (az functionapp show --resource-group $resourceGroupName --name $functionName | ConvertFrom-JSON).defaultHostName\n}\n\ntry\n{\n  # Make a web request  \n  $response = Invoke-WebRequest -Uri \"https://$testUrl\"\n\n  # Check for a 200 response\n  if ($response.StatusCode -ne 200)\n  {\n    # Throw an error\n    throw $response.StatusCode\n  }\n  else\n  {\n    Write-Host \"Smoke test succeeded!\"\n  }\n}\ncatch\n{\n  Write-Warning \"An error occurred: $($_.Exception.Message)\"\n}"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
-        "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = \"#{Project.Azure.ResourceGroup.Name}\"\n$functionName = \"#{Project.Azure.Function.Octopub.Products.Name}\"\n\n# Get list of deployment slots\n$deploymentSlots = (az functionapp deployment slot list --resource-group $resourceGroupName --name $functionName | ConvertFrom-JSON)\n\n# Check to see if anything was returned\nif ($null -ne $deploymentSlots -and $null -ne ($deploymentSlots | Where-Object {$_.Name -eq \"staging\"}))\n{\n  # Assing the hostname of the deployment slot\n  $testUrl = ($deploymentSlots | Where-Object {$_.Name -eq \"staging\"}).defaultHostName\n}\nelse\n{\n  # No deployments slots are available, use the function app instead\n  $testUrl = (az functionapp show --resource-group $resourceGroupName --name $functionName | ConvertFrom-JSON).defaultHostName\n}\n\ntry\n{\n  # Make a web request  \n  $response = Invoke-WebRequest -Uri \"https://$testUrl\"\n\n  # Check for a 200 response\n  if ($response.StatusCode -ne 200)\n  {\n    # Throw an error\n    throw $response.StatusCode\n  }\n  else\n  {\n    Write-Host \"Smoke test succeeded!\"\n  }\n}\ncatch\n{\n  Write-Warning \"An error occurred: $($_.Exception.Message)\"\n}"
       }
 }
 
@@ -473,7 +473,7 @@ resource "octopusdeploy_process_step" "process_step_azure_function_swap_deployme
   type                  = "Octopus.AzurePowerShell"
   process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function[0].id}"
   channels              = null
-  condition             = "Variable"
+  condition             = "Success"
   environments          = null
   excluded_environments = null
   notes                 = "This step swaps the staging and production deployment slots.  This allows for blue/green style deployments."
@@ -522,11 +522,11 @@ resource "octopusdeploy_process_step" "process_step_azure_function_scan_for_vuln
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -536,7 +536,7 @@ resource "octopusdeploy_process_step" "process_step_azure_function_send_deployme
   type                  = "Octopus.Email"
   process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function[0].id}"
   channels              = null
-  condition             = "Variable"
+  condition             = "Success"
   environments          = null
   excluded_environments = null
   notes                 = "This step sends an email notification that the deployment has completed successfully.  It only runs when the output variable `Octopus.Action[Check SMTP configuration].Output.SmtpConfigured` is set to true."
@@ -560,7 +560,7 @@ resource "octopusdeploy_process_step" "process_step_azure_function_send_deployme
   type                  = "Octopus.Email"
   process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function[0].id}"
   channels              = null
-  condition             = "Variable"
+  condition             = "Success"
   environments          = null
   excluded_environments = null
   notes                 = "This step sends an email notification that the deployment has failed.  It includes the error details.  This step only runs when `Octopus.Error` has a value and the output variable `Octopus.Action[Check SMTP configuration].Output.SmtpConfigured` is set to true."
@@ -572,10 +572,10 @@ resource "octopusdeploy_process_step" "process_step_azure_function_send_deployme
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Check SMTP configuration].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} failed to deploy to #{Octopus.Environment.Name}!"
-        "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} has failed deployed to #{Octopus.Environment.Name}\n\n#{Octopus.Deployment.Error}:\n#{Octopus.Deployment.ErrorDetail}"
         "Octopus.Action.Email.Priority" = "High"
         "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
+        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} failed to deploy to #{Octopus.Environment.Name}!"
+        "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} has failed deployed to #{Octopus.Environment.Name}\n\n#{Octopus.Deployment.Error}:\n#{Octopus.Deployment.ErrorDetail}"
       }
 }
 
@@ -850,7 +850,7 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
   type                  = "Octopus.AzurePowerShell"
   process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function_create_infrastructure[0].id}"
   channels              = null
-  condition             = "Variable"
+  condition             = "Success"
   environments          = null
   excluded_environments = null
   package_requirement   = "LetOctopusDecide"
@@ -862,12 +862,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_octopussamples_azure_account.accounts) != 0 ? data.octopusdeploy_accounts.account_octopussamples_azure_account.accounts[0].id : octopusdeploy_azure_service_principal.account_octopussamples_azure_account[0].id}"
         "Octopus.Action.Script.ScriptBody" = "# Get Azure Access Token -- an upcoming breaking change changes this to a secure string\n$accessToken = Get-AzAccessToken -AsSecureString\n\n# Convert secure string token to plain text so we can add it as a Sensitive Octopus Output variable\n$UnsecurePassword = (New-Object PSCredential 0, $accessToken.Token).GetNetworkCredential().Password\n\nSet-OctopusVariable -Name \"AzureToken\" -Value $UnsecurePassword -Sensitive"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_octopussamples_azure_account.accounts) != 0 ? data.octopusdeploy_accounts.account_octopussamples_azure_account.accounts[0].id : octopusdeploy_azure_service_principal.account_octopussamples_azure_account[0].id}"
       }
 }
 
@@ -877,7 +877,7 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
   type                  = "Octopus.Script"
   process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function_create_infrastructure[0].id}"
   channels              = null
-  condition             = "Variable"
+  condition             = "Success"
   environments          = null
   excluded_environments = null
   git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
@@ -891,12 +891,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/CheckForSiteAvailability.ps1"
         "Octopus.Action.Script.ScriptParameters" = "-AzureSiteName #{Project.Azure.Function.Octopub.Products.Name}"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -906,7 +906,7 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
   type                  = "Octopus.AzurePowerShell"
   process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function_create_infrastructure[0].id}"
   channels              = null
-  condition             = "Variable"
+  condition             = "Success"
   environments          = null
   excluded_environments = null
   notes                 = "This step uses the Azure CLI to create a Resource Group."
@@ -919,12 +919,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}"
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = $OctopusParameters['Project.Azure.ResourceGroup.Name']\n$azureLocation = $OctopusParameters['Project.Azure.Location']\n$resourceGroupCreated = $false\n\n# Check to see if the group already exists\n$groupExists = az group exists --name $resourceGroupName\n\nif ($groupExists -eq $true)\n{\n  Write-Highlight \"A Resource Group with the name of $resourceGroupName already exists.  We recommend creating a new Resource Group for this example.\"\n}\nelse\n{\n  # Create resourece group\n  Write-Host \"Creating resource group $resourceGroupName in $azureLocation...\"\n  az group create --location $azureLocation --name $resourceGroupName\n\n  $resourceGroupCreated = $true\n}\n\n# Set output variable\nSet-OctopusVariable -Name \"ResourceGroupCreated\" -Value $resourceGroupCreated"
-        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -934,7 +934,7 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
   type                  = "Octopus.AzurePowerShell"
   process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function_create_infrastructure[0].id}"
   channels              = null
-  condition             = "Variable"
+  condition             = "Success"
   environments          = null
   excluded_environments = null
   notes                 = "This step uses the Azure CLI to create a Storage Account resource."
@@ -947,12 +947,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Action[Create Resource Group].Output.ResourceGroupCreated == \"True\"}true#{/if}"
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "# Get variables\n$storageAccountName = $OctopusParameters['Project.Azure.StorageAccount.Name']\n$resourceGroupName = $OctopusParameters['Project.Azure.ResourceGroup.Name']\n$azureLocation = $OctopusParameters['Project.Azure.Location']\n$storageAccountCreated = $false\n\n# Check to see if name is already being used in this subscription\n$accountExists = ((az storage account check-name --name $storageAccountName) | ConvertFrom-Json)\n\nif ($accountExists.nameAvailable -ne $true)\n{\n  Write-Highlight \"A storage account with the name $storageAccountName already exists in your subscription.  Please update the Project Variable Project.Azure.StorageAccount.Name\"\n}\nelse\n{\n  # Create Azure storage account\n  Write-Host \"Creating storage account ...\"\n  az storage account create --name $storageAccountName --resource-group $resourceGroupName --location $azureLocation\n\n  $storageAccountCreated = $true\n}\n\nSet-OctopusVariable -Name StorageAccountCreated -Value  $storageAccountCreated\n# Get account keys\n$accountKeys = (az storage account keys list --account-name $storageAccountName --resource-group $resourceGroupName) | ConvertFrom-JSON"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -962,7 +962,7 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
   type                  = "Octopus.AzurePowerShell"
   process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function_create_infrastructure[0].id}"
   channels              = null
-  condition             = "Variable"
+  condition             = "Success"
   environments          = null
   excluded_environments = null
   notes                 = "This step uses the Azure CLI to create an Azure Function App."
@@ -1051,12 +1051,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_destroy_infra
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $true"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
+        "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $true"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -1066,7 +1066,7 @@ resource "octopusdeploy_process_step" "process_step_azure_function_destroy_infra
   type                  = "Octopus.Script"
   process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function_destroy_infrastructure[0].id}"
   channels              = null
-  condition             = "Variable"
+  condition             = "Success"
   environments          = null
   excluded_environments = null
   notes                 = "Deregisters the Azure Function App as a Target."
@@ -1079,11 +1079,11 @@ resource "octopusdeploy_process_step" "process_step_azure_function_destroy_infra
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}"
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "$appServiceName = \"#{Project.Azure.Function.Octopub.Products.Name}\"\n$apiKey = \"#{Project.Octopus.Api.Key}\"\n$spaceId = \"#{Octopus.Space.Id}\"\n$headers = @{\"X-Octopus-ApiKey\"=$apiKey}\n\nif ([String]::IsNullOrWhitespace(\"#{Octopus.Web.ServerUri}\"))\n{\n  $octopusUrl = \"#{Octopus.Web.BaseUrl}\"\n}\nelse\n{\n  $octopusUrl = \"#{Octopus.Web.ServerUri}\"\n}\n\n$uriBuilder = New-Object System.UriBuilder(\"$octopusUrl/api/$spaceId/machines\")\n$query = [System.Web.HttpUtility]::ParseQueryString(\"\")\n$query[\"name\"] = $appServiceName\n$query[\"environmentIds\"] = \"#{Octopus.Environment.Id}\"\n$uriBuilder.Query = $query.ToString()\n$uri = $uriBuilder.ToString()\n\n$octopubTarget = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers\n\nforeach ($target in $octopubTarget.Items)\n{\n  if ($target.Name -eq $appServiceName)\n  {\n    Write-Host \"Deregistering\" + $target.Name\n    $uri = \"$octopusUrl/api/$spaceId/machines/$($target.Id)\"\n    Invoke-RestMethod -Method Delete -Uri $uri -Headers $headers\n  }\n}"
+        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -1093,7 +1093,7 @@ resource "octopusdeploy_process_step" "process_step_azure_function_destroy_infra
   type                  = "Octopus.AzurePowerShell"
   process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function_destroy_infrastructure[0].id}"
   channels              = null
-  condition             = "Variable"
+  condition             = "Success"
   environments          = null
   excluded_environments = null
   notes                 = "This step uses the Azure CLI to delete a resource group."
