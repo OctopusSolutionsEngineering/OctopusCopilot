@@ -30,6 +30,31 @@ def find_octopus_variables(filename, label):
         print(f"Error processing file: {e}")
 
 
+def find_project_scheduled_triggers(filename, label):
+    # Pattern to match the resource declarations for octopusdeploy_project_scheduled_trigger
+    pattern = r'resource\s+"octopusdeploy_project_scheduled_trigger"\s+"([^"]+)"'
+
+    try:
+        # Open and read the file
+        print(f"\n## {label} Project Scheduled Triggers Instructions\n")
+        print(
+            "You must include all the following project scheduled trigger resources unless otherwise specified:"
+        )
+        with open(filename, "r") as file:
+            lines = file.readlines()
+
+            for i, line in enumerate(lines):
+                match = re.match(pattern, line)
+                if match:
+                    print(
+                        f'* resource "octopusdeploy_project_scheduled_trigger" "{match.group(1)}"'
+                    )
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
+    except Exception as e:
+        print(f"Error processing file: {e}")
+
+
 def find_step_names(filename, label):
     try:
         # Open and read the file
@@ -315,6 +340,7 @@ def main():
     filename = sys.argv[1]
     label = sys.argv[2]
     find_octopus_variables(filename, label)
+    find_project_scheduled_triggers(filename, label)
     find_step_names(filename, label)
     find_runbook_names(filename, label)
     find_runbook_step_names(filename, label)
