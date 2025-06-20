@@ -16,7 +16,7 @@ def find_octopus_variables(filename, label):
         # Open and read the file
         print(f"## {label} Project Variable Instructions\n")
         print(
-            "You must include all the following variables once unless otherwise specified:"
+            f'You must include all the following variables from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:'
         )
         with open(filename, "r") as file:
             for line_number, line in enumerate(file, 1):
@@ -38,7 +38,7 @@ def find_project_scheduled_triggers(filename, label):
         # Open and read the file
         print(f"\n## {label} Project Scheduled Triggers Instructions\n")
         print(
-            "You must include all the following project scheduled trigger resources unless otherwise specified:"
+            f'You must include all the following project scheduled trigger resources from the "Example Octopus {label} Terraform Configuration" unless otherwise specified:'
         )
         with open(filename, "r") as file:
             lines = file.readlines()
@@ -60,7 +60,7 @@ def find_step_names(filename, label):
         # Open and read the file
         print(f"\n## {label} Project Deployment Process Instructions\n")
         print(
-            "You must include all the following step resources unless otherwise specified:"
+            f'You must include all the following step resources from the "Example Octopus {label} Terraform Configuration" unless otherwise specified:'
         )
         with open(filename, "r") as file:
             content = file.read()

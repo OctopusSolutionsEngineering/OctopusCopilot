@@ -206,7 +206,7 @@ def create_template_project_callback(
                 messages = project_context(
                     general_examples_values,
                     project_example_values,
-                    project_example_context_name,
+                    f"Example Octopus {project_example_context_name} Terraform Configuration",
                     general_system_message_values,
                     project_system_message_values,
                 )
@@ -223,7 +223,7 @@ def create_template_project_callback(
                     messages,
                     context,
                     log_query,
-                    "2025-04-14-ft-b7ec4df744f94c1897ce98de538256ca-octoterra-trained",  # os.getenv("AISERVICES_DEPLOYMENT"),
+                    "1-mini-2025-04-14-octoterra-trained-2",  # os.getenv("AISERVICES_DEPLOYMENT"),
                     os.getenv("AISERVICES_KEY"),
                     os.getenv("AISERVICES_ENDPOINT"),
                 )
