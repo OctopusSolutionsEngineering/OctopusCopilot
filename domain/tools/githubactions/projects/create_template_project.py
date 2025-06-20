@@ -211,7 +211,7 @@ def create_template_project_callback(
                     project_system_message_values,
                 )
 
-                # We use the new AI services resource in Azure to build the sample Terarform. This gives us access to
+                # We use the new AI services resource in Azure to build the sample Terraform. This gives us access to
                 # a wider range of models. See https://learn.microsoft.com/en-us/azure/ai-services/openai/overview#comparing-azure-openai-and-openai
                 # for the differences between OpenAI and AI Services.
                 # The important thing to note about this LLM call is that we do not pass any of the Octopus configuration
@@ -223,7 +223,7 @@ def create_template_project_callback(
                     messages,
                     context,
                     log_query,
-                    os.getenv("AISERVICES_DEPLOYMENT"),
+                    "2025-04-14-ft-b7ec4df744f94c1897ce98de538256ca-octoterra-trained",  # os.getenv("AISERVICES_DEPLOYMENT"),
                     os.getenv("AISERVICES_KEY"),
                     os.getenv("AISERVICES_ENDPOINT"),
                 )
