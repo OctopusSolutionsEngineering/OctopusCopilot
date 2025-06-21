@@ -478,6 +478,17 @@ class MockRequests(unittest.TestCase):
 
         self.assertEqual(function.name, "create_lambda_project")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_account(self):
+        """
+        Tests that the llm can correctly identify the function to call when the prompt is
+        """
+
+        query = 'Create the AWS Account with the name "My AWS Account" and with an access key of "ABCDEFGHIJKLMNOPQRST"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_account")
+
 
 if __name__ == "__main__":
     unittest.main()

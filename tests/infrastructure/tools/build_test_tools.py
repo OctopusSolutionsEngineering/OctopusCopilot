@@ -11,6 +11,9 @@ from domain.tools.githubactions.generate_terraform import (
 from domain.tools.githubactions.projects.create_template_project import (
     create_template_project_confirm_callback_wrapper,
 )
+from domain.tools.githubactions.projects.unsupported_resource import (
+    unsupported_resource,
+)
 from domain.tools.githubactions.release_what_changed import (
     release_what_changed_callback_wrapper,
 )
@@ -24,6 +27,7 @@ from domain.tools.wrapper.function_definition import (
 from domain.tools.wrapper.general_query import answer_general_query_wrapper
 from domain.tools.wrapper.generate_terraform import generate_terraform_wrapper
 from domain.tools.wrapper.how_to import how_to_wrapper
+from domain.tools.wrapper.octopusresources.create_account import create_account_wrapper
 from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_wrapper
 from domain.tools.wrapper.projects.create_lambda_project import (
     create_lambda_project_wrapper,
@@ -126,6 +130,13 @@ def build_mock_test_tools(tool_query):
                     generate_terraform_callback_wrapper(),
                     os.environ["GH_TEST_TOKEN"],
                 )
+            ),
+            FunctionDefinition(
+                create_account_wrapper(
+                    tool_query,
+                    callback=unsupported_resource,
+                    logging=log_query,
+                ),
             ),
             FunctionDefinition(
                 create_k8s_project_wrapper(
