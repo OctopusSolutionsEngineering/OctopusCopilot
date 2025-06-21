@@ -14,23 +14,23 @@
 * The image defined in the "package" block is referenced in the YAML as "#{Octopus.Action.Package[<package name>].PackageId}:#{Octopus.Action.Package[<package name>].PackageVersion}"
 * You will be penalized for directly referencing an image in the YAML.
 
-## Kubernetes Web App Project Variable Instructions
+## Kubernetes Project Variable Instructions
 
-You must include all the following variables from the "Example Octopus Kubernetes Web App Terraform Configuration" once unless otherwise specified:
+You must include all the following variables from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_variable" "kubernetes_web_app_kubernetes_deployment_name_1"
 * resource "octopusdeploy_variable" "kubernetes_web_app_octopus_project_workerpool_1"
 * resource "octopusdeploy_variable" "kubernetes_web_app_octopusprintevaluatedvariables_1"
 * resource "octopusdeploy_variable" "kubernetes_web_app_octopusprintvariables_1"
 * resource "octopusdeploy_variable" "kubernetes_web_app_application_image_1"
 
-## Kubernetes Web App Project Scheduled Triggers Instructions
+## Kubernetes Project Scheduled Triggers Instructions
 
-You must include all the following project scheduled trigger resources from the "Example Octopus Kubernetes Web App Terraform Configuration" unless otherwise specified:
+You must include all the following project scheduled trigger resources from the "Example Octopus Kubernetes Terraform Configuration" unless otherwise specified:
 * resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_kubernetes_web_app_daily_security_scan"
 
-## Kubernetes Web App Project Deployment Process Instructions
+## Kubernetes Project Deployment Process Instructions
 
-You must include all the following step resources from the "Example Octopus Kubernetes Web App Terraform Configuration" unless otherwise specified:
+You must include all the following step resources from the "Example Octopus Kubernetes Terraform Configuration" unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_approve_production_deployment"
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_kubernetes_web_app_via_yaml"
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_print_message_when_no_targets"
