@@ -189,7 +189,7 @@ jobs:
           # This is the deployment used to generate project Terraform configuration
           AISERVICES_DEPLOYMENT_PROJECT_GEN: gpt-4-1-2025-04-14-ft-1c3748861c484e1cbed29f22b29bff65
           # This is the deployment used to handle function calls
-          AISERVICES_DEPLOYMENT_FUNCTIONS: gpt-4.1-mini
+          AISERVICES_DEPLOYMENT_FUNCTIONS: gpt-4.1
           AISERVICES_KEY: ${{ secrets.AISERVICES_KEY }}
           AISERVICES_ENDPOINT: ${{ secrets.AISERVICES_ENDPOINT }}
         shell: /usr/bin/bash --noprofile --norc {0}
