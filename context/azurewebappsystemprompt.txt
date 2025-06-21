@@ -6,7 +6,7 @@
 
 ## Azure Web App Project Variable Instructions
 
-You must include all the following variables once unless otherwise specified:
+You must include all the following variables from the "Example Octopus Azure Web App Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_1"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_2"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_3"
@@ -20,11 +20,12 @@ You must include all the following variables once unless otherwise specified:
 
 ## Azure Web App Project Scheduled Triggers Instructions
 
-You must include all the following project scheduled trigger resources unless otherwise specified:
+You must include all the following project scheduled trigger resources from the "Example Octopus Azure Web App Terraform Configuration" unless otherwise specified:
+* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_azure_web_app_daily_security_scan"
 
 ## Azure Web App Project Deployment Process Instructions
 
-You must include all the following step resources unless otherwise specified:
+You must include all the following step resources from the "Example Octopus Azure Web App Terraform Configuration" unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_check_smtp_configuration"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deployment_start_notification"
@@ -56,5 +57,4 @@ You must include all the following runbook steps from the runbook_azure_web_app_
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_validate_setup"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_deregister_target"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_destroy_resource_group"
-
 
