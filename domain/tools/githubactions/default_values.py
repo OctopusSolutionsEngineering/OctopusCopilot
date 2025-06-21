@@ -118,11 +118,13 @@ def default_value_callbacks(github_user, connection_string):
         delete_default_values(github_user, get_functions_connection_string())
         return CopilotResponse(f"Deleted default values")
 
-    def get_default_value(default_name):
-        """Return the default space, project, environment, or channel.
+    def get_default_value(name):
+        """Displays the default space, project, environment, or channel.
 
-        You will be penalized for selecting this function for prompts related to deployments, logs, releases, or variables.
-        You must only select this function when the prompt is related to displaying a single default space, project, environment, channel, or tenant.
+        You will be penalized for selecting this tool for prompts related to deployments, logs, releases, or variables.
+        You will be penalized for selecting this tool for prompts unrelated to setting default values.
+        You will be penalized for selecting this tool for prompts asking for help, advice, or suggestions.
+        You must only select this tool when the prompt is related to displaying a single default value.
 
         Example prompts include:
         * Get the default environment
@@ -131,20 +133,22 @@ def default_value_callbacks(github_user, connection_string):
         * What is the default channel?
 
         Args:
-            default_name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
+            name: The name of the default value. For example, "Environment", "Project", "Space", or "Channel"
         """
-        if not default_name or not default_name.strip():
+        if not name or not name.strip():
             return CopilotResponse("The default name cannot be empty")
 
-        name = str(default_name).casefold()
+        name = str(name).casefold()
         value = get_default_values(github_user, name, get_functions_connection_string())
         return CopilotResponse(f'The default value for "{name}" is "{value}"')
 
     def get_all_default_values():
-        """Return all the default spaces, projects, environments, and channels.
+        """Display all the default spaces, projects, environments, and channels.
 
-        You will be penalized for selecting this function for prompts related to deployments, logs, or releases.
-        You must only select this function when the prompt is related to displaying the all the defaults values.
+        You will be penalized for selecting this tool for prompts related to deployments, logs, or releases.
+        You will be penalized for selecting this tool for prompts unrelated to default values.
+        You will be penalized for selecting this tool for prompts asking for help, advice, or suggestions.
+        You must only select this tool when the prompt is related to displaying the all the defaults values.
 
         Example prompts include:
         * Get all the default values

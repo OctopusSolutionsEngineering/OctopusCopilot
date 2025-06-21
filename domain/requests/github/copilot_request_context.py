@@ -564,6 +564,7 @@ def build_form_tools(query, req: func.HttpRequest):
             FunctionDefinition(save_defaults_as_profile),
             FunctionDefinition(load_defaults_from_profile),
             FunctionDefinition(list_profiles),
+            *docs_functions,
             FunctionDefinition(
                 show_space_dashboard_wrapper(
                     query,
@@ -966,7 +967,6 @@ def build_form_tools(query, req: func.HttpRequest):
                     log_query,
                 ),
             ),
-            *docs_functions,
             FunctionDefinition(
                 create_feed_wrapper(
                     query,

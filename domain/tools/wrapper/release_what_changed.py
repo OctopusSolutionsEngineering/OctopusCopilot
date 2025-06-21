@@ -96,12 +96,12 @@ def release_what_changed_wrapper(
         You must select this function when the prompt is related to understanding or fixing a failed deployment.
 
         Example prompts include:
+        * Help me understand why the deployment to the "Staging" environment failed.
         * Help me understand why the deployment failed.
         * Help me resolve the failed deployment. Provide suggestions for resolving the issue.
         * Help me understand why the deployment failed. The current environment is "Production".
         * Help me understand why the deployment to the production environment failed.
         * Help me fix the deployment.
-        * Help me understand why the deployment to the "Staging" environment failed.
         * What is the latest version of project "my project" deployed to the "Staging" environment?
 
         Args:
