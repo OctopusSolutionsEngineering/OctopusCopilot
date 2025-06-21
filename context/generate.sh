@@ -66,6 +66,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionseng
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > k8s.tf
 
+# The project name (i.e "Kubernetes" in this case) must match the value in copilot_request_context.py
 ./generate_instructions.py k8s.tf "Kubernetes" > instructions_k8s.md
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
