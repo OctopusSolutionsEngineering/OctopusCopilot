@@ -96,7 +96,7 @@ step "deploy-with-cli" {
                    },
                    {
                      "name": "AISERVICES_DEPLOYMENT_PROJECT_GEN",
-                     "value": "#{Azure.US.AIServices.DeploymentProjectGen}",
+                     "value": "#{Azure.US.AIServices.Deployment.ProjectGen}",
                      "slotSetting": false
                    },
                    {
