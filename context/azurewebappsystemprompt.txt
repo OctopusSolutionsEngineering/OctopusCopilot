@@ -1,8 +1,6 @@
 ## Azure Web App Instructions
 
-* The supplied "Example Octopus Azure Web App Project Terraform Configuration" is the primary source of truth for the configuration.
-* You must respond with Terraform configuration to create an Octopus project deploying an application to an Azure Web App based on examples provided.
-* You must use the lifecycle from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+* The supplied "Example Octopus Azure Web App Terraform Configuration" is the primary source of truth for the configuration.
 
 ## Azure Web App Project Variable Instructions
 
