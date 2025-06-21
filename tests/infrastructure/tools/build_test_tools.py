@@ -95,13 +95,13 @@ def build_mock_test_tools(tool_query):
 
     return FunctionDefinitions(
         [
-            FunctionDefinition(
-                answer_general_query_wrapper(tool_query, general_query_handler)
-            ),
             FunctionDefinition(set_default_value),
             FunctionDefinition(get_default_value),
             FunctionDefinition(get_all_default_values),
             FunctionDefinition(remove_default_value),
+            FunctionDefinition(
+                answer_general_query_wrapper(tool_query, general_query_handler)
+            ),
             FunctionDefinition(
                 suggest_solution_wrapper(
                     tool_query,
