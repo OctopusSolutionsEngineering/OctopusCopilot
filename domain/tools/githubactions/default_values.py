@@ -105,7 +105,7 @@ def default_value_callbacks(github_user, connection_string):
         )
 
     def remove_default_value():
-        """Removes, clears, or deletes a default value for a space, query_project, environment, or channel
+        """Removes, clears, or deletes a default value for a space, query_project, environment, channel, or tenant.
 
         Example prompts include:
         * Remove the default environment
@@ -122,7 +122,7 @@ def default_value_callbacks(github_user, connection_string):
         """Return the default space, project, environment, or channel.
 
         You will be penalized for selecting this function for prompts related to deployments, logs, releases, or variables.
-        You must only select this function when the prompt is related to displaying a single default space, project, environment, or channel.
+        You must only select this function when the prompt is related to displaying a single default space, project, environment, channel, or tenant.
 
         Example prompts include:
         * Get the default environment

@@ -62,7 +62,7 @@ def how_to_wrapper(query, callback, logging):
         lead time for changes, change failure rate, and recovery time, and how and where to measure, view, and generate
         these metrics.
 
-        You will be penalized for using this function when the query relates to releases or deployments.
+        You will be penalized for using this function when the query relates to releases, deployments, or runbook runs.
         You will be penalized for using this function when the query relates to general configuration or state of Octopus resources.
 
         Args:
