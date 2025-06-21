@@ -158,10 +158,6 @@ jobs:
           # These are the connection details to Azure OpenAI
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_ENDPOINT: ${{ secrets.OPENAI_ENDPOINT }}
-          # This is the deployment used for function calling
-          OPENAI_API_DEPLOYMENT_FUNCTIONS: gpt-4o-mini
-          # This is the deployment used for answering prompts
-          OPENAI_API_DEPLOYMENT_QUERY: gpt4o
           # This is a base 64 encoded version of the Octopus license
           LICENSE: ${{ secrets.OCTOPUS_LICENSE }}
           # This is the slack webhook used to send messages
