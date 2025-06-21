@@ -119,12 +119,10 @@ def default_value_callbacks(github_user, connection_string):
         return CopilotResponse(f"Deleted default values")
 
     def get_default_value(default_name):
-        """Return the default value for a space, query_project, environment, or channel.
+        """Return the default space, project, environment, or channel.
 
-        A "default value" is not the same as a "variable".
         You will be penalized for selecting this function for prompts related to deployments, logs, releases, or variables.
-        You will be penalized for selecting this function when a more specific function is available.
-        You must only select this function when the prompt is related to displaying a single default value for a space, project, environment, or channel.
+        You must only select this function when the prompt is related to displaying a single default space, project, environment, or channel.
 
         Example prompts include:
         * Get the default environment
@@ -143,12 +141,10 @@ def default_value_callbacks(github_user, connection_string):
         return CopilotResponse(f'The default value for "{name}" is "{value}"')
 
     def get_all_default_values():
-        """Return all the default values.
+        """Return all the default spaces, projects, environments, and channels.
 
-        A "default value" is not the same as a "variable".
         You will be penalized for selecting this function for prompts related to deployments, logs, or releases.
-        You will be penalized for selecting this function when a more specific function is available.
-        You must only select this function when the prompt is related to displaying a default values for a space, project, environment, or channel.
+        You must only select this function when the prompt is related to displaying the all the defaults values.
 
         Example prompts include:
         * Get all the default values
