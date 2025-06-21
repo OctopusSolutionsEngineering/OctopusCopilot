@@ -36,6 +36,7 @@ You must include all the following step resources from the "Example Octopus Kube
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_print_message_when_no_targets"
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_scan_for_vulnerabilities"
 
-## Kubernetes Lifecycle Instructions
-
 You must include all the following lifecycle resources from the "Example Octopus Kubernetes Terraform Configuration" unless otherwise specified:
+* data "octopusdeploy_lifecycles" "lifecycle_devsecops"
+* resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
+* data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"

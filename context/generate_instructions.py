@@ -56,8 +56,9 @@ def find_project_scheduled_triggers(filename, label):
 
 
 def find_lifecycles(filename, label):
-    # Pattern to match the resource declarations for octopusdeploy_lifecycles
-    pattern = r'resource\s+"octopusdeploy_lifecycles"\s+"([^"]+)"'
+    # Pattern to match the resource declarations for octopusdeploy_lifecycle
+    pattern = r'resource\s+"octopusdeploy_lifecycle"\s+"([^"]+)"'
+    data_pattern = r'data\s+"octopusdeploy_lifecycles"\s+"([^"]+)"'
 
     try:
         # Open and read the file
@@ -71,7 +72,11 @@ def find_lifecycles(filename, label):
             for i, line in enumerate(lines):
                 match = re.match(pattern, line)
                 if match:
-                    print(f'* resource "octopusdeploy_lifecycles" "{match.group(1)}"')
+                    print(f'* resource "octopusdeploy_lifecycle" "{match.group(1)}"')
+
+                match = re.match(data_pattern, line)
+                if match:
+                    print(f'* data "octopusdeploy_lifecycles" "{match.group(1)}"')
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
