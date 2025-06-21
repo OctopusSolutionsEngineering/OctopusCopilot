@@ -118,6 +118,8 @@ jobs:
           cd spacebuilder
           unzip spacebuilder_linux_amd64_azure.zip
           chmod +x spacebuilder_linux_amd64_azure
+          chmod +x binaries/opa_linux_amd64
+          chmod +x binaries/tofu
           ./spacebuilder_linux_amd64_azure &
         env:
           # The directory containing the policy files
@@ -128,6 +130,8 @@ jobs:
           SPACEBUILDER_OPA_PATH: "${{ github.workspace }}/spacebuilder/binaries/opa_linux_amd64"
             # The location of the tofu binary
           SPACEBUILDER_TOFU_PATH: "${{ github.workspace }}/spacebuilder/binaries/tofu"
+          # Don't try and make the binaries executable
+          DISABLE_BINARIES_EXECUTABLE: true
           # The port used when running the spacebuilder microservice
           FUNCTIONS_CUSTOMHANDLER_PORT: 8083
           # This is the connection string to Azurite, the test Aure Storage emulator
