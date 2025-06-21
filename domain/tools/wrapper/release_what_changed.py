@@ -28,7 +28,7 @@ def release_what_changed_wrapper(
         release_version: The release version
         """
 
-        return release_what_changed(
+        return release_or_deployment_what_changed(
             space=space,
             project=project,
             environment=environment,
@@ -39,7 +39,7 @@ def release_what_changed_wrapper(
             **kwargs,
         )
 
-    def release_what_changed_help_me(
+    def release_or_deployment_what_changed_help_me(
         space=None,
         project=None,
         environment=None,
@@ -50,9 +50,9 @@ def release_what_changed_wrapper(
         **kwargs,
     ):
         """
-        Provides help on understanding or fixing a failed deployment.
+        Provides help on understanding or fixing a failed deployment or release.
 
-        You must select this function when the prompt is related to understanding or fixing a failed deployment.
+        You must select this function when the prompt is related to understanding or fixing a failed deployment or release.
 
         Example prompts include:
         * Help me understand why the deployment failed.
@@ -72,7 +72,7 @@ def release_what_changed_wrapper(
         release_version: The release version
         """
 
-        return release_what_changed(
+        return release_or_deployment_what_changed(
             space=space,
             project=project,
             environment=environment,
@@ -83,11 +83,14 @@ def release_what_changed_wrapper(
             **kwargs,
         )
 
-    def release_what_changed_help_me_environment(
+    def release_or_deployment_what_changed_help_me_environment(
+        space=None,
+        project=None,
         environment=None,
         **kwargs,
     ):
         """
+        Provides information on deployments or releases to an environment.
         Provides help on understanding or fixing a failed deployment to an environment.
 
         You must select this function when the prompt is related to understanding or fixing a failed deployment.
@@ -99,14 +102,17 @@ def release_what_changed_wrapper(
         * Help me understand why the deployment to the production environment failed.
         * Help me fix the deployment.
         * Help me understand why the deployment to the "Staging" environment failed.
+        * What is the latest version of project "my project" deployed to the "Staging" environment?
 
         Args:
+        space: The name of the space
+        project: The name of the project
         environment: The optional name of the environment
         """
 
-        return release_what_changed(
-            space=None,
-            project=None,
+        return release_or_deployment_what_changed(
+            space=space,
+            project=project,
             environment=environment,
             tenant=None,
             channel=None,
@@ -115,7 +121,7 @@ def release_what_changed_wrapper(
             **kwargs,
         )
 
-    def release_what_changed(
+    def release_or_deployment_what_changed(
         space=None,
         project=None,
         environment=None,
@@ -126,8 +132,10 @@ def release_what_changed_wrapper(
         **kwargs,
     ):
         """
-        Provides details about an Octopus release or deployment, including git commits, issues or tickets, release notes etc.
+        Provides information about an Octopus release or deployment, including git commits, issues or tickets, release notes etc.
+
         Select this function for any prompt regarding releases or deployments.
+
         Example prompts include:
         * What changed in the latest deployment to the production environment?
         * How do I fix release "10.23.65" of the "WebApp" project to the "Production" environment?
@@ -148,7 +156,7 @@ def release_what_changed_wrapper(
         """
 
         if logging:
-            logging("Enter:", "release_what_changed")
+            logging("Enter:", "release_or_deployment_what_changed")
 
         for key, value in kwargs.items():
             if logging:
@@ -166,8 +174,8 @@ def release_what_changed_wrapper(
         )
 
     return (
-        release_what_changed,
-        release_what_changed_help_me,
+        release_or_deployment_what_changed,
+        release_or_deployment_what_changed_help_me,
         release_what_changed_with_dates,
-        release_what_changed_help_me_environment,
+        release_or_deployment_what_changed_help_me_environment,
     )

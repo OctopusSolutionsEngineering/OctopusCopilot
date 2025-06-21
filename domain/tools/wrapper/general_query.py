@@ -57,6 +57,9 @@ def answer_general_query_wrapper(query, callback, logging=None):
         library variable sets, environments, feeds, accounts, certificates, lifecycles, worker pools, machine policies,
         health check script, tag sets, project groups, channels, releases, steps, variables, or git credentials.
 
+        You will be penalized for calling this function for a prompt asking for instructions, documentation, general
+        explanations, help, or "How do I" questions.
+
         Example prompts:
 
         * Show me the username for the git credential called "GitHub Creds".

@@ -289,7 +289,7 @@ class MockRequests(unittest.TestCase):
         # these are all the same tool, and it doesn't matter which one we use
         self.assertIn(
             function.name,
-            ["release_what_changed", "release_what_changed_with_dates"],
+            ["release_or_deployment_what_changed", "release_what_changed_with_dates"],
             response,
         )
         self.assertTrue(
@@ -319,7 +319,14 @@ class MockRequests(unittest.TestCase):
         function = llm_tool_query(query, build_mock_test_tools(query))
         response = function.call_function()
 
-        self.assertEqual(function.name, "release_what_changed", response)
+        self.assertIn(
+            function.name,
+            [
+                "release_or_deployment_what_changed",
+                "release_or_deployment_what_changed_help_me_environment",
+            ],
+            response,
+        )
         self.assertTrue(response["projects"] == "test", response)
         # Interestingly, the LLM will capitalize the environment name sometimes
         self.assertTrue(response["environments"].casefold() == "production", response)
@@ -444,8 +451,8 @@ class MockRequests(unittest.TestCase):
         self.assertIn(
             function.name,
             [
-                "release_what_changed_help_me_environment",
-                "release_what_changed_help_me",
+                "release_or_deployment_what_changed_help_me_environment",
+                "release_or_deployment_what_changed",
             ],
         )
 

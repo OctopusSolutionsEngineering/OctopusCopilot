@@ -61,6 +61,8 @@ def suggest_solution_wrapper(
         send to a help desk or support forum.
         You must select this function for any prompt that starts with the phrase "Suggest a solution for" or "Provide a solution for".
 
+        You will be penalized for selecting the function for a prompt that asks about the configuration or state of resources.
+
         Example prompts include:
         * Suggest a solution for the following issue: How can I use Harbor as a private image registry.
         * Provide a solution for the following error with the custom search queries "kubernetes", "yaml", "linux": In my helm deploy step I am setting some key values and they don't transform.
