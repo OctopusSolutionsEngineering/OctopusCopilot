@@ -4,10 +4,10 @@
 
 azure-functions
 azure-storage-blob
-langchain==0.3.23
-langchain-community==0.3.21
-langchain-core==0.3.51
-langchain-openai==0.3.12
+langchain==0.3.26
+langchain-community==0.3.26
+langchain-core==0.3.66
+langchain-openai==0.3.24
 openai==1.71.0
 testcontainers==4.11.0
 urllib3==2.5.0

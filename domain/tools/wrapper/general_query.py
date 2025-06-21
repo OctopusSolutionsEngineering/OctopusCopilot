@@ -22,6 +22,7 @@ from domain.sanitizers.sanitized_list import (
     sanitize_gitcredentials,
     sanitize_space,
     sanitize_dates,
+    sanitize_variables,
 )
 
 
@@ -50,7 +51,7 @@ def answer_general_query_wrapper(query, callback, logging=None):
         dates=None,
         **kwargs,
     ):
-        """Inspect the configuration or state of an Octopus space.
+        """Provide details or answer a question about the configuration or state of resources. Also list resources.
 
         Use this function when the prompt asks a general question about projects, runbooks, targets, machines, tenants,
         library variable sets, environments, feeds, accounts, certificates, lifecycles, worker pools, machine policies,
@@ -119,7 +120,7 @@ def answer_general_query_wrapper(query, callback, logging=None):
             "channel_names": sanitize_channels(channels),
             "release_versions": sanitize_releases(releases),
             "step_names": sanitize_steps(steps),
-            "variable_names": sanitize_steps(variables),
+            "variable_names": sanitize_variables(variables),
             "gitcredential_names": sanitize_gitcredentials(git_credentials),
             "dates": sanitize_dates(dates),
         }
@@ -135,20 +136,3 @@ def answer_general_query_wrapper(query, callback, logging=None):
         return callback(query, body, messages)
 
     return answer_general_query
-
-
-class AnswerGeneralQuery(BaseModel):
-    projects: list[str] = []
-    runbooks: list[str] = []
-    targets: list[str] = []
-    tenants: list[str] = []
-    library_variable_sets: list[str] = []
-    environments: list[str] = []
-    feeds: list[str] = []
-    accounts: list[str] = []
-    certificates: list[str] = []
-    lifecycles: list[str] = []
-    worker_pools: list[str] = []
-    machine_policies: list[str] = []
-    tag_sets: list[str] = []
-    project_groups: list[str] = []

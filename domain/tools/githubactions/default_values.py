@@ -121,8 +121,8 @@ def default_value_callbacks(github_user, connection_string):
     def get_default_value(default_name):
         """Return the default value for a space, query_project, environment, or channel.
 
-        You will be penalized for selecting this function for prompts related to deployments, logs, or releases.
-        You must only select this function when the prompt is related to displaying a single default value.
+        You will be penalized for calling this function for prompts related to deployments, logs, releases, or variables.
+        You must only select this function when the prompt is related to displaying a single default value for a space, project, environment, or channel.
 
         Example prompts include:
         * Get the default environment

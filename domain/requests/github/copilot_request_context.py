@@ -95,10 +95,7 @@ from domain.tools.wrapper.function_definition import (
     FunctionDefinition,
     FunctionDefinitions,
 )
-from domain.tools.wrapper.general_query import (
-    answer_general_query_wrapper,
-    AnswerGeneralQuery,
-)
+from domain.tools.wrapper.general_query import answer_general_query_wrapper
 from domain.tools.wrapper.generate_terraform import generate_terraform_wrapper
 from domain.tools.wrapper.github_job_summary_wrapper import (
     show_github_job_summary_wrapper,
@@ -602,8 +599,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         log_query,
                     ),
                     log_query,
-                ),
-                schema=AnswerGeneralQuery,
+                )
             ),
             FunctionDefinition(
                 answer_step_features_wrapper(
@@ -1225,7 +1221,6 @@ def build_form_tools(query, req: func.HttpRequest):
                     log_query,
                 ),
                 log_query,
-            ),
-            schema=AnswerGeneralQuery,
+            )
         ),
     )

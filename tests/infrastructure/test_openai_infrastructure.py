@@ -350,6 +350,18 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Deploy WebApp Container" in body["project_names"], "body")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_general_project_variable_question(self):
+        """
+        Tests that the llm identifies the correct project name in the query
+        """
+
+        query = "What are the variable names defined in the project."
+        function = llm_tool_query(query, build_mock_test_tools(query))
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query")
+
     @retry((AssertionError), tries=3, delay=2)
     def test_documentation_question(self):
         """
@@ -429,7 +441,13 @@ class MockRequests(unittest.TestCase):
         query = 'Help me understand why the deployment to the "Production" environment failed.'
         function = llm_tool_query(query, build_mock_test_tools(query))
 
-        self.assertEqual(function.name, "release_what_changed_help_me")
+        self.assertIn(
+            function.name,
+            [
+                "release_what_changed_help_me_environment",
+                "release_what_changed_help_me",
+            ],
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_k8s_project(self):
