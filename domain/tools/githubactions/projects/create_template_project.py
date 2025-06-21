@@ -123,7 +123,7 @@ def create_template_project_callback(
     :param github_user: The github user id
     :param connection_string: The connection string to the storage account
     :param log_query: A logging function
-    :param general_examples: The RowKeys that contain general examples of Octopus projects in Terraform
+    :param general_examples: The RowKeys that contain general examples of Octopus projects in Terraform. This can be an empty list when using an LLM that has been fine-tuned on Octopus Deploy projects.
     :param project_example: The RowKey that contains an example of a project in Terraform
     :param project_example_context_name: The name of the context item that contains the project example
     :param general_system_message: The system message to pass to the LLM when generating the Terraform configuration
