@@ -223,7 +223,8 @@ def create_template_project_callback(
                     messages,
                     context,
                     log_query,
-                    "1-mini-2025-04-14-octoterra-trained-2",  # os.getenv("AISERVICES_DEPLOYMENT"),
+                    os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN")
+                    or os.getenv("AISERVICES_DEPLOYMENT"),
                     os.getenv("AISERVICES_KEY"),
                     os.getenv("AISERVICES_ENDPOINT"),
                 )
@@ -366,5 +367,5 @@ def project_context(
         *general_examples_messages,
         project_example_message,
         ("user", "Question: {input}"),
-        ("user", f"Generated {project_example_context_name} Terraform Configuration:"),
+        ("user", f"Generated Terraform Configuration:"),
     ]
