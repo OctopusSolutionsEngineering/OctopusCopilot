@@ -21,6 +21,7 @@ def create_lambda_project_wrapper(query, callback, logging):
         * Create a Lambda project in the space "My Space" called "My Project"
         * Create AWS Lambda project called "My Project" in the space "My Space"
         * Create Lambda project called "My Project"
+        * Create Lambda project called "My Project". Create an AWS account called "AWS" with access key "AKIAIOSFODNN7EXAMPLE"
 
         Args:
         space_name: The optional name of the space
