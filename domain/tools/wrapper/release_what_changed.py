@@ -105,8 +105,8 @@ def release_what_changed_wrapper(
         * What is the latest version of project "my project" deployed to the "Staging" environment?
 
         Args:
-        space: The name of the space
-        project: The name of the project
+        space: The optional name of the space
+        project: The optional name of the project
         environment: The optional name of the environment
         """
 
