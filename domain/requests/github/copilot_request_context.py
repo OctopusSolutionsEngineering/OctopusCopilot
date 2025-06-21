@@ -555,11 +555,15 @@ def build_form_tools(query, req: func.HttpRequest):
         get_github_user_from_form(req), get_functions_connection_string()
     )
 
-    # The order of the tools can make a difference. The dashboard tools are supplied first, as this
-    # appears to give them a higher precedence.
-    # This behaviour is undocumented as far as I can tell - I only found out through trial and error.
     return FunctionDefinitions(
         [
+            FunctionDefinition(set_default_value),
+            FunctionDefinition(get_default_value),
+            FunctionDefinition(get_all_default_values),
+            FunctionDefinition(remove_default_value),
+            FunctionDefinition(save_defaults_as_profile),
+            FunctionDefinition(load_defaults_from_profile),
+            FunctionDefinition(list_profiles),
             FunctionDefinition(
                 show_space_dashboard_wrapper(
                     query,
@@ -694,13 +698,6 @@ def build_form_tools(query, req: func.HttpRequest):
                     get_github_user_from_form(req), get_functions_connection_string()
                 )
             ),
-            FunctionDefinition(set_default_value),
-            FunctionDefinition(get_default_value),
-            FunctionDefinition(get_all_default_values),
-            FunctionDefinition(remove_default_value),
-            FunctionDefinition(save_defaults_as_profile),
-            FunctionDefinition(load_defaults_from_profile),
-            FunctionDefinition(list_profiles),
             *help_functions,
             FunctionDefinition(
                 run_runbook_wrapper(
