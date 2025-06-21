@@ -206,7 +206,7 @@ def create_template_project_callback(
                 messages = project_context(
                     general_examples_values,
                     project_example_values,
-                    f"Example Octopus {project_example_context_name} Terraform Configuration",
+                    project_example_context_name,
                     general_system_message_values,
                     project_system_message_values,
                 )
@@ -350,7 +350,7 @@ def project_context(
     ]
     project_example_message = (
         "system",
-        project_example_context_name
+        f"Example Octopus {project_example_context_name} Terraform Configuration"
         + ": ###\n"
         + escape_message(project_example)
         + "\n"
@@ -366,5 +366,5 @@ def project_context(
         *general_examples_messages,
         project_example_message,
         ("user", "Question: {input}"),
-        ("user", "Terraform Configuration:"),
+        ("user", f"Generated {project_example_context_name} Terraform Configuration:"),
     ]
