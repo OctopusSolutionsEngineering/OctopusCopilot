@@ -363,11 +363,11 @@ class MockRequests(unittest.TestCase):
         Tests that the llm identifies the correct project name in the query
         """
 
-        query = "What are the variable names defined in the project."
+        query = "List the names of the variables defined in the project."
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
-        self.assertEqual(function.name, "answer_general_query")
+        self.assertEqual(function.name, "answer_general_query", body)
 
     @retry((AssertionError), tries=3, delay=2)
     def test_documentation_question(self):
