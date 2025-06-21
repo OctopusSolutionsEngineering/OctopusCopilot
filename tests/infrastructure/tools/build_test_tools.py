@@ -25,6 +25,9 @@ from domain.tools.wrapper.general_query import answer_general_query_wrapper
 from domain.tools.wrapper.generate_terraform import generate_terraform_wrapper
 from domain.tools.wrapper.how_to import how_to_wrapper
 from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_wrapper
+from domain.tools.wrapper.projects.create_lambda_project import (
+    create_lambda_project_wrapper,
+)
 from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
 from domain.tools.wrapper.suggest_solution import suggest_solution_wrapper
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
@@ -126,6 +129,20 @@ def build_mock_test_tools(tool_query):
             ),
             FunctionDefinition(
                 create_k8s_project_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                create_lambda_project_wrapper(
                     tool_query,
                     create_template_project_confirm_callback_wrapper(
                         tool_query,
