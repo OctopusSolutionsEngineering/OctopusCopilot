@@ -1,0 +1,16 @@
+## Script Project Variable Instructions
+
+You must include all the following variables from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
+* resource "octopusdeploy_variable" "script_project_workerpool_1"
+* resource "octopusdeploy_variable" "script_project_message_1"
+
+## Script Project Scheduled Triggers Instructions
+
+You must include all the following project scheduled trigger resources from the "Example Octopus Script Terraform Configuration" unless otherwise specified:
+* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_script_daily_security_scan"
+
+## Script Project Deployment Process Instructions
+
+You must include all the following step resources from the "Example Octopus Script Terraform Configuration" unless otherwise specified:
+* resource "octopusdeploy_process_step" "process_step_script_hello_world"
+* resource "octopusdeploy_process_step" "process_step_script_scan_for_vulnerabilities"
