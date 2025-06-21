@@ -26,10 +26,7 @@ from domain.tools.wrapper.function_definition import (
     FunctionDefinitions,
     FunctionDefinition,
 )
-from domain.tools.wrapper.general_query import (
-    answer_general_query_wrapper,
-    AnswerGeneralQuery,
-)
+from domain.tools.wrapper.general_query import answer_general_query_wrapper
 from domain.tools.wrapper.github_job_summary_wrapper import (
     show_github_job_summary_wrapper,
 )
@@ -143,21 +140,23 @@ def build_tools(tool_query):
         )
     ]
 
+    query_functions = [
+        FunctionDefinition(tool)
+        for tool in answer_general_query_wrapper(
+            tool_query,
+            general_query_cli_callback(
+                get_api_key(),
+                get_octopus_api(),
+                get_default_argument,
+                log_query,
+            ),
+            log_query,
+        )
+    ]
+
     return FunctionDefinitions(
         [
-            FunctionDefinition(
-                answer_general_query_wrapper(
-                    tool_query,
-                    general_query_cli_callback(
-                        get_api_key(),
-                        get_octopus_api(),
-                        get_default_argument,
-                        log_query,
-                    ),
-                    log_query,
-                ),
-                AnswerGeneralQuery,
-            ),
+            *query_functions,
             FunctionDefinition(
                 answer_project_variables_wrapper(
                     tool_query,

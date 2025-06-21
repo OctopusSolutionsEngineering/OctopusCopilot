@@ -123,7 +123,7 @@ def create_template_project_callback(
     :param github_user: The github user id
     :param connection_string: The connection string to the storage account
     :param log_query: A logging function
-    :param general_examples: The RowKeys that contain general examples of Octopus projects in Terraform
+    :param general_examples: The RowKeys that contain general examples of Octopus projects in Terraform. This can be an empty list when using an LLM that has been fine-tuned on Octopus Deploy projects.
     :param project_example: The RowKey that contains an example of a project in Terraform
     :param project_example_context_name: The name of the context item that contains the project example
     :param general_system_message: The system message to pass to the LLM when generating the Terraform configuration
@@ -211,7 +211,7 @@ def create_template_project_callback(
                     project_system_message_values,
                 )
 
-                # We use the new AI services resource in Azure to build the sample Terarform. This gives us access to
+                # We use the new AI services resource in Azure to build the sample Terraform. This gives us access to
                 # a wider range of models. See https://learn.microsoft.com/en-us/azure/ai-services/openai/overview#comparing-azure-openai-and-openai
                 # for the differences between OpenAI and AI Services.
                 # The important thing to note about this LLM call is that we do not pass any of the Octopus configuration
@@ -223,7 +223,8 @@ def create_template_project_callback(
                     messages,
                     context,
                     log_query,
-                    os.getenv("AISERVICES_DEPLOYMENT"),
+                    os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN")
+                    or os.getenv("AISERVICES_DEPLOYMENT"),
                     os.getenv("AISERVICES_KEY"),
                     os.getenv("AISERVICES_ENDPOINT"),
                 )
@@ -350,12 +351,12 @@ def project_context(
     ]
     project_example_message = (
         "system",
-        project_example_context_name
-        + ": ###\n"
+        f"# Example Octopus {project_example_context_name} Terraform Configuration"
+        + "\n"
         + escape_message(project_example)
         + "\n"
         + escape_message(general_system_message_values)
-        + "\n###",
+        + "\n",
     )
 
     return [
@@ -366,5 +367,5 @@ def project_context(
         *general_examples_messages,
         project_example_message,
         ("user", "Question: {input}"),
-        ("user", "Terraform Configuration:"),
+        ("user", f"Generated Terraform Configuration:"),
     ]

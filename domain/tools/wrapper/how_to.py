@@ -53,14 +53,46 @@ def how_to_wrapper(query, callback, logging):
 
     def provide_help_and_instructions(keywords=None, **kwargs):
         """Answers questions like how or where to create, use, add, remove, setup, enable, disable, configure, or find
-        Octopus Deploy features like: Projects, Environments, Lifecycles, Channels, Deployments, Releases,
-        Deployment Processes, Variables, Lifecycle Events, Integrations, Retention Policies, Security,
-        Audit Logs, Targets, Machines, Agents, Authentication, polling and listening Tentacles, SSH, Step Templates, Licenses,
-        Metrics, DORA, DORA metrics, Config-as-Code (CaC), OCL, community step templates, using the CLI, code samples,
-        REST API, explanations of high level concepts, integration with continuous integration (CI) servers, integration
-        with ServiceNow (SNOW) and Jira service Manager (JSM), details on metrics like deployment frequency,
-        lead time for changes, change failure rate, and recovery time, and how and where to measure, view, and generate
+        Octopus Deploy features like:
+
+        * Projects
+        * Environments
+        * Lifecycles
+        * Channels
+        * Deployments
+        * Releases
+        * Deployment Processes
+        * Variables
+        * Lifecycle Events
+        * Integrations
+        * Retention Policies
+        * Security
+        * Audit Logs
+        * Targets
+        * Machines
+        * Agents
+        * Authentication
+        * polling and listening Tentacles
+        * SSH
+        * Step Templates
+        * Licenses
+        * Metrics
+        * DORA
+        * DORA metrics
+        * Config-as-Code (CaC)
+        * OCL
+        * community step templates
+        * using the CLI
+        * code samples
+        * REST API
+        * explanations of high level concepts
+        * integration with continuous integration (CI) servers
+        * integration with ServiceNow (SNOW) and Jira service Manager (JSM)
+        * details on metrics like deployment frequency,lead time for changes, change failure rate, and recovery time, and how and where to measure, view, and generate
         these metrics.
+
+        You will be penalized for using this function when the query relates to running a runbook.
+        You will be penalized for using this function when the query relates to the general configuration or state of Octopus resources.
 
         Args:
         keywords: The keywords extracted from the query

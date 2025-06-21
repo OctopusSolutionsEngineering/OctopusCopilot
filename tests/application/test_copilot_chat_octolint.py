@@ -68,6 +68,9 @@ class CopilotChatOctolintTest(unittest.TestCase):
             save_default_values(
                 github_user, "workflow", "build.yaml", os.environ["AzureWebJobsStorage"]
             )
+            save_default_values(
+                github_user, "project", "", os.environ["AzureWebJobsStorage"]
+            )
         except Exception as e:
             print(
                 "The tests will fail because Azurite is not running. Run Azurite with: "
