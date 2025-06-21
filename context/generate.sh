@@ -66,7 +66,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionseng
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > k8s.tf
 
-./generate_instructions.py k8s.tf "Kubernetes Web App" > instructions_k8s.md
+./generate_instructions.py k8s.tf "Kubernetes" > instructions_k8s.md
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
     -url https://mattc.octopus.app \

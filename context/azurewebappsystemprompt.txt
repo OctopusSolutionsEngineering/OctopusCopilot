@@ -58,3 +58,6 @@ You must include all the following runbook steps from the runbook_azure_web_app_
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_deregister_target"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_destroy_resource_group"
 
+## Azure Web App Lifecycle Instructions
+
+You must include all the following lifecycle resources from the "Example Octopus Azure Web App Terraform Configuration" unless otherwise specified:
