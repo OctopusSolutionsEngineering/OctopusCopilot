@@ -18,7 +18,7 @@ def create_account_wrapper(query, callback, logging):
 
 
         Args:
-        space_name: The name of the space
+        space_name: The optional name of the space
         account_name: The name of the account
         account_type: The type of the account
         """

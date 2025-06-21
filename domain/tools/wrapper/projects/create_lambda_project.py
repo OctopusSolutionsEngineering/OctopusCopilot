@@ -4,13 +4,26 @@ def create_lambda_project_wrapper(query, callback, logging):
         project_name=None,
         **kwargs,
     ):
-        """Creates an AWS Lambda project in Octopus Deploy. Example prompts include:
-            * Create a Lambda project in the space "My Space" called "My Project"
-            * Create AWS Lambda project called "My Project" in the space "My Space"
-            * Create Lambda project called "My Project"
+        """
+        Creates an AWS Lambda project in Octopus Deploy, and optionally create any other resources required to run the project such as:
+        * Accounts
+        * Feeds
+        * Environments
+        * Lifecycles
+        * Steps
+        * Triggers
+        * Machines
+        * Targets
+        * Deployment processes
+        * Runbooks
+
+        Example prompts include:
+        * Create a Lambda project in the space "My Space" called "My Project"
+        * Create AWS Lambda project called "My Project" in the space "My Space"
+        * Create Lambda project called "My Project"
 
         Args:
-        space_name: The name of the space
+        space_name: The optional name of the space
         project_name: The name of the project
         """
 

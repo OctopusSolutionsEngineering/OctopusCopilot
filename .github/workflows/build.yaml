@@ -120,7 +120,9 @@ jobs:
           chmod +x spacebuilder_linux_amd64_azure
           ./spacebuilder_linux_amd64_azure &
         env:
-          # The port used when running the octolint microservice
+          # The directory containing the policy files
+          SPACEBUILDER_OPA_POLICY_PATH: policy
+          # The port used when running the spacebuilder microservice
           FUNCTIONS_CUSTOMHANDLER_PORT: 8083
           # This is the connection string to Azurite, the test Aure Storage emulator
           AzureWebJobsStorage: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;
