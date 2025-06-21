@@ -121,9 +121,9 @@ jobs:
           ./spacebuilder_linux_amd64_azure &
         env:
           # The directory containing the policy files
-          SPACEBUILDER_OPA_POLICY_PATH: "${{ env.GITHUB_WORKSPACE }}\spacebuilder\policy"
+          SPACEBUILDER_OPA_POLICY_PATH: "${{ github.workspace }}\spacebuilder\policy"
             # The directory containing the Terraform providers
-          SPACEBUILDER_TERRAFORM_PROVIDERS: "${{ env.GITHUB_WORKSPACE }}\spacebuilder\provider"
+          SPACEBUILDER_TERRAFORM_PROVIDERS: "${{ github.workspace }}\spacebuilder\provider"
           # The port used when running the spacebuilder microservice
           FUNCTIONS_CUSTOMHANDLER_PORT: 8083
           # This is the connection string to Azurite, the test Aure Storage emulator
