@@ -18,6 +18,7 @@ name: Python Build
     paths-ignore:
       - '.octopus/**'
       - 'context/**'
+      - 'main.py'
   schedule:
     - cron: '0 0 * * *'
 jobs:

@@ -643,7 +643,8 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 
 ## Terraform Instructions
 
-* Each "data" and "resource" block must have a unique name.
+* Each resource type must have a unique resource name.
+* Each data type must have a unique data name.
 * You will be penalized for defining resources or adding attributes that are not included in the sample Terraform configurations.
 * Every resource must have a "count" attribute.
 * Each "count" attribute must be defined in the format "${length(data.<data type>.<data resource>.<collection>) != 0 ? 0 : 1}".
@@ -699,5 +700,6 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 * You will be penalized for including any instructions.
 * You will be penalized for returning any other text.
 * You will be penalized for including any comments.
-* You will be penalized for duplicating resources or data blocks.
+* You will be penalized for duplicating resource names for a resource type, for example, including `resource "octopusdeploy_process_step" "step1" { ... }` and `resource "octopusdeploy_process_step" "step1" { ... }` is invalid.
+* You will be penalized for duplicating data names for a data type, for example, including `data "octopusdeploy_projects" "project1" { ... } and `data "octopusdeploy_projects" "project1" { ... }` is invalid.
 * You will be penalized for not including all required resources and data blocks.
