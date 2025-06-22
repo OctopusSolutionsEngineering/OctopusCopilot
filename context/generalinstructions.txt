@@ -505,6 +505,9 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
   * "Success"
   * "Variable"
 * The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
+* The "slug" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource must be unique across the project.
+* The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource must be unique across the project.
+* You will be penalized for defining a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource with a duplicate "name" or "slug" attribute within the same project.
 * You will be penalized for defining a "name" attribute with the characters "/" and "\".
 * Target tags must only be defined in the "Octopus.Action.TargetRoles" properties on a "octopusdeploy_process_step", for example:
 
