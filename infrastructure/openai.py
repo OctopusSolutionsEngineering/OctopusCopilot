@@ -55,10 +55,9 @@ def llm_message_query(
     llm = AzureChatOpenAI(
         temperature=0,
         azure_deployment=deployment,
-        openai_api_key=(api_key or os.environ["AISERVICES_KEY"]),
+        api_key=(api_key or os.environ["AISERVICES_KEY"]),
         azure_endpoint=(endpoint or os.environ["AISERVICES_ENDPOINT"]),
         api_version=version,
-        request_timeout=llm_timeout,
     )
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)
