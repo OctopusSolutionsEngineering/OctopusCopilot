@@ -100,6 +100,11 @@ step "deploy-with-cli" {
                      "slotSetting": false
                    },
                    {
+                     "name": "AISERVICES_DEPLOYMENT_PROJECT_GEN_VERSION",
+                     "value": "#{Azure.US.AIServices.Deployment.ProjectGenVersion}",
+                     "slotSetting": false
+                   },
+                   {
                      "name": "AISERVICES_DEPLOYMENT_FUNCTIONS",
                      "value": "#{Azure.US.AIServices.Deployment.Functions}",
                      "slotSetting": false

@@ -7,13 +7,12 @@ from langchain_openai import AzureChatOpenAI
 from openai import RateLimitError
 from retry import retry
 
-from domain.config.openai import llm_timeout
 from domain.exceptions.openai_error import (
     OpenAIContentFilter,
     OpenAITokenLengthExceeded,
     OpenAIBadRequest,
 )
-from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
+
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitize_logs import sanitize_message
@@ -58,10 +57,6 @@ def llm_message_query(
         api_key=(api_key or os.environ["AISERVICES_KEY"]),
         azure_endpoint=(endpoint or os.environ["AISERVICES_ENDPOINT"]),
         api_version=version,
-        top_p=1.0,
-        frequency_penalty=0.0,
-        presence_penalty=0.0,
-        max_tokens=None,
     )
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)
