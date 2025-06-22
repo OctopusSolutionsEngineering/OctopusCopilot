@@ -555,6 +555,8 @@ def build_form_tools(query, req: func.HttpRequest):
         get_github_user_from_form(req), get_functions_connection_string()
     )
 
+    general_project_examples = ["context.tf", "everystep.tf", "projectsettings1.tf"]
+
     return FunctionDefinitions(
         [
             FunctionDefinition(set_default_value),
@@ -1080,7 +1082,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         get_functions_connection_string(),
                         log_query,
-                        [],
+                        general_project_examples,
                         "k8s.tf",
                         "Kubernetes",
                         "generalinstructions.txt",
@@ -1107,7 +1109,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         get_functions_connection_string(),
                         log_query,
-                        [],
+                        general_project_examples,
                         "azurewebapp.tf",
                         "Azure Web App",
                         "generalinstructions.txt",
@@ -1134,7 +1136,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         get_functions_connection_string(),
                         log_query,
-                        [],
+                        general_project_examples,
                         "azurefunction.tf",
                         "Azure Function",
                         "generalinstructions.txt",
@@ -1161,7 +1163,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         get_functions_connection_string(),
                         log_query,
-                        [],
+                        general_project_examples,
                         "awslambda.tf",
                         "AWS Lambda Function",
                         "generalinstructions.txt",
@@ -1188,7 +1190,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         get_functions_connection_string(),
                         log_query,
-                        [],
+                        general_project_examples,
                         "windowsiis.tf",
                         "Windows IIS",
                         "generalinstructions.txt",
