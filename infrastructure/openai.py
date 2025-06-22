@@ -49,16 +49,19 @@ def llm_message_query(
     version = (
         custom_version
         or os.environ.get("AISERVICES_DEPLOYMENT_QUERY_VERSION")
-        or "2024-10-21"  # https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-preview-api-releases
+        or "2024-12-01-preview"  # https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-preview-api-releases
     )
 
     llm = AzureChatOpenAI(
         temperature=0,
         azure_deployment=deployment,
-        openai_api_key=(api_key or os.environ["AISERVICES_KEY"]),
+        api_key=(api_key or os.environ["AISERVICES_KEY"]),
         azure_endpoint=(endpoint or os.environ["AISERVICES_ENDPOINT"]),
         api_version=version,
-        request_timeout=llm_timeout,
+        top_p=1.0,
+        frequency_penalty=0.0,
+        presence_penalty=0.0,
+        max_tokens=10000,
     )
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)
@@ -113,7 +116,10 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
         os.environ.get("AISERVICES_DEPLOYMENT_FUNCTIONS")
         or os.environ["AISERVICES_DEPLOYMENT"]
     )
-    version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-10-21"
+    version = (
+        os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION")
+        or "2024-12-01-preview"
+    )
 
     agent = OpenAIFunctionsAgent.from_llm_and_tools(
         llm=AzureChatOpenAI(

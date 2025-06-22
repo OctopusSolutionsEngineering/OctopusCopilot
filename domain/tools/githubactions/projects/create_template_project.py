@@ -343,16 +343,14 @@ def project_context(
     general_examples_messages = [
         (
             "system",
-            "Example Octopus Terraform Configuration: ###\n"
-            + escape_message(example)
-            + "\n###",
+            "# Example Octopus Terraform Configuration\n\n" + escape_message(example),
         )
         for example in general_examples
     ]
     project_example_message = (
         "system",
         f"# Example Octopus {project_example_context_name} Terraform Configuration"
-        + "\n"
+        + "\n\n"
         + escape_message(project_example)
         + "\n"
         + escape_message(general_system_message_values)
