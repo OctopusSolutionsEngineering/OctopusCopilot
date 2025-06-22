@@ -7,13 +7,12 @@ from langchain_openai import AzureChatOpenAI
 from openai import RateLimitError
 from retry import retry
 
-from domain.config.openai import llm_timeout
 from domain.exceptions.openai_error import (
     OpenAIContentFilter,
     OpenAITokenLengthExceeded,
     OpenAIBadRequest,
 )
-from domain.langchain.azure_chat_open_ai_with_tooling import AzureChatOpenAIWithTooling
+
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitize_logs import sanitize_message
