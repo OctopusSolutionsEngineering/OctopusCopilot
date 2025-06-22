@@ -41,7 +41,17 @@ from domain.tools.wrapper.project_variables import (
     answer_project_variables_wrapper,
     answer_project_variables_usage_wrapper,
 )
+from domain.tools.wrapper.projects.create_azure_function_project import (
+    create_azure_function_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_azure_web_app_project import (
+    create_azure_web_app_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_iis_project import create_iis_project_wrapper
 from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_wrapper
+from domain.tools.wrapper.projects.create_lambda_project import (
+    create_lambda_project_wrapper,
+)
 from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.tools.wrapper.task_summary_wrapper import show_task_summary_wrapper
@@ -285,6 +295,114 @@ def build_tools(tool_query):
                         "Kubernetes",
                         "generalinstructions.txt",
                         "k8ssystemprompt.txt",
+                        None,
+                        None,
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    tool_query,
+                    get_github_user(),
+                    lambda: (get_api_key(), get_octopus_api()),
+                    log_query,
+                    None,
+                    None,
+                ),
+            ),
+            FunctionDefinition(
+                create_azure_function_project_wrapper(
+                    tool_query,
+                    callback=create_template_project_callback(
+                        lambda: (get_api_key(), get_octopus_api()),
+                        get_github_user(),
+                        azurite_connection_string,
+                        log_query,
+                        general_project_examples,
+                        "azurefunction.tf",
+                        "Azure Function",
+                        "generalinstructions.txt",
+                        "azurefunctionsystemprompt.txt",
+                        None,
+                        None,
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    tool_query,
+                    get_github_user(),
+                    lambda: (get_api_key(), get_octopus_api()),
+                    log_query,
+                    None,
+                    None,
+                ),
+            ),
+            FunctionDefinition(
+                create_lambda_project_wrapper(
+                    tool_query,
+                    callback=create_template_project_callback(
+                        lambda: (get_api_key(), get_octopus_api()),
+                        get_github_user(),
+                        azurite_connection_string,
+                        log_query,
+                        general_project_examples,
+                        "awslambda.tf",
+                        "AWS Lambda Function",
+                        "generalinstructions.txt",
+                        "awslambdaystemprompt.txt",
+                        None,
+                        None,
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    tool_query,
+                    get_github_user(),
+                    lambda: (get_api_key(), get_octopus_api()),
+                    log_query,
+                    None,
+                    None,
+                ),
+            ),
+            FunctionDefinition(
+                create_azure_web_app_project_wrapper(
+                    tool_query,
+                    callback=create_template_project_callback(
+                        lambda: (get_api_key(), get_octopus_api()),
+                        get_github_user(),
+                        azurite_connection_string,
+                        log_query,
+                        general_project_examples,
+                        "azurewebapp.tf",
+                        "Azure Web App",
+                        "generalinstructions.txt",
+                        "azurewebappsystemprompt.txt",
+                        None,
+                        None,
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    tool_query,
+                    get_github_user(),
+                    lambda: (get_api_key(), get_octopus_api()),
+                    log_query,
+                    None,
+                    None,
+                ),
+            ),
+            FunctionDefinition(
+                create_iis_project_wrapper(
+                    tool_query,
+                    callback=create_template_project_callback(
+                        lambda: (get_api_key(), get_octopus_api()),
+                        get_github_user(),
+                        azurite_connection_string,
+                        log_query,
+                        general_project_examples,
+                        "windowsiis.tf",
+                        "Windows IIS",
+                        "generalinstructions.txt",
+                        "windowsiissystemprompt.txt",
                         None,
                         None,
                     ),
