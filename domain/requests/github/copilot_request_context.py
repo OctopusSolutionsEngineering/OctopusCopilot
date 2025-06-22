@@ -555,7 +555,7 @@ def build_form_tools(query, req: func.HttpRequest):
         get_github_user_from_form(req), get_functions_connection_string()
     )
 
-    general_project_examples = ["everystep.tf"]
+    general_project_examples = []
 
     return FunctionDefinitions(
         [
