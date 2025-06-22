@@ -90,7 +90,7 @@ def find_projects(filename, label):
 
     try:
         # Open and read the file
-        print(f"\n## {label} Lifecycle Instructions\n")
+        print(f"\n## {label} Project Instructions\n")
         print(
             f'You must include all the following project resources from the "Example Octopus {label} Terraform Configuration" unless otherwise specified:'
         )
