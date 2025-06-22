@@ -76,3 +76,10 @@ You must include all the following lifecycle resources from the "Example Octopus
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+
+You must include all the following lifecycle resources from the "Example Octopus Azure Web App Terraform Configuration" unless otherwise specified:
+* data "octopusdeploy_projects" "projecttrigger_azure_web_app_daily_security_scan"
+* data "octopusdeploy_projects" "runbook_azure_web_app_create_infrastructure"
+* data "octopusdeploy_projects" "runbook_azure_web_app_destroy_infrastructure"
+* data "octopusdeploy_projects" "project_azure_web_app"
+* resource "octopusdeploy_project" "project_azure_web_app"
