@@ -16,7 +16,7 @@ def find_octopus_variables(filename, label):
         # Open and read the file
         print(f"## {label} Project Variable Instructions\n")
         print(
-            "You must include all the following variables once unless otherwise specified:"
+            f'You must include all the following variables from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:'
         )
         with open(filename, "r") as file:
             for line_number, line in enumerate(file, 1):
@@ -38,7 +38,7 @@ def find_project_scheduled_triggers(filename, label):
         # Open and read the file
         print(f"\n## {label} Project Scheduled Triggers Instructions\n")
         print(
-            "You must include all the following project scheduled trigger resources unless otherwise specified:"
+            f'You must include all the following project scheduled trigger resources from the "Example Octopus {label} Terraform Configuration" unless otherwise specified:'
         )
         with open(filename, "r") as file:
             lines = file.readlines()
@@ -55,12 +55,40 @@ def find_project_scheduled_triggers(filename, label):
         print(f"Error processing file: {e}")
 
 
+def find_lifecycles(filename, label):
+    # Pattern to match the resource declarations for octopusdeploy_lifecycle
+    pattern = r'resource\s+"octopusdeploy_lifecycle"\s+"([^"]+)"'
+    data_pattern = r'data\s+"octopusdeploy_lifecycles"\s+"([^"]+)"'
+
+    try:
+        # Open and read the file
+        print(f"\n## {label} Lifecycle Instructions\n")
+        print(
+            f'You must include all the following lifecycle resources from the "Example Octopus {label} Terraform Configuration" unless otherwise specified:'
+        )
+        with open(filename, "r") as file:
+            lines = file.readlines()
+
+            for i, line in enumerate(lines):
+                match = re.match(pattern, line)
+                if match:
+                    print(f'* resource "octopusdeploy_lifecycle" "{match.group(1)}"')
+
+                match = re.match(data_pattern, line)
+                if match:
+                    print(f'* data "octopusdeploy_lifecycles" "{match.group(1)}"')
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
+    except Exception as e:
+        print(f"Error processing file: {e}")
+
+
 def find_step_names(filename, label):
     try:
         # Open and read the file
         print(f"\n## {label} Project Deployment Process Instructions\n")
         print(
-            "You must include all the following step resources unless otherwise specified:"
+            f'You must include all the following step resources from the "Example Octopus {label} Terraform Configuration" unless otherwise specified:'
         )
         with open(filename, "r") as file:
             content = file.read()
@@ -344,6 +372,7 @@ def main():
     find_step_names(filename, label)
     find_runbook_names(filename, label)
     find_runbook_step_names(filename, label)
+    find_lifecycles(filename, label)
 
 
 if __name__ == "__main__":

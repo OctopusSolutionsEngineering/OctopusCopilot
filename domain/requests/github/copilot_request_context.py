@@ -95,10 +95,7 @@ from domain.tools.wrapper.function_definition import (
     FunctionDefinition,
     FunctionDefinitions,
 )
-from domain.tools.wrapper.general_query import (
-    answer_general_query_wrapper,
-    AnswerGeneralQuery,
-)
+from domain.tools.wrapper.general_query import answer_general_query_wrapper
 from domain.tools.wrapper.generate_terraform import generate_terraform_wrapper
 from domain.tools.wrapper.github_job_summary_wrapper import (
     show_github_job_summary_wrapper,
@@ -558,11 +555,18 @@ def build_form_tools(query, req: func.HttpRequest):
         get_github_user_from_form(req), get_functions_connection_string()
     )
 
-    # The order of the tools can make a difference. The dashboard tools are supplied first, as this
-    # appears to give them a higher precedence.
-    # This behaviour is undocumented as far as I can tell - I only found out through trial and error.
+    general_project_examples = ["context.tf", "everystep.tf", "projectsettings1.tf"]
+
     return FunctionDefinitions(
         [
+            FunctionDefinition(set_default_value),
+            FunctionDefinition(get_default_value),
+            FunctionDefinition(get_all_default_values),
+            FunctionDefinition(remove_default_value),
+            FunctionDefinition(save_defaults_as_profile),
+            FunctionDefinition(load_defaults_from_profile),
+            FunctionDefinition(list_profiles),
+            *docs_functions,
             FunctionDefinition(
                 show_space_dashboard_wrapper(
                     query,
@@ -602,8 +606,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         log_query,
                     ),
                     log_query,
-                ),
-                schema=AnswerGeneralQuery,
+                )
             ),
             FunctionDefinition(
                 answer_step_features_wrapper(
@@ -698,13 +701,6 @@ def build_form_tools(query, req: func.HttpRequest):
                     get_github_user_from_form(req), get_functions_connection_string()
                 )
             ),
-            FunctionDefinition(set_default_value),
-            FunctionDefinition(get_default_value),
-            FunctionDefinition(get_all_default_values),
-            FunctionDefinition(remove_default_value),
-            FunctionDefinition(save_defaults_as_profile),
-            FunctionDefinition(load_defaults_from_profile),
-            FunctionDefinition(list_profiles),
             *help_functions,
             FunctionDefinition(
                 run_runbook_wrapper(
@@ -973,142 +969,6 @@ def build_form_tools(query, req: func.HttpRequest):
                     log_query,
                 ),
             ),
-            *docs_functions,
-            FunctionDefinition(
-                create_k8s_project_wrapper(
-                    query,
-                    callback=create_template_project_callback(
-                        lambda: get_api_key_and_url(req),
-                        get_github_user_from_form(req),
-                        get_functions_connection_string(),
-                        log_query,
-                        ["context.tf", "everystep.tf", "projectsettings1.tf"],
-                        "k8s.tf",
-                        "Example Octopus Kubernetes Project Terraform Configuration",
-                        "generalinstructions.txt",
-                        "k8ssystemprompt.txt",
-                        get_redirections(req),
-                        get_redirections_api_key(req),
-                    ),
-                    logging=log_query,
-                ),
-                callback=create_template_project_confirm_callback_wrapper(
-                    query,
-                    get_github_user_from_form(req),
-                    lambda: get_api_key_and_url(req),
-                    log_query,
-                    get_redirections(req),
-                    get_redirections_api_key(req),
-                ),
-            ),
-            FunctionDefinition(
-                create_azure_web_app_project_wrapper(
-                    query,
-                    callback=create_template_project_callback(
-                        lambda: get_api_key_and_url(req),
-                        get_github_user_from_form(req),
-                        get_functions_connection_string(),
-                        log_query,
-                        ["context.tf", "everystep.tf", "projectsettings1.tf"],
-                        "azurewebapp.tf",
-                        "Example Octopus Azure Web App Project Terraform Configuration",
-                        "generalinstructions.txt",
-                        "azurewebappsystemprompt.txt",
-                        get_redirections(req),
-                        get_redirections_api_key(req),
-                    ),
-                    logging=log_query,
-                ),
-                callback=create_template_project_confirm_callback_wrapper(
-                    query,
-                    get_github_user_from_form(req),
-                    lambda: get_api_key_and_url(req),
-                    log_query,
-                    get_redirections(req),
-                    get_redirections_api_key(req),
-                ),
-            ),
-            FunctionDefinition(
-                create_azure_function_project_wrapper(
-                    query,
-                    callback=create_template_project_callback(
-                        lambda: get_api_key_and_url(req),
-                        get_github_user_from_form(req),
-                        get_functions_connection_string(),
-                        log_query,
-                        ["context.tf", "everystep.tf", "projectsettings1.tf"],
-                        "azurefunction.tf",
-                        "Example Octopus Azure Function Project Terraform Configuration",
-                        "generalinstructions.txt",
-                        "azurefunctionsystemprompt.txt",
-                        get_redirections(req),
-                        get_redirections_api_key(req),
-                    ),
-                    logging=log_query,
-                ),
-                callback=create_template_project_confirm_callback_wrapper(
-                    query,
-                    get_github_user_from_form(req),
-                    lambda: get_api_key_and_url(req),
-                    log_query,
-                    get_redirections(req),
-                    get_redirections_api_key(req),
-                ),
-            ),
-            FunctionDefinition(
-                create_lambda_project_wrapper(
-                    query,
-                    callback=create_template_project_callback(
-                        lambda: get_api_key_and_url(req),
-                        get_github_user_from_form(req),
-                        get_functions_connection_string(),
-                        log_query,
-                        ["context.tf", "everystep.tf", "projectsettings1.tf"],
-                        "awslambda.tf",
-                        "Example Octopus AWS Lambda Function Project Terraform Configuration",
-                        "generalinstructions.txt",
-                        "awslambdaystemprompt.txt",
-                        get_redirections(req),
-                        get_redirections_api_key(req),
-                    ),
-                    logging=log_query,
-                ),
-                callback=create_template_project_confirm_callback_wrapper(
-                    query,
-                    get_github_user_from_form(req),
-                    lambda: get_api_key_and_url(req),
-                    log_query,
-                    get_redirections(req),
-                    get_redirections_api_key(req),
-                ),
-            ),
-            FunctionDefinition(
-                create_iis_project_wrapper(
-                    query,
-                    callback=create_template_project_callback(
-                        lambda: get_api_key_and_url(req),
-                        get_github_user_from_form(req),
-                        get_functions_connection_string(),
-                        log_query,
-                        ["context.tf", "everystep.tf", "projectsettings1.tf"],
-                        "windowsiis.tf",
-                        "Example Octopus Windows IIS Project Terraform Configuration",
-                        "generalinstructions.txt",
-                        "windowsiissystemprompt.txt",
-                        get_redirections(req),
-                        get_redirections_api_key(req),
-                    ),
-                    logging=log_query,
-                ),
-                callback=create_template_project_confirm_callback_wrapper(
-                    query,
-                    get_github_user_from_form(req),
-                    lambda: get_api_key_and_url(req),
-                    log_query,
-                    get_redirections(req),
-                    get_redirections_api_key(req),
-                ),
-            ),
             FunctionDefinition(
                 create_feed_wrapper(
                     query,
@@ -1214,6 +1074,141 @@ def build_form_tools(query, req: func.HttpRequest):
                     logging=log_query,
                 ),
             ),
+            FunctionDefinition(
+                create_k8s_project_wrapper(
+                    query,
+                    callback=create_template_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "k8s.tf",
+                        "Kubernetes",
+                        "generalinstructions.txt",
+                        "k8ssystemprompt.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+            ),
+            FunctionDefinition(
+                create_azure_web_app_project_wrapper(
+                    query,
+                    callback=create_template_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "azurewebapp.tf",
+                        "Azure Web App",
+                        "generalinstructions.txt",
+                        "azurewebappsystemprompt.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+            ),
+            FunctionDefinition(
+                create_azure_function_project_wrapper(
+                    query,
+                    callback=create_template_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "azurefunction.tf",
+                        "Azure Function",
+                        "generalinstructions.txt",
+                        "azurefunctionsystemprompt.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+            ),
+            FunctionDefinition(
+                create_lambda_project_wrapper(
+                    query,
+                    callback=create_template_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "awslambda.tf",
+                        "AWS Lambda Function",
+                        "generalinstructions.txt",
+                        "awslambdaystemprompt.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+            ),
+            FunctionDefinition(
+                create_iis_project_wrapper(
+                    query,
+                    callback=create_template_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "windowsiis.tf",
+                        "Windows IIS",
+                        "generalinstructions.txt",
+                        "windowsiissystemprompt.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+            ),
         ],
         fallback=FunctionDefinitions(docs_functions),
         invalid=FunctionDefinition(
@@ -1225,7 +1220,6 @@ def build_form_tools(query, req: func.HttpRequest):
                     log_query,
                 ),
                 log_query,
-            ),
-            schema=AnswerGeneralQuery,
+            )
         ),
     )

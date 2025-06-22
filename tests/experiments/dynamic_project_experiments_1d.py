@@ -10,10 +10,7 @@ from domain.tools.wrapper.function_definition import (
     FunctionDefinition,
     FunctionDefinitions,
 )
-from domain.tools.wrapper.general_query import (
-    answer_general_query_wrapper,
-    AnswerGeneralQuery,
-)
+from domain.tools.wrapper.general_query import answer_general_query_wrapper
 from infrastructure.octopus import get_projects, get_space_id_and_name_from_name
 from infrastructure.openai import llm_tool_query
 
@@ -115,8 +112,7 @@ class DynamicProjectExperiments(unittest.TestCase):
                             FunctionDefinition(
                                 answer_general_query_wrapper(
                                     tool_query, general_query_handler
-                                ),
-                                AnswerGeneralQuery,
+                                )
                             ),
                         ]
                     )

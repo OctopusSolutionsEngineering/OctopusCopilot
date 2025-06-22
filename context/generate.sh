@@ -66,7 +66,8 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionseng
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > k8s.tf
 
-./generate_instructions.py k8s.tf "Kubernetes Web App" > instructions_k8s.md
+# The project name (i.e "Kubernetes" in this case) must match the value in copilot_request_context.py
+./generate_instructions.py k8s.tf "Kubernetes" > instructions_k8s.md
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
     -url https://mattc.octopus.app \
@@ -143,3 +144,22 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionseng
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > windowsiis.tf
 
 ./generate_instructions.py windowsiis.tf "Windows IIS" > instructions_iis.md
+
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+    -url https://mattc.octopus.app \
+    -space Spaces-3368 \
+    -apiKey $OCTOPUS_CLI_API_KEY \
+    -projectName "Script" \
+    -stepTemplate \
+    -stepTemplateName "Space Context" \
+    -stepTemplateKey "SpaceContext" \
+    -dummySecretVariableValues \
+    -includeProviderServerDetails=false \
+    -ignoreCacManagedValues=false \
+    -excludeCaCProjectSettings=true \
+    -includeOctopusOutputVars=false \
+    -inlineVariableValues \
+    -dest /tmp/octoexport
+cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > script.tf
+
+./generate_instructions.py script.tf "Script" > instructions_script.md

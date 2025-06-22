@@ -289,7 +289,7 @@ class MockRequests(unittest.TestCase):
         # these are all the same tool, and it doesn't matter which one we use
         self.assertIn(
             function.name,
-            ["release_what_changed", "release_what_changed_with_dates"],
+            ["release_or_deployment_what_changed", "release_what_changed_with_dates"],
             response,
         )
         self.assertTrue(
@@ -319,7 +319,14 @@ class MockRequests(unittest.TestCase):
         function = llm_tool_query(query, build_mock_test_tools(query))
         response = function.call_function()
 
-        self.assertEqual(function.name, "release_what_changed", response)
+        self.assertIn(
+            function.name,
+            [
+                "release_or_deployment_what_changed",
+                "release_or_deployment_what_changed_help_me_environment",
+            ],
+            response,
+        )
         self.assertTrue(response["projects"] == "test", response)
         # Interestingly, the LLM will capitalize the environment name sometimes
         self.assertTrue(response["environments"].casefold() == "production", response)
@@ -349,6 +356,18 @@ class MockRequests(unittest.TestCase):
 
         self.assertEqual(function.name, "answer_general_query")
         self.assertTrue("Deploy WebApp Container" in body["project_names"], "body")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_general_project_variable_question(self):
+        """
+        Tests that the llm identifies the correct project name in the query
+        """
+
+        query = "List the names of the variables defined in the project."
+        function = llm_tool_query(query, build_mock_test_tools(query))
+        body = function.call_function()
+
+        self.assertEqual(function.name, "answer_general_query", body)
 
     @retry((AssertionError), tries=3, delay=2)
     def test_documentation_question(self):
@@ -429,7 +448,13 @@ class MockRequests(unittest.TestCase):
         query = 'Help me understand why the deployment to the "Production" environment failed.'
         function = llm_tool_query(query, build_mock_test_tools(query))
 
-        self.assertEqual(function.name, "release_what_changed_help_me")
+        self.assertIn(
+            function.name,
+            [
+                "release_or_deployment_what_changed_help_me_environment",
+                "release_or_deployment_what_changed",
+            ],
+        )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_k8s_project(self):
@@ -441,6 +466,28 @@ class MockRequests(unittest.TestCase):
         function = llm_tool_query(query, build_mock_test_tools(query))
 
         self.assertEqual(function.name, "create_k8s_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_lambda_project(self):
+        """
+        Tests that the llm can correctly identify the function to call when the prompt is
+        """
+
+        query = 'Create a AWS Lambda project called "OAM API" in the project group "AWS". Create the AWS Account with the name "My AWS Account" and with an access key of "ABCDEFGHIJKLMNOPQRST"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_lambda_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_account(self):
+        """
+        Tests that the llm can correctly identify the function to call when the prompt is
+        """
+
+        query = 'Create the AWS Account with the name "My AWS Account" and with an access key of "ABCDEFGHIJKLMNOPQRST"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_account")
 
 
 if __name__ == "__main__":

@@ -1,12 +1,10 @@
 ## AWS Lambda Instructions
 
-* The supplied "Example Octopus AWS Lambda Function Project Terraform Configuration" is the primary source of truth for the configuration.
-* You must respond with Terraform configuration to create an Octopus project deploying an application to an AWS Lambda Function based on examples provided.
-* You must use the lifecycle from the supplied "Example Octopus AWS Lambda Function Project Terraform Configuration" unless instructed otherwise.
+* The supplied "Example Octopus AWS Lambda Function Terraform Configuration" is the primary source of truth for the configuration.
 
 ## AWS Lambda Project Variable Instructions
 
-You must include all the following variables once unless otherwise specified:
+You must include all the following variables from the "Example Octopus AWS Lambda Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_variable" "aws_lambda_project_octopus_api_key_1"
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_account_1"
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_region_1"
@@ -16,12 +14,12 @@ You must include all the following variables once unless otherwise specified:
 
 ## AWS Lambda Project Scheduled Triggers Instructions
 
-You must include all the following project scheduled trigger resources unless otherwise specified:
+You must include all the following project scheduled trigger resources from the "Example Octopus AWS Lambda Terraform Configuration" unless otherwise specified:
 * resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_daily_security_scan"
 
 ## AWS Lambda Project Deployment Process Instructions
 
-You must include all the following step resources unless otherwise specified:
+You must include all the following step resources from the "Example Octopus AWS Lambda Terraform Configuration" unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_validate_setup"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_check_smtp_configuration"
@@ -41,3 +39,10 @@ You must include all the following runbook resources unless otherwise specified:
 
 You must include all the following runbook steps from the runbook_aws_lambda_checkov_sam_static_analysis runbook unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_checkov_sam_static_analysis_run_checkov_static_analysis_scan"
+
+## AWS Lambda Lifecycle Instructions
+
+You must include all the following lifecycle resources from the "Example Octopus AWS Lambda Terraform Configuration" unless otherwise specified:
+* data "octopusdeploy_lifecycles" "lifecycle_devsecops"
+* resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
+* data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"

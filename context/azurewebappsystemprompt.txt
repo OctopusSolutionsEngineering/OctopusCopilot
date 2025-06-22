@@ -1,12 +1,24 @@
 ## Azure Web App Instructions
 
-* The supplied "Example Octopus Azure Web App Project Terraform Configuration" is the primary source of truth for the configuration.
-* You must respond with Terraform configuration to create an Octopus project deploying an application to an Azure Web App based on examples provided.
-* You must use the lifecycle from the supplied "Example Octopus Azure Web App Project Terraform Configuration" unless instructed otherwise.
+* The supplied "Example Octopus Azure Web App Terraform Configuration" is the primary source of truth for the configuration.
 
 ## Azure Web App Project Variable Instructions
 
-You must include all the following variables once unless otherwise specified:
+You must include all the following variables from the "Example Octopus Azure Web App Terraform Configuration" once unless otherwise specified:
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_2"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_3"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_name_1"
+* resource "octopusdeploy_variable" "azure_web_app_application_image_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_location_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_name_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_sku_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_octopus_api_key_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_account_1"
+
+## Azure Web App Project Variable Instructions
+
+You must include all the following variables from the "Example Octopus Azure Web App Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_1"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_2"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_3"
@@ -20,11 +32,12 @@ You must include all the following variables once unless otherwise specified:
 
 ## Azure Web App Project Scheduled Triggers Instructions
 
-You must include all the following project scheduled trigger resources unless otherwise specified:
+You must include all the following project scheduled trigger resources from the "Example Octopus Azure Web App Terraform Configuration" unless otherwise specified:
+* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_azure_web_app_daily_security_scan"
 
 ## Azure Web App Project Deployment Process Instructions
 
-You must include all the following step resources unless otherwise specified:
+You must include all the following step resources from the "Example Octopus Azure Web App Terraform Configuration" unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_check_smtp_configuration"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deployment_start_notification"
@@ -57,4 +70,9 @@ You must include all the following runbook steps from the runbook_azure_web_app_
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_deregister_target"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_destroy_resource_group"
 
+## Azure Web App Lifecycle Instructions
 
+You must include all the following lifecycle resources from the "Example Octopus Azure Web App Terraform Configuration" unless otherwise specified:
+* data "octopusdeploy_lifecycles" "lifecycle_devsecops"
+* resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
+* data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
