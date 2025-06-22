@@ -15,7 +15,8 @@ sample_terraform_context_container_name = "sampleterraformcontext"
 @logging_wrapper
 def load_terraform_context(filename, connection_string):
     ensure_string_not_empty(
-        filename, "filename must be the connection string (load_terraform_cache)."
+        filename,
+        "filename must be the name of the blob to load (load_terraform_cache).",
     )
     ensure_string_not_empty(
         connection_string,

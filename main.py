@@ -140,23 +140,22 @@ def build_tools(tool_query):
         )
     ]
 
-    query_functions = [
-        FunctionDefinition(tool)
-        for tool in answer_general_query_wrapper(
-            tool_query,
-            general_query_cli_callback(
-                get_api_key(),
-                get_octopus_api(),
-                get_default_argument,
-                log_query,
-            ),
-            log_query,
-        )
-    ]
+    general_project_examples = ["context.tf", "everystep.tf", "projectsettings1.tf"]
 
     return FunctionDefinitions(
         [
-            *query_functions,
+            FunctionDefinition(
+                answer_general_query_wrapper(
+                    tool_query,
+                    general_query_cli_callback(
+                        get_api_key(),
+                        get_octopus_api(),
+                        get_default_argument,
+                        log_query,
+                    ),
+                    log_query,
+                )
+            ),
             FunctionDefinition(
                 answer_project_variables_wrapper(
                     tool_query,
@@ -257,9 +256,10 @@ def build_tools(tool_query):
                         get_github_user(),
                         azurite_connection_string,
                         log_query,
-                        ["context.tf", "everystep.tf"],
+                        general_project_examples,
                         "k8s.tf",
-                        "Example Octopus Kubernetes Project Terraform Configuration",
+                        "Kubernetes",
+                        "generalinstructions.txt",
                         "k8ssystemprompt.txt",
                         None,
                         None,
@@ -270,6 +270,7 @@ def build_tools(tool_query):
                     get_github_user(),
                     lambda: (get_api_key(), get_octopus_api()),
                     log_query,
+                    None,
                     None,
                     None,
                 ),
