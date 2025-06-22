@@ -201,7 +201,7 @@ jobs:
           # This is the deployment used to handle prompts
           AISERVICES_DEPLOYMENT: gpt-4.1
           # This is the deployment used to generate project Terraform configuration
-          AISERVICES_DEPLOYMENT_PROJECT_GEN: gpt-4.1-mini
+          AISERVICES_DEPLOYMENT_PROJECT_GEN: gpt-4.1
           # The API version of the deployment used to generate projects
           AISERVICES_DEPLOYMENT_PROJECT_GEN_VERSION: 2025-01-01-preview
           # This is the deployment used to handle function calls
