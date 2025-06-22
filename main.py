@@ -1,4 +1,5 @@
 import argparse
+import glob
 import json
 import os
 
@@ -61,6 +62,7 @@ from domain.transformers.sse_transformers import (
 )
 from function_app import copilot_handler_internal
 from infrastructure.openai import llm_tool_query
+from infrastructure.terraform_context import save_terraform_context
 
 azurite_connection_string = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
 
@@ -142,6 +144,25 @@ def build_confirmation_request(body):
             "X-Octopus-Server": get_octopus_api(),
         },
     )
+
+
+def populate_blob_storage():
+    # The path changes depending on where the tests are run from.
+    context_path = (
+        "../../context/" if os.path.exists("../../context/context.tf") else "context/"
+    )
+
+    pattern_tf = os.path.join(context_path, "*.tf")
+    pattern_txt = os.path.join(context_path, "*.txt")
+
+    all_files = glob.glob(pattern_tf) + glob.glob(pattern_txt)
+    all_files.sort()
+
+    for file_path in all_files:
+        with open(file_path, "r") as file:
+            file_content = file.read()
+            filename = os.path.basename(file_path)
+            save_terraform_context(filename, file_content, azurite_connection_string)
 
 
 def build_tools(tool_query):
@@ -423,6 +444,7 @@ def build_tools(tool_query):
 
 
 try:
+    populate_blob_storage()
     result = llm_tool_query(
         parser.query,
         build_tools(parser.query),
