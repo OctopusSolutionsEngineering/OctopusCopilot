@@ -507,7 +507,39 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
 * The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
 * The "slug" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource must be unique across the project.
 * The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource must be unique across the project.
-* You will be penalized for defining a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource with a duplicate "name" or "slug" attribute within the same project.
+* You will be penalized for defining a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource with a duplicate "slug" attribute within the same project, for example, the following is invalid because the "slug" attribute is duplicated:
+
+```
+resource "octopusdeploy_process_step" "step1" {
+    slug = "step1"
+}
+
+resource "octopusdeploy_process_step" "step2" {
+    slug = "step2"
+}
+
+resource "octopusdeploy_process_step" "step3" {
+    slug = "step1"
+}
+```
+
+* You will be penalized for defining a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource with a duplicate "name" attribute within the same project, for example, the following is invalid because the "name" attribute is duplicated:
+
+```
+resource "octopusdeploy_process_step" "step1" {
+    name = "step1"
+}
+
+resource "octopusdeploy_process_step" "step2" {
+    name = "step2"
+}
+
+resource "octopusdeploy_process_step" "step3" {
+    name = "step1"
+}
+```
+
+* You will be penalized for defining a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource with a "name" attribute that contains any characters other than letters, numbers, periods, commas, dashes, underscores or hashes.
 * You will be penalized for defining a "name" attribute with the characters "/" and "\".
 * Target tags must only be defined in the "Octopus.Action.TargetRoles" properties on a "octopusdeploy_process_step", for example:
 
