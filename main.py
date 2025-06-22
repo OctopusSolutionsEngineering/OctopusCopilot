@@ -1,6 +1,8 @@
 import argparse
+import json
 import os
 
+import azure.functions as func
 from domain.config.zendesk import get_zendesk_user, get_zendesk_token
 from domain.errors.error_handling import handle_error
 from domain.logging.query_logging import log_query
@@ -43,6 +45,11 @@ from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_
 from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.tools.wrapper.task_summary_wrapper import show_task_summary_wrapper
+from domain.transformers.sse_transformers import (
+    get_confirmation_id,
+    convert_from_sse_response,
+)
+from function_app import copilot_handler_internal
 from infrastructure.openai import llm_tool_query
 
 azurite_connection_string = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
@@ -108,6 +115,18 @@ def get_default_argument(argument, default_name):
 
 def logging(prefix, message):
     print(prefix + " " + ",".join(sanitize_list(message)))
+
+
+def build_confirmation_request(body):
+    return func.HttpRequest(
+        method="POST",
+        body=json.dumps(body).encode("utf8"),
+        url="/api/form_handler",
+        params=None,
+        headers={
+            "X-GitHub-Token": get_github_token(),
+        },
+    )
 
 
 def build_tools(tool_query):
@@ -267,10 +286,10 @@ def build_tools(tool_query):
                     logging=log_query,
                 ),
                 callback=create_template_project_confirm_callback_wrapper(
+                    tool_query,
                     get_github_user(),
                     lambda: (get_api_key(), get_octopus_api()),
                     log_query,
-                    None,
                     None,
                     None,
                 ),
@@ -289,6 +308,26 @@ try:
 
     if isinstance(result, CopilotResponse):
         print(result.response)
+
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": result.prompt_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+
+        print(convert_from_sse_response(run_response.get_body().decode("utf8")))
+
     else:
         print(result)
 except Exception as e:
