@@ -227,7 +227,9 @@ def create_template_project_callback(
                     or os.getenv("AISERVICES_DEPLOYMENT"),
                     os.getenv("AISERVICES_KEY"),
                     os.getenv("AISERVICES_ENDPOINT"),
-                    custom_version="2025-01-01-preview",
+                    custom_version=os.getenv(
+                        "AISERVICES_DEPLOYMENT_PROJECT_GEN_VERSION"
+                    ),
                 )
 
                 # Deal with the LLM returning code in markdown code blocks
