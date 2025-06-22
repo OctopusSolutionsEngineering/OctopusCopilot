@@ -84,15 +84,15 @@ def find_lifecycles(filename, label):
 
 
 def find_projects(filename, label):
-    # Pattern to match the resource declarations for octopusdeploy_lifecycle
+    # Pattern to match the resource declarations for octopusdeploy_project
     pattern = r'resource\s+"octopusdeploy_project"\s+"([^"]+)"'
     data_pattern = r'data\s+"octopusdeploy_projects"\s+"([^"]+)"'
 
     try:
         # Open and read the file
-        print(f"\n## {label} Project Instructions\n")
+        print(f"\n## {label} Lifecycle Instructions\n")
         print(
-            f'You must include all the following lifecycle resources from the "Example Octopus {label} Terraform Configuration" unless otherwise specified:'
+            f'You must include all the following project resources from the "Example Octopus {label} Terraform Configuration" unless otherwise specified:'
         )
         with open(filename, "r") as file:
             lines = file.readlines()
