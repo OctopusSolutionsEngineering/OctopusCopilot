@@ -1,3 +1,7 @@
+# Kubernetes Instructions
+
+* The supplied "Example Octopus Kubernetes Terraform Configuration" is the primary source of truth for the configuration.
+
 ## Kubernetes YAML Instructions
 
 * You will be penalized for using asterisks as placeholders in the "Octopus.Action.KubernetesContainers.CustomResourceYaml" property.
@@ -36,7 +40,22 @@ You must include all the following step resources from the "Example Octopus Kube
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_print_message_when_no_targets"
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_scan_for_vulnerabilities"
 
+## Kubernetes Project Runbook Instructions
+
+You must include all the following runbook resources unless otherwise specified:
+
+## Kubernetes Project Runbook Deployment Process Instructions
+
+## Kubernetes Lifecycle Instructions
+
 You must include all the following lifecycle resources from the "Example Octopus Kubernetes Terraform Configuration" unless otherwise specified:
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+
+## Kubernetes Project Instructions
+
+You must include all the following project resources from the "Example Octopus Kubernetes Terraform Configuration" unless otherwise specified:
+* data "octopusdeploy_projects" "projecttrigger_kubernetes_web_app_daily_security_scan"
+* data "octopusdeploy_projects" "project_kubernetes_web_app"
+* resource "octopusdeploy_project" "project_kubernetes_web_app"

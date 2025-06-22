@@ -1,4 +1,4 @@
-## AWS Lambda Instructions
+# AWS Lambda Instructions
 
 * The supplied "Example Octopus AWS Lambda Function Terraform Configuration" is the primary source of truth for the configuration.
 
@@ -46,3 +46,11 @@ You must include all the following lifecycle resources from the "Example Octopus
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+
+## AWS Lambda Project Instructions
+
+You must include all the following project resources from the "Example Octopus AWS Lambda Terraform Configuration" unless otherwise specified:
+* data "octopusdeploy_projects" "projecttrigger_aws_lambda_daily_security_scan"
+* data "octopusdeploy_projects" "runbook_aws_lambda_checkov_sam_static_analysis"
+* data "octopusdeploy_projects" "project_aws_lambda"
+* resource "octopusdeploy_project" "project_aws_lambda"
