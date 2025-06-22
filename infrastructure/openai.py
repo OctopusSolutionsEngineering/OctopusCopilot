@@ -61,7 +61,7 @@ def llm_message_query(
         top_p=1.0,
         frequency_penalty=0.0,
         presence_penalty=0.0,
-        max_tokens=10000,
+        max_tokens=None,
     )
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)
