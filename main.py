@@ -118,6 +118,9 @@ def logging(prefix, message):
 
 
 def build_confirmation_request(body):
+    """
+    Builds a confirmation request for the Copilot handler.
+    """
     return func.HttpRequest(
         method="POST",
         body=json.dumps(body).encode("utf8"),
@@ -125,6 +128,8 @@ def build_confirmation_request(body):
         params=None,
         headers={
             "X-GitHub-Token": get_github_token(),
+            "X-Octopus-ApiKey": get_api_key(),
+            "X-Octopus-Server": get_octopus_api(),
         },
     )
 
