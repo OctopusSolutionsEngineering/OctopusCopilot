@@ -700,3 +700,4 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 * You will be penalized for returning any other text.
 * You will be penalized for including any comments.
 * You will be penalized for duplicating resources or data blocks.
+* You will be penalized for not including all required resources and data blocks.
