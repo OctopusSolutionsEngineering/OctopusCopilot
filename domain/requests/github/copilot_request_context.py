@@ -555,7 +555,8 @@ def build_form_tools(query, req: func.HttpRequest):
         get_github_user_from_form(req), get_functions_connection_string()
     )
 
-    general_project_examples = []
+    # This is a list of the filename that contain general purpose terraform examples.
+    general_project_examples = ["context.tf", "everystep.tf", "projectsettings1.tf"]
 
     return FunctionDefinitions(
         [
