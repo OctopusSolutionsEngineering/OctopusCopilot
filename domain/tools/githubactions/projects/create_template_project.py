@@ -172,17 +172,17 @@ def create_template_project_callback(
             context = {"input": original_query}
 
             general_examples_values = [
-                load_terraform_context(context, get_functions_connection_string())
+                load_terraform_context(context, connection_string)
                 for context in general_examples
             ]
             project_example_values = load_terraform_context(
-                project_example, get_functions_connection_string()
+                project_example, connection_string
             )
             general_system_message_values = load_terraform_context(
-                general_system_message, get_functions_connection_string()
+                general_system_message, connection_string
             )
             project_system_message_values = load_terraform_context(
-                project_system_message, get_functions_connection_string()
+                project_system_message, connection_string
             )
 
             # We build a unique sha for the inputs that generate a terraform configuration
