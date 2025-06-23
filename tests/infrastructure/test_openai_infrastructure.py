@@ -473,7 +473,7 @@ class MockRequests(unittest.TestCase):
         Tests that the llm can correctly identify the function to call when the prompt is
         """
 
-        query = 'Create a AWS Lambda project called "OAM API" in the project group "AWS". Create the AWS Account with the name "My AWS Account" and with an access key of "ABCDEFGHIJKLMNOPQRST"'
+        query = 'Create a AWS Lambda project called "OAM API 3" in the project group "AWS". Replace the account "AWS OIDC" with the AWS Account with the name "My AWS Account 3" and with an access key of "ABCDEFGHIJKLMNOPQRST".'
         function = llm_tool_query(query, build_mock_test_tools(query))
 
         self.assertEqual(function.name, "create_lambda_project")
