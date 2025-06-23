@@ -12,14 +12,14 @@
 ## Default Lifecycle Instructions
 
 * You must always include one "data" "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" resource.
-* You will be penalized for including duplicate  "data" "octopusdeploy_lifecycles" "lifecycle_default_lifecycle", for example, the following is invalid because it defines the "data" "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" resource twice:
+* You will be penalized for including duplicate "data" "octopusdeploy_lifecycles" "lifecycle_default_lifecycle", for example, the following is invalid because it defines the "data" "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" resource twice:
 
 ```
- "data" "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {...}
- "data" "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {...}
+data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {...}
+data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {...}
 ```
 
-* Use "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id" when referencing the default lifecycle, for example "lifecycle_id = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}".
+* Use "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id" when referencing the Default Lifecycle, for example "lifecycle_id = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}".
 * You will be penalized for referencing the resource "octopusdeploy_lifecycle" "lifecycle_default_lifecycle" because it does not exist.
 
 ## Data Resources Instructions
