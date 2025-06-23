@@ -505,6 +505,41 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
   * "Success"
   * "Variable"
 * The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
+* The "slug" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource must be unique across the project.
+* The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource must be unique across the project.
+* You will be penalized for defining a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource with a duplicate "slug" attribute within the same project, for example, the following is invalid because the "slug" attribute is duplicated:
+
+```
+resource "octopusdeploy_process_step" "step1" {
+    slug = "step1"
+}
+
+resource "octopusdeploy_process_step" "step2" {
+    slug = "step2"
+}
+
+resource "octopusdeploy_process_step" "step3" {
+    slug = "step1"
+}
+```
+
+* You will be penalized for defining a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource with a duplicate "name" attribute within the same project, for example, the following is invalid because the "name" attribute is duplicated:
+
+```
+resource "octopusdeploy_process_step" "step1" {
+    name = "step1"
+}
+
+resource "octopusdeploy_process_step" "step2" {
+    name = "step2"
+}
+
+resource "octopusdeploy_process_step" "step3" {
+    name = "step1"
+}
+```
+
+* You will be penalized for defining a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource with a "name" attribute that contains any characters other than letters, numbers, periods, commas, dashes, underscores or hashes.
 * You will be penalized for defining a "name" attribute with the characters "/" and "\".
 * Target tags must only be defined in the "Octopus.Action.TargetRoles" properties on a "octopusdeploy_process_step", for example:
 
@@ -643,6 +678,8 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 
 ## Terraform Instructions
 
+* Resource names must be unique per type.
+* Data names must be unique per type.
 * You will be penalized for defining resources or adding attributes that are not included in the sample Terraform configurations.
 * Every resource must have a "count" attribute.
 * Each "count" attribute must be defined in the format "${length(data.<data type>.<data resource>.<collection>) != 0 ? 0 : 1}".
@@ -698,3 +735,20 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 * You will be penalized for including any instructions.
 * You will be penalized for returning any other text.
 * You will be penalized for including any comments.
+* You will be penalized for duplicating resource names for a resource type, for example, the following terraform is invalid because the resource name "step1" for resource type "octopusdeploy_process_step" is duplicated:
+
+```
+resource "octopusdeploy_process_step" "step1" { ... }
+resource "octopusdeploy_process_step" "step2" { ... }
+resource "octopusdeploy_process_step" "step1" { ... }
+```
+
+* You will be penalized for duplicating data names for a data type, for example, the following terraform is invalid because the data name "project1" for data type "octopusdeploy_projects" is duplicated:
+
+```
+data "octopusdeploy_projects" "project1" { ... }
+data "octopusdeploy_projects" "project2" { ... }
+data "octopusdeploy_projects" "project1" { ... }
+```
+
+* You will be penalized for not including all required resources and data blocks.
