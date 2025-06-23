@@ -164,6 +164,10 @@ resource "octopusdeploy_project" "<name>" {
 * You will be penalized for using count arguments like this: "${length(data.<data type>.<data resource>.<collection>) != 0 ? 1 : 1}"
 * You will be penalized for using ternary operators that return the same value for both cases.
 
+## Account Instructions
+
+* You will be penalized for defining a "session_token" attribute on a "octopusdeploy_aws_account" resource.
+
 ## Lifecycle Instructions
 
 * Custom lifecycles must include the environments "Development", "Test", and "Production" unless otherwise instructed.
