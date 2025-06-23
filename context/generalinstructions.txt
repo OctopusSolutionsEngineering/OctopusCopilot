@@ -615,7 +615,18 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
 * You will be penalized for defining an empty "properties" block, for example "properties = {}".
 * You will be penalized for defining a "properties_additional" block.
 * You will be penalized for defining multiple "features" attributes.
-
+* You must include the "container" nested child block if one exists for a "octopusdeploy_process_step" resource in the sample Terraform configurations.
+* The "container" block has the following required properties:
+    * "feed_id"
+    * "image"
+* For example here is an example "container" block for a "octopusdeploy_process_step":
+```
+{
+    feed_id = "${length(data.octopusdeploy_feeds.feed_docker_hub.feeds) != 0 ? data.octopusdeploy_feeds.feed_docker_hub.feeds[0].id : octopusdeploy_docker_container_registry.feed_docker_hub[0].id}",
+    image = "octopuslabs/aws-workertools"
+}
+```
+* You will be penalized for not including the "container" nested child block if one exists in the sample Terraform configurations.
 * Steps with actions of the following types must have at least one role defined in the "target_roles" array:
    * "Octopus.AzureWebApp"
    * "Octopus.KubernetesDeployRawYaml"
