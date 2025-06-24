@@ -1,6 +1,7 @@
 # Kubernetes Instructions
 
 * The supplied "Example Octopus Kubernetes Terraform Configuration" is the primary source of truth for the configuration.
+* You must respond with Terraform configuration to create an Octopus project deploying an application to Kubernetes based on the "Example Octopus Kubernetes Terraform Configuration".
 
 ## Kubernetes YAML Instructions
 

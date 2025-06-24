@@ -1,6 +1,7 @@
 # Windows IIS Instructions
 
 * The supplied "Example Octopus Windows IIS Terraform Configuration" is the primary source of truth for the configuration.
+* You must respond with Terraform configuration to create an Octopus project deploying an application to IIS based on the "Example Octopus Windows IIS Terraform Configuration".
 * You must use the package ID "com.octopus:octopub-frontend" unless instructed otherwise.
 
 ## Windows IIS Project Variable Instructions
