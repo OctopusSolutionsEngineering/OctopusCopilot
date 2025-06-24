@@ -66,6 +66,7 @@ from infrastructure.github import get_github_user, exchange_github_code
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, create_limited_api_key, get_version
 from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
+from infrastructure.terraform_context import delete_old_cached_items
 from infrastructure.users import (
     delete_old_user_details,
     save_users_octopus_url_from_login,
@@ -100,6 +101,19 @@ def api_key_cleanup(mytimer: func.TimerRequest) -> None:
     """
     try:
         delete_old_user_details(get_functions_connection_string())
+    except Exception as e:
+        handle_error(e)
+
+
+@app.function_name(name="terraform_cache_cleanup")
+@app.timer_trigger(schedule="0 0 0 * * *", arg_name="mytimer", run_on_startup=True)
+def terraform_cache_cleanup(mytimer: func.TimerRequest) -> None:
+    """
+    A function handler used to clean up old terraform cache items
+    :param mytimer: The Timer request
+    """
+    try:
+        delete_old_cached_items(get_functions_connection_string())
     except Exception as e:
         handle_error(e)
 
