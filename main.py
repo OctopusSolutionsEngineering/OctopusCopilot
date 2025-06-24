@@ -53,6 +53,9 @@ from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_
 from domain.tools.wrapper.projects.create_lambda_project import (
     create_lambda_project_wrapper,
 )
+from domain.tools.wrapper.projects.create_orchestration_project import (
+    create_orchestration_project_wrapper,
+)
 from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
 from domain.tools.wrapper.task_summary_wrapper import show_task_summary_wrapper
@@ -424,6 +427,33 @@ def build_tools(tool_query):
                         "Windows IIS",
                         "generalinstructions.txt",
                         "windowsiissystemprompt.txt",
+                        None,
+                        None,
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    tool_query,
+                    get_github_user(),
+                    lambda: (get_api_key(), get_octopus_api()),
+                    log_query,
+                    None,
+                    None,
+                ),
+            ),
+            FunctionDefinition(
+                create_orchestration_project_wrapper(
+                    tool_query,
+                    callback=create_template_project_callback(
+                        lambda: (get_api_key(), get_octopus_api()),
+                        get_github_user(),
+                        azurite_connection_string,
+                        log_query,
+                        general_project_examples,
+                        "deploymentorchestration.tf",
+                        "Deployment Orchestration",
+                        "generalinstructions.txt",
+                        "deploymentorchestrationsystemprompt.txt",
                         None,
                         None,
                     ),

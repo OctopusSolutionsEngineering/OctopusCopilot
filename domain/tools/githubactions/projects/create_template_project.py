@@ -339,7 +339,7 @@ def project_context(
     project_example,
     project_example_context_name,
     general_system_message_values,
-    system_message,
+    project_system_message_values,
 ):
     """
     Builds the messages used when building an octopus project
@@ -349,9 +349,7 @@ def project_context(
     general_examples_messages = [
         (
             "system",
-            "Example Octopus Terraform Configuration: ###\n"
-            + escape_message(example)
-            + "\n###",
+            "# Example Octopus Terraform Configuration:\n" + escape_message(example),
         )
         for example in general_examples
     ]
@@ -361,14 +359,16 @@ def project_context(
         + "\n"
         + escape_message(project_example)
         + "\n"
-        + escape_message(general_system_message_values)
-        + "\n",
     )
 
     return [
         (
             "system",
-            escape_message(system_message),
+            escape_message(general_system_message_values),
+        ),
+        (
+            "system",
+            escape_message(project_system_message_values),
         ),
         *general_examples_messages,
         project_example_message,

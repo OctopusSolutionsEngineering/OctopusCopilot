@@ -80,7 +80,7 @@ And the following "octopusdeploy_project_group" resource must be defined:
 resource "octopusdeploy_project_group" "project_group_<name>" {
   count = "${length(data.octopusdeploy_project_groups.project_group_<name>.project_groups) != 0 ? 0 : 1}"
   name  = "<Name>"
-  # Populate the rest of the project group attributes here
+  ...
 }
 ```
 
