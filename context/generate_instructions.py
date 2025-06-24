@@ -55,6 +55,29 @@ def find_project_scheduled_triggers(filename, label):
         print(f"Error processing file: {e}")
 
 
+def find_project_channels(filename, label):
+    # Pattern to match the resource declarations for octopusdeploy_project_scheduled_trigger
+    pattern = r'resource\s+"octopusdeploy_channel"\s+"([^"]+)"'
+
+    try:
+        # Open and read the file
+        print(f"\n## {label} Project Channels Instructions\n")
+        print(
+            f'You must include all the following project channel resources from the "Example Octopus {label} Terraform Configuration" unless otherwise specified:'
+        )
+        with open(filename, "r") as file:
+            lines = file.readlines()
+
+            for i, line in enumerate(lines):
+                match = re.match(pattern, line)
+                if match:
+                    print(f'* resource "octopusdeploy_channel" "{match.group(1)}"')
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
+    except Exception as e:
+        print(f"Error processing file: {e}")
+
+
 def find_lifecycles(filename, label):
     # Pattern to match the resource declarations for octopusdeploy_lifecycle
     pattern = r'resource\s+"octopusdeploy_lifecycle"\s+"([^"]+)"'
@@ -373,6 +396,7 @@ def main():
     find_runbook_names(filename, label)
     find_runbook_step_names(filename, label)
     find_lifecycles(filename, label)
+    find_project_channels(filename, label)
 
 
 if __name__ == "__main__":

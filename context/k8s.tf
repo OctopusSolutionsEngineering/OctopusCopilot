@@ -228,6 +228,59 @@ data "octopusdeploy_channels" "channel_kubernetes_web_app_default" {
   take         = 1
 }
 
+data "octopusdeploy_lifecycles" "lifecycle_hotfix" {
+  ids          = null
+  partial_name = "Hotfix"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_lifecycle" "lifecycle_hotfix" {
+  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles) != 0 ? 0 : 1}"
+  name        = "Hotfix"
+  description = "This channel allows deployments directly to production."
+
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+    name                                  = "Production"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+
+  release_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_projects" "channel_kubernetes_web_app_hotfix" {
+  ids          = null
+  partial_name = "Kubernetes Web App"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_channel" "channel_kubernetes_web_app_hotfix" {
+  count        = "${length(data.octopusdeploy_projects.channel_kubernetes_web_app_hotfix.projects) != 0 ? 0 : 1}"
+  lifecycle_id = "${length(data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_hotfix[0].id}"
+  name         = "Hotfix"
+  description  = ""
+  project_id   = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id : octopusdeploy_project.project_kubernetes_web_app[0].id}"
+  is_default   = false
+  tenant_tags  = []
+  depends_on   = [octopusdeploy_process_steps_order.process_step_order_kubernetes_web_app]
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
   feed_type    = "BuiltIn"
   ids          = null
@@ -339,15 +392,15 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"1\"\n            memory: \"512Mi\"\n          requests:\n            cpu: \"0.5\"\n            memory: \"256Mi\"\n        livenessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
         "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"1\"\n            memory: \"512Mi\"\n          requests:\n            cpu: \"0.5\"\n            memory: \"256Mi\"\n        livenessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
       }
 }
 
@@ -369,11 +422,11 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_print_mes
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy a Kubernetes Web App via YAML].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Kubernetes target with the tag 'Kubernetes'.\"\n  Write-Highlight \"We recommend the [Kubernetes Agent](https://octopus.com/docs/kubernetes/targets/kubernetes-agent).\"\n}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -396,11 +449,11 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_scan_for_
   properties            = {
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DockerImageSbomScan.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 

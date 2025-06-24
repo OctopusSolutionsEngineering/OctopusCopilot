@@ -40,3 +40,8 @@ You must include all the following lifecycle resources from the "Example Octopus
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+
+## Kubernetes Project Channels Instructions
+
+You must include all the following project channel resources from the "Example Octopus Kubernetes Terraform Configuration" unless otherwise specified:
+* resource "octopusdeploy_channel" "channel_kubernetes_web_app_hotfix"
