@@ -45,6 +45,7 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
   package_requirement   = "LetOctopusDecide"
   primary_package       = {
     acquisition_location = "NotAcquired",
+    # The feed_id is set to the built-in Octopus Server Releases feed found in the data source
     feed_id = "${data.octopusdeploy_feeds.feed_octopus_server_releases__built_in_.feeds[0].id}",
     id = null,
     # The package_id is set to the child project ID
@@ -64,3 +65,5 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
       }
 }
 ```
+
+* You will be penalized for setting the "Octopus.Action.DeployRelease.ProjectId" property to a fixed value like "projects-1234".
