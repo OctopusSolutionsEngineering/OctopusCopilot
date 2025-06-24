@@ -142,7 +142,7 @@ resource "octopusdeploy_environment" "environment_<name>" {
 When the "project_id" attribute is set to "${length(data.octopusdeploy_projects.project_<name>.projects) != 0 ? 0 : 1}"
 
 ```
-data "octopusdeploy_projects" "<name>" {
+data "octopusdeploy_projects" "project_<name>" {
   ids          = null
   partial_name = "<Name>"
   skip         = 0
@@ -153,7 +153,7 @@ data "octopusdeploy_projects" "<name>" {
 And the following "octopusdeploy_project" resource must be defined:
 
 ```
-resource "octopusdeploy_project" "<name>" {
+resource "octopusdeploy_project" "project_<name>" {
     count = "${length(data.octopusdeploy_projects.project_<name>.projects) != 0 ? 0 : 1}"
     name = "<Name>"
     # Populate the rest of the project attributes here
