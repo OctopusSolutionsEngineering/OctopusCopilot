@@ -2,3 +2,65 @@
 
 * The supplied "Example Octopus Deployment Orchestration Terraform Configuration" is the primary source of truth for the configuration.
 
+## Deployment Orchestration Project Step Instructions
+
+* Orchestration projects contain steps of type "Octopus.DeployRelease" that deploy a child project.
+* Each "Octopus.DeployRelease" step must have a "Octopus.Action.DeployRelease.ProjectId" execution property and a "primary_package" with the "package_id" set to the child project ID.
+* The ID of the child project can be obtained from a data "octopusdeploy_projects" data source.
+* The following is an example of a "Octopus.DeployRelease" step that references a data "octopusdeploy_projects" data source for the child project ID and a data "octopusdeploy_feeds" data source for the feed ID:
+
+```
+data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_" {
+  feed_type    = "OctopusProject"
+  ids          = null
+  partial_name = "Octopus Server Releases"
+  skip         = 0
+  take         = 1
+  lifecycle {
+    postcondition {
+      error_message = "Failed to resolve a feed called \"Octopus Server Releases (built-in)\". This resource must exist in the space before this Terraform configuration is applied."
+      condition     = length(self.feeds) != 0
+    }
+  }
+}
+
+data "octopusdeploy_projects" "project_every_step_project" {
+  ids          = null
+  # Replace this attribute with the name of the project you want to deploy
+  partial_name = "Child project name"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_release" {
+  count                 = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? 0 : 1}"
+  name                  = "Deploy a Release"
+  type                  = "Octopus.DeployRelease"
+  process_id            = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? null : octopusdeploy_process.process_every_step_project[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = null
+  notes                 = "This step is used to deploy a release of a child project."
+  package_requirement   = "LetOctopusDecide"
+  primary_package       = {
+    acquisition_location = "NotAcquired",
+    feed_id = "${data.octopusdeploy_feeds.feed_octopus_server_releases__built_in_.feeds[0].id}",
+    id = null,
+    # The package_id is set to the child project ID
+    package_id = "${data.octopusdeploy_projects.project_child_project.projects[0].id}",
+    properties = null
+  }
+  slug                  = "deploy-a-release"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  properties            = {
+      }
+  execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.DeployRelease.DeploymentCondition" = "Always"
+        # The "Octopus.Action.DeployRelease.ProjectId" property is set to the child project ID
+        "Octopus.Action.DeployRelease.ProjectId" = "${data.octopusdeploy_projects.project_child_project.projects[0].id}"
+      }
+}
+```
