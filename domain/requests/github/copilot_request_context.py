@@ -177,7 +177,9 @@ from domain.tools.wrapper.octopusresources.create_worker_pool import (
 from domain.tools.wrapper.projects.create_lambda_project import (
     create_lambda_project_wrapper,
 )
-from domain.tools.wrapper.projects.create_orchestration_project import create_orchestration_project_wrapper
+from domain.tools.wrapper.projects.create_orchestration_project import (
+    create_orchestration_project_wrapper,
+)
 from domain.tools.wrapper.reject_manual_intervention import (
     reject_manual_intervention_wrapper,
 )
