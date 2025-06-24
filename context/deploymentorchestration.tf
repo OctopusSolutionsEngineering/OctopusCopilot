@@ -17,23 +17,24 @@ variable "octopus_space_id" {
   description = "The ID of the Octopus space to populate."
 }
 
-variable "project_group_default_project_group_name" {
+data "octopusdeploy_project_groups" "project_group_orchestrator" {
+  ids          = null
+  partial_name = "${var.project_group_orchestrator_name}"
+  skip         = 0
+  take         = 1
+}
+variable "project_group_orchestrator_name" {
   type        = string
   nullable    = false
   sensitive   = false
   description = "The name of the project group to lookup"
-  default     = "Default Project Group"
+  default     = "Orchestrator"
 }
-data "octopusdeploy_project_groups" "project_group_default_project_group" {
-  ids          = null
-  partial_name = "${var.project_group_default_project_group_name}"
-  skip         = 0
-  take         = 1
+resource "octopusdeploy_project_group" "project_group_orchestrator" {
+  count = "${length(data.octopusdeploy_project_groups.project_group_orchestrator.project_groups) != 0 ? 0 : 1}"
+  name  = "${var.project_group_orchestrator_name}"
   lifecycle {
-    postcondition {
-      error_message = "Failed to resolve a project group called $${var.project_group_default_project_group_name}. This resource must exist in the space before this Terraform configuration is applied."
-      condition     = length(self.project_groups) != 0
-    }
+    prevent_destroy = true
   }
 }
 
@@ -328,7 +329,7 @@ resource "octopusdeploy_project" "project_child_project" {
   is_disabled                          = false
   is_version_controlled                = false
   lifecycle_id                         = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}"
-  project_group_id                     = "${data.octopusdeploy_project_groups.project_group_default_project_group.project_groups[0].id}"
+  project_group_id                     = "${length(data.octopusdeploy_project_groups.project_group_orchestrator.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_orchestrator.project_groups[0].id : octopusdeploy_project_group.project_group_orchestrator[0].id}"
   included_library_variable_sets       = []
   tenanted_deployment_participation    = "${var.project_child_project_tenanted}"
 
@@ -371,9 +372,9 @@ resource "octopusdeploy_process_step" "process_step_deployment_orchestration_dep
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.DeployRelease.DeploymentCondition" = "Always"
+        "Octopus.Action.DeployRelease.DeploymentCondition" = "IfNotCurrentVersion"
         "Octopus.Action.DeployRelease.ProjectId" = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -409,7 +410,7 @@ variable "project_deployment_orchestration_description" {
   nullable    = false
   sensitive   = false
   description = "The description of the project exported from Deployment Orchestration"
-  default     = "This project is used to host \"Deploy a Release\" steps to orchestrate the deployment of child projects."
+  default     = "This project is used to host \"Deploy a Release\" steps to orchestrate the deployment of child projects. This is typically used to promote a set of microservice releases across environments as a group."
 }
 variable "project_deployment_orchestration_tenanted" {
   type        = string
@@ -434,7 +435,7 @@ resource "octopusdeploy_project" "project_deployment_orchestration" {
   is_disabled                          = false
   is_version_controlled                = false
   lifecycle_id                         = "${length(data.octopusdeploy_lifecycles.lifecycle_application.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_application.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_application[0].id}"
-  project_group_id                     = "${data.octopusdeploy_project_groups.project_group_default_project_group.project_groups[0].id}"
+  project_group_id                     = "${length(data.octopusdeploy_project_groups.project_group_orchestrator.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_orchestrator.project_groups[0].id : octopusdeploy_project_group.project_group_orchestrator[0].id}"
   included_library_variable_sets       = []
   tenanted_deployment_participation    = "${var.project_deployment_orchestration_tenanted}"
 
@@ -445,7 +446,7 @@ resource "octopusdeploy_project" "project_deployment_orchestration" {
   }
 
   versioning_strategy {
-    template = "#{Octopus.Version.LastMajor}.#{Octopus.Version.LastMinor}.#{Octopus.Version.NextPatch}"
+    template = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
   }
   description = "${var.project_deployment_orchestration_description_prefix}${var.project_deployment_orchestration_description}${var.project_deployment_orchestration_description_suffix}"
   lifecycle {
