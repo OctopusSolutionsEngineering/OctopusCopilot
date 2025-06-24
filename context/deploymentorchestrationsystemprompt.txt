@@ -1,0 +1,4 @@
+# Deployment Orchestration Instructions
+
+* The supplied "Example Octopus Deployment Orchestration Terraform Configuration" is the primary source of truth for the configuration.
+
