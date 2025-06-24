@@ -86,3 +86,10 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
     * resource "octopusdeploy_project" "project_child_project"
 * You must always include the `data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_"` data source.
 * The "feed_id" attribute in the "primary_package" block must always be set to the built-in Octopus Server Releases feed found in the `data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_"` data source.
+
+## Deployment Orchestration Lifecycle Instructions
+
+You must include all the following lifecycle resources from the "Example Octopus Deployment Orchestration Terraform Configuration" at most once unless otherwise specified:
+* data "octopusdeploy_lifecycles" "lifecycle_application"
+* resource "octopusdeploy_lifecycle" "lifecycle_application"
+* data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
