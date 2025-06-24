@@ -427,7 +427,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 
 ```
 resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_daily_security_scan" {
-  count       = "${length(data.octopusdeploy_projects.projecttrigger_aws_lambda_daily_security_scan.projects) != 0 ? 0 : 1}"
+  count       = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
   space_id    = "${trimspace(var.octopus_space_id)}"
   name        = "Daily Security Scan"
   description = "This trigger reruns the deployment in the Security environment. This means any new vulnerabilities detected after a production deployment will be identified."
