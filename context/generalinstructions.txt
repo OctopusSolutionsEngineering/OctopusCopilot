@@ -643,7 +643,7 @@ resource "octopusdeploy_process_step" "process_step_orchestrator_project_deploy_
 }
 ```
 
-* You will be penalized for defining a step of type "Octopus.DeployRelease" with a string like "Projects-1" for the "Octopus.Action.DeployRelease.ProjectId" property.
+* You will be penalized for defining a step of type "Octopus.DeployRelease" with a string like "Projects-##" for the "Octopus.Action.DeployRelease.ProjectId" execution property.
 
 ## Octopus Variable Syntax Instructions
 
