@@ -127,3 +127,31 @@ def fix_account_type(config):
         return config.replace(match.group(1), "")
 
     return config
+
+
+def fix_duplicate_default_lifecycle(config):
+    """
+    The LLM kept trying to return multiple data lookups for the default lifecycle,
+    so rename any duplicates.
+    """
+
+    # If we get a duplicate default lifecycle block, just remove it
+    if (
+        config.count('data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"')
+        <= 1
+    ):
+        return config
+
+    count = 0
+    splits = config.splitlines()
+
+    for i in range(splits.length()):
+        line = splits[i]
+        if line == 'data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"':
+            count += 1
+            if count > 1:
+                splits[i] = (
+                    f'data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle{count}"'
+                )
+
+    return "\n".join(splits)

@@ -20,6 +20,7 @@ from domain.sanitizers.terraform import (
     fix_single_line_lifecycle,
     fix_account_type,
     fix_single_line_retention_policy,
+    fix_duplicate_default_lifecycle,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
@@ -249,6 +250,9 @@ def create_template_project_callback(
 
                 # Deal with invalid account_types in data blocks
                 configuration = fix_account_type(configuration)
+
+                # Deal with the LLM returning a duplicate default lifecycle block
+                configuration = fix_duplicate_default_lifecycle(configuration)
 
             # We can then save the Terraform plan as a callback
             callback_id = str(uuid.uuid4())
