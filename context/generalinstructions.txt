@@ -630,6 +630,20 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
 * Steps with actions of the following types must have at least one role defined in the "target_roles" array:
    * "Octopus.AzureWebApp"
    * "Octopus.KubernetesDeployRawYaml"
+* The "Octopus.Action.DeployRelease.ProjectId" property for a step of type "Octopus.DeployRelease" must reference the project ID of a project from a data "octopusdeploy_projects", for example:
+
+```
+resource "octopusdeploy_process_step" "process_step_orchestrator_project_deploy_a_release" {
+  type                  = "Octopus.DeployRelease"
+  execution_properties  = {
+    "Octopus.Action.DeployRelease.ProjectId" = "${data.octopusdeploy_projects.project_child_project.projects[0].id}"
+    ...
+  }
+  ...
+}
+```
+
+* You will be penalized for defining a step of type "Octopus.DeployRelease" with a string like "Projects-1" for the "Octopus.Action.DeployRelease.ProjectId" property.
 
 ## Octopus Variable Syntax Instructions
 
