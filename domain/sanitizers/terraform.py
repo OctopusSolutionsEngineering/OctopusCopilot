@@ -145,7 +145,7 @@ def fix_duplicate_default_lifecycle(config):
     count = 0
     splits = config.splitlines()
 
-    for i in range(splits.length()):
+    for i in range(len(splits)):
         line = splits[i]
         if line == 'data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"':
             count += 1
