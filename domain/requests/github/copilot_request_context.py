@@ -1224,7 +1224,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         "deploymentorchestration.tf",
                         "Deployment Orchestration",
                         "generalinstructions.txt",
-                        "deploymentorchestrationsystemprompt.tf",
+                        "deploymentorchestrationsystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
                     ),

@@ -13,6 +13,7 @@ from domain.lookup.octopus_lookups import (
 from domain.octopus.authorization import get_auth
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.escape_messages import escape_message
+from domain.sanitizers.sanitize_strings import empty_if_none
 from domain.sanitizers.terraform import (
     sanitize_kuberenetes_yaml_step_config,
     sanitize_account_type,
@@ -175,6 +176,7 @@ def create_template_project_callback(
             general_examples_values = [
                 load_terraform_context(context, connection_string)
                 for context in general_examples
+                if context.strip()
             ]
             project_example_values = load_terraform_context(
                 project_example, connection_string
@@ -192,11 +194,11 @@ def create_template_project_callback(
                 + "\n"
                 + "\n".join(general_examples_values)
                 + "\n"
-                + project_example_values
+                + empty_if_none(project_example_values)
                 + "\n"
-                + general_system_message_values
+                + empty_if_none(general_system_message_values)
                 + "\n"
-                + project_system_message_values
+                + empty_if_none(project_system_message_values)
             )
             cache_sha = hashlib.sha256(cache_key.encode("utf-8")).hexdigest()
 
