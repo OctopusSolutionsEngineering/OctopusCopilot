@@ -1,4 +1,4 @@
-## Kubernetes YAML Instructions
+# Kubernetes YAML Instructions
 
 * You will be penalized for using asterisks as placeholders in the "Octopus.Action.KubernetesContainers.CustomResourceYaml" property.
 * You will be penalized for using "*****" as a placeholder in the "Octopus.Action.KubernetesContainers.CustomResourceYaml" property.
@@ -14,9 +14,9 @@
 * The image defined in the "package" block is referenced in the YAML as "#{Octopus.Action.Package[<package name>].PackageId}:#{Octopus.Action.Package[<package name>].PackageVersion}"
 * You will be penalized for directly referencing an image in the YAML.
 
-## Kubernetes Project Variable Instructions
+# Kubernetes Project Variable Instructions
 
-You must include all the following variables from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
+You must include all the following variables from the "Example Octopus Kubernetes Terraform Configuration" at most once unless otherwise specified:
 * resource "octopusdeploy_variable" "kubernetes_web_app_kubernetes_deployment_name_1"
 * resource "octopusdeploy_variable" "kubernetes_web_app_octopus_project_workerpool_1"
 * resource "octopusdeploy_variable" "kubernetes_web_app_octopusprintevaluatedvariables_1"
@@ -25,23 +25,27 @@ You must include all the following variables from the "Example Octopus Kubernete
 
 ## Kubernetes Project Scheduled Triggers Instructions
 
-You must include all the following project scheduled trigger resources from the "Example Octopus Kubernetes Terraform Configuration" unless otherwise specified:
+You must include all the following project scheduled trigger resources from the "Example Octopus Kubernetes Terraform Configuration" at most once unless otherwise specified:
 * resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_kubernetes_web_app_daily_security_scan"
 
 ## Kubernetes Project Deployment Process Instructions
 
-You must include all the following step resources from the "Example Octopus Kubernetes Terraform Configuration" unless otherwise specified:
+You must include all the following step resources from the "Example Octopus Kubernetes Terraform Configuration" at most once unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_approve_production_deployment"
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_kubernetes_web_app_via_yaml"
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_print_message_when_no_targets"
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_scan_for_vulnerabilities"
 
-You must include all the following lifecycle resources from the "Example Octopus Kubernetes Terraform Configuration" unless otherwise specified:
+## Kubernetes Lifecycle Instructions
+
+You must include all the following lifecycle resources from the "Example Octopus Kubernetes Terraform Configuration" at most once unless otherwise specified:
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+* data "octopusdeploy_lifecycles" "lifecycle_hotfix"
+* resource "octopusdeploy_lifecycle" "lifecycle_hotfix"
 
 ## Kubernetes Project Channels Instructions
 
-You must include all the following project channel resources from the "Example Octopus Kubernetes Terraform Configuration" unless otherwise specified:
+You must include all the following project channel resources from the "Example Octopus Kubernetes Terraform Configuration" at most once unless otherwise specified:
 * resource "octopusdeploy_channel" "channel_kubernetes_web_app_hotfix"
