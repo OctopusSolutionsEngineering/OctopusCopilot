@@ -4,10 +4,13 @@ def create_orchestration_project_wrapper(query, callback, logging):
         project_name=None,
         **kwargs,
     ):
-        """Creates an orchestration project in Octopus Deploy. Example prompts include:
+        """Creates an orchestration or orchestrator project in Octopus Deploy. Example prompts include:
             * Create an orchestration project in the space "My Space" called "My Project"
+            * Create an orchestrator project in the space "My Space" called "My Project"
             * Create orchestration project called "My Project" in the space "My Space"
+            * Create orchestrator project called "My Project" in the space "My Space"
             * Create orchestration project called "My Project"
+            * Create orchestrator project called "My Project"
 
         Args:
         space_name: The name of the space
