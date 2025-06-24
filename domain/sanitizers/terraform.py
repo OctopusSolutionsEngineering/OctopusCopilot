@@ -147,11 +147,11 @@ def fix_duplicate_default_lifecycle(config):
 
     for i in range(len(splits)):
         line = splits[i]
-        if line == 'data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"':
+        if line == 'data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {':
             count += 1
             if count > 1:
                 splits[i] = (
-                    f'data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle{count}"'
+                    f'data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle{count}" {{'
                 )
 
     return "\n".join(splits)
