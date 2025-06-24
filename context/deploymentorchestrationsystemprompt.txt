@@ -66,4 +66,7 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
 }
 ```
 
-* You will be penalized for setting the "Octopus.Action.DeployRelease.ProjectId" property to a fixed value like "projects-1234".
+* You will be penalized for setting the "Octopus.Action.DeployRelease.ProjectId" property to a fixed value like "Projects-8916", "Projects-8915", and "Projects-8917".
+* You must not recreate the following:
+    * data "octopusdeploy_projects" "project_child_project"
+    * resource "octopusdeploy_project" "project_child_project"
