@@ -10,8 +10,6 @@ def create_certificate_wrapper(query, callback, logging):
         Example prompts include:
         * Create a Certificate called "Web Server" in the space "My Space"
 
-        You will be penalized for selecting this function if the prompt mentions a project, or creating a project.
-
         Args:
         space_name: The name of the space
         certificate_name: The name of the certificate
