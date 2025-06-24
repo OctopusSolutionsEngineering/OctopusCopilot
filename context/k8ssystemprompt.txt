@@ -1,4 +1,8 @@
-# Kubernetes YAML Instructions
+# Kubernetes Instructions
+
+* The supplied "Example Octopus Kubernetes Terraform Configuration" is the primary source of truth for the configuration.
+
+## Kubernetes YAML Instructions
 
 * You will be penalized for using asterisks as placeholders in the "Octopus.Action.KubernetesContainers.CustomResourceYaml" property.
 * You will be penalized for using "*****" as a placeholder in the "Octopus.Action.KubernetesContainers.CustomResourceYaml" property.
@@ -14,7 +18,7 @@
 * The image defined in the "package" block is referenced in the YAML as "#{Octopus.Action.Package[<package name>].PackageId}:#{Octopus.Action.Package[<package name>].PackageVersion}"
 * You will be penalized for directly referencing an image in the YAML.
 
-# Kubernetes Project Variable Instructions
+## Kubernetes Project Variable Instructions
 
 You must include all the following variables from the "Example Octopus Kubernetes Terraform Configuration" at most once unless otherwise specified:
 * resource "octopusdeploy_variable" "kubernetes_web_app_kubernetes_deployment_name_1"
