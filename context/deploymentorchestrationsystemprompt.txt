@@ -59,7 +59,7 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
     # The feed_id is set to the built-in Octopus Server Releases feed found in the data source
     feed_id = "${data.octopusdeploy_feeds.feed_octopus_server_releases__built_in_.feeds[0].id}",
     id = null,
-    # The package_id is set to the child project ID
+    # The package_id is set to the child project ID found via the data source
     package_id = "${data.octopusdeploy_projects.project_child_project.projects[0].id}",
     properties = null
   }
@@ -71,7 +71,7 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
   execution_properties  = {
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.DeployRelease.DeploymentCondition" = "Always"
-        # The "Octopus.Action.DeployRelease.ProjectId" property is set to the child project ID
+        # The "Octopus.Action.DeployRelease.ProjectId" property is set to the child project ID found via the data source
         "Octopus.Action.DeployRelease.ProjectId" = "${data.octopusdeploy_projects.project_child_project.projects[0].id}"
       }
 }
@@ -80,6 +80,7 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
 * The "Octopus.Action.DeployRelease.ProjectId" and "package_id" properties must reference only a data source.
 * You will be penalized for setting the "Octopus.Action.DeployRelease.ProjectId" or "package_id" property to something like `"${length(data.octopusdeploy_projects.project_reporting_microservice.projects) != 0 ? data.octopusdeploy_projects.project_reporting_microservice.projects[0].id : octopusdeploy_project.project_reporting_microservice[0].id}"`
 * You will be penalized for setting the "Octopus.Action.DeployRelease.ProjectId" property to a fixed value like "Projects-8916", "Projects-8915", and "Projects-8917".
+* You will be penalized for setting the "feed_id" attribute in the "primary_package" block to a fixed value like "Feeds-5936", "Feeds-5678", and "Feeds-91011".
 * You must not recreate the following, as these resources and data sources are only used to demonstrate the orchestration project step:
     * data "octopusdeploy_projects" "project_child_project"
     * resource "octopusdeploy_project" "project_child_project"
