@@ -359,7 +359,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 ## Feed Instructions
 
 * The data "octopusdeploy_feeds" with "type" set to "BuiltIn" must have an empty "partial_name" attribute.
-* You must define the data "octopusdeploy_feeds" "feed_docker_hub" at most once.
+* You must define the data "octopusdeploy_feeds" "feed_docker_hub" once.
 * You will be penalized for defining the data "octopusdeploy_feeds" "feed_docker_hub" more than once.
 
 ## Project Instructions
