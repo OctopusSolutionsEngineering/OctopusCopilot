@@ -47,3 +47,7 @@ You must include all the following lifecycle resources from the "Example Octopus
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+
+You must include all the following project deployment process resources from the "Example Octopus AWS Lambda Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_aws_lambda"
+* resource "octopusdeploy_process" "process_aws_lambda_checkov_sam_static_analysis"

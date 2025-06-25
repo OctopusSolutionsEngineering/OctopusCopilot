@@ -13,3 +13,6 @@ You must include all the following project scheduled trigger resources from the 
 
 You must include all the following step resources from the "Example Octopus Script Terraform Configuration" unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_script_hello_world"
+
+You must include all the following project deployment process resources from the "Example Octopus Script Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_script"

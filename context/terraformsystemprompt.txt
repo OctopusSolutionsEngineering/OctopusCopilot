@@ -28,3 +28,8 @@ You must include all the following lifecycle resources from the "Example Octopus
 * data "octopusdeploy_lifecycles" "lifecycle_application"
 * resource "octopusdeploy_lifecycle" "lifecycle_application"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+
+## Terraform Deploy Project Deployment Process Instructions
+
+You must include all the following project deployment process resources from the "Example Octopus Terraform Deploy Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_terraform"

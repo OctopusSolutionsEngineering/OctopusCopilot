@@ -54,3 +54,8 @@ You must include all the following lifecycle resources from the "Example Octopus
 
 You must include all the following project channel resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_channel" "channel_kubernetes_web_app_hotfix"
+
+## Kubernetes Project Deployment Process Instructions
+
+You must include all the following project deployment process resources from the "Example Octopus Kubernetes Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_kubernetes_web_app"

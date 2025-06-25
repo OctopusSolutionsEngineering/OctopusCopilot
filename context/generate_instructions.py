@@ -78,6 +78,30 @@ def find_project_channels(filename, label):
         print(f"Error processing file: {e}")
 
 
+def find_project_deployment_process(filename, label):
+    ignore_list = ["process_child_project"]
+
+    pattern = r'resource\s+"octopusdeploy_process"\s+"([^"]+)"'
+
+    try:
+        # Open and read the file
+        print(f"\n## {label} Project Deployment Process Instructions\n")
+        print(
+            f'You must include all the following project deployment process resources from the "Example Octopus {label} Terraform Configuration" once:'
+        )
+        with open(filename, "r") as file:
+            lines = file.readlines()
+
+            for i, line in enumerate(lines):
+                match = re.match(pattern, line)
+                if match and match.group(1) not in ignore_list:
+                    print(f'* resource "octopusdeploy_process" "{match.group(1)}"')
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
+    except Exception as e:
+        print(f"Error processing file: {e}")
+
+
 def find_lifecycles(filename, label):
     # Pattern to match the resource declarations for octopusdeploy_lifecycle
     pattern = r'resource\s+"octopusdeploy_lifecycle"\s+"([^"]+)"'
@@ -107,6 +131,10 @@ def find_lifecycles(filename, label):
 
 
 def find_step_names(filename, label):
+    # We do not want to include the child project from the orcestration project example.
+    # This project is only included to demonstrate how all the data sources link up.
+    ignore_list = ["process_step_child_project_run_a_script"]
+
     try:
         # Open and read the file
         print(f"\n## {label} Project Deployment Process Instructions\n")
@@ -201,7 +229,10 @@ def find_step_names(filename, label):
                         current_block_tf_name,
                         parent_tf_name_ref,
                     ) in all_step_details:
-                        if parent_tf_name_ref == process_tf_name:
+                        if (
+                            parent_tf_name_ref == process_tf_name
+                            and current_block_tf_name not in ignore_list
+                        ):
                             print(
                                 f'* resource "octopusdeploy_process_step" "{current_block_tf_name}"'
                             )
@@ -397,6 +428,7 @@ def main():
     find_runbook_step_names(filename, label)
     find_lifecycles(filename, label)
     find_project_channels(filename, label)
+    find_project_deployment_process(filename, label)
 
 
 if __name__ == "__main__":

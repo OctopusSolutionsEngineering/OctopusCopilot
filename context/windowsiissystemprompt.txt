@@ -28,3 +28,8 @@ You must include all the following lifecycle resources from the "Example Octopus
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
 
+## Windows IIS Project Deployment Process Instructions
+
+You must include all the following project deployment process resources from the "Example Octopus Windows IIS Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_iis"
+
