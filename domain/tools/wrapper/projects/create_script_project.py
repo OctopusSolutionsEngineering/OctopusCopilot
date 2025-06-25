@@ -1,4 +1,4 @@
-def create_terraform_project_wrapper(query, callback, logging):
+def create_script_project_wrapper(query, callback, logging):
     def create_script_project(
         space_name=None,
         project_name=None,
