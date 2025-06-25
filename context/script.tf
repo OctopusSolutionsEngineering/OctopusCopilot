@@ -242,26 +242,6 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
   }
 }
 
-data "octopusdeploy_feeds" "feed_octopus_maven_feed" {
-  feed_type    = "Maven"
-  ids          = null
-  partial_name = "Octopus Maven Feed"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? 0 : 1}"
-  name                                 = "Octopus Maven Feed"
-  feed_uri                             = "http://octopus-sales-public-maven-repo.s3-website-ap-southeast-2.amazonaws.com/snapshot"
-  package_acquisition_location_options = ["Server", "ExecutionTarget"]
-  download_attempts                    = 5
-  download_retry_backoff_seconds       = 10
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
 resource "octopusdeploy_process" "process_script" {
   count      = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? 0 : 1}"
   project_id = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? data.octopusdeploy_projects.project_script.projects[0].id : octopusdeploy_project.project_script[0].id}"
@@ -286,52 +266,18 @@ resource "octopusdeploy_process_step" "process_step_script_hello_world" {
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"#{Project.Message}\""
-      }
-}
-
-variable "project_script_step_scan_for_vulnerabilities_package_webapp_packageid" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The package ID for the package named webapp from step Scan for Vulnerabilities in project Script"
-  default     = "com.octopus:octopub-frontend"
-}
-resource "octopusdeploy_process_step" "process_step_script_scan_for_vulnerabilities" {
-  count                 = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? 0 : 1}"
-  name                  = "Scan for Vulnerabilities"
-  type                  = "Octopus.Script"
-  process_id            = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? null : octopusdeploy_process.process_script[0].id}"
-  channels              = null
-  condition             = "Success"
-  environments          = null
-  excluded_environments = null
-  notes                 = "This is a mock step that demonstrates running a vulnerability scan after a production deployment."
-  package_requirement   = "LetOctopusDecide"
-  packages              = { webapp = { acquisition_location = "Server", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_script_step_scan_for_vulnerabilities_package_webapp_packageid}", properties = { Extract = "True", Purpose = "", SelectionMode = "immediate" } } }
-  slug                  = "scan-for-vulnerabilities"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_variable  = "Project.WorkerPool"
-  properties            = {
-      }
-  execution_properties  = {
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "echo \"Simulating a vulnerability scan\""
       }
 }
 
 resource "octopusdeploy_process_steps_order" "process_step_order_script" {
   count      = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? 0 : 1}"
   process_id = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? null : octopusdeploy_process.process_script[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_script.projects) != 0 ? null : octopusdeploy_process_step.process_step_script_hello_world[0].id}", "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? null : octopusdeploy_process_step.process_step_script_scan_for_vulnerabilities[0].id}"]
+  steps      = ["${length(data.octopusdeploy_projects.project_script.projects) != 0 ? null : octopusdeploy_process_step.process_step_script_hello_world[0].id}"]
 }
 
 data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {

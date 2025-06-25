@@ -1,0 +1,30 @@
+# Deployment Terraform Instructions
+
+* The supplied "Example Octopus Terraform Deploy Terraform Configuration" is the primary source of truth for the configuration.
+
+## Terraform Deploy Project Variable Instructions
+
+You must include all the following variables from the "Example Octopus Terraform Deploy Terraform Configuration" once unless otherwise specified:
+* resource "octopusdeploy_variable" "terraform_project_workerpool_1"
+* resource "octopusdeploy_variable" "terraform_project_terraform_configuration_1"
+* resource "octopusdeploy_variable" "terraform_terraform_variable_message_1"
+* resource "octopusdeploy_variable" "terraform_octopusprintvariables_1"
+
+## Terraform Deploy Project Scheduled Triggers Instructions
+
+You must include all the following project scheduled trigger resources from the "Example Octopus Terraform Deploy Terraform Configuration" once unless otherwise specified:
+* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_terraform_daily_security_scan"
+
+## Terraform Deploy Project Deployment Process Instructions
+
+You must include all the following step resources from the "Example Octopus Terraform Deploy Terraform Configuration" once unless otherwise specified:
+* resource "octopusdeploy_process_step" "process_step_terraform_plan_to_apply_a_terraform_template"
+* resource "octopusdeploy_process_step" "process_step_terraform_approve_plan"
+* resource "octopusdeploy_process_step" "process_step_terraform_apply_a_terraform_template"
+
+## Terraform Deploy Lifecycle Instructions
+
+You must include all the following lifecycle resources from the "Example Octopus Terraform Deploy Terraform Configuration" once unless otherwise specified:
+* data "octopusdeploy_lifecycles" "lifecycle_application"
+* resource "octopusdeploy_lifecycle" "lifecycle_application"
+* data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
