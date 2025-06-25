@@ -26,8 +26,6 @@ def create_terraform_project_wrapper(query, callback, logging):
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
         # This is just a passthrough to the original callback
-        return callback(
-            create_script_project.__name__, query, space_name, project_name
-        )
+        return callback(create_script_project.__name__, query, space_name, project_name)
 
     return create_script_project
