@@ -251,20 +251,20 @@ resource "octopusdeploy_process_step" "process_step_terraform_plan_to_apply_a_te
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
-        "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
         "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
       }
 }
 
@@ -285,8 +285,8 @@ resource "octopusdeploy_process_step" "process_step_terraform_approve_plan" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the planned changes?\n\n#{Octopus.Action[Plan to apply a Terraform template].Output.TerraformPlanOutput}"
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
       }
 }
 
@@ -309,20 +309,20 @@ resource "octopusdeploy_process_step" "process_step_terraform_apply_a_terraform_
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
         "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
         "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
         "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
         "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
       }
 }
 
@@ -433,14 +433,8 @@ resource "octopusdeploy_environment" "environment_security" {
   }
 }
 
-data "octopusdeploy_projects" "projecttrigger_terraform_daily_security_scan" {
-  ids          = null
-  partial_name = "Terraform"
-  skip         = 0
-  take         = 1
-}
 resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_terraform_daily_security_scan" {
-  count       = "${length(data.octopusdeploy_projects.projecttrigger_terraform_daily_security_scan.projects) != 0 ? 0 : 1}"
+  count       = "${length(data.octopusdeploy_projects.Terraform.projects) != 0 ? 0 : 1}"
   space_id    = "${trimspace(var.octopus_space_id)}"
   name        = "Daily Security Scan"
   description = ""

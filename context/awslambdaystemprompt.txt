@@ -3,7 +3,7 @@
 * The supplied "Example Octopus AWS Lambda Function Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project deploying an application to an AWS Lambda based on the "Example Octopus AWS Lambda Function Terraform Configuration".
 
-# AWS Lambda Project Variable Instructions
+## AWS Lambda Project Variable Instructions
 
 You must include all the following variables from the "Example Octopus AWS Lambda Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_variable" "aws_lambda_project_octopus_api_key_1"
@@ -14,9 +14,9 @@ You must include all the following variables from the "Example Octopus AWS Lambd
 * resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1"
 
 ## AWS Lambda Project Scheduled Triggers Instructions
-
 You must include all the following project scheduled trigger resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_daily_security_scan"
+
 
 ## AWS Lambda Project Deployment Process Instructions
 
@@ -32,22 +32,54 @@ You must include all the following step resources from the "Example Octopus AWS 
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_scan_for_vulnerabilities"
 
 ## AWS Lambda Project Runbook Instructions
-
 You must include all the following runbook resources once unless otherwise specified:
 * resource "octopusdeploy_runbook" "runbook_aws_lambda_checkov_sam_static_analysis"
+
 
 ## AWS Lambda Project Runbook Deployment Process Instructions
 
 You must include all the following runbook steps from the runbook_aws_lambda_checkov_sam_static_analysis runbook once unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_checkov_sam_static_analysis_run_checkov_static_analysis_scan"
 
-## AWS Lambda Lifecycle Instructions
 
+## AWS Lambda Lifecycle Instructions
 You must include all the following lifecycle resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless otherwise specified:
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
 
+
+## AWS Lambda Project Deployment Process Instructions
+
 You must include all the following project deployment process resources from the "Example Octopus AWS Lambda Terraform Configuration" once:
 * resource "octopusdeploy_process" "process_aws_lambda"
 * resource "octopusdeploy_process" "process_aws_lambda_checkov_sam_static_analysis"
+
+## AWS Lambda Project Instructions
+
+You must include all the following project resources from the "Example Octopus AWS Lambda Terraform Configuration" once:
+* data "octopusdeploy_projects" "project_aws_lambda"
+* resource "octopusdeploy_project" "project_aws_lambda"
+
+## AWS Lambda Environment Instructions
+
+You must include all the following environment resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless otherwise specified:
+* data "octopusdeploy_environments" "environment_development"
+* resource "octopusdeploy_environment" "environment_development"
+* data "octopusdeploy_environments" "environment_test"
+* resource "octopusdeploy_environment" "environment_test"
+* data "octopusdeploy_environments" "environment_production"
+* resource "octopusdeploy_environment" "environment_production"
+* data "octopusdeploy_environments" "environment_security"
+* resource "octopusdeploy_environment" "environment_security"
+
+## AWS Lambda Feed Instructions
+
+You must include all the following environment resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless otherwise specified:
+* data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+* data "octopusdeploy_feeds" "feed_docker_hub"
+* resource "octopusdeploy_docker_container_registry" "feed_docker_hub"
+* data "octopusdeploy_feeds" "feed_octopus_maven_feed"
+* resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed"
+
+

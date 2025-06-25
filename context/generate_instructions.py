@@ -34,48 +34,58 @@ def find_project_scheduled_triggers(filename, label):
     # Pattern to match the resource declarations for octopusdeploy_project_scheduled_trigger
     pattern = r'resource\s+"octopusdeploy_project_scheduled_trigger"\s+"([^"]+)"'
 
+    message = ""
+    found = False
+
     try:
         # Open and read the file
-        print(f"\n## {label} Project Scheduled Triggers Instructions\n")
-        print(
-            f'You must include all the following project scheduled trigger resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:'
-        )
+        message += f"\n## {label} Project Scheduled Triggers Instructions\n"
+        message += f'You must include all the following project scheduled trigger resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:\n'
         with open(filename, "r") as file:
             lines = file.readlines()
 
             for i, line in enumerate(lines):
                 match = re.match(pattern, line)
                 if match:
-                    print(
-                        f'* resource "octopusdeploy_project_scheduled_trigger" "{match.group(1)}"'
-                    )
+                    found = True
+                    message += f'* resource "octopusdeploy_project_scheduled_trigger" "{match.group(1)}"\n'
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
         print(f"Error processing file: {e}")
+
+    if found:
+        print(message)
 
 
 def find_project_channels(filename, label):
     # Pattern to match the resource declarations for octopusdeploy_project_scheduled_trigger
     pattern = r'resource\s+"octopusdeploy_channel"\s+"([^"]+)"'
 
+    found = False
+    message = ""
+
     try:
         # Open and read the file
-        print(f"\n## {label} Project Channels Instructions\n")
-        print(
-            f'You must include all the following project channel resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:'
-        )
+        message += f"\n## {label} Project Channels Instructions\n"
+        message += f'You must include all the following project channel resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:\n'
         with open(filename, "r") as file:
             lines = file.readlines()
 
             for i, line in enumerate(lines):
                 match = re.match(pattern, line)
                 if match:
-                    print(f'* resource "octopusdeploy_channel" "{match.group(1)}"')
+                    message += (
+                        f'* resource "octopusdeploy_channel" "{match.group(1)}"\n'
+                    )
+                    found = True
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
         print(f"Error processing file: {e}")
+
+    if found:
+        print(message)
 
 
 def find_project_deployment_process(filename, label):
@@ -107,23 +117,155 @@ def find_lifecycles(filename, label):
     pattern = r'resource\s+"octopusdeploy_lifecycle"\s+"([^"]+)"'
     data_pattern = r'data\s+"octopusdeploy_lifecycles"\s+"([^"]+)"'
 
+    message = ""
+    found = False
+
     try:
         # Open and read the file
-        print(f"\n## {label} Lifecycle Instructions\n")
-        print(
-            f'You must include all the following lifecycle resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:'
-        )
+        message += f"\n## {label} Lifecycle Instructions\n"
+        message += f'You must include all the following lifecycle resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:\n'
         with open(filename, "r") as file:
             lines = file.readlines()
 
             for i, line in enumerate(lines):
                 match = re.match(pattern, line)
                 if match:
-                    print(f'* resource "octopusdeploy_lifecycle" "{match.group(1)}"')
+                    found = True
+                    message += (
+                        f'* resource "octopusdeploy_lifecycle" "{match.group(1)}"\n'
+                    )
 
                 match = re.match(data_pattern, line)
                 if match:
-                    print(f'* data "octopusdeploy_lifecycles" "{match.group(1)}"')
+                    found = True
+                    message += f'* data "octopusdeploy_lifecycles" "{match.group(1)}"\n'
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
+    except Exception as e:
+        print(f"Error processing file: {e}")
+
+    if found:
+        print(message)
+
+
+def find_projects(filename, label):
+    ignore_list = ["project_child_project"]
+
+    pattern = r'resource\s+"octopusdeploy_project"\s+"([^"]+)"'
+    data_pattern = r'data\s+"octopusdeploy_projects"\s+"([^"]+)"'
+
+    try:
+        # Open and read the file
+        print(f"\n## {label} Project Instructions\n")
+        print(
+            f'You must include all the following project resources from the "Example Octopus {label} Terraform Configuration" once:'
+        )
+        with open(filename, "r") as file:
+            lines = file.readlines()
+
+            for i, line in enumerate(lines):
+                match = re.match(pattern, line)
+                if match and match.group(1) not in ignore_list:
+                    print(f'* resource "octopusdeploy_project" "{match.group(1)}"')
+
+                match = re.match(data_pattern, line)
+                if match:
+                    print(f'* data "octopusdeploy_projects" "{match.group(1)}"')
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
+    except Exception as e:
+        print(f"Error processing file: {e}")
+
+
+def find_environments(filename, label):
+    ignore_list = []
+
+    pattern = r'resource\s+"octopusdeploy_environment"\s+"([^"]+)"'
+    data_pattern = r'data\s+"octopusdeploy_environments"\s+"([^"]+)"'
+
+    try:
+        # Open and read the file
+        print(f"\n## {label} Environment Instructions\n")
+        print(
+            f'You must include all the following environment resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:'
+        )
+        with open(filename, "r") as file:
+            lines = file.readlines()
+
+            for i, line in enumerate(lines):
+                match = re.match(pattern, line)
+                if match and match.group(1) not in ignore_list:
+                    print(f'* resource "octopusdeploy_environment" "{match.group(1)}"')
+
+                match = re.match(data_pattern, line)
+                if match:
+                    print(f'* data "octopusdeploy_environments" "{match.group(1)}"')
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
+    except Exception as e:
+        print(f"Error processing file: {e}")
+
+
+def find_feeds(filename, label):
+    ignore_list = []
+
+    ecr = r'resource\s+"octopusdeploy_aws_elastic_container_registry"\s+"([^"]+)"'
+    docker = r'resource\s+"octopusdeploy_docker_container_registry"\s+"([^"]+)"'
+    github = r'resource\s+"octopusdeploy_github_repository_feed"\s+"([^"]+)"'
+    helm = r'resource\s+"octopusdeploy_helm_feed"\s+"([^"]+)"'
+    maven = r'resource\s+"octopusdeploy_maven_feed"\s+"([^"]+)"'
+    nuget = r'resource\s+"octopusdeploy_nuget_feed"\s+"([^"]+)"'
+    data_pattern = r'data\s+"octopusdeploy_feeds"\s+"([^"]+)"'
+
+    try:
+        # Open and read the file
+        print(f"\n## {label} Feed Instructions\n")
+        print(
+            f'You must include all the following environment resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:'
+        )
+        with open(filename, "r") as file:
+            lines = file.readlines()
+
+            for i, line in enumerate(lines):
+                match = re.match(ecr, line)
+                if match and match.group(1) not in ignore_list:
+                    print(
+                        f'* resource "octopusdeploy_aws_elastic_container_registry" "{match.group(1)}"'
+                    )
+
+                match = re.match(docker, line)
+                if match and match.group(1) not in ignore_list:
+                    print(
+                        f'* resource "octopusdeploy_docker_container_registry" "{match.group(1)}"'
+                    )
+
+                match = re.match(github, line)
+                if match and match.group(1) not in ignore_list:
+                    print(
+                        f'* resource "octopusdeploy_github_repository_feed" "{match.group(1)}"'
+                    )
+
+                match = re.match(nuget, line)
+                if match and match.group(1) not in ignore_list:
+                    print(f'* resource "octopusdeploy_nuget_feed" "{match.group(1)}"')
+
+                match = re.match(maven, line)
+                if match and match.group(1) not in ignore_list:
+                    print(f'* resource "octopusdeploy_maven_feed" "{match.group(1)}"')
+
+                match = re.match(helm, line)
+                if match and match.group(1) not in ignore_list:
+                    print(f'* resource "octopusdeploy_helm_feed" "{match.group(1)}"')
+
+                match = re.match(github, line)
+                if match and match.group(1) not in ignore_list:
+                    print(
+                        f'* resource "octopusdeploy_github_repository_feed" "{match.group(1)}"'
+                    )
+
+                match = re.match(data_pattern, line)
+                if match:
+                    print(f'* data "octopusdeploy_feeds" "{match.group(1)}"')
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
@@ -247,23 +389,30 @@ def find_runbook_names(filename, label):
     # Pattern to match the resource declarations for octopusdeploy_variable
     pattern = r'resource\s+"octopusdeploy_runbook"\s+"([^"]+)"'
 
+    found = False
+    message = ""
+
     try:
         # Open and read the file
-        print(f"\n## {label} Project Runbook Instructions\n")
-        print(
-            "You must include all the following runbook resources once unless otherwise specified:"
-        )
+        message += f"\n## {label} Project Runbook Instructions\n"
+        message += "You must include all the following runbook resources once unless otherwise specified:\n"
         with open(filename, "r") as file:
             lines = file.readlines()
 
             for i, line in enumerate(lines):
                 match = re.match(pattern, line)
                 if match:
-                    print(f'* resource "octopusdeploy_runbook" "{match.group(1)}"')
+                    found = True
+                    message += (
+                        f'* resource "octopusdeploy_runbook" "{match.group(1)}"\n'
+                    )
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
         print(f"Error processing file: {e}")
+
+    if found:
+        print(message)
 
 
 def find_variable_value(filename, variable):
@@ -309,8 +458,11 @@ def find_variable_value(filename, variable):
 
 
 def find_runbook_step_names(filename, label):
+    message = ""
+    found = False
+
     try:
-        print(f"\n## {label} Project Runbook Deployment Process Instructions")
+        message += f"\n## {label} Project Runbook Deployment Process Instructions\n"
         with open(filename, "r") as file:
             content = file.read()  # Read the whole file content once
 
@@ -389,9 +541,7 @@ def find_runbook_step_names(filename, label):
                 # Derive the base name for the runbook
                 runbook_base_name = tf_process_name.replace("process_", "")
 
-                print(
-                    f"\nYou must include all the following runbook steps from the runbook_{runbook_base_name} runbook once unless otherwise specified:"
-                )
+                message += f"\nYou must include all the following runbook steps from the runbook_{runbook_base_name} runbook once unless otherwise specified:\n"
 
                 # Define the prefix that steps for this runbook should start with.
                 step_name_prefix = f"process_step_{runbook_base_name}_"
@@ -403,14 +553,16 @@ def find_runbook_step_names(filename, label):
                 ) in all_process_steps_data:
                     # Check if the step's Terraform resource name starts with the expected prefix.
                     if step_tf_name.startswith(step_name_prefix):
-                        print(
-                            f'* resource "octopusdeploy_process_step" "{current_block_tf_name}"'
-                        )
+                        found = True
+                        message += f'* resource "octopusdeploy_process_step" "{current_block_tf_name}"\n'
 
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
         print(f"Error processing file: {e}")
+
+    if found:
+        print(message)
 
 
 def main():
@@ -429,6 +581,9 @@ def main():
     find_lifecycles(filename, label)
     find_project_channels(filename, label)
     find_project_deployment_process(filename, label)
+    find_projects(filename, label)
+    find_environments(filename, label)
+    find_feeds(filename, label)
 
 
 if __name__ == "__main__":

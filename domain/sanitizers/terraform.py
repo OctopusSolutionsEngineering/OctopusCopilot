@@ -129,29 +129,56 @@ def fix_account_type(config):
     return config
 
 
-def fix_duplicate_default_lifecycle(config):
+def remove_duplicate_definitions(config):
     """
-    The LLM kept trying to return multiple data lookups for the default lifecycle,
-    so rename any duplicates.
+    The LLM kept trying to return duplicate definitions for resources, data, variables, and outputs.
+    This is not foolproof - we would need to parse the HCL2 syntax properly to do that.
+    We assume the Terraform config is indented correctly and that each block ends with a closing bracket on the start of the line.
+    If the indents are incorrect and there are duplicated blocks, this will return invalid Terraform config.
+    However, in that scenario, we had invalid Terraform config to begin with, so we have lost nothing by trying to sanitize it.
+    :param config: The generated Terraform config to sanitize.
+    :return: The sanitized Terraform config with duplicate definitions removed.
     """
+    block_types = [
+        "resource",
+        "data",
+        "variable",
+        "output",
+    ]
 
-    # If we get a duplicate default lifecycle block, just remove it
-    if (
-        config.count('data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"')
-        <= 1
-    ):
-        return config
+    if not config:
+        return ""
 
-    count = 0
+    fixed_config = config
+
     splits = config.splitlines()
 
-    for i in range(len(splits)):
-        line = splits[i]
-        if line == 'data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {':
-            count += 1
-            if count > 1:
-                splits[i] = (
-                    f'data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle{count}" {{'
-                )
+    blocks = []
 
-    return "\n".join(splits)
+    # Step 1 - Find the blocks in the config
+    current_block = None
+    for line in splits:
+        # The start of a block is appended to the current block
+        if any(line.startswith(block_type) for block_type in block_types):
+            current_block = []
+
+        if current_block is not None:
+            # If we have started a new block, append the line to it
+            current_block.append(line)
+
+        # If we reach the end of a block, append it to the blocks list
+        if line == "}":
+            if current_block is not None:
+                blocks.append(current_block)
+            current_block = None
+
+    # Step 2 - Remove duplicate blocks
+    for i in range(len(blocks)):
+        for j in range(i + 1, len(blocks)):
+            if blocks[i] == blocks[j]:
+                duplicate_block = "\n".join(blocks[i])
+                while fixed_config.count(duplicate_block) > 1:
+                    # Remove the duplicate block
+                    fixed_config = fixed_config.replace(duplicate_block, "", 1)
+
+    return fixed_config.strip()

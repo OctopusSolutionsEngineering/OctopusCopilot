@@ -17,6 +17,712 @@ variable "octopus_space_id" {
   description = "The ID of the Octopus space to populate."
 }
 
+data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
+  feed_type    = "BuiltIn"
+  ids          = null
+  partial_name = ""
+  skip         = 0
+  take         = 1
+  lifecycle {
+    postcondition {
+      error_message = "Failed to resolve a feed called \"BuiltIn\". This resource must exist in the space before this Terraform configuration is applied."
+      condition     = length(self.feeds) != 0
+    }
+  }
+}
+
+data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_" {
+  feed_type    = "OctopusProject"
+  ids          = null
+  partial_name = "Octopus Server Releases"
+  skip         = 0
+  take         = 1
+  lifecycle {
+    postcondition {
+      error_message = "Failed to resolve a feed called \"Octopus Server Releases (built-in)\". This resource must exist in the space before this Terraform configuration is applied."
+      condition     = length(self.feeds) != 0
+    }
+  }
+}
+
+data "octopusdeploy_feeds" "feed_docker_hub" {
+  feed_type    = "Docker"
+  ids          = null
+  partial_name = "Docker Hub"
+  skip         = 0
+  take         = 1
+}
+variable "feed_docker_hub_password" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The password used by the feed Docker Hub"
+  default     = "Change Me!"
+}
+resource "octopusdeploy_docker_container_registry" "feed_docker_hub" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_docker_hub.feeds) != 0 ? 0 : 1}"
+  name                                 = "Docker Hub"
+  password                             = "${var.feed_docker_hub_password}"
+  registry_path                        = ""
+  username                             = "mcasperson"
+  api_version                          = ""
+  feed_uri                             = "https://index.docker.io"
+  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_feeds" "feed_nuget" {
+  feed_type    = "NuGet"
+  ids          = null
+  partial_name = "Nuget"
+  skip         = 0
+  take         = 1
+}
+variable "feed_nuget_password" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The password used by the feed Nuget"
+  default     = "Change Me!"
+}
+resource "octopusdeploy_nuget_feed" "feed_nuget" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_nuget.feeds) != 0 ? 0 : 1}"
+  name                                 = "Nuget"
+  feed_uri                             = "https://nuget.example.org"
+  username                             = "username"
+  password                             = "${var.feed_nuget_password}"
+  is_enhanced_mode                     = false
+  package_acquisition_location_options = ["Server", "ExecutionTarget"]
+  download_attempts                    = 5
+  download_retry_backoff_seconds       = 10
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_feeds" "feed_artifactory_feed" {
+  feed_type    = "ArtifactoryGeneric"
+  ids          = null
+  partial_name = "Artifactory Feed"
+  skip         = 0
+  take         = 1
+}
+variable "feed_artifactory_feed_password" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The password used by the feed Artifactory Feed"
+  default     = "Change Me!"
+}
+resource "octopusdeploy_artifactory_generic_feed" "feed_artifactory_feed" {
+  count      = "${length(data.octopusdeploy_feeds.feed_artifactory_feed.feeds) != 0 ? 0 : 1}"
+  feed_uri   = "https://example.jfrog.io"
+  name       = "Artifactory Feed"
+  password   = "${var.feed_artifactory_feed_password}"
+  username   = "username"
+  repository = "repositoryname"
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_feeds" "feed_aws_ecr" {
+  feed_type    = "AwsElasticContainerRegistry"
+  ids          = null
+  partial_name = "AWS ECR"
+  skip         = 0
+  take         = 1
+}
+variable "feed_aws_ecr_secretkey" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The secret key used by the feed AWS ECR"
+  default     = "Change Me!"
+}
+resource "octopusdeploy_aws_elastic_container_registry" "feed_aws_ecr" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_aws_ecr.feeds) != 0 ? 0 : 1}"
+  name                                 = "AWS ECR"
+  access_key                           = "ASIAY34FZKBNKMUTVV7A"
+  secret_key                           = "${var.feed_aws_ecr_secretkey}"
+  region                               = "ap-southeast-2"
+  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
+  lifecycle {
+    ignore_changes  = [secret_key]
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_feeds" "feed_github_repository_feed" {
+  feed_type    = "GitHub"
+  ids          = null
+  partial_name = "GitHub Repository Feed"
+  skip         = 0
+  take         = 1
+}
+variable "feed_github_repository_feed_password" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The password used by the feed GitHub Repository Feed"
+  default     = "Change Me!"
+}
+resource "octopusdeploy_github_repository_feed" "feed_github_repository_feed" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_github_repository_feed.feeds) != 0 ? 0 : 1}"
+  name                                 = "GitHub Repository Feed"
+  password                             = "${var.feed_github_repository_feed_password}"
+  feed_uri                             = "https://api.github.com"
+  download_attempts                    = 5
+  download_retry_backoff_seconds       = 10
+  username                             = "x-access-token"
+  package_acquisition_location_options = ["Server", "ExecutionTarget"]
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_feeds" "feed_helm" {
+  feed_type    = "Helm"
+  ids          = null
+  partial_name = "Helm"
+  skip         = 0
+  take         = 1
+}
+variable "feed_helm_password" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The password used by the feed Helm"
+  default     = "Change Me!"
+}
+resource "octopusdeploy_helm_feed" "feed_helm" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_helm.feeds) != 0 ? 0 : 1}"
+  name                                 = "Helm"
+  password                             = "${var.feed_helm_password}"
+  feed_uri                             = "https://charts.helm.sh/stable"
+  username                             = "username"
+  package_acquisition_location_options = ["ExecutionTarget", "Server", "NotAcquired"]
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_feeds" "feed_maven" {
+  feed_type    = "Maven"
+  ids          = null
+  partial_name = "Maven"
+  skip         = 0
+  take         = 1
+}
+variable "feed_maven_password" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The password used by the feed Maven"
+  default     = "Change Me!"
+}
+resource "octopusdeploy_maven_feed" "feed_maven" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_maven.feeds) != 0 ? 0 : 1}"
+  name                                 = "Maven"
+  feed_uri                             = "https://repo.maven.apache.org/maven2/"
+  username                             = "username"
+  password                             = "${var.feed_maven_password}"
+  package_acquisition_location_options = ["Server", "ExecutionTarget"]
+  download_attempts                    = 5
+  download_retry_backoff_seconds       = 10
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_feeds" "feed_github_repository_feed_with_token" {
+  feed_type    = "GitHub"
+  ids          = null
+  partial_name = "GitHub Repository Feed with Token"
+  skip         = 0
+  take         = 1
+}
+variable "feed_github_repository_feed_with_token_password" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The password used by the feed GitHub Repository Feed with Token"
+  default     = "Change Me!"
+}
+resource "octopusdeploy_github_repository_feed" "feed_github_repository_feed_with_token" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_github_repository_feed_with_token.feeds) != 0 ? 0 : 1}"
+  name                                 = "GitHub Repository Feed with Token"
+  password                             = "${var.feed_github_repository_feed_with_token_password}"
+  feed_uri                             = "https://api.github.com"
+  download_attempts                    = 5
+  download_retry_backoff_seconds       = 10
+  package_acquisition_location_options = ["Server", "ExecutionTarget"]
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_feeds" "feed_github_repository_feed_with_anonymous_access" {
+  feed_type    = "GitHub"
+  ids          = null
+  partial_name = "GitHub Repository Feed with Anonymous Access"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_github_repository_feed" "feed_github_repository_feed_with_anonymous_access" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_github_repository_feed_with_anonymous_access.feeds) != 0 ? 0 : 1}"
+  name                                 = "GitHub Repository Feed with Anonymous Access"
+  feed_uri                             = "https://api.github.com"
+  download_attempts                    = 5
+  download_retry_backoff_seconds       = 10
+  package_acquisition_location_options = ["Server", "ExecutionTarget"]
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_feeds" "feed_github_container_registry" {
+  feed_type    = "Docker"
+  ids          = null
+  partial_name = "GitHub Container Registry"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_docker_container_registry" "feed_github_container_registry" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? 0 : 1}"
+  name                                 = "GitHub Container Registry"
+  registry_path                        = ""
+  api_version                          = "v2"
+  feed_uri                             = "https://ghcr.io"
+  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_feeds" "feed_ghcr_anonymous" {
+  feed_type    = "Docker"
+  ids          = null
+  partial_name = "GHCR Anonymous"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? 0 : 1}"
+  name                                 = "GHCR Anonymous"
+  registry_path                        = ""
+  api_version                          = "v2"
+  feed_uri                             = "https://ghcrfacade-a6awccayfpcpg4cg.eastus-01.azurewebsites.net"
+  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_feeds" "feed_octopussamples_github_nuget_feed" {
+  feed_type    = "NuGet"
+  ids          = null
+  partial_name = "OctopusSamples GitHub NuGet Feed"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_nuget_feed" "feed_octopussamples_github_nuget_feed" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_octopussamples_github_nuget_feed.feeds) != 0 ? 0 : 1}"
+  name                                 = "OctopusSamples GitHub NuGet Feed"
+  feed_uri                             = "https://nuget.pkg.github.com/OctopusSamples/index.json"
+  is_enhanced_mode                     = false
+  package_acquisition_location_options = ["Server", "ExecutionTarget"]
+  download_attempts                    = 5
+  download_retry_backoff_seconds       = 10
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_feeds" "feed_octopus_maven_feed" {
+  feed_type    = "Maven"
+  ids          = null
+  partial_name = "Octopus Maven Feed"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? 0 : 1}"
+  name                                 = "Octopus Maven Feed"
+  feed_uri                             = "http://octopus-sales-public-maven-repo.s3-website-ap-southeast-2.amazonaws.com/snapshot"
+  package_acquisition_location_options = ["Server", "ExecutionTarget"]
+  download_attempts                    = 5
+  download_retry_backoff_seconds       = 10
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_git_credentials" "gitcredential_github" {
+  name = "GitHub"
+  skip = 0
+  take = 1
+}
+resource "octopusdeploy_git_credential" "gitcredential_github" {
+  count    = "${length(data.octopusdeploy_git_credentials.gitcredential_github.git_credentials) != 0 ? 0 : 1}"
+  name     = "GitHub"
+  type     = "UsernamePassword"
+  username = "x-access-token"
+  password = "${var.gitcredential_github_sensitive_value}"
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+variable "gitcredential_github_sensitive_value" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The secret variable value associated with the git credential \"GitHub\""
+  default     = "Change Me!"
+}
+
+data "octopusdeploy_tag_sets" "tagset_tag_set" {
+  ids          = null
+  partial_name = "Tag Set"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_tag_set" "tagset_tag_set" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? 0 : 1}"
+  name        = "Tag Set"
+  description = "An example of a tenant tag set"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "octopusdeploy_tag" "tagset_tag_set_tag_tag" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? 0 : 1}"
+  name        = "tag"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets[0].id : octopusdeploy_tag_set.tagset_tag_set[0].id}"
+  color       = "#333333"
+  description = "An example of a tag"
+}
+
+resource "octopusdeploy_tag" "tagset_tag_set_tag_tag2" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? 0 : 1}"
+  name        = "tag2"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets[0].id : octopusdeploy_tag_set.tagset_tag_set[0].id}"
+  color       = "#C5AEEE"
+  description = "Another example of a tag"
+}
+
+data "octopusdeploy_tag_sets" "tagset_cities" {
+  ids          = null
+  partial_name = "Cities"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_tag_set" "tagset_cities" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
+  name        = "Cities"
+  description = "An example tag set that captures cities"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
+  name        = "Sydney"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
+  color       = "#333333"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_cities_tag_london" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
+  name        = "London"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
+  color       = "#87BFEC"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_cities_tag_washington" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
+  name        = "Washington"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
+  color       = "#5ECD9E"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_cities_tag_madrid" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
+  name        = "Madrid"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
+  color       = "#FFA461"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_cities_tag_wellington" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
+  name        = "Wellington"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
+  color       = "#C5AEEE"
+  description = ""
+}
+
+data "octopusdeploy_tag_sets" "tagset_business_units" {
+  ids          = null
+  partial_name = "Business Units"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_tag_set" "tagset_business_units" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
+  name        = "Business Units"
+  description = "An example tag set that defined business units"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "octopusdeploy_tag" "tagset_business_units_tag_billing" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
+  name        = "Billing"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
+  color       = "#333333"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_business_units_tag_insurance" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
+  name        = "Insurance"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
+  color       = "#87BFEC"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_business_units_tag_engineering" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
+  name        = "Engineering"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
+  color       = "#C5AEEE"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_business_units_tag_hr" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
+  name        = "HR"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
+  color       = "#FFA461"
+  description = ""
+}
+
+data "octopusdeploy_tag_sets" "tagset_regions" {
+  ids          = null
+  partial_name = "Regions"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_tag_set" "tagset_regions" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
+  name        = "Regions"
+  description = "A sample tag set that captures geographical regions"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "octopusdeploy_tag" "tagset_regions_tag_us" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
+  name        = "US"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
+  color       = "#333333"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_regions_tag_europe" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
+  name        = "Europe"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
+  color       = "#5ECD9E"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_regions_tag_asia" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
+  name        = "Asia"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
+  color       = "#FF9F9F"
+  description = ""
+}
+
+resource "octopusdeploy_tag" "tagset_regions_tag_anz" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
+  name        = "ANZ"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
+  color       = "#C5AEEE"
+  description = ""
+}
+
+data "octopusdeploy_lifecycles" "lifecycle_application" {
+  ids          = null
+  partial_name = "Application"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_lifecycle" "lifecycle_application" {
+  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_application.lifecycles) != 0 ? 0 : 1}"
+  name        = "Application"
+  description = "This is an example lifecycle that automatically deploys to the first environment"
+
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+    name                                  = "Development"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
+    name                                  = "Test"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+    name                                  = "Production"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+
+  release_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
+  ids          = null
+  partial_name = "Default Lifecycle"
+  skip         = 0
+  take         = 1
+  lifecycle {
+    postcondition {
+      error_message = "Failed to resolve a lifecycle called \"Default Lifecycle\". This resource must exist in the space before this Terraform configuration is applied."
+      condition     = length(self.lifecycles) != 0
+    }
+  }
+}
+
+data "octopusdeploy_lifecycles" "lifecycle_devsecops" {
+  ids          = null
+  partial_name = "DevSecOps"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
+  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_devsecops.lifecycles) != 0 ? 0 : 1}"
+  name        = "DevSecOps"
+  description = "This lifecycle automatically deploys to the Development environment, progresses through the Test and Production environments, and then automatically deploys to the Security environment. The Security environment is used to scan SBOMs for any vulnerabilities and deployments to the Security environment are initiated by triggers on a daily basis."
+
+  phase {
+    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+    optional_deployment_targets           = []
+    name                                  = "Development"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
+    name                                  = "Test"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+    name                                  = "Production"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+    optional_deployment_targets           = []
+    name                                  = "Security"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+
+  release_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_lifecycles" "lifecycle_hotfix" {
+  ids          = null
+  partial_name = "Hotfix"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_lifecycle" "lifecycle_hotfix" {
+  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles) != 0 ? 0 : 1}"
+  name        = "Hotfix"
+  description = "This channel allows deployments directly to production."
+
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+    name                                  = "Production"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+
+  release_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 data "octopusdeploy_accounts" "account_aws" {
   ids          = null
   partial_name = "AWS"
@@ -383,30 +1089,6 @@ variable "account_username_password" {
   default     = "Change Me!"
 }
 
-data "octopusdeploy_git_credentials" "gitcredential_github" {
-  name = "GitHub"
-  skip = 0
-  take = 1
-}
-resource "octopusdeploy_git_credential" "gitcredential_github" {
-  count    = "${length(data.octopusdeploy_git_credentials.gitcredential_github.git_credentials) != 0 ? 0 : 1}"
-  name     = "GitHub"
-  type     = "UsernamePassword"
-  username = "x-access-token"
-  password = "${var.gitcredential_github_sensitive_value}"
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-variable "gitcredential_github_sensitive_value" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The secret variable value associated with the git credential \"GitHub\""
-  default     = "Change Me!"
-}
-
 data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
   ids          = null
   partial_name = "Default Worker Pool"
@@ -612,761 +1294,16 @@ resource "octopusdeploy_project_group" "project_group_windows" {
   }
 }
 
-data "octopusdeploy_lifecycles" "lifecycle_application" {
+data "octopusdeploy_machine_policies" "default_machine_policy" {
   ids          = null
-  partial_name = "Application"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_lifecycle" "lifecycle_application" {
-  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_application.lifecycles) != 0 ? 0 : 1}"
-  name        = "Application"
-  description = "This is an example lifecycle that automatically deploys to the first environment"
-
-  phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-    name                                  = "Development"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-  phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
-    name                                  = "Test"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-  phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-    name                                  = "Production"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-
-  release_retention_policy {
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-
-  tentacle_retention_policy {
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
-  ids          = null
-  partial_name = "Default Lifecycle"
+  partial_name = "Default Machine Policy"
   skip         = 0
   take         = 1
   lifecycle {
     postcondition {
-      error_message = "Failed to resolve a lifecycle called \"Default Lifecycle\". This resource must exist in the space before this Terraform configuration is applied."
-      condition     = length(self.lifecycles) != 0
+      error_message = "Failed to resolve a machine policy called \"default_machine_policy\". This resource must exist in the space before this Terraform configuration is applied."
+      condition     = length(self.machine_policies) != 0
     }
-  }
-}
-
-data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
-  feed_type    = "BuiltIn"
-  ids          = null
-  partial_name = ""
-  skip         = 0
-  take         = 1
-  lifecycle {
-    postcondition {
-      error_message = "Failed to resolve a feed called \"BuiltIn\". This resource must exist in the space before this Terraform configuration is applied."
-      condition     = length(self.feeds) != 0
-    }
-  }
-}
-
-data "octopusdeploy_tag_sets" "tagset_tag_set" {
-  ids          = null
-  partial_name = "Tag Set"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_tag_set" "tagset_tag_set" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? 0 : 1}"
-  name        = "Tag Set"
-  description = "An example of a tenant tag set"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_" {
-  feed_type    = "OctopusProject"
-  ids          = null
-  partial_name = "Octopus Server Releases"
-  skip         = 0
-  take         = 1
-  lifecycle {
-    postcondition {
-      error_message = "Failed to resolve a feed called \"Octopus Server Releases (built-in)\". This resource must exist in the space before this Terraform configuration is applied."
-      condition     = length(self.feeds) != 0
-    }
-  }
-}
-
-resource "octopusdeploy_tag" "tagset_tag_set_tag_tag" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? 0 : 1}"
-  name        = "tag"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets[0].id : octopusdeploy_tag_set.tagset_tag_set[0].id}"
-  color       = "#333333"
-  description = "An example of a tag"
-}
-
-resource "octopusdeploy_tag" "tagset_tag_set_tag_tag2" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? 0 : 1}"
-  name        = "tag2"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_tag_set.tag_sets[0].id : octopusdeploy_tag_set.tagset_tag_set[0].id}"
-  color       = "#C5AEEE"
-  description = "Another example of a tag"
-}
-
-data "octopusdeploy_feeds" "feed_docker_hub" {
-  feed_type    = "Docker"
-  ids          = null
-  partial_name = "Docker Hub"
-  skip         = 0
-  take         = 1
-}
-variable "feed_docker_hub_password" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The password used by the feed Docker Hub"
-  default     = "Change Me!"
-}
-resource "octopusdeploy_docker_container_registry" "feed_docker_hub" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_docker_hub.feeds) != 0 ? 0 : 1}"
-  name                                 = "Docker Hub"
-  password                             = "${var.feed_docker_hub_password}"
-  registry_path                        = ""
-  username                             = "mcasperson"
-  api_version                          = ""
-  feed_uri                             = "https://index.docker.io"
-  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_tag_sets" "tagset_cities" {
-  ids          = null
-  partial_name = "Cities"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_tag_set" "tagset_cities" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
-  name        = "Cities"
-  description = "An example tag set that captures cities"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
-  name        = "Sydney"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
-  color       = "#333333"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_cities_tag_london" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
-  name        = "London"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
-  color       = "#87BFEC"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_cities_tag_washington" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
-  name        = "Washington"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
-  color       = "#5ECD9E"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_cities_tag_madrid" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
-  name        = "Madrid"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
-  color       = "#FFA461"
-  description = ""
-}
-
-data "octopusdeploy_lifecycles" "lifecycle_devsecops" {
-  ids          = null
-  partial_name = "DevSecOps"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
-  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_devsecops.lifecycles) != 0 ? 0 : 1}"
-  name        = "DevSecOps"
-  description = "This lifecycle automatically deploys to the Development environment, progresses through the Test and Production environments, and then automatically deploys to the Security environment. The Security environment is used to scan SBOMs for any vulnerabilities and deployments to the Security environment are initiated by triggers on a daily basis."
-
-  phase {
-    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-    optional_deployment_targets           = []
-    name                                  = "Development"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-  phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
-    name                                  = "Test"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-  phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-    name                                  = "Production"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-  phase {
-    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
-    optional_deployment_targets           = []
-    name                                  = "Security"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-
-  release_retention_policy {
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-
-  tentacle_retention_policy {
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_feeds" "feed_nuget" {
-  feed_type    = "NuGet"
-  ids          = null
-  partial_name = "Nuget"
-  skip         = 0
-  take         = 1
-}
-variable "feed_nuget_password" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The password used by the feed Nuget"
-  default     = "Change Me!"
-}
-resource "octopusdeploy_nuget_feed" "feed_nuget" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_nuget.feeds) != 0 ? 0 : 1}"
-  name                                 = "Nuget"
-  feed_uri                             = "https://nuget.example.org"
-  username                             = "username"
-  password                             = "${var.feed_nuget_password}"
-  is_enhanced_mode                     = false
-  package_acquisition_location_options = ["Server", "ExecutionTarget"]
-  download_attempts                    = 5
-  download_retry_backoff_seconds       = 10
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_tag" "tagset_cities_tag_wellington" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? 0 : 1}"
-  name        = "Wellington"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
-  color       = "#C5AEEE"
-  description = ""
-}
-
-data "octopusdeploy_lifecycles" "lifecycle_hotfix" {
-  ids          = null
-  partial_name = "Hotfix"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_lifecycle" "lifecycle_hotfix" {
-  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles) != 0 ? 0 : 1}"
-  name        = "Hotfix"
-  description = "This channel allows deployments directly to production."
-
-  phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-    name                                  = "Production"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-
-  release_retention_policy {
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-
-  tentacle_retention_policy {
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_tag_sets" "tagset_business_units" {
-  ids          = null
-  partial_name = "Business Units"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_tag_set" "tagset_business_units" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
-  name        = "Business Units"
-  description = "An example tag set that defined business units"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_tag" "tagset_business_units_tag_billing" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
-  name        = "Billing"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
-  color       = "#333333"
-  description = ""
-}
-
-data "octopusdeploy_feeds" "feed_artifactory_feed" {
-  feed_type    = "ArtifactoryGeneric"
-  ids          = null
-  partial_name = "Artifactory Feed"
-  skip         = 0
-  take         = 1
-}
-variable "feed_artifactory_feed_password" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The password used by the feed Artifactory Feed"
-  default     = "Change Me!"
-}
-resource "octopusdeploy_artifactory_generic_feed" "feed_artifactory_feed" {
-  count      = "${length(data.octopusdeploy_feeds.feed_artifactory_feed.feeds) != 0 ? 0 : 1}"
-  feed_uri   = "https://example.jfrog.io"
-  name       = "Artifactory Feed"
-  password   = "${var.feed_artifactory_feed_password}"
-  username   = "username"
-  repository = "repositoryname"
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_tag" "tagset_business_units_tag_insurance" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
-  name        = "Insurance"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
-  color       = "#87BFEC"
-  description = ""
-}
-
-data "octopusdeploy_feeds" "feed_aws_ecr" {
-  feed_type    = "AwsElasticContainerRegistry"
-  ids          = null
-  partial_name = "AWS ECR"
-  skip         = 0
-  take         = 1
-}
-variable "feed_aws_ecr_secretkey" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The secret key used by the feed AWS ECR"
-  default     = "Change Me!"
-}
-resource "octopusdeploy_aws_elastic_container_registry" "feed_aws_ecr" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_aws_ecr.feeds) != 0 ? 0 : 1}"
-  name                                 = "AWS ECR"
-  access_key                           = "ASIAY34FZKBNKMUTVV7A"
-  secret_key                           = "${var.feed_aws_ecr_secretkey}"
-  region                               = "ap-southeast-2"
-  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
-  lifecycle {
-    ignore_changes  = [secret_key]
-    prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_tag" "tagset_business_units_tag_engineering" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
-  name        = "Engineering"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
-  color       = "#C5AEEE"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_business_units_tag_hr" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? 0 : 1}"
-  name        = "HR"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_business_units.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_business_units.tag_sets[0].id : octopusdeploy_tag_set.tagset_business_units[0].id}"
-  color       = "#FFA461"
-  description = ""
-}
-
-data "octopusdeploy_tag_sets" "tagset_regions" {
-  ids          = null
-  partial_name = "Regions"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_tag_set" "tagset_regions" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
-  name        = "Regions"
-  description = "A sample tag set that captures geographical regions"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_tag" "tagset_regions_tag_us" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
-  name        = "US"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
-  color       = "#333333"
-  description = ""
-}
-
-data "octopusdeploy_feeds" "feed_github_repository_feed" {
-  feed_type    = "GitHub"
-  ids          = null
-  partial_name = "GitHub Repository Feed"
-  skip         = 0
-  take         = 1
-}
-variable "feed_github_repository_feed_password" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The password used by the feed GitHub Repository Feed"
-  default     = "Change Me!"
-}
-resource "octopusdeploy_github_repository_feed" "feed_github_repository_feed" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_github_repository_feed.feeds) != 0 ? 0 : 1}"
-  name                                 = "GitHub Repository Feed"
-  password                             = "${var.feed_github_repository_feed_password}"
-  feed_uri                             = "https://api.github.com"
-  download_attempts                    = 5
-  download_retry_backoff_seconds       = 10
-  username                             = "x-access-token"
-  package_acquisition_location_options = ["Server", "ExecutionTarget"]
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_tag" "tagset_regions_tag_europe" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
-  name        = "Europe"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
-  color       = "#5ECD9E"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_regions_tag_asia" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
-  name        = "Asia"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
-  color       = "#FF9F9F"
-  description = ""
-}
-
-resource "octopusdeploy_tag" "tagset_regions_tag_anz" {
-  count       = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
-  name        = "ANZ"
-  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
-  color       = "#C5AEEE"
-  description = ""
-}
-
-data "octopusdeploy_feeds" "feed_helm" {
-  feed_type    = "Helm"
-  ids          = null
-  partial_name = "Helm"
-  skip         = 0
-  take         = 1
-}
-variable "feed_helm_password" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The password used by the feed Helm"
-  default     = "Change Me!"
-}
-resource "octopusdeploy_helm_feed" "feed_helm" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_helm.feeds) != 0 ? 0 : 1}"
-  name                                 = "Helm"
-  password                             = "${var.feed_helm_password}"
-  feed_uri                             = "https://charts.helm.sh/stable"
-  username                             = "username"
-  package_acquisition_location_options = ["ExecutionTarget", "Server", "NotAcquired"]
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_feeds" "feed_maven" {
-  feed_type    = "Maven"
-  ids          = null
-  partial_name = "Maven"
-  skip         = 0
-  take         = 1
-}
-variable "feed_maven_password" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The password used by the feed Maven"
-  default     = "Change Me!"
-}
-resource "octopusdeploy_maven_feed" "feed_maven" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_maven.feeds) != 0 ? 0 : 1}"
-  name                                 = "Maven"
-  feed_uri                             = "https://repo.maven.apache.org/maven2/"
-  username                             = "username"
-  password                             = "${var.feed_maven_password}"
-  package_acquisition_location_options = ["Server", "ExecutionTarget"]
-  download_attempts                    = 5
-  download_retry_backoff_seconds       = 10
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_feeds" "feed_github_repository_feed_with_token" {
-  feed_type    = "GitHub"
-  ids          = null
-  partial_name = "GitHub Repository Feed with Token"
-  skip         = 0
-  take         = 1
-}
-variable "feed_github_repository_feed_with_token_password" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The password used by the feed GitHub Repository Feed with Token"
-  default     = "Change Me!"
-}
-resource "octopusdeploy_github_repository_feed" "feed_github_repository_feed_with_token" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_github_repository_feed_with_token.feeds) != 0 ? 0 : 1}"
-  name                                 = "GitHub Repository Feed with Token"
-  password                             = "${var.feed_github_repository_feed_with_token_password}"
-  feed_uri                             = "https://api.github.com"
-  download_attempts                    = 5
-  download_retry_backoff_seconds       = 10
-  package_acquisition_location_options = ["Server", "ExecutionTarget"]
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_feeds" "feed_github_repository_feed_with_anonymous_access" {
-  feed_type    = "GitHub"
-  ids          = null
-  partial_name = "GitHub Repository Feed with Anonymous Access"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_github_repository_feed" "feed_github_repository_feed_with_anonymous_access" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_github_repository_feed_with_anonymous_access.feeds) != 0 ? 0 : 1}"
-  name                                 = "GitHub Repository Feed with Anonymous Access"
-  feed_uri                             = "https://api.github.com"
-  download_attempts                    = 5
-  download_retry_backoff_seconds       = 10
-  package_acquisition_location_options = ["Server", "ExecutionTarget"]
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_feeds" "feed_github_container_registry" {
-  feed_type    = "Docker"
-  ids          = null
-  partial_name = "GitHub Container Registry"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_docker_container_registry" "feed_github_container_registry" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? 0 : 1}"
-  name                                 = "GitHub Container Registry"
-  registry_path                        = ""
-  api_version                          = "v2"
-  feed_uri                             = "https://ghcr.io"
-  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_feeds" "feed_ghcr_anonymous" {
-  feed_type    = "Docker"
-  ids          = null
-  partial_name = "GHCR Anonymous"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? 0 : 1}"
-  name                                 = "GHCR Anonymous"
-  registry_path                        = ""
-  api_version                          = "v2"
-  feed_uri                             = "https://ghcrfacade-a6awccayfpcpg4cg.eastus-01.azurewebsites.net"
-  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_feeds" "feed_octopussamples_github_nuget_feed" {
-  feed_type    = "NuGet"
-  ids          = null
-  partial_name = "OctopusSamples GitHub NuGet Feed"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_nuget_feed" "feed_octopussamples_github_nuget_feed" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_octopussamples_github_nuget_feed.feeds) != 0 ? 0 : 1}"
-  name                                 = "OctopusSamples GitHub NuGet Feed"
-  feed_uri                             = "https://nuget.pkg.github.com/OctopusSamples/index.json"
-  is_enhanced_mode                     = false
-  package_acquisition_location_options = ["Server", "ExecutionTarget"]
-  download_attempts                    = 5
-  download_retry_backoff_seconds       = 10
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_feeds" "feed_octopus_maven_feed" {
-  feed_type    = "Maven"
-  ids          = null
-  partial_name = "Octopus Maven Feed"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? 0 : 1}"
-  name                                 = "Octopus Maven Feed"
-  feed_uri                             = "http://octopus-sales-public-maven-repo.s3-website-ap-southeast-2.amazonaws.com/snapshot"
-  package_acquisition_location_options = ["Server", "ExecutionTarget"]
-  download_attempts                    = 5
-  download_retry_backoff_seconds       = 10
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_tenants" "tenant_australian_office" {
-  ids          = null
-  partial_name = "Australian Office"
-  skip         = 0
-  take         = 1
-  project_id   = ""
-  tags         = null
-}
-resource "octopusdeploy_tenant" "tenant_australian_office" {
-  count       = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
-  name        = "Australian Office"
-  description = "An example tenant that represents an Australian office"
-  tenant_tags = ["Cities/Sydney"]
-  depends_on  = [octopusdeploy_tag_set.tagset_cities,octopusdeploy_tag.tagset_cities_tag_sydney]
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_tenants" "tenant_european_office" {
-  ids          = null
-  partial_name = "European Office"
-  skip         = 0
-  take         = 1
-  project_id   = ""
-  tags         = null
-}
-resource "octopusdeploy_tenant" "tenant_european_office" {
-  count       = "${length(data.octopusdeploy_tenants.tenant_european_office.tenants) != 0 ? 0 : 1}"
-  name        = "European Office"
-  description = "An example tenant that represents the European office"
-  tenant_tags = ["Cities/London"]
-  depends_on  = [octopusdeploy_tag_set.tagset_cities,octopusdeploy_tag.tagset_cities_tag_london]
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_tenants" "tenant_main_office" {
-  ids          = null
-  partial_name = "Main Office"
-  skip         = 0
-  take         = 1
-  project_id   = ""
-  tags         = null
-}
-resource "octopusdeploy_tenant" "tenant_main_office" {
-  count       = "${length(data.octopusdeploy_tenants.tenant_main_office.tenants) != 0 ? 0 : 1}"
-  name        = "Main Office"
-  description = "An example tenant that represents that main US office"
-  tenant_tags = ["Cities/Washington"]
-  depends_on  = [octopusdeploy_tag_set.tagset_cities,octopusdeploy_tag.tagset_cities_tag_washington]
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_tenants" "tenant_tenant" {
-  ids          = null
-  partial_name = "Tenant"
-  skip         = 0
-  take         = 1
-  project_id   = ""
-  tags         = null
-}
-resource "octopusdeploy_tenant" "tenant_tenant" {
-  count       = "${length(data.octopusdeploy_tenants.tenant_tenant.tenants) != 0 ? 0 : 1}"
-  name        = "Tenant"
-  description = "An example of a tenant"
-  tenant_tags = ["Tag Set/tag"]
-  depends_on  = [octopusdeploy_tag_set.tagset_tag_set,octopusdeploy_tag.tagset_tag_set_tag_tag]
-  lifecycle {
-    prevent_destroy = true
   }
 }
 
@@ -1723,85 +1660,61 @@ resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes
   depends_on = []
 }
 
-data "octopusdeploy_machine_policies" "default_machine_policy" {
-  ids          = null
-  partial_name = "Default Machine Policy"
-  skip         = 0
-  take         = 1
-  lifecycle {
-    postcondition {
-      error_message = "Failed to resolve a machine policy called \"default_machine_policy\". This resource must exist in the space before this Terraform configuration is applied."
-      condition     = length(self.machine_policies) != 0
-    }
-  }
+data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {
+  ids             = null
+  environment_ids = null
+  project_ids     = null
+  tenant_ids      = null
+  partial_name    = "Xmas"
+  skip            = 0
+  take            = 1
 }
-
-data "octopusdeploy_deployment_targets" "target_cloudregion1" {
-  ids                  = null
-  partial_name         = "CloudRegion1"
-  skip                 = 0
-  take                 = 1
-  health_statuses      = null
-  communication_styles = null
-  environments         = null
-  roles                = null
-  shell_names          = null
-  tenant_tags          = null
-  tenants              = null
-}
-resource "octopusdeploy_cloud_region_deployment_target" "target_cloudregion1" {
-  count                             = "${length(data.octopusdeploy_deployment_targets.target_cloudregion1.deployment_targets) != 0 ? 0 : 1}"
-  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-  name                              = "CloudRegion1"
-  roles                             = ["TestMe"]
-  default_worker_pool_id            = ""
-  health_status                     = "Healthy"
-  is_disabled                       = false
-  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
-  shell_name                        = "Unknown"
-  shell_version                     = "Unknown"
-  tenant_tags                       = []
-  tenanted_deployment_participation = "Untenanted"
-  tenants                           = []
-  thumbprint                        = ""
+resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
+  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
+  name  = "Xmas"
+  start = "2024-12-24T14:00:00.000+00:00"
+  end   = "2025-12-26T16:00:00.000+00:00"
   lifecycle {
     prevent_destroy = true
   }
-  depends_on = []
 }
 
-data "octopusdeploy_deployment_targets" "target_cloudregion2" {
-  ids                  = null
-  partial_name         = "CloudRegion2"
-  skip                 = 0
-  take                 = 1
-  health_statuses      = null
-  communication_styles = null
-  environments         = null
-  roles                = null
-  shell_names          = null
-  tenant_tags          = null
-  tenants              = null
+data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {
+  ids             = null
+  environment_ids = null
+  project_ids     = null
+  tenant_ids      = null
+  partial_name    = "Xmas"
+  skip            = 0
+  take            = 1
 }
-resource "octopusdeploy_cloud_region_deployment_target" "target_cloudregion2" {
-  count                             = "${length(data.octopusdeploy_deployment_targets.target_cloudregion2.deployment_targets) != 0 ? 0 : 1}"
-  environments                      = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
-  name                              = "CloudRegion2"
-  roles                             = ["TestMe"]
-  default_worker_pool_id            = ""
-  health_status                     = "Healthy"
-  is_disabled                       = false
-  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
-  shell_name                        = "Unknown"
-  shell_version                     = "Unknown"
-  tenant_tags                       = []
-  tenanted_deployment_participation = "Untenanted"
-  tenants                           = []
-  thumbprint                        = ""
+resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
+  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
+  name  = "Xmas"
+  start = "2024-12-24T14:00:00.000+00:00"
+  end   = "2025-12-26T16:00:00.000+00:00"
   lifecycle {
     prevent_destroy = true
   }
-  depends_on = []
+}
+
+data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {
+  ids             = null
+  environment_ids = null
+  project_ids     = null
+  tenant_ids      = null
+  partial_name    = "Xmas"
+  skip            = 0
+  take            = 1
+}
+resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
+  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
+  name  = "Xmas"
+  start = "2024-12-24T14:00:00.000+00:00"
+  end   = "2025-12-26T16:00:00.000+00:00"
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "octopusdeploy_variable" "variables_example_variable_set_database_password_1" {
@@ -1955,58 +1868,145 @@ resource "octopusdeploy_library_variable_set" "library_variable_set_variables_ex
   }
 }
 
-data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {
-  ids             = null
-  environment_ids = null
-  project_ids     = null
-  tenant_ids      = null
-  partial_name    = "Xmas"
-  skip            = 0
-  take            = 1
+data "octopusdeploy_deployment_targets" "target_cloudregion1" {
+  ids                  = null
+  partial_name         = "CloudRegion1"
+  skip                 = 0
+  take                 = 1
+  health_statuses      = null
+  communication_styles = null
+  environments         = null
+  roles                = null
+  shell_names          = null
+  tenant_tags          = null
+  tenants              = null
 }
-resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
-  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
-  name  = "Xmas"
-  start = "2024-12-24T14:00:00.000+00:00"
-  end   = "2025-12-26T16:00:00.000+00:00"
+resource "octopusdeploy_cloud_region_deployment_target" "target_cloudregion1" {
+  count                             = "${length(data.octopusdeploy_deployment_targets.target_cloudregion1.deployment_targets) != 0 ? 0 : 1}"
+  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+  name                              = "CloudRegion1"
+  roles                             = ["TestMe"]
+  default_worker_pool_id            = ""
+  health_status                     = "Healthy"
+  is_disabled                       = false
+  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
+  shell_name                        = "Unknown"
+  shell_version                     = "Unknown"
+  tenant_tags                       = []
+  tenanted_deployment_participation = "Untenanted"
+  tenants                           = []
+  thumbprint                        = ""
+  lifecycle {
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+data "octopusdeploy_deployment_targets" "target_cloudregion2" {
+  ids                  = null
+  partial_name         = "CloudRegion2"
+  skip                 = 0
+  take                 = 1
+  health_statuses      = null
+  communication_styles = null
+  environments         = null
+  roles                = null
+  shell_names          = null
+  tenant_tags          = null
+  tenants              = null
+}
+resource "octopusdeploy_cloud_region_deployment_target" "target_cloudregion2" {
+  count                             = "${length(data.octopusdeploy_deployment_targets.target_cloudregion2.deployment_targets) != 0 ? 0 : 1}"
+  environments                      = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
+  name                              = "CloudRegion2"
+  roles                             = ["TestMe"]
+  default_worker_pool_id            = ""
+  health_status                     = "Healthy"
+  is_disabled                       = false
+  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
+  shell_name                        = "Unknown"
+  shell_version                     = "Unknown"
+  tenant_tags                       = []
+  tenanted_deployment_participation = "Untenanted"
+  tenants                           = []
+  thumbprint                        = ""
+  lifecycle {
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+data "octopusdeploy_tenants" "tenant_australian_office" {
+  ids          = null
+  partial_name = "Australian Office"
+  skip         = 0
+  take         = 1
+  project_id   = ""
+  tags         = null
+}
+resource "octopusdeploy_tenant" "tenant_australian_office" {
+  count       = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
+  name        = "Australian Office"
+  description = "An example tenant that represents an Australian office"
+  tenant_tags = ["Cities/Sydney"]
+  depends_on  = [octopusdeploy_tag_set.tagset_cities,octopusdeploy_tag.tagset_cities_tag_sydney]
   lifecycle {
     prevent_destroy = true
   }
 }
 
-data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {
-  ids             = null
-  environment_ids = null
-  project_ids     = null
-  tenant_ids      = null
-  partial_name    = "Xmas"
-  skip            = 0
-  take            = 1
+data "octopusdeploy_tenants" "tenant_european_office" {
+  ids          = null
+  partial_name = "European Office"
+  skip         = 0
+  take         = 1
+  project_id   = ""
+  tags         = null
 }
-resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
-  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
-  name  = "Xmas"
-  start = "2024-12-24T14:00:00.000+00:00"
-  end   = "2025-12-26T16:00:00.000+00:00"
+resource "octopusdeploy_tenant" "tenant_european_office" {
+  count       = "${length(data.octopusdeploy_tenants.tenant_european_office.tenants) != 0 ? 0 : 1}"
+  name        = "European Office"
+  description = "An example tenant that represents the European office"
+  tenant_tags = ["Cities/London"]
+  depends_on  = [octopusdeploy_tag.tagset_cities_tag_london,octopusdeploy_tag_set.tagset_cities]
   lifecycle {
     prevent_destroy = true
   }
 }
 
-data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {
-  ids             = null
-  environment_ids = null
-  project_ids     = null
-  tenant_ids      = null
-  partial_name    = "Xmas"
-  skip            = 0
-  take            = 1
+data "octopusdeploy_tenants" "tenant_main_office" {
+  ids          = null
+  partial_name = "Main Office"
+  skip         = 0
+  take         = 1
+  project_id   = ""
+  tags         = null
 }
-resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
-  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
-  name  = "Xmas"
-  start = "2024-12-24T14:00:00.000+00:00"
-  end   = "2025-12-26T16:00:00.000+00:00"
+resource "octopusdeploy_tenant" "tenant_main_office" {
+  count       = "${length(data.octopusdeploy_tenants.tenant_main_office.tenants) != 0 ? 0 : 1}"
+  name        = "Main Office"
+  description = "An example tenant that represents that main US office"
+  tenant_tags = ["Cities/Washington"]
+  depends_on  = [octopusdeploy_tag.tagset_cities_tag_washington,octopusdeploy_tag_set.tagset_cities]
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_tenants" "tenant_tenant" {
+  ids          = null
+  partial_name = "Tenant"
+  skip         = 0
+  take         = 1
+  project_id   = ""
+  tags         = null
+}
+resource "octopusdeploy_tenant" "tenant_tenant" {
+  count       = "${length(data.octopusdeploy_tenants.tenant_tenant.tenants) != 0 ? 0 : 1}"
+  name        = "Tenant"
+  description = "An example of a tenant"
+  tenant_tags = ["Tag Set/tag"]
+  depends_on  = [octopusdeploy_tag.tagset_tag_set_tag_tag,octopusdeploy_tag_set.tagset_tag_set]
   lifecycle {
     prevent_destroy = true
   }

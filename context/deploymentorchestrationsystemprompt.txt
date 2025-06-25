@@ -98,3 +98,10 @@ You must include all the following lifecycle resources from the "Example Octopus
 
 You must include all the following project deployment process resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once:
 * resource "octopusdeploy_process" "process_deployment_orchestration"
+
+## Deployment Orchestration Project Instructions
+
+You must include all the following project resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless otherwise specified:
+* data "octopusdeploy_projects" "project_child_project"
+* data "octopusdeploy_projects" "project_deployment_orchestration"
+* resource "octopusdeploy_project" "project_deployment_orchestration"
