@@ -4,10 +4,24 @@ def create_k8s_project_wrapper(query, callback, logging):
         project_name=None,
         **kwargs,
     ):
-        """Creates a Kubernetes project in Octopus Deploy. Example prompts include:
-            * Create a Kubernetes project in the space "My Space" called "My Project"
-            * Create a Kubernetes project called "My Project" in the space "My Space"
-            * Create a Kubernetes project called "My Project"
+        """
+        Creates a Kubernetes project in Octopus Deploy, and optionally create any other resources required to run the project such as:
+        * Accounts
+        * Feeds
+        * Environments
+        * Lifecycles
+        * Steps
+        * Triggers
+        * Machines
+        * Targets
+        * Deployment processes
+        * Runbooks
+        * Tenants
+
+        Example prompts include:
+        * Create a Kubernetes project in the space "My Space" called "My Project"
+        * Create a Kubernetes project called "My Project" in the space "My Space"
+        * Create a Kubernetes project called "My Project"
 
         Args:
         space_name: The name of the space

@@ -16,6 +16,7 @@ def create_lambda_project_wrapper(query, callback, logging):
         * Targets
         * Deployment processes
         * Runbooks
+        * Tenants
 
         Example prompts include:
         * Create a Lambda project in the space "My Space" called "My Project"
