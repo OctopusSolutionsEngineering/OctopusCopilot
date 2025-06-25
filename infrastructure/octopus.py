@@ -28,6 +28,7 @@ from domain.sanitizers.sanitized_list import (
     get_item_fuzzy,
     normalize_log_step_name,
     flatten_list,
+    sanitize_list,
 )
 from domain.sanitizers.url_sanitizer import quote_safe
 from domain.url.build_url import build_url
@@ -1927,11 +1928,12 @@ def activity_logs_to_string(
     if not activity_logs:
         return ""
 
-    logs = flatten_list(
-        get_logs(i, 0, sanitized_steps, categories, include_name) for i in activity_logs
+    logs = sanitize_list(
+        flatten_list(
+            get_logs(i, 0, sanitized_steps, categories, include_name)
+            for i in activity_logs
+        )
     )
-
-    logs = list(filter(lambda x: x, logs))
 
     return join_string.join(logs)
 
