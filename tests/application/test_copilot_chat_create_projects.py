@@ -235,9 +235,10 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             space_name, project_name, Octopus_Api_Key, Octopus_Url
         )
         deployment_process = json.loads(raw_deployment_process)
+        number_of_steps = len(deployment_process["Steps"])
         self.assertTrue(
-            len(deployment_process["Steps"]) > 2,
-            f"The deployment process should have at least two steps. It has {len(deployment_process["Steps"])}",
+            number_of_steps > 2,
+            f"The deployment process should have at least two steps. It has: {number_of_steps}",
         )
 
         mandatory_step = "Approve Production Deployment"
@@ -291,9 +292,10 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             space_name, project_name, Octopus_Api_Key, Octopus_Url
         )
         deployment_process = json.loads(raw_deployment_process)
+        number_of_steps = len(deployment_process["Steps"])
         self.assertTrue(
-            len(deployment_process["Steps"]) > 2,
-            f"The deployment process should have at least two steps. It has {len(deployment_process["Steps"])}",
+            number_of_steps > 2,
+            f"The deployment process should have at least two steps. It has: {number_of_steps}",
         )
         mandatory_step = "Validate Setup"
         self.assertTrue(
@@ -346,9 +348,10 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             space_name, project_name, Octopus_Api_Key, Octopus_Url
         )
         deployment_process = json.loads(raw_deployment_process)
+        number_of_steps = len(deployment_process["Steps"])
         self.assertTrue(
-            len(deployment_process["Steps"]) > 2,
-            f"The deployment process should have at least two steps. It has {len(deployment_process["Steps"])}",
+            number_of_steps > 2,
+            f"The deployment process should have at least two steps. It has: {number_of_steps}",
         )
 
         mandatory_step = "Validate Setup"
@@ -410,9 +413,10 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             space_name, project_name, Octopus_Api_Key, Octopus_Url
         )
         deployment_process = json.loads(raw_deployment_process)
+        number_of_steps = len(deployment_process["Steps"])
         self.assertTrue(
-            len(deployment_process["Steps"]) > 2,
-            f"The deployment process should have at least two steps. It has {len(deployment_process["Steps"])}",
+            number_of_steps > 2,
+            f"The deployment process should have at least two steps. It has: {number_of_steps}",
         )
         mandatory_step = "Validate Setup"
         self.assertTrue(
@@ -469,9 +473,10 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             space_name, project_name, Octopus_Api_Key, Octopus_Url
         )
         deployment_process = json.loads(raw_deployment_process)
+        number_of_steps = len(deployment_process["Steps"])
         self.assertTrue(
-            len(deployment_process["Steps"]) > 2,
-            f"The deployment process should have at least two steps. It has {len(deployment_process["Steps"])}",
+            number_of_steps > 2,
+            f"The deployment process should have at least two steps. It has: {number_of_steps}",
         )
         mandatory_step = "Attempt Login"
         self.assertTrue(
@@ -530,9 +535,10 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             space_name, project_name, Octopus_Api_Key, Octopus_Url
         )
         deployment_process = json.loads(raw_deployment_process)
+        number_of_steps = len(deployment_process["Steps"])
         self.assertTrue(
-            len(deployment_process["Steps"]) > 2,
-            f"The deployment process should have at least two steps. It has {len(deployment_process["Steps"])}",
+            number_of_steps > 2,
+            f"The deployment process should have at least two steps. It has: {number_of_steps}",
         )
 
         mandatory_step = "Attempt Login"
@@ -599,9 +605,10 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             space_name, project_name, Octopus_Api_Key, Octopus_Url
         )
         deployment_process = json.loads(raw_deployment_process)
+        number_of_steps = len(deployment_process["Steps"])
         self.assertTrue(
-            len(deployment_process["Steps"]) > 2,
-            f"The deployment process should have at least two steps. It has {len(deployment_process["Steps"])}",
+            number_of_steps > 2,
+            f"The deployment process should have at least two steps. It has: {number_of_steps}",
         )
 
         mandatory_step = "Attempt Login"
