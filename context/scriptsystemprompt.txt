@@ -13,4 +13,3 @@ You must include all the following project scheduled trigger resources from the 
 
 You must include all the following step resources from the "Example Octopus Script Terraform Configuration" unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_script_hello_world"
-* resource "octopusdeploy_process_step" "process_step_script_scan_for_vulnerabilities"
