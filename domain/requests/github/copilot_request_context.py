@@ -180,7 +180,9 @@ from domain.tools.wrapper.projects.create_lambda_project import (
 from domain.tools.wrapper.projects.create_orchestration_project import (
     create_orchestration_project_wrapper,
 )
-from domain.tools.wrapper.projects.create_script_project import create_script_project_wrapper
+from domain.tools.wrapper.projects.create_script_project import (
+    create_script_project_wrapper,
+)
 from domain.tools.wrapper.projects.create_terraform_project import (
     create_terraform_project_wrapper,
 )
