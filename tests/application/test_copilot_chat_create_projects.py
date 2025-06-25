@@ -527,9 +527,10 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         self.assertTrue(
             project["Name"] == project_name,
         )
+        project_tenant_mode = project["TenantedDeploymentMode"]
         self.assertTrue(
-            project["TenantedDeploymentMode"] == ("Tenanted" or "TenantedOrUntenanted"),
-            f"TenantedDeploymentMode was f{project["TenantedDeploymentMode"]}",
+            project_tenant_mode == ("Tenanted" or "TenantedOrUntenanted"),
+            f"TenantedDeploymentMode was: f{project_tenant_mode}",
         )
         raw_deployment_process = get_raw_deployment_process(
             space_name, project_name, Octopus_Api_Key, Octopus_Url
