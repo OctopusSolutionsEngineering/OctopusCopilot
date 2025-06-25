@@ -1930,6 +1930,9 @@ def activity_logs_to_string(
     logs = flatten_list(
         get_logs(i, 0, sanitized_steps, categories, include_name) for i in activity_logs
     )
+
+    logs = list(filter(lambda x: x, logs))
+
     return join_string.join(logs)
 
 
@@ -1952,7 +1955,7 @@ def get_logs(log_item, depth, steps=None, categories=None, include_name=True):
     logs = []
 
     if include_name:
-        logs.append(log_item["Name"])
+        logs.append(log_item.get("Name", ""))
 
     logs.extend(list(map(lambda e: e["MessageText"], filtered_logs)))
 
