@@ -364,11 +364,11 @@ def project_context(
 
     return [
         *general_examples_messages,
-        project_example_message,
         (
             "system",
             escape_message(general_system_message_values),
         ),
+        project_example_message,
         ("user", "Question: {input}"),
         ("user", f"Generated Terraform Configuration:"),
     ]
