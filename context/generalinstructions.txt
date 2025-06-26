@@ -521,11 +521,13 @@ data "octopusdeploy_projects" "project_my_app" {
 }
 
 resource "octopusdeploy_process_steps_order" "process_step_order_azure_function" {
-  steps      = ["${length(data.octopusdeploy_projects.project_my_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_deploy_app[0].id}"]
+  count  = "${length(data.octopusdeploy_projects.project_my_app.projects) != 0 ? 0 : 1}"
+  steps  = ["${length(data.octopusdeploy_projects.project_my_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_deploy_app[0].id}"]
   # ...
 }
 
 resource "octopusdeploy_process_step" "process_step_deploy_app" {
+  count  = "${length(data.octopusdeploy_projects.project_my_app.projects) != 0 ? 0 : 1}"
   # ...
 }
 ```
