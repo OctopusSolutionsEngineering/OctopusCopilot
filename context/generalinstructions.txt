@@ -499,6 +499,10 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
 
 ## Octopus Deployment Process Instructions
 
+* Every "octopusdeploy_project" resource must have an associated "octopusdeploy_process" resource.
+* Every "octopusdeploy_process" resource must have an associated "octopusdeploy_process_steps_order" resource.
+* Every "octopusdeploy_process_steps_order" resource must have an associated "octopusdeploy_process_step" resource.
+* You will be penalized for not defining steps for a project or runbook.
 * Steps are defined in the "octopusdeploy_process_step" and "octopusdeploy_process_child_step" resources.
 * The order of the steps are defined in the "octopusdeploy_process_steps_order" resource.
 * The order of child steps are defined in the "octopusdeploy_process_child_steps_order" resource.
