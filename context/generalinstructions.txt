@@ -525,7 +525,7 @@ resource "octopusdeploy_process_steps_order" "process_step_order_azure_function"
   # ...
 }
 
-resource "octopusdeploy_process_step" "process_step_azure_function_validate_setup" {
+resource "octopusdeploy_process_step" "process_step_deploy_app" {
   # ...
 }
 ```
