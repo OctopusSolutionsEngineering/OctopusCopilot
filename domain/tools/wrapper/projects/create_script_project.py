@@ -5,7 +5,7 @@ def create_script_project_wrapper(query, callback, logging):
         **kwargs,
     ):
         """
-        Creates a Script project in Octopus Deploy
+        Creates a Script project in Octopus Deploy, in addition to any supporting resources.
 
         Example prompts include:
         * Create a Script project in the space "My Space" called "My Project"

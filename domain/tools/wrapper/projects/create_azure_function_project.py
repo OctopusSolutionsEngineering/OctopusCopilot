@@ -5,18 +5,7 @@ def create_azure_function_project_wrapper(query, callback, logging):
         **kwargs,
     ):
         """
-        Creates an Azure Function project in Octopus Deploy, and optionally create any other resources required to run the project such as:
-        * Accounts
-        * Feeds
-        * Environments
-        * Lifecycles
-        * Steps
-        * Triggers
-        * Machines
-        * Targets
-        * Deployment processes
-        * Runbooks
-        * Tenants
+        Creates an Azure Function project in Octopus Deploy, in addition to any supporting resources.
 
         Example prompts include:
         * Create an Azure Function project in the space "My Space" called "My Project"

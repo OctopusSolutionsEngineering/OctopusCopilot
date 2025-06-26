@@ -5,7 +5,7 @@ def create_terraform_project_wrapper(query, callback, logging):
         **kwargs,
     ):
         """
-        Creates a Terraform project in Octopus Deploy
+        Creates a Terraform project in Octopus Deploy, in addition to any supporting resources.
 
         Example prompts include:
         * Create a Terraform project in the space "My Space" called "My Project"

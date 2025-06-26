@@ -173,8 +173,8 @@ resource "octopusdeploy_project" "project_<name>" {
 
 ## Tenant Instructions
 
-* If the prompt indicates that tenants are to be created or added, the tenants must be created in addition to the project and runbook resources.
-* You will be penalized for not creating a project resource when creating tenants.
+* If the prompt indicates that tenants are to be created or added, the "octopusdeploy_tenant" resources must be created in addition to the "octopusdeploy_project" resource.
+* You will be penalized for creating "octopusdeploy_tenant" resources without an associated "octopusdeploy_project" resource.
 * Each resource "octopusdeploy_tenant" must have an associated data "octopusdeploy_tenants". For example, if the following resource is defined:
 
 ```
