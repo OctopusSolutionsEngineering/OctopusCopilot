@@ -510,6 +510,26 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
 * The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
 * The "slug" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource must be unique across the project.
 * The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource must be unique across the project.
+* You must include all the "octopusdeploy_process_step" resources referenced in the "octopusdeploy_process_steps_order" resource "steps" array, for example:
+
+```
+data "octopusdeploy_projects" "project_my_app" {
+  ids          = null
+  partial_name = "My App"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_process_steps_order" "process_step_order_azure_function" {
+  steps      = ["${length(data.octopusdeploy_projects.project_my_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_deploy_app[0].id}"]
+  # ...
+}
+
+resource "octopusdeploy_process_step" "process_step_azure_function_validate_setup" {
+  # ...
+}
+```
+
 * You will be penalized for defining a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource with a duplicate "slug" attribute within the same project, for example, the following is invalid because the "slug" attribute is duplicated:
 
 ```
