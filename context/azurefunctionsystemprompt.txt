@@ -4,6 +4,27 @@
 * You must respond with Terraform configuration to create an Octopus project deploying an application to Azure functions based on the "Example Octopus Azure Function Terraform Configuration".
 
 
+## Azure Function Environment Instructions
+
+You must include all the following environment resources from the "Example Octopus Azure Function Terraform Configuration" once unless otherwise specified:
+* data "octopusdeploy_environments" "environment_development"
+* resource "octopusdeploy_environment" "environment_development"
+* data "octopusdeploy_environments" "environment_test"
+* resource "octopusdeploy_environment" "environment_test"
+* data "octopusdeploy_environments" "environment_production"
+* resource "octopusdeploy_environment" "environment_production"
+* data "octopusdeploy_environments" "environment_security"
+* resource "octopusdeploy_environment" "environment_security"
+
+## Azure Function Feed Instructions
+
+You must include all the following feed resources from the "Example Octopus Azure Function Terraform Configuration" once unless otherwise specified:
+* data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+* data "octopusdeploy_feeds" "feed_octopus_maven_feed"
+* resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed"
+* data "octopusdeploy_feeds" "feed_ghcr_anonymous"
+* resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
+
 ## Azure Function Project Instructions
 
 You must include all the following project resources from the "Example Octopus Azure Function Terraform Configuration" once:
@@ -24,14 +45,7 @@ You must include all the following project deployment process resources from the
 * resource "octopusdeploy_process" "process_azure_function_create_infrastructure"
 * resource "octopusdeploy_process" "process_azure_function_destroy_infrastructure"
 
-## Azure Function Project Deployment Process Instructions
-
-You must include all the following project deployment process step order resources from the "Example Octopus Azure Function Terraform Configuration" once:
-* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function"
-* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_create_infrastructure"
-* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_destroy_infrastructure"
-
-## Azure Function Project Deployment Process Instructions
+## Azure Function Project Deployment Process Steps Instructions
 
 You must include all the following step resources from the "Example Octopus Azure Function Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_azure_function_validate_setup"
@@ -60,6 +74,13 @@ You must include all the following runbook steps from the runbook_azure_function
 * resource "octopusdeploy_process_step" "process_step_azure_function_destroy_infrastructure_deregister_target"
 * resource "octopusdeploy_process_step" "process_step_azure_function_destroy_infrastructure_destroy_resource_group"
 
+
+## Azure Function Project Deployment Process Step Order Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus Azure Function Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function"
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_create_infrastructure"
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_destroy_infrastructure"
 ## Azure Function Project Variable Instructions
 
 You must include all the following variables from the "Example Octopus Azure Function Terraform Configuration" once unless otherwise specified:
@@ -82,27 +103,6 @@ You must include all the following lifecycle resources from the "Example Octopus
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
 
-
-## Azure Function Environment Instructions
-
-You must include all the following environment resources from the "Example Octopus Azure Function Terraform Configuration" once unless otherwise specified:
-* data "octopusdeploy_environments" "environment_development"
-* resource "octopusdeploy_environment" "environment_development"
-* data "octopusdeploy_environments" "environment_test"
-* resource "octopusdeploy_environment" "environment_test"
-* data "octopusdeploy_environments" "environment_production"
-* resource "octopusdeploy_environment" "environment_production"
-* data "octopusdeploy_environments" "environment_security"
-* resource "octopusdeploy_environment" "environment_security"
-
-## Azure Function Feed Instructions
-
-You must include all the following feed resources from the "Example Octopus Azure Function Terraform Configuration" once unless otherwise specified:
-* data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
-* data "octopusdeploy_feeds" "feed_octopus_maven_feed"
-* resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed"
-* data "octopusdeploy_feeds" "feed_ghcr_anonymous"
-* resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
 
 ## Azure Function Project Scheduled Triggers Instructions
 

@@ -119,7 +119,7 @@ def find_project_deployment_process_step_order(filename, label):
 
     try:
         # Open and read the file
-        print(f"\n## {label} Project Deployment Process Instructions\n")
+        print(f"\n## {label} Project Deployment Process Step Order Instructions\n")
         print(
             f'You must include all the following project deployment process step order resources from the "Example Octopus {label} Terraform Configuration" once:'
         )
@@ -305,7 +305,7 @@ def find_step_names(filename, label):
 
     try:
         # Open and read the file
-        print(f"\n## {label} Project Deployment Process Instructions\n")
+        print(f"\n## {label} Project Deployment Process Steps Instructions\n")
         print(
             f'You must include all the following step resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:'
         )
@@ -488,7 +488,9 @@ def find_runbook_step_names(filename, label):
     found = False
 
     try:
-        message += f"\n## {label} Project Runbook Deployment Process Instructions\n"
+        message += (
+            f"\n## {label} Project Runbook Deployment Process Steps Instructions\n"
+        )
         with open(filename, "r") as file:
             content = file.read()  # Read the whole file content once
 

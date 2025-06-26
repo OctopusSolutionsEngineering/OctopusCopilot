@@ -427,7 +427,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
     def test_create_lambda_project(self):
         project_name = "My AWS Lambda"
-        prompt = f'Create an AWS Lambda project called "{project_name}" in the project group "AWS".'
+        prompt = f'Create an AWS Lambda project called "{project_name}". Use the project group "AWS".'
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
