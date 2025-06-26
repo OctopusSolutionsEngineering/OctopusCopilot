@@ -358,7 +358,7 @@ def project_context(
         f"# Example Octopus {project_example_context_name} Terraform Configuration"
         + "\n"
         + escape_message(project_example)
-        + "\n",
+        + "\n"
         +escape_message(project_system_message_values),
     )
 
