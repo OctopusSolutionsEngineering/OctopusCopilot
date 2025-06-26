@@ -1,8 +1,8 @@
-# Azure Web App Instructions
+# AWS Azure Web App Instructions
 
 * The supplied "Example Octopus Azure Web App Terraform Configuration" is the primary source of truth for the configuration.
-* You must respond with Terraform configuration to create an Octopus project deploying an application to Azure Web App based on the "Example Octopus Azure Web App Terraform Configuration".
-
+* You must respond with Terraform configuration to create an Octopus project deploying an application to an AWS Lambda based on the "Example Octopus Azure Web App Terraform Configuration".
+* You must include the steps defined in the "Example Octopus Azure Web App Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
 
 ## Azure Web App Environment Instructions
 
@@ -57,7 +57,7 @@ You must include all the following step resources from the "Example Octopus Azur
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deployment_success_notification"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deployment_failure_notification"
 
-## Azure Web App Project Runbook Deployment Process Instructions
+## Azure Web App Project Runbook Deployment Process Steps Instructions
 
 You must include all the following runbook steps from the runbook_azure_web_app_create_infrastructure runbook once unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_create_infrastructure_validate_setup"

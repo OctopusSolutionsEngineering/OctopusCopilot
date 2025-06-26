@@ -1,8 +1,8 @@
-# AWS Lambda Instructions
+# AWS AWS Lambda Instructions
 
 * The supplied "Example Octopus AWS Lambda Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project deploying an application to an AWS Lambda based on the "Example Octopus AWS Lambda Terraform Configuration".
-
+* You must include the steps defined in the "Example Octopus AWS Lambda Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
 
 ## AWS Lambda Environment Instructions
 
@@ -56,7 +56,7 @@ You must include all the following step resources from the "Example Octopus AWS 
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_print_message_when_no_targets"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_scan_for_vulnerabilities"
 
-## AWS Lambda Project Runbook Deployment Process Instructions
+## AWS Lambda Project Runbook Deployment Process Steps Instructions
 
 You must include all the following runbook steps from the runbook_aws_lambda_checkov_sam_static_analysis runbook once unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_checkov_sam_static_analysis_run_checkov_static_analysis_scan"

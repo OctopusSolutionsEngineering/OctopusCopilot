@@ -8,6 +8,19 @@ import re
 import sys
 
 
+def general_instructions(filename, label):
+    print(f"# AWS {label} Instructions\n")
+    print(
+        f'* The supplied "Example Octopus {label} Terraform Configuration" is the primary source of truth for the configuration.'
+    )
+    print(
+        f'* You must respond with Terraform configuration to create an Octopus project deploying an application to an AWS Lambda based on the "Example Octopus {label} Terraform Configuration".'
+    )
+    print(
+        f'* You must include the steps defined in the "Example Octopus {label} Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.'
+    )
+
+
 def find_octopus_variables(filename, label):
     # Pattern to match the resource declarations for octopusdeploy_variable
     pattern = r'resource\s+"octopusdeploy_variable"\s+"[^"]+"'
@@ -604,6 +617,7 @@ def main():
 
     # The order of resources appears to be important. We create the standalone resources first,
     # then the resources that depend on them.
+    general_instructions(filename, label)
     find_environments(filename, label)
     find_feeds(filename, label)
     find_projects(filename, label)
