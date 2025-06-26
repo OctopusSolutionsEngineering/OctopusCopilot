@@ -359,19 +359,16 @@ def project_context(
         + "\n"
         + escape_message(project_example)
         + "\n",
+        +escape_message(project_system_message_values),
     )
 
     return [
+        *general_examples_messages,
+        project_example_message,
         (
             "system",
             escape_message(general_system_message_values),
         ),
-        (
-            "system",
-            escape_message(project_system_message_values),
-        ),
-        *general_examples_messages,
-        project_example_message,
         ("user", "Question: {input}"),
         ("user", f"Generated Terraform Configuration:"),
     ]
