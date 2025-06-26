@@ -169,7 +169,7 @@ def find_projects(filename, label):
                     print(f'* resource "octopusdeploy_project" "{match.group(1)}"')
 
                 match = re.match(data_pattern, line)
-                if match:
+                if match and match.group(1) not in ignore_list:
                     print(f'* data "octopusdeploy_projects" "{match.group(1)}"')
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")

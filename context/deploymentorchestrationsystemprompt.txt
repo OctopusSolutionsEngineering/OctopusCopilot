@@ -87,12 +87,21 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
 * You must always include the `data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_"` data source.
 * The "feed_id" attribute in the "primary_package" block must always be set to the built-in Octopus Server Releases feed found in the `data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_"` data source.
 
-## Deployment Orchestration Lifecycle Instructions
+## Deployment Orchestration Project Variable Instructions
 
+You must include all the following variables from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless otherwise specified:
+
+## Deployment Orchestration Project Deployment Process Instructions
+
+You must include all the following step resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless otherwise specified:
+* resource "octopusdeploy_process_step" "process_step_deployment_orchestration_deploy_a_release"
+
+## Deployment Orchestration Lifecycle Instructions
 You must include all the following lifecycle resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless otherwise specified:
 * data "octopusdeploy_lifecycles" "lifecycle_application"
 * resource "octopusdeploy_lifecycle" "lifecycle_application"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+
 
 ## Deployment Orchestration Project Deployment Process Instructions
 
@@ -101,7 +110,22 @@ You must include all the following project deployment process resources from the
 
 ## Deployment Orchestration Project Instructions
 
-You must include all the following project resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless otherwise specified:
-* data "octopusdeploy_projects" "project_child_project"
+You must include all the following project resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once:
 * data "octopusdeploy_projects" "project_deployment_orchestration"
 * resource "octopusdeploy_project" "project_deployment_orchestration"
+
+## Deployment Orchestration Environment Instructions
+
+You must include all the following environment resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless otherwise specified:
+* data "octopusdeploy_environments" "environment_development"
+* resource "octopusdeploy_environment" "environment_development"
+* data "octopusdeploy_environments" "environment_test"
+* resource "octopusdeploy_environment" "environment_test"
+* data "octopusdeploy_environments" "environment_production"
+* resource "octopusdeploy_environment" "environment_production"
+
+## Deployment Orchestration Feed Instructions
+
+You must include all the following feed resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless otherwise specified:
+* data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+* data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_"
