@@ -511,7 +511,87 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
   * "Failure"
   * "Success"
   * "Variable"
-* Adding a step requires a new "octopusdeploy_process_step" resource to be defined and then added to the "octopusdeploy_process_steps_order" resource in the "steps" array.
+* Adding a step requires a new "octopusdeploy_process_step" resource to be defined and then added to the "octopusdeploy_process_steps_order" resource in the "steps" array. For example, if this is the initial set of steps:
+
+```
+data "octopusdeploy_projects" "project_azure_web_app" {
+  ids          = null
+  partial_name = "My Project"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_project" "project_azure_web_app" {
+  count                                = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  name                                 = "My Project"
+  # ...
+}
+
+resource "octopusdeploy_process" "process_azure_web_app" {
+  count      = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? data.octopusdeploy_projects.project_azure_web_app.projects[0].id : octopusdeploy_project.project_azure_web_app[0].id}"
+  depends_on = []
+}
+
+resource "octopusdeploy_process_steps_order" "process_step_order_azure_web_app" {
+  count      = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  process_id = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process.process_azure_web_app[0].id}"
+  steps      = ["${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_web_app_validate_setup[0].id}"]
+}
+
+resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup" {
+  count                 = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  name                  = "Validate setup"
+  # ...
+}
+```
+
+Then adding a new step called "Deploy an Azure Web App (Web Deploy)" would require the following changes:
+
+```
+data "octopusdeploy_projects" "project_azure_web_app" {
+  ids          = null
+  partial_name = "My Project"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_project" "project_azure_web_app" {
+  count                                = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  name                                 = "My Project"
+  # ...
+}
+
+resource "octopusdeploy_process" "process_azure_web_app" {
+  count      = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? data.octopusdeploy_projects.project_azure_web_app.projects[0].id : octopusdeploy_project.project_azure_web_app[0].id}"
+  depends_on = []
+}
+
+resource "octopusdeploy_process_steps_order" "process_step_order_azure_web_app" {
+  count      = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  process_id = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process.process_azure_web_app[0].id}"
+  # The new step is added to the steps array
+  steps      = [
+  "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_web_app_validate_setup[0].id}",
+  "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_web_app_deploy_web_app[0].id}"
+  ]
+}
+
+resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup" {
+  count                 = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  name                  = "Validate setup"
+  # ...
+}
+
+# This is the new step being added
+resource "octopusdeploy_process_step" "process_step_azure_web_app_deploy_web_app" {
+  count                 = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  name                  = "Deploy Web App (Web Deploy)"
+  # ...
+}
+```
+
 * The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
 * The "slug" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource must be unique across the project.
 * The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource must be unique across the project.
