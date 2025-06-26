@@ -84,4 +84,10 @@ You must include all the following feed resources from the "Example Octopus AWS 
 * data "octopusdeploy_feeds" "feed_octopus_maven_feed"
 * resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed"
 
+## AWS Lambda Project Deployment Process Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus AWS Lambda Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_aws_lambda"
+* resource "octopusdeploy_process_steps_order" "process_step_order_aws_lambda_checkov_sam_static_analysis"
+
 

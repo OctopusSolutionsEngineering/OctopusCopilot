@@ -98,3 +98,10 @@ You must include all the following feed resources from the "Example Octopus Azur
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
 * data "octopusdeploy_feeds" "feed_ghcr_anonymous"
 * resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
+
+## Azure Web App Project Deployment Process Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus Azure Web App Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_web_app"
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_web_app_create_infrastructure"
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_web_app_destroy_infrastructure"

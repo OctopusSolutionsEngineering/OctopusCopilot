@@ -19,6 +19,7 @@ You must include all the following variables from the "Example Octopus Azure Fun
 * resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_3"
 
 ## Azure Function Project Scheduled Triggers Instructions
+
 You must include all the following project scheduled trigger resources from the "Example Octopus Azure Function Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_azure_function_daily_security_scan"
 
@@ -38,6 +39,7 @@ You must include all the following step resources from the "Example Octopus Azur
 * resource "octopusdeploy_process_step" "process_step_azure_function_send_deployment_failure_notification"
 
 ## Azure Function Project Runbook Instructions
+
 You must include all the following runbook resources once unless otherwise specified:
 * resource "octopusdeploy_runbook" "runbook_azure_function_create_infrastructure"
 * resource "octopusdeploy_runbook" "runbook_azure_function_destroy_infrastructure"
@@ -93,9 +95,16 @@ You must include all the following environment resources from the "Example Octop
 
 ## Azure Function Feed Instructions
 
-You must include all the following environment resources from the "Example Octopus Azure Function Terraform Configuration" once unless otherwise specified:
+You must include all the following feed resources from the "Example Octopus Azure Function Terraform Configuration" once unless otherwise specified:
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
 * data "octopusdeploy_feeds" "feed_octopus_maven_feed"
 * resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed"
 * data "octopusdeploy_feeds" "feed_ghcr_anonymous"
 * resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
+
+## Azure Function Project Deployment Process Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus Azure Function Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function"
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_create_infrastructure"
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_destroy_infrastructure"

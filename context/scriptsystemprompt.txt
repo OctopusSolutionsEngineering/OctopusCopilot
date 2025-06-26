@@ -55,3 +55,8 @@ You must include all the following environment resources from the "Example Octop
 
 You must include all the following feed resources from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+
+## Script Project Deployment Process Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus Script Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_script"

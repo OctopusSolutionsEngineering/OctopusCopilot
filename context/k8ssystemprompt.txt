@@ -73,3 +73,8 @@ You must include all the following feed resources from the "Example Octopus Kube
 * resource "octopusdeploy_docker_container_registry" "feed_github_container_registry"
 * data "octopusdeploy_feeds" "feed_ghcr_anonymous"
 * resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
+
+## Kubernetes Project Deployment Process Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus Kubernetes Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_kubernetes_web_app"

@@ -112,6 +112,32 @@ def find_project_deployment_process(filename, label):
         print(f"Error processing file: {e}")
 
 
+def find_project_deployment_process_step_order(filename, label):
+    ignore_list = []
+
+    pattern = r'resource\s+"octopusdeploy_process_steps_order"\s+"([^"]+)"'
+
+    try:
+        # Open and read the file
+        print(f"\n## {label} Project Deployment Process Instructions\n")
+        print(
+            f'You must include all the following project deployment process step order resources from the "Example Octopus {label} Terraform Configuration" once:'
+        )
+        with open(filename, "r") as file:
+            lines = file.readlines()
+
+            for i, line in enumerate(lines):
+                match = re.match(pattern, line)
+                if match and match.group(1) not in ignore_list:
+                    print(
+                        f'* resource "octopusdeploy_process_steps_order" "{match.group(1)}"'
+                    )
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
+    except Exception as e:
+        print(f"Error processing file: {e}")
+
+
 def find_lifecycles(filename, label):
     # Pattern to match the resource declarations for octopusdeploy_lifecycle
     pattern = r'resource\s+"octopusdeploy_lifecycle"\s+"([^"]+)"'
@@ -584,6 +610,7 @@ def main():
     find_projects(filename, label)
     find_environments(filename, label)
     find_feeds(filename, label)
+    find_project_deployment_process_step_order(filename, label)
 
 
 if __name__ == "__main__":
