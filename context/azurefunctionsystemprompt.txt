@@ -1,4 +1,4 @@
-# AWS Azure Function Instructions
+# Azure Function Instructions
 
 * The supplied "Example Octopus Azure Function Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project deploying an application, and any supporting resources, based on the "Example Octopus Azure Function Terraform Configuration".

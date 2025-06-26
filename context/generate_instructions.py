@@ -9,7 +9,7 @@ import sys
 
 
 def general_instructions(filename, label):
-    print(f"# AWS {label} Instructions\n")
+    print(f"# {label} Instructions\n")
     print(
         f'* The supplied "Example Octopus {label} Terraform Configuration" is the primary source of truth for the configuration.'
     )

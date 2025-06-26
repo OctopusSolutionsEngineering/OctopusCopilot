@@ -1,8 +1,29 @@
 # Kubernetes Instructions
 
 * The supplied "Example Octopus Kubernetes Terraform Configuration" is the primary source of truth for the configuration.
-* You must respond with Terraform configuration to create an Octopus project deploying an application to Kubernetes based on the "Example Octopus Kubernetes Terraform Configuration".
+* You must respond with Terraform configuration to create an Octopus project deploying an application, and any supporting resources, based on the "Example Octopus Kubernetes Terraform Configuration".
+* You must include the steps defined in the "Example Octopus Kubernetes Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
 
+## Kubernetes Environment Instructions
+
+You must include all the following environment resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
+* data "octopusdeploy_environments" "environment_development"
+* resource "octopusdeploy_environment" "environment_development"
+* data "octopusdeploy_environments" "environment_test"
+* resource "octopusdeploy_environment" "environment_test"
+* data "octopusdeploy_environments" "environment_production"
+* resource "octopusdeploy_environment" "environment_production"
+* data "octopusdeploy_environments" "environment_security"
+* resource "octopusdeploy_environment" "environment_security"
+
+## Kubernetes Feed Instructions
+
+You must include all the following feed resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
+* data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+* data "octopusdeploy_feeds" "feed_github_container_registry"
+* resource "octopusdeploy_docker_container_registry" "feed_github_container_registry"
+* data "octopusdeploy_feeds" "feed_ghcr_anonymous"
+* resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
 
 ## Kubernetes Project Instructions
 
@@ -16,18 +37,18 @@ You must include all the following project resources from the "Example Octopus K
 You must include all the following project deployment process resources from the "Example Octopus Kubernetes Terraform Configuration" once:
 * resource "octopusdeploy_process" "process_kubernetes_web_app"
 
-## Kubernetes Project Deployment Process Instructions
-
-You must include all the following project deployment process step order resources from the "Example Octopus Kubernetes Terraform Configuration" once:
-* resource "octopusdeploy_process_steps_order" "process_step_order_kubernetes_web_app"
-
-## Kubernetes Project Deployment Process Instructions
+## Kubernetes Project Deployment Process Steps Instructions
 
 You must include all the following step resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_approve_production_deployment"
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_kubernetes_web_app_via_yaml"
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_print_message_when_no_targets"
 * resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_scan_for_vulnerabilities"
+
+## Kubernetes Project Deployment Process Step Order Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus Kubernetes Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_kubernetes_web_app"
 ## Kubernetes Project Variable Instructions
 
 You must include all the following variables from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
@@ -52,27 +73,6 @@ You must include all the following lifecycle resources from the "Example Octopus
 You must include all the following project channel resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_channel" "channel_kubernetes_web_app_hotfix"
 
-
-## Kubernetes Environment Instructions
-
-You must include all the following environment resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
-* data "octopusdeploy_environments" "environment_development"
-* resource "octopusdeploy_environment" "environment_development"
-* data "octopusdeploy_environments" "environment_test"
-* resource "octopusdeploy_environment" "environment_test"
-* data "octopusdeploy_environments" "environment_production"
-* resource "octopusdeploy_environment" "environment_production"
-* data "octopusdeploy_environments" "environment_security"
-* resource "octopusdeploy_environment" "environment_security"
-
-## Kubernetes Feed Instructions
-
-You must include all the following feed resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
-* data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
-* data "octopusdeploy_feeds" "feed_github_container_registry"
-* resource "octopusdeploy_docker_container_registry" "feed_github_container_registry"
-* data "octopusdeploy_feeds" "feed_ghcr_anonymous"
-* resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
 
 ## Kubernetes Project Scheduled Triggers Instructions
 

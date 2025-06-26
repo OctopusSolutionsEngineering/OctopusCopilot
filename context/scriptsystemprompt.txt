@@ -1,43 +1,8 @@
-## Script Project Variable Instructions
+# Script Instructions
 
-You must include all the following variables from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
-* resource "octopusdeploy_variable" "script_project_workerpool_1"
-* resource "octopusdeploy_variable" "script_project_message_1"
-
-
-## Script Project Instructions
-
-You must include all the following project resources from the "Example Octopus Script Terraform Configuration" once:
-* data "octopusdeploy_projects" "project_script"
-* resource "octopusdeploy_project" "project_script"
-
-## Script Project Deployment Process Instructions
-
-You must include all the following project deployment process resources from the "Example Octopus Script Terraform Configuration" once:
-* resource "octopusdeploy_process" "process_script"
-
-## Script Project Deployment Process Instructions
-
-You must include all the following project deployment process step order resources from the "Example Octopus Script Terraform Configuration" once:
-* resource "octopusdeploy_process_steps_order" "process_step_order_script"
-
-## Script Project Deployment Process Instructions
-
-You must include all the following step resources from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
-* resource "octopusdeploy_process_step" "process_step_script_hello_world"
-## Script Project Variable Instructions
-
-You must include all the following variables from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
-* resource "octopusdeploy_variable" "script_project_workerpool_1"
-* resource "octopusdeploy_variable" "script_project_message_1"
-
-## Script Lifecycle Instructions
-
-You must include all the following lifecycle resources from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
-* data "octopusdeploy_lifecycles" "lifecycle_application"
-* resource "octopusdeploy_lifecycle" "lifecycle_application"
-* data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
-
+* The supplied "Example Octopus Script Terraform Configuration" is the primary source of truth for the configuration.
+* You must respond with Terraform configuration to create an Octopus project deploying an application, and any supporting resources, based on the "Example Octopus Script Terraform Configuration".
+* You must include the steps defined in the "Example Octopus Script Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
 
 ## Script Environment Instructions
 
@@ -55,6 +20,40 @@ You must include all the following environment resources from the "Example Octop
 
 You must include all the following feed resources from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+
+## Script Project Instructions
+
+You must include all the following project resources from the "Example Octopus Script Terraform Configuration" once:
+* data "octopusdeploy_projects" "project_script"
+* resource "octopusdeploy_project" "project_script"
+
+## Script Project Deployment Process Instructions
+
+You must include all the following project deployment process resources from the "Example Octopus Script Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_script"
+
+## Script Project Deployment Process Steps Instructions
+
+You must include all the following step resources from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
+* resource "octopusdeploy_process_step" "process_step_script_hello_world"
+
+## Script Project Deployment Process Step Order Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus Script Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_script"
+## Script Project Variable Instructions
+
+You must include all the following variables from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
+* resource "octopusdeploy_variable" "script_project_workerpool_1"
+* resource "octopusdeploy_variable" "script_project_message_1"
+
+## Script Lifecycle Instructions
+
+You must include all the following lifecycle resources from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
+* data "octopusdeploy_lifecycles" "lifecycle_application"
+* resource "octopusdeploy_lifecycle" "lifecycle_application"
+* data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+
 
 ## Script Project Scheduled Triggers Instructions
 
