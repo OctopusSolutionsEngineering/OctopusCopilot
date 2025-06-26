@@ -20,7 +20,7 @@ def general_instructions(filename, label):
         f'* You must include the steps defined in the "Example Octopus {label} Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.'
     )
     print(
-        f'* If the prompt specifies that tenants, targets, machines, feeds, accounts, or any other kind of resources are to be created, they must be created in addition to the resources from the "Example Octopus {label} Terraform Configuration".'
+        f'* If the prompt specifies that tenants, targets, machines, feeds, accounts, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus {label} Terraform Configuration".'
     )
 
 

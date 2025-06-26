@@ -34,6 +34,7 @@ from infrastructure.octopus import (
     get_project,
     get_runbook_fuzzy,
     get_raw_deployment_process,
+    get_tenants,
 )
 from infrastructure.terraform_context import save_terraform_context
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
@@ -489,7 +490,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
     def test_create_lambda_project_tenanted(self):
         project_name = "My tenanted Lambda"
-        prompt = f'Create an AWS Lambda project called "{project_name}". Configure the project to require tenants for deployment. Then create 10 tenants named after cities located in England. Create tag sets that represent counties from England. Assign tags to the tenants. Assign the tenants to the project.'
+        prompt = f'Create an AWS Lambda project called "{project_name}". Configure the project to require tenants for deployment. Add 10 tenants named after cities located in England. Create tag sets that represent counties from England. Assign tags to the tenants. Assign the tenants to the project.'
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
@@ -548,6 +549,13 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         self.assertTrue(
             any(step["Name"] == mandatory_step for step in deployment_process["Steps"]),
             f'The deployment process should have a step called "{mandatory_step}".',
+        )
+
+        tenants = get_tenants(Octopus_Api_Key, Octopus_Url, space_id)
+        number_of_tenants = len(tenants)
+        self.assertTrue(
+            number_of_tenants >= 10,
+            f"The deployment process should have at least 10 tenants. It has: {number_of_tenants}",
         )
 
     @retry((AssertionError, RateLimitError), tries=2, delay=2)

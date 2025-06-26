@@ -173,9 +173,11 @@ resource "octopusdeploy_project" "project_<name>" {
 
 ## Tenant Instructions
 
+* If the prompt indicates that tenants are to be created or added, the tenants must be created in addition to the project and runbook resources.
+* You will be penalized for not creating a project resource when creating tenants.
 * Each resource "octopusdeploy_tenant" must have an associated data "octopusdeploy_tenants". For example, if the following resource is defined:
-```
 
+```
 resource "octopusdeploy_tenant" "tenant_australian_office" {
   count       = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
   name        = "Australian Office"
