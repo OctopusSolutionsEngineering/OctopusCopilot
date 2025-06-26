@@ -14,7 +14,7 @@ def general_instructions(filename, label):
         f'* The supplied "Example Octopus {label} Terraform Configuration" is the primary source of truth for the configuration.'
     )
     print(
-        f'* You must respond with Terraform configuration to create an Octopus project deploying an application, and any supporting resources, based on the "Example Octopus {label} Terraform Configuration".'
+        f'* You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus {label} Terraform Configuration".'
     )
     print(
         f'* You must include the steps defined in the "Example Octopus {label} Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.'
