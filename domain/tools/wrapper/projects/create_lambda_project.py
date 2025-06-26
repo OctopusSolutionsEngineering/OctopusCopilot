@@ -5,7 +5,7 @@ def create_lambda_project_wrapper(query, callback, logging):
         **kwargs,
     ):
         """
-        Creates an AWS Lambda project in Octopus Deploy.
+        Creates an AWS Lambda project in Octopus Deploy, in addition to any supporting resources.
 
         Example prompts include:
         * Create a Lambda project in the space "My Space" called "My Project"
