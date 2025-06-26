@@ -1174,7 +1174,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         log_query,
                         general_project_examples,
                         "awslambda.tf",
-                        "AWS Lambda Function",
+                        "AWS Lambda",
                         "generalinstructions.txt",
                         "awslambdaystemprompt.txt",
                         get_redirections(req),

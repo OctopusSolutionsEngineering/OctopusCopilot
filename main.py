@@ -370,7 +370,7 @@ def build_tools(tool_query):
                         log_query,
                         general_project_examples,
                         "awslambda.tf",
-                        "AWS Lambda Function",
+                        "AWS Lambda",
                         "generalinstructions.txt",
                         "awslambdaystemprompt.txt",
                         None,
