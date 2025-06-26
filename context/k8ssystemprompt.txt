@@ -3,6 +3,31 @@
 * The supplied "Example Octopus Kubernetes Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project deploying an application to Kubernetes based on the "Example Octopus Kubernetes Terraform Configuration".
 
+
+## Kubernetes Project Instructions
+
+You must include all the following project resources from the "Example Octopus Kubernetes Terraform Configuration" once:
+* data "octopusdeploy_projects" "channel_kubernetes_web_app_hotfix"
+* data "octopusdeploy_projects" "project_kubernetes_web_app"
+* resource "octopusdeploy_project" "project_kubernetes_web_app"
+
+## Kubernetes Project Deployment Process Instructions
+
+You must include all the following project deployment process resources from the "Example Octopus Kubernetes Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_kubernetes_web_app"
+
+## Kubernetes Project Deployment Process Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus Kubernetes Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_kubernetes_web_app"
+
+## Kubernetes Project Deployment Process Instructions
+
+You must include all the following step resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
+* resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_approve_production_deployment"
+* resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_kubernetes_web_app_via_yaml"
+* resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_print_message_when_no_targets"
+* resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_scan_for_vulnerabilities"
 ## Kubernetes Project Variable Instructions
 
 You must include all the following variables from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
@@ -12,21 +37,8 @@ You must include all the following variables from the "Example Octopus Kubernete
 * resource "octopusdeploy_variable" "kubernetes_web_app_application_image_1"
 * resource "octopusdeploy_variable" "kubernetes_web_app_kubernetes_deployment_name_1"
 
-## Kubernetes Project Scheduled Triggers Instructions
-
-You must include all the following project scheduled trigger resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
-* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_kubernetes_web_app_daily_security_scan"
-
-
-## Kubernetes Project Deployment Process Instructions
-
-You must include all the following step resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
-* resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_approve_production_deployment"
-* resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_kubernetes_web_app_via_yaml"
-* resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_print_message_when_no_targets"
-* resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_scan_for_vulnerabilities"
-
 ## Kubernetes Lifecycle Instructions
+
 You must include all the following lifecycle resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
@@ -40,18 +52,6 @@ You must include all the following lifecycle resources from the "Example Octopus
 You must include all the following project channel resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_channel" "channel_kubernetes_web_app_hotfix"
 
-
-## Kubernetes Project Deployment Process Instructions
-
-You must include all the following project deployment process resources from the "Example Octopus Kubernetes Terraform Configuration" once:
-* resource "octopusdeploy_process" "process_kubernetes_web_app"
-
-## Kubernetes Project Instructions
-
-You must include all the following project resources from the "Example Octopus Kubernetes Terraform Configuration" once:
-* data "octopusdeploy_projects" "channel_kubernetes_web_app_hotfix"
-* data "octopusdeploy_projects" "project_kubernetes_web_app"
-* resource "octopusdeploy_project" "project_kubernetes_web_app"
 
 ## Kubernetes Environment Instructions
 
@@ -74,7 +74,8 @@ You must include all the following feed resources from the "Example Octopus Kube
 * data "octopusdeploy_feeds" "feed_ghcr_anonymous"
 * resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
 
-## Kubernetes Project Deployment Process Instructions
+## Kubernetes Project Scheduled Triggers Instructions
 
-You must include all the following project deployment process step order resources from the "Example Octopus Kubernetes Terraform Configuration" once:
-* resource "octopusdeploy_process_steps_order" "process_step_order_kubernetes_web_app"
+You must include all the following project scheduled trigger resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
+* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_kubernetes_web_app_daily_security_scan"
+
