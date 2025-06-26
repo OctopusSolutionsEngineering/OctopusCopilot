@@ -363,6 +363,10 @@ def project_context(
     )
 
     return [
+        (
+            "system",
+            "You are an expert in generating Terraform configurations for Octopus Deploy projects.",
+        ),
         *general_examples_messages,
         (
             "system",
