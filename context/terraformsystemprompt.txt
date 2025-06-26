@@ -1,8 +1,9 @@
-`# Terraform Deploy Instructions
+# Terraform Deploy Instructions
 
 * The supplied "Example Octopus Terraform Deploy Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus Terraform Deploy Terraform Configuration".
 * You must include the steps defined in the "Example Octopus Terraform Deploy Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
+* If the prompt specifies that tenants, targets, machines, feeds, accounts, or any other kind of resources are to be created, they must be created in addition to the resources from the "Example Octopus Terraform Deploy Terraform Configuration".
 
 ## Terraform Deploy Environment Instructions
 
@@ -66,4 +67,3 @@ You must include all the following lifecycle resources from the "Example Octopus
 You must include all the following project scheduled trigger resources from the "Example Octopus Terraform Deploy Terraform Configuration" once unless the prompt explicitly states that triggers should be removed or modified:
 * resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_terraform_daily_security_scan"
 
-`
