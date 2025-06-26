@@ -10,6 +10,7 @@ You must include all the following variables from the "Example Octopus Windows I
 * resource "octopusdeploy_variable" "iis_project_workerpool_1"
 
 ## Windows IIS Project Scheduled Triggers Instructions
+
 You must include all the following project scheduled trigger resources from the "Example Octopus Windows IIS Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_iis_daily_security_scan"
 
@@ -53,7 +54,7 @@ You must include all the following environment resources from the "Example Octop
 
 ## Windows IIS Feed Instructions
 
-You must include all the following environment resources from the "Example Octopus Windows IIS Terraform Configuration" once unless otherwise specified:
+You must include all the following feed resources from the "Example Octopus Windows IIS Terraform Configuration" once unless otherwise specified:
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
 * data "octopusdeploy_feeds" "feed_octopus_maven_feed"
 * resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed"

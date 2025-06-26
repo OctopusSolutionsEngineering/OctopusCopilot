@@ -13,6 +13,7 @@ You must include all the following variables from the "Example Octopus Kubernete
 * resource "octopusdeploy_variable" "kubernetes_web_app_kubernetes_deployment_name_1"
 
 ## Kubernetes Project Scheduled Triggers Instructions
+
 You must include all the following project scheduled trigger resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_kubernetes_web_app_daily_security_scan"
 
@@ -35,6 +36,7 @@ You must include all the following lifecycle resources from the "Example Octopus
 
 
 ## Kubernetes Project Channels Instructions
+
 You must include all the following project channel resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_channel" "channel_kubernetes_web_app_hotfix"
 
@@ -65,7 +67,7 @@ You must include all the following environment resources from the "Example Octop
 
 ## Kubernetes Feed Instructions
 
-You must include all the following environment resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
+You must include all the following feed resources from the "Example Octopus Kubernetes Terraform Configuration" once unless otherwise specified:
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
 * data "octopusdeploy_feeds" "feed_github_container_registry"
 * resource "octopusdeploy_docker_container_registry" "feed_github_container_registry"

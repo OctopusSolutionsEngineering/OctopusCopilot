@@ -11,6 +11,7 @@ You must include all the following variables from the "Example Octopus Script Te
 * resource "octopusdeploy_variable" "script_project_message_1"
 
 ## Script Project Scheduled Triggers Instructions
+
 You must include all the following project scheduled trigger resources from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
 * resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_script_daily_security_scan"
 
@@ -52,5 +53,5 @@ You must include all the following environment resources from the "Example Octop
 
 ## Script Feed Instructions
 
-You must include all the following environment resources from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
+You must include all the following feed resources from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
