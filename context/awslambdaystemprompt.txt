@@ -49,12 +49,12 @@ You must include all the following step resources from the "Example Octopus AWS 
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_validate_setup"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_check_smtp_configuration"
-* resource "octopusdeploy_process_step" "process_step_aws_lambda_send_deployment_start_notification"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_approve_production_deployment"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_upload_lambda"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam_template"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_print_message_when_no_targets"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_scan_for_vulnerabilities"
+* resource "octopusdeploy_process_step" "process_step_aws_lambda_send_deployment_failure_notification"
 
 ## AWS Lambda Project Runbook Deployment Process Steps Instructions
 

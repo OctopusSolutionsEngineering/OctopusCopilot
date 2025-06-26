@@ -31,70 +31,41 @@ You must include all the following project resources from the "Example Octopus A
 * data "octopusdeploy_projects" "project_azure_function"
 * resource "octopusdeploy_project" "project_azure_function"
 
-## Azure Function Project Runbook Instructions
-
-You must include all the following runbook resources once unless the prompt explicitly states that runbooks should be removed or modified:
-* resource "octopusdeploy_runbook" "runbook_azure_function_create_infrastructure"
-* resource "octopusdeploy_runbook" "runbook_azure_function_destroy_infrastructure"
-
-
 ## Azure Function Project Deployment Process Instructions
 
 You must include all the following project deployment process resources from the "Example Octopus Azure Function Terraform Configuration" once:
 * resource "octopusdeploy_process" "process_azure_function"
-* resource "octopusdeploy_process" "process_azure_function_create_infrastructure"
-* resource "octopusdeploy_process" "process_azure_function_destroy_infrastructure"
 
 ## Azure Function Project Deployment Process Steps Instructions
 
 You must include all the following step resources from the "Example Octopus Azure Function Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
 * resource "octopusdeploy_process_step" "process_step_azure_function_validate_setup"
 * resource "octopusdeploy_process_step" "process_step_azure_function_check_smtp_configuration"
-* resource "octopusdeploy_process_step" "process_step_azure_function_send_deployment_start_notification"
 * resource "octopusdeploy_process_step" "process_step_azure_function_deploy_products_microservice_azurefunction_jvm_azure_function___staging_slot"
 * resource "octopusdeploy_process_step" "process_step_azure_function_smoke_test"
 * resource "octopusdeploy_process_step" "process_step_azure_function_manual_approval"
 * resource "octopusdeploy_process_step" "process_step_azure_function_swap_deployment_slots"
 * resource "octopusdeploy_process_step" "process_step_azure_function_scan_for_vulnerabilities"
-* resource "octopusdeploy_process_step" "process_step_azure_function_send_deployment_success_notification"
 * resource "octopusdeploy_process_step" "process_step_azure_function_send_deployment_failure_notification"
-
-## Azure Function Project Runbook Deployment Process Steps Instructions
-
-You must include all the following runbook steps from the runbook_azure_function_create_infrastructure runbook once unless the prompt explicitly states that runbook steps should be removed or modified:
-* resource "octopusdeploy_process_step" "process_step_azure_function_create_infrastructure_validate_setup"
-* resource "octopusdeploy_process_step" "process_step_azure_function_create_infrastructure_get_azure_access_token"
-* resource "octopusdeploy_process_step" "process_step_azure_function_create_infrastructure_validate_function_name_availability"
-* resource "octopusdeploy_process_step" "process_step_azure_function_create_infrastructure_create_resource_group"
-* resource "octopusdeploy_process_step" "process_step_azure_function_create_infrastructure_create_storage_account"
-* resource "octopusdeploy_process_step" "process_step_azure_function_create_infrastructure_create_octopub_products_function_app"
-
-You must include all the following runbook steps from the runbook_azure_function_destroy_infrastructure runbook once unless the prompt explicitly states that runbook steps should be removed or modified:
-* resource "octopusdeploy_process_step" "process_step_azure_function_destroy_infrastructure_validate_setup"
-* resource "octopusdeploy_process_step" "process_step_azure_function_destroy_infrastructure_deregister_target"
-* resource "octopusdeploy_process_step" "process_step_azure_function_destroy_infrastructure_destroy_resource_group"
-
 
 ## Azure Function Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus Azure Function Terraform Configuration" once:
 * resource "octopusdeploy_process_steps_order" "process_step_order_azure_function"
-* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_create_infrastructure"
-* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_destroy_infrastructure"
 ## Azure Function Project Variable Instructions
 
 You must include all the following variables from the "Example Octopus Azure Function Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
+* resource "octopusdeploy_variable" "azure_function_project_octopus_api_key_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_account_1"
 * resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_name_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_1"
 * resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_os_1"
 * resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_runtime_1"
 * resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_version_1"
 * resource "octopusdeploy_variable" "azure_function_project_azure_location_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_storageaccount_name_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_account_1"
-* resource "octopusdeploy_variable" "azure_function_project_octopus_api_key_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_1"
 * resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_2"
 * resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_3"
+* resource "octopusdeploy_variable" "azure_function_project_azure_storageaccount_name_1"
 
 ## Azure Function Lifecycle Instructions
 
