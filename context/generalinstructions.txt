@@ -2,6 +2,7 @@
 
 ## General Instructions
 
+* You must carefully consider the prompt and create all the required resources.
 * You must ignore any mention of the current project.
 * If the target space is defined in the prompt, that must take precedence over any mention of a current space. For example:
   * When given the prompt `Create a project called 'Example Project' in the 'Example Space'. The current project is 'My Web App'. The current space is 'Default'.`, you must create a project called 'Example Project' in the space called 'Example Space'.

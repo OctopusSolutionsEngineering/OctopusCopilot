@@ -330,15 +330,15 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login" {
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
         "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Script.ScriptBody" = "# Get the current AWS user. This will only succeed if the AWS account is valid.\n# If the AWS account is not valid, this step will fail. We can detect the failure and offer next steps.\naws sts get-caller-identity"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -387,9 +387,9 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_approve_productio
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate setup].Output.AwsLambdaConfigured == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "false"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
       }
 }
 
@@ -421,26 +421,26 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_upload_lambda" {
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate setup].Output.AwsLambdaConfigured == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Aws.S3.BucketName" = "#{Project.AWS.Lambda.S3.BucketName}"
+        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
         "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
         "Octopus.Action.Aws.S3.PackageOptions" = jsonencode({
+        "bucketKeyPrefix" = ""
+        "variableSubstitutionPatterns" = ""
+        "tags" = []
+        "bucketKey" = "#{Project.AWS.Lambda.S3.FileName}"
+        "bucketKeyBehaviour" = "Custom"
         "storageClass" = "STANDARD"
         "cannedAcl" = "private"
         "structuredVariableSubstitutionPatterns" = ""
-        "autoFocus" = "true"
-        "bucketKey" = "#{Project.AWS.Lambda.S3.FileName}"
-        "bucketKeyBehaviour" = "Custom"
-        "bucketKeyPrefix" = ""
-        "variableSubstitutionPatterns" = ""
         "metadata" = []
-        "tags" = []
+        "autoFocus" = "true"
                 })
-        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.S3.BucketName" = "#{Project.AWS.Lambda.S3.BucketName}"
+        "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
       }
 }
 
@@ -473,10 +473,14 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
       }
   execution_properties  = {
         "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.Package.JsonConfigurationVariablesTargets" = "sam.jvm.yaml"
+        "Octopus.Action.Aws.WaitForCompletion" = "True"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.CloudFormationStackName" = "#{Octopus.Space.Name | Replace \"[^A-Za-z0-9]\" \"-\"}-OctopubProductsSAMLambda-#{Octopus.Deployment.Id | Replace -}-#{Octopus.Environment.Name}"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
         {
-        "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
         "key" = "OctopusTenantId"
+        "value" = "#{if Octopus.Deployment.Tenant.Id}#{Octopus.Deployment.Tenant.Id}#{/if}#{unless Octopus.Deployment.Tenant.Id}untenanted#{/unless}"
                 },
         {
         "key" = "OctopusStepId"
@@ -491,38 +495,34 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
         "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
                 },
         {
-        "key" = "OctopusProjectId"
         "value" = "#{Octopus.Project.Id}"
+        "key" = "OctopusProjectId"
                 },
         {
         "key" = "OctopusEnvironmentId"
         "value" = "#{Octopus.Environment.Id}"
                 },
         {
-        "key" = "Environment"
         "value" = "#{Octopus.Environment.Name}"
+        "key" = "Environment"
                 },
         {
         "key" = "DeploymentProject"
         "value" = "#{Octopus.Project.Name}"
                 },
         ])
+        "Octopus.Action.Aws.CloudFormationTemplate" = "sam.jvm.yaml"
         "Octopus.Action.Aws.IamCapabilities" = jsonencode([
         "CAPABILITY_AUTO_EXPAND",
         "CAPABILITY_IAM",
         "CAPABILITY_NAMED_IAM",
         ])
-        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Aws.CloudFormationStackName" = "#{Octopus.Space.Name | Replace \"[^A-Za-z0-9]\" \"-\"}-OctopubProductsSAMLambda-#{Octopus.Deployment.Id | Replace -}-#{Octopus.Environment.Name}"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "Octopus.Action.Aws.TemplateSource" = "Package"
-        "Octopus.Action.Aws.CloudFormationTemplate" = "sam.jvm.yaml"
-        "Octopus.Action.Package.JsonConfigurationVariablesTargets" = "sam.jvm.yaml"
         "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
+        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables"
+        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
+        "Octopus.Action.Aws.TemplateSource" = "Package"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -553,11 +553,11 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_scan_for_vulnerab
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -705,83 +705,6 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_da
   }
   lifecycle {
     prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_process" "process_aws_lambda_checkov_sam_static_analysis" {
-  count      = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
-  project_id = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? data.octopusdeploy_projects.project_aws_lambda.projects[0].id : octopusdeploy_project.project_aws_lambda[0].id}"
-  runbook_id = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_runbook.runbook_aws_lambda_checkov_sam_static_analysis[0].id}"
-  depends_on = []
-}
-
-variable "project_checkov_sam_static_analysis_step_run_checkov_static_analysis_scan_package_products_microservice_awssam_packageid" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The package ID for the package named products-microservice-awssam from step Run Checkov static analysis scan in project Checkov SAM Static Analysis"
-  default     = "com.octopus:products-microservice-awssam"
-}
-resource "octopusdeploy_process_step" "process_step_aws_lambda_checkov_sam_static_analysis_run_checkov_static_analysis_scan" {
-  count                 = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
-  name                  = "Run Checkov static analysis scan"
-  type                  = "Octopus.Script"
-  process_id            = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process.process_aws_lambda_checkov_sam_static_analysis[0].id}"
-  channels              = null
-  condition             = "Success"
-  environments          = null
-  excluded_environments = null
-  git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
-  notes                 = "This step extracts SAM YAML files and scans them for security and compliance misconfigurations in your SAM CloudFormation template files. \n\nThis step is expected to be run as a routine operations task (a runbook) to ensure any potential issues can be reported."
-  package_requirement   = "LetOctopusDecide"
-  packages              = { products-microservice-awssam = { acquisition_location = "Server", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_checkov_sam_static_analysis_step_run_checkov_static_analysis_scan_package_products_microservice_awssam_packageid}", properties = { Extract = "True", Purpose = "", SelectionMode = "immediate" } } }
-  slug                  = "run-checkov-static-analysis-scan"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.Script.ScriptFileName" = "octopus/RunCheckovScan.ps1"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GitRepository.Source" = "External"
-      }
-}
-
-resource "octopusdeploy_process_steps_order" "process_step_order_aws_lambda_checkov_sam_static_analysis" {
-  count      = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
-  process_id = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process.process_aws_lambda_checkov_sam_static_analysis[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_checkov_sam_static_analysis_run_checkov_static_analysis_scan[0].id}"]
-}
-
-variable "runbook_aws_lambda_checkov_sam_static_analysis_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the runbook exported from Checkov SAM Static Analysis"
-  default     = "Checkov SAM Static Analysis"
-}
-resource "octopusdeploy_runbook" "runbook_aws_lambda_checkov_sam_static_analysis" {
-  count                       = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
-  name                        = "${var.runbook_aws_lambda_checkov_sam_static_analysis_name}"
-  project_id                  = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? data.octopusdeploy_projects.project_aws_lambda.projects[0].id : octopusdeploy_project.project_aws_lambda[0].id}"
-  environment_scope           = "All"
-  environments                = []
-  force_package_download      = false
-  default_guided_failure_mode = "EnvironmentDefault"
-  description                 = "Uses `checkov`, a static analysis tool to help identify any security and compliance misconfigurations in your SAM CloudFormation template files."
-  multi_tenancy_mode          = "Untenanted"
-
-  retention_policy {
-    quantity_to_keep = 100
-  }
-
-  connectivity_policy {
-    allow_deployments_to_no_targets = true
-    exclude_unhealthy_targets       = false
-    skip_machine_behavior           = "None"
   }
 }
 

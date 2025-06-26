@@ -32,17 +32,10 @@ You must include all the following project resources from the "Example Octopus A
 * data "octopusdeploy_projects" "project_aws_lambda"
 * resource "octopusdeploy_project" "project_aws_lambda"
 
-## AWS Lambda Project Runbook Instructions
-
-You must include all the following runbook resources once unless the prompt explicitly states that runbooks should be removed or modified:
-* resource "octopusdeploy_runbook" "runbook_aws_lambda_checkov_sam_static_analysis"
-
-
 ## AWS Lambda Project Deployment Process Instructions
 
 You must include all the following project deployment process resources from the "Example Octopus AWS Lambda Terraform Configuration" once:
 * resource "octopusdeploy_process" "process_aws_lambda"
-* resource "octopusdeploy_process" "process_aws_lambda_checkov_sam_static_analysis"
 
 ## AWS Lambda Project Deployment Process Steps Instructions
 
@@ -54,17 +47,10 @@ You must include all the following step resources from the "Example Octopus AWS 
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam_template"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_scan_for_vulnerabilities"
 
-## AWS Lambda Project Runbook Deployment Process Steps Instructions
-
-You must include all the following runbook steps from the runbook_aws_lambda_checkov_sam_static_analysis runbook once unless the prompt explicitly states that runbook steps should be removed or modified:
-* resource "octopusdeploy_process_step" "process_step_aws_lambda_checkov_sam_static_analysis_run_checkov_static_analysis_scan"
-
-
 ## AWS Lambda Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus AWS Lambda Terraform Configuration" once:
 * resource "octopusdeploy_process_steps_order" "process_step_order_aws_lambda"
-* resource "octopusdeploy_process_steps_order" "process_step_order_aws_lambda_checkov_sam_static_analysis"
 ## AWS Lambda Project Variable Instructions
 
 You must include all the following variables from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
