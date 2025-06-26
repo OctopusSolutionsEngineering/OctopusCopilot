@@ -599,6 +599,11 @@ def main():
 
     filename = sys.argv[1]
     label = sys.argv[2]
+
+    # The order of resources appears to be important. We create the standalone resources first,
+    # then the resources that depend on them.
+    find_environments(filename, label)
+    find_feeds(filename, label)
     find_projects(filename, label)
     find_runbook_names(filename, label)
     find_project_deployment_process(filename, label)
@@ -608,8 +613,6 @@ def main():
     find_octopus_variables(filename, label)
     find_lifecycles(filename, label)
     find_project_channels(filename, label)
-    find_environments(filename, label)
-    find_feeds(filename, label)
     find_project_scheduled_triggers(filename, label)
 
 
