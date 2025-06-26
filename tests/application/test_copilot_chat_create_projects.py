@@ -307,7 +307,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
     def test_create_azure_web_app_project_with_new_step(self):
         project_name = "My Azure WebApp with step"
         additional_step_name = "Smoke tests"
-        prompt = f'Create an Azure web app project called "{project_name}". Include a new "Run an Azure Script" step called "{additional_step_name}" at the end of the deployment process. It should test a HTTP endpoint returns a 200 status code.'
+        prompt = f'Create an Azure web app project called "{project_name}". Add a new "Run an Azure Script" step called "{additional_step_name}" at the end of the deployment process. It must test a HTTP endpoint returns a 200 status code.'
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)

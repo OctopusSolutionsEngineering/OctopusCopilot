@@ -511,6 +511,7 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
   * "Failure"
   * "Success"
   * "Variable"
+* Adding a step requires a new "octopusdeploy_process_step" resource to be defined and then added to the "octopusdeploy_process_steps_order" resource.
 * The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
 * The "slug" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource must be unique across the project.
 * The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource must be unique across the project.
