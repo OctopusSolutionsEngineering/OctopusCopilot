@@ -3,26 +3,32 @@
 * The supplied "Example Octopus Azure Function Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project deploying an application to Azure functions based on the "Example Octopus Azure Function Terraform Configuration".
 
-## Azure Function Project Variable Instructions
+## Azure Function Project Instructions
 
-You must include all the following variables from the "Example Octopus Azure Function Terraform Configuration" once unless otherwise specified:
-* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_name_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_os_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_runtime_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_version_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_location_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_storageaccount_name_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_account_1"
-* resource "octopusdeploy_variable" "azure_function_project_octopus_api_key_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_2"
-* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_3"
+You must include all the following project resources from the "Example Octopus Azure Function Terraform Configuration" once:
+* data "octopusdeploy_projects" "project_azure_function"
+* resource "octopusdeploy_project" "project_azure_function"
 
-## Azure Function Project Scheduled Triggers Instructions
+## Azure Function Project Runbook Instructions
 
-You must include all the following project scheduled trigger resources from the "Example Octopus Azure Function Terraform Configuration" once unless otherwise specified:
-* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_azure_function_daily_security_scan"
+You must include all the following runbook resources once unless otherwise specified:
+* resource "octopusdeploy_runbook" "runbook_azure_function_create_infrastructure"
+* resource "octopusdeploy_runbook" "runbook_azure_function_destroy_infrastructure"
 
+
+## Azure Function Project Deployment Process Instructions
+
+You must include all the following project deployment process resources from the "Example Octopus Azure Function Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_azure_function"
+* resource "octopusdeploy_process" "process_azure_function_create_infrastructure"
+* resource "octopusdeploy_process" "process_azure_function_destroy_infrastructure"
+
+## Azure Function Project Deployment Process Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus Azure Function Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function"
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_create_infrastructure"
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_destroy_infrastructure"
 
 ## Azure Function Project Deployment Process Instructions
 
@@ -37,13 +43,6 @@ You must include all the following step resources from the "Example Octopus Azur
 * resource "octopusdeploy_process_step" "process_step_azure_function_scan_for_vulnerabilities"
 * resource "octopusdeploy_process_step" "process_step_azure_function_send_deployment_success_notification"
 * resource "octopusdeploy_process_step" "process_step_azure_function_send_deployment_failure_notification"
-
-## Azure Function Project Runbook Instructions
-
-You must include all the following runbook resources once unless otherwise specified:
-* resource "octopusdeploy_runbook" "runbook_azure_function_create_infrastructure"
-* resource "octopusdeploy_runbook" "runbook_azure_function_destroy_infrastructure"
-
 
 ## Azure Function Project Runbook Deployment Process Instructions
 
@@ -60,26 +59,28 @@ You must include all the following runbook steps from the runbook_azure_function
 * resource "octopusdeploy_process_step" "process_step_azure_function_destroy_infrastructure_deregister_target"
 * resource "octopusdeploy_process_step" "process_step_azure_function_destroy_infrastructure_destroy_resource_group"
 
+## Azure Function Project Variable Instructions
+
+You must include all the following variables from the "Example Octopus Azure Function Terraform Configuration" once unless otherwise specified:
+* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_name_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_os_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_runtime_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_version_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_location_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_storageaccount_name_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_account_1"
+* resource "octopusdeploy_variable" "azure_function_project_octopus_api_key_1"
+* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_2"
+* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_3"
 
 ## Azure Function Lifecycle Instructions
+
 You must include all the following lifecycle resources from the "Example Octopus Azure Function Terraform Configuration" once unless otherwise specified:
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
 
-
-## Azure Function Project Deployment Process Instructions
-
-You must include all the following project deployment process resources from the "Example Octopus Azure Function Terraform Configuration" once:
-* resource "octopusdeploy_process" "process_azure_function"
-* resource "octopusdeploy_process" "process_azure_function_create_infrastructure"
-* resource "octopusdeploy_process" "process_azure_function_destroy_infrastructure"
-
-## Azure Function Project Instructions
-
-You must include all the following project resources from the "Example Octopus Azure Function Terraform Configuration" once:
-* data "octopusdeploy_projects" "project_azure_function"
-* resource "octopusdeploy_project" "project_azure_function"
 
 ## Azure Function Environment Instructions
 
@@ -102,9 +103,8 @@ You must include all the following feed resources from the "Example Octopus Azur
 * data "octopusdeploy_feeds" "feed_ghcr_anonymous"
 * resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
 
-## Azure Function Project Deployment Process Instructions
+## Azure Function Project Scheduled Triggers Instructions
 
-You must include all the following project deployment process step order resources from the "Example Octopus Azure Function Terraform Configuration" once:
-* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function"
-* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_create_infrastructure"
-* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_destroy_infrastructure"
+You must include all the following project scheduled trigger resources from the "Example Octopus Azure Function Terraform Configuration" once unless otherwise specified:
+* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_azure_function_daily_security_scan"
+

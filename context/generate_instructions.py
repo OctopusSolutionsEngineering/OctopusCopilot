@@ -149,7 +149,7 @@ def find_lifecycles(filename, label):
     try:
         # Open and read the file
         message += f"\n## {label} Lifecycle Instructions\n"
-        message += f'You must include all the following lifecycle resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:\n'
+        message += f'\nYou must include all the following lifecycle resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:\n'
         with open(filename, "r") as file:
             lines = file.readlines()
 
@@ -599,18 +599,18 @@ def main():
 
     filename = sys.argv[1]
     label = sys.argv[2]
-    find_octopus_variables(filename, label)
-    find_project_scheduled_triggers(filename, label)
-    find_step_names(filename, label)
+    find_projects(filename, label)
     find_runbook_names(filename, label)
+    find_project_deployment_process(filename, label)
+    find_step_names(filename, label)
     find_runbook_step_names(filename, label)
+    find_project_deployment_process_step_order(filename, label)
+    find_octopus_variables(filename, label)
     find_lifecycles(filename, label)
     find_project_channels(filename, label)
-    find_project_deployment_process(filename, label)
-    find_projects(filename, label)
     find_environments(filename, label)
     find_feeds(filename, label)
-    find_project_deployment_process_step_order(filename, label)
+    find_project_scheduled_triggers(filename, label)
 
 
 if __name__ == "__main__":

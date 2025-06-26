@@ -487,7 +487,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
     def test_create_lambda_project_tenanted(self):
         project_name = "My tenanted Lambda"
-        prompt = f'Create an AWS Lambda project called "{project_name}". Include 10 tenants named after cities located in England. Create tag sets that represent counties from England. Assign tags to the tenants. Assign the tenants to the project.'
+        prompt = f'Create an AWS Lambda project called "{project_name}". Include 10 tenants named after cities located in England. Create tag sets that represent counties from England. Assign tags to the tenants. Assign the tenants to the project. Configure the project to require tenants for deployment.'
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
@@ -530,7 +530,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         project_tenant_mode = project["TenantedDeploymentMode"]
         self.assertTrue(
             project_tenant_mode == ("Tenanted" or "TenantedOrUntenanted"),
-            f"TenantedDeploymentMode was: f{project_tenant_mode}",
+            f"TenantedDeploymentMode was: {project_tenant_mode}",
         )
         raw_deployment_process = get_raw_deployment_process(
             space_name, project_name, Octopus_Api_Key, Octopus_Url
