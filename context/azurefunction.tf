@@ -322,12 +322,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_validate_setu
   properties            = {
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
         "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $true"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -350,11 +350,11 @@ resource "octopusdeploy_process_step" "process_step_azure_function_check_smtp_co
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/CheckSMTPConfigured.ps1"
+        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -409,11 +409,11 @@ resource "octopusdeploy_process_step" "process_step_azure_function_deploy_produc
         "Octopus.Action.TargetRoles" = "Octopub-Products-Function"
       }
   execution_properties  = {
+        "Octopus.Action.Azure.DeploymentType" = "Package"
+        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.DeploymentSlot" = "staging"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Azure.DeploymentType" = "Package"
-        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
       }
 }
 
@@ -436,12 +436,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_smoke_test" {
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = \"#{Project.Azure.ResourceGroup.Name}\"\n$functionName = \"#{Project.Azure.Function.Octopub.Products.Name}\"\n\n# Get list of deployment slots\n$deploymentSlots = (az functionapp deployment slot list --resource-group $resourceGroupName --name $functionName | ConvertFrom-JSON)\n\n# Check to see if anything was returned\nif ($null -ne $deploymentSlots -and $null -ne ($deploymentSlots | Where-Object {$_.Name -eq \"staging\"}))\n{\n  # Assing the hostname of the deployment slot\n  $testUrl = ($deploymentSlots | Where-Object {$_.Name -eq \"staging\"}).defaultHostName\n}\nelse\n{\n  # No deployments slots are available, use the function app instead\n  $testUrl = (az functionapp show --resource-group $resourceGroupName --name $functionName | ConvertFrom-JSON).defaultHostName\n}\n\ntry\n{\n  # Make a web request  \n  $response = Invoke-WebRequest -Uri \"https://$testUrl\"\n\n  # Check for a 200 response\n  if ($response.StatusCode -ne 200)\n  {\n    # Throw an error\n    throw $response.StatusCode\n  }\n  else\n  {\n    Write-Host \"Smoke test succeeded!\"\n  }\n}\ncatch\n{\n  Write-Warning \"An error occurred: $($_.Exception.Message)\"\n}"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
       }
 }
 
@@ -462,9 +462,9 @@ resource "octopusdeploy_process_step" "process_step_azure_function_manual_approv
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-managers"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Please review the Staging slot for the function apps"
-        "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-managers"
       }
 }
 
@@ -488,12 +488,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_swap_deployme
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = $OctopusParameters[\"Project.Azure.ResourceGroup.Name\"]\n$functionAppName = $OctopusParameters[\"Project.Azure.Function.Octopub.Products.Name\"]\n\n# Swap the staging and production slots\nWrite-Host \"Swapping Staging and Production slots...\"\naz functionapp deployment slot swap --slot \"Staging\" --target-slot \"Production\" --resource-group $resourceGroupName --name $functionAppName\nWrite-Host \"Swap complete!\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -524,11 +524,11 @@ resource "octopusdeploy_process_step" "process_step_azure_function_scan_for_vuln
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.GitRepository.Source" = "External"
       }
 }
 
@@ -812,7 +812,7 @@ resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_na
 }
 
 resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_azure_function_daily_security_scan" {
-  count       = "${length(data.octopusdeploy_projects.Azure Function.projects) != 0 ? 0 : 1}"
+  count       = "${length(data.octopusdeploy_projects.azure_function.projects) != 0 ? 0 : 1}"
   space_id    = "${trimspace(var.octopus_space_id)}"
   name        = "Daily Security Scan"
   description = "Performs a daily security scan of the production deployment"
@@ -839,7 +839,7 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_azure_functio
 resource "octopusdeploy_process" "process_azure_function_create_infrastructure" {
   count      = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
   project_id = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? data.octopusdeploy_projects.project_azure_function.projects[0].id : octopusdeploy_project.project_azure_function[0].id}"
-  runbook_id = "${length(data.octopusdeploy_projects.Azure Function.projects) != 0 ? null : octopusdeploy_runbook.runbook_azure_function_create_infrastructure[0].id}"
+  runbook_id = "${length(data.octopusdeploy_projects.azure_function.projects) != 0 ? null : octopusdeploy_runbook.runbook_azure_function_create_infrastructure[0].id}"
   depends_on = []
 }
 
@@ -862,12 +862,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $false"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
+        "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $false"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -890,12 +890,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
+        "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_octopussamples_azure_account.accounts) != 0 ? data.octopusdeploy_accounts.account_octopussamples_azure_account.accounts[0].id : octopusdeploy_azure_service_principal.account_octopussamples_azure_account[0].id}"
         "Octopus.Action.Script.ScriptBody" = "# Get Azure Access Token -- an upcoming breaking change changes this to a secure string\n$accessToken = Get-AzAccessToken -AsSecureString\n\n# Convert secure string token to plain text so we can add it as a Sensitive Octopus Output variable\n$UnsecurePassword = (New-Object PSCredential 0, $accessToken.Token).GetNetworkCredential().Password\n\nSet-OctopusVariable -Name \"AzureToken\" -Value $UnsecurePassword -Sensitive"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
       }
 }
 
@@ -919,12 +919,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/CheckForSiteAvailability.ps1"
         "Octopus.Action.Script.ScriptParameters" = "-AzureSiteName #{Project.Azure.Function.Octopub.Products.Name}"
+        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -949,12 +949,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/CreateResourceGroup.ps1"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/CreateResourceGroup.ps1"
       }
 }
 
@@ -979,12 +979,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Action[Create Resource Group].Output.ResourceGroupCreated == \"True\"}true#{/if}"
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/CreateStorageAccount.ps1"
-        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -1009,12 +1009,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_create_infras
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Action[Validate Function Name Availability].Output.NameAvailable == \"True\"}#{if Octopus.Action[Create Storage Account].Output.StorageAccountCreated == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/CreateOctopubFunctionApp.ps1"
-        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -1032,7 +1032,7 @@ variable "runbook_azure_function_create_infrastructure_name" {
   default     = "Create Infrastructure"
 }
 resource "octopusdeploy_runbook" "runbook_azure_function_create_infrastructure" {
-  count                       = "${length(data.octopusdeploy_projects.Azure Function.projects) != 0 ? 0 : 1}"
+  count                       = "${length(data.octopusdeploy_projects.azure_function.projects) != 0 ? 0 : 1}"
   name                        = "${var.runbook_azure_function_create_infrastructure_name}"
   project_id                  = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? data.octopusdeploy_projects.project_azure_function.projects[0].id : octopusdeploy_project.project_azure_function[0].id}"
   environment_scope           = "Specified"
@@ -1056,7 +1056,7 @@ resource "octopusdeploy_runbook" "runbook_azure_function_create_infrastructure" 
 resource "octopusdeploy_process" "process_azure_function_destroy_infrastructure" {
   count      = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
   project_id = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? data.octopusdeploy_projects.project_azure_function.projects[0].id : octopusdeploy_project.project_azure_function[0].id}"
-  runbook_id = "${length(data.octopusdeploy_projects.Azure Function.projects) != 0 ? null : octopusdeploy_runbook.runbook_azure_function_destroy_infrastructure[0].id}"
+  runbook_id = "${length(data.octopusdeploy_projects.azure_function.projects) != 0 ? null : octopusdeploy_runbook.runbook_azure_function_destroy_infrastructure[0].id}"
   depends_on = []
 }
 
@@ -1079,12 +1079,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_destroy_infra
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
         "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $true"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
       }
 }
 
@@ -1108,11 +1108,11 @@ resource "octopusdeploy_process_step" "process_step_azure_function_destroy_infra
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}"
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/DeregisterTarget.ps1"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
       }
 }
 
@@ -1137,12 +1137,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_destroy_infra
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}"
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/DestroyResourceGroup.ps1"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
       }
 }
 
@@ -1160,7 +1160,7 @@ variable "runbook_azure_function_destroy_infrastructure_name" {
   default     = "Destroy Infrastructure"
 }
 resource "octopusdeploy_runbook" "runbook_azure_function_destroy_infrastructure" {
-  count                       = "${length(data.octopusdeploy_projects.Azure Function.projects) != 0 ? 0 : 1}"
+  count                       = "${length(data.octopusdeploy_projects.azure_function.projects) != 0 ? 0 : 1}"
   name                        = "${var.runbook_azure_function_destroy_infrastructure_name}"
   project_id                  = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? data.octopusdeploy_projects.project_azure_function.projects[0].id : octopusdeploy_project.project_azure_function[0].id}"
   environment_scope           = "Specified"

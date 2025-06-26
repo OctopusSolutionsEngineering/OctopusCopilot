@@ -330,15 +330,15 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
-        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "# Get the current AWS user. This will only succeed if the AWS account is valid.\n# If the AWS account is not valid, this step will fail. We can detect the failure and offer next steps.\naws sts get-caller-identity"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
       }
 }
 
@@ -361,11 +361,11 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_validate_setup" {
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/aws/ValidateLambdaSetup.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -388,11 +388,11 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_check_smtp_config
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/CheckSMTPConfigured.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.GitRepository.Source" = "External"
       }
 }
 
@@ -414,10 +414,10 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_send_deployment_s
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Check SMTP configuration].Output.SmtpConfigured == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
+        "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} is deploying to #{Octopus.Environment.Name}"
         "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} is deploying to #{Octopus.Environment.Name}"
         "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
         "Octopus.Action.RunOnServer" = "false"
-        "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} is deploying to #{Octopus.Environment.Name}"
       }
 }
 
@@ -473,26 +473,26 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_upload_lambda" {
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate setup].Output.AwsLambdaConfigured == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.Aws.S3.BucketName" = "#{Project.AWS.Lambda.S3.BucketName}"
-        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
         "Octopus.Action.Aws.S3.PackageOptions" = jsonencode({
-        "structuredVariableSubstitutionPatterns" = ""
         "tags" = []
-        "autoFocus" = "true"
-        "storageClass" = "STANDARD"
-        "cannedAcl" = "private"
-        "metadata" = []
-        "bucketKey" = "#{Project.AWS.Lambda.S3.FileName}"
         "bucketKeyBehaviour" = "Custom"
-        "bucketKeyPrefix" = ""
+        "storageClass" = "STANDARD"
         "variableSubstitutionPatterns" = ""
+        "autoFocus" = "true"
+        "bucketKey" = "#{Project.AWS.Lambda.S3.FileName}"
+        "bucketKeyPrefix" = ""
+        "cannedAcl" = "private"
+        "structuredVariableSubstitutionPatterns" = ""
+        "metadata" = []
                 })
+        "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
+        "Octopus.Action.Aws.S3.BucketName" = "#{Project.AWS.Lambda.S3.BucketName}"
+        "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
       }
 }
 
@@ -524,6 +524,8 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate setup].Output.AwsLambdaConfigured == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
+        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
+        "Octopus.Action.Aws.WaitForCompletion" = "True"
         "Octopus.Action.Aws.TemplateSource" = "Package"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
         {
@@ -535,8 +537,8 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
         "value" = "#{Octopus.Step.Id}"
                 },
         {
-        "key" = "OctopusRunbookRunId"
         "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
+        "key" = "OctopusRunbookRunId"
                 },
         {
         "key" = "OctopusDeploymentId"
@@ -555,26 +557,24 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
         "value" = "#{Octopus.Environment.Name}"
                 },
         {
-        "key" = "DeploymentProject"
         "value" = "#{Octopus.Project.Name}"
+        "key" = "DeploymentProject"
                 },
         ])
+        "Octopus.Action.Aws.CloudFormationStackName" = "#{Octopus.Space.Name | Replace \"[^A-Za-z0-9]\" \"-\"}-OctopubProductsSAMLambda-#{Octopus.Deployment.Id | Replace -}-#{Octopus.Environment.Name}"
+        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.CloudFormationTemplate" = "sam.jvm.yaml"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
         "Octopus.Action.Aws.IamCapabilities" = jsonencode([
         "CAPABILITY_AUTO_EXPAND",
         "CAPABILITY_IAM",
         "CAPABILITY_NAMED_IAM",
         ])
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Aws.CloudFormationTemplate" = "sam.jvm.yaml"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Package.JsonConfigurationVariablesTargets" = "sam.jvm.yaml"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables"
-        "Octopus.Action.Aws.CloudFormationStackName" = "#{Octopus.Space.Name | Replace \"[^A-Za-z0-9]\" \"-\"}-OctopubProductsSAMLambda-#{Octopus.Deployment.Id | Replace -}-#{Octopus.Environment.Name}"
       }
 }
 
@@ -596,11 +596,11 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_print_message_whe
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the lambda\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy AWS Lambda function].Status.Code}\" -ieq \"Skipped\") {\n  Write-Highlight \"To complete the deployment, you must have the necessary AWS Lambda configuration.\"\n  Write-Highlight \"See details of the [required configuration](https://library.octopus.com/step-templates/9b5ee984-bdd2-49f0-a78a-07e21e60da8a/actiontemplate-aws-deploy-lambda-function).\"\n}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
       }
 }
 
@@ -631,11 +631,11 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_scan_for_vulnerab
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -762,7 +762,7 @@ resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_pro
 }
 
 resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_daily_security_scan" {
-  count       = "${length(data.octopusdeploy_projects.AWS Lambda.projects) != 0 ? 0 : 1}"
+  count       = "${length(data.octopusdeploy_projects.aws_lambda.projects) != 0 ? 0 : 1}"
   space_id    = "${trimspace(var.octopus_space_id)}"
   name        = "Daily Security Scan"
   description = "This trigger reruns the deployment in the Security environment. This means any new vulnerabilities detected after a production deployment will be identified."
@@ -789,7 +789,7 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_da
 resource "octopusdeploy_process" "process_aws_lambda_checkov_sam_static_analysis" {
   count      = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
   project_id = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? data.octopusdeploy_projects.project_aws_lambda.projects[0].id : octopusdeploy_project.project_aws_lambda[0].id}"
-  runbook_id = "${length(data.octopusdeploy_projects.AWS Lambda.projects) != 0 ? null : octopusdeploy_runbook.runbook_aws_lambda_checkov_sam_static_analysis[0].id}"
+  runbook_id = "${length(data.octopusdeploy_projects.aws_lambda.projects) != 0 ? null : octopusdeploy_runbook.runbook_aws_lambda_checkov_sam_static_analysis[0].id}"
   depends_on = []
 }
 
@@ -820,11 +820,11 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_checkov_sam_stati
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/RunCheckovScan.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -842,7 +842,7 @@ variable "runbook_aws_lambda_checkov_sam_static_analysis_name" {
   default     = "Checkov SAM Static Analysis"
 }
 resource "octopusdeploy_runbook" "runbook_aws_lambda_checkov_sam_static_analysis" {
-  count                       = "${length(data.octopusdeploy_projects.AWS Lambda.projects) != 0 ? 0 : 1}"
+  count                       = "${length(data.octopusdeploy_projects.aws_lambda.projects) != 0 ? 0 : 1}"
   name                        = "${var.runbook_aws_lambda_checkov_sam_static_analysis_name}"
   project_id                  = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? data.octopusdeploy_projects.project_aws_lambda.projects[0].id : octopusdeploy_project.project_aws_lambda[0].id}"
   environment_scope           = "All"
