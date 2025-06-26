@@ -90,7 +90,7 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
 
 ## Deployment Orchestration Environment Instructions
 
-You must include all the following environment resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless otherwise specified:
+You must include all the following environment resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
 * data "octopusdeploy_environments" "environment_development"
 * resource "octopusdeploy_environment" "environment_development"
 * data "octopusdeploy_environments" "environment_test"
@@ -100,7 +100,7 @@ You must include all the following environment resources from the "Example Octop
 
 ## Deployment Orchestration Feed Instructions
 
-You must include all the following feed resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless otherwise specified:
+You must include all the following feed resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
 * data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_"
 
@@ -117,7 +117,7 @@ You must include all the following project deployment process resources from the
 
 ## Deployment Orchestration Project Deployment Process Steps Instructions
 
-You must include all the following step resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless otherwise specified:
+You must include all the following step resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
 * resource "octopusdeploy_process_step" "process_step_deployment_orchestration_deploy_a_release"
 
 ## Deployment Orchestration Project Deployment Process Step Order Instructions
@@ -127,11 +127,12 @@ You must include all the following project deployment process step order resourc
 * resource "octopusdeploy_process_steps_order" "process_step_order_deployment_orchestration"
 ## Deployment Orchestration Project Variable Instructions
 
-You must include all the following variables from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless otherwise specified:
+You must include all the following variables from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
 
 ## Deployment Orchestration Lifecycle Instructions
 
-You must include all the following lifecycle resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless otherwise specified:
+You must include all the following lifecycle resources from the "Example Octopus Deployment Orchestration Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
 * data "octopusdeploy_lifecycles" "lifecycle_application"
 * resource "octopusdeploy_lifecycle" "lifecycle_application"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+

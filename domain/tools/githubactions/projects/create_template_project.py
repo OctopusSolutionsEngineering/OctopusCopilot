@@ -359,7 +359,7 @@ def project_context(
         + "\n"
         + escape_message(project_example)
         + "\n"
-        +escape_message(project_system_message_values),
+        + escape_message(project_system_message_values),
     )
 
     return [

@@ -6,7 +6,7 @@
 
 ## Azure Web App Environment Instructions
 
-You must include all the following environment resources from the "Example Octopus Azure Web App Terraform Configuration" once unless otherwise specified:
+You must include all the following environment resources from the "Example Octopus Azure Web App Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
 * data "octopusdeploy_environments" "environment_development"
 * resource "octopusdeploy_environment" "environment_development"
 * data "octopusdeploy_environments" "environment_test"
@@ -18,7 +18,7 @@ You must include all the following environment resources from the "Example Octop
 
 ## Azure Web App Feed Instructions
 
-You must include all the following feed resources from the "Example Octopus Azure Web App Terraform Configuration" once unless otherwise specified:
+You must include all the following feed resources from the "Example Octopus Azure Web App Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
 * data "octopusdeploy_feeds" "feed_ghcr_anonymous"
 * resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
@@ -31,7 +31,7 @@ You must include all the following project resources from the "Example Octopus A
 
 ## Azure Web App Project Runbook Instructions
 
-You must include all the following runbook resources once unless otherwise specified:
+You must include all the following runbook resources once unless the prompt explicitly states that runbooks should be removed or modified:
 * resource "octopusdeploy_runbook" "runbook_azure_web_app_create_infrastructure"
 * resource "octopusdeploy_runbook" "runbook_azure_web_app_destroy_infrastructure"
 
@@ -45,7 +45,7 @@ You must include all the following project deployment process resources from the
 
 ## Azure Web App Project Deployment Process Steps Instructions
 
-You must include all the following step resources from the "Example Octopus Azure Web App Terraform Configuration" once unless otherwise specified:
+You must include all the following step resources from the "Example Octopus Azure Web App Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_check_smtp_configuration"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deployment_start_notification"
@@ -59,7 +59,7 @@ You must include all the following step resources from the "Example Octopus Azur
 
 ## Azure Web App Project Runbook Deployment Process Steps Instructions
 
-You must include all the following runbook steps from the runbook_azure_web_app_create_infrastructure runbook once unless otherwise specified:
+You must include all the following runbook steps from the runbook_azure_web_app_create_infrastructure runbook once unless the prompt explicitly states that runbook steps should be removed or modified:
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_create_infrastructure_validate_setup"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_create_infrastructure_get_azure_access_token"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_create_infrastructure_validate_webapp_name_availability"
@@ -67,7 +67,7 @@ You must include all the following runbook steps from the runbook_azure_web_app_
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_create_infrastructure_create_web_app_service_plan"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_create_infrastructure_create_octopub_web_app"
 
-You must include all the following runbook steps from the runbook_azure_web_app_destroy_infrastructure runbook once unless otherwise specified:
+You must include all the following runbook steps from the runbook_azure_web_app_destroy_infrastructure runbook once unless the prompt explicitly states that runbook steps should be removed or modified:
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_validate_setup"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_deregister_target"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_destroy_resource_group"
@@ -81,7 +81,7 @@ You must include all the following project deployment process step order resourc
 * resource "octopusdeploy_process_steps_order" "process_step_order_azure_web_app_destroy_infrastructure"
 ## Azure Web App Project Variable Instructions
 
-You must include all the following variables from the "Example Octopus Azure Web App Terraform Configuration" once unless otherwise specified:
+You must include all the following variables from the "Example Octopus Azure Web App Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_1"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_2"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_3"
@@ -95,7 +95,7 @@ You must include all the following variables from the "Example Octopus Azure Web
 
 ## Azure Web App Lifecycle Instructions
 
-You must include all the following lifecycle resources from the "Example Octopus Azure Web App Terraform Configuration" once unless otherwise specified:
+You must include all the following lifecycle resources from the "Example Octopus Azure Web App Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
@@ -103,6 +103,6 @@ You must include all the following lifecycle resources from the "Example Octopus
 
 ## Azure Web App Project Scheduled Triggers Instructions
 
-You must include all the following project scheduled trigger resources from the "Example Octopus Azure Web App Terraform Configuration" once unless otherwise specified:
+You must include all the following project scheduled trigger resources from the "Example Octopus Azure Web App Terraform Configuration" once unless the prompt explicitly states that triggers should be removed or modified:
 * resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_azure_web_app_daily_security_scan"
 

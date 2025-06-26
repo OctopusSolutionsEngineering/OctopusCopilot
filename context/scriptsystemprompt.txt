@@ -6,7 +6,7 @@
 
 ## Script Environment Instructions
 
-You must include all the following environment resources from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
+You must include all the following environment resources from the "Example Octopus Script Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
 * data "octopusdeploy_environments" "environment_development"
 * resource "octopusdeploy_environment" "environment_development"
 * data "octopusdeploy_environments" "environment_test"
@@ -18,7 +18,7 @@ You must include all the following environment resources from the "Example Octop
 
 ## Script Feed Instructions
 
-You must include all the following feed resources from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
+You must include all the following feed resources from the "Example Octopus Script Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
 
 ## Script Project Instructions
@@ -34,7 +34,7 @@ You must include all the following project deployment process resources from the
 
 ## Script Project Deployment Process Steps Instructions
 
-You must include all the following step resources from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
+You must include all the following step resources from the "Example Octopus Script Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
 * resource "octopusdeploy_process_step" "process_step_script_hello_world"
 
 ## Script Project Deployment Process Step Order Instructions
@@ -43,13 +43,13 @@ You must include all the following project deployment process step order resourc
 * resource "octopusdeploy_process_steps_order" "process_step_order_script"
 ## Script Project Variable Instructions
 
-You must include all the following variables from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
+You must include all the following variables from the "Example Octopus Script Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
 * resource "octopusdeploy_variable" "script_project_workerpool_1"
 * resource "octopusdeploy_variable" "script_project_message_1"
 
 ## Script Lifecycle Instructions
 
-You must include all the following lifecycle resources from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
+You must include all the following lifecycle resources from the "Example Octopus Script Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
 * data "octopusdeploy_lifecycles" "lifecycle_application"
 * resource "octopusdeploy_lifecycle" "lifecycle_application"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
@@ -57,6 +57,6 @@ You must include all the following lifecycle resources from the "Example Octopus
 
 ## Script Project Scheduled Triggers Instructions
 
-You must include all the following project scheduled trigger resources from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
+You must include all the following project scheduled trigger resources from the "Example Octopus Script Terraform Configuration" once unless the prompt explicitly states that triggers should be removed or modified:
 * resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_script_daily_security_scan"
 

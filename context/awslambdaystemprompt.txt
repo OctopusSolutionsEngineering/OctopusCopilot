@@ -6,7 +6,7 @@
 
 ## AWS Lambda Environment Instructions
 
-You must include all the following environment resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless otherwise specified:
+You must include all the following environment resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
 * data "octopusdeploy_environments" "environment_development"
 * resource "octopusdeploy_environment" "environment_development"
 * data "octopusdeploy_environments" "environment_test"
@@ -18,7 +18,7 @@ You must include all the following environment resources from the "Example Octop
 
 ## AWS Lambda Feed Instructions
 
-You must include all the following feed resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless otherwise specified:
+You must include all the following feed resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
 * data "octopusdeploy_feeds" "feed_docker_hub"
 * resource "octopusdeploy_docker_container_registry" "feed_docker_hub"
@@ -33,7 +33,7 @@ You must include all the following project resources from the "Example Octopus A
 
 ## AWS Lambda Project Runbook Instructions
 
-You must include all the following runbook resources once unless otherwise specified:
+You must include all the following runbook resources once unless the prompt explicitly states that runbooks should be removed or modified:
 * resource "octopusdeploy_runbook" "runbook_aws_lambda_checkov_sam_static_analysis"
 
 
@@ -45,7 +45,7 @@ You must include all the following project deployment process resources from the
 
 ## AWS Lambda Project Deployment Process Steps Instructions
 
-You must include all the following step resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless otherwise specified:
+You must include all the following step resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_validate_setup"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_check_smtp_configuration"
@@ -58,7 +58,7 @@ You must include all the following step resources from the "Example Octopus AWS 
 
 ## AWS Lambda Project Runbook Deployment Process Steps Instructions
 
-You must include all the following runbook steps from the runbook_aws_lambda_checkov_sam_static_analysis runbook once unless otherwise specified:
+You must include all the following runbook steps from the runbook_aws_lambda_checkov_sam_static_analysis runbook once unless the prompt explicitly states that runbook steps should be removed or modified:
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_checkov_sam_static_analysis_run_checkov_static_analysis_scan"
 
 
@@ -69,7 +69,7 @@ You must include all the following project deployment process step order resourc
 * resource "octopusdeploy_process_steps_order" "process_step_order_aws_lambda_checkov_sam_static_analysis"
 ## AWS Lambda Project Variable Instructions
 
-You must include all the following variables from the "Example Octopus AWS Lambda Terraform Configuration" once unless otherwise specified:
+You must include all the following variables from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
 * resource "octopusdeploy_variable" "aws_lambda_project_octopus_api_key_1"
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_account_1"
 * resource "octopusdeploy_variable" "aws_lambda_project_aws_region_1"
@@ -79,7 +79,7 @@ You must include all the following variables from the "Example Octopus AWS Lambd
 
 ## AWS Lambda Lifecycle Instructions
 
-You must include all the following lifecycle resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless otherwise specified:
+You must include all the following lifecycle resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
@@ -87,6 +87,6 @@ You must include all the following lifecycle resources from the "Example Octopus
 
 ## AWS Lambda Project Scheduled Triggers Instructions
 
-You must include all the following project scheduled trigger resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless otherwise specified:
+You must include all the following project scheduled trigger resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that triggers should be removed or modified:
 * resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_daily_security_scan"
 

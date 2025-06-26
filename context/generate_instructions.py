@@ -29,7 +29,7 @@ def find_octopus_variables(filename, label):
         # Open and read the file
         print(f"## {label} Project Variable Instructions\n")
         print(
-            f'You must include all the following variables from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:'
+            f'You must include all the following variables from the "Example Octopus {label} Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:'
         )
         with open(filename, "r") as file:
             for line_number, line in enumerate(file, 1):
@@ -53,7 +53,7 @@ def find_project_scheduled_triggers(filename, label):
     try:
         # Open and read the file
         message += f"\n## {label} Project Scheduled Triggers Instructions\n"
-        message += f'\nYou must include all the following project scheduled trigger resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:\n'
+        message += f'\nYou must include all the following project scheduled trigger resources from the "Example Octopus {label} Terraform Configuration" once unless the prompt explicitly states that triggers should be removed or modified:\n'
         with open(filename, "r") as file:
             lines = file.readlines()
 
@@ -81,7 +81,7 @@ def find_project_channels(filename, label):
     try:
         # Open and read the file
         message += f"\n## {label} Project Channels Instructions\n"
-        message += f'\nYou must include all the following project channel resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:\n'
+        message += f'\nYou must include all the following project channel resources from the "Example Octopus {label} Terraform Configuration" once unless the prompt explicitly states that channels should be removed or modified:\n'
         with open(filename, "r") as file:
             lines = file.readlines()
 
@@ -162,7 +162,7 @@ def find_lifecycles(filename, label):
     try:
         # Open and read the file
         message += f"\n## {label} Lifecycle Instructions\n"
-        message += f'\nYou must include all the following lifecycle resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:\n'
+        message += f'\nYou must include all the following lifecycle resources from the "Example Octopus {label} Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:\n'
         with open(filename, "r") as file:
             lines = file.readlines()
 
@@ -226,7 +226,7 @@ def find_environments(filename, label):
         # Open and read the file
         print(f"\n## {label} Environment Instructions\n")
         print(
-            f'You must include all the following environment resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:'
+            f'You must include all the following environment resources from the "Example Octopus {label} Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:'
         )
         with open(filename, "r") as file:
             lines = file.readlines()
@@ -260,7 +260,7 @@ def find_feeds(filename, label):
         # Open and read the file
         print(f"\n## {label} Feed Instructions\n")
         print(
-            f'You must include all the following feed resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:'
+            f'You must include all the following feed resources from the "Example Octopus {label} Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:'
         )
         with open(filename, "r") as file:
             lines = file.readlines()
@@ -320,7 +320,7 @@ def find_step_names(filename, label):
         # Open and read the file
         print(f"\n## {label} Project Deployment Process Steps Instructions\n")
         print(
-            f'You must include all the following step resources from the "Example Octopus {label} Terraform Configuration" once unless otherwise specified:'
+            f'You must include all the following step resources from the "Example Octopus {label} Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:'
         )
         with open(filename, "r") as file:
             content = file.read()
@@ -434,7 +434,7 @@ def find_runbook_names(filename, label):
     try:
         # Open and read the file
         message += f"\n## {label} Project Runbook Instructions\n"
-        message += "\nYou must include all the following runbook resources once unless otherwise specified:\n"
+        message += "\nYou must include all the following runbook resources once unless the prompt explicitly states that runbooks should be removed or modified:\n"
         with open(filename, "r") as file:
             lines = file.readlines()
 
@@ -582,7 +582,7 @@ def find_runbook_step_names(filename, label):
                 # Derive the base name for the runbook
                 runbook_base_name = tf_process_name.replace("process_", "")
 
-                message += f"\nYou must include all the following runbook steps from the runbook_{runbook_base_name} runbook once unless otherwise specified:\n"
+                message += f"\nYou must include all the following runbook steps from the runbook_{runbook_base_name} runbook once unless the prompt explicitly states that runbook steps should be removed or modified:\n"
 
                 # Define the prefix that steps for this runbook should start with.
                 step_name_prefix = f"process_step_{runbook_base_name}_"

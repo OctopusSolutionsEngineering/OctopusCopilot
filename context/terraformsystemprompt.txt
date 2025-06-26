@@ -1,4 +1,4 @@
-# Terraform Deploy Instructions
+`# Terraform Deploy Instructions
 
 * The supplied "Example Octopus Terraform Deploy Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus Terraform Deploy Terraform Configuration".
@@ -6,7 +6,7 @@
 
 ## Terraform Deploy Environment Instructions
 
-You must include all the following environment resources from the "Example Octopus Terraform Deploy Terraform Configuration" once unless otherwise specified:
+You must include all the following environment resources from the "Example Octopus Terraform Deploy Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
 * data "octopusdeploy_environments" "environment_development"
 * resource "octopusdeploy_environment" "environment_development"
 * data "octopusdeploy_environments" "environment_test"
@@ -18,7 +18,7 @@ You must include all the following environment resources from the "Example Octop
 
 ## Terraform Deploy Feed Instructions
 
-You must include all the following feed resources from the "Example Octopus Terraform Deploy Terraform Configuration" once unless otherwise specified:
+You must include all the following feed resources from the "Example Octopus Terraform Deploy Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
 * data "octopusdeploy_feeds" "feed_github_container_registry"
 * resource "octopusdeploy_docker_container_registry" "feed_github_container_registry"
@@ -36,7 +36,7 @@ You must include all the following project deployment process resources from the
 
 ## Terraform Deploy Project Deployment Process Steps Instructions
 
-You must include all the following step resources from the "Example Octopus Terraform Deploy Terraform Configuration" once unless otherwise specified:
+You must include all the following step resources from the "Example Octopus Terraform Deploy Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
 * resource "octopusdeploy_process_step" "process_step_terraform_plan_to_apply_a_terraform_template"
 * resource "octopusdeploy_process_step" "process_step_terraform_approve_plan"
 * resource "octopusdeploy_process_step" "process_step_terraform_apply_a_terraform_template"
@@ -47,7 +47,7 @@ You must include all the following project deployment process step order resourc
 * resource "octopusdeploy_process_steps_order" "process_step_order_terraform"
 ## Terraform Deploy Project Variable Instructions
 
-You must include all the following variables from the "Example Octopus Terraform Deploy Terraform Configuration" once unless otherwise specified:
+You must include all the following variables from the "Example Octopus Terraform Deploy Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
 * resource "octopusdeploy_variable" "terraform_project_workerpool_1"
 * resource "octopusdeploy_variable" "terraform_project_terraform_configuration_1"
 * resource "octopusdeploy_variable" "terraform_terraform_variable_message_1"
@@ -55,7 +55,7 @@ You must include all the following variables from the "Example Octopus Terraform
 
 ## Terraform Deploy Lifecycle Instructions
 
-You must include all the following lifecycle resources from the "Example Octopus Terraform Deploy Terraform Configuration" once unless otherwise specified:
+You must include all the following lifecycle resources from the "Example Octopus Terraform Deploy Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
 * data "octopusdeploy_lifecycles" "lifecycle_application"
 * resource "octopusdeploy_lifecycle" "lifecycle_application"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
@@ -63,6 +63,7 @@ You must include all the following lifecycle resources from the "Example Octopus
 
 ## Terraform Deploy Project Scheduled Triggers Instructions
 
-You must include all the following project scheduled trigger resources from the "Example Octopus Terraform Deploy Terraform Configuration" once unless otherwise specified:
+You must include all the following project scheduled trigger resources from the "Example Octopus Terraform Deploy Terraform Configuration" once unless the prompt explicitly states that triggers should be removed or modified:
 * resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_terraform_daily_security_scan"
 
+`
