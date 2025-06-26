@@ -230,11 +230,11 @@ resource "octopusdeploy_process_step" "process_step_script_hello_world" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"#{Project.Message}\""
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -317,7 +317,7 @@ resource "octopusdeploy_environment" "environment_security" {
 }
 
 resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_script_daily_security_scan" {
-  count       = "${length(data.octopusdeploy_projects.script.projects) != 0 ? 0 : 1}"
+  count       = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? 0 : 1}"
   space_id    = "${trimspace(var.octopus_space_id)}"
   name        = "Daily Security Scan"
   description = ""
