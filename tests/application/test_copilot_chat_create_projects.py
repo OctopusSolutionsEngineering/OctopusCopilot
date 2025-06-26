@@ -7,6 +7,7 @@ import unittest
 import uuid
 from datetime import datetime
 
+import Levenshtein
 import azure.functions as func
 from openai import RateLimitError
 from requests.exceptions import HTTPError
@@ -362,7 +363,8 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
 
         self.assertTrue(
             any(
-                step["Name"] == additional_step_name
+                # The LLM might change the step name slightly, so we use Levenshtein distance to check for similarity
+                Levenshtein.distance(step["Name"], additional_step_name) <= 2
                 for step in deployment_process["Steps"]
             ),
             f'The deployment process should have an additional step called "{additional_step_name}".',
