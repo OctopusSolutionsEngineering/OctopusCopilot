@@ -38,6 +38,8 @@ You must include all the following project deployment process resources from the
 You must include all the following step resources from the "Example Octopus Script Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
 * resource "octopusdeploy_process_step" "process_step_script_hello_world"
 
+You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
+
 ## Script Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus Script Terraform Configuration" once:

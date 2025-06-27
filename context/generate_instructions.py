@@ -421,6 +421,10 @@ def find_step_names(filename, label):
                                 f'* resource "octopusdeploy_process_step" "{current_block_tf_name}"'
                             )
 
+        print(
+            f"\nYou will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified."
+        )
+
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:

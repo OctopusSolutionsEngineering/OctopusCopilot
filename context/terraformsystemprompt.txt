@@ -42,6 +42,8 @@ You must include all the following step resources from the "Example Octopus Terr
 * resource "octopusdeploy_process_step" "process_step_terraform_approve_plan"
 * resource "octopusdeploy_process_step" "process_step_terraform_apply_a_terraform_template"
 
+You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
+
 ## Terraform Deploy Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus Terraform Deploy Terraform Configuration" once:

@@ -42,6 +42,8 @@ You must include all the following step resources from the "Example Octopus Wind
 * resource "octopusdeploy_process_step" "process_step_iis_print_message_when_no_targets"
 * resource "octopusdeploy_process_step" "process_step_iis_scan_for_vulnerabilities"
 
+You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
+
 ## Windows IIS Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus Windows IIS Terraform Configuration" once:

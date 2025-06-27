@@ -47,6 +47,8 @@ You must include all the following step resources from the "Example Octopus AWS 
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam_template"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_scan_for_vulnerabilities"
 
+You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
+
 ## AWS Lambda Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus AWS Lambda Terraform Configuration" once:
