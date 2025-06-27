@@ -385,12 +385,13 @@ class MockRequests(unittest.TestCase):
             "How do I enable Azure AD?",
             "How do I create a new azure target?",
             "How do I integrate with ServiceNow?",
-            # "How do I use lifecycles",            # This needs to be resolved
+            "How do I use lifecycles",
             "How do I add a Worker?",
             "How do I setup a polling Tentacle?",
             "How do I review the DORA metrics?",
             "How do I use Community Step templates?",
             "How do I enable Config-as-code?",
+            "How do I create an AWS OIDC account?",
         ]
 
         for query in queries:
@@ -413,31 +414,6 @@ class MockRequests(unittest.TestCase):
 
         # Make sure we get some kind of response
         self.assertTrue(response)
-
-    @unittest.skip("GPt 4.1 has a much longer context and no longer fails")
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    def test_long_prompt(self):
-        """
-        Tests that the llm fails with the expected message when passed too much context
-        """
-
-        current_file_path = os.path.abspath(__file__)
-        path_without_filename = os.path.dirname(current_file_path)
-
-        with open(os.path.join(path_without_filename, "large_example.tf"), "r") as file:
-            data = file.read()
-
-        response = llm_message_query(
-            [
-                ("system", "You are a helpful agent."),
-                ("user", "{input}"),
-                ("user", "###\n{hcl}\n###"),
-            ],
-            {"input": "What does this project do?", "hcl": data},
-        )
-
-        # Make sure we get some kind of response
-        self.assertTrue(response.index("reduce the length of the messages") != -1)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_help_me_understand_deployment_failed(self):
