@@ -643,12 +643,20 @@ Create tag sets that represent counties from England and assign them to the tena
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_account(self):
-        prompt = 'Create an AWS account called "AWS".'
+        account_name = "AWS"
+        prompt = f'Create an AWS account called "{account_name}".'
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
             f"Creating this kind of resource is not yet supported." in response_text,
+            "Response contained text indicating a tool other than create_account was incorrectly chosen.",
+        )
+
+        self.assertFalse(
+            f'To create an AWS account called **"{account_name}"** in Octopus Deploy, follow these steps'
+            in response_text,
+            "Response contained text indicating the provide_help_and_instructions function was incorrectly chosen.",
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
