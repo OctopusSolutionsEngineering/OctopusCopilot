@@ -27,7 +27,11 @@ from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
 from infrastructure.openai import llm_message_query
-from infrastructure.space_builder import create_terraform_plan, create_terraform_apply
+from infrastructure.space_builder import (
+    create_terraform_plan,
+    create_terraform_apply,
+    create_terraform_autoapply,
+)
 from infrastructure.terraform_context import (
     load_terraform_context,
     load_terraform_cache,
@@ -63,8 +67,6 @@ def create_template_project_confirm_callback_wrapper(
                 Plan ID: {plan_id}""",
             )
 
-            response_text = []
-
             debug_text.extend(
                 get_params_message(
                     github_user,
@@ -90,6 +92,7 @@ def create_template_project_confirm_callback_wrapper(
                 )
                 return CopilotResponse(project_prompt_error_message)
 
+            response_text = []
             response_text.append("The following resources were created:")
             response_text.append(
                 "```\n" + response["data"]["attributes"]["apply_text"] + "\n```"
@@ -140,6 +143,7 @@ def create_template_project_callback(
         original_query,
         space_name=None,
         project_name=None,
+        auto_apply=False,
     ):
         """
 
@@ -169,6 +173,16 @@ def create_template_project_callback(
                 return CopilotResponse(
                     "The name of the space to create the project in must be defined."
                 )
+
+            debug_text.extend(
+                get_params_message(
+                    github_user,
+                    False,
+                    create_template_project.__name__,
+                    space_name=actual_space_name,
+                    space_id=space_id,
+                )
+            )
 
             # We need to call the LLM to get the Terraform configuration
             context = {"input": original_query}
@@ -256,10 +270,30 @@ def create_template_project_callback(
                 # Deal with the LLM returning a duplicate blocks
                 configuration = remove_duplicate_definitions(configuration)
 
-            # We can then save the Terraform plan as a callback
-            callback_id = str(uuid.uuid4())
-
             try:
+                if auto_apply:
+                    response = await create_terraform_autoapply(
+                        api_key,
+                        access_token,
+                        url,
+                        space_id,
+                        project_name,
+                        original_query,
+                        configuration,
+                        redirections,
+                        redirector_api_key,
+                    )
+
+                    response_text = [
+                        "Auto-apply was enabled, so validate the resources in Octopus Deploy to ensure they were created successfully.",
+                        "The following resources were created:",
+                        "```\n"
+                        + response["data"]["attributes"]["apply_text"]
+                        + "\n```",
+                    ]
+                    response_text.extend(debug_text)
+                    return CopilotResponse("\n\n".join(response_text))
+
                 response = await create_terraform_plan(
                     api_key,
                     access_token,
@@ -293,15 +327,9 @@ def create_template_project_callback(
                 Plan: {response["data"]["attributes"]["plan_text"]}""",
             )
 
-            debug_text.extend(
-                get_params_message(
-                    github_user,
-                    False,
-                    create_template_project.__name__,
-                    space_name=actual_space_name,
-                    space_id=space_id,
-                )
-            )
+            # We can then save the Terraform plan as a callback
+            callback_id = str(uuid.uuid4())
+
             save_callback(
                 github_user,
                 callback_name,

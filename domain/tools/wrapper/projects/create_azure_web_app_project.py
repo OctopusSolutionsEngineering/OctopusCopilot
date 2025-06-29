@@ -1,7 +1,9 @@
 def create_azure_web_app_project_wrapper(query, callback, logging):
+
     def create_azure_web_app_project(
         space_name=None,
         project_name=None,
+        auto_apply=False,
         **kwargs,
     ):
         """
@@ -15,6 +17,7 @@ def create_azure_web_app_project_wrapper(query, callback, logging):
         Args:
         space_name: The name of the space
         project_name: The name of the project
+        auto_apply: Whether to automatically apply the project after creation. Defaults to False.
         """
 
         if logging:
@@ -26,7 +29,11 @@ def create_azure_web_app_project_wrapper(query, callback, logging):
 
         # This is just a passthrough to the original callback
         return callback(
-            create_azure_web_app_project.__name__, query, space_name, project_name
+            create_azure_web_app_project.__name__,
+            query,
+            space_name,
+            project_name,
+            auto_apply,
         )
 
     return create_azure_web_app_project

@@ -1,7 +1,9 @@
 def create_iis_project_wrapper(query, callback, logging):
+
     def create_iis_project(
         space_name=None,
         project_name=None,
+        auto_apply=False,
         **kwargs,
     ):
         """
@@ -15,6 +17,7 @@ def create_iis_project_wrapper(query, callback, logging):
         Args:
         space_name: The name of the space
         project_name: The name of the project
+        auto_apply: Whether to automatically apply the project after creation. Defaults to False.
         """
 
         if logging:
@@ -25,6 +28,8 @@ def create_iis_project_wrapper(query, callback, logging):
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
         # This is just a passthrough to the original callback
-        return callback(create_iis_project.__name__, query, space_name, project_name)
+        return callback(
+            create_iis_project.__name__, query, space_name, project_name, auto_apply
+        )
 
     return create_iis_project

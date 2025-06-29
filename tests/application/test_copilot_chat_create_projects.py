@@ -249,6 +249,18 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             f'The deployment process should have a step called "{mandatory_step}".',
         )
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_k8s_project_auto_apply(self):
+        project_name = "My K8s Project"
+        prompt = f'Create a Kubernetes project called "{project_name}" and enable auto-apply.'
+        response = copilot_handler_internal(build_request(prompt))
+
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"The following resources were created:" in response_text,
+        )
+
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
     def test_create_azure_web_app_project(self):
         project_name = "My Azure WebApp Project"
