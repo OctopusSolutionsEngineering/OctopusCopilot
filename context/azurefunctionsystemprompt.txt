@@ -3,7 +3,7 @@
 * The supplied "Example Octopus Azure Function Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus Azure Function Terraform Configuration".
 * You must include the steps defined in the "Example Octopus Azure Function Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
-* If the prompt specifies that tenants, targets, machines, feeds, accounts, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus Azure Function Terraform Configuration".
+* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus Azure Function Terraform Configuration".
 
 ## Azure Function Environment Instructions
 
