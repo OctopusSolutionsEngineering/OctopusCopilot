@@ -93,6 +93,7 @@ def how_to_wrapper(query, callback, logging):
 
         You will be penalized for choosing this function when:
           * The query relates to running a runbook.
+          * The query relates to cancelling a task.
           * The query relates to the general configuration or state of Octopus resources.
           * The query explicitly requests resources like the examples listed above to be created with specific settings, such as the name of a project, account, or environment.
              * For example, you must not choose this function for a query like: Create an AWS account called "My AWS Account".
