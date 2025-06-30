@@ -362,6 +362,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 * You must include the "lifecycle_id" attribute for every "octopusdeploy_project" resource.
 * The "is_version_controlled" attribute must always be "false".
 * The "auto_create_release" attribute must be set to "false" for all "octopusdeploy_project" resources.
+* You will be penalized for setting the "auto_create_release" attribute to "true".
 
 ## Project Group Instructions
 
