@@ -308,13 +308,13 @@ def create_template_project_callback(
             except SpaceBuilderRequestFailed as e:
                 log_query(create_template_project_callback.__name__, str(e))
                 return CopilotResponse(project_prompt_error_message)
-
-            # Cache the template if it resulted in a valid plan.
-            # If the plan is particularly big (over the limit of 32K characters), the save operation might fail.
-            # This is a best effort operation, so we silently ignore exceptions.
-            none_on_exception(
-                lambda: cache_terraform(cache_sha, configuration, connection_string)
-            )
+            finally:
+                # Cache the template if it resulted in a valid plan.
+                # If the plan is particularly big (over the limit of 32K characters), the save operation might fail.
+                # This is a best effort operation, so we silently ignore exceptions.
+                none_on_exception(
+                    lambda: cache_terraform(cache_sha, configuration, connection_string)
+                )
 
             arguments = {
                 "plan_id": response["data"]["id"],
