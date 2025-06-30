@@ -402,5 +402,11 @@ def project_context(
         ),
         project_example_message,
         ("user", "Question: {input}"),
+        # The LLM was constantly removing the sample resources when the prompt indicated that a new resource, like a new lifecycle, should be created.
+        # We reinforce the need to keep any template resources by adding this message after the user prompt.
+        (
+            "user",
+            f'* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "{project_example_context_name}".',
+        ),
         ("user", f"Generated Terraform Configuration:"),
     ]
