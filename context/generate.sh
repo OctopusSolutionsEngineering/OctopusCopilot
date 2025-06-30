@@ -162,7 +162,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionseng
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > script.tf
 
-./generate_instructions.py script.tf "Script" > instructions_script.md
+./generate_instructions.py script.tf "Script Execution" > instructions_script.md
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
     -url https://mattc.octopus.app \
