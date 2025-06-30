@@ -3,7 +3,7 @@ def create_terraform_project_wrapper(query, callback, logging):
     def create_terraform_project(
         space_name=None,
         project_name=None,
-        auto_apply=False,
+        no_prompt=False,
         **kwargs,
     ):
         """
@@ -18,7 +18,7 @@ def create_terraform_project_wrapper(query, callback, logging):
         Args:
         space_name: The optional name of the space
         project_name: The name of the project
-        auto_apply: Whether to automatically apply the project after creation. Defaults to False.
+        no_prompt: Weather to disable the prompt. Defaults to False.
         """
 
         if logging:
@@ -34,7 +34,7 @@ def create_terraform_project_wrapper(query, callback, logging):
             query,
             space_name,
             project_name,
-            auto_apply,
+            no_prompt,
         )
 
     return create_terraform_project
