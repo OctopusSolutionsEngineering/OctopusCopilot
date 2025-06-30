@@ -357,13 +357,6 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 * You must define the data "octopusdeploy_feeds" "feed_docker_hub" once.
 * You will be penalized for defining the data "octopusdeploy_feeds" "feed_docker_hub" more than once.
 
-## Project Instructions
-
-* You must include the "lifecycle_id" attribute for every "octopusdeploy_project" resource.
-* The "is_version_controlled" attribute must always be "false".
-* The "auto_create_release" attribute must be set to "false" for all "octopusdeploy_project" resources.
-* You will be penalized for setting the "auto_create_release" attribute to "true".
-
 ## Project Group Instructions
 
 * Only the "Default Project Group" data "octopusdeploy_project_groups" includes a "postcondition" attribute.
@@ -414,6 +407,17 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 * You will be penalized for adding a "retention_policy" block to a resource "octopusdeploy_project".
 * The "skip_machine_behavior" property can be set to "None" or "SkipUnavailableMachines"
 * If a project name was specified in the prompt, you must use that name for the "name" attribute in the resource "octopusdeploy_project".
+* You must include the "lifecycle_id" attribute for every "octopusdeploy_project" resource.
+* The "is_version_controlled" attribute must always be "false".
+* The "auto_create_release" attribute must be set to "false" for all "octopusdeploy_project" resources, for example:
+
+```
+resource "octopusdeploy_project" "my_project" {
+  auto_create_release = false
+}
+```
+
+* You will be penalized for setting the "auto_create_release" attribute to "true".
 
 ## Octopus Project Trigger Instructions
 
