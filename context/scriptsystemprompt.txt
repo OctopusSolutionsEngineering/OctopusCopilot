@@ -14,8 +14,6 @@ You must include all the following environment resources from the "Example Octop
 * resource "octopusdeploy_environment" "environment_test"
 * data "octopusdeploy_environments" "environment_production"
 * resource "octopusdeploy_environment" "environment_production"
-* data "octopusdeploy_environments" "environment_security"
-* resource "octopusdeploy_environment" "environment_security"
 
 ## Script Execution Feed Instructions
 
@@ -56,10 +54,4 @@ You must include all the following lifecycle resources from the "Example Octopus
 * data "octopusdeploy_lifecycles" "lifecycle_application"
 * resource "octopusdeploy_lifecycle" "lifecycle_application"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
-
-
-## Script Execution Project Scheduled Triggers Instructions
-
-You must include all the following project scheduled trigger resources from the "Example Octopus Script Execution Terraform Configuration" once unless the prompt explicitly states that triggers should be removed or modified:
-* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_script_daily_security_scan"
 
