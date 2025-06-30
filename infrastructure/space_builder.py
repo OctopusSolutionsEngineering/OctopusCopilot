@@ -157,7 +157,7 @@ async def create_terraform_plan(
                     )
                     body = await response.text()
                     raise SpaceBuilderRequestFailed(
-                        f"Request to {api} failed with {body}"
+                        f"SpaceBuilder plan request to {api} failed with {body}"
                     )
                 return await response.json()
 
@@ -218,7 +218,7 @@ async def create_terraform_apply(
                     )
                     body = await response.text()
                     raise SpaceBuilderRequestFailed(
-                        f"Request to {api} failed with {body}"
+                        f"SpaceBuilder apply request to {api} failed with {body}"
                     )
                 return await response.json()
 
@@ -286,6 +286,6 @@ async def create_terraform_autoapply(
                     )
                     body = await response.text()
                     raise SpaceBuilderRequestFailed(
-                        f"Request to {api} failed with {body}"
+                        f"SpaceBuilder autoapply request to {api} failed with {body}"
                     )
                 return await response.json()
