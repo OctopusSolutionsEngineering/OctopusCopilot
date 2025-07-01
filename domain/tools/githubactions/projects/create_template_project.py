@@ -406,7 +406,7 @@ def project_context(
         # We reinforce the need to keep any template resources by adding this message after the user prompt.
         (
             "user",
-            f'* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "{project_example_context_name}".',
+            f'If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "{project_example_context_name}".',
         ),
         ("user", f"Generated Terraform Configuration:"),
     ]
