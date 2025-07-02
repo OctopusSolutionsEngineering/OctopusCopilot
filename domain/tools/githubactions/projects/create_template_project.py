@@ -93,6 +93,9 @@ def create_template_project_confirm_callback_wrapper(
                 return CopilotResponse(project_prompt_error_message)
 
             response_text = []
+            response_text.append(
+                "Your project was created successfully. The next step is to create and deploy a release. The deployment logs provide instructions and links to help you customize your project further."
+            )
             response_text.append("The following resources were created:")
             response_text.append(
                 "```\n" + response["data"]["attributes"]["apply_text"] + "\n```"
