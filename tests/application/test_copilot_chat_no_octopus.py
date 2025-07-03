@@ -258,6 +258,7 @@ From your diagram, the hosting company Octopus instance (UL-Octopus) is where de
         prompt = 'Generate a Terraform module with an environment called "Development", a project group called "Test", and a project called "Hello World" with a single Powershell script step that echoes the text "Hello World".'
         response = copilot_handler_internal(build_no_octopus_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
 
         self.assertIn(
             'resource "octopusdeploy_environment"',
