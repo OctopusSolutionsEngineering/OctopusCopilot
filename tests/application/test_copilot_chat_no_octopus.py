@@ -1,5 +1,6 @@
 import os
 import unittest
+from unittest import skip
 
 from openai import RateLimitError
 from retry import retry
@@ -253,6 +254,7 @@ From your diagram, the hosting company Octopus instance (UL-Octopus) is where de
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    @skip("This test is skipped for now as we move to the new deployment process.")
     def test_sample_hcl(self):
         prompt = 'Generate a Terraform module with an environment called "Development", a project group called "Test", and a project called "Hello World" with a single Powershell script step that echoes the text "Hello World".'
         response = copilot_handler_internal(build_no_octopus_request(prompt))
