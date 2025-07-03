@@ -254,7 +254,6 @@ From your diagram, the hosting company Octopus instance (UL-Octopus) is where de
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    @skip("This test is skipped for now as we move to the new deployment process.")
     def test_sample_hcl(self):
         prompt = 'Generate a Terraform module with an environment called "Development", a project group called "Test", and a project called "Hello World" with a single Powershell script step that echoes the text "Hello World".'
         response = copilot_handler_internal(build_no_octopus_request(prompt))
@@ -276,7 +275,17 @@ From your diagram, the hosting company Octopus instance (UL-Octopus) is where de
             "Response was " + response_text,
         )
         self.assertIn(
-            'resource "octopusdeploy_deployment_process"',
+            'resource "octopusdeploy_process"',
+            response_text.casefold(),
+            "Response was " + response_text,
+        )
+        self.assertIn(
+            'resource "octopusdeploy_process_steps_order"',
+            response_text.casefold(),
+            "Response was " + response_text,
+        )
+        self.assertIn(
+            'resource "octopusdeploy_process_step"',
             response_text.casefold(),
             "Response was " + response_text,
         )
