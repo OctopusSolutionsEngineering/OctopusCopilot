@@ -11,6 +11,8 @@ def generate_terraform_callback_wrapper():
             )
         ]
 
-        return CopilotResponse("\n\n".join(chat_response))
+        # The LLM has been finetuned to respond only with the terraform. We wrap it up in a code block
+        # to allow it to be displayed in the UI.
+        return CopilotResponse("```\n" + "\n\n".join(chat_response) + "\n```")
 
     return generate_terraform_callback_implementation
