@@ -70,11 +70,11 @@ def get_provider_example():
     return [
         (
             "system",
-            'terraform {{\n  required_providers {{\n    octopusdeploy = {{ source = "OctopusDeploy/octopusdeploy", version = "1.1.0" }}\n  }}\n}}',
+            '# Example Terraform Block\n\nterraform {{\n  required_providers {{\n    octopusdeploy = {{ source = "OctopusDeploy/octopusdeploy", version = "1.1.0" }}\n  }}\n}}',
         ),
         (
             "system",
-            'variable "octopus_server" {{\n  type        = string\n  nullable    = false\n  sensitive   = false\n  description = "The URL of the Octopus server e.g. https://myinstance.octopus.app."\n}}\nvariable "octopus_apikey" {{\n  type        = string\n  nullable    = false\n  sensitive   = true\n  description = "The API key used to access the Octopus server. See https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key for details on creating an API key."\n}}\nvariable "octopus_space_id" {{\n  type        = string\n  nullable    = false\n  sensitive   = false\n  description = "The space ID to populate"\n}}n\n\nprovider "octopusdeploy" {{\n  address  = "${{var.octopus_server}}"\n  api_key  = "${{var.octopus_apikey}}"\n  space_id = "${{var.octopus_space_id}}"\n}}',
+            '# Example Octopus Provider\n\nvariable "octopus_server" {{\n  type        = string\n  nullable    = false\n  sensitive   = false\n  description = "The URL of the Octopus server e.g. https://myinstance.octopus.app."\n}}\nvariable "octopus_apikey" {{\n  type        = string\n  nullable    = false\n  sensitive   = true\n  description = "The API key used to access the Octopus server. See https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key for details on creating an API key."\n}}\nvariable "octopus_space_id" {{\n  type        = string\n  nullable    = false\n  sensitive   = false\n  description = "The space ID to populate"\n}}n\n\nprovider "octopusdeploy" {{\n  address  = "${{var.octopus_server}}"\n  api_key  = "${{var.octopus_apikey}}"\n  space_id = "${{var.octopus_space_id}}"\n}}',
         ),
     ]
 
