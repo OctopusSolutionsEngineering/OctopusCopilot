@@ -24,7 +24,8 @@ def generate_hcl_messages(github_token, logging=None):
     # messages += get_live_messages(github_token, logging)
 
     # These are the hard coded messages to remove the need to download the sample HCL
-    messages += get_hardcoded_hcl_examples()
+    # This is not needed when using an LLM fine tuned against examples of the Terraform Provider configuration files.
+    # messages += get_hardcoded_hcl_examples()
 
     messages += [("user", "Question: {input}"), ("user", "Answer:")]
 
