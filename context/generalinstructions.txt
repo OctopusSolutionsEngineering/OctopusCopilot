@@ -28,6 +28,8 @@
 * When getting the length of the "data" "octopusdeploy_accounts" resource, the format is "${length(data.octopusdeploy_accounts.<data name>.accounts) != 0 ? 0 : 1}".
 * When getting the length of the "data" "octopusdeploy_machine_policies" resource, the format is "${length(data.octopusdeploy_machine_policies.<data name>.machine_policies) != 0 ? 0 : 1}".
 * When getting the length of the "data" "octopusdeploy_channels" resource, the format is "${length(data.octopusdeploy_channels.<data name>.channels) != 0 ? 0 : 1}".
+* The "<data name>" in the above examples must be replaced with the name of the data resource included in the output.
+* You will be penalized for using a "<data name>" that does not match the name of the data resource included in the output.
 
 ## Data and Resource pairing instructions
 
