@@ -1,0 +1,85 @@
+# LLM Kubernetes Instructions
+
+* The supplied "Example Octopus LLM Kubernetes Terraform Configuration" is the primary source of truth for the configuration.
+* You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus LLM Kubernetes Terraform Configuration".
+* You must include the steps defined in the "Example Octopus LLM Kubernetes Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
+* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus LLM Kubernetes Terraform Configuration".
+
+## LLM Kubernetes Environment Instructions
+
+You must include all the following environment resources from the "Example Octopus LLM Kubernetes Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
+* data "octopusdeploy_environments" "environment_development"
+* resource "octopusdeploy_environment" "environment_development"
+* data "octopusdeploy_environments" "environment_test"
+* resource "octopusdeploy_environment" "environment_test"
+* data "octopusdeploy_environments" "environment_production"
+* resource "octopusdeploy_environment" "environment_production"
+* data "octopusdeploy_environments" "environment_security"
+* resource "octopusdeploy_environment" "environment_security"
+
+## LLM Kubernetes Feed Instructions
+
+You must include all the following feed resources from the "Example Octopus LLM Kubernetes Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
+* data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+* data "octopusdeploy_feeds" "feed_github_container_registry"
+* resource "octopusdeploy_docker_container_registry" "feed_github_container_registry"
+* data "octopusdeploy_feeds" "feed_ghcr_anonymous"
+* resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
+
+## LLM Kubernetes Project Instructions
+
+You must include all the following project resources from the "Example Octopus LLM Kubernetes Terraform Configuration" once:
+* data "octopusdeploy_projects" "channel_llm_in_kubernetes_hotfix"
+* data "octopusdeploy_projects" "project_llm_in_kubernetes"
+* resource "octopusdeploy_project" "project_llm_in_kubernetes"
+
+## LLM Kubernetes Project Deployment Process Instructions
+
+You must include all the following project deployment process resources from the "Example Octopus LLM Kubernetes Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_llm_in_kubernetes"
+
+## LLM Kubernetes Project Deployment Process Steps Instructions
+
+You must include all the following step resources from the "Example Octopus LLM Kubernetes Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
+* resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_approve_production_deployment"
+* resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_deploy_a_kubernetes_llm_web_app_via_yaml"
+* resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_smoke_test"
+* resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_print_message_when_no_targets"
+* resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_scan_for_vulnerabilities"
+
+You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
+
+## LLM Kubernetes Project Deployment Process Step Order Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus LLM Kubernetes Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_llm_in_kubernetes"
+## LLM Kubernetes Project Variable Instructions
+
+You must include all the following variables from the "Example Octopus LLM Kubernetes Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
+* resource "octopusdeploy_variable" "llm_in_kubernetes_octopusprintevaluatedvariables_1"
+* resource "octopusdeploy_variable" "llm_in_kubernetes_octopusprintvariables_1"
+* resource "octopusdeploy_variable" "llm_in_kubernetes_kubernetes_deployment_name_1"
+* resource "octopusdeploy_variable" "llm_in_kubernetes_octopus_project_workerpool_1"
+* resource "octopusdeploy_variable" "llm_in_kubernetes_application_image_1"
+
+## LLM Kubernetes Lifecycle Instructions
+
+You must include all the following lifecycle resources from the "Example Octopus LLM Kubernetes Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
+* data "octopusdeploy_lifecycles" "lifecycle_devsecops"
+* resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
+* data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+* data "octopusdeploy_lifecycles" "lifecycle_hotfix"
+* resource "octopusdeploy_lifecycle" "lifecycle_hotfix"
+
+
+## LLM Kubernetes Project Channels Instructions
+
+You must include all the following project channel resources from the "Example Octopus LLM Kubernetes Terraform Configuration" once unless the prompt explicitly states that channels should be removed or modified:
+* resource "octopusdeploy_channel" "channel_llm_in_kubernetes_hotfix"
+
+
+## LLM Kubernetes Project Scheduled Triggers Instructions
+
+You must include all the following project scheduled trigger resources from the "Example Octopus LLM Kubernetes Terraform Configuration" once unless the prompt explicitly states that triggers should be removed or modified:
+* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_llm_in_kubernetes_daily_security_scan"
+

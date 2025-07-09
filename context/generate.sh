@@ -201,3 +201,22 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionseng
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > terraform.tf
 
 ./generate_instructions.py terraform.tf "Terraform Deploy" > instructions_terraform.md
+
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+    -url https://mattc.octopus.app \
+    -space Spaces-3368 \
+    -apiKey $OCTOPUS_CLI_API_KEY \
+    -projectName "LLM in Kubernetes" \
+    -stepTemplate \
+    -stepTemplateName "Space Context" \
+    -stepTemplateKey "SpaceContext" \
+    -dummySecretVariableValues \
+    -includeProviderServerDetails=false \
+    -ignoreCacManagedValues=false \
+    -excludeCaCProjectSettings=true \
+    -includeOctopusOutputVars=false \
+    -inlineVariableValues \
+    -dest /tmp/octoexport
+cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > llm.tf
+
+./generate_instructions.py llm.tf "LLM Kubernetes" > instructions_llm.md

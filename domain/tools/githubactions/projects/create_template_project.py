@@ -4,7 +4,6 @@ import json
 import os
 import uuid
 
-from domain.config.database import get_functions_connection_string
 from domain.exceptions.none_on_exception import none_on_exception
 from domain.exceptions.spacebuilder import SpaceBuilderRequestFailed
 from domain.lookup.octopus_lookups import (
