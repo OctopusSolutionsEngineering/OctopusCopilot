@@ -15,6 +15,9 @@ def create_llm_project_wrapper(query, callback, logging):
         * Create Kubernetes LLM project called "My Project"
         * Create Kubernetes LLM project called "My Project". Create an AWS account called "AWS" with access key "AKIAIOSFODNN7EXAMPLE"
 
+        You must only use this tool if the prompt includes the word "LLM".
+        You will be penalized for using this tool if the prompt does not include the word "LLM".
+
         Args:
         space_name: The optional name of the space
         project_name: The name of the project
