@@ -177,6 +177,7 @@ from domain.tools.wrapper.octopusresources.create_worker_pool import (
 from domain.tools.wrapper.projects.create_lambda_project import (
     create_lambda_project_wrapper,
 )
+from domain.tools.wrapper.projects.create_llm_project import create_llm_project_wrapper
 from domain.tools.wrapper.projects.create_orchestration_project import (
     create_orchestration_project_wrapper,
 )
@@ -1300,7 +1301,7 @@ def build_form_tools(query, req: func.HttpRequest):
                 ),
             ),
             FunctionDefinition(
-                create_script_project_wrapper(
+                create_llm_project_wrapper(
                     query,
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
