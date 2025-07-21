@@ -3,7 +3,7 @@
 # Manually managing azure-functions-worker may cause unexpected issues
 
 azure-functions
-azure-storage-blob
+azure-storage-blob==12.23.0
 langchain==0.3.26
 langchain-community==0.3.26
 langchain-core==0.3.66
