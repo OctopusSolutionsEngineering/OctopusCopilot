@@ -40,7 +40,7 @@ class BuildUrl(unittest.TestCase):
         self.assertTrue(is_octopus_cloud_local_or_example(url))
 
     def test_testoctopus_url(self):
-        url = urlparse("https://example.testoctopus.com")
+        url = urlparse("https://example.testoctopus.app")
         self.assertTrue(is_octopus_cloud_local_or_example(url))
 
     def test_localhost_url(self):
