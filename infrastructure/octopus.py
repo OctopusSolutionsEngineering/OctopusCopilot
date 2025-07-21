@@ -69,6 +69,11 @@ def get_request_headers(api_key, octopus_url):
     return headers
 
 
+def get_unauthenticated_request_headers(octopus_url):
+    headers = get_redirect_headers(octopus_url)
+    return headers
+
+
 def get_octopus_headers(api_key_or_access_token):
     """
     Build the headers used to make an Octopus API request. Also validate the API key to prevent
@@ -188,7 +193,11 @@ def get_space_id_and_name_from_name(space_name, api_key, octopus_url):
 @logging_wrapper
 def get_version(octopus_url):
     api = build_url(octopus_url, "api")
-    resp = handle_response(lambda: http.request("GET", api))
+    resp = handle_response(
+        lambda: http.request(
+            "GET", api, headers=get_unauthenticated_request_headers(octopus_url)
+        )
+    )
     return resp.json()["Version"]
 
 
