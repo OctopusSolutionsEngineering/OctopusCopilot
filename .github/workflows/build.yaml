@@ -61,6 +61,7 @@ jobs:
 
       # The --skipApiVersionCheck argument was added to the Azurite command line to skip the error:
       # The API version 2025-07-05 is not supported by Azurite. Please upgrade Azurite to latest version and retry. If you are using Azurite in Visual Studio, please check you have installed latest Visual Studio patch. Azurite command line parameter "--skipApiVersionCheck" or Visual Studio Code configuration "Skip Api Version Check" can skip this error.
+      # https://github.com/Azure/Azurite/issues/2562
       - name: Start Azurite
         run: docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 --restart unless-stopped mcr.microsoft.com/azure-storage/azurite azurite --skipApiVersionCheck
         shell: bash
