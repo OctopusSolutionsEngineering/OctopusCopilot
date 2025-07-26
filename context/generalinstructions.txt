@@ -762,6 +762,7 @@ resource "octopusdeploy_process_step" "process_step_orchestrator_project_deploy_
 ```
 
 * You will be penalized for defining a step of type "Octopus.DeployRelease" with a string like "Projects-##" for the "Octopus.Action.DeployRelease.ProjectId" execution property.
+* You will be penalized for setting the "container" block on a step when the "Octopus.Action.RunOnServer" property is set to "false".
 
 ## Octopus Variable Syntax Instructions
 
