@@ -836,6 +836,10 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 * You will be penalized for defining a target with an empty "environments" attribute.
 * If a target has no environments specified, the "environments" attribute must include all environments.
 
+## Octopus Account Instructions
+
+* You must set the "token" attribute on a "octopusdeploy_token_account" resource to "CHANGEME".
+
 ## Terraform Instructions
 
 * Resource names must be unique per type.
