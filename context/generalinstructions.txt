@@ -781,7 +781,7 @@ resource "octopusdeploy_process_step" "process_step_orchestrator_project_deploy_
   * "String"
   * "WorkerPool"
 * You will be penalized for setting the resource "octopusdeploy_variable" "type" attribute to "Token".
-* When defining the value for a resource "octopusdeploy_variable" with a "type" of "Sensitive", the "sensitive_value" attribute must be set to "CHANGE ME", and the "value" attribute must not be defined.
+* When defining the value for a resource "octopusdeploy_variable" with a "type" of "Sensitive", the "sensitive_value" attribute must be set to "CHANGEME", and the "value" attribute must not be defined.
 
 For example, this is a sensitive variable:
 
@@ -792,7 +792,7 @@ resource "octopusdeploy_variable" "a_sensitive_variable" {
   name         = "A.Sensitive.Variable"
   type         = "Sensitive"
   is_sensitive = true
-  sensitive_value = "CHANGE ME"
+  sensitive_value = "CHANGEME"
 }
 ```
 
@@ -810,7 +810,7 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 ```
 
 * You will be penalized for setting the "value" and "sensitive_value" attributes in the same resource "octopusdeploy_variable".
-* You will be penalized for setting the "sensitive_value" attribute to anything other than "CHANGE ME".
+* You will be penalized for setting the "sensitive_value" attribute to anything other than "CHANGEME".
 * You will be penalized for assigning an empty scope like "scope {}" to a resource "octopusdeploy_variable".
 * You will be penalized for defining a "tenants" attribute in the "scope" block.
 * You will be penalized for including more than one resource "octopusdeploy_variable" with the same name.
@@ -853,8 +853,8 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 * A block starting with "{" and ending with "}" must write each child property on a new line.
 * You will be penalized for writing a single line block like this: "lifecycle { ignore_changes = [sensitive_value] prevent_destroy = true }".
 * You will be penalized for writing a block starting with "{" and ending with "}" on a single line.
-* You must use the password "CHANGE ME" for all passwords and secret keys.
-* You must use username "CHANGE ME" for all usernames.
+* You must use the password "CHANGEME" for all passwords and secret keys.
+* You must use username "CHANGEME" for all usernames.
 * You must only create the following types of steps:
   * "Octopus.Script" - Run a Script step
   * "Octopus.AzurePowerShell" - Run an Azure Script step
