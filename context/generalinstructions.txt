@@ -28,6 +28,7 @@
 * When getting the length of the "data" "octopusdeploy_accounts" resource, the format is "${length(data.octopusdeploy_accounts.<data name>.accounts) != 0 ? 0 : 1}".
 * When getting the length of the "data" "octopusdeploy_machine_policies" resource, the format is "${length(data.octopusdeploy_machine_policies.<data name>.machine_policies) != 0 ? 0 : 1}".
 * When getting the length of the "data" "octopusdeploy_channels" resource, the format is "${length(data.octopusdeploy_channels.<data name>.channels) != 0 ? 0 : 1}".
+* When getting the length of the "data" "octopusdeploy_deployment_targets" resource, the format is "${length(data.octopusdeploy_deployment_targets.<data name>.deployment_targets) != 0 ? 0 : 1}".
 * The "<data name>" in the above examples must be replaced with the name of the data resource included in the output.
 * You will be penalized for using a "<data name>" that does not match the name of the data resource included in the output.
 
@@ -88,7 +89,7 @@ When the "feed_id" attribute is set to:
 Then the following "octopusdeploy_feeds" data resource must be included in the output:
 
 ```
-data "octopusdeploy_feeds" ""<name>" {
+data "octopusdeploy_feeds" "<name>" {
   feed_type    = "Docker"
   ids          = null
   partial_name = "<Name>"
@@ -836,6 +837,24 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 * Targets must be scoped to at least one environment
 * You will be penalized for defining a target with an empty "environments" attribute.
 * If a target has no environments specified, the "environments" attribute must include all environments.
+* Each resource "octopusdeploy_kubernetes_cluster_deployment_target" must have an associated data "octopusdeploy_deployment_targets". For example, if the following resource is defined:
+
+```
+resource "octopusdeploy_kubernetes_cluster_deployment_target" "kubernetes_cluster_target_example" {
+  count       = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_auzre_auth.deployment_targets) != 0 ? 0 : 1}"
+  name        = "Kubernetes Target"
+}
+```
+
+Then the associated data resource must be defined as follows:
+
+```
+data "octopusdeploy_deployment_targets" "kubernetes_cluster_target_example" {
+  partial_name         = "Kubernetes Target"
+  skip                 = 0
+  take                 = 1
+}
+```
 
 ## Octopus Account Instructions
 
