@@ -841,7 +841,7 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 
 ```
 resource "octopusdeploy_kubernetes_cluster_deployment_target" "kubernetes_cluster_target_example" {
-  count       = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_auzre_auth.deployment_targets) != 0 ? 0 : 1}"
+  count       = "${length(data.octopusdeploy_deployment_targets.kubernetes_cluster_target_example.deployment_targets) != 0 ? 0 : 1}"
   name        = "Kubernetes Target"
 }
 ```
