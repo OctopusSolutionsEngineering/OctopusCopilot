@@ -735,6 +735,8 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
 * You will be penalized for defining a "properties_additional" block.
 * You will be penalized for defining multiple "features" attributes.
 * You must include the "container" nested child block if one exists for a "octopusdeploy_process_step" resource in the sample Terraform configurations.
+* The "container" block is used to define the step's "Container Image".
+* Instructions that reference a step's "Container Image" result in the "container" block being defined or edited.
 * The "container" block has the following required properties:
     * "feed_id"
     * "image"
