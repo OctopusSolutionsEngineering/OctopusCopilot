@@ -747,7 +747,7 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
     image = "octopuslabs/aws-workertools"
 }
 ```
-* You will be penalized for editing the "packages" block with the details of a "Container Image".
+* You will be penalized for editing the "packages" block with a prompt that includes details concerning a "Container Image".
 * For example, if the prompt asks to set the "Container Image" to "octopuslabs/k8s-workertools", and the sample Terraform defines a step with a package of "nginx", you must edit the "container" block with the specific image, while leaving the "packages" blocks unmodified:
 ```
 resource "octopusdeploy_process_step" "deploy_k8s_yaml" {
