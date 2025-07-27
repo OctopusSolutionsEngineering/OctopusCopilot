@@ -737,7 +737,6 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
 * You must include the "container" nested child block if one exists for a "octopusdeploy_process_step" resource in the sample Terraform configurations.
 * The "container" block is used to define the step's "Container Image".
 * Instructions that reference a step's "Container Image" result in the "container" block being defined or edited.
-* You will be penalized for editing the "packages" attribute with the details of a "Container Image" instead of using the "container" block.
 * The "container" block has the following required properties:
     * "feed_id"
     * "image"
@@ -746,6 +745,27 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
 {
     feed_id = "${length(data.octopusdeploy_feeds.feed_docker_hub.feeds) != 0 ? data.octopusdeploy_feeds.feed_docker_hub.feeds[0].id : octopusdeploy_docker_container_registry.feed_docker_hub[0].id}",
     image = "octopuslabs/aws-workertools"
+}
+```
+* You will be penalized for editing the "packages" block with the details of a "Container Image".
+* For example, if the prompt asks to set the "Container Image" to "octopuslabs/k8s-workertools", and the sample Terraform defines a step with a package of "nginx", you must define the "container" and "packages" blocks as follows:
+```
+resource "octopusdeploy_process_step" "deploy_k8s_yaml" {
+  # The prompt asks to set the Container Image to "octopuslabs/k8s-workertools"
+  container = {
+    feed_id = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id : octopusdeploy_docker_container_registry.feed_github_container_registry[0].id}"
+    image = "ghcr.io/octopusdeploylabs/k8s-workertools"
+  }
+  # The packages do not change, so we keep the existing package definition
+  packages = {
+      nginx = {
+          acquisition_location = "NotAcquired"
+          feed_id = "${length(data.octopusdeploy_feeds.docker.feeds) != 0 ? data.octopusdeploy_feeds.docker.feeds[0].id : octopusdeploy_docker_container_registry.docker[0].id}"
+          id = null
+          package_id = "nginx"
+          properties = { Extract = "False", Purpose = "DockerImageReference", SelectionMode = "immediate" }
+      }
+  }
 }
 ```
 * You will be penalized for not including the "container" nested child block if one exists in the sample Terraform configurations.
