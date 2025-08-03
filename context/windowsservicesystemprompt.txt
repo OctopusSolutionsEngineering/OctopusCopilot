@@ -1,0 +1,68 @@
+# Windows IIS Instructions
+
+* The supplied "Example Octopus Windows IIS Terraform Configuration" is the primary source of truth for the configuration.
+* You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus Windows IIS Terraform Configuration".
+* You must include the steps defined in the "Example Octopus Windows IIS Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
+* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus Windows IIS Terraform Configuration".
+
+## Windows IIS Environment Instructions
+
+You must include all the following environment resources from the "Example Octopus Windows IIS Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
+* data "octopusdeploy_environments" "environment_development"
+* resource "octopusdeploy_environment" "environment_development"
+* data "octopusdeploy_environments" "environment_test"
+* resource "octopusdeploy_environment" "environment_test"
+* data "octopusdeploy_environments" "environment_production"
+* resource "octopusdeploy_environment" "environment_production"
+* data "octopusdeploy_environments" "environment_security"
+* resource "octopusdeploy_environment" "environment_security"
+
+## Windows IIS Feed Instructions
+
+You must include all the following feed resources from the "Example Octopus Windows IIS Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
+* data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+* data "octopusdeploy_feeds" "feed_octopus_maven_feed"
+* resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed"
+
+## Windows IIS Project Instructions
+
+You must include all the following project resources from the "Example Octopus Windows IIS Terraform Configuration" once:
+* data "octopusdeploy_projects" "project_windows_service"
+* resource "octopusdeploy_project" "project_windows_service"
+
+## Windows IIS Project Deployment Process Instructions
+
+You must include all the following project deployment process resources from the "Example Octopus Windows IIS Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_windows_service"
+
+## Windows IIS Project Deployment Process Steps Instructions
+
+You must include all the following step resources from the "Example Octopus Windows IIS Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
+* resource "octopusdeploy_process_step" "process_step_windows_service_deploy_a_windows_service"
+* resource "octopusdeploy_process_step" "process_step_windows_service_print_message_when_no_targets"
+* resource "octopusdeploy_process_step" "process_step_windows_service_scan_for_vulnerabilities"
+
+You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
+
+## Windows IIS Project Deployment Process Step Order Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus Windows IIS Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_windows_service"
+## Windows IIS Project Variable Instructions
+
+You must include all the following variables from the "Example Octopus Windows IIS Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
+* resource "octopusdeploy_variable" "windows_service_project_workerpool_1"
+
+## Windows IIS Lifecycle Instructions
+
+You must include all the following lifecycle resources from the "Example Octopus Windows IIS Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
+* data "octopusdeploy_lifecycles" "lifecycle_devsecops"
+* resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
+* data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+
+
+## Windows IIS Project Scheduled Triggers Instructions
+
+You must include all the following project scheduled trigger resources from the "Example Octopus Windows IIS Terraform Configuration" once unless the prompt explicitly states that triggers should be removed or modified:
+* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_windows_service_daily_security_scan"
+
