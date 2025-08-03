@@ -42,6 +42,17 @@ step "open-firewall-port" {
             feed = "ghcr"
             image = "ghcr.io/octopusdeploylabs/azure-workertools"
         }
+
+        packages "Azure.Functions.Cli.linux-x64" {
+            acquisition_location = "Server"
+            feed = "octopus-server-built-in"
+            package_id = "Azure.Functions.Cli.linux-x64"
+            properties = {
+                Extract = "True"
+                Purpose = ""
+                SelectionMode = "immediate"
+            }
+        }
     }
 }
 
