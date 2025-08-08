@@ -219,8 +219,16 @@ def create_template_project_callback(
             )
             cache_sha = hashlib.sha256(cache_key.encode("utf-8")).hexdigest()
 
-            # Attempt to load a previously cached terraform configuration
-            configuration = load_terraform_cache(cache_sha, connection_string)
+            # Attempt to load a previously cached terraform configuration,
+            # unless the cache is disabled.
+            configuration = (
+                None
+                if os.getenv(
+                    "AISERVICES_CACHE_DISABLED_PROJECT_GEN", "false"
+                ).casefold()
+                == "true"
+                else load_terraform_cache(cache_sha, connection_string)
+            )
 
             if not configuration:
                 messages = project_context(
