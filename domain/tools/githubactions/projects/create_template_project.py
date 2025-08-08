@@ -4,6 +4,7 @@ import json
 import os
 import uuid
 
+from domain.converters.string_to_int import string_to_int
 from domain.exceptions.none_on_exception import none_on_exception
 from domain.exceptions.spacebuilder import SpaceBuilderRequestFailed
 from domain.lookup.octopus_lookups import (
@@ -246,6 +247,10 @@ def create_template_project_callback(
                     or os.getenv("AISERVICES_DEPLOYMENT"),
                     os.getenv("AISERVICES_KEY"),
                     os.getenv("AISERVICES_ENDPOINT"),
+                    temperature=string_to_int(
+                        os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE", "0"),
+                        0,
+                    ),
                 )
 
                 # Deal with the LLM returning code in markdown code blocks

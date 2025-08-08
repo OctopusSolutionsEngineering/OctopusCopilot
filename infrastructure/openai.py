@@ -38,6 +38,7 @@ def llm_message_query(
     api_key=None,
     endpoint=None,
     custom_version=None,
+    temperature=0,
 ):
     # We can use a specific deployment to answer a query, or fallback to the default
     deployment = (
@@ -52,7 +53,7 @@ def llm_message_query(
     )
 
     llm = AzureChatOpenAI(
-        temperature=0,
+        temperature=temperature,
         azure_deployment=deployment,
         api_key=(api_key or os.environ["AISERVICES_KEY"]),
         azure_endpoint=(endpoint or os.environ["AISERVICES_ENDPOINT"]),
