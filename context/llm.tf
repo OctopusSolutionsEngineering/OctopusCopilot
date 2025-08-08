@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.1.4" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.2.1" }
   }
   required_version = ">= 1.6.0"
 }
@@ -357,9 +357,9 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_approve_pr
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "false"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
-        "Octopus.Action.RunOnServer" = "false"
       }
 }
 
@@ -391,14 +391,14 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_deploy_a_k
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: v1\nkind: Service\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  selector:\n    app: \"#{Kubernetes.Deployment.Name}\"\n  ports:\n    - protocol: TCP\n      port: 8080\n      targetPort: 8080\n  type: ClusterIP\n---\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[ollamainference].PackageId}:#{Octopus.Action.Package[ollamainference].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"2\"\n            memory: \"2Gi\"\n          requests:\n            cpu: \"1\"\n            memory: \"1Gi\"\n        livenessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
         "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: v1\nkind: Service\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  selector:\n    app: \"#{Kubernetes.Deployment.Name}\"\n  ports:\n    - protocol: TCP\n      port: 8080\n      targetPort: 8080\n  type: ClusterIP\n---\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[ollamainference].PackageId}:#{Octopus.Action.Package[ollamainference].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"2\"\n            memory: \"2Gi\"\n          requests:\n            cpu: \"1\"\n            memory: \"1Gi\"\n        livenessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
         "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
@@ -422,12 +422,12 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_smoke_test
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "false"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptParameters" = "-URL \"http://#{Kubernetes.Deployment.Name}.#{Octopus.Environment.Name | ToLower}.svc.cluster.local:8080/v1/chat/completions\" -Body '{\"model\": \"gemma3:1b\", \"messages\": [{\"role\": \"user\",\"content\": \"What is the capital of France?\"}]}'"
         "Octopus.Action.Script.ScriptFileName" = "octopus/HttpTest.ps1"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "false"
       }
 }
 
@@ -449,11 +449,11 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_print_mess
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy a Kubernetes Web App via YAML].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Kubernetes target with the tag 'Kubernetes'.\"\n  Write-Highlight \"We recommend the [Kubernetes Agent](https://octopus.com/docs/kubernetes/targets/kubernetes-agent).\"\n}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -476,11 +476,11 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_scan_for_v
   properties            = {
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DockerImageSbomScan.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -535,13 +535,6 @@ resource "octopusdeploy_variable" "llm_in_kubernetes_kubernetes_deployment_name_
   depends_on = []
 }
 
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
-  ids          = null
-  partial_name = "Default Worker Pool"
-  skip         = 0
-  take         = 1
-}
-
 data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
   ids          = null
   partial_name = "Hosted Ubuntu"
@@ -552,7 +545,7 @@ data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
 resource "octopusdeploy_variable" "llm_in_kubernetes_octopus_project_workerpool_1" {
   count        = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) == 0 ?octopusdeploy_project.project_llm_in_kubernetes[0].id : data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id}"
-  value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : null}"
   name         = "Octopus.Project.WorkerPool"
   type         = "WorkerPool"
   description  = "Using a variable to define the worker pool used by steps allows the worker pool to be easily changed in a central location."
@@ -648,7 +641,6 @@ data "octopusdeploy_projects" "project_llm_in_kubernetes" {
 resource "octopusdeploy_project" "project_llm_in_kubernetes" {
   count                                = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
   name                                 = "${var.project_llm_in_kubernetes_name}"
-  auto_create_release                  = false
   default_guided_failure_mode          = "EnvironmentDefault"
   default_to_skip_if_already_installed = false
   discrete_channel_release             = false
@@ -663,6 +655,7 @@ resource "octopusdeploy_project" "project_llm_in_kubernetes" {
     allow_deployments_to_no_targets = true
     exclude_unhealthy_targets       = false
     skip_machine_behavior           = "None"
+    target_roles                    = []
   }
 
   versioning_strategy {

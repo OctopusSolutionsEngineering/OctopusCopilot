@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.1.4" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.2.1" }
   }
   required_version = ">= 1.6.0"
 }
@@ -220,13 +220,6 @@ data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_" {
   }
 }
 
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
-  ids          = null
-  partial_name = "Default Worker Pool"
-  skip         = 0
-  take         = 1
-}
-
 data "octopusdeploy_worker_pools" "workerpool_hosted_windows" {
   ids          = null
   partial_name = "Hosted Windows"
@@ -260,15 +253,15 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
   slug                  = "run-a-script"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : null}"
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"Hello world\""
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -322,7 +315,6 @@ data "octopusdeploy_projects" "project_child_project" {
 resource "octopusdeploy_project" "project_child_project" {
   count                                = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? 0 : 1}"
   name                                 = "${var.project_child_project_name}"
-  auto_create_release                  = false
   default_guided_failure_mode          = "EnvironmentDefault"
   default_to_skip_if_already_installed = false
   discrete_channel_release             = false
@@ -337,6 +329,7 @@ resource "octopusdeploy_project" "project_child_project" {
     allow_deployments_to_no_targets = true
     exclude_unhealthy_targets       = false
     skip_machine_behavior           = "None"
+    target_roles                    = []
   }
 
   versioning_strategy {
@@ -372,9 +365,9 @@ resource "octopusdeploy_process_step" "process_step_deployment_orchestration_dep
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.DeployRelease.DeploymentCondition" = "IfNotCurrentVersion"
         "Octopus.Action.DeployRelease.ProjectId" = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.DeployRelease.DeploymentCondition" = "IfNotCurrentVersion"
       }
 }
 
@@ -428,7 +421,6 @@ data "octopusdeploy_projects" "project_deployment_orchestration" {
 resource "octopusdeploy_project" "project_deployment_orchestration" {
   count                                = "${length(data.octopusdeploy_projects.project_deployment_orchestration.projects) != 0 ? 0 : 1}"
   name                                 = "${var.project_deployment_orchestration_name}"
-  auto_create_release                  = false
   default_guided_failure_mode          = "EnvironmentDefault"
   default_to_skip_if_already_installed = false
   discrete_channel_release             = false
@@ -443,6 +435,7 @@ resource "octopusdeploy_project" "project_deployment_orchestration" {
     allow_deployments_to_no_targets = true
     exclude_unhealthy_targets       = false
     skip_machine_behavior           = "None"
+    target_roles                    = []
   }
 
   versioning_strategy {

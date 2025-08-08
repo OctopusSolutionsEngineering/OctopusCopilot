@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.1.4" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.2.1" }
   }
   required_version = ">= 1.6.0"
 }
@@ -127,7 +127,6 @@ data "octopusdeploy_projects" "project_project_settings_example" {
 resource "octopusdeploy_project" "project_project_settings_example" {
   count                                = "${length(data.octopusdeploy_projects.project_project_settings_example.projects) != 0 ? 0 : 1}"
   name                                 = "${var.project_project_settings_example_name}"
-  auto_create_release                  = false
   default_guided_failure_mode          = "On"
   default_to_skip_if_already_installed = false
   discrete_channel_release             = false
@@ -142,10 +141,23 @@ resource "octopusdeploy_project" "project_project_settings_example" {
     allow_deployments_to_no_targets = false
     exclude_unhealthy_targets       = true
     skip_machine_behavior           = "SkipUnavailableMachines"
+    target_roles                    = ["TestMe"]
   }
 
   versioning_strategy {
     template = "#{Octopus.Version.LastMajor}.#{Octopus.Version.LastMinor}.#{Octopus.Version.NextPatch}"
+  }
+
+  jira_service_management_extension_settings {
+    connection_id             = "8e5deac587294c26b432c9b389fd1772"
+    is_enabled                = true
+    service_desk_project_name = "myproject"
+  }
+
+  servicenow_extension_settings {
+    connection_id                       = "a9ba951dd84f49a3ab4b748a6ea94a55"
+    is_enabled                          = true
+    is_state_automatically_transitioned = false
   }
   description = "${var.project_project_settings_example_description_prefix}${var.project_project_settings_example_description}${var.project_project_settings_example_description_suffix}"
   lifecycle {

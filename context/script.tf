@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.1.4" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.2.1" }
   }
   required_version = ">= 1.6.0"
 }
@@ -230,11 +230,11 @@ resource "octopusdeploy_process_step" "process_step_script_hello_world" {
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"#{Project.Message}\""
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -242,13 +242,6 @@ resource "octopusdeploy_process_steps_order" "process_step_order_script" {
   count      = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? 0 : 1}"
   process_id = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? null : octopusdeploy_process.process_script[0].id}"
   steps      = ["${length(data.octopusdeploy_projects.project_script.projects) != 0 ? null : octopusdeploy_process_step.process_step_script_hello_world[0].id}"]
-}
-
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
-  ids          = null
-  partial_name = "Default Worker Pool"
-  skip         = 0
-  take         = 1
 }
 
 data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
@@ -261,7 +254,7 @@ data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
 resource "octopusdeploy_variable" "script_project_workerpool_1" {
   count        = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_script.projects) == 0 ?octopusdeploy_project.project_script[0].id : data.octopusdeploy_projects.project_script.projects[0].id}"
-  value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : null}"
   name         = "Project.WorkerPool"
   type         = "WorkerPool"
   description  = "The workerpool used by the steps. Defining the workerpool as a variable allows it to be changed in a single location for multiple steps."
@@ -331,7 +324,6 @@ data "octopusdeploy_projects" "project_script" {
 resource "octopusdeploy_project" "project_script" {
   count                                = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? 0 : 1}"
   name                                 = "${var.project_script_name}"
-  auto_create_release                  = false
   default_guided_failure_mode          = "EnvironmentDefault"
   default_to_skip_if_already_installed = false
   discrete_channel_release             = false
@@ -346,6 +338,7 @@ resource "octopusdeploy_project" "project_script" {
     allow_deployments_to_no_targets = true
     exclude_unhealthy_targets       = false
     skip_machine_behavior           = "None"
+    target_roles                    = []
   }
 
   versioning_strategy {
