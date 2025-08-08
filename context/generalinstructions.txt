@@ -787,6 +787,17 @@ resource "octopusdeploy_process_step" "process_step_orchestrator_project_deploy_
 
 * You will be penalized for defining a step of type "Octopus.DeployRelease" with a string like "Projects-##" for the "Octopus.Action.DeployRelease.ProjectId" execution property.
 * You will be penalized for setting the "container" block on a step when the "Octopus.Action.RunOnServer" property is set to "false".
+* Steps of type "Octopus.AwsRunScript" must have the "Octopus.Action.Aws.Region" execution_property defined, for example:
+
+```
+resource "octopusdeploy_process_step" "aws_script_step" {
+  type                  = "Octopus.AwsRunScript"
+  execution_properties  = {
+    # The "Octopus.Action.Aws.Region" must be defined
+    "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
+  }
+}
+```
 
 ## Octopus Variable Syntax Instructions
 
