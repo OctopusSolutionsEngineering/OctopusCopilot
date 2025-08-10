@@ -17,6 +17,13 @@ variable "octopus_space_id" {
   description = "The ID of the Octopus space to populate."
 }
 
+data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle" {
+  ids          = null
+  partial_name = ""
+  skip         = 0
+  take         = 1
+}
+
 variable "project_group_default_project_group_name" {
   type        = string
   nullable    = false
@@ -42,12 +49,6 @@ data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
   partial_name = "Default Lifecycle"
   skip         = 0
   take         = 1
-  lifecycle {
-    postcondition {
-      error_message = "Failed to resolve a lifecycle called \"Default Lifecycle\". This resource must exist in the space before this Terraform configuration is applied."
-      condition     = length(self.lifecycles) != 0
-    }
-  }
 }
 
 data "octopusdeploy_channels" "channel_project_settings_example_default" {
@@ -118,6 +119,33 @@ variable "project_project_settings_example_tenanted" {
   description = "The tenanted setting for the project Untenanted"
   default     = "Untenanted"
 }
+variable "project_project_settings_example_jsm_connection_id" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The Jira Service Manager Connection ID for project Project Settings Example"
+  default     = "8e5deac587294c26b432c9b389fd1772"
+}
+variable "project_project_settings_example_jsm_service_desk_project_name" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The Jira Service Manager Service Desk Project Name for project Project Settings Example"
+  default     = "myproject"
+}
+variable "project_project_settings_example_snow_connection_id" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The Jira Service Manager Connection ID for project Project Settings Example"
+  default     = "a9ba951dd84f49a3ab4b748a6ea94a55"
+}
+variable "project_project_settings_example_snow_standard_change_template_name" {
+  type        = string
+  nullable    = true
+  sensitive   = true
+  description = "The Jira Service Manager Service Desk Project Name for project Project Settings Example"
+}
 data "octopusdeploy_projects" "project_project_settings_example" {
   ids          = null
   partial_name = "${var.project_project_settings_example_name}"
@@ -132,7 +160,7 @@ resource "octopusdeploy_project" "project_project_settings_example" {
   discrete_channel_release             = false
   is_disabled                          = false
   is_version_controlled                = false
-  lifecycle_id                         = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}"
+  lifecycle_id                         = "${length(data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id : data.octopusdeploy_lifecycles.system_lifecycle_firstlifecycle.lifecycles[0].id}"
   project_group_id                     = "${data.octopusdeploy_project_groups.project_group_default_project_group.project_groups[0].id}"
   included_library_variable_sets       = []
   tenanted_deployment_participation    = "${var.project_project_settings_example_tenanted}"
@@ -149,15 +177,16 @@ resource "octopusdeploy_project" "project_project_settings_example" {
   }
 
   jira_service_management_extension_settings {
-    connection_id             = "8e5deac587294c26b432c9b389fd1772"
+    connection_id             = "${var.project_project_settings_example_jsm_connection_id}"
     is_enabled                = true
-    service_desk_project_name = "myproject"
+    service_desk_project_name = "${var.project_project_settings_example_jsm_service_desk_project_name}"
   }
 
   servicenow_extension_settings {
-    connection_id                       = "a9ba951dd84f49a3ab4b748a6ea94a55"
+    connection_id                       = "${var.project_project_settings_example_snow_connection_id}"
     is_enabled                          = true
     is_state_automatically_transitioned = false
+    standard_change_template_name       = "${var.project_project_settings_example_snow_standard_change_template_name}"
   }
   description = "${var.project_project_settings_example_description_prefix}${var.project_project_settings_example_description}${var.project_project_settings_example_description_suffix}"
   lifecycle {

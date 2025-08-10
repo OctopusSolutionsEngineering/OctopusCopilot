@@ -17,6 +17,13 @@ variable "octopus_space_id" {
   description = "The ID of the Octopus space to populate."
 }
 
+data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle" {
+  ids          = null
+  partial_name = ""
+  skip         = 0
+  take         = 1
+}
+
 data "octopusdeploy_project_groups" "project_group_orchestrator" {
   ids          = null
   partial_name = "${var.project_group_orchestrator_name}"
@@ -177,12 +184,6 @@ data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
   partial_name = "Default Lifecycle"
   skip         = 0
   take         = 1
-  lifecycle {
-    postcondition {
-      error_message = "Failed to resolve a lifecycle called \"Default Lifecycle\". This resource must exist in the space before this Terraform configuration is applied."
-      condition     = length(self.lifecycles) != 0
-    }
-  }
 }
 
 data "octopusdeploy_channels" "channel_deployment_orchestration_default" {
@@ -257,11 +258,11 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"Hello world\""
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -320,7 +321,7 @@ resource "octopusdeploy_project" "project_child_project" {
   discrete_channel_release             = false
   is_disabled                          = false
   is_version_controlled                = false
-  lifecycle_id                         = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}"
+  lifecycle_id                         = "${length(data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id : data.octopusdeploy_lifecycles.system_lifecycle_firstlifecycle.lifecycles[0].id}"
   project_group_id                     = "${length(data.octopusdeploy_project_groups.project_group_orchestrator.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_orchestrator.project_groups[0].id : octopusdeploy_project_group.project_group_orchestrator[0].id}"
   included_library_variable_sets       = []
   tenanted_deployment_participation    = "${var.project_child_project_tenanted}"
@@ -365,9 +366,9 @@ resource "octopusdeploy_process_step" "process_step_deployment_orchestration_dep
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.DeployRelease.ProjectId" = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.DeployRelease.DeploymentCondition" = "IfNotCurrentVersion"
+        "Octopus.Action.DeployRelease.ProjectId" = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"
       }
 }
 
