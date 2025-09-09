@@ -808,6 +808,16 @@ resource "octopusdeploy_process_step" "azure_resource_group" {
         "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? data.octopusdeploy_accounts.account_azure.accounts[0].id : octopusdeploy_azure_openid_connect.account_azure[0].id}"
       }
 }
+
+* Steps of type "Octopus.Script" must have the "OctopusUseBundledTooling" execution_properties defined, for example:
+
+```
+resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" {
+  type                  = "Octopus.Script"
+  execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
+      }
+}
 ```
 
 ## Octopus Variable Syntax Instructions
