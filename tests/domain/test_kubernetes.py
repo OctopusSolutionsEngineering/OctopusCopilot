@@ -6,6 +6,7 @@ from domain.sanitizers.terraform import (
     fix_single_line_lifecycle,
     fix_account_type,
     fix_single_line_retention_policy,
+    fix_single_line_tentacle_retention_policy,
 )
 
 
@@ -360,6 +361,18 @@ class TestKubernetesSanitizer(unittest.TestCase):
         )
 
         result = fix_single_line_retention_policy(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_fix_single_line_retention_policy(self):
+        # Test with a single-line retention policy
+        input_config = (
+            'tentacle_retention_policy { quantity_to_keep = 30 unit = "Days" }'
+        )
+        expected_output = (
+            'tentacle_retention_policy {\n quantity_to_keep = 30\n unit = "Days"\n}'
+        )
+
+        result = fix_single_line_tentacle_retention_policy(input_config)
         self.assertEqual(result, expected_output)
 
     def test_different_values(self):
