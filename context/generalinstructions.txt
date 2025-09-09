@@ -868,6 +868,7 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
   * "machines"
   * "roles"
   * "tenant_tags"
+* You will be penalized for defining "tenants" in the "scope" block for a "octopusdeploy_variable" resource.
 
 ## Runbook Instructions
 
