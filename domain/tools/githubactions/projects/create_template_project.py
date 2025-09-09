@@ -22,6 +22,7 @@ from domain.sanitizers.terraform import (
     fix_account_type,
     fix_single_line_retention_policy,
     remove_duplicate_definitions,
+    fix_single_line_tentacle_retention_policy,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
@@ -278,6 +279,9 @@ def create_template_project_callback(
 
                 # Deal with the LLM returning a single line for a release_retention_policy block
                 configuration = fix_single_line_retention_policy(configuration)
+
+                # Deal with the LLM returning a single line for a tentacle_retention_policy block
+                configuration = fix_single_line_tentacle_retention_policy(configuration)
 
                 # Deal with invalid account_types in data blocks
                 configuration = fix_account_type(configuration)
