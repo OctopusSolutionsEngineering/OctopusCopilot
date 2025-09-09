@@ -968,6 +968,14 @@ data "octopusdeploy_deployment_targets" "kubernetes_cluster_target_example" {
 "Octopus.Action.Script.ScriptBody" = "curl -w \"%%{http_code}\" http://example.org"
 ```
 
+This is another example using the heredoc syntax:
+
+```
+"Octopus.Action.Script.ScriptBody" = <<EOT
+    curl -w \"%%{http_code}\" http://example.org
+EOT
+```
+
 * Script steps that reference variables like "${VARIABLE}" must escape the dollar sign like "$${VARIABLE}", for example:
 
 ```
