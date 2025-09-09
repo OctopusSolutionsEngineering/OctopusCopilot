@@ -799,6 +799,17 @@ resource "octopusdeploy_process_step" "aws_script_step" {
 }
 ```
 
+* Steps of type "Octopus.AzureResourceGroup" must have the "Octopus.Action.Azure.AccountId" execution_properties defined, for example:
+
+```
+resource "octopusdeploy_process_step" "azure_resource_group" {
+  type                  = "Octopus.AzureResourceGroup"
+  execution_properties  = {
+        "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? data.octopusdeploy_accounts.account_azure.accounts[0].id : octopusdeploy_azure_openid_connect.account_azure[0].id}"
+      }
+}
+```
+
 ## Octopus Variable Syntax Instructions
 
 * Octopus variable syntax must be defined as "#{<variable name>}"
