@@ -7,6 +7,7 @@ from domain.sanitizers.terraform import (
     fix_account_type,
     fix_single_line_retention_policy,
     fix_single_line_tentacle_retention_policy,
+    fix_bad_logic_characters,
 )
 
 
@@ -349,6 +350,13 @@ class TestKubernetesSanitizer(unittest.TestCase):
         expected_output = 'account_type=""'
 
         result = fix_account_type(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_fix_bad_logic_characters(self):
+        input_config = 'count       = length(data.octopusdeploy_tag_sets.tagset_tier.tag_sets) != 0 && length([for item in data.octopusdeploy_tag_sets.tagset_tier.tag_sets[0].tags : item if item.name == "Gold"]_ _= 0 _ 0 : 1'
+        expected_output = 'count = length(data.octopusdeploy_tag_sets.tagset_tier.tag_sets) != 0 && length([for item in data.octopusdeploy_tag_sets.tagset_tier.tag_sets[0].tags : item if item.name == "Gold"]) != 0 ? 0 : 1'
+
+        result = fix_bad_logic_characters(input_config)
         self.assertEqual(result, expected_output)
 
     def test_fix_single_line_retention_policy(self):

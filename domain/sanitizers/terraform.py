@@ -124,6 +124,24 @@ def fix_single_line_tentacle_retention_policy(config):
     return config
 
 
+def fix_bad_logic_characters(config):
+    """
+    The LLM kept insisting on building the tag count attribute like this:
+    length(data.octopusdeploy_tag_sets.tagset_tier.tag_sets) != 0 && length([for item in data.octopusdeploy_tag_sets.tagset_tier.tag_sets[0].tags : item if item.name == \"Gold\"]_ _= 0 _ 0 : 1
+    So we need to fix this up
+    """
+
+    match = re.match(
+        r"count\s*=\s*(.*?)_ _= 0 _ 0 : 1",
+        config,
+    )
+    if match:
+        # fix up the logic
+        return f"count = {match.group(1)}) != 0 ? 0 : 1"
+
+    return config
+
+
 def fix_account_type(config):
     """
     Fix up invalid account_type values.
