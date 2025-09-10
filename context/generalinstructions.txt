@@ -135,6 +135,8 @@ resource "octopusdeploy_environment" "environment_<name>" {
 }
 ```
 
+You will be penalized for referencing a "octopusdeploy_environments" data source or "octopusdeploy_environment" resource that does not exist in the output.
+
 When the "project_id" attribute is set to "${length(data.octopusdeploy_projects.project_<name>.projects) != 0 ? 0 : 1}"
 
 ```
