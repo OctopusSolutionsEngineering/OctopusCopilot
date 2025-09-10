@@ -62,32 +62,6 @@ def logging_wrapper(func):
     return wrapper
 
 
-def get_octopus_headers(api_key_or_access_token):
-    """
-    Build the headers used to make an Octopus API request. Also validate the API key to prevent
-    clearly invalid keys from being used.
-    :param api_key_or_access_token: The API key or access token
-    :return: The headers required to call the Octopus API
-    """
-
-    ensure_api_key(
-        api_key_or_access_token,
-        "api_key_or_access_token must be the Octopus Api key (get_octopus_headers).",
-    )
-
-    if api_key_or_access_token.startswith("API-"):
-        return {
-            "X-Octopus-ApiKey": api_key_or_access_token,
-            "User-Agent": "OctopusAI",
-        }
-
-    # Assume an access token instead
-    return {
-        "Authorization": "Bearer " + api_key_or_access_token,
-        "User-Agent": "OctopusAI",
-    }
-
-
 @logging_wrapper
 def get_space_first_project_runbook_and_environment(space_id, api_key, url):
     """

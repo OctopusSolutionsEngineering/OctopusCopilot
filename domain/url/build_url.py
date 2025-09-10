@@ -1,7 +1,10 @@
 import os
 from urllib.parse import urlparse, urlencode, urlunsplit
 
-from domain.validation.argument_validation import ensure_string_not_empty
+from domain.validation.argument_validation import (
+    ensure_string_not_empty,
+    ensure_api_key,
+)
 from infrastructure.octopus import get_octopus_headers
 
 
@@ -27,6 +30,32 @@ def build_unredirected_url(base_url, path, query=None):
     query = urlencode(query) if query is not None else ""
 
     return urlunsplit((parsed.scheme, parsed.netloc, path, query, ""))
+
+
+def get_octopus_headers(api_key_or_access_token):
+    """
+    Build the headers used to make an Octopus API request. Also validate the API key to prevent
+    clearly invalid keys from being used.
+    :param api_key_or_access_token: The API key or access token
+    :return: The headers required to call the Octopus API
+    """
+
+    ensure_api_key(
+        api_key_or_access_token,
+        "api_key_or_access_token must be the Octopus Api key (get_octopus_headers).",
+    )
+
+    if api_key_or_access_token.startswith("API-"):
+        return {
+            "X-Octopus-ApiKey": api_key_or_access_token,
+            "User-Agent": "OctopusAI",
+        }
+
+    # Assume an access token instead
+    return {
+        "Authorization": "Bearer " + api_key_or_access_token,
+        "User-Agent": "OctopusAI",
+    }
 
 
 def build_url(base_url, api_key, path, query=None):
