@@ -286,7 +286,7 @@ resource "octopusdeploy_tag" "tagset_cities_tag_brisbane" {
 ```
 
 * The "count" attribute on the resource "octopusdeploy_tag" must be set to `length(data.octopusdeploy_tag_sets.<tagset data name>.tag_sets) != 0 && length([for item in data.octopusdeploy_tag_sets.<tagset data name>.tag_sets[0].tags : item if item.name == "<tag name>"]) != 0 ? 0 : 1`
-* You will be penalized for using a "count" attribute on the resource "octopusdeploy_tag" like this: `length(data.octopusdeploy_tag_sets.<tagset data name>.tag_sets) != 0 && length([for item in data.octopusdeploy_tag_sets.<tagset data name>.tag_sets[0].tags : item if item.name == "<tag name>"]_ _= 0 _ 0 : 1`
+* You will be penalized for using a "count" attribute on the resource "octopusdeploy_tag" using underscores in the place of brackets, question marks, and exclamation points like this: `length(data.octopusdeploy_tag_sets.<tagset data name>.tag_sets) != 0 && length([for item in data.octopusdeploy_tag_sets.<tagset data name>.tag_sets[0].tags : item if item.name == "<tag name>"]_ _= 0 _ 0 : 1`
 "
 
 ## Lifecycle Instructions
