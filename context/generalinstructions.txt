@@ -117,7 +117,7 @@ When the "environment_id" attribute is set to:
 Then the following "octopusdeploy_environments" data resource must be included in the output:
 
 ```
-data "octopusdeploy_environments" "environment_<data name>" {
+data "octopusdeploy_environments" "environment_<name>" {
   ids          = null
   partial_name = "<Name>"
   skip         = 0
