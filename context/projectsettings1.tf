@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.2.1" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.3.8" }
   }
   required_version = ">= 1.6.0"
 }
@@ -172,10 +172,6 @@ resource "octopusdeploy_project" "project_project_settings_example" {
     target_roles                    = ["TestMe"]
   }
 
-  versioning_strategy {
-    template = "#{Octopus.Version.LastMajor}.#{Octopus.Version.LastMinor}.#{Octopus.Version.NextPatch}"
-  }
-
   jira_service_management_extension_settings {
     connection_id             = "${var.project_project_settings_example_jsm_connection_id}"
     is_enabled                = true
@@ -192,6 +188,11 @@ resource "octopusdeploy_project" "project_project_settings_example" {
   lifecycle {
     prevent_destroy = true
   }
+}
+resource "octopusdeploy_project_versioning_strategy" "project_project_settings_example" {
+  count      = "${length(data.octopusdeploy_projects.project_project_settings_example.projects) != 0 ? 0 : 1}"
+  project_id = "${octopusdeploy_project.project_project_settings_example.id}"
+  template   = "#{Octopus.Version.LastMajor}.#{Octopus.Version.LastMinor}.#{Octopus.Version.NextPatch}"
 }
 
 

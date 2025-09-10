@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.2.1" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.3.8" }
   }
   required_version = ">= 1.6.0"
 }
@@ -258,11 +258,11 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptBody" = "echo \"Hello world\""
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptBody" = "echo \"Hello world\""
+        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -332,14 +332,15 @@ resource "octopusdeploy_project" "project_child_project" {
     skip_machine_behavior           = "None"
     target_roles                    = []
   }
-
-  versioning_strategy {
-    template = "#{Octopus.Version.LastMajor}.#{Octopus.Version.LastMinor}.#{Octopus.Version.NextPatch}"
-  }
   description = "${var.project_child_project_description_prefix}${var.project_child_project_description}${var.project_child_project_description_suffix}"
   lifecycle {
     prevent_destroy = true
   }
+}
+resource "octopusdeploy_project_versioning_strategy" "project_child_project" {
+  count      = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? 0 : 1}"
+  project_id = "${octopusdeploy_project.project_child_project.id}"
+  template   = "#{Octopus.Version.LastMajor}.#{Octopus.Version.LastMinor}.#{Octopus.Version.NextPatch}"
 }
 
 resource "octopusdeploy_process" "process_deployment_orchestration" {
@@ -366,9 +367,9 @@ resource "octopusdeploy_process_step" "process_step_deployment_orchestration_dep
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.DeployRelease.DeploymentCondition" = "IfNotCurrentVersion"
         "Octopus.Action.DeployRelease.ProjectId" = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -438,14 +439,15 @@ resource "octopusdeploy_project" "project_deployment_orchestration" {
     skip_machine_behavior           = "None"
     target_roles                    = []
   }
-
-  versioning_strategy {
-    template = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
-  }
   description = "${var.project_deployment_orchestration_description_prefix}${var.project_deployment_orchestration_description}${var.project_deployment_orchestration_description_suffix}"
   lifecycle {
     prevent_destroy = true
   }
+}
+resource "octopusdeploy_project_versioning_strategy" "project_deployment_orchestration" {
+  count      = "${length(data.octopusdeploy_projects.project_deployment_orchestration.projects) != 0 ? 0 : 1}"
+  project_id = "${octopusdeploy_project.project_deployment_orchestration.id}"
+  template   = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
 }
 
 

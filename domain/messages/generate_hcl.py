@@ -70,7 +70,7 @@ def get_provider_example():
     return [
         (
             "system",
-            '# Example Terraform Block\n\nterraform {{\n  required_providers {{\n    octopusdeploy = {{ source = "OctopusDeploy/octopusdeploy", version = "1.1.0" }}\n  }}\n}}',
+            '# Example Terraform Block\n\nterraform {{\n  required_providers {{\n    octopusdeploy = {{ source = "OctopusDeploy/octopusdeploy", version = "1.3.8" }}\n  }}\n}}',
         ),
         (
             "system",

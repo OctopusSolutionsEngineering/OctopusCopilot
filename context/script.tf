@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.2.1" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.3.8" }
   }
   required_version = ">= 1.6.0"
 }
@@ -231,11 +231,11 @@ resource "octopusdeploy_process_step" "process_step_script_hello_world" {
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptBody" = "echo \"#{Project.Message}\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "echo \"#{Project.Message}\""
       }
 }
 
@@ -341,14 +341,15 @@ resource "octopusdeploy_project" "project_script" {
     skip_machine_behavior           = "None"
     target_roles                    = []
   }
-
-  versioning_strategy {
-    template = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
-  }
   description = "${var.project_script_description_prefix}${var.project_script_description}${var.project_script_description_suffix}"
   lifecycle {
     prevent_destroy = true
   }
+}
+resource "octopusdeploy_project_versioning_strategy" "project_script" {
+  count      = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? 0 : 1}"
+  project_id = "${octopusdeploy_project.project_script.id}"
+  template   = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
 }
 
 
