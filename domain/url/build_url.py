@@ -5,7 +5,6 @@ from domain.validation.argument_validation import (
     ensure_string_not_empty,
     ensure_api_key,
 )
-from infrastructure.octopus import get_octopus_headers
 
 
 def build_unredirected_url(base_url, path, query=None):
