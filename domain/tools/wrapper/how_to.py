@@ -52,8 +52,8 @@ def how_to_wrapper(query, callback, logging):
         return provide_help_and_instructions(keywords, **kwargs)
 
     def provide_help_and_instructions(keywords=None, **kwargs):
-        """Answers questions like how or where to create, use, add, remove, setup, enable, disable, configure, or find
-        Octopus Deploy features like:
+        """Answers questions like how or where to manually create, use, manually add, remove, manually setup, enable,
+        disable, manually configure, or find Octopus Deploy features like:
 
         * Projects
         * Environments
@@ -81,18 +81,22 @@ def how_to_wrapper(query, callback, logging):
         * DORA metrics
         * Config-as-Code (CaC)
         * OCL
-        * community step templates
-        * using the CLI
-        * code samples
+        * Community step templates
+        * Using the CLI
+        * Code samples
         * REST API
-        * explanations of high level concepts
-        * integration with continuous integration (CI) servers
-        * integration with ServiceNow (SNOW) and Jira service Manager (JSM)
-        * details on metrics like deployment frequency,lead time for changes, change failure rate, and recovery time, and how and where to measure, view, and generate
+        * Explanations of high level concepts
+        * Integration with continuous integration (CI) servers
+        * Integration with ServiceNow (SNOW) and Jira service Manager (JSM)
+        * Details on metrics like deployment frequency,lead time for changes, change failure rate, and recovery time, and how and where to measure, view, and generate
         these metrics.
 
-        You will be penalized for using this function when the query relates to running a runbook.
-        You will be penalized for using this function when the query relates to the general configuration or state of Octopus resources.
+        You will be penalized for choosing this function when:
+          * The query relates to running a runbook.
+          * The query relates to cancelling a task.
+          * The query relates to the general configuration or state of Octopus resources.
+          * The query explicitly requests resources like the examples listed above to be created with specific settings, such as the name of a project, account, or environment.
+             * For example, you must not choose this function for a query like: Create an AWS account called "My AWS Account".
 
         Args:
         keywords: The keywords extracted from the query

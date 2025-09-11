@@ -1,5 +1,6 @@
 import unittest
-from infrastructure.octopus import get_request_headers
+
+from domain.url.build_url import build_url
 
 
 class TestGetRequestHeaders(unittest.TestCase):
@@ -7,7 +8,7 @@ class TestGetRequestHeaders(unittest.TestCase):
         api_key = "API-123456"
         octopus_url = "https://example.octopus.app"
 
-        headers = get_request_headers(api_key, octopus_url)
+        api, headers = build_url(octopus_url, api_key, "/")
         self.assertIsNotNone(headers.get("X-Octopus-ApiKey"))
         self.assertIsNone(headers.get("X_REDIRECTION_SERVICE_API_KEY"))
 
@@ -15,7 +16,7 @@ class TestGetRequestHeaders(unittest.TestCase):
         api_key = "API-123456"
         octopus_url = "https://localhost"
 
-        headers = get_request_headers(api_key, octopus_url)
+        api, headers = build_url(octopus_url, api_key, "/")
         self.assertIsNotNone(headers.get("X-Octopus-ApiKey"))
         self.assertIsNone(headers.get("X_REDIRECTION_SERVICE_API_KEY"))
 
@@ -23,7 +24,7 @@ class TestGetRequestHeaders(unittest.TestCase):
         api_key = "API-123456"
         octopus_url = "https://myinstance.com"
 
-        headers = get_request_headers(api_key, octopus_url)
+        api, headers = build_url(octopus_url, api_key, "/")
         self.assertIsNotNone(headers.get("X-Octopus-ApiKey"))
         self.assertIsNotNone(headers.get("X_REDIRECTION_SERVICE_API_KEY"))
 

@@ -1,30 +1,57 @@
-## Script Project Variable Instructions
+# Script Execution Instructions
 
-You must include all the following variables from the "Example Octopus Script Terraform Configuration" once unless otherwise specified:
+* The supplied "Example Octopus Script Execution Terraform Configuration" is the primary source of truth for the configuration.
+* You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus Script Execution Terraform Configuration".
+* You must include the steps defined in the "Example Octopus Script Execution Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
+* If the prompt specifies that tenants, targets, machines, feeds, accounts, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus Script Execution Terraform Configuration".
+
+## Script Execution Environment Instructions
+
+You must include all the following environment resources from the "Example Octopus Script Execution Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
+* data "octopusdeploy_environments" "environment_development"
+* resource "octopusdeploy_environment" "environment_development"
+* data "octopusdeploy_environments" "environment_test"
+* resource "octopusdeploy_environment" "environment_test"
+* data "octopusdeploy_environments" "environment_production"
+* resource "octopusdeploy_environment" "environment_production"
+
+## Script Execution Feed Instructions
+
+You must include all the following feed resources from the "Example Octopus Script Execution Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
+* data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+
+## Script Execution Project Instructions
+
+You must include all the following project resources from the "Example Octopus Script Execution Terraform Configuration" once:
+* data "octopusdeploy_projects" "project_script"
+* resource "octopusdeploy_project" "project_script"
+
+## Script Execution Project Deployment Process Instructions
+
+You must include all the following project deployment process resources from the "Example Octopus Script Execution Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_script"
+
+## Script Execution Project Deployment Process Steps Instructions
+
+You must include all the following step resources from the "Example Octopus Script Execution Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
+* resource "octopusdeploy_process_step" "process_step_script_hello_world"
+
+You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
+
+## Script Execution Project Deployment Process Step Order Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus Script Execution Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_script"
+## Script Execution Project Variable Instructions
+
+You must include all the following variables from the "Example Octopus Script Execution Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
 * resource "octopusdeploy_variable" "script_project_workerpool_1"
 * resource "octopusdeploy_variable" "script_project_message_1"
 
-## Script Project Scheduled Triggers Instructions
+## Script Execution Lifecycle Instructions
 
-You must include all the following project scheduled trigger resources from the "Example Octopus Script Terraform Configuration" unless otherwise specified:
-* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_script_daily_security_scan"
-
-## Script Project Deployment Process Instructions
-
-You must include all the following step resources from the "Example Octopus Script Terraform Configuration" unless otherwise specified:
-* resource "octopusdeploy_process_step" "process_step_script_hello_world"
-* resource "octopusdeploy_process_step" "process_step_script_scan_for_vulnerabilities"
-
-## Script Lifecycle Instructions
-
-You must include all the following lifecycle resources from the "Example Octopus Script Terraform Configuration" unless otherwise specified:
-* data "octopusdeploy_lifecycles" "lifecycle_devsecops"
-* resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
+You must include all the following lifecycle resources from the "Example Octopus Script Execution Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
+* data "octopusdeploy_lifecycles" "lifecycle_application"
+* resource "octopusdeploy_lifecycle" "lifecycle_application"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
 
-## Script Project Instructions
-
-You must include all the following project resources from the "Example Octopus Script Terraform Configuration" unless otherwise specified:
-* data "octopusdeploy_projects" "projecttrigger_script_daily_security_scan"
-* data "octopusdeploy_projects" "project_script"
-* resource "octopusdeploy_project" "project_script"

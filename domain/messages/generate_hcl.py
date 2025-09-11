@@ -24,7 +24,11 @@ def generate_hcl_messages(github_token, logging=None):
     # messages += get_live_messages(github_token, logging)
 
     # These are the hard coded messages to remove the need to download the sample HCL
-    messages += get_hardcoded_hcl_examples()
+    # This is not needed when using an LLM fine tuned against examples of the Terraform Provider configuration files.
+    # messages += get_hardcoded_hcl_examples()
+
+    # These messages allow us to update the provider version without tuning the LLM
+    messages += get_provider_example()
 
     messages += [("user", "Question: {input}"), ("user", "Answer:")]
 
@@ -57,6 +61,22 @@ def get_live_messages(github_token, logging=None):
         messages.append(hcl)
 
     return messages
+
+
+def get_provider_example():
+    """
+    Provides an example of the provider block for the Octopus Terraform provider.
+    """
+    return [
+        (
+            "system",
+            '# Example Terraform Block\n\nterraform {{\n  required_providers {{\n    octopusdeploy = {{ source = "OctopusDeploy/octopusdeploy", version = "1.3.8" }}\n  }}\n}}',
+        ),
+        (
+            "system",
+            '# Example Octopus Provider\n\nvariable "octopus_server" {{\n  type        = string\n  nullable    = false\n  sensitive   = false\n  description = "The URL of the Octopus server e.g. https://myinstance.octopus.app."\n}}\nvariable "octopus_apikey" {{\n  type        = string\n  nullable    = false\n  sensitive   = true\n  description = "The API key used to access the Octopus server. See https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key for details on creating an API key."\n}}\nvariable "octopus_space_id" {{\n  type        = string\n  nullable    = false\n  sensitive   = false\n  description = "The space ID to populate"\n}}n\n\nprovider "octopusdeploy" {{\n  address  = "${{var.octopus_server}}"\n  api_key  = "${{var.octopus_apikey}}"\n  space_id = "${{var.octopus_space_id}}"\n}}',
+        ),
+    ]
 
 
 def get_hardcoded_hcl_examples():

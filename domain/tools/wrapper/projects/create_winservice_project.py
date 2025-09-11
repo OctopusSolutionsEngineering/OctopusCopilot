@@ -1,18 +1,18 @@
-def create_azure_web_app_project_wrapper(query, callback, logging):
+def create_winservice_project_wrapper(query, callback, logging):
 
-    def create_azure_web_app_project(
+    def create_winservice_project(
         space_name=None,
         project_name=None,
         no_prompt=False,
         **kwargs,
     ):
         """
-        Creates an Azure Web App project in Octopus Deploy, in addition to any supporting resources.
+        Creates a Windows service project in Octopus Deploy, in addition to any supporting resources.
 
         Example prompts include:
-        * Create an Azure Web App project in the space "My Space" called "My Project"
-        * Create an Azure Web App project called "My Project" in the space "My Space"
-        * Create an Azure Web App project called "My Project"
+        * Create a Windows service project in the space "My Space" called "My Project"
+        * Create Windows service project called "My Project" in the space "My Space"
+        * Create service project called "My Project"
 
         Args:
         space_name: The name of the space
@@ -21,7 +21,7 @@ def create_azure_web_app_project_wrapper(query, callback, logging):
         """
 
         if logging:
-            logging("Enter:", create_azure_web_app_project.__name__)
+            logging("Enter:", create_winservice_project.__name__)
 
         for key, value in kwargs.items():
             if logging:
@@ -29,11 +29,11 @@ def create_azure_web_app_project_wrapper(query, callback, logging):
 
         # This is just a passthrough to the original callback
         return callback(
-            create_azure_web_app_project.__name__,
+            create_winservice_project.__name__,
             query,
             space_name,
             project_name,
             no_prompt,
         )
 
-    return create_azure_web_app_project
+    return create_winservice_project

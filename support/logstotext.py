@@ -4,19 +4,31 @@
 
 import sys
 import ast
+import os
+import re
 
 # Download log files from the storage account under a path like
 # resourceId=/SUBSCRIPTIONS/36083A1B-9710-4AAD-AB70-05E0EACC40FD/RESOURCEGROUPS/OCTOPUSAIAGENT/PROVIDERS/MICROSOFT.WEB/SITES/SPACEBUILDER/y=2025/m=06/d=14/h=00/m=00/PT1H.json
 
-input_file = sys.argv[1] if len(sys.argv) > 2 else "PT1H.json"
-output_file = sys.argv[2] if len(sys.argv) > 2 else "output.log"
 
-with open(input_file, "r") as infile, open(output_file, "w") as outfile:
-    for line in infile:
-        try:
-            data = ast.literal_eval(line)
-            message = data.get("properties", {}).get("message", "")
-            outfile.write(message + "\n")
-        except Exception as e:
-            print(e)
-            continue
+def find_pt1h_files(directory):
+    pt1h_files = []
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file == "PT1H.json":
+                pt1h_files.append(os.path.join(root, file))
+    return pt1h_files
+
+
+with open("output.log", "w") as outfile:
+    for file in find_pt1h_files("."):
+        with open(file, "r") as infile:
+            for line in infile:
+                try:
+                    data = ast.literal_eval(line)
+                    message = data.get("properties", {}).get("message", "")
+                    if not re.search(r".*?Options\n\{", message):
+                        outfile.write(message + "\n")
+                except Exception as e:
+                    print(e)
+                    continue

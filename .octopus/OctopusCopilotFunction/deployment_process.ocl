@@ -1,19 +1,11 @@
-step "deploy-with-cli" {
-    name = "Deploy to Consumption Function"
+step "open-firewall-port" {
+    name = "Open FIrewall Port"
 
     action {
         action_type = "Octopus.AzurePowerShell"
-        environments = ["production"]
-        notes = "Deploy the application using the Azure Functions CLI"
         properties = {
-            Octopus.Action.AutoRetry.MaximumCount = "3"
-            Octopus.Action.Azure.AccountId = "#{Octopus.Azure.Account}"
+            Octopus.Action.Azure.AccountId = "azure-copilot"
             Octopus.Action.Script.ScriptBody = <<-EOT
-                pushd Azure.Functions.Cli.linux-x64
-                chmod +x func
-                chmod +x gozip
-                popd
-                
                 # Grant access to this dynamic worker
                 WORKERIP=$(curl --silent ifconfig.net/)
                 
@@ -34,6 +26,56 @@ step "deploy-with-cli" {
                 # Allow this worker access
                 az functionapp config access-restriction add -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --action Allow --ip-address ${WORKERIP} --priority 500
                 az functionapp config access-restriction add -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --action Allow --ip-address ${WORKERIP} --priority 500 --slot "staging"
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool = "hosted-ubuntu"
+
+        container {
+            feed = "ghcr"
+            image = "ghcr.io/octopusdeploylabs/azure-workertools"
+        }
+    }
+}
+
+step "deploy-with-cli" {
+    name = "Deploy to Consumption Function"
+
+    action {
+        action_type = "Octopus.AzurePowerShell"
+        environments = ["production"]
+        notes = "Deploy the application using the Azure Functions CLI"
+        properties = {
+            Octopus.Action.AutoRetry.MaximumCount = "3"
+            Octopus.Action.Azure.AccountId = "#{Octopus.Azure.Account}"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                pushd Azure.Functions.Cli.linux-x64
+                chmod +x func
+                chmod +x gozip
+                popd
+                
+                # # Grant access to this dynamic worker
+                # WORKERIP=$(curl --silent ifconfig.net/)
+                
+                
+                # # Clear any existing rule
+                # EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
+                # if [[ $EXISTING -eq "1" ]]
+                # then
+                #   az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker"
+                # fi
+                
+                # EXISTING=$(az functionapp config access-restriction show -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --slot "staging" | jq -r '[.ipSecurityRestrictions[] | select(.name=="dynamicworker")] | length')
+                # if [[ $EXISTING -eq "1" ]]
+                # then
+                #   az functionapp config access-restriction remove -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --slot "staging"
+                # fi
+                
+                # # Allow this worker access
+                # az functionapp config access-restriction add -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --action Allow --ip-address ${WORKERIP} --priority 500
+                # az functionapp config access-restriction add -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --rule-name "dynamicworker" --action Allow --ip-address ${WORKERIP} --priority 500 --slot "staging"
                 
                 
                 # Disable autoswap
@@ -97,6 +139,11 @@ step "deploy-with-cli" {
                    {
                      "name": "AISERVICES_DEPLOYMENT_PROJECT_GEN",
                      "value": "#{Azure.US.AIServices.Deployment.ProjectGen}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE",
+                     "value": "#{Azure.US.AIServices.Temperature.ProjectGen}",
                      "slotSetting": false
                    },
                    {

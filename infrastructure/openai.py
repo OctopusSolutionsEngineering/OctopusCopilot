@@ -38,6 +38,7 @@ def llm_message_query(
     api_key=None,
     endpoint=None,
     custom_version=None,
+    temperature=0,
 ):
     # We can use a specific deployment to answer a query, or fallback to the default
     deployment = (
@@ -48,11 +49,11 @@ def llm_message_query(
     version = (
         custom_version
         or os.environ.get("AISERVICES_DEPLOYMENT_QUERY_VERSION")
-        or "2024-12-01-preview"  # https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-preview-api-releases
+        or "2025-04-01-preview"  # https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-preview-api-releases
     )
 
     llm = AzureChatOpenAI(
-        temperature=0,
+        temperature=temperature,
         azure_deployment=deployment,
         api_key=(api_key or os.environ["AISERVICES_KEY"]),
         azure_endpoint=(endpoint or os.environ["AISERVICES_ENDPOINT"]),
@@ -111,10 +112,7 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
         os.environ.get("AISERVICES_DEPLOYMENT_FUNCTIONS")
         or os.environ["AISERVICES_DEPLOYMENT"]
     )
-    version = (
-        os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION")
-        or "2024-12-01-preview"
-    )
+    version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-10-21"
 
     agent = OpenAIFunctionsAgent.from_llm_and_tools(
         llm=AzureChatOpenAI(

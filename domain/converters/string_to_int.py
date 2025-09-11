@@ -1,4 +1,4 @@
-def string_to_int(s):
+def string_to_int(s, default=None):
     if not s:
         return None
 
@@ -8,4 +8,4 @@ def string_to_int(s):
     try:
         return int(s)
     except ValueError:
-        return None
+        return default

@@ -4,7 +4,7 @@ import json
 import os
 import uuid
 
-from domain.config.database import get_functions_connection_string
+from domain.converters.string_to_int import string_to_int
 from domain.exceptions.none_on_exception import none_on_exception
 from domain.exceptions.spacebuilder import SpaceBuilderRequestFailed
 from domain.lookup.octopus_lookups import (
@@ -13,6 +13,7 @@ from domain.lookup.octopus_lookups import (
 from domain.octopus.authorization import get_auth
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.escape_messages import escape_message
+from domain.sanitizers.sanitize_strings import empty_if_none
 from domain.sanitizers.terraform import (
     sanitize_kuberenetes_yaml_step_config,
     sanitize_account_type,
@@ -20,12 +21,20 @@ from domain.sanitizers.terraform import (
     fix_single_line_lifecycle,
     fix_account_type,
     fix_single_line_retention_policy,
+    remove_duplicate_definitions,
+    fix_single_line_tentacle_retention_policy,
+    fix_bad_logic_characters,
+    fix_lifecycle,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
 from infrastructure.openai import llm_message_query
-from infrastructure.space_builder import create_terraform_plan, create_terraform_apply
+from infrastructure.space_builder import (
+    create_terraform_plan,
+    create_terraform_apply,
+    create_terraform_autoapply,
+)
 from infrastructure.terraform_context import (
     load_terraform_context,
     load_terraform_cache,
@@ -61,8 +70,6 @@ def create_template_project_confirm_callback_wrapper(
                 Plan ID: {plan_id}""",
             )
 
-            response_text = []
-
             debug_text.extend(
                 get_params_message(
                     github_user,
@@ -88,6 +95,10 @@ def create_template_project_confirm_callback_wrapper(
                 )
                 return CopilotResponse(project_prompt_error_message)
 
+            response_text = []
+            response_text.append(
+                "Your project was created successfully. The next step is to create and deploy a release. The deployment logs provide instructions and links to help you customize your project further."
+            )
             response_text.append("The following resources were created:")
             response_text.append(
                 "```\n" + response["data"]["attributes"]["apply_text"] + "\n```"
@@ -138,6 +149,7 @@ def create_template_project_callback(
         original_query,
         space_name=None,
         project_name=None,
+        auto_apply=False,
     ):
         """
 
@@ -168,12 +180,23 @@ def create_template_project_callback(
                     "The name of the space to create the project in must be defined."
                 )
 
+            debug_text.extend(
+                get_params_message(
+                    github_user,
+                    False,
+                    create_template_project.__name__,
+                    space_name=actual_space_name,
+                    space_id=space_id,
+                )
+            )
+
             # We need to call the LLM to get the Terraform configuration
             context = {"input": original_query}
 
             general_examples_values = [
                 load_terraform_context(context, connection_string)
                 for context in general_examples
+                if context.strip()
             ]
             project_example_values = load_terraform_context(
                 project_example, connection_string
@@ -191,16 +214,24 @@ def create_template_project_callback(
                 + "\n"
                 + "\n".join(general_examples_values)
                 + "\n"
-                + project_example_values
+                + empty_if_none(project_example_values)
                 + "\n"
-                + general_system_message_values
+                + empty_if_none(general_system_message_values)
                 + "\n"
-                + project_system_message_values
+                + empty_if_none(project_system_message_values)
             )
             cache_sha = hashlib.sha256(cache_key.encode("utf-8")).hexdigest()
 
-            # Attempt to load a previously cached terraform configuration
-            configuration = load_terraform_cache(cache_sha, connection_string)
+            # Attempt to load a previously cached terraform configuration,
+            # unless the cache is disabled.
+            configuration = (
+                None
+                if os.getenv(
+                    "AISERVICES_CACHE_DISABLED_PROJECT_GEN", "false"
+                ).casefold()
+                == "true"
+                else load_terraform_cache(cache_sha, connection_string)
+            )
 
             if not configuration:
                 messages = project_context(
@@ -227,8 +258,9 @@ def create_template_project_callback(
                     or os.getenv("AISERVICES_DEPLOYMENT"),
                     os.getenv("AISERVICES_KEY"),
                     os.getenv("AISERVICES_ENDPOINT"),
-                    custom_version=os.getenv(
-                        "AISERVICES_DEPLOYMENT_PROJECT_GEN_VERSION"
+                    temperature=string_to_int(
+                        os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE", "0"),
+                        0,
                     ),
                 )
 
@@ -250,13 +282,45 @@ def create_template_project_callback(
                 # Deal with the LLM returning a single line for a release_retention_policy block
                 configuration = fix_single_line_retention_policy(configuration)
 
+                # Deal with the LLM returning a single line for a tentacle_retention_policy block
+                configuration = fix_single_line_tentacle_retention_policy(configuration)
+
+                # Deal with bad count attributes
+                configuration = fix_bad_logic_characters(configuration)
+
+                # Remove lifecycle blocks
+                configuration = fix_lifecycle(configuration)
+
                 # Deal with invalid account_types in data blocks
                 configuration = fix_account_type(configuration)
 
-            # We can then save the Terraform plan as a callback
-            callback_id = str(uuid.uuid4())
+                # Deal with the LLM returning a duplicate blocks
+                configuration = remove_duplicate_definitions(configuration)
 
             try:
+                if auto_apply:
+                    response = await create_terraform_autoapply(
+                        api_key,
+                        access_token,
+                        url,
+                        space_id,
+                        project_name,
+                        original_query,
+                        configuration,
+                        redirections,
+                        redirector_api_key,
+                    )
+
+                    response_text = [
+                        "Auto-apply was enabled, so validate the resources in Octopus Deploy to ensure they were created successfully.",
+                        "The following resources were created:",
+                        "```\n"
+                        + response["data"]["attributes"]["apply_text"]
+                        + "\n```",
+                    ]
+                    response_text.extend(debug_text)
+                    return CopilotResponse("\n\n".join(response_text))
+
                 response = await create_terraform_plan(
                     api_key,
                     access_token,
@@ -271,13 +335,13 @@ def create_template_project_callback(
             except SpaceBuilderRequestFailed as e:
                 log_query(create_template_project_callback.__name__, str(e))
                 return CopilotResponse(project_prompt_error_message)
-
-            # Cache the template if it resulted in a valid plan.
-            # If the plan is particularly big (over the limit of 32K characters), the save operation might fail.
-            # This is a best effort operation, so we silently ignore exceptions.
-            none_on_exception(
-                lambda: cache_terraform(cache_sha, configuration, connection_string)
-            )
+            finally:
+                # Cache the template if it resulted in a valid plan.
+                # If the plan is particularly big (over the limit of 32K characters), the save operation might fail.
+                # This is a best effort operation, so we silently ignore exceptions.
+                none_on_exception(
+                    lambda: cache_terraform(cache_sha, configuration, connection_string)
+                )
 
             arguments = {
                 "plan_id": response["data"]["id"],
@@ -290,15 +354,9 @@ def create_template_project_callback(
                 Plan: {response["data"]["attributes"]["plan_text"]}""",
             )
 
-            debug_text.extend(
-                get_params_message(
-                    github_user,
-                    False,
-                    create_template_project.__name__,
-                    space_name=actual_space_name,
-                    space_id=space_id,
-                )
-            )
+            # We can then save the Terraform plan as a callback
+            callback_id = str(uuid.uuid4())
+
             save_callback(
                 github_user,
                 callback_name,
@@ -336,7 +394,7 @@ def project_context(
     project_example,
     project_example_context_name,
     general_system_message_values,
-    system_message,
+    project_system_message_values,
 ):
     """
     Builds the messages used when building an octopus project
@@ -346,27 +404,40 @@ def project_context(
     general_examples_messages = [
         (
             "system",
-            "# Example Octopus Terraform Configuration\n\n" + escape_message(example),
+            "# Example Octopus Terraform Configuration:\n" + escape_message(example),
         )
         for example in general_examples
     ]
     project_example_message = (
         "system",
         f"# Example Octopus {project_example_context_name} Terraform Configuration"
-        + "\n\n"
+        + "\n"
         + escape_message(project_example)
         + "\n"
-        + escape_message(general_system_message_values)
-        + "\n",
+        + escape_message(project_system_message_values),
     )
 
     return [
         (
             "system",
-            escape_message(system_message),
+            "You are an expert in generating Terraform configurations for Octopus Deploy projects.",
         ),
         *general_examples_messages,
+        (
+            "system",
+            escape_message(general_system_message_values),
+        ),
         project_example_message,
         ("user", "Question: {input}"),
+        # The LLM was constantly removing the sample resources when the prompt indicated that a new resource, like a new lifecycle, should be created.
+        # We reinforce the need to keep any template resources by adding this message after the user prompt.
+        (
+            "user",
+            f'If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "{project_example_context_name}".',
+        ),
+        (
+            "user",
+            f'You must include all the resources from the "{project_example_context_name}" unless the prompt explicitly asks to remove them.',
+        ),
         ("user", f"Generated Terraform Configuration:"),
     ]

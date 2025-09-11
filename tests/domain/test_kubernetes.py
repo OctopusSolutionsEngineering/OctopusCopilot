@@ -6,6 +6,9 @@ from domain.sanitizers.terraform import (
     fix_single_line_lifecycle,
     fix_account_type,
     fix_single_line_retention_policy,
+    fix_single_line_tentacle_retention_policy,
+    fix_bad_logic_characters,
+    fix_lifecycle,
 )
 
 
@@ -350,6 +353,35 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = fix_account_type(input_config)
         self.assertEqual(result, expected_output)
 
+    def test_fix_lifecycle(self):
+        input_config = (
+            "lifecycle { ignore_changes = [password] prevent_destroy = true }"
+        )
+
+        result = fix_lifecycle(input_config)
+        self.assertEqual(result, "")
+
+    def test_fix_bad_logic_characters(self):
+        input_config = 'count = length(try([for item in data.octopusdeploy_tag_sets.tagset_counties.tag_sets[0].tags : item if item.name == "Greater London"], []_) != 0 ? 0 : 1'
+        expected_output = 'count = length(try([for item in data.octopusdeploy_tag_sets.tagset_counties.tag_sets[0].tags : item if item.name == "Greater London"], [])) != 0 ? 0 : 1'
+
+        result = fix_bad_logic_characters(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_fix_bad_logic_characters2(self):
+        input_config = 'count =    length(try([for item in data.octopusdeploy_tag_sets.tagset_counties.tag_sets[0].tags : item if item.name == "Greater London"], []_) != 0 ? 0 : 1'
+        expected_output = 'count = length(try([for item in data.octopusdeploy_tag_sets.tagset_counties.tag_sets[0].tags : item if item.name == "Greater London"], [])) != 0 ? 0 : 1'
+
+        result = fix_bad_logic_characters(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_fix_bad_logic_characters3(self):
+        input_config = 'count =    length(try([for item in data.octopusdeploy_tag_sets.tagset_counties.tag_sets[0].tags : item if item.name == "Greater London"], []__ _= 0 _ 0 : 1'
+        expected_output = 'count = length(try([for item in data.octopusdeploy_tag_sets.tagset_counties.tag_sets[0].tags : item if item.name == "Greater London"], [])) != 0 ? 0 : 1'
+
+        result = fix_bad_logic_characters(input_config)
+        self.assertEqual(result, expected_output)
+
     def test_fix_single_line_retention_policy(self):
         # Test with a single-line retention policy
         input_config = (
@@ -360,6 +392,18 @@ class TestKubernetesSanitizer(unittest.TestCase):
         )
 
         result = fix_single_line_retention_policy(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_fix_single_line_retention_policy(self):
+        # Test with a single-line retention policy
+        input_config = (
+            'tentacle_retention_policy { quantity_to_keep = 30 unit = "Days" }'
+        )
+        expected_output = (
+            'tentacle_retention_policy {\n quantity_to_keep = 30\n unit = "Days"\n}'
+        )
+
+        result = fix_single_line_tentacle_retention_policy(input_config)
         self.assertEqual(result, expected_output)
 
     def test_different_values(self):

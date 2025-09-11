@@ -25,3 +25,7 @@ def strip_leading_whitespace(input_string):
 
 def to_lower_case_or_none(s):
     return s.lower() if s is not None else None
+
+
+def empty_if_none(s):
+    return s if s is not None else ""

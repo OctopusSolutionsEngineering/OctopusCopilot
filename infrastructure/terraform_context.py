@@ -1,3 +1,5 @@
+from datetime import datetime, timezone, timedelta
+
 from azure.core.exceptions import HttpResponseError, ResourceExistsError
 
 from domain.logging.app_logging import configure_logging
@@ -10,6 +12,8 @@ from azure.storage.blob import (
 logger = configure_logging(__name__)
 terraform_context_container_name = "terraformcontext"
 sample_terraform_context_container_name = "sampleterraformcontext"
+
+CACHED_ITME_LIFETIME = 31
 
 
 @logging_wrapper
@@ -106,7 +110,6 @@ def load_terraform_cache(sha, connection_string):
         return None
 
 
-@logging_wrapper
 def cache_terraform(sha, template, connection_string):
     ensure_string_not_empty(
         sha,
@@ -135,3 +138,19 @@ def cache_terraform(sha, template, connection_string):
     except HttpResponseError as e:
         # Saving a cached item is a best effort operation, so we don't raise an error if it fails.
         pass
+
+
+@logging_wrapper
+def delete_old_cached_items(connection_string):
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    container_client = blob_service_client.get_container_client(
+        terraform_context_container_name
+    )
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=CACHED_ITME_LIFETIME)
+
+    blobs = container_client.list_blobs()
+    for blob in blobs:
+        if blob.last_modified < cutoff:
+            print(f"Deleting blob: {blob.name} (Last modified: {blob.last_modified})")
+            container_client.delete_blob(blob.name)

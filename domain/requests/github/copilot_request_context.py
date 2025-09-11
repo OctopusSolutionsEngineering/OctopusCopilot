@@ -109,6 +109,9 @@ from domain.tools.wrapper.octolint_duplicate_variables import (
     octolint_duplicate_variables_wrapper,
 )
 from domain.tools.wrapper.octolint_empty_projects import octolint_empty_projects_wrapper
+from domain.tools.wrapper.octolint_sha1_certificates import (
+    octolint_sha1_certificates_wrapper,
+)
 from domain.tools.wrapper.octolint_unhealthy_targets import (
     octolint_unhealthy_targets_wrapper,
 )
@@ -176,6 +179,19 @@ from domain.tools.wrapper.octopusresources.create_worker_pool import (
 )
 from domain.tools.wrapper.projects.create_lambda_project import (
     create_lambda_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_llm_project import create_llm_project_wrapper
+from domain.tools.wrapper.projects.create_orchestration_project import (
+    create_orchestration_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_script_project import (
+    create_script_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_terraform_project import (
+    create_terraform_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_winservice_project import (
+    create_winservice_project_wrapper,
 )
 from domain.tools.wrapper.reject_manual_intervention import (
     reject_manual_intervention_wrapper,
@@ -971,6 +987,19 @@ def build_form_tools(query, req: func.HttpRequest):
                 ),
             ),
             FunctionDefinition(
+                octolint_sha1_certificates_wrapper(
+                    octolint_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        query,
+                        "OctoLintSha1Certificates",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    log_query,
+                ),
+            ),
+            FunctionDefinition(
                 create_feed_wrapper(
                     query,
                     callback=unsupported_resource,
@@ -1166,7 +1195,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         log_query,
                         general_project_examples,
                         "awslambda.tf",
-                        "AWS Lambda Function",
+                        "AWS Lambda",
                         "generalinstructions.txt",
                         "awslambdaystemprompt.txt",
                         get_redirections(req),
@@ -1196,6 +1225,141 @@ def build_form_tools(query, req: func.HttpRequest):
                         "Windows IIS",
                         "generalinstructions.txt",
                         "windowsiissystemprompt.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+            ),
+            FunctionDefinition(
+                create_winservice_project_wrapper(
+                    query,
+                    callback=create_template_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "windowsservice.tf",
+                        "Windows Service",
+                        "generalinstructions.txt",
+                        "windowsservicesystemprompt.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+            ),
+            FunctionDefinition(
+                create_orchestration_project_wrapper(
+                    query,
+                    callback=create_template_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "deploymentorchestration.tf",
+                        "Deployment Orchestration",
+                        "generalinstructions.txt",
+                        "deploymentorchestrationsystemprompt.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+            ),
+            FunctionDefinition(
+                create_terraform_project_wrapper(
+                    query,
+                    callback=create_template_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "terraform.tf",
+                        "Terraform Deploy",
+                        "generalinstructions.txt",
+                        "terraformsystemprompt.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+            ),
+            FunctionDefinition(
+                create_script_project_wrapper(
+                    query,
+                    callback=create_template_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "script.tf",
+                        "Script Execution",
+                        "generalinstructions.txt",
+                        "scriptsystemprompt.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+            ),
+            FunctionDefinition(
+                create_llm_project_wrapper(
+                    query,
+                    callback=create_template_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "llm.tf",
+                        "LLM Kubernetes",
+                        "generalinstructions.txt",
+                        "llmsystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
                     ),

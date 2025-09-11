@@ -222,7 +222,7 @@ data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
   take         = 1
 }
 
-data "octopusdeploy_channels" "channel_iis_default" {
+data "octopusdeploy_channels" "channel_windows_service_default" {
   ids          = []
   partial_name = "Default"
   skip         = 0
@@ -263,74 +263,57 @@ resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
   }
 }
 
-resource "octopusdeploy_process" "process_iis" {
-  count      = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
-  project_id = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? data.octopusdeploy_projects.project_iis.projects[0].id : octopusdeploy_project.project_iis[0].id}"
+resource "octopusdeploy_process" "process_windows_service" {
+  count      = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? data.octopusdeploy_projects.project_windows_service.projects[0].id : octopusdeploy_project.project_windows_service[0].id}"
   depends_on = []
 }
 
-variable "project_iis_step_deploy_to_iis_packageid" {
+variable "project_windows_service_step_deploy_a_windows_service_packageid" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The package ID for the package named  from step Deploy to IIS in project IIS"
-  default     = "com.octopus:octopub-frontend"
+  description = "The package ID for the package named  from step Deploy a Windows Service in project Windows Service"
+  default     = "com.octopus:windowsservice"
 }
-resource "octopusdeploy_process_step" "process_step_iis_deploy_to_iis" {
-  count                 = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
-  name                  = "Deploy to IIS"
-  type                  = "Octopus.IIS"
-  process_id            = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? null : octopusdeploy_process.process_iis[0].id}"
+resource "octopusdeploy_process_step" "process_step_windows_service_deploy_a_windows_service" {
+  count                 = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? 0 : 1}"
+  name                  = "Deploy a Windows Service"
+  type                  = "Octopus.WindowsService"
+  process_id            = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? null : octopusdeploy_process.process_windows_service[0].id}"
   channels              = null
   condition             = "Success"
   environments          = null
-  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
-  notes                 = "This step deploys a website to IIS"
+  excluded_environments = null
+  notes                 = "This step deploys a Windows service."
   package_requirement   = "LetOctopusDecide"
-  primary_package       = { acquisition_location = "Server", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_iis_step_deploy_to_iis_packageid}", properties = { SelectionMode = "immediate" } }
-  slug                  = "deploy-to-iis"
+  primary_package       = { acquisition_location = "Server", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_windows_service_step_deploy_a_windows_service_packageid}", properties = { SelectionMode = "immediate" } }
+  slug                  = "deploy-a-windows-service"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   properties            = {
-        "Octopus.Action.TargetRoles" = "OctoPub-Windows-IIS"
+        "Octopus.Action.TargetRoles" = "Windows-Service"
       }
   execution_properties  = {
         "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.IISWebSite,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
-        "Octopus.Action.IISWebSite.Bindings" = jsonencode([
-        {
-        "host" = ""
-        "thumbprint" = null
-        "certificateVariable" = null
-        "requireSni" = "False"
-        "enabled" = "True"
-        "protocol" = "http"
-        "port" = "8080"
-                },
-        ])
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
-        "Octopus.Action.IISWebSite.WebSiteName" = "MyWebApp"
+        "Octopus.Action.WindowsService.DesiredStatus" = "Default"
+        "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
+        "Octopus.Action.WindowsService.StartMode" = "auto"
+        "Octopus.Action.WindowsService.ServiceName" = "JokeService"
+        "Octopus.Action.WindowsService.ExecutablePath" = "WindowsServiceDotNETCore.exe"
+        "Octopus.Action.WindowsService.Description" = "A sample windows service"
+        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.WindowsService,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
+        "Octopus.Action.WindowsService.DisplayName" = "Joke Service"
+        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
         "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion" = "v4.0"
-        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
-        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
-        "Octopus.Action.IISWebSite.EnableAnonymousAuthentication" = "True"
-        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "False"
-        "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
-        "Octopus.Action.IISWebSite.ApplicationPoolName" = "WebApps"
-        "Octopus.Action.IISWebSite.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
-        "Octopus.Action.IISWebSite.StartWebSite" = "True"
-        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
-        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
       }
 }
 
-resource "octopusdeploy_process_step" "process_step_iis_print_message_when_no_targets" {
-  count                 = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
+resource "octopusdeploy_process_step" "process_step_windows_service_print_message_when_no_targets" {
+  count                 = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? 0 : 1}"
   name                  = "Print Message when No Targets"
   type                  = "Octopus.Script"
-  process_id            = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? null : octopusdeploy_process.process_iis[0].id}"
+  process_id            = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? null : octopusdeploy_process.process_windows_service[0].id}"
   channels              = null
   condition             = "Success"
   environments          = null
@@ -344,26 +327,26 @@ resource "octopusdeploy_process_step" "process_step_iis_print_message_when_no_ta
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy to IIS].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Windows target with the tag 'OctoPub-Windows-IIS'.\"\n  Write-Highlight \"We recommend the [Polling Tentacle](https://octopus.com/docs/infrastructure/deployment-targets/tentacle/tentacle-communication).\"\n}"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy to IIS].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Windows target with the tag 'Windows-Service'.\"\n  Write-Highlight \"We recommend the [Polling Tentacle](https://octopus.com/docs/infrastructure/deployment-targets/tentacle/tentacle-communication).\"\n}"
       }
 }
 
-variable "project_iis_step_scan_for_vulnerabilities_package_webapp_packageid" {
+variable "project_windows_service_step_scan_for_vulnerabilities_package_webapp_packageid" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The package ID for the package named webapp from step Scan for Vulnerabilities in project IIS"
-  default     = "com.octopus:octopub-frontend"
+  description = "The package ID for the package named webapp from step Scan for Vulnerabilities in project Windows Service"
+  default     = "com.octopus:windowsservice"
 }
-resource "octopusdeploy_process_step" "process_step_iis_scan_for_vulnerabilities" {
-  count                 = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
+resource "octopusdeploy_process_step" "process_step_windows_service_scan_for_vulnerabilities" {
+  count                 = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? 0 : 1}"
   name                  = "Scan for Vulnerabilities"
   type                  = "Octopus.Script"
-  process_id            = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? null : octopusdeploy_process.process_iis[0].id}"
+  process_id            = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? null : octopusdeploy_process.process_windows_service[0].id}"
   channels              = null
   condition             = "Success"
   environments          = null
@@ -371,7 +354,7 @@ resource "octopusdeploy_process_step" "process_step_iis_scan_for_vulnerabilities
   git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
   notes                 = "This step extracts the application package, finds any bom.json files, and scans them for vulnerabilities using Trivy. \n\nThis step is expected to be run with each deployment to ensure vulnerabilities are discovered as early as possible. \n\nIt is also run daily via a project trigger that reruns the deployment in the Security environment. This allows unknown vulnerabilities to be discovered after a production deployment."
   package_requirement   = "LetOctopusDecide"
-  packages              = { webapp = { acquisition_location = "Server", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_iis_step_scan_for_vulnerabilities_package_webapp_packageid}", properties = { Extract = "True", Purpose = "", SelectionMode = "immediate" } } }
+  packages              = { webapp = { acquisition_location = "Server", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_windows_service_step_scan_for_vulnerabilities_package_webapp_packageid}", properties = { Extract = "True", Purpose = "", SelectionMode = "immediate" } } }
   slug                  = "scan-for-vulnerabilities"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
@@ -379,18 +362,18 @@ resource "octopusdeploy_process_step" "process_step_iis_scan_for_vulnerabilities
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
       }
 }
 
-resource "octopusdeploy_process_steps_order" "process_step_order_iis" {
-  count      = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
-  process_id = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? null : octopusdeploy_process.process_iis[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_iis_deploy_to_iis[0].id}", "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_iis_print_message_when_no_targets[0].id}", "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_iis_scan_for_vulnerabilities[0].id}"]
+resource "octopusdeploy_process_steps_order" "process_step_order_windows_service" {
+  count      = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? 0 : 1}"
+  process_id = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? null : octopusdeploy_process.process_windows_service[0].id}"
+  steps      = ["${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? null : octopusdeploy_process_step.process_step_windows_service_deploy_a_windows_service[0].id}", "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? null : octopusdeploy_process_step.process_step_windows_service_print_message_when_no_targets[0].id}", "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? null : octopusdeploy_process_step.process_step_windows_service_scan_for_vulnerabilities[0].id}"]
 }
 
 data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
@@ -400,9 +383,9 @@ data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
   take         = 1
 }
 
-resource "octopusdeploy_variable" "iis_project_workerpool_1" {
-  count        = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_iis.projects) == 0 ?octopusdeploy_project.project_iis[0].id : data.octopusdeploy_projects.project_iis.projects[0].id}"
+resource "octopusdeploy_variable" "windows_service_project_workerpool_1" {
+  count        = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_windows_service.projects) == 0 ?octopusdeploy_project.project_windows_service[0].id : data.octopusdeploy_projects.project_windows_service.projects[0].id}"
   value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : null}"
   name         = "Project.WorkerPool"
   type         = "WorkerPool"
@@ -415,14 +398,14 @@ resource "octopusdeploy_variable" "iis_project_workerpool_1" {
   depends_on = []
 }
 
-resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_iis_daily_security_scan" {
-  count       = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
+resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_windows_service_daily_security_scan" {
+  count       = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? 0 : 1}"
   space_id    = "${trimspace(var.octopus_space_id)}"
   name        = "Daily Security Scan"
   description = ""
   timezone    = "UTC"
   is_disabled = false
-  project_id  = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? data.octopusdeploy_projects.project_iis.projects[0].id : octopusdeploy_project.project_iis[0].id}"
+  project_id  = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? data.octopusdeploy_projects.project_windows_service.projects[0].id : octopusdeploy_project.project_windows_service[0].id}"
   tenant_ids  = []
 
   once_daily_schedule {
@@ -440,50 +423,50 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_iis_daily_sec
   }
 }
 
-variable "project_iis_name" {
+variable "project_windows_service_name" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The name of the project exported from IIS"
-  default     = "IIS"
+  description = "The name of the project exported from Windows Service"
+  default     = "Windows Service"
 }
-variable "project_iis_description_prefix" {
+variable "project_windows_service_description_prefix" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "An optional prefix to add to the project description for the project IIS"
+  description = "An optional prefix to add to the project description for the project Windows Service"
   default     = ""
 }
-variable "project_iis_description_suffix" {
+variable "project_windows_service_description_suffix" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "An optional suffix to add to the project description for the project IIS"
+  description = "An optional suffix to add to the project description for the project Windows Service"
   default     = ""
 }
-variable "project_iis_description" {
+variable "project_windows_service_description" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The description of the project exported from IIS"
-  default     = "This project deploys an IIS web application to a Windows target."
+  description = "The description of the project exported from Windows Service"
+  default     = "This project deploys a service to a Windows target."
 }
-variable "project_iis_tenanted" {
+variable "project_windows_service_tenanted" {
   type        = string
   nullable    = false
   sensitive   = false
   description = "The tenanted setting for the project Untenanted"
   default     = "Untenanted"
 }
-data "octopusdeploy_projects" "project_iis" {
+data "octopusdeploy_projects" "project_windows_service" {
   ids          = null
-  partial_name = "${var.project_iis_name}"
+  partial_name = "${var.project_windows_service_name}"
   skip         = 0
   take         = 1
 }
-resource "octopusdeploy_project" "project_iis" {
-  count                                = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
-  name                                 = "${var.project_iis_name}"
+resource "octopusdeploy_project" "project_windows_service" {
+  count                                = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? 0 : 1}"
+  name                                 = "${var.project_windows_service_name}"
   default_guided_failure_mode          = "EnvironmentDefault"
   default_to_skip_if_already_installed = false
   discrete_channel_release             = false
@@ -492,7 +475,7 @@ resource "octopusdeploy_project" "project_iis" {
   lifecycle_id                         = "${length(data.octopusdeploy_lifecycles.lifecycle_devsecops.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_devsecops.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_devsecops[0].id}"
   project_group_id                     = "${length(data.octopusdeploy_project_groups.project_group_windows.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_windows.project_groups[0].id : octopusdeploy_project_group.project_group_windows[0].id}"
   included_library_variable_sets       = []
-  tenanted_deployment_participation    = "${var.project_iis_tenanted}"
+  tenanted_deployment_participation    = "${var.project_windows_service_tenanted}"
 
   connectivity_policy {
     allow_deployments_to_no_targets = true
@@ -500,14 +483,14 @@ resource "octopusdeploy_project" "project_iis" {
     skip_machine_behavior           = "None"
     target_roles                    = []
   }
-  description = "${var.project_iis_description_prefix}${var.project_iis_description}${var.project_iis_description_suffix}"
+  description = "${var.project_windows_service_description_prefix}${var.project_windows_service_description}${var.project_windows_service_description_suffix}"
   lifecycle {
     prevent_destroy = true
   }
 }
-resource "octopusdeploy_project_versioning_strategy" "project_iis" {
-  count      = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? 0 : 1}"
-  project_id = "${length(data.octopusdeploy_projects.project_iis.projects) != 0 ? data.octopusdeploy_projects.project_iis.projects[0].id : octopusdeploy_project.project_iis[0].id}"
+resource "octopusdeploy_project_versioning_strategy" "project_windows_service" {
+  count      = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? data.octopusdeploy_projects.project_windows_service.projects[0].id : octopusdeploy_project.project_windows_service[0].id}"
   template   = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
 }
 

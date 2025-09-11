@@ -1,21 +1,13 @@
 def create_lambda_project_wrapper(query, callback, logging):
+
     def create_lambda_project(
         space_name=None,
         project_name=None,
+        no_prompt=False,
         **kwargs,
     ):
         """
-        Creates an AWS Lambda project in Octopus Deploy, and optionally create any other resources required to run the project such as:
-        * Accounts
-        * Feeds
-        * Environments
-        * Lifecycles
-        * Steps
-        * Triggers
-        * Machines
-        * Targets
-        * Deployment processes
-        * Runbooks
+        Creates a project in Octopus Deploy that deploys to AWS Lambda, in addition to any supporting resources.
 
         Example prompts include:
         * Create a Lambda project in the space "My Space" called "My Project"
@@ -26,6 +18,7 @@ def create_lambda_project_wrapper(query, callback, logging):
         Args:
         space_name: The optional name of the space
         project_name: The name of the project
+        no_prompt: Weather to disable the prompt. Defaults to False.
         """
 
         if logging:
@@ -36,6 +29,8 @@ def create_lambda_project_wrapper(query, callback, logging):
                 logging(f"Unexpected Key: {key}", "Value: {value}")
 
         # This is just a passthrough to the original callback
-        return callback(create_lambda_project.__name__, query, space_name, project_name)
+        return callback(
+            create_lambda_project.__name__, query, space_name, project_name, no_prompt
+        )
 
     return create_lambda_project

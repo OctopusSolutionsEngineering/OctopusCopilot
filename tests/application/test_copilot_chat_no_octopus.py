@@ -1,5 +1,6 @@
 import os
 import unittest
+from unittest import skip
 
 from openai import RateLimitError
 from retry import retry
@@ -257,6 +258,7 @@ From your diagram, the hosting company Octopus instance (UL-Octopus) is where de
         prompt = 'Generate a Terraform module with an environment called "Development", a project group called "Test", and a project called "Hello World" with a single Powershell script step that echoes the text "Hello World".'
         response = copilot_handler_internal(build_no_octopus_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
 
         self.assertIn(
             'resource "octopusdeploy_environment"',
@@ -274,7 +276,17 @@ From your diagram, the hosting company Octopus instance (UL-Octopus) is where de
             "Response was " + response_text,
         )
         self.assertIn(
-            'resource "octopusdeploy_deployment_process"',
+            'resource "octopusdeploy_process"',
+            response_text.casefold(),
+            "Response was " + response_text,
+        )
+        self.assertIn(
+            'resource "octopusdeploy_process_steps_order"',
+            response_text.casefold(),
+            "Response was " + response_text,
+        )
+        self.assertIn(
+            'resource "octopusdeploy_process_step"',
             response_text.casefold(),
             "Response was " + response_text,
         )

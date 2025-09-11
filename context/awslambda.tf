@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.0.1" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.3.8" }
   }
   required_version = ">= 1.6.0"
 }
@@ -15,6 +15,13 @@ variable "octopus_space_id" {
   nullable    = false
   sensitive   = false
   description = "The ID of the Octopus space to populate."
+}
+
+data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle" {
+  ids          = null
+  partial_name = ""
+  skip         = 0
+  take         = 1
 }
 
 data "octopusdeploy_project_groups" "project_group_aws" {
@@ -213,12 +220,6 @@ data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
   partial_name = "Default Lifecycle"
   skip         = 0
   take         = 1
-  lifecycle {
-    postcondition {
-      error_message = "Failed to resolve a lifecycle called \"Default Lifecycle\". This resource must exist in the space before this Terraform configuration is applied."
-      condition     = length(self.lifecycles) != 0
-    }
-  }
 }
 
 data "octopusdeploy_channels" "channel_aws_lambda_default" {
@@ -242,28 +243,19 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
   }
 }
 
-data "octopusdeploy_feeds" "feed_docker_hub" {
+data "octopusdeploy_feeds" "feed_github_container_registry" {
   feed_type    = "Docker"
   ids          = null
-  partial_name = "Docker Hub"
+  partial_name = "GitHub Container Registry"
   skip         = 0
   take         = 1
 }
-variable "feed_docker_hub_password" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The password used by the feed Docker Hub"
-  default     = "Change Me!"
-}
-resource "octopusdeploy_docker_container_registry" "feed_docker_hub" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_docker_hub.feeds) != 0 ? 0 : 1}"
-  name                                 = "Docker Hub"
-  password                             = "${var.feed_docker_hub_password}"
+resource "octopusdeploy_docker_container_registry" "feed_github_container_registry" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? 0 : 1}"
+  name                                 = "GitHub Container Registry"
   registry_path                        = ""
-  username                             = "mcasperson"
-  api_version                          = ""
-  feed_uri                             = "https://index.docker.io"
+  api_version                          = "v2"
+  feed_uri                             = "https://ghcr.io"
   package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
   lifecycle {
     ignore_changes  = [password]
@@ -291,13 +283,6 @@ resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
   }
 }
 
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
-  ids          = null
-  partial_name = "Default Worker Pool"
-  skip         = 0
-  take         = 1
-}
-
 data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
   ids          = null
   partial_name = "Hosted Ubuntu"
@@ -318,6 +303,7 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login" {
   process_id            = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process.process_aws_lambda[0].id}"
   channels              = null
   condition             = "Success"
+  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id : octopusdeploy_docker_container_registry.feed_github_container_registry[0].id}", image = "ghcr.io/octopusdeploylabs/aws-workertools" }
   environments          = null
   excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
   notes                 = "This step runs an AWS CLI command to get the current user. It will only succeed if the AWS account is correctly configured. We can use the success or failure of this step to determine if the AWS account is correctly configured."
@@ -325,19 +311,19 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login" {
   slug                  = "attempt-login"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : null}"
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
-        "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
         "Octopus.Action.Script.ScriptBody" = "# Get the current AWS user. This will only succeed if the AWS account is valid.\n# If the AWS account is not valid, this step will fail. We can detect the failure and offer next steps.\naws sts get-caller-identity"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
       }
 }
 
@@ -351,72 +337,20 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_validate_setup" {
   environments          = null
   excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
   git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
-  notes                 = "This step detects any default values that must be updated before a deployment to AWS can be performed."
+  notes                 = "This step detects any default values that must be updated before a deployment to AWS can be performed, as well as checking SMTP is configured for notifications."
   package_requirement   = "LetOctopusDecide"
   slug                  = "validate-setup"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : null}"
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/aws/ValidateLambdaSetup.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GitRepository.Source" = "External"
-      }
-}
-
-resource "octopusdeploy_process_step" "process_step_aws_lambda_check_smtp_configuration" {
-  count                 = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
-  name                  = "Check SMTP configuration"
-  type                  = "Octopus.Script"
-  process_id            = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process.process_aws_lambda[0].id}"
-  channels              = null
-  condition             = "Success"
-  environments          = null
-  excluded_environments = null
-  git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
-  notes                 = "This step checks to see if SMTP has been configured.  It sets an output variable that can be used in subsequent steps that send email."
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "check-smtp-configuration"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.Script.ScriptFileName" = "octopus/CheckSMTPConfigured.ps1"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GitRepository.Source" = "External"
-      }
-}
-
-resource "octopusdeploy_process_step" "process_step_aws_lambda_send_deployment_start_notification" {
-  count                 = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
-  name                  = "Send deployment start notification"
-  type                  = "Octopus.Email"
-  process_id            = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process.process_aws_lambda[0].id}"
-  channels              = null
-  condition             = "Variable"
-  environments          = null
-  excluded_environments = null
-  notes                 = "This step sends an email notification that the deployment has started.  It only runs when the output variable `Octopus.Action[Check SMTP configuration].Output.SmtpConfigured` is set to true."
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "send-deployment-start-notification"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  properties            = {
-        "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Check SMTP configuration].Output.SmtpConfigured == \"True\"}true#{/if}#{/unless}"
-      }
-  execution_properties  = {
-        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} is deploying to #{Octopus.Environment.Name}"
-        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
-        "Octopus.Action.RunOnServer" = "false"
-        "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} is deploying to #{Octopus.Environment.Name}"
       }
 }
 
@@ -438,9 +372,9 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_approve_productio
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate setup].Output.AwsLambdaConfigured == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
-        "Octopus.Action.RunOnServer" = "false"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
       }
 }
 
@@ -458,6 +392,7 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_upload_lambda" {
   process_id            = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process.process_aws_lambda[0].id}"
   channels              = null
   condition             = "Variable"
+  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id : octopusdeploy_docker_container_registry.feed_github_container_registry[0].id}", image = "ghcr.io/octopusdeploylabs/aws-workertools" }
   environments          = null
   excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
   notes                 = "Upload the Lambda application packages to the specified S3 bucket."
@@ -466,31 +401,31 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_upload_lambda" {
   slug                  = "upload-lambda"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : null}"
   properties            = {
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate setup].Output.AwsLambdaConfigured == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.Aws.S3.BucketName" = "#{Project.AWS.Lambda.S3.BucketName}"
         "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Aws.AssumeRole" = "False"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Aws.S3.PackageOptions" = jsonencode({
-        "tags" = []
+        "metadata" = []
         "autoFocus" = "true"
-        "bucketKey" = "#{Project.AWS.Lambda.S3.FileName}"
+        "bucketKeyBehaviour" = "Custom"
+        "bucketKeyPrefix" = ""
         "storageClass" = "STANDARD"
         "cannedAcl" = "private"
         "variableSubstitutionPatterns" = ""
-        "metadata" = []
-        "bucketKeyBehaviour" = "Custom"
-        "bucketKeyPrefix" = ""
         "structuredVariableSubstitutionPatterns" = ""
+        "tags" = []
+        "bucketKey" = "#{Project.AWS.Lambda.S3.FileName}"
                 })
-        "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.S3.BucketName" = "#{Project.AWS.Lambda.S3.BucketName}"
+        "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
       }
 }
 
@@ -508,6 +443,7 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
   process_id            = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process.process_aws_lambda[0].id}"
   channels              = null
   condition             = "Variable"
+  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id : octopusdeploy_docker_container_registry.feed_github_container_registry[0].id}", image = "ghcr.io/octopusdeploylabs/aws-workertools" }
   environments          = null
   excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
   notes                 = "Stacks deploying Lambda versions must have unique names to ensure a new version is created each time. This step deploys a uniquely named [AWS SAM tooling](https://aws.amazon.com/serverless/sam/) stack, creating a version of the Lambda uploaded in the last step."
@@ -516,20 +452,20 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
   slug                  = "deploy-lambda-sam-template"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : null}"
   properties            = {
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate setup].Output.AwsLambdaConfigured == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Package.JsonConfigurationVariablesTargets" = "sam.jvm.yaml"
-        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables"
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "Octopus.Action.Aws.CloudFormationStackName" = "#{Octopus.Space.Name | Replace \"[^A-Za-z0-9]\" \"-\"}-OctopubProductsSAMLambda-#{Octopus.Deployment.Id | Replace -}-#{Octopus.Environment.Name}"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
         "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.Aws.CloudFormationStackName" = "#{Octopus.Space.Name | Replace \"[^A-Za-z0-9]\" \"-\"}-OctopubProductsSAMLambda-#{Octopus.Deployment.Id | Replace -}-#{Octopus.Environment.Name}"
+        "Octopus.Action.Aws.WaitForCompletion" = "True"
+        "Octopus.Action.Aws.IamCapabilities" = jsonencode([
+        "CAPABILITY_AUTO_EXPAND",
+        "CAPABILITY_IAM",
+        "CAPABILITY_NAMED_IAM",
+        ])
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
         {
         "key" = "OctopusTenantId"
@@ -540,8 +476,8 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
         "value" = "#{Octopus.Step.Id}"
                 },
         {
-        "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
         "key" = "OctopusRunbookRunId"
+        "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
                 },
         {
         "key" = "OctopusDeploymentId"
@@ -564,40 +500,14 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
         "value" = "#{Octopus.Project.Name}"
                 },
         ])
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Aws.IamCapabilities" = jsonencode([
-        "CAPABILITY_AUTO_EXPAND",
-        "CAPABILITY_IAM",
-        "CAPABILITY_NAMED_IAM",
-        ])
-        "Octopus.Action.Aws.TemplateSource" = "Package"
-        "Octopus.Action.Aws.CloudFormationTemplate" = "sam.jvm.yaml"
-      }
-}
-
-resource "octopusdeploy_process_step" "process_step_aws_lambda_print_message_when_no_targets" {
-  count                 = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
-  name                  = "Print Message When no Targets"
-  type                  = "Octopus.Script"
-  process_id            = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process.process_aws_lambda[0].id}"
-  channels              = null
-  condition             = "Success"
-  environments          = null
-  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
-  notes                 = "This step detects when the previous steps were skipped due to no targets being defined and prints a message with a link to documentation for creating targets."
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "print-message-when-no-targets"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the lambda\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy AWS Lambda function].Status.Code}\" -ieq \"Skipped\") {\n  Write-Highlight \"To complete the deployment, you must have the necessary AWS Lambda configuration.\"\n  Write-Highlight \"See details of the [required configuration](https://library.octopus.com/step-templates/9b5ee984-bdd2-49f0-a78a-07e21e60da8a/actiontemplate-aws-deploy-lambda-function).\"\n}"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Package.JsonConfigurationVariablesTargets" = "sam.jvm.yaml"
+        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables"
+        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Aws.CloudFormationTemplate" = "sam.jvm.yaml"
+        "Octopus.Action.Aws.TemplateSource" = "Package"
+        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
       }
 }
 
@@ -624,22 +534,22 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_scan_for_vulnerab
   slug                  = "scan-for-vulnerabilities"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : null}"
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
 resource "octopusdeploy_process_steps_order" "process_step_order_aws_lambda" {
   count      = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
   process_id = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process.process_aws_lambda[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_attempt_login[0].id}", "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_validate_setup[0].id}", "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_check_smtp_configuration[0].id}", "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_send_deployment_start_notification[0].id}", "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_upload_lambda[0].id}", "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_deploy_lambda_sam_template[0].id}", "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_print_message_when_no_targets[0].id}", "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_scan_for_vulnerabilities[0].id}"]
+  steps      = ["${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_attempt_login[0].id}", "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_validate_setup[0].id}", "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_upload_lambda[0].id}", "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_deploy_lambda_sam_template[0].id}", "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_scan_for_vulnerabilities[0].id}"]
 }
 
 resource "octopusdeploy_variable" "aws_lambda_project_octopus_api_key_1" {
@@ -758,14 +668,8 @@ resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_pro
   depends_on = []
 }
 
-data "octopusdeploy_projects" "projecttrigger_aws_lambda_daily_security_scan" {
-  ids          = null
-  partial_name = "AWS Lambda"
-  skip         = 0
-  take         = 1
-}
 resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_daily_security_scan" {
-  count       = "${length(data.octopusdeploy_projects.projecttrigger_aws_lambda_daily_security_scan.projects) != 0 ? 0 : 1}"
+  count       = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
   space_id    = "${trimspace(var.octopus_space_id)}"
   name        = "Daily Security Scan"
   description = "This trigger reruns the deployment in the Security environment. This means any new vulnerabilities detected after a production deployment will be identified."
@@ -786,89 +690,6 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_da
   }
   lifecycle {
     prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_process" "process_aws_lambda_checkov_sam_static_analysis" {
-  count      = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
-  project_id = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? data.octopusdeploy_projects.project_aws_lambda.projects[0].id : octopusdeploy_project.project_aws_lambda[0].id}"
-  runbook_id = "${length(data.octopusdeploy_projects.runbook_aws_lambda_checkov_sam_static_analysis.projects) != 0 ? null : octopusdeploy_runbook.runbook_aws_lambda_checkov_sam_static_analysis[0].id}"
-  depends_on = []
-}
-
-variable "project_checkov_sam_static_analysis_step_run_checkov_static_analysis_scan_package_products_microservice_awssam_packageid" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The package ID for the package named products-microservice-awssam from step Run Checkov static analysis scan in project Checkov SAM Static Analysis"
-  default     = "com.octopus:products-microservice-awssam"
-}
-resource "octopusdeploy_process_step" "process_step_aws_lambda_checkov_sam_static_analysis_run_checkov_static_analysis_scan" {
-  count                 = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
-  name                  = "Run Checkov static analysis scan"
-  type                  = "Octopus.Script"
-  process_id            = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process.process_aws_lambda_checkov_sam_static_analysis[0].id}"
-  channels              = null
-  condition             = "Success"
-  environments          = null
-  excluded_environments = null
-  git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
-  notes                 = "This step extracts SAM YAML files and scans them for security and compliance misconfigurations in your SAM CloudFormation template files. \n\nThis step is expected to be run as a routine operations task (a runbook) to ensure any potential issues can be reported."
-  package_requirement   = "LetOctopusDecide"
-  packages              = { products-microservice-awssam = { acquisition_location = "Server", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_checkov_sam_static_analysis_step_run_checkov_static_analysis_scan_package_products_microservice_awssam_packageid}", properties = { Extract = "True", Purpose = "", SelectionMode = "immediate" } } }
-  slug                  = "run-checkov-static-analysis-scan"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.Script.ScriptFileName" = "octopus/RunCheckovScan.ps1"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "OctopusUseBundledTooling" = "False"
-      }
-}
-
-resource "octopusdeploy_process_steps_order" "process_step_order_aws_lambda_checkov_sam_static_analysis" {
-  count      = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
-  process_id = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process.process_aws_lambda_checkov_sam_static_analysis[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process_step.process_step_aws_lambda_checkov_sam_static_analysis_run_checkov_static_analysis_scan[0].id}"]
-}
-
-data "octopusdeploy_projects" "runbook_aws_lambda_checkov_sam_static_analysis" {
-  ids          = null
-  partial_name = "AWS Lambda"
-  skip         = 0
-  take         = 1
-}
-variable "runbook_aws_lambda_checkov_sam_static_analysis_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the runbook exported from Checkov SAM Static Analysis"
-  default     = "Checkov SAM Static Analysis"
-}
-resource "octopusdeploy_runbook" "runbook_aws_lambda_checkov_sam_static_analysis" {
-  count                       = "${length(data.octopusdeploy_projects.runbook_aws_lambda_checkov_sam_static_analysis.projects) != 0 ? 0 : 1}"
-  name                        = "${var.runbook_aws_lambda_checkov_sam_static_analysis_name}"
-  project_id                  = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? data.octopusdeploy_projects.project_aws_lambda.projects[0].id : octopusdeploy_project.project_aws_lambda[0].id}"
-  environment_scope           = "All"
-  environments                = []
-  force_package_download      = false
-  default_guided_failure_mode = "EnvironmentDefault"
-  description                 = "Uses `checkov`, a static analysis tool to help identify any security and compliance misconfigurations in your SAM CloudFormation template files."
-  multi_tenancy_mode          = "Untenanted"
-
-  retention_policy {
-    quantity_to_keep = 100
-  }
-
-  connectivity_policy {
-    allow_deployments_to_no_targets = true
-    exclude_unhealthy_targets       = false
-    skip_machine_behavior           = "None"
   }
 }
 
@@ -916,7 +737,6 @@ data "octopusdeploy_projects" "project_aws_lambda" {
 resource "octopusdeploy_project" "project_aws_lambda" {
   count                                = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
   name                                 = "${var.project_aws_lambda_name}"
-  auto_create_release                  = false
   default_guided_failure_mode          = "EnvironmentDefault"
   default_to_skip_if_already_installed = false
   discrete_channel_release             = false
@@ -931,15 +751,17 @@ resource "octopusdeploy_project" "project_aws_lambda" {
     allow_deployments_to_no_targets = true
     exclude_unhealthy_targets       = false
     skip_machine_behavior           = "None"
-  }
-
-  versioning_strategy {
-    template = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
+    target_roles                    = []
   }
   description = "${var.project_aws_lambda_description_prefix}${var.project_aws_lambda_description}${var.project_aws_lambda_description_suffix}"
   lifecycle {
     prevent_destroy = true
   }
+}
+resource "octopusdeploy_project_versioning_strategy" "project_aws_lambda" {
+  count      = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? data.octopusdeploy_projects.project_aws_lambda.projects[0].id : octopusdeploy_project.project_aws_lambda[0].id}"
+  template   = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
 }
 
 
