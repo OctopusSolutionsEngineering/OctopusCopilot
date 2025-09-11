@@ -24,6 +24,7 @@ from domain.sanitizers.terraform import (
     remove_duplicate_definitions,
     fix_single_line_tentacle_retention_policy,
     fix_bad_logic_characters,
+    fix_lifecycle,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
@@ -286,6 +287,9 @@ def create_template_project_callback(
 
                 # Deal with bad count attributes
                 configuration = fix_bad_logic_characters(configuration)
+
+                # Remove lifecycle blocks
+                configuration = fix_lifecycle(configuration)
 
                 # Deal with invalid account_types in data blocks
                 configuration = fix_account_type(configuration)

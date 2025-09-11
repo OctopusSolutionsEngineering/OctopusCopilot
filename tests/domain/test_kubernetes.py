@@ -8,6 +8,7 @@ from domain.sanitizers.terraform import (
     fix_single_line_retention_policy,
     fix_single_line_tentacle_retention_policy,
     fix_bad_logic_characters,
+    fix_lifecycle,
 )
 
 
@@ -351,6 +352,14 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
         result = fix_account_type(input_config)
         self.assertEqual(result, expected_output)
+
+    def test_fix_lifecycle(self):
+        input_config = (
+            "lifecycle { ignore_changes = [password] prevent_destroy = true }"
+        )
+
+        result = fix_lifecycle(input_config)
+        self.assertEqual(result, "")
 
     def test_fix_bad_logic_characters(self):
         input_config = 'count = length(try([for item in data.octopusdeploy_tag_sets.tagset_counties.tag_sets[0].tags : item if item.name == "Greater London"], []_) != 0 ? 0 : 1'

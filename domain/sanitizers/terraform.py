@@ -126,6 +126,18 @@ def fix_bad_logic_characters(config):
     )
 
 
+def fix_lifecycle(config):
+    """
+    We don't need to use lifecycle blocks in the generated terraform config.
+    """
+
+    return re.sub(
+        r"lifecycle\s*{.*?}",
+        "",
+        config,
+    )
+
+
 def fix_account_type(config):
     """
     Fix up invalid account_type values.
