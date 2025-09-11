@@ -359,6 +359,13 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = fix_bad_logic_characters(input_config)
         self.assertEqual(result, expected_output)
 
+    def test_fix_bad_logic_characters2(self):
+        input_config = 'count       = length(data.octopusdeploy_tag_sets.tagset_county_lancashire.tag_sets) != 0 && length([for item in data.octopusdeploy_tag_sets.tagset_county_lancashire.tag_sets[0].tags : item if item.name == "Lancashire"]_ _= 0 _ 0 : 1'
+        expected_output = 'count = length(data.octopusdeploy_tag_sets.tagset_county_lancashire.tag_sets) != 0 && length([for item in data.octopusdeploy_tag_sets.tagset_county_lancashire.tag_sets[0].tags : item if item.name == "Lancashire"]) != 0 ? 0 : 1'
+
+        result = fix_bad_logic_characters(input_config)
+        self.assertEqual(result, expected_output)
+
     def test_fix_single_line_retention_policy(self):
         # Test with a single-line retention policy
         input_config = (
