@@ -87,20 +87,14 @@ def fix_single_line_retention_policy(config):
     The LLM kept insisting on using a single line release_retention_policy block. This is not valid HCL2 syntax.
     """
 
-    match = re.match(
+    return re.sub(
         r"release_retention_policy\s*{\s*quantity_to_keep\s*=\s*(\d+)\s*unit\s*=\s*\"([^\"]+)\"\s*}",
+        r"release_retention_policy {\n"
+        r" quantity_to_keep = \1\n"
+        r' unit = "\2"\n'
+        "}",
         config,
     )
-    if match:
-        # If we get a single line lifecycle block, just replace it with a multi-line one
-        return (
-            "release_retention_policy {\n"
-            f" quantity_to_keep = {match.group(1)}\n"
-            f' unit = "{match.group(2)}"\n'
-            "}"
-        )
-
-    return config
 
 
 def fix_single_line_tentacle_retention_policy(config):
@@ -108,20 +102,14 @@ def fix_single_line_tentacle_retention_policy(config):
     The LLM kept insisting on using a single line tentacle_retention_policy block. This is not valid HCL2 syntax.
     """
 
-    match = re.match(
+    return re.sub(
         r"tentacle_retention_policy\s*{\s*quantity_to_keep\s*=\s*(\d+)\s*unit\s*=\s*\"([^\"]+)\"\s*}",
+        r"tentacle_retention_policy {\n"
+        r" quantity_to_keep = \1\n"
+        r' unit = "\2"\n'
+        "}",
         config,
     )
-    if match:
-        # If we get a single line lifecycle block, just replace it with a multi-line one
-        return (
-            "tentacle_retention_policy {\n"
-            f" quantity_to_keep = {match.group(1)}\n"
-            f' unit = "{match.group(2)}"\n'
-            "}"
-        )
-
-    return config
 
 
 def fix_bad_logic_characters(config):
@@ -131,15 +119,11 @@ def fix_bad_logic_characters(config):
     So we need to fix this up
     """
 
-    match = re.match(
+    return re.sub(
         r"count\s*=\s*(.*?)_ _= 0 _ 0 : 1",
+        r"count = \1) != 0 ? 0 : 1",
         config,
     )
-    if match:
-        # fix up the logic
-        return f"count = {match.group(1)}) != 0 ? 0 : 1"
-
-    return config
 
 
 def fix_account_type(config):
