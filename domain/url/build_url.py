@@ -78,8 +78,10 @@ def build_url(base_url, api_key, path, query=None):
     query = urlencode(query) if query is not None else ""
 
     disable_redirector = (
-        os.environ.get("DISABLE_REDIRECTION", "false").lower() == "true"
+        os.environ.get("REDIRECTION_DISABLE", "false").lower() == "true"
     )
+
+    force_redirector = os.environ.get("REDIRECTION_FORCE", "false").lower() == "true"
 
     headers = get_octopus_headers(api_key) if api_key else {}
 
@@ -90,7 +92,10 @@ def build_url(base_url, api_key, path, query=None):
         "X_REDIRECTION_UPSTREAM_HOST": parsed.hostname,
     }
 
-    if disable_redirector or is_octopus_cloud_local_or_example(parsed):
+    # Forcing the use of the redirector takes precedence over disabling it
+    if not force_redirector and (
+        disable_redirector or is_octopus_cloud_local_or_example(parsed)
+    ):
         return urlunsplit((parsed.scheme, parsed.netloc, path, query, "")), headers
 
     # For everyone else, we have to route requests through the redirection service
