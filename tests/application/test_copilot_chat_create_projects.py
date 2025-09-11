@@ -500,7 +500,6 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
 
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
-    @unittest.skip("This works locally but not in GitHub Actions - I'm not sure why")
     def test_create_lambda_project_tenanted(self):
         project_name = "My tenanted Lambda"
         prompt = f"""Create an AWS Lambda project called "{project_name}".

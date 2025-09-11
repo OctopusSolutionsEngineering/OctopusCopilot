@@ -265,7 +265,7 @@ resource "octopusdeploy_tag_set" "tagset_cities" {
 # If there is no existing tag set, create the tag with this resource
 # There is a one-to-many relationship between tag sets and tags
 resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
-  count       = length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 && length([for item in data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].tags : item if item.name == "Sydney"]) != 0 ? 0 : 1
+  count       = length(try([for item in data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].tags : item if item.name == "Sydney"], [])) != 0 ? 0 : 1
   name        = "Sydney"
   tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
   # The colours are random
@@ -276,7 +276,7 @@ resource "octopusdeploy_tag" "tagset_cities_tag_sydney" {
 # If there is no existing tag set, create the tag with this resource
 # There is a one-to-many relationship between tag sets and tags
 resource "octopusdeploy_tag" "tagset_cities_tag_brisbane" {
-  count       = length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 && length([for item in data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].tags : item if item.name == "Brisbane"]) != 0 ? 0 : 1
+  count       = length(try([for item in data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].tags : item if item.name == "Brisbane"], [])) != 0 ? 0 : 1
   name        = "Brisbane"
   tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
   # The colours are random
@@ -285,8 +285,8 @@ resource "octopusdeploy_tag" "tagset_cities_tag_brisbane" {
 }
 ```
 
-* The "count" attribute on the resource "octopusdeploy_tag" must be set to `length(data.octopusdeploy_tag_sets.<tagset data name>.tag_sets) != 0 && length([for item in data.octopusdeploy_tag_sets.<tagset data name>.tag_sets[0].tags : item if item.name == "<tag name>"]) != 0 ? 0 : 1`
-* You will be penalized for using a "count" attribute on the resource "octopusdeploy_tag" using underscores in the place of brackets, question marks, and exclamation points like this: `length(data.octopusdeploy_tag_sets.<tagset data name>.tag_sets) != 0 && length([for item in data.octopusdeploy_tag_sets.<tagset data name>.tag_sets[0].tags : item if item.name == "<tag name>"]_ _= 0 _ 0 : 1`
+* The "count" attribute on the resource "octopusdeploy_tag" must be set to `length(try([for item in data.octopusdeploy_tag_sets.<tagset data name>.tag_sets[0].tags : item if item.name == "<tag name>"], [])) != 0 ? 0 : 1`
+* You will be penalized for using a "count" attribute on the resource "octopusdeploy_tag" using underscores in the place of brackets, question marks, and exclamation points like this: `length(try([for item in data.octopusdeploy_tag_sets.<tagset data name>.tag_sets[0].tags : item if item.name == "<tag name>"], []_ _= 0 _ 0 : 1`
 "
 
 ## Lifecycle Instructions
