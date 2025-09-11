@@ -822,6 +822,8 @@ resource "octopusdeploy_process_step" "azure_resource_group" {
 
 * You will be penalized for defining a "Octopus.Action.Azure.AccountId" execution property with an empty string.
 
+* You will be penalized for defining a "primary_package" block when the "Octopus.Action.Script.ScriptSource" execution property is set to "Inline".
+
 * Steps of type "Octopus.Script" must have the "OctopusUseBundledTooling" execution_properties defined, for example:
 
 ```
