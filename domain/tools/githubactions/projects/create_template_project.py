@@ -431,5 +431,9 @@ def project_context(
             "user",
             f'If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "{project_example_context_name}".',
         ),
+        (
+            "user",
+            f'You must include all the resources from the "{project_example_context_name}" unless the prompt explicitly asks to remove them.',
+        ),
         ("user", f"Generated Terraform Configuration:"),
     ]
