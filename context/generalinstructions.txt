@@ -807,7 +807,7 @@ resource "octopusdeploy_process_step" "aws_script_step" {
 }
 ```
 
-* Steps of type "Octopus.AzureResourceGroup" must have the "Octopus.Action.Azure.AccountId" property in the execution_properties defined, for example:
+* Steps of type "Octopus.AzureResourceGroup" and "Octopus.AzurePowerShell" must have the "Octopus.Action.Azure.AccountId" property in the execution_properties defined, for example:
 
 ```
 resource "octopusdeploy_process_step" "azure_resource_group" {
@@ -816,8 +816,9 @@ resource "octopusdeploy_process_step" "azure_resource_group" {
         "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? data.octopusdeploy_accounts.account_azure.accounts[0].id : octopusdeploy_azure_openid_connect.account_azure[0].id}"
       }
 }
+```
 
-* If no Azure account has been specified in the prompt, and a step of type "Octopus.AzureResourceGroup" is created, you must create an account of type "octopusdeploy_azure_openid_connect" with default settings and assign it to the "Octopus.Action.Azure.AccountId" property in the execution_properties.
+* If no Azure account has been specified in the prompt, and a step of type "Octopus.AzureResourceGroup" or "Octopus.AzurePowerShell" is created, you must create an account of type "octopusdeploy_azure_openid_connect" with default settings and assign it to the "Octopus.Action.Azure.AccountId" property in the execution_properties.
 
 * You will be penalized for defining a "Octopus.Action.Azure.AccountId" execution property with an empty string.
 
