@@ -136,6 +136,8 @@ jobs:
           SPACEBUILDER_TOFU_PATH: "${{ github.workspace }}/spacebuilder/binaries/tofu"
           # Don't try and make the binaries executable
           DISABLE_BINARIES_EXECUTABLE: true
+          # Just download the required providers
+          SPACEBUILDER_DISABLE_TERRAFORM_CLI_CONFIG: true
           # The port used when running the spacebuilder microservice
           FUNCTIONS_CUSTOMHANDLER_PORT: 8083
           # This is the connection string to Azurite, the test Aure Storage emulator
