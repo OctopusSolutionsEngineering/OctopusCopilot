@@ -120,7 +120,7 @@ def fix_bad_logic_characters(config):
     """
 
     return re.sub(
-        r"count\s*=\s*(.*?), \[]_\) != 0 ? 0 : 1",
+        r"count\s*=\s*(.*?), \[]_\) != 0 \? 0 : 1",
         r"count = \1, [])) != 0 ? 0 : 1",
         config,
     )
