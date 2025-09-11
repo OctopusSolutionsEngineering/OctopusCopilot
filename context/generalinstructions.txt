@@ -819,6 +819,8 @@ resource "octopusdeploy_process_step" "azure_resource_group" {
 
 * If no Azure account has been specified in the prompt, and a step of type "Octopus.AzureResourceGroup" is created, you must create an account of type "octopusdeploy_azure_openid_connect" with default settings and assign it to the "Octopus.Action.Azure.AccountId" execution property.
 
+* You will be penalized for defining a "Octopus.Action.Azure.AccountId" execution property with an empty string.
+
 * Steps of type "Octopus.Script" must have the "OctopusUseBundledTooling" execution_properties defined, for example:
 
 ```
