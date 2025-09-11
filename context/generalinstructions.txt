@@ -467,7 +467,8 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_da
     * A "space_id"
     * A "tenant_tags" property is a list of strings, used to associate a channel with specific tenant tags
 * A project can have multiple "octopusdeploy_channel" resources.
-* The "count" attribute for the "octopusdeploy_channel" resource must be set to "${length(data.octopusdeploy_projects.<name>.projects) != 0 ? 0 : 1}" where "<name>" is the name of a data resource "octopusdeploy_projects" that matches the name of the project that the channel is associated with.
+* The "count" attribute for the "octopusdeploy_channel" resource must be set to "${length(data.octopusdeploy_projects.<name>.projects) != 0 ? 0 : 1}" where "<name>" is the name of a data source "octopusdeploy_projects" that matches the name of the project that the channel is associated with.
+* You will be penalized for referencing a data source "octopusdeploy_projects" that does not exist in the output.
 * Here is an example of a channel resource without a "rule" block:
 
 ```
