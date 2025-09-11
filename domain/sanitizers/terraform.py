@@ -143,11 +143,11 @@ def fix_account_type(config):
         "Token",
         "UsernamePassword",
     ]
-    match = re.match(r'account_type\s*=\s*"([^"]+)"', config)
 
-    # If we get an invalid account type, just remove it
-    if match and match.group(1) not in valid_types:
-        return config.replace(match.group(1), "")
+    for match in re.finditer(r'account_type\s*=\s*"([^"]+)"', config):
+        # If we get an invalid account type, just remove it
+        if match and match.group(1) not in valid_types:
+            return config.replace(match.group(1), "")
 
     return config
 
