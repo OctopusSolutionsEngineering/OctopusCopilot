@@ -83,7 +83,7 @@ jobs:
         with:
           repository: "OctopusSolutionsEngineering/OctoAISpaceBuilder"
           latest: true
-          fileName: "spacebuilder_linux_amd64_azure.zip "
+          fileName: "spacebuilder_linux_amd64_azure.zip"
 
       - name: Start Octoterra
         run: |
