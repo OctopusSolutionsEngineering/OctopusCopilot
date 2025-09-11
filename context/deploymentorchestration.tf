@@ -258,11 +258,11 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
   properties            = {
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"Hello world\""
-        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -339,7 +339,7 @@ resource "octopusdeploy_project" "project_child_project" {
 }
 resource "octopusdeploy_project_versioning_strategy" "project_child_project" {
   count      = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? 0 : 1}"
-  project_id = "${octopusdeploy_project.project_child_project.id}"
+  project_id = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"
   template   = "#{Octopus.Version.LastMajor}.#{Octopus.Version.LastMinor}.#{Octopus.Version.NextPatch}"
 }
 
@@ -367,9 +367,9 @@ resource "octopusdeploy_process_step" "process_step_deployment_orchestration_dep
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.DeployRelease.DeploymentCondition" = "IfNotCurrentVersion"
         "Octopus.Action.DeployRelease.ProjectId" = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -446,7 +446,7 @@ resource "octopusdeploy_project" "project_deployment_orchestration" {
 }
 resource "octopusdeploy_project_versioning_strategy" "project_deployment_orchestration" {
   count      = "${length(data.octopusdeploy_projects.project_deployment_orchestration.projects) != 0 ? 0 : 1}"
-  project_id = "${octopusdeploy_project.project_deployment_orchestration.id}"
+  project_id = "${length(data.octopusdeploy_projects.project_deployment_orchestration.projects) != 0 ? data.octopusdeploy_projects.project_deployment_orchestration.projects[0].id : octopusdeploy_project.project_deployment_orchestration[0].id}"
   template   = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
 }
 

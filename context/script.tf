@@ -348,7 +348,7 @@ resource "octopusdeploy_project" "project_script" {
 }
 resource "octopusdeploy_project_versioning_strategy" "project_script" {
   count      = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? 0 : 1}"
-  project_id = "${octopusdeploy_project.project_script.id}"
+  project_id = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? data.octopusdeploy_projects.project_script.projects[0].id : octopusdeploy_project.project_script[0].id}"
   template   = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
 }
 

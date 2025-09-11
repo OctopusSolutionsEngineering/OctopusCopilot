@@ -191,7 +191,7 @@ resource "octopusdeploy_project" "project_project_settings_example" {
 }
 resource "octopusdeploy_project_versioning_strategy" "project_project_settings_example" {
   count      = "${length(data.octopusdeploy_projects.project_project_settings_example.projects) != 0 ? 0 : 1}"
-  project_id = "${octopusdeploy_project.project_project_settings_example.id}"
+  project_id = "${length(data.octopusdeploy_projects.project_project_settings_example.projects) != 0 ? data.octopusdeploy_projects.project_project_settings_example.projects[0].id : octopusdeploy_project.project_project_settings_example[0].id}"
   template   = "#{Octopus.Version.LastMajor}.#{Octopus.Version.LastMinor}.#{Octopus.Version.NextPatch}"
 }
 
