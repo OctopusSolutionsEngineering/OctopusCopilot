@@ -715,9 +715,49 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
 * You will be penalized for adding the "target_roles" attribute on an "action".
 * You will be penalized for adding the "excluded_environments" attribute on a "step".
 * You will be penalized for adding target tags to the "tenant_tags" attribute.
-* When the "Octopus.Action.Script.ScriptSource" property is set to "Package", the "Octopus.Action.Script.Syntax" and "Octopus.Action.Script.ScriptBody" property must not be defined.
+* When the "Octopus.Action.Script.ScriptSource" property is set to "Package", the "Octopus.Action.Script.Syntax" and "Octopus.Action.Script.ScriptBody" property must not be defined, for example:
+
+```
+resource "octopusdeploy_process_step" "process_step_every_step_project_run_a_script_from_a_package" {
+  name                  = "Run a Script from a package"
+  # The primary_package block is defined because the execution_properties "Octopus.Action.Script.ScriptSource" attribute is set to "Package"
+  primary_package       = {
+    acquisition_location = "Server"
+    feed_id = "${data.octopusdeploy_feeds.feed_octopus_server__built_in_.feeds[0].id}"
+    id = null
+    package_id = "${var.project_every_step_project_step_run_a_script_from_a_package_packageid}"
+    properties = {
+        SelectionMode = "immediate"
+    }
+  }
+  execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Package"
+        "Octopus.Action.Script.ScriptFileName" = "MyScript.ps1"
+      }
+}
+```
+
 * You will be penalized for using the "Octopus.Action.Script.Syntax" or "Octopus.Action.Script.ScriptBody" property when the "Octopus.Action.Script.ScriptSource" property is set to "Package".
-* When the "execution_properties" ""Octopus.Action.Script.ScriptSource" property is set to "Inline", the "primary_package" property must not be defined in a "octopusdeploy_process_step" resource.
+* When the "execution_properties" ""Octopus.Action.Script.ScriptSource" property is set to "Inline", the "primary_package" property must not be defined in a "octopusdeploy_process_step" resource, for example:
+
+```
+step "open-firewall-port" {
+    name = "Open Firewall Port"
+    action {
+        action_type = "Octopus.AzurePowerShell"
+        properties = {
+            Octopus.Action.Azure.AccountId = "aws-account"
+            Octopus.Action.Script.ScriptBody = "echo 'hi'"
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+            OctopusUseBundledTooling = "False"
+        }
+    }
+}
+```
+
 * You will be penalized for using the "primary_package" property when the "Octopus.Action.Script.ScriptSource" property is set to "Inline".
 * You will be penalized for defining a script step with no script.
 * Steps of type "Octopus.AzureAppService" must have at least one item in the "target_roles" attribute.
