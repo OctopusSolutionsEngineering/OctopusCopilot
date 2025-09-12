@@ -454,6 +454,7 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_da
 ```
 
 * You will be penalized for providing an attribute value for "timezone" that isn't a valid "Windows Time Zone Identifier".
+* You will be penalized for providing an empty "project_id" attribute on a trigger.
 
 ## Octopus Project Channel Instructions
 
