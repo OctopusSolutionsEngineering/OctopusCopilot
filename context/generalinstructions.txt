@@ -535,6 +535,8 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
 * The order of the steps are defined in the "octopusdeploy_process_steps_order" resource.
 * The order of child steps are defined in the "octopusdeploy_process_child_steps_order" resource.
 * You will be penalized for using asterisks, for example "*****", as placeholders in step properties.
+* The "Octopus.Step.ConditionVariableExpression" property can only be defined in the "properties" block.
+* You will be penalized for defining the "Octopus.Step.ConditionVariableExpression" property in the "execution_properties" block.
 * The "condition" attribute on an "octopusdeploy_process_step" block must be set to one of the following:
   * "Always"
   * "Failure"
