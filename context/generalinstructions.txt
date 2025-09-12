@@ -1008,6 +1008,7 @@ EOT
 
 ```
 "Octopus.Action.Script.ScriptBody" = "echo $${VARIABLE}"
+"Octopus.Action.Azure.ResourceGroupTemplate" = "param location string = resourceGroup().location\nresource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {\n  name: 'octoglobal$${uniqueString(resourceGroup().id)}'\n  location: location\n  sku: {\n    name: 'Standard_LRS'\n  }\n  kind: 'StorageV2'\n}\n"
 ```
 
 ## Penalties
