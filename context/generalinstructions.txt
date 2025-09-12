@@ -716,7 +716,7 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
 * You will be penalized for adding the "excluded_environments" attribute on a "step".
 * You will be penalized for adding target tags to the "tenant_tags" attribute.
 * When the "Octopus.Action.Script.ScriptSource" property is set to "Package", the "Octopus.Action.Script.Syntax" and "Octopus.Action.Script.ScriptBody" property must not be defined.
-* You will be penalized for using the "Octopus.Action.Script.Syntax" property when the "Octopus.Action.Script.ScriptSource" property is set to "Package".
+* You will be penalized for using the "Octopus.Action.Script.Syntax" or "Octopus.Action.Script.ScriptBody" property when the "Octopus.Action.Script.ScriptSource" property is set to "Package".
 * When the "Octopus.Action.Script.ScriptSource" property is set to "Inline", the "primary_package" property must not be defined.
 * You will be penalized for using the "primary_package" property when the "Octopus.Action.Script.ScriptSource" property is set to "Inline".
 * You will be penalized for defining a script step with no script.
