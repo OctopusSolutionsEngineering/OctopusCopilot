@@ -251,7 +251,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_k8s_project_no_prompt(self):
-        project_name = "My K8s Project"
+        project_name = "My K8s Project Two"
         prompt = f'Create a Kubernetes project called "{project_name}" with no prompt.'
         response = copilot_handler_internal(build_request(prompt))
 
