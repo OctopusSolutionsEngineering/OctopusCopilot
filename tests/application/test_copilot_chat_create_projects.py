@@ -353,9 +353,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
 
         project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
-        self.assertTrue(
-            project["Name"] == project_name,
-        )
+        self.assertEqual(project["Name"], project_name)
         raw_deployment_process = get_raw_deployment_process(
             space_name, project_name, Octopus_Api_Key, Octopus_Url
         )
@@ -418,9 +416,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
 
         project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
-        self.assertTrue(
-            project["Name"] == project_name,
-        )
+        self.assertEqual(project["Name"], project_name)
 
         raw_deployment_process = get_raw_deployment_process(
             space_name, project_name, Octopus_Api_Key, Octopus_Url
@@ -478,9 +474,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
 
         project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
 
-        self.assertTrue(
-            project["Name"] == project_name,
-        )
+        self.assertEqual(project["Name"], project_name)
 
         raw_deployment_process = get_raw_deployment_process(
             space_name, project_name, Octopus_Api_Key, Octopus_Url
@@ -540,9 +534,7 @@ Create tag sets that represent counties from England and assign them to the tena
         )
 
         project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
-        self.assertTrue(
-            project["Name"] == project_name,
-        )
+        self.assertEqual(project["Name"], project_name)
         project_tenant_mode = project["TenantedDeploymentMode"]
         self.assertTrue(
             project_tenant_mode == ("Tenanted" or "TenantedOrUntenanted"),
@@ -612,9 +604,7 @@ Create tag sets that represent counties from England and assign them to the tena
         )
 
         project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
-        self.assertTrue(
-            project["Name"] == project_name,
-        )
+        self.assertEqual(project["Name"], project_name)
         runbook = get_runbook_fuzzy(
             space_id,
             project["Id"],
