@@ -298,9 +298,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
 
         project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
-        self.assertTrue(
-            project["Name"] == project_name,
-        )
+        self.assertEqual(project["Name"], project_name)
 
         raw_deployment_process = get_raw_deployment_process(
             space_name, project_name, Octopus_Api_Key, Octopus_Url
