@@ -5,7 +5,7 @@ mcp-servers:
     octopus:
         type: local
         command: npx
-        args: ["-y", "@octopusdeploy/mcp-server", "--api-key", "${{ secrets.OCTOPUS_API_KEY }}", "--server-url", "${{ secrets.OCTOPUS_URL }}"]
+        args: ["-y", "@octopusdeploy/mcp-server", "--api-key", "${{ secrets.COPILOT_OCTOPUS_API }}", "--server-url", "${{ secrets.COPILOT_OCTOPUS_URL }}"]
     github:
         type: sse        
         url: "https://api.githubcopilot.com/mcp/"
