@@ -1,5 +1,5 @@
 ---
-name: code-review
+name: changelog
 description: An agent that reviews code for best practices, potential bugs, and improvements.
 mcp-servers:
     octopus:
