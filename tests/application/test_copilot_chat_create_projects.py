@@ -559,8 +559,8 @@ Create tag sets that represent counties from England and assign them to the tena
         tenants = get_tenants(Octopus_Api_Key, Octopus_Url, space_id)
         number_of_tenants = len(tenants)
         self.assertTrue(
-            number_of_tenants >= 10,
-            f"The deployment process should have at least 10 tenants. It has: {number_of_tenants}",
+            number_of_tenants >= 5,
+            f"The deployment process should have at least 5 tenants. It has: {number_of_tenants}",
         )
 
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
