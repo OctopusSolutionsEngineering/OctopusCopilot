@@ -8,6 +8,11 @@ class TestRemoveMarkdownCodeBlock(unittest.TestCase):
         result = remove_markdown_code_block(text)
         self.assertEqual(result, "\nexample code\n")
 
+    def test_remove_markdown_code_block_with_syntax(self):
+        text = "```hcl\nexample code\n```"
+        result = remove_markdown_code_block(text)
+        self.assertEqual(result, "\nexample code\n")
+
     def test_remove_markdown_code_block_without_code_block(self):
         text = "example code"
         result = remove_markdown_code_block(text)
