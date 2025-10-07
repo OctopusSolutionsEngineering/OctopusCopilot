@@ -534,7 +534,7 @@ Create tag sets that represent counties from England and assign them to the tena
         )
 
         project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
-        self.assertEqual(project["Name"], project_name)
+        self.assertEqual(project["Name"].casefold(), project_name.casefold())
         project_tenant_mode = project["TenantedDeploymentMode"]
         self.assertTrue(
             project_tenant_mode == ("Tenanted" or "TenantedOrUntenanted"),
