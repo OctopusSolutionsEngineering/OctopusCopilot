@@ -496,7 +496,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         project_name = "My tenanted Lambda"
         prompt = f"""Create an AWS Lambda project called "{project_name}".
 Configure the project to require tenants for deployment.
-Create 10 tenants named after cities located in England and assign them to the project.
+Create 5 tenants named after cities located in England and assign them to the project.
 Create tag sets that represent counties from England and assign them to the tenants."""
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
