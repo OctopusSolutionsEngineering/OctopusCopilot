@@ -419,8 +419,25 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 * If a project name was specified in the prompt, you must use that name for the "name" attribute in the resource "octopusdeploy_project".
 * You must include the "lifecycle_id" attribute for every "octopusdeploy_project" resource.
 * The "is_version_controlled" attribute must always be "false".
-
 * You will be penalized for setting the "auto_create_release" attribute to "true".
+* The name of the data source much also match the name used when referecing a "project_id" attribute. For example, this data source:
+
+```
+data "octopusdeploy_projects" "project_aws_lambda" {
+	  ids          = null
+	  partial_name = "${var.project_aws_lambda_name}"
+	  skip         = 0
+	  take         = 1
+}
+```
+
+must be referenced in the "project_id" attribute like this:
+
+```
+"${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? data.octopusdeploy_projects.project_aws_lambda.projects[0].id : octopusdeploy_project.project_aws_lambda[0].id}"
+```
+
+* You will be penalized for referencing a data source that does not exist in the output.
 
 ## Octopus Project Trigger Instructions
 
