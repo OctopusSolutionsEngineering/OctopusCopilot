@@ -9,7 +9,7 @@ langchain-community==0.3.26
 langchain-core==0.3.66
 langchain-openai==0.3.24
 openai==1.90.0
-testcontainers==4.11.0
+testcontainers==4.13.2
 urllib3==2.5.0
 retry==0.9.2
 types-retry==0.9.9.4
