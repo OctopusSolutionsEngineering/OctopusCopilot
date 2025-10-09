@@ -1,9 +1,100 @@
+process_template "predeploy-hook" {
+    name = "PreDeploy Hook"
+    process_template_slug = "project-predeploy-hook"
+    version_mask = "1.X"
+
+    parameter "Octopus.WorkerPool" {
+        value = "WorkerPools-2688"
+    }
+}
+
+process_template "deployment" {
+    name = "Deployment"
+    process_template_slug = "azure-function-deployment-go"
+    version_mask = "2.X"
+
+    package_parameter "Packages.FunctionApp" {
+        feed = "octopus-server-built-in"
+        package_id = "octolint_azure"
+    }
+
+    package_parameter "Packages.FunctionsCli" {
+        feed = "octopus-server-built-in"
+        package_id = "Azure.Functions.Cli.linux-x64"
+    }
+
+    parameter "Azure.Account" {
+        value = "Octolint.Octopus.Azure.Account"
+    }
+
+    parameter "Octopus.WorkerPool" {
+        value = "WorkerPools-2688"
+    }
+
+    parameter "Octopus.ContainerImageFeed" {
+        value = "Feeds-4704"
+    }
+
+    parameter "Octopus.Environment.Security" {
+        value = "Environments-3023"
+    }
+}
+
+step "http-test-url" {
+    name = "HTTP - Test URL"
+
+    action {
+        properties = {
+            ExpectedCode = "200"
+            Octopus.Action.Template.Id = "ActionTemplates-1741"
+            Octopus.Action.Template.Version = "18"
+            TimeoutSeconds = "60"
+            Uri = "#{Octolint.Application.HealthCheck}"
+            UseWindowsAuth = "False"
+        }
+        worker_pool = "hosted-ubuntu"
+    }
+}
+
+process_template "security" {
+    name = "Security"
+    process_template_slug = "azure-function-deployment"
+    version_mask = "4.X"
+
+    package_parameter "Packages.AzureCli" {
+        feed = "octopus-server-built-in"
+        package_id = "Azure.Functions.Cli.linux-x64"
+    }
+
+    package_parameter "SecurityScan.Package" {
+        feed = "octopus-server-built-in"
+        package_id = "feedback_azure"
+    }
+
+    parameter "Azure.Account" {
+        value = "Octolint.Octopus.Azure.Account"
+    }
+
+    parameter "Octopus.WorkerPool" {
+        value = "WorkerPools-2688"
+    }
+
+    parameter "Octopus.ContainerImageFeed" {
+        value = "Feeds-4704"
+    }
+
+    parameter "Octopus.SecurityEnvironment" {
+        value = "Environments-3023"
+    }
+}
+
 step "deploy-with-cli" {
     name = "Deploy with CLI"
 
     action {
         action_type = "Octopus.AzurePowerShell"
         environments = ["production"]
+        is_disabled = true
         notes = "Deploy the application using the Azure Functions CLI"
         properties = {
             Octopus.Action.Azure.AccountId = "#{Octolint.Octopus.Azure.Account}"
@@ -71,27 +162,12 @@ step "deploy-with-cli" {
     }
 }
 
-step "http-test-url" {
-    name = "HTTP - Test URL"
-
-    action {
-        properties = {
-            ExpectedCode = "200"
-            Octopus.Action.Template.Id = "ActionTemplates-1741"
-            Octopus.Action.Template.Version = "18"
-            TimeoutSeconds = "60"
-            Uri = "#{Octolint.Application.HealthCheck}"
-            UseWindowsAuth = "False"
-        }
-        worker_pool = "hosted-ubuntu"
-    }
-}
-
 step "security-scan" {
     name = "Security Scan"
 
     action {
         action_type = "Octopus.Script"
+        is_disabled = true
         properties = {
             Octopus.Action.Script.ScriptBody = <<-EOT
                 echo "Pulling Trivy Docker Image"
@@ -165,6 +241,7 @@ step "remove-worker-access" {
     action {
         action_type = "Octopus.AzurePowerShell"
         environments = ["production"]
+        is_disabled = true
         notes = "Removes the dynamic worker's IP from the function's firewall"
         properties = {
             Octopus.Action.Azure.AccountId = "#{Octolint.Octopus.Azure.Account}"
@@ -193,5 +270,15 @@ step "remove-worker-access" {
             feed = "docker-hub"
             image = "octopuslabs/azure-workertools"
         }
+    }
+}
+
+process_template "postdeploy-hook" {
+    name = "PostDeploy Hook"
+    process_template_slug = "project-postdeploy-hook"
+    version_mask = "1.X"
+
+    parameter "Octopus.WorkerPool" {
+        value = "WorkerPools-2688"
     }
 }
