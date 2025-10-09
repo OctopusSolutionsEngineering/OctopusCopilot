@@ -276,17 +276,12 @@ From your diagram, the hosting company Octopus instance (UL-Octopus) is where de
             "Response was " + response_text,
         )
         self.assertIn(
-            'resource "octopusdeploy_process"',
+            'resource "octopusdeploy_deployment_process"',
             response_text.casefold(),
             "Response was " + response_text,
         )
         self.assertIn(
-            'resource "octopusdeploy_process_steps_order"',
-            response_text.casefold(),
-            "Response was " + response_text,
-        )
-        self.assertIn(
-            'resource "octopusdeploy_process_step"',
+            'resource "octopusdeploy_deployment_process_step"',
             response_text.casefold(),
             "Response was " + response_text,
         )
