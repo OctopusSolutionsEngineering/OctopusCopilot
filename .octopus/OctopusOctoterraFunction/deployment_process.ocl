@@ -1,8 +1,51 @@
+process_template "predeploy-hook" {
+    name = "PreDeploy hook"
+    process_template_slug = "project-predeploy-hook"
+    version_mask = "1.X"
+
+    parameter "Octopus.WorkerPool" {
+        value = "WorkerPools-2688"
+    }
+}
+
+process_template "deploy" {
+    name = "Deploy"
+    process_template_slug = "azure-function-deployment-go"
+    version_mask = "2.X"
+
+    package_parameter "Packages.FunctionApp" {
+        feed = "octopus-server-built-in"
+        package_id = "spacebuilder_azure"
+    }
+
+    package_parameter "Packages.FunctionsCli" {
+        feed = "octopus-server-built-in"
+        package_id = "Azure.Functions.Cli.linux-x64"
+    }
+
+    parameter "Azure.Account" {
+        value = "Octopus.Azure.Account"
+    }
+
+    parameter "Octopus.WorkerPool" {
+        value = "WorkerPools-2688"
+    }
+
+    parameter "Octopus.ContainerImageFeed" {
+        value = "Feeds-4704"
+    }
+
+    parameter "Octopus.Environment.Security" {
+        value = "Environments-3023"
+    }
+}
+
 step "deploy-with-cli" {
     name = "Deploy with CLI"
 
     action {
         environments = ["production"]
+        is_disabled = true
         notes = "Deploy the application using the Azure Functions CLI"
         properties = {
             Octopus.Action.Template.Id = "ActionTemplates-4321"
@@ -46,11 +89,44 @@ step "http-test-url" {
     }
 }
 
+process_template "security" {
+    name = "Security"
+    process_template_slug = "azure-function-deployment"
+    version_mask = "4.X"
+
+    package_parameter "Packages.AzureCli" {
+        feed = "octopus-server-built-in"
+        package_id = "Azure.Functions.Cli.linux-x64"
+    }
+
+    package_parameter "SecurityScan.Package" {
+        feed = "octopus-server-built-in"
+        package_id = "spacebuilder_azure"
+    }
+
+    parameter "Azure.Account" {
+        value = "Octopus.Azure.Account"
+    }
+
+    parameter "Octopus.WorkerPool" {
+        value = "WorkerPools-2688"
+    }
+
+    parameter "Octopus.ContainerImageFeed" {
+        value = "Feeds-4704"
+    }
+
+    parameter "Octopus.SecurityEnvironment" {
+        value = "Environments-3023"
+    }
+}
+
 step "security-scan" {
     name = "Security Scan"
 
     action {
         action_type = "Octopus.Script"
+        is_disabled = true
         properties = {
             Octopus.Action.Script.ScriptBody = <<-EOT
                 echo "Pulling Trivy Docker Image"
@@ -124,6 +200,7 @@ step "remove-worker-access" {
     action {
         action_type = "Octopus.AzurePowerShell"
         environments = ["production"]
+        is_disabled = true
         notes = "Removes the dynamic worker's IP from the function's firewall"
         properties = {
             Octopus.Action.Azure.AccountId = "#{Octopus.Azure.Account}"
@@ -155,9 +232,9 @@ step "remove-worker-access" {
     }
 }
 
-process_template "predeploy-hook" {
-    name = "PreDeploy hook"
-    process_template_slug = "project-predeploy-hook"
+process_template "postdeploy-hook" {
+    name = "PostDeploy Hook"
+    process_template_slug = "project-postdeploy-hook"
     version_mask = "1.X"
 
     parameter "Octopus.WorkerPool" {
