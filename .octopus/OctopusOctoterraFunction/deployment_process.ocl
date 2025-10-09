@@ -154,3 +154,13 @@ step "remove-worker-access" {
         }
     }
 }
+
+process_template "predeploy-hook" {
+    name = "PreDeploy hook"
+    process_template_slug = "project-predeploy-hook"
+    version_mask = "1.X"
+
+    parameter "Octopus.WorkerPool" {
+        value = "WorkerPools-2688"
+    }
+}
