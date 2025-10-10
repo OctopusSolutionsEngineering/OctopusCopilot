@@ -474,6 +474,7 @@ must be referenced in the "project_id" attribute like this:
 ```
 
 * You will be penalized for referencing a data source that does not exist in the output.
+* You will be penalized for defining the "tenant_tags" property on a resource "octopusdeploy_project".
 
 ## Octopus Project Trigger Instructions
 
