@@ -1005,6 +1005,7 @@ resource "octopusdeploy_variable" "tag_scoped" {
 * The "Tag Set Name" in the "tenant_tags" attribute must match the name of a tag set defined in a resource "octopusdeploy_tag_set".
 * The "Tag Name" in the "tenant_tags" attribute must match a tag defined in a tag defined in a resource "octopusdeploy_tag".
 * Every tag belongs to a tag set.
+* If tags were specified in the prompt, but no tag set was specified in the prompt, you must create a tag set of "Default" and assign all tags to that tag set.
 * You will be penalized for defining a tenant tag in the "tenant_tags" attribute with a single word like "West" or "Enterprise-Client" in the "tenant_tags" attribute in the "scope" block for a "octopusdeploy_variable" resource.
 
 ## Runbook Instructions
