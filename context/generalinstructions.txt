@@ -493,6 +493,7 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
 * Retention policies do not apply to resource "octopusdeploy_project".
 * You must ignore any mention of retention policies when building the resource "octopusdeploy_project".
 * You will be penalized for adding a "retention_policy" block to a resource "octopusdeploy_project".
+* You will be penalized for creating "octopusdeploy_project_deployment_settings" resources.
 * The "skip_machine_behavior" property can be set to "None" or "SkipUnavailableMachines"
 * If a project name was specified in the prompt, you must use that name for the "name" attribute in the resource "octopusdeploy_project".
 * You must include the "lifecycle_id" attribute for every "octopusdeploy_project" resource.
