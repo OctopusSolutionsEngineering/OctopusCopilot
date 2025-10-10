@@ -19,7 +19,6 @@ from domain.sanitizers.terraform import (
     sanitize_account_type,
     sanitize_name_attributes,
     fix_single_line_lifecycle,
-    fix_account_type,
     fix_single_line_retention_policy,
     remove_duplicate_definitions,
     fix_single_line_tentacle_retention_policy,
@@ -290,9 +289,6 @@ def create_template_project_callback(
 
                 # Remove lifecycle blocks
                 configuration = fix_lifecycle(configuration)
-
-                # Deal with invalid account_types in data blocks
-                configuration = fix_account_type(configuration)
 
                 # Deal with the LLM returning a duplicate blocks
                 configuration = remove_duplicate_definitions(configuration)

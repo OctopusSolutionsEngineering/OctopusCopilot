@@ -138,33 +138,6 @@ def fix_lifecycle(config):
     )
 
 
-def fix_account_type(config):
-    """
-    Fix up invalid account_type values.
-    """
-    valid_types = [
-        "AmazonWebServicesAccount",
-        "AmazonWebServicesRoleAccount",
-        "AmazonWebServicesOidcAccount",
-        "AzureServicePrincipal",
-        "AzureOIDC",
-        "AzureSubscription",
-        "GenericOidcAccount",
-        "GoogleCloudAccount",
-        "None",
-        "SshKeyPair",
-        "Token",
-        "UsernamePassword",
-    ]
-
-    for match in re.finditer(r'account_type\s*=\s*"([^"]+)"', config):
-        # If we get an invalid account type, just remove it
-        if match and match.group(1) not in valid_types:
-            return config.replace(match.group(1), "")
-
-    return config
-
-
 def remove_duplicate_definitions(config):
     """
     The LLM kept trying to return duplicate definitions for resources, data, variables, and outputs.
