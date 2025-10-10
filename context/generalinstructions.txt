@@ -209,7 +209,7 @@ data "octopusdeploy_tenants" "tenant_australian_office" {
 }
 ```
 
-* The `unit` property in a `release_retention_policy` block in a `phase` block must be set to `Days` or `Items`, for example:
+* The `unit` property in a `release_retention_policy` or `tentacle_retention_policy` block in a `phase` block must be set to `Days` or `Items`, for example:
 
 ```
 resource "octopusdeploy_lifecycle" "simple_lifecycle" {
@@ -243,7 +243,7 @@ resource "octopusdeploy_lifecycle" "simple_lifecycle" {
   }
 ```
 
-* You will be penalized for setting the `unit` property in a `release_retention_policy` block in a `phase` block to `Releases`.
+* You will be penalized for setting the `unit` property in a `release_retention_policy` or `tentacle_retention_policy` block in a `phase` block to `Releases`.
 
 ## Library Variable Set Instructions
 
