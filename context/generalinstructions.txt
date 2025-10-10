@@ -823,7 +823,7 @@ step "open-firewall-port" {
    * "Octopus.JavaArchive"
    * "Octopus.HelmChartUpgrade"
    * "Octopus.AzureAppService"
-* You will be penalized for defining a "package" block in steps with the types:
+* You will be penalized for defining a "packages" block in steps with the types:
    * "Octopus.IIS"
    * "Octopus.AzureWebApp"
    * "Octopus.TentaclePackage"
