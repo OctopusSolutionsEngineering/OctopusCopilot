@@ -459,6 +459,7 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
   * "AzureOIDC"
   * "AzureSubscription"
   * "GenericOidcAccount"
+  * "GoogleCloudAccount"
   * "None"
   * "SshKeyPair"
   * "Token"

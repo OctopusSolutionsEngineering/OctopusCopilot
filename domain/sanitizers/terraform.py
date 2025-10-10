@@ -150,6 +150,7 @@ def fix_account_type(config):
         "AzureOIDC",
         "AzureSubscription",
         "GenericOidcAccount",
+        "GoogleCloudAccount",
         "None",
         "SshKeyPair",
         "Token",
