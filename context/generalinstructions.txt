@@ -47,6 +47,19 @@
   * "SshKeyPair"
   * "Token"
   * "UsernamePassword"
+
+* This is an example of a "octopusdeploy_accounts" data source with a correctly defined "account_type" attribute:
+
+```
+data "octopusdeploy_accounts" "account_azure" {
+  ids          = null
+  partial_name = "Azure"
+  skip         = 0
+  take         = 1
+  account_type = "AzureOIDC"
+}
+```
+
 * You will be penalized for setting the "account_type" to an empty value.
 
 ## Data and Resource pairing instructions
