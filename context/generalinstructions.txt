@@ -992,7 +992,7 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
   * "roles"
   * "tenant_tags"
 * You will be penalized for defining "tenants" in the "scope" block for a "octopusdeploy_variable" resource.
-* The "tenant_tags" attribute in the "scope" block for a "octopusdeploy_variable" resource must be in the format "Tag Set Name/Tag Name", with two words separated by a forward slash, where the first word(s) are the tag set name, and the second word(s) are the tag name, for example "Region/West". Here is an example of a tenant tag defined for a variable:
+* The "tenant_tags" attribute in the "scope" block for a "octopusdeploy_variable" resource must be in the format "Tag Set Name/Tag Name", with two phrases separated by a forward slash, where the phrase is the tag set name, and the second phrase is the tag name, for example "Region/West". Here is an example of a tenant tag defined for a variable:
 
 ```
 resource "octopusdeploy_variable" "tag_scoped" {
