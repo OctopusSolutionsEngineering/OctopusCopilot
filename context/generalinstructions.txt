@@ -32,6 +32,23 @@
 * The "<data name>" in the above examples must be replaced with the name of the data resource included in the output.
 * You will be penalized for using a "<data name>" that does not match the name of the data resource included in the output.
 
+## Account Data Instructions
+
+* The "account_type" in a "octopusdeploy_accounts" data source must be set to one of the following, matching the case exactly:
+  * AmazonWebServicesAccount"
+  * "AmazonWebServicesRoleAccount"
+  * "AmazonWebServicesOidcAccount"
+  * "AzureServicePrincipal"
+  * "AzureOIDC"
+  * "AzureSubscription"
+  * "GenericOidcAccount"
+  * "GoogleCloudAccount"
+  * "None"
+  * "SshKeyPair"
+  * "Token"
+  * "UsernamePassword"
+* You will be penalized for setting the "account_type" to an empty value.
+
 ## Data and Resource pairing instructions
 
 When a “data” resource is referenced in a resource’s attributes, the data resource must be included in the output.
