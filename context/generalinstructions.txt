@@ -35,7 +35,7 @@
 ## Account Data Instructions
 
 * The "account_type" in a "octopusdeploy_accounts" data source must be set to one of the following, matching the case exactly:
-  * AmazonWebServicesAccount"
+  * "AmazonWebServicesAccount"
   * "AmazonWebServicesRoleAccount"
   * "AmazonWebServicesOidcAccount"
   * "AzureServicePrincipal"
