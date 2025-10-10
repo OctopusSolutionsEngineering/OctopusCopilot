@@ -1072,7 +1072,16 @@ resource "octopusdeploy_tag_set" "default_tag_set" {
 
 ## Worker Pool Instructions
 
-* You must include the data "octopusdeploy_worker_pools" "workerpool_default_worker_pool".
+* You must always include the data "octopusdeploy_worker_pools" "workerpool_default_worker_pool", for example:
+
+```
+data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
+  ids          = null
+  partial_name = "Hosted Ubuntu"
+  skip         = 0
+  take         = 1
+}
+```
 
 ## Octopus Target Instructions
 
