@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.3.8" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.3.10" }
   }
   required_version = ">= 1.6.0"
 }
@@ -69,6 +69,7 @@ resource "octopusdeploy_environment" "environment_development" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = []
   lifecycle {
     prevent_destroy = true
   }
@@ -98,6 +99,7 @@ resource "octopusdeploy_environment" "environment_test" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = [octopusdeploy_environment.environment_development]
   lifecycle {
     prevent_destroy = true
   }
@@ -127,6 +129,7 @@ resource "octopusdeploy_environment" "environment_production" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test]
   lifecycle {
     prevent_destroy = true
   }
@@ -156,6 +159,7 @@ resource "octopusdeploy_environment" "environment_security" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test,octopusdeploy_environment.environment_production]
   lifecycle {
     prevent_destroy = true
   }
@@ -295,17 +299,17 @@ resource "octopusdeploy_process_step" "process_step_windows_service_deploy_a_win
         "Octopus.Action.TargetRoles" = "Windows-Service"
       }
   execution_properties  = {
-        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.WindowsService.StartMode" = "auto"
-        "Octopus.Action.WindowsService.DisplayName" = "Joke Service"
-        "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
-        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.WindowsService,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
-        "Octopus.Action.WindowsService.Description" = "A sample windows service"
-        "Octopus.Action.WindowsService.DesiredStatus" = "Default"
-        "Octopus.Action.WindowsService.ServiceName" = "JokeService"
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
         "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
+        "Octopus.Action.WindowsService.DisplayName" = "Joke Service"
+        "Octopus.Action.WindowsService.DesiredStatus" = "Default"
         "Octopus.Action.WindowsService.ExecutablePath" = "WindowsServiceDotNETCore.exe"
+        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
+        "Octopus.Action.WindowsService.Description" = "A sample windows service"
+        "Octopus.Action.WindowsService.StartMode" = "auto"
+        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.WindowsService,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
+        "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
+        "Octopus.Action.WindowsService.ServiceName" = "JokeService"
       }
 }
 
@@ -362,11 +366,11 @@ resource "octopusdeploy_process_step" "process_step_windows_service_scan_for_vul
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.GitRepository.Source" = "External"
       }
 }
 

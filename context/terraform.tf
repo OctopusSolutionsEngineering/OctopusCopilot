@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.3.8" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.3.10" }
   }
   required_version = ">= 1.6.0"
 }
@@ -69,6 +69,7 @@ resource "octopusdeploy_environment" "environment_development" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = []
   lifecycle {
     prevent_destroy = true
   }
@@ -98,6 +99,7 @@ resource "octopusdeploy_environment" "environment_test" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = [octopusdeploy_environment.environment_development]
   lifecycle {
     prevent_destroy = true
   }
@@ -127,6 +129,7 @@ resource "octopusdeploy_environment" "environment_production" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test]
   lifecycle {
     prevent_destroy = true
   }
@@ -252,20 +255,20 @@ resource "octopusdeploy_process_step" "process_step_terraform_plan_to_apply_a_te
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
         "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
-        "Octopus.Action.RunOnServer" = "true"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
         "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
+        "Octopus.Action.Terraform.AzureAccount" = "False"
       }
 }
 
@@ -288,6 +291,7 @@ resource "octopusdeploy_process_step" "process_step_terraform_approve_plan" {
   execution_properties  = {
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the planned changes?\n\n#{Octopus.Action[Plan to apply a Terraform template].Output.TerraformPlanOutput}"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -310,20 +314,20 @@ resource "octopusdeploy_process_step" "process_step_terraform_apply_a_terraform_
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
         "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -422,6 +426,7 @@ resource "octopusdeploy_environment" "environment_security" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test,octopusdeploy_environment.environment_production]
   lifecycle {
     prevent_destroy = true
   }

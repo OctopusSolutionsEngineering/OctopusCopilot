@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.3.8" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.3.10" }
   }
   required_version = ">= 1.6.0"
 }
@@ -69,6 +69,7 @@ resource "octopusdeploy_environment" "environment_development" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = []
   lifecycle {
     prevent_destroy = true
   }
@@ -98,6 +99,7 @@ resource "octopusdeploy_environment" "environment_test" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = [octopusdeploy_environment.environment_development]
   lifecycle {
     prevent_destroy = true
   }
@@ -127,6 +129,7 @@ resource "octopusdeploy_environment" "environment_production" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test]
   lifecycle {
     prevent_destroy = true
   }
@@ -156,6 +159,7 @@ resource "octopusdeploy_environment" "environment_security" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test,octopusdeploy_environment.environment_production]
   lifecycle {
     prevent_destroy = true
   }
@@ -358,9 +362,9 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_approve_pr
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "false"
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
       }
 }
 
@@ -392,15 +396,15 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_deploy_a_k
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
         "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: v1\nkind: Service\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  selector:\n    app: \"#{Kubernetes.Deployment.Name}\"\n  ports:\n    - protocol: TCP\n      port: 8080\n      targetPort: 8080\n  type: ClusterIP\n---\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[ollamainference].PackageId}:#{Octopus.Action.Package[ollamainference].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"2\"\n            memory: \"2Gi\"\n          requests:\n            cpu: \"1\"\n            memory: \"1Gi\"\n        livenessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
         "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
-        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
       }
 }
 
@@ -423,12 +427,12 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_smoke_test
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "false"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptParameters" = "-URL \"http://#{Kubernetes.Deployment.Name}.#{Octopus.Environment.Name | ToLower}.svc.cluster.local:8080/v1/chat/completions\" -Body '{\"model\": \"gemma3:1b\", \"messages\": [{\"role\": \"user\",\"content\": \"What is the capital of France?\"}]}'"
         "Octopus.Action.Script.ScriptFileName" = "octopus/HttpTest.ps1"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "false"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
       }
 }
 
@@ -477,11 +481,11 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_scan_for_v
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DockerImageSbomScan.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "OctopusUseBundledTooling" = "False"
       }
 }
 

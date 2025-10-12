@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.3.8" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.3.10" }
   }
   required_version = ">= 1.6.0"
 }
@@ -69,6 +69,7 @@ resource "octopusdeploy_environment" "environment_development" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = []
   lifecycle {
     prevent_destroy = true
   }
@@ -98,6 +99,7 @@ resource "octopusdeploy_environment" "environment_test" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = [octopusdeploy_environment.environment_development]
   lifecycle {
     prevent_destroy = true
   }
@@ -127,6 +129,7 @@ resource "octopusdeploy_environment" "environment_production" {
   servicenow_extension_settings {
     is_enabled = false
   }
+  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test]
   lifecycle {
     prevent_destroy = true
   }
@@ -231,11 +234,11 @@ resource "octopusdeploy_process_step" "process_step_script_hello_world" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"#{Project.Message}\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
