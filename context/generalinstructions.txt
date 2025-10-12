@@ -997,6 +997,7 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
   * "WorkerPool"
 * You will be penalized for defining the "lifecycle" block on a resource "octopusdeploy_variable".
 * You will be penalized for setting the resource "octopusdeploy_variable" "type" attribute to "Token".
+* When the "is_sensitive" property on a resource "octopusdeploy_variable" is set to "true", the "type" attribute must be set to "Sensitive".
 * When defining the value for a resource "octopusdeploy_variable" with a "type" of "Sensitive", the "sensitive_value" attribute must be set to "CHANGEME", and the "value" attribute must not be defined.
 
 For example, this is a sensitive variable:
