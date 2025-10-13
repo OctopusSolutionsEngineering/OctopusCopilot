@@ -29,6 +29,7 @@ async def create_feedback_async(
 
     headers = {
         "Authorization": "Bearer " + access_token,
+        "X-Octopus-Server": octopus_url,
     }
 
     feedback = {
