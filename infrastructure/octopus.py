@@ -1224,6 +1224,23 @@ def get_space(space_id, api_key, octopus_url):
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
+def sync_community_step_templates(api_key, octopus_url):
+    base_url = f"api/tasks"
+    body = {
+        "Name": "SyncCommunityActionTemplates",
+        "Description": "Synchronize Community Step Templates",
+        "Arguments": {},
+        "SpaceId": None,
+    }
+    api, headers = build_url(octopus_url, api_key, base_url)
+    resp = handle_response(
+        lambda: http.request("POST", api, json=body, headers=headers)
+    )
+    return resp.json()
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 def get_project(space_id, project_name, api_key, octopus_url):
     """
     Returns a project resource from the name

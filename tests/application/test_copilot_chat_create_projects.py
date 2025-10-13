@@ -4,46 +4,32 @@ import os
 import re
 import time
 import unittest
-import uuid
-from datetime import datetime
 
 import Levenshtein
 import azure.functions as func
 from openai import RateLimitError
-from requests.exceptions import HTTPError
+
 from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
-from domain.lookup.octopus_lookups import (
-    lookup_space,
-    lookup_projects,
-    lookup_environments,
-    lookup_tenants,
-    lookup_runbooks,
-)
+
 from domain.transformers.sse_transformers import (
     convert_from_sse_response,
     get_confirmation_id,
 )
-from domain.url.session import create_session_blob
-from function_app import copilot_handler_internal, health_internal
+from function_app import copilot_handler_internal
 from infrastructure.octopus import (
-    run_published_runbook_fuzzy,
     get_space_id_and_name_from_name,
     get_project,
     get_runbook_fuzzy,
     get_raw_deployment_process,
     get_tenants,
+    sync_community_step_templates,
 )
 from infrastructure.terraform_context import save_terraform_context
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
-from tests.infrastructure.create_and_deploy_release import (
-    create_and_deploy_release,
-    wait_for_task,
-)
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
-from tests.infrastructure.publish_runbook import publish_runbook
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
@@ -155,6 +141,8 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
                 cls.octopus, "Web server is ready to process requests", timeout=300
             )
 
+            sync_community_step_templates(Octopus_Api_Key, Octopus_Url)
+
             output = run_terraform(
                 terraform_dir + "simple/space_creation", Octopus_Url, Octopus_Api_Key
             )
@@ -256,6 +244,38 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
 
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"The following resources were created:" in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_vm_blue_green_project(self):
+        project_name = "My VM Blue Green project"
+        prompt = f'Create a VM Blue/Green project called "{project_name}".'
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
         print(response_text)
         self.assertTrue(
             f"The following resources were created:" in response_text,
