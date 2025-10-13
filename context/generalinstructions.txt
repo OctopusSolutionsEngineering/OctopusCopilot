@@ -446,6 +446,19 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
 }
 ```
 
+* The "feed_type" attribute on a "octopusdeploy_feeds" data source must be set to:
+    * AwsElasticContainerRegistry
+    * BuiltIn
+    * Docker
+    * GitHub
+    * Helm
+    * Maven
+    * NuGet
+    * S3
+    * OciRegistry
+    * OctopusProject
+* You will be penalized for setting "feed_type" to "Npm"
+
 ## Project Group Instructions
 
 * Only the "Default Project Group" data "octopusdeploy_project_groups" includes a "postcondition" attribute.
