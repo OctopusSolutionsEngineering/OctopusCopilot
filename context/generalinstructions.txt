@@ -1161,7 +1161,7 @@ data "octopusdeploy_deployment_targets" "kubernetes_cluster_target_example" {
 * Dollar signs in script steps must be escaped with a second dollar sign like "$$", for example:
 
 ```
-"Octopus.Action.Script.ScriptBody" = "echo $${variable}"
+"Octopus.Action.Script.ScriptBody" = "echo $$variable"
 ```
 
 * Percent signs in script steps must be escaped with a second percent sign like "%%", for example:
