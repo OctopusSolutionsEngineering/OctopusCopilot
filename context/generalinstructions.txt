@@ -446,18 +446,20 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
 }
 ```
 
-* The "feed_type" attribute on a "octopusdeploy_feeds" data source must be set to:
-    * AwsElasticContainerRegistry
-    * BuiltIn
-    * Docker
-    * GitHub
-    * Helm
-    * Maven
-    * NuGet
-    * S3
-    * OciRegistry
-    * OctopusProject
-* You will be penalized for setting "feed_type" to "Npm"
+* The "feed_type" attribute on a "octopusdeploy_feeds" data source must be set to one of the following values:
+  * "AwsElasticContainerRegistry"
+  * "BuiltIn"
+  * "Docker"
+  * "GitHub"
+  * "Helm"
+  * "Maven"
+  * "NuGet"
+  * "S3"
+  * "OciRegistry"
+  * "OctopusProject"
+* If the prompt specifies a "feed_type" that is not in the list, you must define the feed as "NuGet".
+* You will be penalized for setting "feed_type" to "Npm".
+
 
 ## Project Group Instructions
 
