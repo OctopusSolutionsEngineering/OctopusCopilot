@@ -14,6 +14,8 @@
 
 * Use "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id" when referencing the Default Lifecycle, for example `lifecycle_id = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}"`.
 * You will be penalized for referencing the resource "octopusdeploy_lifecycle" "lifecycle_default_lifecycle" because it does not exist.
+* The "quantity_to_keep" attribute in a "release_retention_policy" or "tentacle_retention_policy" block in a "phase" block must be larger than 0.
+* You will be penalized for setting the "quantity_to_keep" attribute in a "release_retention_policy" or "tentacle_retention_policy" block in a "phase" block to 0.
 
 ## Data Resources Instructions
 
