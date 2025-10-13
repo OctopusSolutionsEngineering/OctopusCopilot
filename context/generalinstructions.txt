@@ -1158,7 +1158,12 @@ data "octopusdeploy_deployment_targets" "kubernetes_cluster_target_example" {
 * The Terraform variable "octopus_space_id" must be included.
 * Terraform string interpolation must be implemented as "${}".
 * You will be penalized for using two curly brackets for string interpolation like "${{}}".
-* Dollar signs in script steps must be escaped with a second dollar sign like "$$".
+* Dollar signs in script steps must be escaped with a second dollar sign like "$$", for example:
+
+```
+"Octopus.Action.Script.ScriptBody" = "echo $${variable}"
+```
+
 * Percent signs in script steps must be escaped with a second percent sign like "%%", for example:
 
 ```
