@@ -366,7 +366,11 @@ def find_step_names(filename, label):
                             all_processes_data[current_block_tf_name] = {
                                 "is_runbook": is_runbook
                             }
-                        elif current_block_type == "octopusdeploy_process_step":
+                        elif (
+                            current_block_type == "octopusdeploy_process_step"
+                            or current_block_type
+                            == "octopusdeploy_process_templated_step"
+                        ):
                             human_readable_name = "Unnamed Step"  # Default fallback
                             name_match = name_attribute_regex.search(block_content)
                             if name_match:
@@ -380,6 +384,7 @@ def find_step_names(filename, label):
                             if parent_process_tf_name:
                                 all_step_details.append(
                                     (
+                                        current_block_type,
                                         human_readable_name,
                                         current_block_tf_name,
                                         parent_process_tf_name,
@@ -399,6 +404,7 @@ def find_step_names(filename, label):
                         if resource_type in [
                             "octopusdeploy_process",
                             "octopusdeploy_process_step",
+                            "octopusdeploy_process_templated_step",
                         ]:
                             in_block = True
                             current_block_type = resource_type
@@ -409,6 +415,7 @@ def find_step_names(filename, label):
             for process_tf_name, process_info in all_processes_data.items():
                 if not process_info["is_runbook"]:
                     for (
+                        current_block_type,
                         human_readable_name,
                         current_block_tf_name,
                         parent_tf_name_ref,
@@ -418,7 +425,7 @@ def find_step_names(filename, label):
                             and current_block_tf_name not in ignore_list
                         ):
                             print(
-                                f'* resource "octopusdeploy_process_step" "{current_block_tf_name}"'
+                                f'* resource "{current_block_type}" "{current_block_tf_name}"'
                             )
 
         print(

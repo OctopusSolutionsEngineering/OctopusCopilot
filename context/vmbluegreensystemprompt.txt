@@ -1,0 +1,76 @@
+# VM Blue/Green Instructions
+
+* The supplied "Example Octopus VM Blue/Green Terraform Configuration" is the primary source of truth for the configuration.
+* You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus VM Blue/Green Terraform Configuration".
+* You must include the steps defined in the "Example Octopus VM Blue/Green Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
+* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus VM Blue/Green Terraform Configuration".
+
+## VM Blue/Green Environment Instructions
+
+You must include all the following environment resources from the "Example Octopus VM Blue/Green Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
+* data "octopusdeploy_environments" "environment_development"
+* resource "octopusdeploy_environment" "environment_development"
+* data "octopusdeploy_environments" "environment_test"
+* resource "octopusdeploy_environment" "environment_test"
+* data "octopusdeploy_environments" "environment_production___blue"
+* resource "octopusdeploy_environment" "environment_production___blue"
+* data "octopusdeploy_environments" "environment_production___green"
+* resource "octopusdeploy_environment" "environment_production___green"
+* data "octopusdeploy_environments" "environment_production"
+* resource "octopusdeploy_environment" "environment_production"
+
+## VM Blue/Green Feed Instructions
+
+You must include all the following feed resources from the "Example Octopus VM Blue/Green Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
+* data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+
+## VM Blue/Green Project Instructions
+
+You must include all the following project resources from the "Example Octopus VM Blue/Green Terraform Configuration" once:
+* data "octopusdeploy_projects" "project_random_quotes__net_iis"
+* resource "octopusdeploy_project" "project_random_quotes__net_iis"
+
+## VM Blue/Green Project Deployment Process Instructions
+
+You must include all the following project deployment process resources from the "Example Octopus VM Blue/Green Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_random_quotes__net_iis"
+
+## VM Blue/Green Project Deployment Process Steps Instructions
+
+You must include all the following step resources from the "Example Octopus VM Blue/Green Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
+* resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_approve_production_deployment"
+* resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net_iis_octopus___check_targets_available"
+* resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net_iis_octopus___check_smtp_server_configured"
+* resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_transfer_a_package"
+* resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_an_email_on_success"
+
+You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
+
+## VM Blue/Green Project Deployment Process Step Order Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus VM Blue/Green Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_random_quotes__net_iis"
+## VM Blue/Green Project Variable Instructions
+
+You must include all the following variables from the "Example Octopus VM Blue/Green Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
+* resource "octopusdeploy_variable" "random_quotes__net_iis_prject_iis_application_pool_1"
+* resource "octopusdeploy_variable" "random_quotes__net_iis_prject_iis_application_pool_2"
+* resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_binding_port_1"
+* resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_binding_port_2"
+* resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_website_name_1"
+* resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_website_name_2"
+* resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_path_1"
+* resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_path_2"
+* resource "octopusdeploy_variable" "random_quotes__net_iis_appsettings_environmentname_1"
+* resource "octopusdeploy_variable" "random_quotes__net_iis_appsettings_appversion_1"
+* resource "octopusdeploy_variable" "random_quotes__net_iis_project_octopus_api_key_1"
+* resource "octopusdeploy_variable" "random_quotes__net_iis_project_workerpool_default_1"
+
+## VM Blue/Green Lifecycle Instructions
+
+You must include all the following lifecycle resources from the "Example Octopus VM Blue/Green Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
+* data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle"
+* data "octopusdeploy_lifecycles" "lifecycle_blue_green"
+* resource "octopusdeploy_lifecycle" "lifecycle_blue_green"
+* data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+

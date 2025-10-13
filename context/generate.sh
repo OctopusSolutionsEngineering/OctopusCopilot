@@ -1,6 +1,28 @@
 PULL=never
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+    -url https://samples.octopus.app \
+    -space Spaces-302 \
+    -apiKey API-GUEST \
+    -projectName "Random Quotes .NET IIS" \
+    -stepTemplate \
+    -stepTemplateName "Space Context" \
+    -stepTemplateKey "SpaceContext" \
+    -dummySecretVariableValues \
+    -includeProviderServerDetails=false \
+    -ignoreCacManagedValues=false \
+    -excludeCaCProjectSettings=true \
+    -includeOctopusOutputVars=false \
+    -excludeAllRunbooks=true \
+    -excludeAllLibraryVariableSets=true \
+    -inlineVariableValues \
+    -excludeTriggersExcept="Daily Security Scan" \
+    -dest /tmp/octoexport
+cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > vmbluegreen.tf
+
+./generate_instructions.py vmbluegreen.tf "VM Blue/Green" > instructions_vmbluegreen.md
+
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
