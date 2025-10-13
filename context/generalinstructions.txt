@@ -878,7 +878,7 @@ step "open-firewall-port" {
 ```
 
 * You will be penalized for using the "primary_package" property when the "Octopus.Action.Script.ScriptSource" property is set to "Inline".
-* If the prompt specifies an inline script as well as a package, you must ignore the package and only define the inline script.
+* If the prompt specifies an inline script as well as a script from a package, you must ignore the package and only define the inline script.
 * You will be penalized for defining a script step with no script.
 * Steps of type "Octopus.AzureAppService" must have at least one item in the "target_roles" attribute.
 * Steps of the following types must have a "primary_package" block:
