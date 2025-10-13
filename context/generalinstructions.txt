@@ -1137,7 +1137,17 @@ data "octopusdeploy_deployment_targets" "kubernetes_cluster_target_example" {
 * You must set the "token" attribute on a "octopusdeploy_token_account" resource to "CHANGEME".
 
 ## Terraform Instructions
-
+* You can only use the following built-in terraform functions:
+    * "jsondecode"
+    * "jsonencode"
+    * "keys"
+    * "length"
+    * "list"
+    * "trim"
+    * "trimprefix"
+    * "trimspace"
+    * "trimsuffix"
+    * "try"
 * Resource names must be unique per type.
 * Data names must be unique per type.
 * You will be penalized for defining resources or adding attributes that are not included in the sample Terraform configurations.
