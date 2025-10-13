@@ -15,7 +15,7 @@ process_template "deploy" {
 
     package_parameter "Packages.FunctionApp" {
         feed = "octopus-server-built-in"
-        package_id = "spacebuilder_azure"
+        package_id = "octoterra_azure"
     }
 
     package_parameter "Packages.FunctionsCli" {
