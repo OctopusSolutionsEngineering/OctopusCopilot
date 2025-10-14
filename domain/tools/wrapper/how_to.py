@@ -45,6 +45,9 @@ def how_to_wrapper(query, callback, logging):
         * When would I use git credentials?
         * Why would I use a deployment target?
 
+        You will be penalized for selecting this function for prompts like:
+        * Show the Github Workflow summary
+
         Args:
         keywords: The keywords extracted from the query
         """
