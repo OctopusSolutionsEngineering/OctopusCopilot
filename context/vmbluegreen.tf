@@ -180,7 +180,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_blue_green" {
     automatic_deployment_targets          = []
     optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
     name                                  = "Development"
-    is_optional_phase                     = true
+    is_optional_phase                     = false
     minimum_environments_before_promotion = 0
 
     release_retention_policy {
@@ -192,7 +192,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_blue_green" {
     automatic_deployment_targets          = []
     optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
     name                                  = "Test"
-    is_optional_phase                     = true
+    is_optional_phase                     = false
     minimum_environments_before_promotion = 0
 
     release_retention_policy {
@@ -362,10 +362,10 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptBody" = "# We assume that deployments to the production environments alternate between green and blue.\n# For example, if the last production deployment was to blue the next one should be to the green environment.\n# This check is used to provide a warning if a production environment is deployed to twice in a row.\n\n$octopusUrl = \"\"\n\n # Check to make sure targets have been created\nif ([string]::IsNullOrWhitespace(\"#{Octopus.Web.ServerUri}\"))\n{\n    $octopusUrl = \"#{Octopus.Web.BaseUrl}\"\n}\nelse\n{\n    $octopusUrl = \"#{Octopus.Web.ServerUri}\"\n}\n\nif (-not \"#{BlueGreen.Octopus.Api.Key}\".StartsWith(\"API-\")) {\n    Write-Host \"The BlueGreen.Octopus.Api.Key variable has not been defined. We can not validate the deployment environment.\"\n    exit 0\n}\n\nif ([string]::IsNullOrWhiteSpace(\"#{BlueGreen.Environment.Blue.Name}\")) {\n    Write-Host \"The BlueGreen.Environment.Blue.Name variable has not been defined. We can not validate the deployment environment.\"\n    exit 0\n}\n\nif ([string]::IsNullOrWhiteSpace(\"#{BlueGreen.Environment.Green.Name}\")) {\n    Write-Host \"The BlueGreen.Environment.Green.Name variable has not been defined. We can not validate the deployment environment.\"\n    exit 0\n}\n\n$header = @{ \"X-Octopus-ApiKey\" = \"#{BlueGreen.Octopus.Api.Key}\" }\n\n# Get environment ID\n$blueEnvironmentName = \"#{BlueGreen.Environment.Blue.Name}\"\n$blueEnvironments = Invoke-RestMethod -Uri \"$octopusURL/api/#{Octopus.Space.Id}/environments?partialName=$([uri]::EscapeDataString($blueEnvironmentName))\u0026skip=0\u0026take=100\" -Headers $header\n$blueEnvironment = $blueEnvironments.Items | Where-Object { $_.Name -eq $blueEnvironmentName } | Select-Object -First 1\n\nif ($null -eq $blueEnvironment) {\n    Write-Host \"Could not find an environment called $blueEnvironmentName. We can not validate the deployment environment.\"\n    exit 0\n}\n\n$greenEnvironmentName = \"#{BlueGreen.Environment.Green.Name}\"\n$greenEnvironments = Invoke-RestMethod -Uri \"$octopusURL/api/#{Octopus.Space.Id}/environments?partialName=$([uri]::EscapeDataString($greenEnvironmentName))\u0026skip=0\u0026take=100\" -Headers $header\n$greenEnvironment = $greenEnvironments.Items | Where-Object { $_.Name -eq $greenEnvironmentName } | Select-Object -First 1\n\nif ($null -eq $greenEnvironment) {\n    Write-Host \"Could not find an environment called $greenEnvironment. We can not validate the deployment environment.\"\n    exit 0\n}\n\n# Get deployments for the environment and project, excluding the current deployment\n$blueDeploymentsUri = \"$octopusUrl/api/#{Octopus.Space.Id}/deployments?environments=$($blueEnvironment.Id)\u0026projects=#{Octopus.Project.Id}\u0026take=2\"\n$blueLatestDeployment = Invoke-RestMethod -Uri $blueDeploymentsUri -Headers $header | Select-Object -ExpandProperty Items | Where-Object { $_.Id -ne \"#{Octopus.Deployment.Id}\" }\n\n$greenDeploymentsUri = \"$octopusUrl/api/#{Octopus.Space.Id}/deployments?environments=$($greenEnvironment.Id)\u0026projects=#{Octopus.Project.Id}\u0026take=2\"\n$greenLatestDeployment = Invoke-RestMethod -Uri $greenDeploymentsUri -Headers $header | Select-Object -ExpandProperty Items | Where-Object { $_.Id -ne \"#{Octopus.Deployment.Id}\" }\n\n# This is the first deployment to any environment. It doesn't matter which one we go to first.\nif ($greenLatestDeployment.Length -eq 0 -and $blueLatestDeployment.Length -eq 0) {\n    Write-Host \"Neither environment has had a deployment, so we are OK to continue\"\n    Set-OctopusVariable -name \"SequentialDeploy\" -value \"False\"\n    exit 0\n}\n\nif (\"#{Octopus.Environment.Name}\" -eq $blueEnvironmentName) {\n    if ($blueLatestDeployment.Length -eq 0)\n    {\n        Write-Host \"We're deploying to blue and there are no blue deployments, so we're OK to continue\"\n        Set-OctopusVariable -name \"SequentialDeploy\" -value \"False\"\n        exit 0\n    }\n\n    # We know we have deployed to blue at least once, but if we have never deployed to green\n    # then we should not continue.\n    if ($greenLatestDeployment.Length -eq 0)\n    {\n        Write-Host \"We're deploying to blue but there are no green deployments, so we should not continue\"\n        Set-OctopusVariable -name \"SequentialDeploy\" -value \"True\"\n        exit 0\n    }\n}\n\nif (\"#{Octopus.Environment.Name}\" -eq $greenEnvironmentName) {\n    if ($greenLatestDeployment.Length -eq 0)\n    {\n        Write-Host \"We're deploying to green and there are no green deployments, so we're OK to continue\"\n        Set-OctopusVariable -name \"SequentialDeploy\" -value \"False\"\n        exit 0\n    }\n\n    # We know we have deployed to green at least once, but if we have never deployed to blue\n    # then we should not continue.\n    if ($blueLatestDeployment.Length -eq 0)\n    {\n        Write-Host \"We're deploying to green but there are no blue deployments, so we should not continue\"\n        Set-OctopusVariable -name \"SequentialDeploy\" -value \"True\"\n        exit 0\n    }\n}\n\n# At this point both blue and green have done at least one deployment. We need to check\n# which environment had the last deployment.\n$blueLastDeploy = [DateTimeOffset]::Parse($blueLatestDeployment[0].Created)\n$greenLastDeploy = [DateTimeOffset]::Parse($greenLatestDeployment[0].Created)\n\nWrite-Host \"Blue Last Deploy: $blueLastDeploy\"\nWrite-Host \"Green Last Deploy: $greenLastDeploy\"\n\n# We now check to see if the current environment has had the last deployment. If so,\n# we have deployed to this environment twice in a row and we should block the deployment.\nif (\"#{Octopus.Environment.Name}\" -eq $blueEnvironmentName -and $blueLastDeploy -gt $greenLastDeploy) {\n    Write-Host \"The last deployment was to the blue environment, so we should not deploy to it again.\"\n    Set-OctopusVariable -name \"SequentialDeploy\" -value \"True\"\n    exit 0\n}\n\nif (\"#{Octopus.Environment.Name}\" -eq $greenEnvironmentName -and $greenLastDeploy -gt $blueLastDeploy) {\n    Write-Host \"The last deployment was to the green environment, so we should not deploy to it again.\"\n    Set-OctopusVariable -name \"SequentialDeploy\" -value \"True\"\n    exit 0\n}\n\nWrite-Host \"We're OK to continue with the deployment.\"\nSet-OctopusVariable -name \"SequentialDeploy\" -value \"False\""
-        "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
@@ -412,11 +412,11 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "$errorCollection = @()\n$setupValid = $false\n\nWrite-Host \"Checking for deployment targets ...\"\n\ntry\n{\n    # Check to make sure targets have been created\n    if ([string]::IsNullOrWhitespace(\"#{Octopus.Web.ServerUri}\"))\n    {\n        $octopusUrl = \"#{Octopus.Web.BaseUrl}\"\n    }\n    else\n    {\n        $octopusUrl = \"#{Octopus.Web.ServerUri}\"\n    }\n\n    $apiKey = \"#{CheckTargets.Octopus.Api.Key}\"\n    $role = \"#{CheckTargets.Octopus.Role}\"\n    $message = \"#{CheckTargets.Message}\"\n\n    if (![string]::IsNullOrWhitespace($apiKey) -and $apiKey.StartsWith(\"API-\"))\n    {\n        $spaceId = \"#{Octopus.Space.Id}\"\n        $headers = @{ \"X-Octopus-ApiKey\" = \"$apiKey\" }\n\n        try\n        {\n            $roleTargets = Invoke-RestMethod -Method Get -Uri \"$octopusUrl/api/$spaceId/machines?roles=$role\" -Headers $headers\n            if ($roleTargets.Items.Count -lt 1)\n            {\n                $errorCollection += @(\"Expected at least 1 target for tag $role, but found $( $roleTargets.Items.Count ). $message\")\n            }\n        }\n        catch\n        {\n            $errorCollection += @(\"Failed to retrieve role targets: $( $_.Exception.Message )\")\n        }\n\n        if ($errorCollection.Count -gt 0)\n        {\n            foreach ($item in $errorCollection)\n            {\n                Write-Highlight \"$item\"\n            }\n        }\n        else\n        {\n            $setupValid = $true\n            Write-Host \"Setup valid!\"\n        }\n    }\n    else\n    {\n        Write-Highlight \"The project variable CheckTargets.Octopus.Api.Key has not been configured, unable to check deployment targets.\"\n    }\n\n    Set-OctopusVariable -Name SetupValid -Value $setupValid\n} catch {\n    Write-Verbose \"Fatal error occurred:\"\n    Write-Verbose \"$($_.Exception.Message)\"\n}"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -439,11 +439,11 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptBody" = "$apiKey = \"#{SmtpCheck.Octopus.Api.Key}\"\n$isSmtpConfigured = $false\n\nif (![string]::IsNullOrWhitespace($apiKey) -and $apiKey.StartsWith(\"API-\"))\n{\n    if ([String]::IsNullOrWhitespace(\"#{Octopus.Web.ServerUri}\"))\n    {\n        $octopusUrl = \"#{Octopus.Web.BaseUrl}\"\n    }\n    else\n    {\n        $octopusUrl = \"#{Octopus.Web.ServerUri}\"\n    }\n\n    $uriBuilder = New-Object System.UriBuilder(\"$octopusUrl/api/smtpconfiguration/isconfigured\")\n    $uri = $uriBuilder.ToString()\n\n    try\n    {\n        $headers = @{ \"X-Octopus-ApiKey\" = $apiKey }\n        $smtpConfigured = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers\n        $isSmtpConfigured = $smtpConfigured.IsConfigured\n    }\n    catch\n    {\n        Write-Host \"Error checking SMTP configuration: $($_.Exception.Message)\"\n    }\n}\nelse\n{\n    Write-Highlight \"The project variable SmtpCheck.Octopus.Api.Key has not been configured, unable to check SMTP configuration.\"\n}\n\nif (-not $isSmtpConfigured)\n{\n    Write-Highlight \"SMTP is not configured. Please [configure SMTP](https://octopus.com/docs/projects/built-in-step-templates/email-notifications#smtp-configuration) settings in Octopus Deploy.\"\n}\n\nSet-OctopusVariable -Name SmtpConfigured -Value $isSmtpConfigured"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -495,10 +495,10 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.To" = "releases@example.org"
-        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
         "Octopus.Action.Email.Body" = "The deployment succeeded."
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Email.To" = "releases@example.org"
+        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
       }
 }
 
