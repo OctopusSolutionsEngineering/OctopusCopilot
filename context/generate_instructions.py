@@ -439,7 +439,7 @@ def find_step_names(filename, label):
 
 
 def find_runbook_names(filename, label):
-    # Pattern to match the resource declarations for octopusdeploy_variable
+    # Pattern to match the resource declarations for octopusdeploy_runbook
     pattern = r'resource\s+"octopusdeploy_runbook"\s+"([^"]+)"'
 
     found = False

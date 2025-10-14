@@ -23,6 +23,8 @@ You must include all the following environment resources from the "Example Octop
 
 You must include all the following feed resources from the "Example Octopus VM Blue/Green Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+* data "octopusdeploy_feeds" "feed_octopus_maven_feed"
+* resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed"
 
 ## VM Blue/Green Project Instructions
 

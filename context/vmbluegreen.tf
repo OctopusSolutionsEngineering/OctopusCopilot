@@ -350,9 +350,9 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_appro
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
-        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
       }
 }
 
@@ -376,10 +376,10 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
       }
   execution_properties  = {
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.ScriptBody" = "$errorCollection = @()\n$setupValid = $false\n\nWrite-Host \"Checking for deployment targets ...\"\n\ntry\n{\n    # Check to make sure targets have been created\n    if ([string]::IsNullOrWhitespace(\"#{Octopus.Web.ServerUri}\"))\n    {\n        $octopusUrl = \"#{Octopus.Web.BaseUrl}\"\n    }\n    else\n    {\n        $octopusUrl = \"#{Octopus.Web.ServerUri}\"\n    }\n\n    $apiKey = \"#{CheckTargets.Octopus.Api.Key}\"\n    $role = \"#{CheckTargets.Octopus.Role}\"\n    $message = \"#{CheckTargets.Message}\"\n\n    if (![string]::IsNullOrWhitespace($apiKey) -and $apiKey.StartsWith(\"API-\"))\n    {\n        $spaceId = \"#{Octopus.Space.Id}\"\n        $headers = @{ \"X-Octopus-ApiKey\" = \"$apiKey\" }\n\n        try\n        {\n            $roleTargets = Invoke-RestMethod -Method Get -Uri \"$octopusUrl/api/$spaceId/machines?roles=$role\" -Headers $headers\n            if ($roleTargets.Items.Count -lt 1)\n            {\n                $errorCollection += @(\"Expected at least 1 target for tag $role, but found $( $roleTargets.Items.Count ). $message\")\n            }\n        }\n        catch\n        {\n            $errorCollection += @(\"Failed to retrieve role targets: $( $_.Exception.Message )\")\n        }\n\n        if ($errorCollection.Count -gt 0)\n        {\n            foreach ($item in $errorCollection)\n            {\n                Write-Highlight \"$item\"\n            }\n        }\n        else\n        {\n            $setupValid = $true\n            Write-Host \"Setup valid!\"\n        }\n    }\n    else\n    {\n        Write-Highlight \"The project variable CheckTargets.Octopus.Api.Key has not been configured, unable to check deployment targets.\"\n    }\n\n    Set-OctopusVariable -Name SetupValid -Value $setupValid\n} catch {\n    Write-Verbose \"Fatal error occurred:\"\n    Write-Verbose \"$($_.Exception.Message)\"\n}"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -403,8 +403,8 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
       }
   execution_properties  = {
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.ScriptBody" = "$apiKey = \"#{SmtpCheck.Octopus.Api.Key}\"\n$isSmtpConfigured = $false\n\nif (![string]::IsNullOrWhitespace($apiKey) -and $apiKey.StartsWith(\"API-\"))\n{\n    if ([String]::IsNullOrWhitespace(\"#{Octopus.Web.ServerUri}\"))\n    {\n        $octopusUrl = \"#{Octopus.Web.BaseUrl}\"\n    }\n    else\n    {\n        $octopusUrl = \"#{Octopus.Web.ServerUri}\"\n    }\n\n    $uriBuilder = New-Object System.UriBuilder(\"$octopusUrl/api/smtpconfiguration/isconfigured\")\n    $uri = $uriBuilder.ToString()\n\n    try\n    {\n        $headers = @{ \"X-Octopus-ApiKey\" = $apiKey }\n        $smtpConfigured = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers\n        $isSmtpConfigured = $smtpConfigured.IsConfigured\n    }\n    catch\n    {\n        Write-Host \"Error checking SMTP configuration: $($_.Exception.Message)\"\n    }\n}\nelse\n{\n    Write-Highlight \"The project variable SmtpCheck.Octopus.Api.Key has not been configured, unable to check SMTP configuration.\"\n}\n\nif (-not $isSmtpConfigured)\n{\n    Write-Highlight \"SMTP is not configured. Please [configure SMTP](https://octopus.com/docs/projects/built-in-step-templates/email-notifications#smtp-configuration) settings in Octopus Deploy.\"\n}\n\nSet-OctopusVariable -Name SmtpConfigured -Value $isSmtpConfigured"
         "Octopus.Action.RunOnServer" = "true"
       }
@@ -702,6 +702,13 @@ resource "octopusdeploy_variable" "random_quotes__net_iis_project_octopus_api_ke
   depends_on = []
 }
 
+data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+  ids          = null
+  partial_name = "Default Worker Pool"
+  skip         = 0
+  take         = 1
+}
+
 data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
   ids          = null
   partial_name = "Hosted Ubuntu"
@@ -712,7 +719,7 @@ data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
 resource "octopusdeploy_variable" "random_quotes__net_iis_project_workerpool_default_1" {
   count        = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) == 0 ?octopusdeploy_project.project_random_quotes__net_iis[0].id : data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id}"
-  value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : null}"
+  value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.Default Worker Pool.worker_pools[0].id}"
   name         = "Project.Workerpool.Default"
   type         = "WorkerPool"
   is_sensitive = false
