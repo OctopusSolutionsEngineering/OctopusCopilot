@@ -299,17 +299,17 @@ resource "octopusdeploy_process_step" "process_step_windows_service_deploy_a_win
         "Octopus.Action.TargetRoles" = "Windows-Service"
       }
   execution_properties  = {
-        "Octopus.Action.WindowsService.StartMode" = "auto"
-        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.WindowsService.ExecutablePath" = "WindowsServiceDotNETCore.exe"
-        "Octopus.Action.WindowsService.Description" = "A sample windows service"
+        "Octopus.Action.WindowsService.ServiceName" = "JokeService"
         "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
+        "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
+        "Octopus.Action.WindowsService.Description" = "A sample windows service"
+        "Octopus.Action.WindowsService.ExecutablePath" = "WindowsServiceDotNETCore.exe"
+        "Octopus.Action.WindowsService.DesiredStatus" = "Default"
+        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.WindowsService,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
+        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
         "Octopus.Action.WindowsService.DisplayName" = "Joke Service"
         "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.WindowsService,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
-        "Octopus.Action.WindowsService.DesiredStatus" = "Default"
-        "Octopus.Action.WindowsService.ServiceName" = "JokeService"
-        "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
+        "Octopus.Action.WindowsService.StartMode" = "auto"
       }
 }
 
@@ -331,11 +331,11 @@ resource "octopusdeploy_process_step" "process_step_windows_service_print_messag
   properties            = {
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy to IIS].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Windows target with the tag 'Windows-Service'.\"\n  Write-Highlight \"We recommend the [Polling Tentacle](https://octopus.com/docs/infrastructure/deployment-targets/tentacle/tentacle-communication).\"\n}"
-        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -387,7 +387,7 @@ data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
   take         = 1
 }
 
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
   ids          = null
   partial_name = "Hosted Ubuntu"
   skip         = 0
@@ -397,7 +397,7 @@ data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
 resource "octopusdeploy_variable" "windows_service_project_workerpool_1" {
   count        = "${length(data.octopusdeploy_projects.project_windows_service.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_windows_service.projects) == 0 ?octopusdeploy_project.project_windows_service[0].id : data.octopusdeploy_projects.project_windows_service.projects[0].id}"
-  value        = "${length(data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id : data.octopusdeploy_worker_pools.Default Worker Pool.worker_pools[0].id}"
+  value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.Hosted Ubuntu.worker_pools[0].id}"
   name         = "Project.WorkerPool"
   type         = "WorkerPool"
   description  = "The workerpool used by the steps. Defining the workerpool as a variable allows it to be changed in a single location for multiple steps."

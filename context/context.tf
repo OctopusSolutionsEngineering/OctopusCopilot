@@ -204,6 +204,30 @@ resource "octopusdeploy_tag" "tagset_regions_tag_anz" {
   count       = length(try([for item in data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].tags : item if item.name == "ANZ"], [])) != 0 ? 0 : 1
 }
 
+data "octopusdeploy_git_credentials" "gitcredential_github" {
+  name = "GitHub"
+  skip = 0
+  take = 1
+}
+resource "octopusdeploy_git_credential" "gitcredential_github" {
+  count    = "${length(data.octopusdeploy_git_credentials.gitcredential_github.git_credentials) != 0 ? 0 : 1}"
+  name     = "GitHub"
+  type     = "UsernamePassword"
+  username = "x-access-token"
+  password = "${var.gitcredential_github_sensitive_value}"
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+variable "gitcredential_github_sensitive_value" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The secret variable value associated with the git credential \"GitHub\""
+  default     = "Change Me!"
+}
+
 data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
   feed_type    = "BuiltIn"
   ids          = null
@@ -585,62 +609,190 @@ resource "octopusdeploy_s3_feed" "feed_s3_feed" {
   }
 }
 
-data "octopusdeploy_git_credentials" "gitcredential_github" {
-  name = "GitHub"
-  skip = 0
-  take = 1
+data "octopusdeploy_project_groups" "project_group_aws" {
+  ids          = null
+  partial_name = "${var.project_group_aws_name}"
+  skip         = 0
+  take         = 1
 }
-resource "octopusdeploy_git_credential" "gitcredential_github" {
-  count    = "${length(data.octopusdeploy_git_credentials.gitcredential_github.git_credentials) != 0 ? 0 : 1}"
-  name     = "GitHub"
-  type     = "UsernamePassword"
-  username = "x-access-token"
-  password = "${var.gitcredential_github_sensitive_value}"
+variable "project_group_aws_name" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The name of the project group to lookup"
+  default     = "AWS"
+}
+resource "octopusdeploy_project_group" "project_group_aws" {
+  count = "${length(data.octopusdeploy_project_groups.project_group_aws.project_groups) != 0 ? 0 : 1}"
+  name  = "${var.project_group_aws_name}"
   lifecycle {
-    ignore_changes  = [password]
     prevent_destroy = true
   }
 }
-variable "gitcredential_github_sensitive_value" {
+
+data "octopusdeploy_project_groups" "project_group_azure" {
+  ids          = null
+  partial_name = "${var.project_group_azure_name}"
+  skip         = 0
+  take         = 1
+}
+variable "project_group_azure_name" {
   type        = string
   nullable    = false
-  sensitive   = true
-  description = "The secret variable value associated with the git credential \"GitHub\""
-  default     = "Change Me!"
+  sensitive   = false
+  description = "The name of the project group to lookup"
+  default     = "Azure"
+}
+resource "octopusdeploy_project_group" "project_group_azure" {
+  count       = "${length(data.octopusdeploy_project_groups.project_group_azure.project_groups) != 0 ? 0 : 1}"
+  name        = "${var.project_group_azure_name}"
+  description = ""
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+variable "project_group_default_project_group_name" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The name of the project group to lookup"
+  default     = "Default Project Group"
+}
+data "octopusdeploy_project_groups" "project_group_default_project_group" {
   ids          = null
-  partial_name = "Default Worker Pool"
+  partial_name = "${var.project_group_default_project_group_name}"
+  skip         = 0
+  take         = 1
+  lifecycle {
+    postcondition {
+      error_message = "Failed to resolve a project group called $${var.project_group_default_project_group_name}. This resource must exist in the space before this Terraform configuration is applied."
+      condition     = length(self.project_groups) != 0
+    }
+  }
+}
+
+data "octopusdeploy_project_groups" "project_group_kubernetes" {
+  ids          = null
+  partial_name = "${var.project_group_kubernetes_name}"
   skip         = 0
   take         = 1
 }
+variable "project_group_kubernetes_name" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The name of the project group to lookup"
+  default     = "Kubernetes"
+}
+resource "octopusdeploy_project_group" "project_group_kubernetes" {
+  count = "${length(data.octopusdeploy_project_groups.project_group_kubernetes.project_groups) != 0 ? 0 : 1}"
+  name  = "${var.project_group_kubernetes_name}"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
 
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+data "octopusdeploy_project_groups" "project_group_llm" {
   ids          = null
-  partial_name = "Hosted Ubuntu"
+  partial_name = "${var.project_group_llm_name}"
   skip         = 0
   take         = 1
 }
+variable "project_group_llm_name" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The name of the project group to lookup"
+  default     = "LLM"
+}
+resource "octopusdeploy_project_group" "project_group_llm" {
+  count = "${length(data.octopusdeploy_project_groups.project_group_llm.project_groups) != 0 ? 0 : 1}"
+  name  = "${var.project_group_llm_name}"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
 
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+data "octopusdeploy_project_groups" "project_group_orchestrator" {
   ids          = null
-  partial_name = "Hosted Windows"
+  partial_name = "${var.project_group_orchestrator_name}"
   skip         = 0
   take         = 1
 }
+variable "project_group_orchestrator_name" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The name of the project group to lookup"
+  default     = "Orchestrator"
+}
+resource "octopusdeploy_project_group" "project_group_orchestrator" {
+  count = "${length(data.octopusdeploy_project_groups.project_group_orchestrator.project_groups) != 0 ? 0 : 1}"
+  name  = "${var.project_group_orchestrator_name}"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
 
-data "octopusdeploy_worker_pools" "workerpool_worker_pool" {
+data "octopusdeploy_project_groups" "project_group_script" {
   ids          = null
-  partial_name = "Worker Pool"
+  partial_name = "${var.project_group_script_name}"
   skip         = 0
   take         = 1
 }
-resource "octopusdeploy_static_worker_pool" "workerpool_worker_pool" {
-  count       = "${length(data.octopusdeploy_worker_pools.workerpool_worker_pool.worker_pools) != 0 ? 0 : 1}"
-  name        = "Worker Pool"
-  description = "An example of a worker pool"
-  is_default  = false
+variable "project_group_script_name" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The name of the project group to lookup"
+  default     = "Script"
+}
+resource "octopusdeploy_project_group" "project_group_script" {
+  count = "${length(data.octopusdeploy_project_groups.project_group_script.project_groups) != 0 ? 0 : 1}"
+  name  = "${var.project_group_script_name}"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_project_groups" "project_group_terraform" {
+  ids          = null
+  partial_name = "${var.project_group_terraform_name}"
+  skip         = 0
+  take         = 1
+}
+variable "project_group_terraform_name" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The name of the project group to lookup"
+  default     = "Terraform"
+}
+resource "octopusdeploy_project_group" "project_group_terraform" {
+  count = "${length(data.octopusdeploy_project_groups.project_group_terraform.project_groups) != 0 ? 0 : 1}"
+  name  = "${var.project_group_terraform_name}"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_project_groups" "project_group_windows" {
+  ids          = null
+  partial_name = "${var.project_group_windows_name}"
+  skip         = 0
+  take         = 1
+}
+variable "project_group_windows_name" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The name of the project group to lookup"
+  default     = "Windows"
+}
+resource "octopusdeploy_project_group" "project_group_windows" {
+  count = "${length(data.octopusdeploy_project_groups.project_group_windows.project_groups) != 0 ? 0 : 1}"
+  name  = "${var.project_group_windows_name}"
   lifecycle {
     prevent_destroy = true
   }
@@ -1013,6 +1165,43 @@ variable "account_username_password" {
   default     = "Change Me!"
 }
 
+data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+  ids          = null
+  partial_name = "Default Worker Pool"
+  skip         = 0
+  take         = 1
+}
+
+data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
+  ids          = null
+  partial_name = "Hosted Ubuntu"
+  skip         = 0
+  take         = 1
+}
+
+data "octopusdeploy_worker_pools" "workerpool_hosted_windows" {
+  ids          = null
+  partial_name = "Hosted Windows"
+  skip         = 0
+  take         = 1
+}
+
+data "octopusdeploy_worker_pools" "workerpool_worker_pool" {
+  ids          = null
+  partial_name = "Worker Pool"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_static_worker_pool" "workerpool_worker_pool" {
+  count       = "${length(data.octopusdeploy_worker_pools.workerpool_worker_pool.worker_pools) != 0 ? 0 : 1}"
+  name        = "Worker Pool"
+  description = "An example of a worker pool"
+  is_default  = false
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 data "octopusdeploy_environments" "environment_development" {
   ids          = null
   partial_name = "Development"
@@ -1128,195 +1317,6 @@ resource "octopusdeploy_environment" "environment_security" {
     is_enabled = false
   }
   depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test,octopusdeploy_environment.environment_production]
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_project_groups" "project_group_aws" {
-  ids          = null
-  partial_name = "${var.project_group_aws_name}"
-  skip         = 0
-  take         = 1
-}
-variable "project_group_aws_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the project group to lookup"
-  default     = "AWS"
-}
-resource "octopusdeploy_project_group" "project_group_aws" {
-  count = "${length(data.octopusdeploy_project_groups.project_group_aws.project_groups) != 0 ? 0 : 1}"
-  name  = "${var.project_group_aws_name}"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_project_groups" "project_group_azure" {
-  ids          = null
-  partial_name = "${var.project_group_azure_name}"
-  skip         = 0
-  take         = 1
-}
-variable "project_group_azure_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the project group to lookup"
-  default     = "Azure"
-}
-resource "octopusdeploy_project_group" "project_group_azure" {
-  count       = "${length(data.octopusdeploy_project_groups.project_group_azure.project_groups) != 0 ? 0 : 1}"
-  name        = "${var.project_group_azure_name}"
-  description = ""
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-variable "project_group_default_project_group_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the project group to lookup"
-  default     = "Default Project Group"
-}
-data "octopusdeploy_project_groups" "project_group_default_project_group" {
-  ids          = null
-  partial_name = "${var.project_group_default_project_group_name}"
-  skip         = 0
-  take         = 1
-  lifecycle {
-    postcondition {
-      error_message = "Failed to resolve a project group called $${var.project_group_default_project_group_name}. This resource must exist in the space before this Terraform configuration is applied."
-      condition     = length(self.project_groups) != 0
-    }
-  }
-}
-
-data "octopusdeploy_project_groups" "project_group_kubernetes" {
-  ids          = null
-  partial_name = "${var.project_group_kubernetes_name}"
-  skip         = 0
-  take         = 1
-}
-variable "project_group_kubernetes_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the project group to lookup"
-  default     = "Kubernetes"
-}
-resource "octopusdeploy_project_group" "project_group_kubernetes" {
-  count = "${length(data.octopusdeploy_project_groups.project_group_kubernetes.project_groups) != 0 ? 0 : 1}"
-  name  = "${var.project_group_kubernetes_name}"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_project_groups" "project_group_llm" {
-  ids          = null
-  partial_name = "${var.project_group_llm_name}"
-  skip         = 0
-  take         = 1
-}
-variable "project_group_llm_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the project group to lookup"
-  default     = "LLM"
-}
-resource "octopusdeploy_project_group" "project_group_llm" {
-  count = "${length(data.octopusdeploy_project_groups.project_group_llm.project_groups) != 0 ? 0 : 1}"
-  name  = "${var.project_group_llm_name}"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_project_groups" "project_group_orchestrator" {
-  ids          = null
-  partial_name = "${var.project_group_orchestrator_name}"
-  skip         = 0
-  take         = 1
-}
-variable "project_group_orchestrator_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the project group to lookup"
-  default     = "Orchestrator"
-}
-resource "octopusdeploy_project_group" "project_group_orchestrator" {
-  count = "${length(data.octopusdeploy_project_groups.project_group_orchestrator.project_groups) != 0 ? 0 : 1}"
-  name  = "${var.project_group_orchestrator_name}"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_project_groups" "project_group_script" {
-  ids          = null
-  partial_name = "${var.project_group_script_name}"
-  skip         = 0
-  take         = 1
-}
-variable "project_group_script_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the project group to lookup"
-  default     = "Script"
-}
-resource "octopusdeploy_project_group" "project_group_script" {
-  count = "${length(data.octopusdeploy_project_groups.project_group_script.project_groups) != 0 ? 0 : 1}"
-  name  = "${var.project_group_script_name}"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_project_groups" "project_group_terraform" {
-  ids          = null
-  partial_name = "${var.project_group_terraform_name}"
-  skip         = 0
-  take         = 1
-}
-variable "project_group_terraform_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the project group to lookup"
-  default     = "Terraform"
-}
-resource "octopusdeploy_project_group" "project_group_terraform" {
-  count = "${length(data.octopusdeploy_project_groups.project_group_terraform.project_groups) != 0 ? 0 : 1}"
-  name  = "${var.project_group_terraform_name}"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_project_groups" "project_group_windows" {
-  ids          = null
-  partial_name = "${var.project_group_windows_name}"
-  skip         = 0
-  take         = 1
-}
-variable "project_group_windows_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the project group to lookup"
-  default     = "Windows"
-}
-resource "octopusdeploy_project_group" "project_group_windows" {
-  count = "${length(data.octopusdeploy_project_groups.project_group_windows.project_groups) != 0 ? 0 : 1}"
-  name  = "${var.project_group_windows_name}"
   lifecycle {
     prevent_destroy = true
   }
@@ -1463,321 +1463,17 @@ resource "octopusdeploy_lifecycle" "lifecycle_hotfix" {
   }
 }
 
-data "octopusdeploy_deployment_targets" "target_kubernetes_target" {
-  ids                  = null
-  partial_name         = "Kubernetes Target"
-  skip                 = 0
-  take                 = 1
-  health_statuses      = null
-  communication_styles = null
-  environments         = null
-  roles                = null
-  shell_names          = null
-  tenant_tags          = null
-  tenants              = null
-}
-resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_target" {
-  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_target.deployment_targets) != 0 ? 0 : 1}"
-  cluster_url                       = "https://example.org"
-  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-  name                              = "Kubernetes Target"
-  roles                             = ["Kubernetes"]
-  default_worker_pool_id            = "${length(data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id : data.octopusdeploy_worker_pools.Default Worker Pool.worker_pools[0].id}"
-  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
-  skip_tls_verification             = true
-  tenant_tags                       = []
-  tenanted_deployment_participation = "Untenanted"
-  tenants                           = []
-
-  endpoint {
-    communication_style = "Kubernetes"
-  }
-
-  container {
-    feed_id = "Feeds-5455"
-    image   = "octopusdeploy/worker-tools:6.4.0-ubuntu.22.04"
-  }
-
-  aws_account_authentication {
-    account_id        = "${length(data.octopusdeploy_accounts.account_aws_oidc.accounts) != 0 ? data.octopusdeploy_accounts.account_aws_oidc.accounts[0].id : octopusdeploy_aws_openid_connect_account.account_aws_oidc[0].id}"
-    cluster_name      = "mytestcluster"
-    assume_role       = false
-    use_instance_role = false
-  }
+data "octopusdeploy_machine_policies" "default_machine_policy" {
+  ids          = null
+  partial_name = "Default Machine Policy"
+  skip         = 0
+  take         = 1
   lifecycle {
-    prevent_destroy = true
+    postcondition {
+      error_message = "Failed to resolve a machine policy called \"default_machine_policy\". This resource must exist in the space before this Terraform configuration is applied."
+      condition     = length(self.machine_policies) != 0
+    }
   }
-  depends_on = []
-}
-
-data "octopusdeploy_deployment_targets" "target_kubernetes_with_auzre_auth" {
-  ids                  = null
-  partial_name         = "Kubernetes with Auzre Auth"
-  skip                 = 0
-  take                 = 1
-  health_statuses      = null
-  communication_styles = null
-  environments         = null
-  roles                = null
-  shell_names          = null
-  tenant_tags          = null
-  tenants              = null
-}
-resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_with_auzre_auth" {
-  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_auzre_auth.deployment_targets) != 0 ? 0 : 1}"
-  cluster_url                       = ""
-  environments                      = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-  name                              = "Kubernetes with Auzre Auth"
-  roles                             = ["MyTargetName"]
-  default_worker_pool_id            = "${length(data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id : data.octopusdeploy_worker_pools.Default Worker Pool.worker_pools[0].id}"
-  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
-  skip_tls_verification             = false
-  tenant_tags                       = []
-  tenanted_deployment_participation = "Untenanted"
-  tenants                           = []
-
-  endpoint {
-    communication_style = "Kubernetes"
-  }
-
-  container {
-    feed_id = "Feeds-5473"
-    image   = "ghcr.io/octopusdeploylabs/k8s-workertools"
-  }
-
-  azure_service_principal_authentication {
-    account_id             = "${length(data.octopusdeploy_accounts.account_azure_service_principal.accounts) != 0 ? data.octopusdeploy_accounts.account_azure_service_principal.accounts[0].id : octopusdeploy_azure_service_principal.account_azure_service_principal[0].id}"
-    cluster_name           = "clustername"
-    cluster_resource_group = "resourcegroupname"
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-data "octopusdeploy_deployment_targets" "target_kubernetes_with_certificate_auth" {
-  ids                  = null
-  partial_name         = "Kubernetes with Certificate Auth"
-  skip                 = 0
-  take                 = 1
-  health_statuses      = null
-  communication_styles = null
-  environments         = null
-  roles                = null
-  shell_names          = null
-  tenant_tags          = null
-  tenants              = null
-}
-resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_with_certificate_auth" {
-  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_certificate_auth.deployment_targets) != 0 ? 0 : 1}"
-  cluster_url                       = "http://cluster"
-  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-  name                              = "Kubernetes with Certificate Auth"
-  roles                             = ["MyTargetName"]
-  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
-  skip_tls_verification             = true
-  tenant_tags                       = []
-  tenanted_deployment_participation = "Untenanted"
-  tenants                           = []
-
-  endpoint {
-    communication_style = "Kubernetes"
-  }
-
-  container {
-    feed_id = ""
-    image   = ""
-  }
-
-  certificate_authentication {
-    client_certificate = "${length(data.octopusdeploy_certificates.certificate_development_certificate.certificates) != 0 ? data.octopusdeploy_certificates.certificate_development_certificate.certificates[0].id : octopusdeploy_certificate.certificate_development_certificate[0].id}"
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-data "octopusdeploy_deployment_targets" "target_kubernetes_with_google_auth" {
-  ids                  = null
-  partial_name         = "Kubernetes with Google Auth"
-  skip                 = 0
-  take                 = 1
-  health_statuses      = null
-  communication_styles = null
-  environments         = null
-  roles                = null
-  shell_names          = null
-  tenant_tags          = null
-  tenants              = null
-}
-resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_with_google_auth" {
-  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_google_auth.deployment_targets) != 0 ? 0 : 1}"
-  cluster_url                       = ""
-  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-  name                              = "Kubernetes with Google Auth"
-  roles                             = ["MyTargetName"]
-  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
-  skip_tls_verification             = false
-  tenant_tags                       = []
-  tenanted_deployment_participation = "Untenanted"
-  tenants                           = []
-
-  endpoint {
-    communication_style = "Kubernetes"
-  }
-
-  container {
-    feed_id = ""
-    image   = ""
-  }
-
-  gcp_account_authentication {
-    account_id                  = "${length(data.octopusdeploy_accounts.account_google_cloud_account.accounts) != 0 ? data.octopusdeploy_accounts.account_google_cloud_account.accounts[0].id : octopusdeploy_gcp_account.account_google_cloud_account[0].id}"
-    cluster_name                = "clustername"
-    project                     = "projectname"
-    impersonate_service_account = false
-    region                      = "us-west1-a"
-    use_vm_service_account      = false
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-data "octopusdeploy_deployment_targets" "target_kubernetes_with_pod_service_account_auth" {
-  ids                  = null
-  partial_name         = "Kubernetes with Pod Service Account Auth"
-  skip                 = 0
-  take                 = 1
-  health_statuses      = null
-  communication_styles = null
-  environments         = null
-  roles                = null
-  shell_names          = null
-  tenant_tags          = null
-  tenants              = null
-}
-resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_with_pod_service_account_auth" {
-  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_pod_service_account_auth.deployment_targets) != 0 ? 0 : 1}"
-  cluster_url                       = "http://mycluster"
-  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-  name                              = "Kubernetes with Pod Service Account Auth"
-  roles                             = ["MyTargetName"]
-  cluster_certificate_path          = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-  default_worker_pool_id            = "${length(data.octopusdeploy_worker_pools.workerpool_worker_pool.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_worker_pool.worker_pools[0].id : octopusdeploy_static_worker_pool.workerpool_worker_pool[0].id}"
-  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
-  skip_tls_verification             = false
-  tenant_tags                       = []
-  tenanted_deployment_participation = "Untenanted"
-  tenants                           = []
-
-  endpoint {
-    communication_style = "Kubernetes"
-  }
-
-  container {
-    feed_id = ""
-    image   = ""
-  }
-
-  pod_authentication {
-    token_path = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-data "octopusdeploy_deployment_targets" "target_kubernetes_with_token_auth" {
-  ids                  = null
-  partial_name         = "Kubernetes with Token Auth"
-  skip                 = 0
-  take                 = 1
-  health_statuses      = null
-  communication_styles = null
-  environments         = null
-  roles                = null
-  shell_names          = null
-  tenant_tags          = null
-  tenants              = null
-}
-resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_with_token_auth" {
-  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_token_auth.deployment_targets) != 0 ? 0 : 1}"
-  cluster_url                       = "http://clusterurl"
-  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}", "${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
-  name                              = "Kubernetes with Token Auth"
-  roles                             = ["Kubernetes"]
-  cluster_certificate               = "${length(data.octopusdeploy_certificates.certificate_development_certificate.certificates) != 0 ? data.octopusdeploy_certificates.certificate_development_certificate.certificates[0].id : octopusdeploy_certificate.certificate_development_certificate[0].id}"
-  default_worker_pool_id            = "${length(data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id : data.octopusdeploy_worker_pools.Default Worker Pool.worker_pools[0].id}"
-  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
-  skip_tls_verification             = false
-  tenant_tags                       = []
-  tenanted_deployment_participation = "Untenanted"
-  tenants                           = []
-
-  endpoint {
-    communication_style = "Kubernetes"
-  }
-
-  container {
-    feed_id = ""
-    image   = ""
-  }
-
-  authentication {
-    account_id = "${length(data.octopusdeploy_accounts.account_token.accounts) != 0 ? data.octopusdeploy_accounts.account_token.accounts[0].id : octopusdeploy_token_account.account_token[0].id}"
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-data "octopusdeploy_deployment_targets" "target_kubernetes_with_username_and_password_auth" {
-  ids                  = null
-  partial_name         = "Kubernetes with Username and Password Auth"
-  skip                 = 0
-  take                 = 1
-  health_statuses      = null
-  communication_styles = null
-  environments         = null
-  roles                = null
-  shell_names          = null
-  tenant_tags          = null
-  tenants              = null
-}
-resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_with_username_and_password_auth" {
-  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_username_and_password_auth.deployment_targets) != 0 ? 0 : 1}"
-  cluster_url                       = "http://10.1.2.3"
-  environments                      = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-  name                              = "Kubernetes with Username and Password Auth"
-  roles                             = ["MyTargetName"]
-  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
-  skip_tls_verification             = true
-  tenant_tags                       = []
-  tenanted_deployment_participation = "Untenanted"
-  tenants                           = []
-
-  endpoint {
-    communication_style = "Kubernetes"
-  }
-
-  container {
-    feed_id = ""
-    image   = ""
-  }
-
-  authentication {
-    account_id = "${length(data.octopusdeploy_accounts.account_username_password.accounts) != 0 ? data.octopusdeploy_accounts.account_username_password.accounts[0].id : octopusdeploy_username_password_account.account_username_password[0].id}"
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-  depends_on = []
 }
 
 data "octopusdeploy_certificates" "certificate_development_certificate" {
@@ -1983,7 +1679,7 @@ resource "octopusdeploy_tenant" "tenant_australian_office" {
   name        = "Australian Office"
   description = "An example tenant that represents an Australian office"
   tenant_tags = ["Cities/Sydney"]
-  depends_on  = [octopusdeploy_tag.tagset_cities_tag_sydney,octopusdeploy_tag_set.tagset_cities]
+  depends_on  = [octopusdeploy_tag_set.tagset_cities,octopusdeploy_tag.tagset_cities_tag_sydney]
   lifecycle {
     prevent_destroy = true
   }
@@ -2046,17 +1742,321 @@ resource "octopusdeploy_tenant" "tenant_tenant" {
   }
 }
 
-data "octopusdeploy_machine_policies" "default_machine_policy" {
-  ids          = null
-  partial_name = "Default Machine Policy"
-  skip         = 0
-  take         = 1
-  lifecycle {
-    postcondition {
-      error_message = "Failed to resolve a machine policy called \"default_machine_policy\". This resource must exist in the space before this Terraform configuration is applied."
-      condition     = length(self.machine_policies) != 0
-    }
+data "octopusdeploy_deployment_targets" "target_kubernetes_target" {
+  ids                  = null
+  partial_name         = "Kubernetes Target"
+  skip                 = 0
+  take                 = 1
+  health_statuses      = null
+  communication_styles = null
+  environments         = null
+  roles                = null
+  shell_names          = null
+  tenant_tags          = null
+  tenants              = null
+}
+resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_target" {
+  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_target.deployment_targets) != 0 ? 0 : 1}"
+  cluster_url                       = "https://example.org"
+  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+  name                              = "Kubernetes Target"
+  roles                             = ["Kubernetes"]
+  default_worker_pool_id            = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.Hosted Ubuntu.worker_pools[0].id}"
+  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
+  skip_tls_verification             = true
+  tenant_tags                       = []
+  tenanted_deployment_participation = "Untenanted"
+  tenants                           = []
+
+  endpoint {
+    communication_style = "Kubernetes"
   }
+
+  container {
+    feed_id = "Feeds-5455"
+    image   = "octopusdeploy/worker-tools:6.4.0-ubuntu.22.04"
+  }
+
+  aws_account_authentication {
+    account_id        = "${length(data.octopusdeploy_accounts.account_aws_oidc.accounts) != 0 ? data.octopusdeploy_accounts.account_aws_oidc.accounts[0].id : octopusdeploy_aws_openid_connect_account.account_aws_oidc[0].id}"
+    cluster_name      = "mytestcluster"
+    assume_role       = false
+    use_instance_role = false
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+data "octopusdeploy_deployment_targets" "target_kubernetes_with_auzre_auth" {
+  ids                  = null
+  partial_name         = "Kubernetes with Auzre Auth"
+  skip                 = 0
+  take                 = 1
+  health_statuses      = null
+  communication_styles = null
+  environments         = null
+  roles                = null
+  shell_names          = null
+  tenant_tags          = null
+  tenants              = null
+}
+resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_with_auzre_auth" {
+  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_auzre_auth.deployment_targets) != 0 ? 0 : 1}"
+  cluster_url                       = ""
+  environments                      = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+  name                              = "Kubernetes with Auzre Auth"
+  roles                             = ["MyTargetName"]
+  default_worker_pool_id            = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.Hosted Ubuntu.worker_pools[0].id}"
+  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
+  skip_tls_verification             = false
+  tenant_tags                       = []
+  tenanted_deployment_participation = "Untenanted"
+  tenants                           = []
+
+  endpoint {
+    communication_style = "Kubernetes"
+  }
+
+  container {
+    feed_id = "Feeds-5473"
+    image   = "ghcr.io/octopusdeploylabs/k8s-workertools"
+  }
+
+  azure_service_principal_authentication {
+    account_id             = "${length(data.octopusdeploy_accounts.account_azure_service_principal.accounts) != 0 ? data.octopusdeploy_accounts.account_azure_service_principal.accounts[0].id : octopusdeploy_azure_service_principal.account_azure_service_principal[0].id}"
+    cluster_name           = "clustername"
+    cluster_resource_group = "resourcegroupname"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+data "octopusdeploy_deployment_targets" "target_kubernetes_with_certificate_auth" {
+  ids                  = null
+  partial_name         = "Kubernetes with Certificate Auth"
+  skip                 = 0
+  take                 = 1
+  health_statuses      = null
+  communication_styles = null
+  environments         = null
+  roles                = null
+  shell_names          = null
+  tenant_tags          = null
+  tenants              = null
+}
+resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_with_certificate_auth" {
+  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_certificate_auth.deployment_targets) != 0 ? 0 : 1}"
+  cluster_url                       = "http://cluster"
+  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+  name                              = "Kubernetes with Certificate Auth"
+  roles                             = ["MyTargetName"]
+  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
+  skip_tls_verification             = true
+  tenant_tags                       = []
+  tenanted_deployment_participation = "Untenanted"
+  tenants                           = []
+
+  endpoint {
+    communication_style = "Kubernetes"
+  }
+
+  container {
+    feed_id = ""
+    image   = ""
+  }
+
+  certificate_authentication {
+    client_certificate = "${length(data.octopusdeploy_certificates.certificate_development_certificate.certificates) != 0 ? data.octopusdeploy_certificates.certificate_development_certificate.certificates[0].id : octopusdeploy_certificate.certificate_development_certificate[0].id}"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+data "octopusdeploy_deployment_targets" "target_kubernetes_with_google_auth" {
+  ids                  = null
+  partial_name         = "Kubernetes with Google Auth"
+  skip                 = 0
+  take                 = 1
+  health_statuses      = null
+  communication_styles = null
+  environments         = null
+  roles                = null
+  shell_names          = null
+  tenant_tags          = null
+  tenants              = null
+}
+resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_with_google_auth" {
+  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_google_auth.deployment_targets) != 0 ? 0 : 1}"
+  cluster_url                       = ""
+  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+  name                              = "Kubernetes with Google Auth"
+  roles                             = ["MyTargetName"]
+  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
+  skip_tls_verification             = false
+  tenant_tags                       = []
+  tenanted_deployment_participation = "Untenanted"
+  tenants                           = []
+
+  endpoint {
+    communication_style = "Kubernetes"
+  }
+
+  container {
+    feed_id = ""
+    image   = ""
+  }
+
+  gcp_account_authentication {
+    account_id                  = "${length(data.octopusdeploy_accounts.account_google_cloud_account.accounts) != 0 ? data.octopusdeploy_accounts.account_google_cloud_account.accounts[0].id : octopusdeploy_gcp_account.account_google_cloud_account[0].id}"
+    cluster_name                = "clustername"
+    project                     = "projectname"
+    impersonate_service_account = false
+    region                      = "us-west1-a"
+    use_vm_service_account      = false
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+data "octopusdeploy_deployment_targets" "target_kubernetes_with_pod_service_account_auth" {
+  ids                  = null
+  partial_name         = "Kubernetes with Pod Service Account Auth"
+  skip                 = 0
+  take                 = 1
+  health_statuses      = null
+  communication_styles = null
+  environments         = null
+  roles                = null
+  shell_names          = null
+  tenant_tags          = null
+  tenants              = null
+}
+resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_with_pod_service_account_auth" {
+  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_pod_service_account_auth.deployment_targets) != 0 ? 0 : 1}"
+  cluster_url                       = "http://mycluster"
+  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+  name                              = "Kubernetes with Pod Service Account Auth"
+  roles                             = ["MyTargetName"]
+  cluster_certificate_path          = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+  default_worker_pool_id            = "${length(data.octopusdeploy_worker_pools.workerpool_worker_pool.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_worker_pool.worker_pools[0].id : octopusdeploy_static_worker_pool.workerpool_worker_pool[0].id}"
+  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
+  skip_tls_verification             = false
+  tenant_tags                       = []
+  tenanted_deployment_participation = "Untenanted"
+  tenants                           = []
+
+  endpoint {
+    communication_style = "Kubernetes"
+  }
+
+  container {
+    feed_id = ""
+    image   = ""
+  }
+
+  pod_authentication {
+    token_path = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+data "octopusdeploy_deployment_targets" "target_kubernetes_with_token_auth" {
+  ids                  = null
+  partial_name         = "Kubernetes with Token Auth"
+  skip                 = 0
+  take                 = 1
+  health_statuses      = null
+  communication_styles = null
+  environments         = null
+  roles                = null
+  shell_names          = null
+  tenant_tags          = null
+  tenants              = null
+}
+resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_with_token_auth" {
+  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_token_auth.deployment_targets) != 0 ? 0 : 1}"
+  cluster_url                       = "http://clusterurl"
+  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}", "${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  name                              = "Kubernetes with Token Auth"
+  roles                             = ["Kubernetes"]
+  cluster_certificate               = "${length(data.octopusdeploy_certificates.certificate_development_certificate.certificates) != 0 ? data.octopusdeploy_certificates.certificate_development_certificate.certificates[0].id : octopusdeploy_certificate.certificate_development_certificate[0].id}"
+  default_worker_pool_id            = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.Hosted Ubuntu.worker_pools[0].id}"
+  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
+  skip_tls_verification             = false
+  tenant_tags                       = []
+  tenanted_deployment_participation = "Untenanted"
+  tenants                           = []
+
+  endpoint {
+    communication_style = "Kubernetes"
+  }
+
+  container {
+    feed_id = ""
+    image   = ""
+  }
+
+  authentication {
+    account_id = "${length(data.octopusdeploy_accounts.account_token.accounts) != 0 ? data.octopusdeploy_accounts.account_token.accounts[0].id : octopusdeploy_token_account.account_token[0].id}"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+data "octopusdeploy_deployment_targets" "target_kubernetes_with_username_and_password_auth" {
+  ids                  = null
+  partial_name         = "Kubernetes with Username and Password Auth"
+  skip                 = 0
+  take                 = 1
+  health_statuses      = null
+  communication_styles = null
+  environments         = null
+  roles                = null
+  shell_names          = null
+  tenant_tags          = null
+  tenants              = null
+}
+resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_with_username_and_password_auth" {
+  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_username_and_password_auth.deployment_targets) != 0 ? 0 : 1}"
+  cluster_url                       = "http://10.1.2.3"
+  environments                      = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+  name                              = "Kubernetes with Username and Password Auth"
+  roles                             = ["MyTargetName"]
+  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
+  skip_tls_verification             = true
+  tenant_tags                       = []
+  tenanted_deployment_participation = "Untenanted"
+  tenants                           = []
+
+  endpoint {
+    communication_style = "Kubernetes"
+  }
+
+  container {
+    feed_id = ""
+    image   = ""
+  }
+
+  authentication {
+    account_id = "${length(data.octopusdeploy_accounts.account_username_password.accounts) != 0 ? data.octopusdeploy_accounts.account_username_password.accounts[0].id : octopusdeploy_username_password_account.account_username_password[0].id}"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+  depends_on = []
 }
 
 data "octopusdeploy_deployment_targets" "target_cloudregion1" {
@@ -2125,82 +2125,6 @@ resource "octopusdeploy_cloud_region_deployment_target" "target_cloudregion2" {
     prevent_destroy = true
   }
   depends_on = []
-}
-
-data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {
-  ids             = null
-  environment_ids = null
-  project_ids     = null
-  tenant_ids      = null
-  partial_name    = "Xmas"
-  skip            = 0
-  take            = 1
-}
-resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
-  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
-  name  = "Xmas"
-  start = "2024-12-24T14:00:00.000+00:00"
-  end   = "2025-12-26T16:00:00.000+00:00"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {
-  ids             = null
-  environment_ids = null
-  project_ids     = null
-  tenant_ids      = null
-  partial_name    = "Xmas"
-  skip            = 0
-  take            = 1
-}
-resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
-  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
-  name  = "Xmas"
-  start = "2024-12-24T14:00:00.000+00:00"
-  end   = "2025-12-26T16:00:00.000+00:00"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {
-  ids             = null
-  environment_ids = null
-  project_ids     = null
-  tenant_ids      = null
-  partial_name    = "Xmas"
-  skip            = 0
-  take            = 1
-}
-resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
-  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
-  name  = "Xmas"
-  start = "2024-12-24T14:00:00.000+00:00"
-  end   = "2025-12-26T16:00:00.000+00:00"
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {
-  ids             = null
-  environment_ids = null
-  project_ids     = null
-  tenant_ids      = null
-  partial_name    = "Xmas"
-  skip            = 0
-  take            = 1
-}
-resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
-  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
-  name  = "Xmas"
-  start = "2024-12-24T14:00:00.000+00:00"
-  end   = "2025-12-26T16:00:00.000+00:00"
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "octopusdeploy_variable" "variables_example_variable_set_database_password_1" {
@@ -2349,6 +2273,82 @@ resource "octopusdeploy_library_variable_set" "library_variable_set_variables_ex
     default_value    = ""
     display_settings = { "Octopus.ControlType" = "WorkerPool" }
   }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {
+  ids             = null
+  environment_ids = null
+  project_ids     = null
+  tenant_ids      = null
+  partial_name    = "Xmas"
+  skip            = 0
+  take            = 1
+}
+resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
+  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
+  name  = "Xmas"
+  start = "2024-12-24T14:00:00.000+00:00"
+  end   = "2025-12-26T16:00:00.000+00:00"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {
+  ids             = null
+  environment_ids = null
+  project_ids     = null
+  tenant_ids      = null
+  partial_name    = "Xmas"
+  skip            = 0
+  take            = 1
+}
+resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
+  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
+  name  = "Xmas"
+  start = "2024-12-24T14:00:00.000+00:00"
+  end   = "2025-12-26T16:00:00.000+00:00"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {
+  ids             = null
+  environment_ids = null
+  project_ids     = null
+  tenant_ids      = null
+  partial_name    = "Xmas"
+  skip            = 0
+  take            = 1
+}
+resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
+  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
+  name  = "Xmas"
+  start = "2024-12-24T14:00:00.000+00:00"
+  end   = "2025-12-26T16:00:00.000+00:00"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_machine_policies" "deploymentfreeze_xmas" {
+  ids             = null
+  environment_ids = null
+  project_ids     = null
+  tenant_ids      = null
+  partial_name    = "Xmas"
+  skip            = 0
+  take            = 1
+}
+resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
+  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
+  name  = "Xmas"
+  start = "2024-12-24T14:00:00.000+00:00"
+  end   = "2025-12-26T16:00:00.000+00:00"
   lifecycle {
     prevent_destroy = true
   }

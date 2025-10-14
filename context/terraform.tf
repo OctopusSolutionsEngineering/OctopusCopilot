@@ -255,20 +255,20 @@ resource "octopusdeploy_process_step" "process_step_terraform_plan_to_apply_a_te
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Terraform.AzureAccount" = "False"
         "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
         "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
+        "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
       }
 }
 
@@ -314,20 +314,20 @@ resource "octopusdeploy_process_step" "process_step_terraform_apply_a_terraform_
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
         "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
         "Octopus.Action.Terraform.PlanJsonOutput" = "False"
         "Octopus.Action.Terraform.AzureAccount" = "False"
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
+        "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
       }
 }
 
@@ -344,7 +344,7 @@ data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
   take         = 1
 }
 
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
   ids          = null
   partial_name = "Hosted Ubuntu"
   skip         = 0
@@ -354,7 +354,7 @@ data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
 resource "octopusdeploy_variable" "terraform_project_workerpool_1" {
   count        = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_terraform.projects) == 0 ?octopusdeploy_project.project_terraform[0].id : data.octopusdeploy_projects.project_terraform.projects[0].id}"
-  value        = "${length(data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id : data.octopusdeploy_worker_pools.Default Worker Pool.worker_pools[0].id}"
+  value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.Hosted Ubuntu.worker_pools[0].id}"
   name         = "Project.WorkerPool"
   type         = "WorkerPool"
   description  = "The workerpool used by the steps. Defining the workerpool as a variable allows it to be changed in a single location for multiple steps."

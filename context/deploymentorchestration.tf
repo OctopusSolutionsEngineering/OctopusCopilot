@@ -231,7 +231,7 @@ data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
   take         = 1
 }
 
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+data "octopusdeploy_worker_pools" "workerpool_hosted_windows" {
   ids          = null
   partial_name = "Hosted Windows"
   skip         = 0
@@ -264,15 +264,15 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
   slug                  = "run-a-script"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id : data.octopusdeploy_worker_pools.Default Worker Pool.worker_pools[0].id}"
+  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.Hosted Windows.worker_pools[0].id}"
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"Hello world\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
