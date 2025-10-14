@@ -40,6 +40,7 @@ You must include all the following project deployment process resources from the
 ## VM Blue/Green Project Deployment Process Steps Instructions
 
 You must include all the following step resources from the "Example Octopus VM Blue/Green Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
+* resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_check_alternate_prod_deployment"
 * resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_approve_production_deployment"
 * resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net_iis_octopus___check_targets_available"
 * resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net_iis_octopus___check_smtp_server_configured"
