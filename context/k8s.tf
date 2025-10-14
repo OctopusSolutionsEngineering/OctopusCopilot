@@ -363,9 +363,9 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_approve_p
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
       }
 }
 
@@ -398,15 +398,15 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_
       }
   execution_properties  = {
         "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
+        "Octopus.UseBundledTooling" = "False"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"1\"\n            memory: \"512Mi\"\n          requests:\n            cpu: \"0.5\"\n            memory: \"256Mi\"\n        livenessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
         "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.UseBundledTooling" = "False"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"1\"\n            memory: \"512Mi\"\n          requests:\n            cpu: \"0.5\"\n            memory: \"256Mi\"\n        livenessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
         "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -455,11 +455,11 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_scan_for_
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DockerImageSbomScan.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
