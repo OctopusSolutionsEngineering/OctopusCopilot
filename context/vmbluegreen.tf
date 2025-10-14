@@ -180,7 +180,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_blue_green" {
     automatic_deployment_targets          = []
     optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
     name                                  = "Development"
-    is_optional_phase                     = true
+    is_optional_phase                     = false
     minimum_environments_before_promotion = 0
 
     release_retention_policy {
@@ -192,7 +192,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_blue_green" {
     automatic_deployment_targets          = []
     optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
     name                                  = "Test"
-    is_optional_phase                     = true
+    is_optional_phase                     = false
     minimum_environments_before_promotion = 0
 
     release_retention_policy {
@@ -312,7 +312,7 @@ data "octopusdeploy_step_template" "steptemplate_octopus___check_targets_availab
   name = "Octopus - Check Targets Available"
 }
 resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_targets_available" {
-  community_action_template_id = "${data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available.steps[0].id}"
+  community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available.steps[0].id : null}"
   count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_targets_available.step_template != null ? 0 : 1}"
 }
 
@@ -323,7 +323,7 @@ data "octopusdeploy_step_template" "steptemplate_octopus___check_smtp_server_con
   name = "Octopus - Check SMTP Server Configured"
 }
 resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_smtp_server_configured" {
-  community_action_template_id = "${data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured.steps[0].id}"
+  community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured.steps[0].id : null}"
   count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_smtp_server_configured.step_template != null ? 0 : 1}"
 }
 
@@ -375,10 +375,10 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "$errorCollection = @()\n$setupValid = $false\n\nWrite-Host \"Checking for deployment targets ...\"\n\ntry\n{\n    # Check to make sure targets have been created\n    if ([string]::IsNullOrWhitespace(\"#{Octopus.Web.ServerUri}\"))\n    {\n        $octopusUrl = \"#{Octopus.Web.BaseUrl}\"\n    }\n    else\n    {\n        $octopusUrl = \"#{Octopus.Web.ServerUri}\"\n    }\n\n    $apiKey = \"#{CheckTargets.Octopus.Api.Key}\"\n    $role = \"#{CheckTargets.Octopus.Role}\"\n    $message = \"#{CheckTargets.Message}\"\n\n    if (![string]::IsNullOrWhitespace($apiKey) -and $apiKey.StartsWith(\"API-\"))\n    {\n        $spaceId = \"#{Octopus.Space.Id}\"\n        $headers = @{ \"X-Octopus-ApiKey\" = \"$apiKey\" }\n\n        try\n        {\n            $roleTargets = Invoke-RestMethod -Method Get -Uri \"$octopusUrl/api/$spaceId/machines?roles=$role\" -Headers $headers\n            if ($roleTargets.Items.Count -lt 1)\n            {\n                $errorCollection += @(\"Expected at least 1 target for tag $role, but found $( $roleTargets.Items.Count ). $message\")\n            }\n        }\n        catch\n        {\n            $errorCollection += @(\"Failed to retrieve role targets: $( $_.Exception.Message )\")\n        }\n\n        if ($errorCollection.Count -gt 0)\n        {\n            foreach ($item in $errorCollection)\n            {\n                Write-Highlight \"$item\"\n            }\n        }\n        else\n        {\n            $setupValid = $true\n            Write-Host \"Setup valid!\"\n        }\n    }\n    else\n    {\n        Write-Highlight \"The project variable CheckTargets.Octopus.Api.Key has not been configured, unable to check deployment targets.\"\n    }\n\n    Set-OctopusVariable -Name SetupValid -Value $setupValid\n} catch {\n    Write-Verbose \"Fatal error occurred:\"\n    Write-Verbose \"$($_.Exception.Message)\"\n}"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.ScriptBody" = "$errorCollection = @()\n$setupValid = $false\n\nWrite-Host \"Checking for deployment targets ...\"\n\ntry\n{\n    # Check to make sure targets have been created\n    if ([string]::IsNullOrWhitespace(\"#{Octopus.Web.ServerUri}\"))\n    {\n        $octopusUrl = \"#{Octopus.Web.BaseUrl}\"\n    }\n    else\n    {\n        $octopusUrl = \"#{Octopus.Web.ServerUri}\"\n    }\n\n    $apiKey = \"#{CheckTargets.Octopus.Api.Key}\"\n    $role = \"#{CheckTargets.Octopus.Role}\"\n    $message = \"#{CheckTargets.Message}\"\n\n    if (![string]::IsNullOrWhitespace($apiKey) -and $apiKey.StartsWith(\"API-\"))\n    {\n        $spaceId = \"#{Octopus.Space.Id}\"\n        $headers = @{ \"X-Octopus-ApiKey\" = \"$apiKey\" }\n\n        try\n        {\n            $roleTargets = Invoke-RestMethod -Method Get -Uri \"$octopusUrl/api/$spaceId/machines?roles=$role\" -Headers $headers\n            if ($roleTargets.Items.Count -lt 1)\n            {\n                $errorCollection += @(\"Expected at least 1 target for tag $role, but found $( $roleTargets.Items.Count ). $message\")\n            }\n        }\n        catch\n        {\n            $errorCollection += @(\"Failed to retrieve role targets: $( $_.Exception.Message )\")\n        }\n\n        if ($errorCollection.Count -gt 0)\n        {\n            foreach ($item in $errorCollection)\n            {\n                Write-Highlight \"$item\"\n            }\n        }\n        else\n        {\n            $setupValid = $true\n            Write-Host \"Setup valid!\"\n        }\n    }\n    else\n    {\n        Write-Highlight \"The project variable CheckTargets.Octopus.Api.Key has not been configured, unable to check deployment targets.\"\n    }\n\n    Set-OctopusVariable -Name SetupValid -Value $setupValid\n} catch {\n    Write-Verbose \"Fatal error occurred:\"\n    Write-Verbose \"$($_.Exception.Message)\"\n}"
         "OctopusUseBundledTooling" = "False"
       }
 }
@@ -402,11 +402,11 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "$apiKey = \"#{SmtpCheck.Octopus.Api.Key}\"\n$isSmtpConfigured = $false\n\nif (![string]::IsNullOrWhitespace($apiKey) -and $apiKey.StartsWith(\"API-\"))\n{\n    if ([String]::IsNullOrWhitespace(\"#{Octopus.Web.ServerUri}\"))\n    {\n        $octopusUrl = \"#{Octopus.Web.BaseUrl}\"\n    }\n    else\n    {\n        $octopusUrl = \"#{Octopus.Web.ServerUri}\"\n    }\n\n    $uriBuilder = New-Object System.UriBuilder(\"$octopusUrl/api/smtpconfiguration/isconfigured\")\n    $uri = $uriBuilder.ToString()\n\n    try\n    {\n        $headers = @{ \"X-Octopus-ApiKey\" = $apiKey }\n        $smtpConfigured = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers\n        $isSmtpConfigured = $smtpConfigured.IsConfigured\n    }\n    catch\n    {\n        Write-Host \"Error checking SMTP configuration: $($_.Exception.Message)\"\n    }\n}\nelse\n{\n    Write-Highlight \"The project variable SmtpCheck.Octopus.Api.Key has not been configured, unable to check SMTP configuration.\"\n}\n\nif (-not $isSmtpConfigured)\n{\n    Write-Highlight \"SMTP is not configured. Please [configure SMTP](https://octopus.com/docs/projects/built-in-step-templates/email-notifications#smtp-configuration) settings in Octopus Deploy.\"\n}\n\nSet-OctopusVariable -Name SmtpConfigured -Value $isSmtpConfigured"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -458,10 +458,10 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }
   execution_properties  = {
+        "Octopus.Action.Email.Body" = "The deployment succeeded."
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "releases@example.org"
         "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
-        "Octopus.Action.Email.Body" = "The deployment succeeded."
       }
 }
 
