@@ -255,6 +255,26 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
   }
 }
 
+data "octopusdeploy_feeds" "feed_octopus_maven_feed" {
+  feed_type    = "Maven"
+  ids          = null
+  partial_name = "Octopus Maven Feed"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? 0 : 1}"
+  name                                 = "Octopus Maven Feed"
+  feed_uri                             = "http://octopus-sales-public-maven-repo.s3-website-ap-southeast-2.amazonaws.com/snapshot"
+  package_acquisition_location_options = ["Server", "ExecutionTarget"]
+  download_attempts                    = 5
+  download_retry_backoff_seconds       = 10
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
 data "octopusdeploy_environments" "environment_production" {
   ids          = null
   partial_name = "Production"
@@ -330,8 +350,8 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_appro
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "true"
       }
 }
@@ -356,10 +376,10 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
       }
   execution_properties  = {
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "$errorCollection = @()\n$setupValid = $false\n\nWrite-Host \"Checking for deployment targets ...\"\n\ntry\n{\n    # Check to make sure targets have been created\n    if ([string]::IsNullOrWhitespace(\"#{Octopus.Web.ServerUri}\"))\n    {\n        $octopusUrl = \"#{Octopus.Web.BaseUrl}\"\n    }\n    else\n    {\n        $octopusUrl = \"#{Octopus.Web.ServerUri}\"\n    }\n\n    $apiKey = \"#{CheckTargets.Octopus.Api.Key}\"\n    $role = \"#{CheckTargets.Octopus.Role}\"\n    $message = \"#{CheckTargets.Message}\"\n\n    if (![string]::IsNullOrWhitespace($apiKey) -and $apiKey.StartsWith(\"API-\"))\n    {\n        $spaceId = \"#{Octopus.Space.Id}\"\n        $headers = @{ \"X-Octopus-ApiKey\" = \"$apiKey\" }\n\n        try\n        {\n            $roleTargets = Invoke-RestMethod -Method Get -Uri \"$octopusUrl/api/$spaceId/machines?roles=$role\" -Headers $headers\n            if ($roleTargets.Items.Count -lt 1)\n            {\n                $errorCollection += @(\"Expected at least 1 target for tag $role, but found $( $roleTargets.Items.Count ). $message\")\n            }\n        }\n        catch\n        {\n            $errorCollection += @(\"Failed to retrieve role targets: $( $_.Exception.Message )\")\n        }\n\n        if ($errorCollection.Count -gt 0)\n        {\n            foreach ($item in $errorCollection)\n            {\n                Write-Highlight \"$item\"\n            }\n        }\n        else\n        {\n            $setupValid = $true\n            Write-Host \"Setup valid!\"\n        }\n    }\n    else\n    {\n        Write-Highlight \"The project variable CheckTargets.Octopus.Api.Key has not been configured, unable to check deployment targets.\"\n    }\n\n    Set-OctopusVariable -Name SetupValid -Value $setupValid\n} catch {\n    Write-Verbose \"Fatal error occurred:\"\n    Write-Verbose \"$($_.Exception.Message)\"\n}"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
       }
 }
 
@@ -384,9 +404,9 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   execution_properties  = {
         "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "$apiKey = \"#{SmtpCheck.Octopus.Api.Key}\"\n$isSmtpConfigured = $false\n\nif (![string]::IsNullOrWhitespace($apiKey) -and $apiKey.StartsWith(\"API-\"))\n{\n    if ([String]::IsNullOrWhitespace(\"#{Octopus.Web.ServerUri}\"))\n    {\n        $octopusUrl = \"#{Octopus.Web.BaseUrl}\"\n    }\n    else\n    {\n        $octopusUrl = \"#{Octopus.Web.ServerUri}\"\n    }\n\n    $uriBuilder = New-Object System.UriBuilder(\"$octopusUrl/api/smtpconfiguration/isconfigured\")\n    $uri = $uriBuilder.ToString()\n\n    try\n    {\n        $headers = @{ \"X-Octopus-ApiKey\" = $apiKey }\n        $smtpConfigured = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers\n        $isSmtpConfigured = $smtpConfigured.IsConfigured\n    }\n    catch\n    {\n        Write-Host \"Error checking SMTP configuration: $($_.Exception.Message)\"\n    }\n}\nelse\n{\n    Write-Highlight \"The project variable SmtpCheck.Octopus.Api.Key has not been configured, unable to check SMTP configuration.\"\n}\n\nif (-not $isSmtpConfigured)\n{\n    Write-Highlight \"SMTP is not configured. Please [configure SMTP](https://octopus.com/docs/projects/built-in-step-templates/email-notifications#smtp-configuration) settings in Octopus Deploy.\"\n}\n\nSet-OctopusVariable -Name SmtpConfigured -Value $isSmtpConfigured"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -395,7 +415,7 @@ variable "project_random_quotes__net_iis_step_transfer_a_package_packageid" {
   nullable    = false
   sensitive   = false
   description = "The package ID for the package named  from step Transfer a Package in project Random Quotes .NET IIS"
-  default     = "RandomQuotes"
+  default     = "com.octopus:randomquotes-dotnet"
 }
 resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_transfer_a_package" {
   count                 = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
@@ -408,7 +428,7 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_trans
   excluded_environments = null
   notes                 = "Transfers a package to the VM."
   package_requirement   = "LetOctopusDecide"
-  primary_package       = { acquisition_location = "Server", feed_id = "${data.octopusdeploy_feeds.feed_octopus_server__built_in_.feeds[0].id}", id = null, package_id = "${var.project_random_quotes__net_iis_step_transfer_a_package_packageid}", properties = { SelectionMode = "immediate" } }
+  primary_package       = { acquisition_location = "Server", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_random_quotes__net_iis_step_transfer_a_package_packageid}", properties = { SelectionMode = "immediate" } }
   slug                  = "transfer-a-package"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
@@ -438,10 +458,10 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
-        "Octopus.Action.Email.Body" = "The deployment succeeded."
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "releases@example.org"
+        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
+        "Octopus.Action.Email.Body" = "The deployment succeeded."
       }
 }
 
@@ -729,7 +749,7 @@ variable "project_random_quotes__net_iis_description" {
   nullable    = false
   sensitive   = false
   description = "The description of the project exported from Random Quotes .NET IIS"
-  default     = "Deploys the .NET version of Random Quotes using the Blue/Green environment pattern to a single server with multiple applications.  [Build definition](https://bamboo.octopussamples.com/browse/RAN-NET)"
+  default     = "Deploys the .NET version of Random Quotes using the Blue/Green environment pattern to a single server with multiple applications.  [Build definition](https://bamboo.octopussamples.com/browse/RAN-NET).\n\nRecreate this project with the AI Assistant using the prompt:\n\n `Create a VM Blue/Green project called \"My VM Blue Green Project\"`"
 }
 variable "project_random_quotes__net_iis_tenanted" {
   type        = string
