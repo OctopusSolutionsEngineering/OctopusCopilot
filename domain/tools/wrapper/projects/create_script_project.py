@@ -18,7 +18,7 @@ def create_script_project_wrapper(query, callback, logging):
         Args:
         space_name: The optional name of the space
         project_name: The name of the project
-        no_prompt: Weather to disable the prompt. Defaults to False.
+        no_prompt: Whether to disable the prompt. Defaults to False.
         """
 
         if logging:
