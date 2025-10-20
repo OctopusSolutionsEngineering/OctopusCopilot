@@ -1168,6 +1168,7 @@ data "octopusdeploy_deployment_targets" "kubernetes_cluster_target_example" {
 ## Octopus Account Instructions
 
 * You must set the "token" attribute on a "octopusdeploy_token_account" resource to "CHANGEME".
+* If the prompt indicates that an account is associated with a tenant, the "tenanted_deployment_participation" property must be set to "TenantedOrUntenanted".
 
 ## Terraform Instructions
 * You can only use the following built-in terraform functions:
