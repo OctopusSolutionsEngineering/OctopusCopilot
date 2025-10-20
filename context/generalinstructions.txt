@@ -1104,6 +1104,8 @@ resource "octopusdeploy_variable" "worker_pool_variable" {
 }
 ```
 
+* You will be penalized for defining a variable of type "WorkerPool" without setting the "value" attribute to "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}".
+
 ## Runbook Instructions
 
 * The "runbook_id" attribute of resource "octopusdeploy_runbook_process" is in the format "${length(data.octopusdeploy_projects.<project>.projects) != 0 ? null : octopusdeploy_runbook.<runbook>[0].id}"
