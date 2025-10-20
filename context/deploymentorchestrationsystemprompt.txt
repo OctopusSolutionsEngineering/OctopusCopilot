@@ -56,3 +56,6 @@ You must include all the following lifecycle resources from the "Example Octopus
 * resource "octopusdeploy_lifecycle" "lifecycle_application"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
 
+# Additional Deployment Orchestration Instructions
+
+* If the prompt specifies which projects to deploy, you must not include the resource "octopusdeploy_project" "project_child_project".
