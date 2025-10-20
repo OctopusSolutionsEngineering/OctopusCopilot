@@ -1180,7 +1180,7 @@ data "octopusdeploy_deployment_targets" "kubernetes_cluster_target_example" {
 ## Octopus Account Instructions
 
 * You must set the "token" attribute on a "octopusdeploy_token_account" resource to "CHANGEME".
-* If the prompt indicates that an account is associated with a tenant, the "tenanted_deployment_participation" property must be set to "TenantedOrUntenanted".
+* If the prompt indicates that an account is associated with a tenant, and the prompt does not specify the project tenanted mode to use, the "tenanted_deployment_participation" property must be set to "TenantedOrUntenanted".
 * You must create one distinct "octopusdeploy_aws_openid_connect_account" resource for each AWS OIDC account specified in the prompt.
 * You must create one distinct "octopusdeploy_accounts" data source for each "octopusdeploy_aws_openid_connect_account" resource.
 * You will be penalized for using a `locals` block to define account names.
