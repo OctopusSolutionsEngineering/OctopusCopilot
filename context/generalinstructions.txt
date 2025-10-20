@@ -1036,6 +1036,83 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
 }
 ```
 
+* Orchestration or orcestrator projects contain steps of type "Octopus.DeployRelease" that deploy a child project.
+* Each "Octopus.DeployRelease" step must have a "Octopus.Action.DeployRelease.ProjectId" execution property and a "primary_package" with the "package_id" set to the child project ID.
+* The ID of the child project can be obtained from a data "octopusdeploy_projects" data source.
+* The following is an example of a "Octopus.DeployRelease" step that references a data "octopusdeploy_projects" data source for the child project ID and a data "octopusdeploy_feeds" data source for the feed ID:
+
+```
+# This data source is used to find an existing parent project by its name.
+data "octopusdeploy_projects" "project_every_step_project" {
+  ids          = null
+  partial_name = "Orchestrator Project"
+  skip         = 0
+  take         = 1
+}
+
+# This data source find the built-in Octopus Server Releases feed.
+data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_" {
+  feed_type    = "OctopusProject"
+  ids          = null
+  partial_name = "Octopus Server Releases"
+  skip         = 0
+  take         = 1
+}
+
+# This data source is used to find an existing child project by its name.
+data "octopusdeploy_projects" "project_every_step_project" {
+  ids          = null
+  # Replace this attribute with the name of the project you want to deploy
+  partial_name = "Child project name"
+  skip         = 0
+  take         = 1
+}
+
+# This resource creates a step that deploys the child project.
+resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_release" {
+  count                 = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? 0 : 1}"
+  name                  = "Deploy a Release"
+  type                  = "Octopus.DeployRelease"
+  process_id            = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? null : octopusdeploy_process.process_every_step_project[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = null
+  notes                 = "This step is used to deploy a release of a child project."
+  package_requirement   = "LetOctopusDecide"
+  primary_package       = {
+    acquisition_location = "NotAcquired",
+    # The feed_id is set to the built-in Octopus Server Releases feed found in the data source
+    feed_id = "${data.octopusdeploy_feeds.feed_octopus_server_releases__built_in_.feeds[0].id}",
+    id = null,
+    # The package_id is set to the child project ID found via the data source
+    package_id = "${data.octopusdeploy_projects.project_child_project.projects[0].id}",
+    properties = null
+  }
+  slug                  = "deploy-a-release"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  properties            = {
+      }
+  execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.DeployRelease.DeploymentCondition" = "Always"
+        # The "Octopus.Action.DeployRelease.ProjectId" property is set to the child project ID found via the data source
+        "Octopus.Action.DeployRelease.ProjectId" = "${data.octopusdeploy_projects.project_child_project.projects[0].id}"
+      }
+}
+```
+
+* The "Octopus.Action.DeployRelease.ProjectId" and "package_id" properties must reference only a data source.
+* You will be penalized for setting the "Octopus.Action.DeployRelease.ProjectId" or "package_id" property to something like `"${length(data.octopusdeploy_projects.project_reporting_microservice.projects) != 0 ? data.octopusdeploy_projects.project_reporting_microservice.projects[0].id : octopusdeploy_project.project_reporting_microservice[0].id}"`
+* You will be penalized for setting the "Octopus.Action.DeployRelease.ProjectId" property to a fixed value like "Projects-8916", "Projects-8915", and "Projects-8917".
+* You will be penalized for setting the "feed_id" attribute in the "primary_package" block to a fixed value like "Feeds-5936", "Feeds-5678", and "Feeds-91011".
+* You must not recreate the following, as these resources and data sources are only used to demonstrate the orchestration project step:
+    * data "octopusdeploy_projects" "project_child_project"
+    * resource "octopusdeploy_project" "project_child_project"
+* You must always include the `data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_"` data source.
+* The "feed_id" attribute in the "primary_package" block must always be set to the built-in Octopus Server Releases feed found in the `data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_"` data source.
+
 ## Octopus Variable Syntax Instructions
 
 * Octopus variable syntax must be defined as "#{<variable name>}"
