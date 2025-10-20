@@ -27,6 +27,7 @@ def general_instructions(filename, label):
 def find_octopus_variables(filename, label):
     # Pattern to match the resource declarations for octopusdeploy_variable
     pattern = r'resource\s+"octopusdeploy_variable"\s+"[^"]+"'
+    value_pattern = r'\s*value\s*=\s*"([^"]+)"'
 
     try:
         # Open and read the file
@@ -40,8 +41,16 @@ def find_octopus_variables(filename, label):
                 match = re.match(pattern, line)
                 additional_instructions = ""
 
+                # We have to be explicit with worker pool variables to set their value.
                 if match and "workerpool" in match.group(0).lower():
-                    additional_instructions = " (ensure the value of this variable queries the hosted work pool data source first and the default worker pool data source second)"
+                    for line_number2, line2 in enumerate(file, line_number):
+                        value_match = re.match(value_pattern, line2)
+
+                        if value_match:
+                            additional_instructions = (
+                                f' (set the value to "{value_match.group(1)}")'
+                            )
+                            break
 
                 if match:
                     print(f"* {match.group(0)}{additional_instructions}")
