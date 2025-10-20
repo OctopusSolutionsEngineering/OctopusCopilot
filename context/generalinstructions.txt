@@ -597,6 +597,7 @@ resource "octopusdeploy_external_feed_create_release_trigger" "projecttrigger_ev
 
 * If the prompt specified that "octopusdeploy_tenant_project_variable" tenant variables are to be assigned to tenants, and does not specify which environment to define the variable for, you must define the tenant variable for all environments that the tenant is connected to.
 * You will be penalized for setting the "environment_id" property on a "octopusdeploy_tenant_project_variable" resource to "null" or an empty string.
+* You will be penalized for setting the "template_id" property on a "octopusdeploy_tenant_project_variable" resource to "null" or an empty string.
 
 ## Octopus Project Channel Instructions
 
