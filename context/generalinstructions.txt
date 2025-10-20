@@ -1306,6 +1306,7 @@ EOT
 * You will be penalized for using "locals" blocks.
 * You will be penalized for using for loops to create resources or data sources.
 * You will be penalized for using syntax like `%{ for idx, name in local.names ~}`.
+* You will be penalized for using dynamic blocks.
 * You will be penalized for using the `replace()` or `lower()` Terraform functions.
 * You will be penalized for duplicating resource names for a resource type, for example, the following terraform is invalid because the resource name "step1" for resource type "octopusdeploy_process_step" is duplicated:
 
