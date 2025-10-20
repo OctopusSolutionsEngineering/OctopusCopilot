@@ -305,6 +305,7 @@ data "octopusdeploy_library_variable_sets" "library_variable_set_variables_examp
 * A tenant common variable sets the value of a variable template defined in a library variable set.
 * When the prompt indicates that the variable template defines an AWS account, the "template" block must have the "display_settings" attribute set to `{ "Octopus.ControlType" = "AmazonWebServicesAccount" }`.
 * Every "octopusdeploy_tenant_common_variable" resource must have a "depends_on" attribute that is an array including the associated "octopusdeploy_tenant_project".
+* You will be penalized for creating a "octopusdeploy_tenant_common_variable" resource without a "depends_on" attribute.
 
 ## Tenant Tag Instructions
 
