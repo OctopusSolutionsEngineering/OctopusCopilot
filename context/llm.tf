@@ -362,9 +362,9 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_approve_pr
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -396,16 +396,16 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_deploy_a_k
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
         "Octopus.UseBundledTooling" = "False"
-        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: v1\nkind: Service\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  selector:\n    app: \"#{Kubernetes.Deployment.Name}\"\n  ports:\n    - protocol: TCP\n      port: 8080\n      targetPort: 8080\n  type: ClusterIP\n---\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[ollamainference].PackageId}:#{Octopus.Action.Package[ollamainference].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"2\"\n            memory: \"2Gi\"\n          requests:\n            cpu: \"1\"\n            memory: \"1Gi\"\n        livenessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
         "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
-        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: v1\nkind: Service\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  selector:\n    app: \"#{Kubernetes.Deployment.Name}\"\n  ports:\n    - protocol: TCP\n      port: 8080\n      targetPort: 8080\n  type: ClusterIP\n---\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[ollamainference].PackageId}:#{Octopus.Action.Package[ollamainference].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"2\"\n            memory: \"2Gi\"\n          requests:\n            cpu: \"1\"\n            memory: \"1Gi\"\n        livenessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
       }
 }
 

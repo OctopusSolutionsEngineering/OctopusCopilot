@@ -388,9 +388,9 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_appro
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?\n\n#{if Octopus.Action[Octopus - Check Blue Green Deployment].Output.SequentialDeploy}WARNING! You appear to be deploying to the #{Octopus.Environment.Name} environment twice. It is expected that blue/green deployments alternate between environments.#{/if}"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -498,8 +498,8 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_
   execution_properties  = {
         "Octopus.Action.Email.To" = "releases@example.org"
         "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.Body" = "The deployment succeeded."
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
