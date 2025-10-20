@@ -38,8 +38,13 @@ def find_octopus_variables(filename, label):
             for line_number, line in enumerate(file, 1):
                 # Check if the line matches our pattern
                 match = re.match(pattern, line)
+                additional_instructions = ""
+
+                if match and "workerpool" in match.group(0).lower():
+                    additional_instructions = " (ensure the value of this variable queries the hosted work pool data source first and the default worker pool data source second)"
+
                 if match:
-                    print(f"* {match.group(0)}")
+                    print(f"* {match.group(0)}{additional_instructions}")
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
