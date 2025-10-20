@@ -571,6 +571,24 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_da
 * You will be penalized for providing an attribute value for "timezone" that isn't a valid "Windows Time Zone Identifier".
 * You will be penalized for providing an empty "project_id" attribute on a trigger.
 
+* The "deployment_action_slug" property in the "package" block of the "octopusdeploy_external_feed_create_release_trigger" resource must be set to the slug of a deployment action in the associated project, for example:
+
+```
+resource "octopusdeploy_external_feed_create_release_trigger" "projecttrigger_every_step_project_external_feed_trigger" {
+  count      = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? 0 : 1}"
+  space_id   = "${trimspace(var.octopus_space_id)}"
+  project_id = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? data.octopusdeploy_projects.project_every_step_project.projects[0].id : octopusdeploy_project.project_every_step_project[0].id}"
+  name       = "External Feed Trigger"
+  channel_id = "${length(data.octopusdeploy_channels.channel_frontend_application.channels) != 0 ? data.octopusdeploy_channels.channel_frontend_application.channels[0].id : octopusdeploy_channel.channel_frontend_application[0].id}"
+
+  package {
+    deployment_action_slug = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? null : octopusdeploy_process_step.process_step_every_step_project_run_a_script[0].slug}"
+    package_reference      = "mypackage"
+  }
+  depends_on = [octopusdeploy_process_steps_order.process_step_order_every_step_project]
+}
+```
+
 ## Octopus Project Channel Instructions
 
 * Channels defined as resource "octopusdeploy_channel" have the following required properties:
