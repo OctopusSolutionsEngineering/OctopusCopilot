@@ -1211,6 +1211,10 @@ data "octopusdeploy_accounts" "my_oidc_account" {
 }
 ```
 
+* You must create one distinct "octopusdeploy_aws_openid_connect_account" resource for each AWS OIDC account specified in the prompt.
+* You must create one distinct "octopusdeploy_accounts" data source for each "octopusdeploy_aws_openid_connect_account" resource.
+* You will be penalized for using a `locals` block to define account names.
+
 ## Terraform Instructions
 * You can only use the following built-in terraform functions:
     * "jsondecode"
