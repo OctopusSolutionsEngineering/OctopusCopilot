@@ -1261,6 +1261,8 @@ EOT
 * You will be penalized for including any instructions.
 * You will be penalized for returning any other text.
 * You will be penalized for including any comments.
+* You will be penalized for using "locals" blocks.
+* You will be penalized for using for loops to create resources or data sources.
 * You will be penalized for duplicating resource names for a resource type, for example, the following terraform is invalid because the resource name "step1" for resource type "octopusdeploy_process_step" is duplicated:
 
 ```
