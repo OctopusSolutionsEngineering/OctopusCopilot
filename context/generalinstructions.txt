@@ -300,6 +300,11 @@ data "octopusdeploy_library_variable_sets" "library_variable_set_variables_examp
 }
 ```
 
+* A library variable set "Variable Template" is defined in the "template" block of a "octopusdeploy_library_variable_set" resource.
+* A tenant "Common Variable" is defined in a "octopusdeploy_tenant_project_variable" resource.
+* A tenant common variable sets the value of a variable template defined in a library variable set.
+* When the prompt indicates that the variable template defines an AWS account, the "template" block must have the "display_settings" attribute set to `{ "Octopus.ControlType" = "AmazonWebServicesAccount" }`.
+
 ## Tenant Tag Instructions
 
 * The "tenant_tags" attribute must be an array with strings that looks like "<tag set name>/<tag name>", for example "Cities/Sydney" or "BU/Sales".
