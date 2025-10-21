@@ -1219,6 +1219,7 @@ resource "octopusdeploy_variable" "worker_pool_variable" {
 ```
 
 * You will be penalized for defining a resource "octopusdeploy_variable" of type "WorkerPool" with the "value" attribute to "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : null}".
+* If the prompt includes instructions to create a variable in a library variable set or as a tenant variable, you must not create any project variables with the same name. Custom variables defined in tenants or library variables sets take precedence over project variables.
 
 ## Runbook Instructions
 
