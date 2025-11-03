@@ -131,9 +131,9 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
     -url https://samples.octopus.app \
-    -space Spaces-302 \
+    -space Spaces-1 \
     -apiKey API-GUEST \
-    -projectName "AWS Lambda App" \
+    -projectName "AWS Lambda" \
     -stepTemplate \
     -stepTemplateName "Space Context" \
     -stepTemplateKey "SpaceContext" \
