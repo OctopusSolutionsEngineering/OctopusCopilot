@@ -130,10 +130,10 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 ./generate_instructions.py azurewebapp.tf "Azure Web App" > instructions_azurewebapp.md
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
-    -url https://mattc.octopus.app \
-    -space Spaces-3368 \
-    -apiKey $OCTOPUS_CLI_API_KEY \
-    -projectName "AWS Lambda" \
+    -url https://samples.octopus.app \
+    -space Spaces-302 \
+    -apiKey API-GUEST \
+    -projectName "AWS Lambda App" \
     -stepTemplate \
     -stepTemplateName "Space Context" \
     -stepTemplateKey "SpaceContext" \

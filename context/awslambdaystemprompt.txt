@@ -3,7 +3,7 @@
 * The supplied "Example Octopus AWS Lambda Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus AWS Lambda Terraform Configuration".
 * You must include the steps defined in the "Example Octopus AWS Lambda Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
-* If the prompt specifies that tenants, targets, machines, feeds, accounts, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus AWS Lambda Terraform Configuration".
+* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus AWS Lambda Terraform Configuration".
 
 ## AWS Lambda Environment Instructions
 
@@ -21,51 +21,56 @@ You must include all the following environment resources from the "Example Octop
 
 You must include all the following feed resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
-* data "octopusdeploy_feeds" "feed_docker_hub"
-* resource "octopusdeploy_docker_container_registry" "feed_docker_hub"
-* data "octopusdeploy_feeds" "feed_octopus_maven_feed"
-* resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed"
+* data "octopusdeploy_feeds" "feed_ghcr_anonymous"
+* resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
 
 ## AWS Lambda Project Instructions
 
 You must include all the following project resources from the "Example Octopus AWS Lambda Terraform Configuration" once:
-* data "octopusdeploy_projects" "project_aws_lambda"
-* resource "octopusdeploy_project" "project_aws_lambda"
+* data "octopusdeploy_projects" "project_azure_web_app"
+* resource "octopusdeploy_project" "project_azure_web_app"
 
 ## AWS Lambda Project Deployment Process Instructions
 
 You must include all the following project deployment process resources from the "Example Octopus AWS Lambda Terraform Configuration" once:
-* resource "octopusdeploy_process" "process_aws_lambda"
+* resource "octopusdeploy_process" "process_azure_web_app"
 
 ## AWS Lambda Project Deployment Process Steps Instructions
 
 You must include all the following step resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
-* resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login"
-* resource "octopusdeploy_process_step" "process_step_aws_lambda_validate_setup"
-* resource "octopusdeploy_process_step" "process_step_aws_lambda_approve_production_deployment"
-* resource "octopusdeploy_process_step" "process_step_aws_lambda_upload_lambda"
-* resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam_template"
-* resource "octopusdeploy_process_step" "process_step_aws_lambda_scan_for_vulnerabilities"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_check_smtp_configuration"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_deploy_azure_web_app_container"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_smoke_test"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_manual_approval"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_swap_production_slot"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_scan_for_vulnerabilities"
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deployment_failure_notification"
 
 You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
 
 ## AWS Lambda Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus AWS Lambda Terraform Configuration" once:
-* resource "octopusdeploy_process_steps_order" "process_step_order_aws_lambda"
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_web_app"
 ## AWS Lambda Project Variable Instructions
 
 You must include all the following variables from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
-* resource "octopusdeploy_variable" "aws_lambda_project_octopus_api_key_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_account_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_region_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_bucketname_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_filename_1"
-* resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_octopus_api_key_1"
+* resource "octopusdeploy_variable" "azure_web_app_application_image_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_account_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_location_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_2"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_3"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_name_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_name_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_sku_1"
 
 ## AWS Lambda Lifecycle Instructions
 
 You must include all the following lifecycle resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
+* data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle"
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
@@ -74,5 +79,5 @@ You must include all the following lifecycle resources from the "Example Octopus
 ## AWS Lambda Project Scheduled Triggers Instructions
 
 You must include all the following project scheduled trigger resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that triggers should be removed or modified:
-* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_daily_security_scan"
+* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_azure_web_app_daily_security_scan"
 
