@@ -165,7 +165,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionseng
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > apachetomcat.tf
 
-./generate_instructions.py apachetomcat.tf "AWS Lambda" > instructions_tomcat.md
+./generate_instructions.py apachetomcat.tf "Apache Tomcat" > instructions_tomcat.md
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
     -url https://mattc.octopus.app \
