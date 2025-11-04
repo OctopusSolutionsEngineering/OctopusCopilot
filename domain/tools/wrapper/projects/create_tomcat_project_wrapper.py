@@ -35,4 +35,4 @@ def create_tomcat_project_wrapper(query, callback, logging):
             no_prompt,
         )
 
-    return create_tomcat_project_wrapper
+    return create_tomcat_project

@@ -365,8 +365,8 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
         "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "BlueGreen.Environment.Green.Name" = "Production - Green"
         "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "BlueGreen.Environment.Green.Name" = "Production - Green"
         "BlueGreen.Environment.Blue.Name" = "Production - Blue"
       }
 }
@@ -497,8 +497,8 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_
       }
   execution_properties  = {
         "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
-        "Octopus.Action.Email.Body" = "The deployment succeeded."
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Email.Body" = "The deployment succeeded."
         "Octopus.Action.Email.To" = "releases@example.org"
       }
 }

@@ -335,11 +335,11 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_check_smtp_con
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/CheckSMTPConfigured.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GitRepository.Source" = "External"
       }
 }
 
@@ -372,12 +372,12 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_deploy_azure_w
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "$skuCode = \"#{Project.Azure.WebApp.ServicePlan.SKU}\"\n\nif ($skuCode.StartsWith(\"S\") -or $skuCode.StartsWith(\"P\"))\n{\n  # Create deployment slots\n  Write-Host \"Deploying to staging slot ...\"\n  az webapp config set --name \"#{Project.Azure.WebApp.Octopub.Name}\" --resource-group \"#{Project.Azure.ResourceGroup.Name}\" --linux-fx-version \"DOCKER|ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\" --slot \"staging\"\n}\nelse\n{\n  # Update the web app to use the specified container\n  Write-Highlight \"WebApp Service Plans of #{Project.Azure.WebApp.ServicePlan.SKU} only have one slot, deploying application.\"\n  az webapp config set --name \"#{Project.Azure.WebApp.Octopub.Name}\" --resource-group \"#{Project.Azure.ResourceGroup.Name}\" --linux-fx-version \"DOCKER|ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n}\n\n"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
       }
 }
 
@@ -525,11 +525,11 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deploymen
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Check SMTP configuration].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.Priority" = "High"
         "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} failed to deploy to #{Octopus.Environment.Name}!"
         "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} has failed deployed to #{Octopus.Environment.Name}\n\n#{Octopus.Deployment.Error}:\n#{Octopus.Deployment.ErrorDetail}"
+        "Octopus.Action.Email.Priority" = "High"
       }
 }
 
