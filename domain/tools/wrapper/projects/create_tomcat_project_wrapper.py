@@ -20,7 +20,7 @@ def create_tomcat_project_wrapper(query, callback, logging):
         """
 
         if logging:
-            logging("Enter:", create_tomcat_project_wrapper.__name__)
+            logging("Enter:", create_tomcat_project.__name__)
 
         for key, value in kwargs.items():
             if logging:
@@ -28,7 +28,7 @@ def create_tomcat_project_wrapper(query, callback, logging):
 
         # This is just a passthrough to the original callback
         return callback(
-            create_tomcat_project_wrapper.__name__,
+            create_tomcat_project.__name__,
             query,
             space_name,
             project_name,
