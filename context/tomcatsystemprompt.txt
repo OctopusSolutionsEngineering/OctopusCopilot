@@ -1,13 +1,13 @@
-# AWS Lambda Instructions
+# Apache Tomcat Instructions
 
-* The supplied "Example Octopus AWS Lambda Terraform Configuration" is the primary source of truth for the configuration.
-* You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus AWS Lambda Terraform Configuration".
-* You must include the steps defined in the "Example Octopus AWS Lambda Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
-* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus AWS Lambda Terraform Configuration".
+* The supplied "Example Octopus Apache Tomcat Terraform Configuration" is the primary source of truth for the configuration.
+* You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus Apache Tomcat Terraform Configuration".
+* You must include the steps defined in the "Example Octopus Apache Tomcat Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
+* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus Apache Tomcat Terraform Configuration".
 
-## AWS Lambda Environment Instructions
+## Apache Tomcat Environment Instructions
 
-You must include all the following environment resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
+You must include all the following environment resources from the "Example Octopus Apache Tomcat Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
 * data "octopusdeploy_environments" "environment_development"
 * resource "octopusdeploy_environment" "environment_development"
 * data "octopusdeploy_environments" "environment_test"
@@ -17,66 +17,57 @@ You must include all the following environment resources from the "Example Octop
 * data "octopusdeploy_environments" "environment_security"
 * resource "octopusdeploy_environment" "environment_security"
 
-## AWS Lambda Feed Instructions
+## Apache Tomcat Feed Instructions
 
-You must include all the following feed resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
+You must include all the following feed resources from the "Example Octopus Apache Tomcat Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
-* data "octopusdeploy_feeds" "feed_ghcr_anonymous"
-* resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
 * data "octopusdeploy_feeds" "feed_octopus_maven_feed"
 * resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed"
 
-## AWS Lambda Project Instructions
+## Apache Tomcat Project Instructions
 
-You must include all the following project resources from the "Example Octopus AWS Lambda Terraform Configuration" once:
-* data "octopusdeploy_projects" "project_aws_lambda"
-* resource "octopusdeploy_project" "project_aws_lambda"
+You must include all the following project resources from the "Example Octopus Apache Tomcat Terraform Configuration" once:
+* data "octopusdeploy_projects" "project_octopub"
+* resource "octopusdeploy_project" "project_octopub"
 
-## AWS Lambda Project Deployment Process Instructions
+## Apache Tomcat Project Deployment Process Instructions
 
-You must include all the following project deployment process resources from the "Example Octopus AWS Lambda Terraform Configuration" once:
-* resource "octopusdeploy_process" "process_aws_lambda"
+You must include all the following project deployment process resources from the "Example Octopus Apache Tomcat Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_octopub"
 
-## AWS Lambda Project Deployment Process Steps Instructions
+## Apache Tomcat Project Deployment Process Steps Instructions
 
-You must include all the following step resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
-* resource "octopusdeploy_process_step" "process_step_aws_lambda_approve_production_deployment"
-* resource "octopusdeploy_process_templated_step" "process_step_aws_lambda_octopus___check_smtp_server_configured"
-* resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login"
-* resource "octopusdeploy_process_step" "process_step_aws_lambda_validate_setup"
-* resource "octopusdeploy_process_step" "process_step_aws_lambda_upload_lambda"
-* resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam_template"
-* resource "octopusdeploy_process_templated_step" "process_step_aws_lambda_scan_for_vulnerabilities"
-* resource "octopusdeploy_process_step" "process_step_aws_lambda_deployment_success_notification"
+You must include all the following step resources from the "Example Octopus Apache Tomcat Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
+* resource "octopusdeploy_process_step" "process_step_octopub_approve_production_deployment"
+* resource "octopusdeploy_process_templated_step" "process_step_octopub_octopus___check_targets_available"
+* resource "octopusdeploy_process_templated_step" "process_step_octopub_octopus___check_smtp_server_configured"
+* resource "octopusdeploy_process_step" "process_step_octopub_deploy_to_tomcat_via_manager"
+* resource "octopusdeploy_process_templated_step" "process_step_octopub_scan_for_vulnerabilities"
+* resource "octopusdeploy_process_step" "process_step_octopub_deployment_success_notification"
 
 You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
 
-## AWS Lambda Project Deployment Process Step Order Instructions
+## Apache Tomcat Project Deployment Process Step Order Instructions
 
-You must include all the following project deployment process step order resources from the "Example Octopus AWS Lambda Terraform Configuration" once:
-* resource "octopusdeploy_process_steps_order" "process_step_order_aws_lambda"
-## AWS Lambda Project Variable Instructions
+You must include all the following project deployment process step order resources from the "Example Octopus Apache Tomcat Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_octopub"
+## Apache Tomcat Project Variable Instructions
 
-You must include all the following variables from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_bucketname_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_region_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_account_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_octopus_api_key_1"
-* resource "octopusdeploy_variable" "aws_lambda_resources_productsmicroservice_properties_codeuri_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_aws_lambda_s3_filename_1"
-* resource "octopusdeploy_variable" "aws_lambda_project_workerpool_1" (set the value to "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}")
+You must include all the following variables from the "Example Octopus Apache Tomcat Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
+* resource "octopusdeploy_variable" "octopub_project_workerpool_1" (set the value to "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}")
+* resource "octopusdeploy_variable" "octopub_project_octopus_api_key_1"
 
-## AWS Lambda Lifecycle Instructions
+## Apache Tomcat Lifecycle Instructions
 
-You must include all the following lifecycle resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
+You must include all the following lifecycle resources from the "Example Octopus Apache Tomcat Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
 * data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle"
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
 
 
-## AWS Lambda Project Scheduled Triggers Instructions
+## Apache Tomcat Project Scheduled Triggers Instructions
 
-You must include all the following project scheduled trigger resources from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that triggers should be removed or modified:
-* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_daily_security_scan"
+You must include all the following project scheduled trigger resources from the "Example Octopus Apache Tomcat Terraform Configuration" once unless the prompt explicitly states that triggers should be removed or modified:
+* resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_octopub_daily_security_scan"
 

@@ -152,7 +152,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionseng
     -url https://samples.octopus.app \
     -space Spaces-203 \
     -apiKey API-GUEST \
-    -projectName "Apache Tomcat" \
+    -projectName "Octopub" \
     -stepTemplate \
     -stepTemplateName "Space Context" \
     -stepTemplateKey "SpaceContext" \
