@@ -204,6 +204,7 @@ class SanitizeList(unittest.TestCase):
         self.assertTrue(sanitize_projectgroups("Valid Project Group"))
 
     def test_sanitize_list(self):
+        self.assertListEqual(["hi", "there"], sanitize_list(["hi,there"]))
         self.assertFalse(sanitize_list("Machine A", "Machine\\s*[A-Za-z0-9]"))
         self.assertFalse(sanitize_list(["*"], "\\*"))
         self.assertFalse(sanitize_list([" ", "  ", "   "]))

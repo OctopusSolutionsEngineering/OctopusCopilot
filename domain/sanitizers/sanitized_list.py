@@ -365,13 +365,16 @@ def sanitize_list(input_list, ignored_re=None):
         return []
 
     # Open AI will give you a list with a single asterisk if the list is empty
-    return [
-        entry.strip()
+    sanitized_list = [
+        entry.strip().split(",")
         for entry in input_list
         if isinstance(entry, str)
         and entry.strip()
         and not is_re_match(entry, ignored_re)
     ]
+
+    # Flat map the list, as individual items may have been comma separated
+    return [item for sublist in sanitized_list for item in sublist]
 
 
 def force_to_list(input_list):
