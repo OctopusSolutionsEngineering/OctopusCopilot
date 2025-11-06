@@ -325,9 +325,9 @@ resource "octopusdeploy_process_step" "process_step_octopub_approve_production_d
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
       }
 }
 
@@ -354,8 +354,8 @@ resource "octopusdeploy_process_templated_step" "process_step_octopub_octopus___
       }
   parameters            = {
         "CheckTargets.Octopus.Role" = "Tomcat.Web"
-        "CheckTargets.Message" = "You must add a [Tentacle](https://octopus.com/docs/infrastructure/deployment-targets/tentacle) with the target tag `Tomcat.Web`."
         "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "CheckTargets.Message" = "You must add a [Tentacle](https://octopus.com/docs/infrastructure/deployment-targets/tentacle) with the target tag `Tomcat.Web`."
       }
 }
 
@@ -420,10 +420,10 @@ resource "octopusdeploy_process_step" "process_step_octopub_deploy_to_tomcat_via
       }
   execution_properties  = {
         "Octopus.Action.EnabledFeatures" = ",Octopus.Features.TomcatDeployManager"
-        "Tomcat.Deploy.Password" = "${var.action_b5db3976a6058b846e2ef726ee139fcf26756a43d95da3aed7f951beadf6377a_sensitive_value}"
         "Tomcat.Deploy.Enabled" = "True"
-        "Tomcat.Deploy.Name" = "octopub"
+        "Tomcat.Deploy.Password" = "${var.action_b5db3976a6058b846e2ef726ee139fcf26756a43d95da3aed7f951beadf6377a_sensitive_value}"
         "Tomcat.Deploy.Controller" = "http://localhost:8080/manager"
+        "Tomcat.Deploy.Name" = "octopub"
         "Tomcat.Deploy.User" = "admin"
       }
 }
@@ -451,8 +451,8 @@ resource "octopusdeploy_process_templated_step" "process_step_octopub_scan_for_v
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
-        "PackageId" = "com.octopus:octopub-frontend-sbom"
         "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
+        "PackageId" = "com.octopus:octopub-frontend-sbom"
                 })
       }
 }
@@ -475,9 +475,9 @@ resource "octopusdeploy_process_step" "process_step_octopub_deployment_success_n
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "admin@example.org"
         "Octopus.Action.Email.Subject" = "Deployment for #{Octopus.Project.Name} completed successfully!"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -580,7 +580,7 @@ variable "project_octopub_description" {
   nullable    = false
   sensitive   = false
   description = "The description of the project exported from Octopub"
-  default     = ""
+  default     = "Deploys a WAR file to a Tomcat server.\n\nRecreate this project with the prompt:\n\n`Create a Tomcat project called \"My Tomcat App\"`"
 }
 variable "project_octopub_tenanted" {
   type        = string

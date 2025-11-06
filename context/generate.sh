@@ -150,6 +150,26 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
     -url https://samples.octopus.app \
+    -space Spaces-1194 \
+    -apiKey API-GUEST \
+    -projectName "Update Image Tags - Helm" \
+    -stepTemplate \
+    -stepTemplateName "Space Context" \
+    -stepTemplateKey "SpaceContext" \
+    -dummySecretVariableValues \
+    -includeProviderServerDetails=false \
+    -ignoreCacManagedValues=false \
+    -excludeCaCProjectSettings=true \
+    -includeOctopusOutputVars=false \
+    -inlineVariableValues \
+    -excludeTriggersExcept="Octopub-frontend container" \
+    -dest /tmp/octoexport
+cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > argoupdatetags.tf
+
+./generate_instructions.py argoupdatetags.tf "Argo CD Update Image Tags" > instructions_argoupdatetags.md
+
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+    -url https://samples.octopus.app \
     -space Spaces-203 \
     -apiKey API-GUEST \
     -projectName "Octopub" \
