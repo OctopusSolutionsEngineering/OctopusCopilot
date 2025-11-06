@@ -1,4 +1,4 @@
-PULL=never
+PULL=always
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
     -url https://samples.octopus.app \
