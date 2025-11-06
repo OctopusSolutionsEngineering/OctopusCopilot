@@ -151,6 +151,9 @@ from domain.tools.wrapper.octopusresources.create_git_credential import (
 from domain.tools.wrapper.octopusresources.create_github_connection import (
     create_github_connection_wrapper,
 )
+from domain.tools.wrapper.projects.create_argo_cd_update_image_tags_project_wrapper import (
+    create_argocdimagetag_project_wrapper,
+)
 from domain.tools.wrapper.projects.create_azure_function_project import (
     create_azure_function_project_wrapper,
 )
@@ -1419,6 +1422,33 @@ def build_form_tools(query, req: func.HttpRequest):
                         "Apache Tomcat",
                         "generalinstructions.txt",
                         "tomcatsystemprompt.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+            ),
+            FunctionDefinition(
+                create_argocdimagetag_project_wrapper(
+                    query,
+                    callback=create_template_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "argoupdatetags.tf",
+                        "Argo CD Update Image Tags",
+                        "generalinstructions.txt",
+                        "argoupdatetagssystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
                     ),
