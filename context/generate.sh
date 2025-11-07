@@ -162,7 +162,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionseng
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
     -inlineVariableValues \
-    -excludeTriggersExcept="Octopub-frontend container" \
+    -excludeTrigger="Octopub-frontend container" \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > argoupdatetags.tf
 
