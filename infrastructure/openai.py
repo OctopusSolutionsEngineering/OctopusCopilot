@@ -1,7 +1,9 @@
 import os
 
 import openai
-from langchain.agents import OpenAIFunctionsAgent
+
+# from langchain.agents import OpenAIFunctionsAgent
+from langchain.agents import create_agent
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
 from openai import RateLimitError
@@ -58,6 +60,7 @@ def llm_message_query(
         api_key=(api_key or os.environ["AISERVICES_KEY"]),
         azure_endpoint=(endpoint or os.environ["AISERVICES_ENDPOINT"]),
         api_version=version,
+        use_responses_api="codex" in deployment,
     )
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)
@@ -114,20 +117,34 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
     )
     version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-10-21"
 
-    agent = OpenAIFunctionsAgent.from_llm_and_tools(
-        llm=AzureChatOpenAI(
+    agent = create_agent(
+        model=AzureChatOpenAI(
             temperature=0,
             azure_deployment=deployment,
             openai_api_key=os.environ["AISERVICES_KEY"],
             azure_endpoint=os.environ["AISERVICES_ENDPOINT"],
             api_version=version,
+            use_responses_api="codex" in deployment,
         ),
         tools=tools,
-        extra_prompt_messages=extra_prompt_messages,
     )
 
+    # agent = OpenAIFunctionsAgent.from_llm_and_tools(
+    #     llm=AzureChatOpenAI(
+    #         temperature=0,
+    #         azure_deployment=deployment,
+    #         openai_api_key=os.environ["AISERVICES_KEY"],
+    #         azure_endpoint=os.environ["AISERVICES_ENDPOINT"],
+    #         api_version=version,
+    #         use_responses_api="codex" in deployment,
+    #     ),
+    #     tools=tools,
+    #     extra_prompt_messages=extra_prompt_messages,
+    # )
+
     try:
-        action = agent.plan([], input=query)
+        result = agent.invoke({"messages": [{"role": "user", "content": query}]})
+        action = result.get("messages", [])[-1] if result.get("messages") else None
     except openai.BadRequestError as e:
         # This will be something like:
         # {'error': {'message': "This model's maximum context length is 16384 tokens. However, your messages resulted in 17570 tokens. Please reduce the length of the messages.", 'type': 'invalid_request_error', 'param': 'messages', 'code': 'context_length_exceeded'}}
