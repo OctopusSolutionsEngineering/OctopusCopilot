@@ -466,6 +466,7 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
   * "OctopusProject"
 * If the prompt specifies a "feed_type" that is not in the list, you must define the feed as "NuGet".
 * You will be penalized for setting "feed_type" to "Npm".
+* You will be penalized for setting the "password" property on a "octopusdeploy_docker_container_registry" resource to an empty string.
 
 
 ## Project Group Instructions
