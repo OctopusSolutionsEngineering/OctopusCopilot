@@ -74,6 +74,12 @@ def llm_message_query(
     except openai.APITimeoutError as e:
         return handle_openai_exception(e)
 
+    # The response might be text or an array depending on the model and settings. GPT 5 codex for example returns an array of items.
+    if isinstance(response, list):
+        response = next(
+            item.get("text") for item in response if item.get("type") == "text"
+        )
+
     # ensure known sensitive variables are not returned
     client_response = sanitize_message(response).strip()
 
