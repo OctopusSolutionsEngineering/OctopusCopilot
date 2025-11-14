@@ -88,7 +88,13 @@ def handle_openai_exception(exception):
     return exception.message
 
 
-def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None):
+def llm_tool_query(
+    query,
+    functions,
+    log_query=None,
+    extra_prompt_messages=None,
+    use_responses_api=False,
+):
     """
     This is the handler that responds to a chat request.
     :param log_query: The function used to log the query
@@ -124,7 +130,7 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
             openai_api_key=os.environ["AISERVICES_KEY"],
             azure_endpoint=os.environ["AISERVICES_ENDPOINT"],
             api_version=version,
-            use_responses_api=True,
+            use_responses_api=use_responses_api,
         ),
         tools=tools,
     )
@@ -160,6 +166,8 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
                 raise OpenAITokenLengthExceeded(e)
 
         raise OpenAIBadRequest(e)
+    except Exception as e:
+        raise e
 
     # We always want to match a tool. This is a big part of how we prevent the extension from returning
     # undesirable answers unrelated to Octopus.
