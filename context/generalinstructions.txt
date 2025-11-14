@@ -1117,6 +1117,14 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
 * You will be penalized for defining a "execution_properties" property called "Octopus.Action.Aws.CloudFormation.TemplateFile" as this is an invalid property.
 * You will be penalized for defining a "execution_properties" property called "Octopus.Action.Aws.CloudFormation.TagsEnabled" as this is an invalid property.
 
+* You will be penalized for defining an "execution_properties" block like this, with "name" and "value" attributes:
+```
+execution_properties {
+  name  = "Octopus.Action.Manual.Instructions"
+  value = "Do you approve the production deployment?"
+}
+```
+
 ## Octopus Variable Syntax Instructions
 
 * Octopus variable syntax must be defined as "#{<variable name>}"
