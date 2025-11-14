@@ -2,7 +2,6 @@ import os
 
 import openai
 
-# from langchain.agents import OpenAIFunctionsAgent
 from langchain.agents import create_agent
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import AzureChatOpenAI
@@ -41,6 +40,7 @@ def llm_message_query(
     endpoint=None,
     custom_version=None,
     temperature=0,
+    use_responses_api=False,
 ):
     # We can use a specific deployment to answer a query, or fallback to the default
     deployment = (
@@ -60,7 +60,7 @@ def llm_message_query(
         api_key=(api_key or os.environ["AISERVICES_KEY"]),
         azure_endpoint=(endpoint or os.environ["AISERVICES_ENDPOINT"]),
         api_version=version,
-        use_responses_api="codex" in deployment,
+        use_responses_api=use_responses_api,
     )
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)
@@ -124,7 +124,7 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
             openai_api_key=os.environ["AISERVICES_KEY"],
             azure_endpoint=os.environ["AISERVICES_ENDPOINT"],
             api_version=version,
-            use_responses_api="codex" in deployment,
+            use_responses_api=True,
         ),
         tools=tools,
     )
