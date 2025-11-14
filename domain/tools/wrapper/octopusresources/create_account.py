@@ -5,8 +5,10 @@ def create_account_wrapper(query, callback, logging):
         account_type=None,
         **kwargs,
     ):
-        """Creates an account in Octopus Deploy.
-        You will be penalized for selecting this function for prompts that include references to a project, or creating a project.
+        """
+        Creates an account in Octopus Deploy.
+
+        You will be penalized for selecting this function when the prompt contains instructions to create a project.
 
         Example prompts include:
         * Create an AWS account called "AWS" in the space "My Space"
