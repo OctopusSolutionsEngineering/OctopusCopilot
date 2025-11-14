@@ -52,12 +52,32 @@ def answer_general_query_wrapper(query, callback, logging=None):
         **kwargs,
     ):
         """
-        Provide details or answer a question about the configuration or state of resources. Also list resources.
+        Provide details about the configuration or state of resources, provides lists of resources, or answer a general question.
 
-        Use this function when the prompt asks a general question about projects, runbooks, targets, machines, tenants,
-        library variable sets, environments, feeds, accounts, certificates, lifecycles, worker pools, machine policies,
-        health check script, tag sets, project groups, channels, releases, steps, variables, git credentials, variables,
-        tenant variables, or project variables.
+        Use this function when the prompt asks a general question about:
+        * projects
+        * runbooks
+        * targets
+        * machines
+        * tenants
+        * library variable sets
+        * environments
+        * feeds
+        * accounts
+        * certificates
+        * lifecycles
+        * worker pools
+        * machine policies
+        * health check script
+        * tag sets
+        * project groups
+        * channels
+        * releases
+        * steps
+        * variables
+        * git credentials
+        * tenant variables
+        * project variables
 
         You will be penalized for calling this function for a prompt asking for instructions, documentation, general
         explanations, help, or "How do I" questions.

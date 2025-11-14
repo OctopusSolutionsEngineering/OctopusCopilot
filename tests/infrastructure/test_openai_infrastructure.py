@@ -358,13 +358,12 @@ class MockRequests(unittest.TestCase):
         self.assertTrue("Deploy WebApp Container" in body["project_names"], "body")
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    @unittest.skip("Temporarily disabled")
     def test_general_project_variable_question(self):
         """
         Tests that the llm identifies the correct project name in the query
         """
 
-        query = "List the names of the variables defined in the project."
+        query = 'List the names of the variables defined in the "Deploy WebApp Container" project.'
         function = llm_tool_query(query, build_mock_test_tools(query))
         body = function.call_function()
 
