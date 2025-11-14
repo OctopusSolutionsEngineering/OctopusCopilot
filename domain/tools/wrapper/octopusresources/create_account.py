@@ -8,8 +8,6 @@ def create_account_wrapper(query, callback, logging):
         """
         Creates an account in Octopus Deploy.
 
-        You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
-
         Example prompts include:
         * Create an AWS account called "AWS" in the space "My Space"
         * Create an AWS OIDC account called "OIDC" in the space "My Space"
@@ -18,6 +16,7 @@ def create_account_wrapper(query, callback, logging):
         * Create a Username/password account called "production" in the space "My Space"
         * Create a Token account called "K8s Cluster" in the space "My Space"
 
+        You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
 
         Args:
         space_name: The optional name of the space
