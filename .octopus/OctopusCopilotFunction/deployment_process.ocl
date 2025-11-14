@@ -157,6 +157,16 @@ step "deploy-with-cli" {
                      "slotSetting": false
                    },
                    {
+                     "name": "AISERVICES_DEPLOYMENT_PROJECT_GEN_RESPONSES",
+                     "value": "#{Azure.US.AIServices.Temperature.ProjectGenResponses}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE",
+                     "value": "#{Azure.US.AIServices.Temperature.ProjectGenTemperature}",
+                     "slotSetting": false
+                   },
+                   {
                      "name": "AISERVICES_DEPLOYMENT_PROJECT_GEN_VERSION",
                      "value": "#{Azure.US.AIServices.Deployment.ProjectGenVersion}",
                      "slotSetting": false
