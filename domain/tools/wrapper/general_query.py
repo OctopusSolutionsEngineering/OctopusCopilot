@@ -51,11 +51,13 @@ def answer_general_query_wrapper(query, callback, logging=None):
         dates=None,
         **kwargs,
     ):
-        """Provide details or answer a question about the configuration or state of resources. Also list resources.
+        """
+        Provide details or answer a question about the configuration or state of resources. Also list resources.
 
         Use this function when the prompt asks a general question about projects, runbooks, targets, machines, tenants,
         library variable sets, environments, feeds, accounts, certificates, lifecycles, worker pools, machine policies,
-        health check script, tag sets, project groups, channels, releases, steps, variables, or git credentials.
+        health check script, tag sets, project groups, channels, releases, steps, variables, git credentials, variables,
+        tenant variables, or project variables.
 
         You will be penalized for calling this function for a prompt asking for instructions, documentation, general
         explanations, help, or "How do I" questions.
@@ -67,6 +69,8 @@ def answer_general_query_wrapper(query, callback, logging=None):
         * Which targets deploy to the "Production" environment in the space "MySpace"?
         * Show a table of the library variable sets that contain database connection strings.
         * Which runbooks create infrastructure with Terraform?
+        * List the variables from the project "MyProject" that are scoped to the "Staging" environment.
+        * List the names of the variables defined in the project.
 
         Args:
         space: Space name
@@ -89,7 +93,8 @@ def answer_general_query_wrapper(query, callback, logging=None):
         steps: step names
         variables: variable names
         git_credentials: git credential names
-        dates: individual dates in the query"""
+        dates: individual dates in the query
+        """
 
         if logging:
             logging("Enter:", "answer_general_query")

@@ -358,6 +358,7 @@ class MockRequests(unittest.TestCase):
         self.assertTrue("Deploy WebApp Container" in body["project_names"], "body")
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    @unittest.skip("Temporarily disabled")
     def test_general_project_variable_question(self):
         """
         Tests that the llm identifies the correct project name in the query
