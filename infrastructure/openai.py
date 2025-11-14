@@ -148,7 +148,10 @@ def llm_tool_query(
 
     try:
         agent_runnable = create_openai_tools_agent(llm, tools, prompt)
-        action = agent_runnable.invoke({"input": query, "intermediate_steps": []})[-1]
+        action = agent_runnable.invoke({"input": query, "intermediate_steps": []})
+        # Get the last action if there are multiple
+        if isinstance(action, list):
+            action = action[-1]
     except openai.BadRequestError as e:
         # This will be something like:
         # {'error': {'message': "This model's maximum context length is 16384 tokens. However, your messages resulted in 17570 tokens. Please reduce the length of the messages.", 'type': 'invalid_request_error', 'param': 'messages', 'code': 'context_length_exceeded'}}
