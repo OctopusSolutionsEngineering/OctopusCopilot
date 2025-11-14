@@ -1,9 +1,8 @@
 import os
 
 import openai
-
-from langchain.agents import create_agent
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_classic.agents import create_openai_tools_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import AzureChatOpenAI
 from openai import RateLimitError
 from retry import retry
@@ -13,7 +12,6 @@ from domain.exceptions.openai_error import (
     OpenAITokenLengthExceeded,
     OpenAIBadRequest,
 )
-
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitize_logs import sanitize_message
@@ -100,6 +98,7 @@ def llm_tool_query(
     log_query=None,
     extra_prompt_messages=None,
     use_responses_api=False,
+    temperature=0,
 ):
     """
     This is the handler that responds to a chat request.
@@ -129,34 +128,27 @@ def llm_tool_query(
     )
     version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-10-21"
 
-    agent = create_agent(
-        model=AzureChatOpenAI(
-            temperature=0,
-            azure_deployment=deployment,
-            openai_api_key=os.environ["AISERVICES_KEY"],
-            azure_endpoint=os.environ["AISERVICES_ENDPOINT"],
-            api_version=version,
-            use_responses_api=use_responses_api,
-        ),
-        tools=tools,
+    llm = AzureChatOpenAI(
+        temperature=temperature,
+        azure_deployment=deployment,
+        openai_api_key=os.environ["AISERVICES_KEY"],
+        azure_endpoint=os.environ["AISERVICES_ENDPOINT"],
+        api_version=version,
+        use_responses_api=use_responses_api,
     )
 
-    # agent = OpenAIFunctionsAgent.from_llm_and_tools(
-    #     llm=AzureChatOpenAI(
-    #         temperature=0,
-    #         azure_deployment=deployment,
-    #         openai_api_key=os.environ["AISERVICES_KEY"],
-    #         azure_endpoint=os.environ["AISERVICES_ENDPOINT"],
-    #         api_version=version,
-    #         use_responses_api="codex" in deployment,
-    #     ),
-    #     tools=tools,
-    #     extra_prompt_messages=extra_prompt_messages,
-    # )
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", "You are a helpful assistant"),
+            *(extra_prompt_messages or []),
+            ("human", "{input}"),
+            MessagesPlaceholder("agent_scratchpad"),
+        ]
+    )
 
     try:
-        result = agent.invoke({"messages": [{"role": "user", "content": query}]})
-        action = result.get("messages", [])[-1] if result.get("messages") else None
+        agent_runnable = create_openai_tools_agent(llm, tools, prompt)
+        action = agent_runnable.invoke({"input": query, "intermediate_steps": []})[-1]
     except openai.BadRequestError as e:
         # This will be something like:
         # {'error': {'message': "This model's maximum context length is 16384 tokens. However, your messages resulted in 17570 tokens. Please reduce the length of the messages.", 'type': 'invalid_request_error', 'param': 'messages', 'code': 'context_length_exceeded'}}
