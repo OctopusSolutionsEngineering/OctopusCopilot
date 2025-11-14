@@ -8,7 +8,7 @@ def create_account_wrapper(query, callback, logging):
         """
         Creates an account in Octopus Deploy.
 
-        You will be penalized for selecting this function when the prompt contains instructions to create a project.
+        You will be penalized for selecting this function when the prompt contains instructions to create a project, for example, "Create a project called...".
 
         Example prompts include:
         * Create an AWS account called "AWS" in the space "My Space"
