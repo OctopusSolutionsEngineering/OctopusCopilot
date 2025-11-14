@@ -1,8 +1,8 @@
 import os
 
 import openai
-from langchain.agents import OpenAIFunctionsAgent
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_classic.agents import create_openai_tools_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import AzureChatOpenAI
 from openai import RateLimitError
 from retry import retry
@@ -12,7 +12,6 @@ from domain.exceptions.openai_error import (
     OpenAITokenLengthExceeded,
     OpenAIBadRequest,
 )
-
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitize_logs import sanitize_message
@@ -39,6 +38,7 @@ def llm_message_query(
     endpoint=None,
     custom_version=None,
     temperature=0,
+    use_responses_api=False,
 ):
     # We can use a specific deployment to answer a query, or fallback to the default
     deployment = (
@@ -58,6 +58,7 @@ def llm_message_query(
         api_key=(api_key or os.environ["AISERVICES_KEY"]),
         azure_endpoint=(endpoint or os.environ["AISERVICES_ENDPOINT"]),
         api_version=version,
+        use_responses_api=use_responses_api,
     )
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)
@@ -70,6 +71,12 @@ def llm_message_query(
         return handle_openai_exception(e)
     except openai.APITimeoutError as e:
         return handle_openai_exception(e)
+
+    # The response might be text or an array depending on the model and settings. GPT 5 codex for example returns an array of items.
+    if isinstance(response, list):
+        response = next(
+            item.get("text") for item in response if item.get("type") == "text"
+        )
 
     # ensure known sensitive variables are not returned
     client_response = sanitize_message(response).strip()
@@ -85,7 +92,14 @@ def handle_openai_exception(exception):
     return exception.message
 
 
-def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None):
+def llm_tool_query(
+    query,
+    functions,
+    log_query=None,
+    extra_prompt_messages=None,
+    use_responses_api=False,
+    temperature=0,
+):
     """
     This is the handler that responds to a chat request.
     :param log_query: The function used to log the query
@@ -114,20 +128,30 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
     )
     version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-10-21"
 
-    agent = OpenAIFunctionsAgent.from_llm_and_tools(
-        llm=AzureChatOpenAI(
-            temperature=0,
-            azure_deployment=deployment,
-            openai_api_key=os.environ["AISERVICES_KEY"],
-            azure_endpoint=os.environ["AISERVICES_ENDPOINT"],
-            api_version=version,
-        ),
-        tools=tools,
-        extra_prompt_messages=extra_prompt_messages,
+    llm = AzureChatOpenAI(
+        temperature=temperature,
+        azure_deployment=deployment,
+        openai_api_key=os.environ["AISERVICES_KEY"],
+        azure_endpoint=os.environ["AISERVICES_ENDPOINT"],
+        api_version=version,
+        use_responses_api=use_responses_api,
+    )
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", "You are a helpful assistant"),
+            *(extra_prompt_messages or []),
+            ("human", "{input}"),
+            MessagesPlaceholder("agent_scratchpad"),
+        ]
     )
 
     try:
-        action = agent.plan([], input=query)
+        agent_runnable = create_openai_tools_agent(llm, tools, prompt)
+        action = agent_runnable.invoke({"input": query, "intermediate_steps": []})
+        # Get the last action if there are multiple
+        if isinstance(action, list):
+            action = action[-1]
     except openai.BadRequestError as e:
         # This will be something like:
         # {'error': {'message': "This model's maximum context length is 16384 tokens. However, your messages resulted in 17570 tokens. Please reduce the length of the messages.", 'type': 'invalid_request_error', 'param': 'messages', 'code': 'context_length_exceeded'}}
@@ -143,6 +167,8 @@ def llm_tool_query(query, functions, log_query=None, extra_prompt_messages=None)
                 raise OpenAITokenLengthExceeded(e)
 
         raise OpenAIBadRequest(e)
+    except Exception as e:
+        raise e
 
     # We always want to match a tool. This is a big part of how we prevent the extension from returning
     # undesirable answers unrelated to Octopus.

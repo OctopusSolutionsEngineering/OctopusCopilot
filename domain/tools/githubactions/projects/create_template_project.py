@@ -249,6 +249,24 @@ def create_template_project_callback(
                 # relationship between the prompt, the sample Terraform (which is provided by the system, not by the client),
                 # and the generated Terraform. This is why we cache the result as it does not rely on any of the clients
                 # unique configuration.
+
+                temperature = (
+                    None
+                    if os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE", "")
+                    == "None"
+                    else string_to_int(
+                        os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE", "0"),
+                        0,
+                    )
+                )
+
+                use_responses_api = (
+                    os.getenv(
+                        "AISERVICES_DEPLOYMENT_PROJECT_GEN_RESPONSES", ""
+                    ).casefold()
+                    == "true"
+                )
+
                 configuration = llm_message_query(
                     messages,
                     context,
@@ -257,10 +275,8 @@ def create_template_project_callback(
                     or os.getenv("AISERVICES_DEPLOYMENT"),
                     os.getenv("AISERVICES_KEY"),
                     os.getenv("AISERVICES_ENDPOINT"),
-                    temperature=string_to_int(
-                        os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE", "0"),
-                        0,
-                    ),
+                    temperature=temperature,
+                    use_responses_api=use_responses_api,
                 )
 
                 # Deal with the LLM returning code in markdown code blocks
