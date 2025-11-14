@@ -1113,7 +1113,9 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
 * You must always include the `data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_"` data source.
 * The "feed_id" attribute in the "primary_package" block of a step of type "Octopus.DeployRelease" must always be set to the built-in Octopus Server Releases feed found in the `data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_"` data source.
 * The template path for a cloud formation step must be defined in the "Octopus.Action.Aws.CloudFormationTemplate" property in the "execution_properties" block.
-* You will be penalized for defining a "execution_properties" property called "Octopus.Action.Aws.CloudFormation.Template".
+* You will be penalized for defining a "execution_properties" property called "Octopus.Action.Aws.CloudFormation.Template" as this is an invalid property.
+* You will be penalized for defining a "execution_properties" property called "Octopus.Action.Aws.CloudFormation.TemplateFile" as this is an invalid property.
+* You will be penalized for defining a "execution_properties" property called "Octopus.Action.Aws.CloudFormation.TagsEnabled" as this is an invalid property.
 
 ## Octopus Variable Syntax Instructions
 
