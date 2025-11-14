@@ -512,6 +512,7 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
 ## Octopus Runbook Instructions
 
 * The "retention_policy" block can only be defined for a resource "octopusdeploy_runbook".
+* You will be penalized for defining a "octopusdeploy_project_runbook" resource.
 
 ## Octopus Project Instructions
 
