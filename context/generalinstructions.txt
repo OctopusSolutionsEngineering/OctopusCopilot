@@ -1131,6 +1131,11 @@ execution_properties {
 execution_properties {
 }
 ```
+* You will be penalized for defining an "properties" block like this without the equal sign:
+```
+properties {
+}
+```
 
 ## Octopus Variable Syntax Instructions
 
