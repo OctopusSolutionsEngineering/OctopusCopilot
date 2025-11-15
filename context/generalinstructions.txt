@@ -1122,6 +1122,12 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
 * You will be penalized for defining a property in the "execution_properties" block called "Octopus.Action.Aws.CloudFormation.TagsEnabled".
 * You will be penalized for defining a property in the "execution_properties" block called "Octopus.Action.Aws.CloudFormation.StackName".
 * You will be penalized for defining multiple "execution_properties" blocks within a single resource.
+* The "execution_properties" property must be defined as a map, for example:
+```
+execution_properties = {
+    # Define properties here
+}
+```
 * You will be penalized for defining an "execution_properties" block like this, with "name" and "value" attributes:
 ```
 execution_properties {
