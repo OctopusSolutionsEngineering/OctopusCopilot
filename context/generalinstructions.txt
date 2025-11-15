@@ -1122,8 +1122,8 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
 * You will be penalized for defining an "execution_properties" block like this, with "name" and "value" attributes:
 ```
 execution_properties {
-  name  = "Octopus.Action.Manual.Instructions"
-  value = "Do you approve the production deployment?"
+  name  = "<some name>"
+  value = "<some value>"
 }
 ```
 * You will be penalized for defining an "execution_properties" block like this without the equal sign:
