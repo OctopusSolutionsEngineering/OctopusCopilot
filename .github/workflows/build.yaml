@@ -94,7 +94,7 @@ jobs:
           cd octoterra
           unzip octoterra_linux_amd64_azure.zip
           chmod +x octoterra_linux_amd64_azure
-          ./octoterra_linux_amd64_azure &
+          ./octoterra_linux_amd64_azure > octoterra.log &
         env:
           # The port used when running the octoterra microservice
           FUNCTIONS_CUSTOMHANDLER_PORT: 8081
@@ -108,7 +108,7 @@ jobs:
           cd octolint
           unzip octolint_linux_amd64_azure.zip
           chmod +x octolint_linux_amd64_azure
-          ./octolint_linux_amd64_azure &
+          ./octolint_linux_amd64_azure > octolint.log &
         env:
           # The port used when running the octolint microservice
           FUNCTIONS_CUSTOMHANDLER_PORT: 8082
@@ -124,7 +124,7 @@ jobs:
           chmod +x spacebuilder_linux_amd64_azure
           chmod +x binaries/opa_linux_amd64
           chmod +x binaries/tofu
-          ./spacebuilder_linux_amd64_azure &
+          ./spacebuilder_linux_amd64_azure > spacebuilder.log &
         env:
           SPACEBUILDER_INSTALLATION_DIRECTORY: "${{ github.workspace }}/spacebuilder"
           # The directory containing the policy files
@@ -169,6 +169,7 @@ jobs:
           ps aux | grep octolint_linux_amd64_azure
           ps aux | grep octoterra_linux_amd64_azure
           docker container ps
+          cat spacebuilder/spacebuilder.log
           exit "$ret"
         env:
           # These are the details of Slack
