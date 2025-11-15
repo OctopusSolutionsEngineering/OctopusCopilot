@@ -1154,6 +1154,21 @@ execution_properties = {
 execution_properties {
 }
 ```
+* Each "octopusdeploy_community_step_template" resource has a corresponding "octopusdeploy_community_step_template" data source that must be used to check for the existence of the community step template before creating it, for example:
+```
+data "octopusdeploy_community_step_template" "my_community_step_template" {
+  website = "https://library.octopus.com/step-templates/<guid goes here>"
+}
+
+resource "octopusdeploy_community_step_template" "my_community_step_template" {
+  community_action_template_id = "${length(data.octopusdeploy_community_step_template.my_community_step_template.steps) != 0 ? data.octopusdeploy_community_step_template.my_community_step_template.steps[0].id : null}"
+  count                        = "${data.octopusdeploy_step_template.my_community_step_template.step_template != null ? 0 : 1}"
+}
+```
+* You will be penalized for referencing a "octopusdeploy_community_step_template" data source "actions" property, for example:
+```
+ count = "${length(try(data.octopusdeploy_step_template.my_community_step_template.step_template.actions, [])) != 0 ? 0 : 1}"
+```
 
 ## Octopus Variable Syntax Instructions
 
