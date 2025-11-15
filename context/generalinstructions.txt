@@ -1146,6 +1146,14 @@ execution_properties {
 properties {
 }
 ```
+* You will be penalized for defining multiple "execution_properties" blocks within a single resource, for example:
+```
+execution_properties = {
+    # Define properties here
+}
+execution_properties {
+}
+```
 
 ## Octopus Variable Syntax Instructions
 
