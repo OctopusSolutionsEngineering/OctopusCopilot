@@ -591,8 +591,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         confirmation_id = get_confirmation_id(response_body)
         self.assertTrue(
             confirmation_id != "",
-            "Confirmation ID was " + confirmation_id,
-            response_body,
+            "Confirmation ID was " + confirmation_id
         )
 
         confirmation = {
