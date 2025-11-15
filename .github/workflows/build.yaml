@@ -126,6 +126,9 @@ jobs:
           chmod +x binaries/tofu
           ./spacebuilder_linux_amd64_azure > spacebuilder.log &
         env:
+          # Enable enhanced logging for localhost
+          ENHANCED_LOGGING_INSTANCES: '["localhost"]'
+          # The directory where spacebuilder is installed
           SPACEBUILDER_INSTALLATION_DIRECTORY: "${{ github.workspace }}/spacebuilder"
           # The directory containing the policy files
           SPACEBUILDER_OPA_POLICY_PATH: "${{ github.workspace }}/spacebuilder/policy"
