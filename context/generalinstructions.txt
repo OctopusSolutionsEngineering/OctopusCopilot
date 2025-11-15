@@ -1118,12 +1118,22 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
 * You will be penalized for defining a property in the "execution_properties" block called "Octopus.Action.Aws.CloudFormation.Template".
 * You will be penalized for defining a property in the "execution_properties" block called "Octopus.Action.Aws.CloudFormation.TemplateFile".
 * You will be penalized for defining a property in the "execution_properties" block called "Octopus.Action.Aws.CloudFormation.TagsEnabled".
-
+* You will be penalized for defining multiple "execution_properties" blocks within a single resource.
 * You will be penalized for defining an "execution_properties" block like this, with "name" and "value" attributes:
 ```
 execution_properties {
   name  = "Octopus.Action.Manual.Instructions"
   value = "Do you approve the production deployment?"
+}
+```
+* You will be penalized for defining an "execution_properties" block like this without the equal sign:
+```
+execution_properties {
+}
+```
+* You will be penalized for defining an "properties" block like this without the equal sign:
+```
+properties {
 }
 ```
 
