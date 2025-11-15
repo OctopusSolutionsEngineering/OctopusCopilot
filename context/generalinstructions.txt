@@ -1126,9 +1126,9 @@ execution_properties {
   value = "Do you approve the production deployment?"
 }
 ```
-* You will be penalized for defining the "execution_properties" property as a map, like this:
+* You will be penalized for defining an "execution_properties" block like this without the equal sign:
 ```
-execution_properties = {
+execution_properties {
 }
 ```
 
