@@ -1165,9 +1165,9 @@ resource "octopusdeploy_community_step_template" "my_community_step_template" {
   count                        = "${data.octopusdeploy_step_template.my_community_step_template.step_template != null ? 0 : 1}"
 }
 ```
-* You will be penalized for referencing a "octopusdeploy_community_step_template" data source "actions" property, for example:
+* You will be penalized for referencing a "octopusdeploy_step_template" data source "actions" property, for example:
 ```
- count = "${length(try(data.octopusdeploy_step_template.my_community_step_template.step_template.actions, [])) != 0 ? 0 : 1}"
+ count = "${length(try(data.octopusdeploy_step_template.my_step_template.step_template.actions, [])) != 0 ? 0 : 1}"
 ```
 
 ## Octopus Variable Syntax Instructions
