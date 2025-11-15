@@ -1126,6 +1126,11 @@ execution_properties {
   value = "Do you approve the production deployment?"
 }
 ```
+* You will be penalized for defining the "execution_properties" block as a map, like this:
+```
+execution_properties = {
+}
+```
 
 ## Octopus Variable Syntax Instructions
 
