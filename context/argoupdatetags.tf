@@ -46,6 +46,108 @@ resource "octopusdeploy_project_group" "project_group_update_application_image_t
   }
 }
 
+data "octopusdeploy_environments" "environment_test" {
+  ids          = null
+  partial_name = "Test"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_environment" "environment_test" {
+  count                        = "${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? 0 : 1}"
+  name                         = "Test"
+  description                  = ""
+  allow_dynamic_infrastructure = false
+  use_guided_failure           = false
+
+  jira_extension_settings {
+    environment_type = "unmapped"
+  }
+
+  jira_service_management_extension_settings {
+    is_enabled = false
+  }
+
+  servicenow_extension_settings {
+    is_enabled = false
+  }
+  depends_on = []
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_environments" "environment_production" {
+  ids          = null
+  partial_name = "Production"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_environment" "environment_production" {
+  count                        = "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? 0 : 1}"
+  name                         = "Production"
+  description                  = ""
+  allow_dynamic_infrastructure = false
+  use_guided_failure           = false
+
+  jira_extension_settings {
+    environment_type = "unmapped"
+  }
+
+  jira_service_management_extension_settings {
+    is_enabled = false
+  }
+
+  servicenow_extension_settings {
+    is_enabled = false
+  }
+  depends_on = [octopusdeploy_environment.environment_test]
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_lifecycles" "lifecycle_argo_lifecycle" {
+  ids          = null
+  partial_name = "Argo Lifecycle"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_lifecycle" "lifecycle_argo_lifecycle" {
+  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_argo_lifecycle.lifecycles) != 0 ? 0 : 1}"
+  name        = "Argo Lifecycle"
+  description = ""
+
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
+    name                                  = "Test"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+    name                                  = "Production"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+
+  release_retention_policy {
+    quantity_to_keep    = 0
+    should_keep_forever = true
+    unit                = "Items"
+  }
+
+  tentacle_retention_policy {
+    quantity_to_keep    = 0
+    should_keep_forever = true
+    unit                = "Items"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
   ids          = null
   partial_name = "Default Lifecycle"
@@ -81,10 +183,19 @@ data "octopusdeploy_feeds" "feed_ghcr_anonymous" {
   skip         = 0
   take         = 1
 }
+variable "feed_ghcr_anonymous_password" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The password used by the feed GHCR Anonymous"
+  default     = "Change Me!"
+}
 resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous" {
   count                                = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? 0 : 1}"
   name                                 = "GHCR Anonymous"
+  password                             = "${var.feed_ghcr_anonymous_password}"
   registry_path                        = ""
+  username                             = "x-accesss-token"
   api_version                          = "v2"
   feed_uri                             = "https://ghcrfacade-a6awccayfpcpg4cg.eastus-01.azurewebsites.net"
   package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
@@ -106,43 +217,6 @@ data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
   partial_name = "Hosted Ubuntu"
   skip         = 0
   take         = 1
-}
-
-data "octopusdeploy_worker_pools" "workerpool_hosted_windows" {
-  ids          = null
-  partial_name = "Hosted Windows"
-  skip         = 0
-  take         = 1
-}
-
-data "octopusdeploy_environments" "environment_production" {
-  ids          = null
-  partial_name = "Production"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_environment" "environment_production" {
-  count                        = "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? 0 : 1}"
-  name                         = "Production"
-  description                  = ""
-  allow_dynamic_infrastructure = false
-  use_guided_failure           = false
-
-  jira_extension_settings {
-    environment_type = "unmapped"
-  }
-
-  jira_service_management_extension_settings {
-    is_enabled = false
-  }
-
-  servicenow_extension_settings {
-    is_enabled = false
-  }
-  depends_on = []
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 data "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_smtp_server_configured" {
@@ -182,6 +256,7 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_app
   condition             = "Success"
   environments          = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
   excluded_environments = null
+  notes                 = "This step pauses the deployment and waits for approval before continuing."
   package_requirement   = "LetOctopusDecide"
   slug                  = "approve-production-deployment"
   start_trigger         = "StartAfterPrevious"
@@ -191,8 +266,8 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_app
   execution_properties  = {
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-everyone"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -206,11 +281,12 @@ resource "octopusdeploy_process_templated_step" "process_step_update_image_tags_
   condition             = "Success"
   environments          = null
   excluded_environments = null
+  notes                 = "Confirms that the SMTP server has been configured."
   package_requirement   = "LetOctopusDecide"
   slug                  = "octopus-check-smtp-server-configured"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_variable  = "Project.Octopus.Worker.Pool"
   properties            = {
       }
   execution_properties  = {
@@ -231,11 +307,12 @@ resource "octopusdeploy_process_templated_step" "process_step_update_image_tags_
   condition             = "Success"
   environments          = null
   excluded_environments = null
+  notes                 = "Checks to see if an Argo CD instance has been registered to Octopus."
   package_requirement   = "LetOctopusDecide"
   slug                  = "octopus-check-for-argo-cd-instances"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_variable  = "Project.Octopus.Worker.Pool"
   properties            = {
       }
   execution_properties  = {
@@ -276,6 +353,7 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_upd
   condition             = "Variable"
   environments          = null
   excluded_environments = null
+  notes                 = "Updates the image tag for the referenced images."
   package_requirement   = "LetOctopusDecide"
   packages              = { octopub-audit-microservice = { acquisition_location = "NotAcquired", feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", id = null, package_id = "${var.project_update_image_tags___helm_step_update_images_package_octopub_audit_microservice_packageid}", properties = { Extract = "False", Purpose = "DockerImageReference", SelectionMode = "immediate" } }, octopub-frontend = { acquisition_location = "NotAcquired", feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", id = null, package_id = "${var.project_update_image_tags___helm_step_update_images_package_octopub_frontend_packageid}", properties = { Extract = "False", Purpose = "DockerImageReference", SelectionMode = "immediate" } }, octopub-products-microservice = { acquisition_location = "NotAcquired", feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", id = null, package_id = "${var.project_update_image_tags___helm_step_update_images_package_octopub_products_microservice_packageid}", properties = { Extract = "False", Purpose = "DockerImageReference", SelectionMode = "immediate" } } }
   slug                  = "update-images"
@@ -286,10 +364,10 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_upd
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check for Argo CD Instances].Output.ArgoPresent == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.ArgoCD.CommitMessageSummary" = "DO NOT MERGE: Octopus Deploy updated image versions"
-        "Octopus.Action.ArgoCD.CommitMethod" = "PullRequest"
         "Octopus.Action.ArgoCD.CommitMessageDescription" = "If we merge this PR, then the next deployment will be a no-op. \n\n[Release link](#{Octopus.Web.ServerUri}#{Octopus.Web.ReleaseLink})\n[Deployment link](#{Octopus.Web.ServerUri}#{Octopus.Web.DeploymentLink})"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.ArgoCD.CommitMessageSummary" = "DO NOT MERGE: Octopus Deploy updated image versions"
+        "Octopus.Action.ArgoCD.CommitMethod" = "PullRequest"
       }
 }
 
@@ -302,20 +380,21 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_smo
   condition             = "Variable"
   environments          = null
   excluded_environments = null
+  notes                 = "Runs a smoke test to verify the deployed containers are working properly."
   package_requirement   = "LetOctopusDecide"
   slug                  = "smoke-test"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_variable  = "Project.Octopus.Worker.Pool"
   properties            = {
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check for Argo CD Instances].Output.ArgoPresent == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.Syntax" = "Bash"
         "Octopus.Action.Script.ScriptBody" = "echo \"Running smoke test...\"\n\necho \".\"\necho \".\"\necho \".\"\necho \".\"\necho \".\"\n\necho \"Smoke test passed!\""
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -328,6 +407,7 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_sen
   condition             = "Variable"
   environments          = null
   excluded_environments = null
+  notes                 = "Sends an email in the event the deployment failed."
   package_requirement   = "LetOctopusDecide"
   slug                  = "send-an-email-deployment-failed"
   start_trigger         = "StartAfterPrevious"
@@ -337,9 +417,9 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_sen
       }
   execution_properties  = {
         "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.Subject" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name} has failed!"
         "Octopus.Action.Email.Body" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name}, version #{Octopus.Release.Number} has failed!"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -356,6 +436,20 @@ resource "octopusdeploy_variable" "update_image_tags___helm_project_octopus_api_
   type            = "Sensitive"
   is_sensitive    = true
   sensitive_value = "Change Me!"
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_variable" "update_image_tags___helm_project_octopus_worker_pool_1" {
+  count        = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) == 0 ?octopusdeploy_project.project_update_image_tags___helm[0].id : data.octopusdeploy_projects.project_update_image_tags___helm.projects[0].id}"
+  value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  name         = "Project.Octopus.Worker.Pool"
+  type         = "WorkerPool"
+  is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true
@@ -412,7 +506,7 @@ resource "octopusdeploy_project" "project_update_image_tags___helm" {
   discrete_channel_release             = false
   is_disabled                          = false
   is_version_controlled                = false
-  lifecycle_id                         = "${length(data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id : data.octopusdeploy_lifecycles.system_lifecycle_firstlifecycle.lifecycles[0].id}"
+  lifecycle_id                         = "${length(data.octopusdeploy_lifecycles.lifecycle_argo_lifecycle.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_argo_lifecycle.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_argo_lifecycle[0].id}"
   project_group_id                     = "${length(data.octopusdeploy_project_groups.project_group_update_application_image_tags.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_update_application_image_tags.project_groups[0].id : octopusdeploy_project_group.project_group_update_application_image_tags[0].id}"
   included_library_variable_sets       = []
   tenanted_deployment_participation    = "${var.project_update_image_tags___helm_tenanted}"
