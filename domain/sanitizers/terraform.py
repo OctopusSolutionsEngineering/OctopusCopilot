@@ -137,6 +137,30 @@ def fix_lifecycle(config):
         config,
     )
 
+def fix_properties_block(config):
+    """
+    The LLM kept trying to define a block like properties {}
+    """
+
+    return re.sub(
+        r"properties\s*\{.*?}",
+        "",
+        config,
+        flags=re.DOTALL
+    )
+
+def fix_execution_properties_block(config):
+    """
+    The LLM kept trying to define a block like properties {}
+    """
+
+    return re.sub(
+        r"execution_properties\s*\{.*?}",
+        "",
+        config,
+        flags=re.DOTALL
+    )
+
 
 def remove_duplicate_definitions(config):
     """
