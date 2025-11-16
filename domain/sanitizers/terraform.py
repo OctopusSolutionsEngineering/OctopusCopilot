@@ -151,7 +151,7 @@ def fix_properties_block(config):
 
 def fix_execution_properties_block(config):
     """
-    The LLM kept trying to define a block like properties {}
+    The LLM kept trying to define a block like execution_properties {}
     """
 
     return re.sub(
