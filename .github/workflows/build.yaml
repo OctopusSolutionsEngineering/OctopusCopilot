@@ -213,11 +213,11 @@ jobs:
           # This is the deployment used to handle prompts
           AISERVICES_DEPLOYMENT: gpt-4.1
           # This is the deployment used to generate project Terraform configuration
-          AISERVICES_DEPLOYMENT_PROJECT_GEN: gpt-5-codex
+          AISERVICES_DEPLOYMENT_PROJECT_GEN: gpt-4.1
           # GPT 5 codex uses the responses API
-          AISERVICES_DEPLOYMENT_PROJECT_GEN_RESPONSES: true
+          AISERVICES_DEPLOYMENT_PROJECT_GEN_RESPONSES: false
           # GPT 5 codex does not support the temperature parameter
-          AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE: None
+          AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE: 0
           # This is the deployment used to handle function calls
           AISERVICES_DEPLOYMENT_FUNCTIONS: gpt-4.1
           AISERVICES_KEY: ${{ secrets.AISERVICES_KEY }}
