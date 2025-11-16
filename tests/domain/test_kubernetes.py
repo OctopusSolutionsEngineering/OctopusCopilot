@@ -407,7 +407,6 @@ class TestKubernetesSanitizer(unittest.TestCase):
         self.assertEqual(result, input_config)
 
     def test_fix_properties_block(self):
-        # Test content that isn't a retention policy block
         input_config = """resource "octopusdeploy_project" "test" {
                properties {
                }
@@ -421,7 +420,6 @@ class TestKubernetesSanitizer(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_fix_execution_properties_block(self):
-        # Test content that isn't a retention policy block
         input_config = """resource "octopusdeploy_project" "test" {
                execution_properties {
                }
