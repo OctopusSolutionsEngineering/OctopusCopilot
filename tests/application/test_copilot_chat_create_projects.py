@@ -587,8 +587,12 @@ Create 5 tag sets that represent counties from England and assign them to the te
         new_runbook_name = "Switch Load Balancer"
         prompt = f'Create an AWS Lambda project called "{project_name}". Include an additional runbook in the new project called "{new_runbook_name}". The additional runbook should have a single step in the runbook process. The step is called "Switch load balancer production group" and it is an AWS run a CLI script step. The step should be a bash script that switches traffic from one target group to the other. The runbook should only run in the "Test" and "Production" environments.'
         response = copilot_handler_internal(build_request(prompt))
-        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
-        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+        response_body = response.get_body().decode("utf8")
+        confirmation_id = get_confirmation_id(response_body)
+        self.assertTrue(
+            confirmation_id != "",
+            "Confirmation ID was " + confirmation_id
+        )
 
         confirmation = {
             "messages": [
