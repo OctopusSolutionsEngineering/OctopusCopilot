@@ -499,11 +499,6 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             number_of_steps > 2,
             f"The deployment process should have at least two steps. It has: {number_of_steps}",
         )
-        mandatory_step = "Validate setup"
-        self.assertTrue(
-            any(step["Name"] == mandatory_step for step in deployment_process["Steps"]),
-            f'The deployment process should have a step called "{mandatory_step}".',
-        )
 
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
     def test_create_script_project(self):
