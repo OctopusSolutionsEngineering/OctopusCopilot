@@ -7,7 +7,9 @@ from domain.sanitizers.terraform import (
     fix_single_line_retention_policy,
     fix_single_line_tentacle_retention_policy,
     fix_bad_logic_characters,
-    fix_lifecycle, fix_properties_block, fix_execution_properties_block,
+    fix_lifecycle,
+    fix_properties_block,
+    fix_execution_properties_block,
 )
 
 
@@ -406,32 +408,28 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
     def test_fix_properties_block(self):
         # Test content that isn't a retention policy block
-        input_config = (
-            '''resource "octopusdeploy_project" "test" {
+        input_config = """resource "octopusdeploy_project" "test" {
                properties {
                }
-            }'''
-        )
+            }"""
 
-        expected = '''resource "octopusdeploy_project" "test" {
+        expected = """resource "octopusdeploy_project" "test" {
                
-            }'''
+            }"""
 
         result = fix_properties_block(input_config)
         self.assertEqual(result, expected)
 
     def test_fix_execution_properties_block(self):
         # Test content that isn't a retention policy block
-        input_config = (
-            '''resource "octopusdeploy_project" "test" {
+        input_config = """resource "octopusdeploy_project" "test" {
                execution_properties {
                }
-            }'''
-        )
+            }"""
 
-        expected = '''resource "octopusdeploy_project" "test" {
+        expected = """resource "octopusdeploy_project" "test" {
                
-            }'''
+            }"""
 
         result = fix_execution_properties_block(input_config)
         self.assertEqual(result, expected)
