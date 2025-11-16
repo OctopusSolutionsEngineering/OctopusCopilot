@@ -452,6 +452,114 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
 
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
+    def test_create_tomcat_project(self):
+        project_name = "My Tomcat Project"
+        prompt = f'Create a Tomcat project called "{project_name}".'
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        print(response_text)
+        self.assertTrue(
+            f"The following resources were created:" in response_text,
+        )
+
+        space_id, space_name = get_space_id_and_name_from_name(
+            "Simple", Octopus_Api_Key, Octopus_Url
+        )
+
+        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
+        self.assertEqual(project["Name"], project_name)
+
+        raw_deployment_process = get_raw_deployment_process(
+            space_name, project_name, Octopus_Api_Key, Octopus_Url
+        )
+        deployment_process = json.loads(raw_deployment_process)
+        number_of_steps = len(deployment_process["Steps"])
+        self.assertTrue(
+            number_of_steps > 2,
+            f"The deployment process should have at least two steps. It has: {number_of_steps}",
+        )
+        mandatory_step = "Validate setup"
+        self.assertTrue(
+            any(step["Name"] == mandatory_step for step in deployment_process["Steps"]),
+            f'The deployment process should have a step called "{mandatory_step}".',
+        )
+
+    @retry((AssertionError, RateLimitError), tries=2, delay=2)
+    def test_create_argo_project(self):
+        project_name = "My Argo Project"
+        prompt = f'Create a Argo CD Tag Update project called "{project_name}".'
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "",
+                    "copilot_references": None,
+                    "copilot_confirmations": [
+                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                    ],
+                }
+            ]
+        }
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        print(response_text)
+        self.assertTrue(
+            f"The following resources were created:" in response_text,
+        )
+
+        space_id, space_name = get_space_id_and_name_from_name(
+            "Simple", Octopus_Api_Key, Octopus_Url
+        )
+
+        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
+        self.assertEqual(project["Name"], project_name)
+
+        raw_deployment_process = get_raw_deployment_process(
+            space_name, project_name, Octopus_Api_Key, Octopus_Url
+        )
+        deployment_process = json.loads(raw_deployment_process)
+        number_of_steps = len(deployment_process["Steps"])
+        self.assertTrue(
+            number_of_steps > 2,
+            f"The deployment process should have at least two steps. It has: {number_of_steps}",
+        )
+        mandatory_step = "Validate setup"
+        self.assertTrue(
+            any(step["Name"] == mandatory_step for step in deployment_process["Steps"]),
+            f'The deployment process should have a step called "{mandatory_step}".',
+        )
+
+    @retry((AssertionError, RateLimitError), tries=2, delay=2)
     def test_create_lambda_project(self):
         project_name = "My AWS Lambda"
         prompt = f'Create an AWS Lambda project called "{project_name}". Use the project group "AWS".'
@@ -589,10 +697,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response = copilot_handler_internal(build_request(prompt))
         response_body = response.get_body().decode("utf8")
         confirmation_id = get_confirmation_id(response_body)
-        self.assertTrue(
-            confirmation_id != "",
-            "Confirmation ID was " + confirmation_id
-        )
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
         confirmation = {
             "messages": [
