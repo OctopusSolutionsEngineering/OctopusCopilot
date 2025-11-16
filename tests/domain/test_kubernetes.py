@@ -414,7 +414,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
         expected = """resource "octopusdeploy_project" "test" {
                
-            }"""
+            }"""  # noqa: W293
 
         result = fix_properties_block(input_config)
         self.assertEqual(result, expected)
@@ -427,7 +427,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
         expected = """resource "octopusdeploy_project" "test" {
                
-            }"""
+            }"""  # noqa: W293
 
         result = fix_execution_properties_block(input_config)
         self.assertEqual(result, expected)
