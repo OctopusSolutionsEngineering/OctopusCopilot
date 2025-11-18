@@ -1490,6 +1490,20 @@ EOT
 "Octopus.Action.Azure.ResourceGroupTemplate" = "param location string = resourceGroup().location\nresource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {\n  name: 'octoglobal$${uniqueString(resourceGroup().id)}'\n  location: location\n  sku: {\n    name: 'Standard_LRS'\n  }\n  kind: 'StorageV2'\n}\n"
 ```
 
+## Terraform Variable Instructions
+
+* All terraform variables must have default values, for example:
+
+```
+variable "project_group_name" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The name of the project group to lookup"
+  default     = "My Project Group"
+}
+```
+
 ## Penalties
 
 * You will be penalized for generating invalid Terraform.
