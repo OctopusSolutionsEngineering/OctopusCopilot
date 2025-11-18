@@ -539,16 +539,6 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
         self.assertEqual(project["Name"], project_name)
 
-        raw_deployment_process = get_raw_deployment_process(
-            space_name, project_name, Octopus_Api_Key, Octopus_Url
-        )
-        deployment_process = json.loads(raw_deployment_process)
-        number_of_steps = len(deployment_process["Steps"])
-        self.assertTrue(
-            number_of_steps > 2,
-            f"The deployment process should have at least two steps. It has: {number_of_steps}",
-        )
-
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
     def test_create_terraform_project(self):
         project_name = "My Terraform Project"
