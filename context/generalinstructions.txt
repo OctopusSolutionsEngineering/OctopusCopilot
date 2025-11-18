@@ -545,8 +545,23 @@ must be referenced in the "project_id" attribute like this:
 
 * You will be penalized for referencing a data source that does not exist in the output.
 * You will be penalized for defining the "tenant_tags" property on a resource "octopusdeploy_project".
-* If the prompt indicates that a projecy is associated with a tenant, and the prompt does not specify the project tenanted mode to use, the "tenanted_deployment_participation" property must be set to "TenantedOrUntenanted".
+* If the prompt indicates that a project is associated with a tenant, and the prompt does not specify the project tenanted mode to use, the "tenanted_deployment_participation" property must be set to "TenantedOrUntenanted".
 * If the prompt indicates that a project is associated with a tenant, link the tenant to all the environments in the project's lifecycle.
+* You must include a variable that define the name of the project, for example:
+```
+variable "project_my_project_name" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The name of the project"
+  default     = "My Project"
+}
+
+resource "octopusdeploy_project" "project_my_project" {
+  name                                 = "${var.project_my_project_name}"
+  # Define other properties here
+}
+```
 
 ## Octopus Project Trigger Instructions
 
