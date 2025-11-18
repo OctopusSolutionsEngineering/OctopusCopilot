@@ -213,7 +213,7 @@ jobs:
           # This is the deployment used to handle prompts
           AISERVICES_DEPLOYMENT: gpt-4.1
           # This is the deployment used to generate project Terraform configuration
-          AISERVICES_DEPLOYMENT_PROJECT_GEN: gpt-5.1-codex-mini
+          AISERVICES_DEPLOYMENT_PROJECT_GEN: gpt-5.1-codex
           # GPT 5 codex uses the responses API
           AISERVICES_DEPLOYMENT_PROJECT_GEN_RESPONSES: true
           # GPT 5 codex does not support the temperature parameter
