@@ -589,10 +589,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response = copilot_handler_internal(build_request(prompt))
         response_body = response.get_body().decode("utf8")
         confirmation_id = get_confirmation_id(response_body)
-        self.assertTrue(
-            confirmation_id != "",
-            "Confirmation ID was " + confirmation_id
-        )
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
         confirmation = {
             "messages": [
