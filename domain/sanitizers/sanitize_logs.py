@@ -4,7 +4,6 @@ from presidio_analyzer import AnalyzerEngine
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 
-from domain.sanitizers.stringlifier.api import Stringlifier
 from domain.validation.argument_validation import ensure_string
 
 # https://github.com/odomojuli/regextokens
