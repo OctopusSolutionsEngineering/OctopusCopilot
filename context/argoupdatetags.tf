@@ -195,7 +195,7 @@ resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous" {
   name                                 = "GHCR Anonymous"
   password                             = "${var.feed_ghcr_anonymous_password}"
   registry_path                        = ""
-  username                             = "x-accesss-token"
+  username                             = "x-access-token"
   api_version                          = "v2"
   feed_uri                             = "https://ghcrfacade-a6awccayfpcpg4cg.eastus-01.azurewebsites.net"
   package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]

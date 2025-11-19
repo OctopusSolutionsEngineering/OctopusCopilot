@@ -1,7 +1,11 @@
 import os
 
+import boto3
 import openai
+from botocore.config import Config as BotoConfig, Config
+from langchain_aws import ChatBedrockConverse
 from langchain_classic.agents import create_openai_tools_agent
+from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import AzureChatOpenAI
 from openai import RateLimitError
@@ -52,14 +56,25 @@ def llm_message_query(
         or "2025-04-01-preview"  # https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-preview-api-releases
     )
 
-    llm = AzureChatOpenAI(
-        temperature=temperature,
-        azure_deployment=deployment,
-        api_key=(api_key or os.environ["AISERVICES_KEY"]),
-        azure_endpoint=(endpoint or os.environ["AISERVICES_ENDPOINT"]),
-        api_version=version,
-        use_responses_api=use_responses_api,
+    # llm = AzureChatOpenAI(
+    #     temperature=temperature,
+    #     azure_deployment=deployment,
+    #     api_key=(api_key or os.environ["AISERVICES_KEY"]),
+    #     azure_endpoint=(endpoint or os.environ["AISERVICES_ENDPOINT"]),
+    #     api_version=version,
+    #     use_responses_api=use_responses_api,
+    # )
+
+    model = (
+        os.environ.get("BEDROCK_MODEL_ID")
+        or "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     )
+    region = os.environ.get("BEDROCK_MODEL_REGION") or "us-east-2"
+
+    bedrock_config = Config(read_timeout=600)
+    client = boto3.client("bedrock-runtime", region_name=region, config=bedrock_config)
+
+    llm = ChatBedrockConverse(client=client, model_id=model, temperature=0)
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)
 
