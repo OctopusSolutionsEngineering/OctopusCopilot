@@ -1,6 +1,7 @@
 import os
 
 import openai
+from langchain_anthropic import ChatAnthropic
 from langchain_classic.agents import create_openai_tools_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import AzureChatOpenAI
@@ -52,13 +53,21 @@ def llm_message_query(
         or "2025-04-01-preview"  # https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-preview-api-releases
     )
 
-    llm = AzureChatOpenAI(
-        temperature=temperature,
-        azure_deployment=deployment,
+    # llm = AzureChatOpenAI(
+    #     temperature=temperature,
+    #     azure_deployment=deployment,
+    #     api_key=(api_key or os.environ["AISERVICES_KEY"]),
+    #     azure_endpoint=(endpoint or os.environ["AISERVICES_ENDPOINT"]),
+    #     api_version=version,
+    #     use_responses_api=use_responses_api,
+    # )
+
+    llm = ChatAnthropic(
+        model="claude-haiku-4-5",
+        base_url="https://matth-m9ho8uqc-eastus2.services.ai.azure.com/anthropic/",
         api_key=(api_key or os.environ["AISERVICES_KEY"]),
-        azure_endpoint=(endpoint or os.environ["AISERVICES_ENDPOINT"]),
-        api_version=version,
-        use_responses_api=use_responses_api,
+        temperature=0,
+        timeout=None,
     )
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)
