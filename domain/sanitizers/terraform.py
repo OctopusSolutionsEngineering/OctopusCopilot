@@ -146,6 +146,22 @@ def fix_properties_block(config):
     return re.sub(r"properties\s*\{.*?}", "", config, flags=re.DOTALL)
 
 
+def fix_empty_properties_block(config):
+    """
+    The LLM kept trying to define empty properties blocks like properties {}
+    """
+
+    return re.sub(r"properties\s*=\s*\{\s*}", "", config, flags=re.DOTALL)
+
+
+def fix_empty_execution_properties_block(config):
+    """
+    The LLM kept trying to define empty properties blocks like execution_properties {}
+    """
+
+    return re.sub(r"execution_properties\s*=\s*\{\s*}", "", config, flags=re.DOTALL)
+
+
 def fix_execution_properties_block(config):
     """
     The LLM kept trying to define a block like execution_properties {}

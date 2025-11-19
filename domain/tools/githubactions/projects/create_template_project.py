@@ -23,7 +23,11 @@ from domain.sanitizers.terraform import (
     remove_duplicate_definitions,
     fix_single_line_tentacle_retention_policy,
     fix_bad_logic_characters,
-    fix_lifecycle, fix_properties_block, fix_execution_properties_block,
+    fix_lifecycle,
+    fix_properties_block,
+    fix_execution_properties_block,
+    fix_empty_execution_properties_block,
+    fix_empty_properties_block,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
@@ -317,6 +321,12 @@ def create_template_project_callback(
 
                 # Deal with the LLM returning a execution_properties blocks
                 configuration = fix_execution_properties_block(configuration)
+
+                # Deal with the LLM returning an empty execution_properties blocks
+                configuration = fix_empty_execution_properties_block(configuration)
+
+                # Deal with the LLM returning an empty properties blocks
+                configuration = fix_empty_properties_block(configuration)
 
             try:
                 if auto_apply:

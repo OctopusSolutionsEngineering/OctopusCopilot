@@ -10,6 +10,8 @@ from domain.sanitizers.terraform import (
     fix_lifecycle,
     fix_properties_block,
     fix_execution_properties_block,
+    fix_empty_properties_block,
+    fix_empty_execution_properties_block,
 )
 
 
@@ -430,6 +432,32 @@ class TestKubernetesSanitizer(unittest.TestCase):
             }"""  # noqa: W293
 
         result = fix_execution_properties_block(input_config)
+        self.assertEqual(result, expected)
+
+    def test_fix_empty_properties_block(self):
+        input_config = """resource "octopusdeploy_project" "test" {
+               properties = {
+               }
+            }"""
+
+        expected = """resource "octopusdeploy_project" "test" {
+               
+            }"""  # noqa: W293
+
+        result = fix_empty_properties_block(input_config)
+        self.assertEqual(result, expected)
+
+    def test_fix_empty_properties_block(self):
+        input_config = """resource "octopusdeploy_project" "test" {
+               execution_properties = {
+               }
+            }"""
+
+        expected = """resource "octopusdeploy_project" "test" {
+               
+            }"""  # noqa: W293
+
+        result = fix_empty_execution_properties_block(input_config)
         self.assertEqual(result, expected)
 
 
