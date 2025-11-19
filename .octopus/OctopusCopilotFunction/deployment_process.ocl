@@ -285,6 +285,11 @@ step "deploy-with-cli" {
                      "name": "AWS_SECRET_ACCESS_KEY",
                      "value": "#{Aws.SecretAccessKey}",
                      "slotSetting": false
+                   },
+                   {
+                     "name": "PROJECT_GEN_SERVICE",
+                     "value": "#{Application.ProjectGen}",
+                     "slotSetting": false
                    }
                 ] 
                 EOL
