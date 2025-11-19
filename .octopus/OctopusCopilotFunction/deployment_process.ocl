@@ -275,8 +275,17 @@ step "deploy-with-cli" {
                      "name": "APPLICATION_SPACEBUILDER_URL",
                      "value": "#{Application.SpaceBuilder.Url}",
                      "slotSetting": false
+                   },
+                   {
+                     "name": "AWS_ACCESS_KEY_ID",
+                     "value": "#{Aws.AccessKey}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AWS_SECRET_ACCESS_KEY",
+                     "value": "#{Aws.SecretAccessKey}",
+                     "slotSetting": false
                    }
-                   
                 ] 
                 EOL
                 
