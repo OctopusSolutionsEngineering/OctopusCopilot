@@ -24,7 +24,7 @@ from infrastructure.octopus import (
     get_deployment_logs,
     activity_logs_to_string,
 )
-from infrastructure.openai import llm_message_query
+from infrastructure.llm import llm_message_query
 
 
 def logs_callback(github_user, octopus_details, log_query):

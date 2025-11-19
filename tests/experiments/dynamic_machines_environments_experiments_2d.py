@@ -13,7 +13,7 @@ from infrastructure.octopus import (
     get_environments,
     get_space_id_and_name_from_name,
 )
-from infrastructure.openai import llm_tool_query
+from infrastructure.llm import llm_tool_query
 
 
 def get_test_cases(limit=0):

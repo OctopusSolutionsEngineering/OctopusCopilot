@@ -4,7 +4,7 @@ from openai import RateLimitError
 from retry import retry
 
 from domain.sanitizers.sanitized_list import sanitize_list
-from infrastructure.openai import llm_tool_query, llm_message_query
+from infrastructure.llm import llm_tool_query, llm_message_query
 from tests.infrastructure.tools.build_test_tools import build_mock_test_tools
 
 

@@ -10,7 +10,7 @@ from domain.messages.docs_messages import docs_prompt
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
 from infrastructure.github import search_repo_async
-from infrastructure.openai import llm_message_query
+from infrastructure.llm import llm_message_query
 
 docs_repo = "OctopusDeploy/docs"
 blog_repo = "OctopusDeploy/blog"

@@ -226,7 +226,7 @@ jobs:
           BEDROCK_MODEL_REGION: us-east-2
           AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
           AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          PROJECT_GEN_SERVICE: bedrock
+          PROJECT_GEN_SERVICE: bedrock_project
 #          REDIRECTION_DISABLE: !!str "true"
 #          REDIRECTION_FORCE: !!str "false"
         shell: /usr/bin/bash --noprofile --norc {0}

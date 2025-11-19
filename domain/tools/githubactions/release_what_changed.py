@@ -59,7 +59,7 @@ from infrastructure.octopus import (
     get_failed_step,
 )
 from infrastructure.octoterra import get_octoterra_space_async
-from infrastructure.openai import llm_message_query
+from infrastructure.llm import llm_message_query
 from infrastructure.zendesk import get_tickets_comments, get_tickets
 
 max_issues = 10

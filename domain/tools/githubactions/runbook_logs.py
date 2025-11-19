@@ -21,7 +21,7 @@ from infrastructure.octopus import (
     activity_logs_to_string,
     get_project,
 )
-from infrastructure.openai import llm_message_query
+from infrastructure.llm import llm_message_query
 
 
 def get_runbook_logs_wrapper(github_user, octopus_details, log_query):

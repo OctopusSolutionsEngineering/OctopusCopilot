@@ -29,7 +29,7 @@ from infrastructure.github import (
     get_issues_comments,
     get_issues,
 )
-from infrastructure.openai import llm_message_query
+from infrastructure.llm import llm_message_query
 from infrastructure.storyblok import search_storyblok_stories, get_fields_with_text
 from infrastructure.zendesk import get_tickets_comments, get_tickets, get_no_tickets
 
