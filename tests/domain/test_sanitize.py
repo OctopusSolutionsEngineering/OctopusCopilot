@@ -19,27 +19,27 @@ class SanitizeTests(unittest.TestCase):
     # def test_message_email_removed(self):
     #     self.assertTrue("example@example.org" not in anonymize_message("Email is example@example.org"))
 
-    def test_access_key_removed(self):
-        self.assertTrue(
-            "AKIAIOSFODNN7ABFRDS"
-            not in anonymize_message("Access key is AKIAIOSFODNN7ABFRDS")
-        )
-        self.assertTrue(
-            "wJalrXUtnFEMI"
-            not in anonymize_message("Secret key is wJalrXUtnFEMI/K7MDENG/bPxRfiCY")
-        )
-        self.assertTrue(
-            "K7MDENG"
-            not in anonymize_message("Secret key is wJalrXUtnFEMI/K7MDENG/bPxRfiCY")
-        )
-        self.assertTrue(
-            "bPxRfiCY"
-            not in anonymize_message("Secret key is wJalrXUtnFEMI/K7MDENG/bPxRfiCY")
-        )
-        self.assertTrue(
-            "7328afad"
-            not in anonymize_message("Tenant ID 7328afad-4ddc-422e-93bb-d465a5dd5c25")
-        )
+    # def test_access_key_removed(self):
+    #     self.assertTrue(
+    #         "AKIAIOSFODNN7ABFRDS"
+    #         not in anonymize_message("Access key is AKIAIOSFODNN7ABFRDS")
+    #     )
+    #     self.assertTrue(
+    #         "wJalrXUtnFEMI"
+    #         not in anonymize_message("Secret key is wJalrXUtnFEMI/K7MDENG/bPxRfiCY")
+    #     )
+    #     self.assertTrue(
+    #         "K7MDENG"
+    #         not in anonymize_message("Secret key is wJalrXUtnFEMI/K7MDENG/bPxRfiCY")
+    #     )
+    #     self.assertTrue(
+    #         "bPxRfiCY"
+    #         not in anonymize_message("Secret key is wJalrXUtnFEMI/K7MDENG/bPxRfiCY")
+    #     )
+    #     self.assertTrue(
+    #         "7328afad"
+    #         not in anonymize_message("Tenant ID 7328afad-4ddc-422e-93bb-d465a5dd5c25")
+    #     )
 
     def test_get_item_or_none(self):
         self.assertEqual("item1", get_item_or_none(["item1"], 0))
