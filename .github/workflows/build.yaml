@@ -222,7 +222,7 @@ jobs:
           AISERVICES_DEPLOYMENT_FUNCTIONS: gpt-4.1
           AISERVICES_KEY: ${{ secrets.AISERVICES_KEY }}
           AISERVICES_ENDPOINT: ${{ secrets.AISERVICES_ENDPOINT }}
-          BEDROCK_MODEL_ID: qwen.qwen3-coder-30b-a3b-v1:0
+          BEDROCK_MODEL_ID: us.anthropic.claude-haiku-4-5-20251001-v1:0
           BEDROCK_MODEL_REGION: us-east-2
           AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
           AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
