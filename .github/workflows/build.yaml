@@ -47,7 +47,7 @@ jobs:
     needs: validate
     strategy:
       matrix:
-        group: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 ]
+        group: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25 ]
     steps:
       - name: Install terraform
         uses: hashicorp/setup-terraform@v3
@@ -326,6 +326,16 @@ jobs:
           "junit-test-summary-13/*.xml" 
           "junit-test-summary-14/*.xml" 
           "junit-test-summary-15/*.xml" 
+          "junit-test-summary-16/*.xml" 
+          "junit-test-summary-17/*.xml" 
+          "junit-test-summary-18/*.xml" 
+          "junit-test-summary-19/*.xml" 
+          "junit-test-summary-20/*.xml" 
+          "junit-test-summary-21/*.xml" 
+          "junit-test-summary-22/*.xml" 
+          "junit-test-summary-23/*.xml" 
+          "junit-test-summary-24/*.xml" 
+          "junit-test-summary-25/*.xml" 
 
       - if: always()
         name: Report
