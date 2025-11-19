@@ -160,7 +160,7 @@ jobs:
       - name: Test
         run: |
           pip install pytest pytest-split coverage setuptools
-          PYTHONPATH=$(pwd) coverage run --omit="./tests/*" --omit="./domain/sanitizers/stringlifier/*" -m pytest --junitxml=results.xml --splits 20 --group ${{ matrix.group }}
+          PYTHONPATH=$(pwd) coverage run --omit="./tests/*" --omit="./domain/sanitizers/stringlifier/*" -m pytest --junitxml=results.xml --splits 25 --group ${{ matrix.group }}
           # See https://github.com/pytest-dev/pytest/issues/2393
           ret=$?
           if [ "$ret" = 5 ]; then
