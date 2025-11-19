@@ -47,7 +47,7 @@ jobs:
     needs: validate
     strategy:
       matrix:
-        group: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 ]
+        group: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 ]
     steps:
       - name: Install terraform
         uses: hashicorp/setup-terraform@v3
@@ -160,7 +160,7 @@ jobs:
       - name: Test
         run: |
           pip install pytest pytest-split coverage setuptools
-          PYTHONPATH=$(pwd) coverage run --omit="./tests/*" --omit="./domain/sanitizers/stringlifier/*" -m pytest --junitxml=results.xml --splits 20 --group ${{ matrix.group }}
+          PYTHONPATH=$(pwd) coverage run --omit="./tests/*" --omit="./domain/sanitizers/stringlifier/*" -m pytest --junitxml=results.xml --splits 30 --group ${{ matrix.group }}
           # See https://github.com/pytest-dev/pytest/issues/2393
           ret=$?
           if [ "$ret" = 5 ]; then
@@ -213,15 +213,20 @@ jobs:
           # This is the deployment used to handle prompts
           AISERVICES_DEPLOYMENT: gpt-4.1
           # This is the deployment used to generate project Terraform configuration
-          AISERVICES_DEPLOYMENT_PROJECT_GEN: gpt-4.1
+          AISERVICES_DEPLOYMENT_PROJECT_GEN: gpt-5.1-codex
           # GPT 5 codex uses the responses API
-          AISERVICES_DEPLOYMENT_PROJECT_GEN_RESPONSES: false
+          AISERVICES_DEPLOYMENT_PROJECT_GEN_RESPONSES: true
           # GPT 5 codex does not support the temperature parameter
-          AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE: 0
+          AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE: None
           # This is the deployment used to handle function calls
           AISERVICES_DEPLOYMENT_FUNCTIONS: gpt-4.1
           AISERVICES_KEY: ${{ secrets.AISERVICES_KEY }}
           AISERVICES_ENDPOINT: ${{ secrets.AISERVICES_ENDPOINT }}
+          BEDROCK_MODEL_ID: us.anthropic.claude-haiku-4-5-20251001-v1:0
+          BEDROCK_MODEL_REGION: us-east-2
+          AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
+          AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          PROJECT_GEN_SERVICE: bedrock_project
 #          REDIRECTION_DISABLE: !!str "true"
 #          REDIRECTION_FORCE: !!str "false"
         shell: /usr/bin/bash --noprofile --norc {0}
@@ -326,6 +331,21 @@ jobs:
           "junit-test-summary-13/*.xml" 
           "junit-test-summary-14/*.xml" 
           "junit-test-summary-15/*.xml" 
+          "junit-test-summary-16/*.xml" 
+          "junit-test-summary-17/*.xml" 
+          "junit-test-summary-18/*.xml" 
+          "junit-test-summary-19/*.xml" 
+          "junit-test-summary-20/*.xml" 
+          "junit-test-summary-21/*.xml" 
+          "junit-test-summary-22/*.xml" 
+          "junit-test-summary-23/*.xml" 
+          "junit-test-summary-24/*.xml" 
+          "junit-test-summary-25/*.xml" 
+          "junit-test-summary-26/*.xml" 
+          "junit-test-summary-27/*.xml" 
+          "junit-test-summary-28/*.xml" 
+          "junit-test-summary-29/*.xml" 
+          "junit-test-summary-30/*.xml" 
 
       - if: always()
         name: Report

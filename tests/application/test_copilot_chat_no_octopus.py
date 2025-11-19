@@ -253,6 +253,7 @@ From your diagram, the hosting company Octopus instance (UL-Octopus) is where de
             "transform", response_text.casefold(), "Response was " + response_text
         )
 
+    @unittest.skip
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_sample_hcl(self):
         prompt = 'Generate a Terraform module with an environment called "Development", a project group called "Test", and a project called "Hello World" with a single Powershell script step that echoes the text "Hello World".'

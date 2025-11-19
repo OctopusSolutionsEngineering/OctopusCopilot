@@ -697,6 +697,7 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
 
 ## Octopus Deployment Process Instructions
 
+* You must consider the attributes in the "execution_properties" block and the "properties" block of the example steps to be mandatory.
 * Every "octopusdeploy_project" resource must have an associated "octopusdeploy_process" resource.
 * Every "octopusdeploy_process" resource must have an associated "octopusdeploy_process_steps_order" resource.
 * Every "octopusdeploy_process_steps_order" resource must have an associated "octopusdeploy_process_step" resource.
@@ -935,6 +936,7 @@ step "open-firewall-port" {
 * If the prompt specifies an inline script as well as a script from a package, you must ignore the package and only define the inline script.
 * You will be penalized for defining a script step with no script.
 * Steps of type "Octopus.AzureAppService" must have at least one item in the "target_roles" attribute.
+* Steps of type "Octopus.AwsUploadS3" must have a "Octopus.Action.AwsAccount.Variable" property in the "execution_properties" block.
 * Steps of the following types must have a "primary_package" block:
    * "Octopus.IIS"
    * "Octopus.AzureWebApp"

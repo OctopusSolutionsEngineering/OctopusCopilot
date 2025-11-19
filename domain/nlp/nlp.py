@@ -5,7 +5,7 @@ from domain.tools.wrapper.function_definition import (
     FunctionDefinitions,
     FunctionDefinition,
 )
-from infrastructure.openai import llm_tool_query
+from infrastructure.llm import llm_tool_query
 
 
 def nlp_get_keywords(text, max_keywords=10):

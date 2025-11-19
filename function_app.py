@@ -65,7 +65,7 @@ from infrastructure.codefresh import get_codefresh_user
 from infrastructure.github import get_github_user, exchange_github_code
 from infrastructure.http_pool import http
 from infrastructure.octopus import get_current_user, create_limited_api_key, get_version
-from infrastructure.openai import llm_tool_query, NO_FUNCTION_RESPONSE
+from infrastructure.llm import llm_tool_query, NO_FUNCTION_RESPONSE
 from infrastructure.terraform_context import delete_old_cached_items
 from infrastructure.users import (
     delete_old_user_details,

@@ -4,7 +4,6 @@ from presidio_analyzer import AnalyzerEngine
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 
-from domain.sanitizers.stringlifier.api import Stringlifier
 from domain.validation.argument_validation import ensure_string
 
 # https://github.com/odomojuli/regextokens
@@ -22,9 +21,6 @@ sensitive_vars = [
     "ghs_[a-zA-Z0-9]{36}",
     "ghr_[a-zA-Z0-9]{36}",
 ]
-# From https://github.com/adobe/stringlifier with some minor modifications to work with the latest
-# versions of numpy.
-stringlifier = Stringlifier()
 
 
 def create_analyser():
@@ -70,6 +66,5 @@ def anonymize_message(message):
 
     results = analyzer.analyze(text=message, language="en")
     anonymized_text = anonymizer.anonymize(text=message, analyzer_results=results).text
-    stringlifier_text = stringlifier(anonymized_text)
 
-    return stringlifier_text[0]
+    return anonymized_text

@@ -2,7 +2,7 @@ from domain.logging.app_logging import configure_logging
 from domain.transformers.minify_strings import minify_strings
 from domain.validation.argument_validation import ensure_string_starts_with
 from infrastructure.octoterra import get_octoterra_space
-from infrastructure.openai import llm_message_query
+from infrastructure.llm import llm_message_query
 
 my_log = configure_logging()
 

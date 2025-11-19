@@ -1,5 +1,5 @@
 from domain.response.copilot_response import CopilotResponse
-from infrastructure.openai import llm_message_query
+from infrastructure.llm import llm_message_query
 
 
 def generate_terraform_callback_wrapper():

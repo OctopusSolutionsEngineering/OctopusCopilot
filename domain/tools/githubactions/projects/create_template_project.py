@@ -23,12 +23,16 @@ from domain.sanitizers.terraform import (
     remove_duplicate_definitions,
     fix_single_line_tentacle_retention_policy,
     fix_bad_logic_characters,
-    fix_lifecycle, fix_properties_block, fix_execution_properties_block,
+    fix_lifecycle,
+    fix_properties_block,
+    fix_execution_properties_block,
+    fix_empty_execution_properties_block,
+    fix_empty_properties_block,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
-from infrastructure.openai import llm_message_query
+from infrastructure.llm import llm_message_query, AZURE_PROJECT_SERVICE
 from infrastructure.space_builder import (
     create_terraform_plan,
     create_terraform_apply,
@@ -241,42 +245,11 @@ def create_template_project_callback(
                     project_system_message_values,
                 )
 
-                # We use the new AI services resource in Azure to build the sample Terraform. This gives us access to
-                # a wider range of models. See https://learn.microsoft.com/en-us/azure/ai-services/openai/overview#comparing-azure-openai-and-openai
-                # for the differences between OpenAI and AI Services.
-                # The important thing to note about this LLM call is that we do not pass any of the Octopus configuration
-                # to it in order to generate the Terraform configuration. This means there is essentially a one-to-one
-                # relationship between the prompt, the sample Terraform (which is provided by the system, not by the client),
-                # and the generated Terraform. This is why we cache the result as it does not rely on any of the clients
-                # unique configuration.
-
-                temperature = (
-                    None
-                    if os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE", "")
-                    == "None"
-                    else string_to_int(
-                        os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE", "0"),
-                        0,
-                    )
-                )
-
-                use_responses_api = (
-                    os.getenv(
-                        "AISERVICES_DEPLOYMENT_PROJECT_GEN_RESPONSES", ""
-                    ).casefold()
-                    == "true"
-                )
-
                 configuration = llm_message_query(
                     messages,
                     context,
                     log_query,
-                    os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN")
-                    or os.getenv("AISERVICES_DEPLOYMENT"),
-                    os.getenv("AISERVICES_KEY"),
-                    os.getenv("AISERVICES_ENDPOINT"),
-                    temperature=temperature,
-                    use_responses_api=use_responses_api,
+                    purpose=os.getenv("PROJECT_GEN_SERVICE") or AZURE_PROJECT_SERVICE,
                 )
 
                 # Deal with the LLM returning code in markdown code blocks
@@ -317,6 +290,12 @@ def create_template_project_callback(
 
                 # Deal with the LLM returning a execution_properties blocks
                 configuration = fix_execution_properties_block(configuration)
+
+                # Deal with the LLM returning an empty execution_properties blocks
+                configuration = fix_empty_execution_properties_block(configuration)
+
+                # Deal with the LLM returning an empty properties blocks
+                configuration = fix_empty_properties_block(configuration)
 
             try:
                 if auto_apply:

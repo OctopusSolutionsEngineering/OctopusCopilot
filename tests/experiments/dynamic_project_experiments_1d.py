@@ -12,7 +12,7 @@ from domain.tools.wrapper.function_definition import (
 )
 from domain.tools.wrapper.general_query import answer_general_query_wrapper
 from infrastructure.octopus import get_projects, get_space_id_and_name_from_name
-from infrastructure.openai import llm_tool_query
+from infrastructure.llm import llm_tool_query
 
 
 def get_test_cases(limit=0):

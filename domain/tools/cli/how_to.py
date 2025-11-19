@@ -1,7 +1,7 @@
 from domain.context.github_docs import get_docs_context
 from domain.messages.docs_messages import docs_prompt
 from infrastructure.github import search_repo
-from infrastructure.openai import llm_message_query
+from infrastructure.llm import llm_message_query
 
 
 def how_to_cli_callback(github_token, logging):

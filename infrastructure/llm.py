@@ -1,12 +1,17 @@
 import os
 
+import boto3
 import openai
+from botocore.config import Config as BotoConfig, Config
+from langchain_aws import ChatBedrockConverse
 from langchain_classic.agents import create_openai_tools_agent
+from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import AzureChatOpenAI
 from openai import RateLimitError
 from retry import retry
 
+from domain.converters.string_to_int import string_to_int
 from domain.exceptions.openai_error import (
     OpenAIContentFilter,
     OpenAITokenLengthExceeded,
@@ -27,39 +32,98 @@ NO_FUNCTION_RESPONSE = (
     + "to learn how to interact with the Octopus AI agent."
 )
 
+AZURE_PROJECT_SERVICE = "azure_project"
+AZURE_GENERAL_SERVICE = "azure_general"
+BEDROCK_PROJECT_SERVICE = "bedrock_project"
 
-@retry(RateLimitError, tries=3, delay=5)
-def llm_message_query(
-    message_prompt,
-    context,
-    log_query=None,
-    deployment=None,
-    api_key=None,
-    endpoint=None,
-    custom_version=None,
-    temperature=0,
-    use_responses_api=False,
-):
-    # We can use a specific deployment to answer a query, or fallback to the default
-    deployment = (
-        deployment
-        or os.environ.get("AISERVICES_DEPLOYMENT_QUERY")
-        or os.environ["AISERVICES_DEPLOYMENT"]
+
+def build_llm(purpose):
+    if purpose == AZURE_PROJECT_SERVICE:
+        return build_azure_project_llm()
+
+    if purpose == BEDROCK_PROJECT_SERVICE:
+        return build_bedrock_llm()
+
+    return build_azure_general_llm()
+
+
+def build_azure_project_llm():
+    deployment = os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN") or os.getenv(
+        "AISERVICES_DEPLOYMENT"
     )
     version = (
-        custom_version
-        or os.environ.get("AISERVICES_DEPLOYMENT_QUERY_VERSION")
+        os.environ.get("AISERVICES_DEPLOYMENT_QUERY_VERSION")
         or "2025-04-01-preview"  # https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-preview-api-releases
     )
 
-    llm = AzureChatOpenAI(
+    temperature = (
+        None
+        if os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE", "") == "None"
+        else string_to_int(
+            os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE", "0"),
+            0,
+        )
+    )
+
+    use_responses_api = (
+        os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_RESPONSES", "").casefold()
+        == "true"
+    )
+
+    api_key = os.environ["AISERVICES_KEY"]
+
+    endpoint = os.environ["AISERVICES_ENDPOINT"]
+
+    return AzureChatOpenAI(
         temperature=temperature,
         azure_deployment=deployment,
-        api_key=(api_key or os.environ["AISERVICES_KEY"]),
-        azure_endpoint=(endpoint or os.environ["AISERVICES_ENDPOINT"]),
+        api_key=api_key,
+        azure_endpoint=endpoint,
         api_version=version,
         use_responses_api=use_responses_api,
     )
+
+
+def build_azure_general_llm():
+    deployment = os.environ["AISERVICES_DEPLOYMENT"]
+
+    version = "2025-04-01-preview"
+
+    temperature = 0
+
+    use_responses_api = False
+
+    api_key = os.environ["AISERVICES_KEY"]
+
+    endpoint = os.environ["AISERVICES_ENDPOINT"]
+
+    return AzureChatOpenAI(
+        temperature=temperature,
+        azure_deployment=deployment,
+        api_key=api_key,
+        azure_endpoint=endpoint,
+        api_version=version,
+        use_responses_api=use_responses_api,
+    )
+
+
+def build_bedrock_llm():
+    model = (
+        os.environ.get("BEDROCK_MODEL_ID")
+        or "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+    )
+    region = os.environ.get("BEDROCK_MODEL_REGION") or "us-east-2"
+
+    bedrock_config = Config(read_timeout=600)
+    client = boto3.client("bedrock-runtime", region_name=region, config=bedrock_config)
+
+    return ChatBedrockConverse(client=client, model_id=model, temperature=0)
+
+
+@retry(RateLimitError, tries=3, delay=5)
+def llm_message_query(message_prompt, context, log_query=None, purpose="azure_general"):
+
+    llm = build_llm(purpose)
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)
 

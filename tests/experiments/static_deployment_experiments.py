@@ -2,7 +2,7 @@ import unittest
 
 from tenacity import retry
 
-from infrastructure.openai import llm_message_query
+from infrastructure.llm import llm_message_query
 
 # How many times to rerun the experiment. LLMs are non-deterministic, so you do need to rerun them multiple times.
 test_count = 5

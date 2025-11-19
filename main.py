@@ -64,7 +64,7 @@ from domain.transformers.sse_transformers import (
     convert_from_sse_response,
 )
 from function_app import copilot_handler_internal
-from infrastructure.openai import llm_tool_query
+from infrastructure.llm import llm_tool_query
 from infrastructure.terraform_context import save_terraform_context
 
 azurite_connection_string = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
