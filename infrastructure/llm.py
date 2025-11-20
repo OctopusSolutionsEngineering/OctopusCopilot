@@ -121,7 +121,9 @@ def build_bedrock_llm():
 
 
 @retry(RateLimitError, tries=3, delay=5)
-def llm_message_query(message_prompt, context, log_query=None, purpose="azure_general"):
+def llm_message_query(
+    message_prompt, context, log_query=None, purpose=AZURE_GENERAL_SERVICE
+):
 
     llm = build_llm(purpose)
 
