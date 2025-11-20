@@ -431,6 +431,7 @@ jobs:
             -x "**/__pycache__/*" \
             -x ".vscode/*" \
             -x "tests/*" \
+            -x local.settings.json
         shell: bash
       - name: Tag Release
         if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'schedule' }}
