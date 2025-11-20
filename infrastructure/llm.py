@@ -68,8 +68,8 @@ def build_azure_anthropic_project_llm():
         None
         if os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TOKENS", "") == "None"
         else string_to_int(
-            os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TOKENS", "100000"),
-            100000,
+            os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TOKENS", "64000"),
+            64000,
         )
     )
 
