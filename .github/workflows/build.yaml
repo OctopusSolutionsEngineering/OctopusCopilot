@@ -229,7 +229,7 @@ jobs:
           PROJECT_GEN_SERVICE: azure_project_anthropic
           AISERVICES_DEPLOYMENT_ANTHROPIC_PROJECT_GEN: claude-haiku-4-5
           AISERVICES_ANTHROPIC_ENDPOINT: https://matth-m9ho8uqc-eastus2.services.ai.azure.com/anthropic/
-          AISERVICES_DEPLOYMENT_PROJECT_GEN_TOKENS: 200000
+          AISERVICES_DEPLOYMENT_PROJECT_GEN_TOKENS: 64000
 #          REDIRECTION_DISABLE: !!str "true"
 #          REDIRECTION_FORCE: !!str "false"
         shell: /usr/bin/bash --noprofile --norc {0}
