@@ -183,8 +183,9 @@ def health(req: func.HttpRequest) -> func.HttpResponse:
 
 def health_internal():
     try:
+        logger.info("Processing health check")
         database_connection_test(get_functions_connection_string())
-        llm_message_query(build_test_prompt(), {"input": "Tell me a joke"}, log_query)
+        llm_message_query(build_test_prompt(), {"input": "Hi"}, log_query)
         return func.HttpResponse("Healthy", status_code=200)
     except Exception as e:
         handle_error(e)
