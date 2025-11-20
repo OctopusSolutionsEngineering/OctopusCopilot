@@ -38,3 +38,8 @@ Jinja2==3.1.6
 gql==3.5.2
 graphql-core==3.2.4
 requests-toolbelt==1.0.0
+
+# https://stackoverflow.com/a/67910697/157605
+# Download this file with pip, otherwise the function will try to download it fresh each time.
+en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
+en-core-web-md @ https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.7.1/en_core_web_md-3.7.1-py3-none-any.whl
