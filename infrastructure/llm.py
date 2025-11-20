@@ -64,9 +64,21 @@ def build_azure_anthropic_project_llm():
             0,
         )
     )
+    max_tokens = (
+        None
+        if os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TOKENS", "") == "None"
+        else string_to_int(
+            os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TOKENS", "100000"),
+            100000,
+        )
+    )
 
     return ChatAnthropic(
-        temperature=temperature, model=deployment, base_url=endpoint, api_key=api_key
+        temperature=temperature,
+        model=deployment,
+        base_url=endpoint,
+        api_key=api_key,
+        max_tokens=max_tokens,
     )
 
 
