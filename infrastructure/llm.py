@@ -3,6 +3,7 @@ import os
 import boto3
 import openai
 from botocore.config import Config as BotoConfig, Config
+from langchain_anthropic import ChatAnthropic
 from langchain_aws import ChatBedrockConverse
 from langchain_classic.agents import create_openai_tools_agent
 from langchain_core.messages import HumanMessage
@@ -33,6 +34,7 @@ NO_FUNCTION_RESPONSE = (
 )
 
 AZURE_PROJECT_SERVICE = "azure_project"
+AZURE_PROJECT_ANTHROPIC_SERVICE = "azure_project_anthropic"
 AZURE_GENERAL_SERVICE = "azure_general"
 BEDROCK_PROJECT_SERVICE = "bedrock_project"
 
@@ -41,10 +43,31 @@ def build_llm(purpose):
     if purpose == AZURE_PROJECT_SERVICE:
         return build_azure_project_llm()
 
+    if purpose == AZURE_PROJECT_ANTHROPIC_SERVICE:
+        return build_azure_anthropic_project_llm()
+
     if purpose == BEDROCK_PROJECT_SERVICE:
         return build_bedrock_llm()
 
     return build_azure_general_llm()
+
+
+def build_azure_anthropic_project_llm():
+    deployment = os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_PROJECT_GEN")
+    api_key = os.environ["AISERVICES_KEY"]
+    endpoint = os.environ["AISERVICES_ANTHROPIC_ENDPOINT"]
+    temperature = (
+        None
+        if os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE", "") == "None"
+        else string_to_int(
+            os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TEMPERATURE", "0"),
+            0,
+        )
+    )
+
+    return ChatAnthropic(
+        temperature=temperature, model=deployment, base_url=endpoint, api_key=api_key
+    )
 
 
 def build_azure_project_llm():

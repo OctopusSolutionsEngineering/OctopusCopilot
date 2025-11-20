@@ -226,7 +226,9 @@ jobs:
           BEDROCK_MODEL_REGION: us-east-2
           AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
           AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          PROJECT_GEN_SERVICE: bedrock_project
+          PROJECT_GEN_SERVICE: azure_project_anthropic
+          AISERVICES_DEPLOYMENT_ANTHROPIC_PROJECT_GEN: claude-haiku-4-5
+          AISERVICES_ANTHROPIC_ENDPOINT: https://matth-m9ho8uqc-eastus2.services.ai.azure.com/anthropic/
 #          REDIRECTION_DISABLE: !!str "true"
 #          REDIRECTION_FORCE: !!str "false"
         shell: /usr/bin/bash --noprofile --norc {0}
