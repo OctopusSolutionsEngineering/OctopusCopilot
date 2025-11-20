@@ -130,7 +130,9 @@ def llm_message_query(message_prompt, context, log_query=None, purpose="azure_ge
     chain = prompt | llm
 
     try:
-        response = timing_wrapper(lambda: chain.invoke(context).content, "Query")
+        response = timing_wrapper(
+            lambda: chain.invoke(context).content, "Query with " + purpose
+        )
     except openai.BadRequestError as e:
         return handle_openai_exception(e)
     except openai.APITimeoutError as e:
