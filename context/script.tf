@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.3.10" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.5.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -337,7 +337,7 @@ resource "octopusdeploy_project" "project_script" {
   name                                 = "${var.project_script_name}"
   default_guided_failure_mode          = "EnvironmentDefault"
   default_to_skip_if_already_installed = false
-  discrete_channel_release             = false
+  is_discrete_channel_release          = false
   is_disabled                          = false
   is_version_controlled                = false
   lifecycle_id                         = "${length(data.octopusdeploy_lifecycles.lifecycle_application.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_application.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_application[0].id}"

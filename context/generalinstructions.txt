@@ -241,41 +241,30 @@ data "octopusdeploy_tenants" "tenant_australian_office" {
 }
 ```
 
-* The `unit` property in a `release_retention_policy` or `tentacle_retention_policy` block in a `phase` block must be set to `Days` or `Items`, for example:
+* Tenant variables defined in a prompt must be created using the resource "octopusdeploy_tenant_project_variable", for example:
 
 ```
-resource "octopusdeploy_lifecycle" "simple_lifecycle" {
-  description = "A test lifecycle"
-  name        = "Simple"
+variable "tenantvariable_e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855_value" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The value of the tenant project variable"
+  default     = "A custom value for the Security environment"
+}
 
-  release_retention_policy {
-    quantity_to_keep    = 1
-    unit                = "Days"
+resource "octopusdeploy_tenant_project_variable" "tenantprojectvariable_1_australian_office" {
+  count          = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
+  environment_id = "${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"
+  project_id     = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? data.octopusdeploy_projects.project_every_step_project.projects[0].id : octopusdeploy_project.project_every_step_project[0].id}"
+  template_id    = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? null : octopusdeploy_project.project_every_step_project[0].template[0].id}"
+  tenant_id      = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
+  value          = "${var.tenantvariable_e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855_value}"
+  depends_on     = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
+  lifecycle {
+    prevent_destroy = true
   }
-
-  tentacle_retention_policy {
-    quantity_to_keep    = 30
-    unit                = "Items"
-  }
-
-  phase {
-    automatic_deployment_targets = []
-    optional_deployment_targets  = [octopusdeploy_environment.development_environment.id]
-    name                         = octopusdeploy_environment.development_environment.name
-
-    release_retention_policy {
-      quantity_to_keep    = 1
-      unit                = "Days"
-    }
-
-    tentacle_retention_policy {
-      quantity_to_keep    = 30
-      unit                = "Items"
-    }
-  }
+}
 ```
-
-* You will be penalized for setting the `unit` property in a `release_retention_policy` or `tentacle_retention_policy` block in a `phase` block to `Releases`.
 
 ## Library Variable Set Instructions
 
@@ -393,6 +382,42 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 * You must use the "optional_deployment_targets" array over the "automatic_deployment_targets" array unless instructed that the Environment should be deployed to automatically.
 * You will be penalized if you include environments in the "automatic_deployment_targets" array unless otherwise instructed.
 * You will be penalized for defining a lifecycle phase with no environments.
+
+* The `unit` property in a `release_retention_policy` or `tentacle_retention_policy` block in a `phase` block must be set to `Days` or `Items`, for example:
+
+```
+resource "octopusdeploy_lifecycle" "simple_lifecycle" {
+  description = "A test lifecycle"
+  name        = "Simple"
+
+  release_retention_policy {
+    quantity_to_keep    = 1
+    unit                = "Days"
+  }
+
+  tentacle_retention_policy {
+    quantity_to_keep    = 30
+    unit                = "Items"
+  }
+
+  phase {
+    automatic_deployment_targets = []
+    optional_deployment_targets  = [octopusdeploy_environment.development_environment.id]
+    name                         = octopusdeploy_environment.development_environment.name
+
+    release_retention_policy {
+      quantity_to_keep    = 1
+      unit                = "Days"
+    }
+
+    tentacle_retention_policy {
+      quantity_to_keep    = 30
+      unit                = "Items"
+    }
+  }
+```
+
+* You will be penalized for setting the `unit` property in a `release_retention_policy` or `tentacle_retention_policy` block in a `phase` block to `Releases`.
 
 ## Variable Template Instructions
 
