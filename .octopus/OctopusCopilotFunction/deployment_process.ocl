@@ -290,6 +290,21 @@ step "deploy-with-cli" {
                      "name": "PROJECT_GEN_SERVICE",
                      "value": "#{Application.ProjectGen}",
                      "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_ANTHROPIC_PROJECT_GEN",
+                     "value": "#{Azure.US.AIServices.Anthropic.Deployment.ProjectGen}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_ANTHROPIC_ENDPOINT",
+                     "value": "#{Azure.US.AIServices.Anthropic.Endpoint}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_PROJECT_GEN_TOKENS",
+                     "value": "#{Azure.US.AIServices.Tokens.ProjectGen}",
+                     "slotSetting": false
                    }
                 ] 
                 EOL
