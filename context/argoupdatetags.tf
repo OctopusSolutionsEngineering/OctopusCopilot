@@ -347,9 +347,9 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_app
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-everyone"
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.RunOnServer" = "true"
       }
 }
@@ -373,8 +373,8 @@ resource "octopusdeploy_process_templated_step" "process_step_update_image_tags_
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.API.Key}"
@@ -474,11 +474,11 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_smo
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check for Argo CD Instances].Output.ArgoPresent == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptBody" = "echo \"Running smoke test...\"\n\necho \".\"\necho \".\"\necho \".\"\necho \".\"\necho \".\"\n\necho \"Smoke test passed!\""
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "Bash"
-        "Octopus.Action.Script.ScriptBody" = "echo \"Running smoke test...\"\n\necho \".\"\necho \".\"\necho \".\"\necho \".\"\necho \".\"\n\necho \"Smoke test passed!\""
-        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -499,8 +499,8 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_sen
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
         "Octopus.Action.Email.Subject" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name} deployed successfully!"
         "Octopus.Action.Email.Body" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name}, version #{Octopus.Release.Number} was successfully deployed!"
       }
@@ -524,10 +524,10 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_sen
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.Subject" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name} has failed!"
-        "Octopus.Action.Email.Body" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name}, version #{Octopus.Release.Number} has failed!"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
+        "Octopus.Action.Email.Subject" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name} has failed!"
+        "Octopus.Action.Email.Body" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name}, version #{Octopus.Release.Number} has failed!"
       }
 }
 
@@ -549,8 +549,8 @@ resource "octopusdeploy_process_templated_step" "process_step_update_image_tags_
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
@@ -651,206 +651,6 @@ resource "octopusdeploy_variable" "update_image_tags___helm_project_octopus_api_
     prevent_destroy = true
   }
   depends_on = []
-}
-
-data "octopusdeploy_feeds" "feed_octopus_maven_feed" {
-  feed_type    = "Maven"
-  ids          = null
-  partial_name = "Octopus Maven Feed"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? 0 : 1}"
-  name                                 = "Octopus Maven Feed"
-  feed_uri                             = "http://octopus-sales-public-maven-repo.s3-website-ap-southeast-2.amazonaws.com/snapshot"
-  package_acquisition_location_options = ["Server", "ExecutionTarget"]
-  download_attempts                    = 5
-  download_retry_backoff_seconds       = 10
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_feeds" "feed_docker_feed_tf" {
-  feed_type    = "Docker"
-  ids          = null
-  partial_name = "Docker Feed TF"
-  skip         = 0
-  take         = 1
-}
-variable "feed_docker_feed_tf_password" {
-  type        = string
-  nullable    = false
-  sensitive   = true
-  description = "The password used by the feed Docker Feed TF"
-  default     = "Change Me!"
-}
-resource "octopusdeploy_docker_container_registry" "feed_docker_feed_tf" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_docker_feed_tf.feeds) != 0 ? 0 : 1}"
-  name                                 = "Docker Feed TF"
-  password                             = "${var.feed_docker_feed_tf_password}"
-  username                             = "octopussolutionsengineering"
-  feed_uri                             = "https://index.docker.io"
-  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_step_template" "steptemplate_scan_for_vulnerabilities_copy" {
-  name = "Scan for Vulnerabilities Copy"
-}
-resource "octopusdeploy_step_template" "steptemplate_scan_for_vulnerabilities_copy" {
-  count           = "${data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities_copy.step_template != null ? 0 : 1}"
-  action_type     = "Octopus.Script"
-  name            = "Scan for Vulnerabilities Copy"
-  description     = "This step extracts the Docker image, finds any bom.json files, and scans them for vulnerabilities using Trivy."
-  step_package_id = "Octopus.Script"
-  packages        = [{ acquisition_location = "ExecutionTarget", extract_during_deployment = null, feed_id = "", name = "application", package_id = "", properties = { package_parameter_name = "Sbom.Package", purpose = "", selection_mode = "True" } }]
-  parameters      = [{ default_sensitive_value = null, default_value = null, display_settings = { "Octopus.ControlType" = "Package" }, help_text = null, id = "38f4f941-14b5-4f39-9a5d-f7b8c9ccb942", label = "Application package containing the SBOM to scan", name = "Sbom.Package" }]
-  properties      = { "Octopus.Action.Script.ScriptBody" = "Write-Host \"Pulling Trivy Docker Image\"\nWrite-Host \"##octopus[stdout-verbose]\"\ndocker pull ghcr.io/aquasecurity/trivy\nWrite-Host \"##octopus[stdout-default]\"\n\n$SUCCESS = 0\n\nWrite-Host \"##octopus[stdout-verbose]\"\nGet-ChildItem -Path \".\" | Out-String\nWrite-Host \"##octopus[stdout-default]\"\n\n# Find all bom.json files\n$bomFiles = Get-ChildItem -Path \".\" -Filter \"bom.json\" -Recurse -File\n\nif ($bomFiles.Count -eq 0) {\n    Write-Host \"No bom.json files found in the current directory.\"\n    exit 0\n}\n\nforeach ($file in $bomFiles) {\n    Write-Host \"Scanning $($file.FullName)\"\n\n    # Delete any existing report file\n    if (Test-Path \"$PWD/depscan-bom.json\") {\n        Remove-Item \"$PWD/depscan-bom.json\" -Force\n    }\n\n    # Generate the report, capturing the output\n    try {\n        $OUTPUT = docker run --rm -v \"$($file.FullName):/input/$($file.Name)\" ghcr.io/aquasecurity/trivy sbom -q \"/input/$($file.Name)\"\n        $exitCode = $LASTEXITCODE\n    }\n    catch {\n        $OUTPUT = $_.Exception.Message\n        $exitCode = 1\n    }\n\n    # Run again to generate the JSON output\n    docker run --rm -v \"$${PWD}:/output\" -v \"$($file.FullName):/input/$($file.Name)\" ghcr.io/aquasecurity/trivy sbom -q -f json -o /output/depscan-bom.json \"/input/$($file.Name)\"\n\n    # Octopus Deploy artifact\n    New-OctopusArtifact \"$PWD/depscan-bom.json\"\n\n    # Parse JSON output to count vulnerabilities\n    $jsonContent = Get-Content -Path \"depscan-bom.json\" | ConvertFrom-Json\n    $CRITICAL = ($jsonContent.Results | ForEach-Object { $_.Vulnerabilities } | Where-Object { $_.Severity -eq \"CRITICAL\" }).Count\n    $HIGH = ($jsonContent.Results | ForEach-Object { $_.Vulnerabilities } | Where-Object { $_.Severity -eq \"HIGH\" }).Count\n\n    if (\"#{Octopus.Environment.Name}\" -eq \"Security\") {\n        Write-Highlight \"🟥 $CRITICAL critical vulnerabilities\"\n        Write-Highlight \"🟧 $HIGH high vulnerabilities\"\n    }\n\n    # Set success to 1 if exit code is not zero\n    if ($exitCode -ne 0) {\n        $SUCCESS = 1\n    }\n\n    # Print the output\n    $OUTPUT | ForEach-Object {\n        if ($_.Length -gt 0) {\n            Write-Host $_\n        }\n    }\n}\n\n# Cleanup\nfor ($i = 1; $i -le 10; $i++) {\n    try {\n        if (Test-Path \"bundle\") {\n            Set-ItemProperty -Path \"bundle\" -Name IsReadOnly -Value $false -Recurse -ErrorAction SilentlyContinue\n            Remove-Item -Path \"bundle\" -Recurse -Force -ErrorAction Stop\n            break\n        }\n    }\n    catch {\n        Write-Host \"Attempting to clean up files\"\n        Start-Sleep -Seconds 1\n    }\n}\n\n# Set Octopus variable\nSet-OctopusVariable -Name \"VerificationResult\" -Value $SUCCESS\n\nexit 0", "Octopus.Action.Script.ScriptSource" = "Inline", "Octopus.Action.Script.Syntax" = "PowerShell", OctopusUseBundledTooling = "False" }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_process" "process_update_image_tags___helm_scan" {
-  count      = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? 0 : 1}"
-  project_id = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? data.octopusdeploy_projects.project_update_image_tags___helm.projects[0].id : octopusdeploy_project.project_update_image_tags___helm[0].id}"
-  runbook_id = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_runbook.runbook_update_image_tags___helm_scan[0].id}"
-  depends_on = []
-}
-
-resource "octopusdeploy_process_templated_step" "process_step_update_image_tags___helm_scan_scan_for_vulnerabilities" {
-  count                 = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? 0 : 1}"
-  name                  = "Scan for Vulnerabilities"
-  process_id            = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process.process_update_image_tags___helm_scan[0].id}"
-  template_id           = "${data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template != null ? data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template.id : octopusdeploy_community_step_template.communitysteptemplate_scan_for_vulnerabilities[0].id}"
-  template_version      = "${data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template != null ? data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template.version : octopusdeploy_community_step_template.communitysteptemplate_scan_for_vulnerabilities[0].version}"
-  channels              = null
-  condition             = "Success"
-  environments          = null
-  excluded_environments = null
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "scan-for-vulnerabilities"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "OctopusUseBundledTooling" = "False"
-      }
-  parameters            = {
-        "Sbom.Package" = jsonencode({
-        "PackageId" = "com.octopus:products-microservice-lambda-jvm"
-        "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
-                })
-      }
-}
-
-variable "project_scan_step_run_a_script_package_octopub_frontend_packageid" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The package ID for the package named octopub-frontend from step Run a Script in project Scan"
-  default     = "octopussamples/octopub-frontend"
-}
-resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_scan_run_a_script" {
-  count                 = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? 0 : 1}"
-  name                  = "Run a Script"
-  type                  = "Octopus.Script"
-  process_id            = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process.process_update_image_tags___helm_scan[0].id}"
-  channels              = null
-  condition             = "Success"
-  environments          = null
-  excluded_environments = null
-  is_disabled           = true
-  package_requirement   = "LetOctopusDecide"
-  packages              = { octopub-frontend = { acquisition_location = "NotAcquired", feed_id = "${length(data.octopusdeploy_feeds.feed_docker_feed_tf.feeds) != 0 ? data.octopusdeploy_feeds.feed_docker_feed_tf.feeds[0].id : octopusdeploy_docker_container_registry.feed_docker_feed_tf[0].id}", id = null, package_id = "${var.project_scan_step_run_a_script_package_octopub_frontend_packageid}", properties = { Extract = "False", SelectionMode = "immediate" } } }
-  slug                  = "run-a-script"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "Write-Host \"Hi\""
-        "OctopusUseBundledTooling" = "False"
-      }
-}
-
-resource "octopusdeploy_process_templated_step" "process_step_update_image_tags___helm_scan_scan_for_vulnerabilities_copy" {
-  count                 = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? 0 : 1}"
-  name                  = "Scan for Vulnerabilities Copy"
-  process_id            = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process.process_update_image_tags___helm_scan[0].id}"
-  template_id           = "${data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities_copy.step_template != null ? data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities_copy.step_template.id : octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities_copy[0].id}"
-  template_version      = "${data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities_copy.step_template != null ? data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities_copy.step_template.version : octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities_copy[0].version}"
-  channels              = null
-  condition             = "Success"
-  environments          = null
-  excluded_environments = null
-  is_disabled           = true
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "scan-for-vulnerabilities-copy"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  properties            = {
-      }
-  execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-      }
-  parameters            = {
-        "Sbom.Package" = jsonencode({
-        "PackageId" = "octopussamples/octopub-frontend"
-        "FeedId" = "${length(data.octopusdeploy_feeds.feed_docker_feed_tf.feeds) != 0 ? data.octopusdeploy_feeds.feed_docker_feed_tf.feeds[0].id : octopusdeploy_docker_container_registry.feed_docker_feed_tf[0].id}"
-                })
-      }
-}
-
-resource "octopusdeploy_process_steps_order" "process_step_order_update_image_tags___helm_scan" {
-  count      = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? 0 : 1}"
-  process_id = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process.process_update_image_tags___helm_scan[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_update_image_tags___helm_scan_scan_for_vulnerabilities[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_step.process_step_update_image_tags___helm_scan_run_a_script[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_update_image_tags___helm_scan_scan_for_vulnerabilities_copy[0].id}"]
-}
-
-variable "runbook_update_image_tags___helm_scan_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the runbook exported from Scan"
-  default     = "Scan"
-}
-resource "octopusdeploy_runbook" "runbook_update_image_tags___helm_scan" {
-  count                       = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? 0 : 1}"
-  name                        = "${var.runbook_update_image_tags___helm_scan_name}"
-  project_id                  = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? data.octopusdeploy_projects.project_update_image_tags___helm.projects[0].id : octopusdeploy_project.project_update_image_tags___helm[0].id}"
-  environment_scope           = "All"
-  environments                = []
-  force_package_download      = false
-  default_guided_failure_mode = "EnvironmentDefault"
-  description                 = ""
-  multi_tenancy_mode          = "Untenanted"
-
-  retention_policy {
-    quantity_to_keep = 5
-  }
-
-  connectivity_policy {
-    allow_deployments_to_no_targets = true
-    exclude_unhealthy_targets       = false
-    skip_machine_behavior           = "None"
-    target_roles                    = []
-  }
 }
 
 variable "project_update_image_tags___helm_name" {
