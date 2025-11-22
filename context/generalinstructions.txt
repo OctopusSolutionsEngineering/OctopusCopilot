@@ -1197,6 +1197,11 @@ resource "octopusdeploy_community_step_template" "my_community_step_template" {
  count = "${length(try(data.octopusdeploy_step_template.my_step_template.step_template.actions, [])) != 0 ? 0 : 1}"
 ```
 
+## Octopus step template instructions
+
+* The "website" attribute in a data "octopusdeploy_community_step_template" must be copied literally.
+* You will be penalized for changing the "website" attribute in a data "octopusdeploy_community_step_template".
+
 ## Octopus Variable Syntax Instructions
 
 * Octopus variable syntax must be defined as "#{<variable name>}"
