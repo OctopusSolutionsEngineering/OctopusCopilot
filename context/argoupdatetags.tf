@@ -367,10 +367,10 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_app
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
-        "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-everyone"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
       }
 }
 
@@ -494,35 +494,11 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_smo
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check for Argo CD Instances].Output.ArgoPresent == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "Bash"
         "Octopus.Action.Script.ScriptBody" = "echo \"Running smoke test...\"\n\necho \".\"\necho \".\"\necho \".\"\necho \".\"\necho \".\"\n\necho \"Smoke test passed!\""
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-      }
-}
-
-resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_send_an_email___deployment_successful" {
-  count                 = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? 0 : 1}"
-  name                  = "Send an Email - Deployment successful"
-  type                  = "Octopus.Email"
-  process_id            = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process.process_update_image_tags___helm[0].id}"
-  channels              = null
-  condition             = "Success"
-  environments          = null
-  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
-  notes                 = "Sends an email in the event the deployment failed."
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "send-an-email-deployment-successful"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.Email.Body" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name}, version #{Octopus.Release.Number} was successfully deployed!"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
-        "Octopus.Action.Email.Subject" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name} deployed successfully!"
       }
 }
 
@@ -544,10 +520,10 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_sen
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Email.Subject" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name} has failed!"
         "Octopus.Action.Email.Body" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name}, version #{Octopus.Release.Number} has failed!"
         "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
+        "Octopus.Action.Email.Subject" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name} has failed!"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -569,8 +545,8 @@ resource "octopusdeploy_process_templated_step" "process_step_update_image_tags_
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
@@ -583,7 +559,7 @@ resource "octopusdeploy_process_templated_step" "process_step_update_image_tags_
 resource "octopusdeploy_process_steps_order" "process_step_order_update_image_tags___helm" {
   count      = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? 0 : 1}"
   process_id = "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process.process_update_image_tags___helm[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_step.process_step_update_image_tags___helm_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_update_image_tags___helm_octopus___check_smtp_server_configured[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_update_image_tags___helm_octopus___check_for_argo_cd_instances[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_step.process_step_update_image_tags___helm_update_images[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_step.process_step_update_image_tags___helm_smoke_test[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_step.process_step_update_image_tags___helm_send_an_email___deployment_successful[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_step.process_step_update_image_tags___helm_send_an_email___deployment_failed[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_update_image_tags___helm_scan_for_vulnerabilities_for_octopub[0].id}"]
+  steps      = ["${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_step.process_step_update_image_tags___helm_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_update_image_tags___helm_octopus___check_smtp_server_configured[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_update_image_tags___helm_octopus___check_for_argo_cd_instances[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_step.process_step_update_image_tags___helm_update_images[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_step.process_step_update_image_tags___helm_smoke_test[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_step.process_step_update_image_tags___helm_send_an_email___deployment_failed[0].id}", "${length(data.octopusdeploy_projects.project_update_image_tags___helm.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_update_image_tags___helm_scan_for_vulnerabilities_for_octopub[0].id}"]
 }
 
 resource "octopusdeploy_variable" "update_image_tags___helm_project_octopus_worker_pool_1" {
