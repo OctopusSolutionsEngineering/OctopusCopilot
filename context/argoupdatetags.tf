@@ -367,10 +367,10 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_app
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-everyone"
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -468,10 +468,10 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_upd
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check for Argo CD Instances].Output.ArgoPresent == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
+        "Octopus.Action.ArgoCD.CommitMethod" = "PullRequest"
         "Octopus.Action.ArgoCD.CommitMessageDescription" = "If we merge this PR, then the next deployment will be a no-op. \n\n[Release link](#{Octopus.Web.ServerUri}#{Octopus.Web.ReleaseLink})\n[Deployment link](#{Octopus.Web.ServerUri}#{Octopus.Web.DeploymentLink})\n\n"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.ArgoCD.CommitMessageSummary" = "Octopus Deploy updated image versions"
-        "Octopus.Action.ArgoCD.CommitMethod" = "PullRequest"
       }
 }
 
@@ -494,11 +494,11 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_smo
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check for Argo CD Instances].Output.ArgoPresent == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "Bash"
         "Octopus.Action.Script.ScriptBody" = "echo \"Running smoke test...\"\n\necho \".\"\necho \".\"\necho \".\"\necho \".\"\necho \".\"\n\necho \"Smoke test passed!\""
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -510,7 +510,7 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_sen
   channels              = null
   condition             = "Success"
   environments          = null
-  excluded_environments = null
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
   notes                 = "Sends an email in the event the deployment failed."
   package_requirement   = "LetOctopusDecide"
   slug                  = "send-an-email-deployment-successful"
@@ -519,10 +519,10 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_sen
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Email.Subject" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name} deployed successfully!"
         "Octopus.Action.Email.Body" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name}, version #{Octopus.Release.Number} was successfully deployed!"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
+        "Octopus.Action.Email.Subject" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name} deployed successfully!"
       }
 }
 
@@ -534,7 +534,7 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_sen
   channels              = null
   condition             = "Variable"
   environments          = null
-  excluded_environments = null
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
   notes                 = "Sends an email in the event the deployment failed."
   package_requirement   = "LetOctopusDecide"
   slug                  = "send-an-email-deployment-failed"
@@ -545,9 +545,9 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_sen
       }
   execution_properties  = {
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
         "Octopus.Action.Email.Subject" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name} has failed!"
         "Octopus.Action.Email.Body" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name}, version #{Octopus.Release.Number} has failed!"
+        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
       }
 }
 
@@ -559,7 +559,7 @@ resource "octopusdeploy_process_templated_step" "process_step_update_image_tags_
   template_version      = "${data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template != null ? data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template.version : octopusdeploy_community_step_template.communitysteptemplate_scan_for_vulnerabilities[0].version}"
   channels              = null
   condition             = "Success"
-  environments          = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  environments          = null
   excluded_environments = null
   package_requirement   = "LetOctopusDecide"
   slug                  = "scan-for-vulnerabilities-for-octopub-products-microservice"
