@@ -38,11 +38,12 @@ def is_api_key_or_jwt(api_key):
     if re.fullmatch(pattern, api_key):
         return True
 
-    # It might be a token
+    # It might be a token. Note that I have seen Octopus generate tokens with expired signatures,
+    # so we skip signature and expiry validation here.
     try:
         PyJWT().decode(
             jwt=api_key,
-            options={"verify_signature": False, "verify_exp": True},
+            options={"verify_signature": False, "verify_exp": False},
             algorithms=["HS256"],
         )
         return True
