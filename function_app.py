@@ -638,7 +638,7 @@ def handle_github_request_failed(e):
 
 def handle_user_not_logged_in(e):
     return func.HttpResponse(
-        convert_to_sse_response("Your GitHub token is invalid."),
+        convert_to_sse_response("The provided API key or access token was invalid."),
         headers=get_sse_headers(),
     )
 
