@@ -1424,6 +1424,8 @@ data "octopusdeploy_accounts" "my_other_oidc_account" {
 }
 ```
 
+* When the prompt indicates that a step requires an account, the associated account data source and resource must be created.
+
 ## Terraform Instructions
 * You can only use the following built-in terraform functions:
     * "jsondecode"
