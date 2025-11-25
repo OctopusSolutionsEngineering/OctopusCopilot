@@ -458,6 +458,8 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
 }
 ```
 
+* The built-in feed always exists and must not be created as a resource.
+
 * The "feed_type" attribute on a "octopusdeploy_feeds" data source must be set to one of the following values:
   * "AwsElasticContainerRegistry"
   * "BuiltIn"
@@ -472,6 +474,7 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
 * If the prompt specifies a "feed_type" that is not in the list, you must define the feed as "NuGet".
 * You will be penalized for setting "feed_type" to "Npm".
 * You will be penalized for setting the "password" property on a "octopusdeploy_docker_container_registry" resource to an empty string.
+* You will be penalized for creating a resource of type resource "octopusdeploy_feed".
 
 
 ## Project Group Instructions
