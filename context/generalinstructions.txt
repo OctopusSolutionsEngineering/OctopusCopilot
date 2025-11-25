@@ -1200,6 +1200,9 @@ resource "octopusdeploy_community_step_template" "my_community_step_template" {
  count = "${length(try(data.octopusdeploy_step_template.my_step_template.step_template.actions, [])) != 0 ? 0 : 1}"
 ```
 
+* You will be penalized for defining both the "environments" and "excluded_environments" attributes in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource.
+* If the prompt defines both environments to include and environments to exclude for a step, you must only define the "environments" attribute.
+
 ## Octopus step template instructions
 
 * The "website" attribute in a data "octopusdeploy_community_step_template" must be copied literally.
