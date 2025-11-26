@@ -1010,105 +1010,105 @@ def build_form_tools(query, req: func.HttpRequest):
             FunctionDefinition(
                 create_feed_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("feed"),
                     logging=log_query,
                 ),
             ),
             FunctionDefinition(
                 create_tenant_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("tenant"),
                     logging=log_query,
                 ),
             ),
             FunctionDefinition(
                 create_environment_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("environment"),
                     logging=log_query,
                 ),
             ),
             FunctionDefinition(
                 create_machine_policy_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("machine policy"),
                     logging=log_query,
                 ),
             ),
             FunctionDefinition(
                 create_worker_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("worker"),
                     logging=log_query,
                 ),
             ),
             FunctionDefinition(
                 create_worker_pool_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("worker pool"),
                     logging=log_query,
                 ),
             ),
             FunctionDefinition(
                 create_lifecycle_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("lifecycle"),
                     logging=log_query,
                 ),
             ),
             FunctionDefinition(
                 create_script_module_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("script module"),
                     logging=log_query,
                 ),
             ),
             FunctionDefinition(
                 create_git_credential_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("git credential"),
                     logging=log_query,
                 ),
             ),
             FunctionDefinition(
                 create_github_connection_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("github connection"),
                     logging=log_query,
                 ),
             ),
             FunctionDefinition(
                 create_machine_proxy_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("machine proxy"),
                     logging=log_query,
                 ),
             ),
             FunctionDefinition(
                 create_step_template_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("step template"),
                     logging=log_query,
                 ),
             ),
             FunctionDefinition(
                 create_certificate_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("certificate"),
                     logging=log_query,
                 ),
             ),
             FunctionDefinition(
                 create_target_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("target"),
                     logging=log_query,
                 ),
             ),
             FunctionDefinition(
                 create_account_wrapper(
                     query,
-                    callback=unsupported_resource,
+                    callback=unsupported_resource("account"),
                     logging=log_query,
                 ),
             ),
