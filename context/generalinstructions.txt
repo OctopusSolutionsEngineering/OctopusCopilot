@@ -941,7 +941,13 @@ step "open-firewall-port" {
 ```
 
 * You will be penalized for using the "primary_package" property when the "Octopus.Action.Script.ScriptSource" property is set to "Inline".
-* If the prompt specifies an inline script as well as a script from a package, you must ignore the package and only define the inline script.
+* If the prompt specifies an inline script as well as a script from a package, you must:
+    * Ignore the package
+    * Not define a "primary_package" block
+    * Only define the inline script in the "Octopus.Action.Script.ScriptBody" proeprty in the "execution_properties" block
+    * Set the "Octopus.Action.Script.ScriptSource" property to "Inline" in the "execution_properties" block
+    * Exclude the "Octopus.Action.Script.Syntax" property in the "execution_properties" block
+
 * You will be penalized for defining a script step with no script.
 * Steps of type "Octopus.AzureAppService" must have at least one item in the "target_roles" attribute.
 * Steps of type "Octopus.AwsUploadS3" must have a "Octopus.Action.AwsAccount.Variable" property in the "execution_properties" block.
