@@ -929,15 +929,12 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_a_scr
 resource "octopusdeploy_process_step" "my_step" {
     name = "Open Firewall Port"
     # There is no primary_package block because the "Octopus.Action.Script.ScriptSource" is set to "Inline"
-    action {
-        action_type = "Octopus.AzurePowerShell"
-        execution_properties = {
-            "Octopus.Action.Azure.AccountId" = "aws-account"
-            "Octopus.Action.Script.ScriptBody" = "echo 'hi'"
-            "Octopus.Action.Script.ScriptSource" = "Inline"
-            "Octopus.Action.Script.Syntax" = "Bash"
-            "OctopusUseBundledTooling" = "False"
-        }
+    execution_properties = {
+        "Octopus.Action.Azure.AccountId" = "aws-account"
+        "Octopus.Action.Script.ScriptBody" = "echo 'hi'"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "Bash"
+        "OctopusUseBundledTooling" = "False"
     }
 }
 ```
