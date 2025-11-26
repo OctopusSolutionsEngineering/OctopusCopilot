@@ -1213,6 +1213,11 @@ resource "octopusdeploy_community_step_template" "my_community_step_template" {
 
 * You will be penalized for defining both the "environments" and "excluded_environments" attributes in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource.
 * If the prompt defines both environments to include and environments to exclude for a step, you must only define the "environments" attribute.
+* You must escape the dollar sign and curly braces in the "Octopus.Action.Azure.ResourceGroupTemplate" property using a double dollar sign, for example:
+
+```
+"Octopus.Action.Azure.ResourceGroupTemplate" = "resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {\n  name: 'analytics$${uniqueString(resourceGroup().id)}'
+```
 
 ## Octopus step template instructions
 
@@ -1449,7 +1454,6 @@ data "octopusdeploy_accounts" "my_other_oidc_account" {
     * "trimspace"
     * "trimsuffix"
     * "try"
-* You will be penalized for using the built-in function "uniqueString".
 * Resource names must be unique per type.
 * Data names must be unique per type.
 * You will be penalized for defining resources or adding attributes that are not included in the sample Terraform configurations.
