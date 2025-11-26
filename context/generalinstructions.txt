@@ -943,7 +943,7 @@ resource "octopusdeploy_process_step" "my_step" {
 * If the prompt specifies an inline script as well as a script from a package, you must:
     * Ignore the package
     * Not define a "primary_package" block
-    * Only define the inline script in the "Octopus.Action.Script.ScriptBody" proeprty in the "execution_properties" block
+    * Only define the inline script in the "Octopus.Action.Script.ScriptBody" property in the "execution_properties" block
     * Set the "Octopus.Action.Script.ScriptSource" property to "Inline" in the "execution_properties" block
     * Exclude the "Octopus.Action.Script.Syntax" property in the "execution_properties" block
 
