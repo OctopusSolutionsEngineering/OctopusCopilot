@@ -708,7 +708,7 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
 
 ## Octopus Deployment Process Instructions
 
-* You must consider the attributes in the "execution_properties" block and the "properties" block of the example steps to be mandatory.
+* You must consider the attributes in the "execution_properties" block and the "properties" block of the example steps to be mandatory, unless otherwise specified (the properties on script steps that define inline scripts or those sourced from packages is the exception).
 * Every "octopusdeploy_project" resource must have an associated "octopusdeploy_process" resource.
 * Every "octopusdeploy_process" resource must have an associated "octopusdeploy_process_steps_order" resource.
 * Every "octopusdeploy_process_steps_order" resource must have an associated "octopusdeploy_process_step" resource.
