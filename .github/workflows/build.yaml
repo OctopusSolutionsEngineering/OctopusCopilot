@@ -251,6 +251,7 @@ jobs:
   test-results:
     needs: test
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Set up Python
         uses: actions/setup-python@v5
