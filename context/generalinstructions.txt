@@ -1510,6 +1510,18 @@ EOT
 "Octopus.Action.Azure.ResourceGroupTemplate" = "param location string = resourceGroup().location\nresource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {\n  name: 'octoglobal$${uniqueString(resourceGroup().id)}'\n  location: location\n  sku: {\n    name: 'Standard_LRS'\n  }\n  kind: 'StorageV2'\n}\n"
 ```
 
+* You must define the "Octopus.Action.TargetRoles" property in the "properties" block for steps that deploy to targets, including steps of type:
+    * "Octopus.TentaclePackage"
+    * "Octopus.TomcatDeploy"
+    * "Octopus.AzureAppService"
+    * "Octopus.IIS"
+    * "Octopus.WindowsService"
+    * "Octopus.AzureWebApp"
+    * "Octopus.JavaArchive"
+    * "Octopus.HelmChartUpgrade"
+    * "Octopus.KubernetesDeployRawYaml"
+    * "Octopus.Kubernetes.Kustomize"
+
 ## Terraform Variable Instructions
 
 * All terraform variables must have default values, for example:
