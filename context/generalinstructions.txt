@@ -1350,6 +1350,12 @@ data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
 }
 ```
 
+* The "worker_pool_id" attribute must first test the length of the "worker_pools" property exposed by the data source associated with a hosted worker pool, return the first worker pool if the hosted worker pool array is not empty, otherwise return the first worker pool from the default worker pool data source, for example:
+
+```
+worker_pool_id = ${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}
+```
+
 ## Octopus Target Instructions
 
 * Targets must be scoped to at least one environment
