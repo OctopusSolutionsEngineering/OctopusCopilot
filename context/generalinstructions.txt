@@ -926,7 +926,7 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_a_scr
 * When the "execution_properties" "Octopus.Action.Script.ScriptSource" property is set to "Inline", the "primary_package" property must not be defined in a "octopusdeploy_process_step" resource, for example:
 
 ```
-step "open-firewall-port" {
+resource "octopusdeploy_process_step" "my_step" {
     name = "Open Firewall Port"
     # There is no primary_package block because the "Octopus.Action.Script.ScriptSource" is set to "Inline"
     action {
