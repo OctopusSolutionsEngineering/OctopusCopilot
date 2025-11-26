@@ -1521,6 +1521,7 @@ EOT
     * "Octopus.HelmChartUpgrade"
     * "Octopus.KubernetesDeployRawYaml"
     * "Octopus.Kubernetes.Kustomize"
+    * "Octopus.TransferPackage"
 
 ## Terraform Variable Instructions
 
