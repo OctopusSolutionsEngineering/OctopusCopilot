@@ -1441,6 +1441,7 @@ data "octopusdeploy_accounts" "my_other_oidc_account" {
 ```
 
 * When the prompt indicates that a step requires an account, the associated account data source and resource must be created.
+* The "azure_environment" attribute for a "octopusdeploy_azure_openid_connect" resource must be set to "AzureCloud" unless specifically instructed otherwise in the prompt.
 
 ## Terraform Instructions
 * You can only use the following built-in terraform functions:

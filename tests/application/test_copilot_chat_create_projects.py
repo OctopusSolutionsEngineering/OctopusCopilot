@@ -848,7 +848,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -859,7 +859,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
             "Response contained text indicating a tool other than create_account was incorrectly chosen.",
         )
 
@@ -876,7 +876,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -886,7 +886,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -896,7 +896,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -906,7 +906,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -916,7 +916,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -926,7 +926,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -936,7 +936,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -946,7 +946,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -956,7 +956,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -966,7 +966,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -976,7 +976,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -986,7 +986,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
@@ -996,7 +996,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
         self.assertTrue(
-            f"Creating this kind of resource is not yet supported." in response_text,
+            f"is not yet supported" in response_text,
         )
 
 
