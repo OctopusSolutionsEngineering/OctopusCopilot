@@ -274,13 +274,6 @@ def build_mock_test_tools(tool_query):
                 )
             ),
             FunctionDefinition(
-                create_account_wrapper(
-                    tool_query,
-                    callback=unsupported_resource,
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
                 create_k8s_project_wrapper(
                     tool_query,
                     create_template_project_confirm_callback_wrapper(
