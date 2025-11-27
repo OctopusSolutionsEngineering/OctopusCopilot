@@ -236,10 +236,7 @@ def remove_duplicate_script_sources(config):
     if detect_hcl2_bugs(config):
         return config
 
-    try:
-        parsed_config = hcl2.loads(config, with_meta=True)
-    except Exception:
-        return config
+    parsed_config = hcl2.loads(config, with_meta=True)
 
     resources = parsed_config.get("resource", [])
     steps = [
@@ -303,10 +300,7 @@ def template_default_value_null(config):
     if detect_hcl2_bugs(config):
         return config
 
-    try:
-        parsed_config = hcl2.loads(config, with_meta=True)
-    except Exception:
-        return config
+    parsed_config = hcl2.loads(config, with_meta=True)
 
     resources = parsed_config.get("resource", [])
     projects = [

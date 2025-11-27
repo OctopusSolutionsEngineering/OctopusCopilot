@@ -299,11 +299,22 @@ def create_template_project_callback(
                 # Deal with the LLM returning an empty properties blocks
                 configuration = fix_empty_properties_block(configuration)
 
-                # The LLM really wanted to return a mixture of package an inline scripts for script steps.
-                configuration = remove_duplicate_script_sources(configuration)
+                try:
+                    # The LLM really wanted to return a mixture of package an inline scripts for script steps.
+                    advanced_configuration = remove_duplicate_script_sources(
+                        configuration
+                    )
 
-                # Template default values must be null, not an empty string
-                configuration = template_default_value_null(configuration)
+                    # Template default values must be null, not an empty string
+                    advanced_configuration = template_default_value_null(
+                        advanced_configuration
+                    )
+
+                    configuration = advanced_configuration
+                except Exception as e:
+                    # If the sequence of parsing, modifying, and re-serializing fails, we just use the original configuration.
+                    # These modifications are a best effort to improve the quality of the configuration.
+                    pass
 
             try:
                 if auto_apply:
