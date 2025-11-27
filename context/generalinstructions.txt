@@ -532,6 +532,7 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
 * You will be penalized for setting "feed_type" to "Npm".
 * You will be penalized for setting the "password" property on a "octopusdeploy_docker_container_registry" resource to an empty string.
 * You will be penalized for creating a resource of type resource "octopusdeploy_feed".
+* You will be penalized for creating a resource of type resource "octopusdeploy_generic_artifact_feed".
 
 
 ## Project Group Instructions

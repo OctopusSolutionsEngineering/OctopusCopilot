@@ -14,9 +14,6 @@ from domain.tools.githubactions.projects.create_template_project import (
 from domain.tools.githubactions.projects.unsupported_resource import (
     unsupported_resource,
 )
-from domain.tools.githubactions.release_what_changed import (
-    release_what_changed_callback_wrapper,
-)
 from domain.tools.githubactions.suggest_solution import (
     suggest_solution_callback_wrapper,
 )
