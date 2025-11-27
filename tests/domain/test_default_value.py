@@ -3,8 +3,7 @@ import unittest
 import hcl2
 
 from domain.sanitizers.terraform import (
-    remove_duplicate_script_sources,
-    template_default_value_null,
+    advanced_cleanup,
 )
 
 
@@ -15,7 +14,7 @@ class DuplicateScriptSourceRemovalTest(unittest.TestCase):
             force_destroy = true
         }"""  # noqa: W293
 
-        fixed_config = remove_duplicate_script_sources(config)
+        fixed_config = advanced_cleanup(config)
 
         print(fixed_config)
 
@@ -70,7 +69,7 @@ class DuplicateScriptSourceRemovalTest(unittest.TestCase):
         }
             """  # noqa: W293
 
-        fixed_config = template_default_value_null(config)
+        fixed_config = advanced_cleanup(config)
 
         parsed_fixed_config = hcl2.loads(fixed_config)
 

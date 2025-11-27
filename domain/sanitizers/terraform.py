@@ -241,7 +241,16 @@ def remove_type_quotes(config):
     return re.sub(r'type\s*=\s*"string"', "type = string", config)
 
 
-def remove_duplicate_script_sources(config):
+def advanced_cleanup(config):
+    """
+    This has been left in place in the hope that the hcl2 library will properly parse HCL2. Today these bugs prevent this
+    library from being used:
+    https://github.com/amplify-education/python-hcl2/issues/249
+    https://github.com/amplify-education/python-hcl2/issues/250
+    https://github.com/amplify-education/python-hcl2/issues/251
+
+    Maybe we can't use the HCL2 library. But if we can, this function provides a good way to address common issues in generated HCL.
+    """
     if detect_hcl2_bugs(config):
         return config
 
@@ -301,17 +310,6 @@ def remove_duplicate_script_sources(config):
                     ):
                         step["Octopus.Action.Script.ScriptFileName"] = "MyScript.ps1"
 
-    example_ast = hcl2.reverse_transform(parsed_config)
-    return hcl2.writes(example_ast)
-
-
-def template_default_value_null(config):
-    if detect_hcl2_bugs(config):
-        return config
-
-    parsed_config = hcl2.loads(config, with_meta=True)
-
-    resources = parsed_config.get("resource", [])
     projects = [
         resource
         for resource in resources

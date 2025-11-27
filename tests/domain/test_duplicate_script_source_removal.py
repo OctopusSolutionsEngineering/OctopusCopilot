@@ -3,7 +3,7 @@ import unittest
 import hcl2
 
 from domain.sanitizers.terraform import (
-    remove_duplicate_script_sources,
+    advanced_cleanup,
     detect_hcl2_bugs,
     remove_type_quotes,
 )
@@ -52,7 +52,7 @@ class DuplicateScriptSourceRemovalTest(unittest.TestCase):
             force_destroy = true
         }"""  # noqa: W293
 
-        fixed_config = remove_duplicate_script_sources(config)
+        fixed_config = advanced_cleanup(config)
 
         self.assertEqual(hcl2.loads(config), hcl2.loads(fixed_config))
 
@@ -85,7 +85,7 @@ class DuplicateScriptSourceRemovalTest(unittest.TestCase):
             resource "octopusdeploy_process_step" "step2" {}
             """  # noqa: W293
 
-        fixed_config = remove_duplicate_script_sources(config)
+        fixed_config = advanced_cleanup(config)
 
         self.assertEqual(hcl2.loads(config), hcl2.loads(fixed_config))
 
@@ -128,7 +128,7 @@ class DuplicateScriptSourceRemovalTest(unittest.TestCase):
             resource "octopusdeploy_process_step" "step2" {}
             """  # noqa: W293
 
-        fixed_config = remove_duplicate_script_sources(config)
+        fixed_config = advanced_cleanup(config)
         parsed_fixed_config = hcl2.loads(fixed_config)
 
         self.assertTrue(
@@ -185,7 +185,7 @@ class DuplicateScriptSourceRemovalTest(unittest.TestCase):
             resource "octopusdeploy_process_step" "step2" {}
             """  # noqa: W293
 
-        fixed_config = remove_duplicate_script_sources(config)
+        fixed_config = advanced_cleanup(config)
 
         print(fixed_config)
 
