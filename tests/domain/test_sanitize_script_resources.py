@@ -123,6 +123,7 @@ class SanitizeScriptResourcesTest(unittest.TestCase):
         self.assertTrue("Octopus.Action.Script.Syntax" not in fixed)
 
     def test_bad_indents_script(self):
+        # Note the space before the final closing brace
         config = """resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login" {
   count                 = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
   name                  = "Attempt Login"
@@ -154,11 +155,12 @@ class SanitizeScriptResourcesTest(unittest.TestCase):
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.ScriptFileName" = "CreaeResourceGroup.ps1"
       }
-  }"""
+   }"""
 
         self.assertEqual(fix_script_source(config), config)
 
     def test_bad_indents_script_2(self):
+        # Note the space before the resource
         config = """  resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login" {
   count                 = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? 0 : 1}"
   name                  = "Attempt Login"
