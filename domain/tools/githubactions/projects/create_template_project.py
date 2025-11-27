@@ -313,6 +313,7 @@ def create_template_project_callback(
                     configuration = advanced_configuration
                 except Exception as e:
                     # If the sequence of parsing, modifying, and re-serializing fails, we just use the original configuration.
+                    # https://github.com/amplify-education/python-hcl2/issues/250 is an example
                     # These modifications are a best effort to improve the quality of the configuration.
                     pass
 
