@@ -265,6 +265,28 @@ def sanitize_package_script(lines):
         and not resource_line.strip().startswith('"Octopus.Action.Script.Syntax"')
     )
 
+    filename_exists = any(
+        resource_line
+        for resource_line in lines
+        if resource_line.strip().startswith('"Octopus.Action.Script.ScriptFileName"')
+    )
+
+    # Add a default file name if one does not exist
+    if not filename_exists:
+        source_index = next(
+            (
+                i
+                for i, v in enumerate(lines)
+                if v.strip().startswith('"Octopus.Action.Script.ScriptSource"')
+            ),
+            -1,
+        )
+        if source_index != -1:
+            lines.insert(
+                source_index + 1,
+                '  "Octopus.Action.Script.ScriptFileName" = "MyScript.ps1"',
+            )
+
     resource_combined = "\n".join(lines)
     return resource_combined
 
