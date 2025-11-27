@@ -274,7 +274,7 @@ def fix_script_source(config):
         return ""
 
     # A quick out if there were no script steps
-    if not "Octopus.Action.Script.ScriptSource" in config:
+    if "Octopus.Action.Script.ScriptSource" not in config:
         return config
 
     splits = config.splitlines()
