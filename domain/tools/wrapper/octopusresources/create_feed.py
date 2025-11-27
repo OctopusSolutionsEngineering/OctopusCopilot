@@ -7,7 +7,7 @@ def create_feed_wrapper(query, callback, logging):
     ):
         """Creates a feed in Octopus Deploy.
 
-        You must only select this function when the prompt is specifically requesting to create a feed.
+        You must only select this function when the prompt is specifically requesting to create a single feed.
         You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
 
         Example prompts include:

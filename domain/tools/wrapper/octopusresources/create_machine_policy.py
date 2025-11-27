@@ -6,7 +6,7 @@ def create_machine_policy_wrapper(query, callback, logging):
     ):
         """Creates a machine policy in Octopus Deploy.
 
-        You must only select this function when the prompt is specifically requesting to create a machine policy.
+        You must only select this function when the prompt is specifically requesting to create a single machine policy.
         You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
 
         Example prompts include:

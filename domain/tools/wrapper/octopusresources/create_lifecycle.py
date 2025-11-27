@@ -6,7 +6,7 @@ def create_lifecycle_wrapper(query, callback, logging):
     ):
         """Creates a lifecycle in Octopus Deploy.
 
-        You must only select this function when the prompt is specifically requesting to create a lifecycle.
+        You must only select this function when the prompt is specifically requesting to create a single lifecycle.
         You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
 
         Example prompts include:
