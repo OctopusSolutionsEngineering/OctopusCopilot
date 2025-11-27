@@ -202,7 +202,11 @@ def release_what_changed_callback_wrapper(
             + count_items_with_data(failure_context)
             + 1
         )
-        max_content_per_source = int(max_chars_128 / sources_with_data)
+        max_content_per_source = int(
+            max_chars_128 / sources_with_data
+            if sources_with_data != 0
+            else max_chars_128
+        )
 
         # We limit the overall length of all the items in the content to their own content window size,
         # but also limit the length of any individual item to the max_content_per_source. This means

@@ -147,7 +147,11 @@ def suggest_solution_wrapper(
 
             # Each external source gets its own dedicated slice of the context window
             sources_with_data = count_non_empty_items(limited_issues)
-            max_content_per_source = max_chars_128 / sources_with_data
+            max_content_per_source = (
+                max_chars_128 / sources_with_data
+                if sources_with_data != 0
+                else max_chars_128
+            )
 
             # Limit the length of the response, and filter out exceptions
             slack_context = limit_array_to_max_char_length(
