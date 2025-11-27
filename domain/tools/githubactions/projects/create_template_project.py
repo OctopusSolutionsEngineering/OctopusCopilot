@@ -28,8 +28,6 @@ from domain.sanitizers.terraform import (
     fix_execution_properties_block,
     fix_empty_execution_properties_block,
     fix_empty_properties_block,
-    advanced_cleanup,
-    remove_type_quotes,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
