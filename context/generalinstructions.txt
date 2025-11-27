@@ -1278,6 +1278,9 @@ resource "octopusdeploy_community_step_template" "my_community_step_template" {
 
 * The "Octopus.Action.RunOnServer" property in the "execution_properties" block must be set to "true" steps of type "Octopus.Script" that do not have any target roles.
 
+* You will be penalized for setting the "image" property in the "container" block to an empty string.
+* If the prompt indicates that a container image should be used, but does not specify an image name, you must set the "image" property in the "container" block to "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04".
+
 ## Octopus step template instructions
 
 * The "website" attribute in a data "octopusdeploy_community_step_template" must be copied literally.
