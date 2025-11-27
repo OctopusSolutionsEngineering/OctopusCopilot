@@ -304,7 +304,13 @@ def template_default_value_null(config):
                 templates = project.get("template", [])
                 for template in templates:
                     if template.get("default_value", "") == "":
-                        # Empty strings must be null values instead.
+                        # Empty strings must be null values instead. Otherwise you get an error like:
+                        # Provider produced inconsistent result after apply
+                        # When applying changes to
+                        # octopusdeploy_project.project_lambda_function_project_2197[0], provider
+                        # "provider[\"registry.opentofu.org/octopusdeploy/octopusdeploy\"]" produced an
+                        # unexpected new value: .template[1].default_value: was cty.StringVal(""), but
+                        # 2now null.
                         del template["default_value"]
 
     example_ast = hcl2.reverse_transform(parsed_config)
