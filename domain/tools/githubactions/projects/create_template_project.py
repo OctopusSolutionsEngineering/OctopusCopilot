@@ -29,6 +29,7 @@ from domain.sanitizers.terraform import (
     fix_empty_execution_properties_block,
     fix_empty_properties_block,
     fix_script_source,
+    fix_default_value,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
@@ -300,6 +301,9 @@ def create_template_project_callback(
 
                 # Remove invalid script configuration
                 configuration = fix_script_source(configuration)
+
+                # Remove empty string default values
+                configuration = fix_default_value(configuration)
 
             try:
                 if auto_apply:
