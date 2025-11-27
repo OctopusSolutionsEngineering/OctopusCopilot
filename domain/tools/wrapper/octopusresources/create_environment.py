@@ -6,10 +6,11 @@ def create_environment_wrapper(query, callback, logging):
     ):
         """Creates an environment in Octopus Deploy.
 
+        You must only select this function when the prompt is specifically requesting to create an environment.
+        You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
+
         Example prompts include:
         * Create an environment called "PreProd" in the space "My Space"
-
-        You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
 
         Args:
         space_name: The name of the space

@@ -7,13 +7,14 @@ def create_feed_wrapper(query, callback, logging):
     ):
         """Creates a feed in Octopus Deploy.
 
+        You must only select this function when the prompt is specifically requesting to create a feed.
+        You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
+
         Example prompts include:
         * Create a NuGet feed called "My Feed" in the space "My Space"
         * Create a Docker feed called "DockerHub" in the space "My Space"
         * Create a Maven feed called "Java Apps" in the space "My Space"
         * Create a Helm feed called "Helm" in the space "My Space"
-
-        You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
 
         Args:
         space_name: The name of the space
