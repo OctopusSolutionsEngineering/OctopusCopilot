@@ -82,6 +82,8 @@ def answer_general_query_wrapper(query, callback, logging=None):
         You will be penalized for calling this function for a prompt asking for instructions, documentation, general
         explanations, help, or "How do I" questions.
 
+        You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
+
         Example prompts:
 
         * Show me the username for the git credential called "GitHub Creds".
