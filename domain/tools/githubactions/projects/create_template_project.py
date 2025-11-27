@@ -28,6 +28,7 @@ from domain.sanitizers.terraform import (
     fix_execution_properties_block,
     fix_empty_execution_properties_block,
     fix_empty_properties_block,
+    remove_duplicate_script_sources,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
@@ -296,6 +297,9 @@ def create_template_project_callback(
 
                 # Deal with the LLM returning an empty properties blocks
                 configuration = fix_empty_properties_block(configuration)
+
+                # The LLM really wanted to return a mixture of package an inline scripts for script steps.
+                configuration = remove_duplicate_script_sources(configuration)
 
             try:
                 if auto_apply:

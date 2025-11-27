@@ -1,5 +1,7 @@
 import re
 
+import hcl2
+
 
 def sanitize_kuberenetes_yaml_step_config(config):
     """
@@ -223,3 +225,64 @@ def remove_duplicate_definitions(config):
                     fixed_config = fixed_config.replace(duplicate_block, "", 1)
 
     return fixed_config.strip()
+
+
+def remove_duplicate_script_sources(config):
+    parsed_config = hcl2.loads(config)
+
+    resources = parsed_config.get("resource", [])
+    steps = [
+        resource
+        for resource in resources
+        if not resource.get("octopusdeploy_process_step", None) is None
+        or not resource.get("octopusdeploy_process_child_step", None) is None
+    ]
+
+    for step_dict in steps:
+        for resource_type, step_value in step_dict.items():
+            for step_name, step in step_value.items():
+                if (
+                    step.get("execution_properties", {}).get(
+                        "Octopus.Action.Script.ScriptSource", None
+                    )
+                    == "Inline"
+                ):
+                    # There is no primary package for inline scripts
+                    if "primary_package" in step:
+                        del step["primary_package"]
+
+                    if "Octopus.Action.Script.ScriptFileName" in step.get(
+                        "execution_properties", {}
+                    ):
+                        del step["execution_properties"][
+                            "Octopus.Action.Script.ScriptFileName"
+                        ]
+
+                if (
+                    step.get("execution_properties", {}).get(
+                        "Octopus.Action.Script.ScriptSource", None
+                    )
+                    == "Package"
+                ):
+                    # There is no syntax for package scripts
+                    if "Octopus.Action.Script.Syntax" in step["execution_properties"]:
+                        del step["execution_properties"]["Octopus.Action.Script.Syntax"]
+
+                    # There is no script body for package scripts
+                    if (
+                        "Octopus.Action.Script.ScriptBody"
+                        in step["execution_properties"]
+                    ):
+                        del step["execution_properties"][
+                            "Octopus.Action.Script.ScriptBody"
+                        ]
+
+                    # There must be a script name for package scripts
+                    if (
+                        "Octopus.Action.Script.ScriptFileName"
+                        not in step["execution_properties"]
+                    ):
+                        step["Octopus.Action.Script.ScriptFileName"] = "MyScript.ps1"
+
+    example_ast = hcl2.reverse_transform(parsed_config)
+    return hcl2.writes(example_ast)
