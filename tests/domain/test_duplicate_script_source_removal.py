@@ -10,7 +10,7 @@ class DuplicateScriptSourceRemovalTest(unittest.TestCase):
         config = """resource "aws_s3_bucket" "bucket" {
             bucket = "bucket_id"
             force_destroy = true
-        }"""
+        }""" # noqa: W293
 
         fixed_config = remove_duplicate_script_sources(config)
 
@@ -43,7 +43,7 @@ class DuplicateScriptSourceRemovalTest(unittest.TestCase):
             }
             
             resource "octopusdeploy_process_step" "step2" {}
-            """
+            """ # noqa: W293
 
         fixed_config = remove_duplicate_script_sources(config)
 
@@ -86,7 +86,7 @@ class DuplicateScriptSourceRemovalTest(unittest.TestCase):
             }
 
             resource "octopusdeploy_process_step" "step2" {}
-            """
+            """ # noqa: W293
 
         fixed_config = remove_duplicate_script_sources(config)
         parsed_fixed_config = hcl2.loads(fixed_config)
@@ -143,7 +143,7 @@ class DuplicateScriptSourceRemovalTest(unittest.TestCase):
             }
 
             resource "octopusdeploy_process_step" "step2" {}
-            """
+            """ # noqa: W293
 
         fixed_config = remove_duplicate_script_sources(config)
         parsed_fixed_config = hcl2.loads(fixed_config)
