@@ -290,7 +290,6 @@ resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
         self.assertEqual(fix_script_source(config), config)
 
     def test_full_module(self):
-        # Note the space before the resource
         config = """provider "octopusdeploy" {
   space_id = "${trimspace(var.octopus_space_id)}"
 }

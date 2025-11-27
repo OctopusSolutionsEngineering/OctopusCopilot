@@ -1616,6 +1616,8 @@ variable "project_group_name" {
 }
 ```
 
+* You will be penalized for defining a "scope" block in a terraform variable.
+
 ## Penalties
 
 * You will be penalized for generating invalid Terraform.
