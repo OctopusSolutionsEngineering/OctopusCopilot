@@ -272,9 +272,9 @@ data "octopusdeploy_library_variable_sets" "library_variable_set_variables_examp
 * You will be penalized for creating a "octopusdeploy_tenant_common_variable" resource without a "depends_on" attribute.
 * The "label" attribute in a "template" block of a "octopusdeploy_library_variable_set" resource must be omitted if it is an empty string.
 * You will be penalized for defining the "label" attribute as an empty string in a "template" block of a "octopusdeploy_library_variable_set" resource.
-* You will be penalized for defining a "octopusdeploy_tenant_common_variable" resource with an empty value for the "template_id" attribute.
-* You will be penalized for defining a "octopusdeploy_tenant_common_variable" resource with an empty value for the "library_variable_set_id" attribute.
-* The "library_variable_set_id" property for a "octopusdeploy_tenant_common_variable" resource must be define.
+* You will be penalized for defining a "octopusdeploy_tenant_common_variable" resource with an empty string for the "template_id" attribute.
+* You will be penalized for defining a "octopusdeploy_tenant_common_variable" resource with an empty string for the "library_variable_set_id" attribute.
+* The "library_variable_set_id" property for a "octopusdeploy_tenant_common_variable" resource must be defined.
 * You will be penalized for setting the "library_variable_set_id" property for a "octopusdeploy_tenant_common_variable" resource to an empty string or null.
 
 ## Tenant Tag Instructions

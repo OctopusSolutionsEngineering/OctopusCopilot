@@ -28,6 +28,40 @@ from domain.tools.wrapper.general_query import answer_general_query_wrapper
 from domain.tools.wrapper.generate_terraform import generate_terraform_wrapper
 from domain.tools.wrapper.how_to import how_to_wrapper
 from domain.tools.wrapper.octopusresources.create_account import create_account_wrapper
+from domain.tools.wrapper.octopusresources.create_certificate import (
+    create_certificate_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_environment import (
+    create_environment_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_feed import create_feed_wrapper
+from domain.tools.wrapper.octopusresources.create_git_credential import (
+    create_git_credential_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_github_connection import (
+    create_github_connection_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_lifecycle import (
+    create_lifecycle_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_machine_policy import (
+    create_machine_policy_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_machine_proxy import (
+    create_machine_proxy_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_script_module import (
+    create_script_module_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_step_template import (
+    create_step_template_wrapper,
+)
+from domain.tools.wrapper.octopusresources.create_target import create_target_wrapper
+from domain.tools.wrapper.octopusresources.create_tenant import create_tenant_wrapper
+from domain.tools.wrapper.octopusresources.create_worker import create_worker_wrapper
+from domain.tools.wrapper.octopusresources.create_worker_pool import (
+    create_worker_pool_wrapper,
+)
 from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_wrapper
 from domain.tools.wrapper.projects.create_lambda_project import (
     create_lambda_project_wrapper,
@@ -100,6 +134,114 @@ def build_mock_test_tools(tool_query):
         )
     ]
 
+    resource_functions = [
+        FunctionDefinition(
+            create_feed_wrapper(
+                tool_query,
+                callback=unsupported_resource("feed"),
+                logging=log_query,
+            ),
+        ),
+        FunctionDefinition(
+            create_tenant_wrapper(
+                tool_query,
+                callback=unsupported_resource("tenant"),
+                logging=log_query,
+            ),
+        ),
+        FunctionDefinition(
+            create_environment_wrapper(
+                tool_query,
+                callback=unsupported_resource("environment"),
+                logging=log_query,
+            ),
+        ),
+        FunctionDefinition(
+            create_machine_policy_wrapper(
+                tool_query,
+                callback=unsupported_resource("machine policy"),
+                logging=log_query,
+            ),
+        ),
+        FunctionDefinition(
+            create_worker_wrapper(
+                tool_query,
+                callback=unsupported_resource("worker"),
+                logging=log_query,
+            ),
+        ),
+        FunctionDefinition(
+            create_worker_pool_wrapper(
+                tool_query,
+                callback=unsupported_resource("worker pool"),
+                logging=log_query,
+            ),
+        ),
+        FunctionDefinition(
+            create_lifecycle_wrapper(
+                tool_query,
+                callback=unsupported_resource("lifecycle"),
+                logging=log_query,
+            ),
+        ),
+        FunctionDefinition(
+            create_script_module_wrapper(
+                tool_query,
+                callback=unsupported_resource("script module"),
+                logging=log_query,
+            ),
+        ),
+        FunctionDefinition(
+            create_git_credential_wrapper(
+                tool_query,
+                callback=unsupported_resource("git credential"),
+                logging=log_query,
+            ),
+        ),
+        FunctionDefinition(
+            create_github_connection_wrapper(
+                tool_query,
+                callback=unsupported_resource("github connection"),
+                logging=log_query,
+            ),
+        ),
+        FunctionDefinition(
+            create_machine_proxy_wrapper(
+                tool_query,
+                callback=unsupported_resource("machine proxy"),
+                logging=log_query,
+            ),
+        ),
+        FunctionDefinition(
+            create_step_template_wrapper(
+                tool_query,
+                callback=unsupported_resource("step template"),
+                logging=log_query,
+            ),
+        ),
+        FunctionDefinition(
+            create_certificate_wrapper(
+                tool_query,
+                callback=unsupported_resource("certificate"),
+                logging=log_query,
+            ),
+        ),
+        FunctionDefinition(
+            create_target_wrapper(
+                tool_query,
+                callback=unsupported_resource("target"),
+                logging=log_query,
+            ),
+        ),
+        FunctionDefinition(
+            create_account_wrapper(
+                tool_query,
+                callback=unsupported_resource("account"),
+                logging=log_query,
+            ),
+        ),
+    ]
+
     return FunctionDefinitions(
         [
             FunctionDefinition(set_default_value),
@@ -167,6 +309,7 @@ def build_mock_test_tools(tool_query):
                 )
             ),
             *deployment_functions,
+            *resource_functions,
         ],
         fallback=FunctionDefinitions(docs_functions),
     )

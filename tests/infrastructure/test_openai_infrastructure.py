@@ -464,6 +464,17 @@ class MockRequests(unittest.TestCase):
 
         self.assertEqual(function.name, "create_account")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_k8s_project_2(self):
+        """
+        Tests that the llm can correctly identify the function to call when the prompt is
+        """
+
+        query = 'Create a Kubernetes project called "K8s Order Processing Platform 2468". Support tenanted and untenanted deployments for tenants "Retail East" (tag "Region/US") and "Retail EU" (tag "Region/EU"). Use the "Secure Release" lifecycle with environments "Dev", "QA", and "Prod". Enable variable debugging. Add a Helm deployment step pulling chart `orders-platform` from Helm feed "internal-charts". Add a Kustomize apply step for config overlays (run only in "QA" and "Prod"). Add a Kubernetes ingress deployment step targeting role `k8s-gateway`. Add an inline Bash script health check step that runs only if `#{PerformHealthCheck}` is `true` and only in "Prod". Define variables `Db.ConnectionString` scoped to "Prod" and tenant "Retail EU", and sensitive variable `Api.Secret` scoped to "Prod". Set a retention policy to keep last 8 successful releases. Place the project in the "Order Services" project group.'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_k8s_project")
+
 
 if __name__ == "__main__":
     unittest.main()
