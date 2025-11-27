@@ -1558,6 +1558,7 @@ data "octopusdeploy_accounts" "my_other_oidc_account" {
   * "Octopus.AwsRunCloudFormation" - Deploy an AWS CloudFormation template step
   * "Octopus.AwsApplyCloudFormationChangeSet" - Apply an AWS CloudFormation Change Set step
   * "Octopus.AwsDeleteCloudFormation" - Delete an AWS CloudFormation stack step
+  * "Octopus.ArgoCDUpdateImageTags" - Update ArgoCD Image Tags step
 * The "octopusdeploy" provider must set the "space_id" attribute to the value "trimspace(var.octopus_space_id)".
 * The Terraform variable "octopus_space_id" must be included.
 * Terraform string interpolation must be implemented as "${}".
