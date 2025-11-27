@@ -229,7 +229,7 @@ def remove_duplicate_definitions(config):
 
 def detect_hcl2_bugs(config):
     # This won't parse. See https://github.com/amplify-education/python-hcl2/issues/249
-    return re.search(r'""\s*=\s*', config)
+    return re.search(r'""\s*=\s*', config) or "jsonencode" in config
 
 
 def remove_duplicate_script_sources(config):
