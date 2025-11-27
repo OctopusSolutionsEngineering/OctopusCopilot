@@ -30,6 +30,7 @@ from domain.sanitizers.terraform import (
     fix_empty_properties_block,
     remove_duplicate_script_sources,
     template_default_value_null,
+    remove_type_quotes,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
@@ -309,6 +310,8 @@ def create_template_project_callback(
                     advanced_configuration = template_default_value_null(
                         advanced_configuration
                     )
+
+                    advanced_configuration = remove_type_quotes(advanced_configuration)
 
                     configuration = advanced_configuration
                 except Exception as e:

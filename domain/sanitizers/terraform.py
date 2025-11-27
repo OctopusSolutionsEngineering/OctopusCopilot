@@ -233,6 +233,14 @@ def detect_hcl2_bugs(config):
     return re.search(r'""\s*=\s*', config) or "jsonencode(" in config
 
 
+def remove_type_quotes(config):
+    """
+    This patches the issue introduced by https://github.com/amplify-education/python-hcl2/issues/251
+    """
+
+    return re.sub(r'type\s*=\s*"string"', "type = string", config)
+
+
 def remove_duplicate_script_sources(config):
     if detect_hcl2_bugs(config):
         return config

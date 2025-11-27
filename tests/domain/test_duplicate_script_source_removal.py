@@ -5,6 +5,7 @@ import hcl2
 from domain.sanitizers.terraform import (
     remove_duplicate_script_sources,
     detect_hcl2_bugs,
+    remove_type_quotes,
 )
 
 
@@ -20,6 +21,30 @@ class DuplicateScriptSourceRemovalTest(unittest.TestCase):
             git_dependencies      = { "test" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
         }"""
         self.assertFalse(detect_hcl2_bugs(bugged_hcl))
+
+    def test_remove_type_quotes(self):
+        bugged_hcl = """variable "octopus_space_id" {
+          type = "string"
+          nullable = false
+          sensitive = false
+          description = "The ID of the Octopus space to populate."
+        }"""
+
+        fixed_hcl = remove_type_quotes(bugged_hcl)
+
+        self.assertTrue("type = string" in fixed_hcl)
+
+    def test_leave_type_unquoted(self):
+        bugged_hcl = """variable "octopus_space_id" {
+          type = string
+          nullable = false
+          sensitive = false
+          description = "The ID of the Octopus space to populate."
+        }"""
+
+        fixed_hcl = remove_type_quotes(bugged_hcl)
+
+        self.assertTrue("type = string" in fixed_hcl)
 
     def test_no_duplicates(self):
         config = """resource "aws_s3_bucket" "bucket" {
