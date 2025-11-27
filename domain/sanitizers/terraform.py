@@ -229,14 +229,17 @@ def remove_duplicate_definitions(config):
 
 def detect_hcl2_bugs(config):
     # This won't parse. See https://github.com/amplify-education/python-hcl2/issues/249
-    return re.search(r'""\s*=\s*', config) or "jsonencode" in config
+    return re.search(r'""\s*=\s*', config)
 
 
 def remove_duplicate_script_sources(config):
     if detect_hcl2_bugs(config):
         return config
 
-    parsed_config = hcl2.loads(config, with_meta=True)
+    try:
+        parsed_config = hcl2.loads(config, with_meta=True)
+    except Exception:
+        return config
 
     resources = parsed_config.get("resource", [])
     steps = [
@@ -300,7 +303,10 @@ def template_default_value_null(config):
     if detect_hcl2_bugs(config):
         return config
 
-    parsed_config = hcl2.loads(config, with_meta=True)
+    try:
+        parsed_config = hcl2.loads(config, with_meta=True)
+    except Exception:
+        return config
 
     resources = parsed_config.get("resource", [])
     projects = [
