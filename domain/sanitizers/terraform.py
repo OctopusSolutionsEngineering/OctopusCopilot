@@ -225,3 +225,107 @@ def remove_duplicate_definitions(config):
                     fixed_config = fixed_config.replace(duplicate_block, "", 1)
 
     return fixed_config.strip()
+
+
+def sanitize_inline_script(lines):
+    # There are no file names for inline packages
+    lines = list(
+        resource_line
+        for resource_line in lines
+        if not resource_line.strip().startswith(
+            '"Octopus.Action.Script.ScriptFileName"'
+        )
+    )
+
+    resource_combined = "\n".join(lines)
+
+    # There is no primary package for inline scripts
+    resource_combined = re.sub(
+        r"primary_package\s*=\s*\{.*?}",
+        "",
+        resource_combined,
+        flags=re.DOTALL,
+    )
+
+    return resource_combined
+
+
+def sanitize_package_script(lines):
+    # There is no inline script or syntax for package scripts
+    lines = list(
+        resource_line
+        for resource_line in lines
+        if not resource_line.strip().startswith('"Octopus.Action.Script.ScriptBody"')
+        and not resource_line.strip().startswith('"Octopus.Action.Script.Syntax"')
+    )
+
+    resource_combined = "\n".join(lines)
+    return resource_combined
+
+
+def fix_script_source(config):
+    """
+    LLMs would frequently mix up inline and package scripts. This function looks at the script source and strips out
+    any unsupported settings. This kind of sanitization is not ideal - proper HCL2 parsing would be much better than
+    assuming correctly indented HCL2 code. But this is better than nothing.
+    """
+
+    if not config:
+        return ""
+
+    # A quick out if there were no script steps
+    if not "Octopus.Action.Script.ScriptSource" in config:
+        return config
+
+    splits = config.splitlines()
+
+    output = []
+
+    in_resource = False
+    resource_lines = []
+
+    for line in splits:
+        if not in_resource and line.startswith("resource "):
+            # We entered a resource block
+            in_resource = True
+            resource_lines = [line]
+        elif in_resource:
+            resource_lines.append(line)
+
+            if line == "}":
+                in_resource = False
+
+                # Detect if this is a script resource
+                is_script = any(
+                    resource_line
+                    for resource_line in resource_lines
+                    if resource_line.strip().startswith(
+                        '"Octopus.Action.Script.ScriptSource"'
+                    )
+                )
+
+                if is_script:
+                    script_type = next(
+                        resource_line.split("=").pop().strip()
+                        for resource_line in resource_lines
+                        if resource_line.strip().startswith(
+                            '"Octopus.Action.Script.ScriptSource"'
+                        )
+                    )
+
+                    if script_type == '"Inline"':
+                        output.append(sanitize_inline_script(resource_lines))
+
+                    elif script_type == '"Package"':
+                        output.append(sanitize_package_script(resource_lines))
+                    else:
+                        # Unknown script type, just output the resource as-is
+                        output.extend(resource_lines)
+        else:
+            output.append(line)
+
+    # Our assumptions about the indents of brackets failed, so do no processing
+    if in_resource:
+        return config
+
+    return "\n".join(output)

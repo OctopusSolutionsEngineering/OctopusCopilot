@@ -28,6 +28,7 @@ from domain.sanitizers.terraform import (
     fix_execution_properties_block,
     fix_empty_execution_properties_block,
     fix_empty_properties_block,
+    fix_script_source,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
@@ -296,6 +297,9 @@ def create_template_project_callback(
 
                 # Deal with the LLM returning an empty properties blocks
                 configuration = fix_empty_properties_block(configuration)
+
+                # Remove invalid script configuration
+                configuration = fix_script_source(configuration)
 
             try:
                 if auto_apply:
