@@ -2,10 +2,25 @@ import unittest
 
 import hcl2
 
-from domain.sanitizers.terraform import remove_duplicate_script_sources
+from domain.sanitizers.terraform import (
+    remove_duplicate_script_sources,
+    detect_hcl2_bugs,
+)
 
 
 class DuplicateScriptSourceRemovalTest(unittest.TestCase):
+    def test_detect_bug(self):
+        bugged_hcl = """resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup" {
+            git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
+        }"""
+        self.assertTrue(detect_hcl2_bugs(bugged_hcl))
+
+    def test_detect_no_bug(self):
+        bugged_hcl = """resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup" {
+            git_dependencies      = { "test" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
+        }"""
+        self.assertFalse(detect_hcl2_bugs(bugged_hcl))
+
     def test_no_duplicates(self):
         config = """resource "aws_s3_bucket" "bucket" {
             bucket = "bucket_id"
