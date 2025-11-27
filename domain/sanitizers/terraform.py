@@ -286,3 +286,26 @@ def remove_duplicate_script_sources(config):
 
     example_ast = hcl2.reverse_transform(parsed_config)
     return hcl2.writes(example_ast)
+
+
+def template_default_value_null(config):
+    parsed_config = hcl2.loads(config)
+
+    resources = parsed_config.get("resource", [])
+    projects = [
+        resource
+        for resource in resources
+        if not resource.get("octopusdeploy_project", None) is None
+    ]
+
+    for project_dict in projects:
+        for resource_type, project_value in project_dict.items():
+            for project_name, project in project_value.items():
+                templates = project.get("template", [])
+                for template in templates:
+                    if template.get("default_value", "") == "":
+                        # Empty strings must be null values instead.
+                        del template["default_value"]
+
+    example_ast = hcl2.reverse_transform(parsed_config)
+    return hcl2.writes(example_ast)

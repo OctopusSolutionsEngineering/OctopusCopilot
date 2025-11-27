@@ -29,6 +29,7 @@ from domain.sanitizers.terraform import (
     fix_empty_execution_properties_block,
     fix_empty_properties_block,
     remove_duplicate_script_sources,
+    template_default_value_null,
 )
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
@@ -300,6 +301,9 @@ def create_template_project_callback(
 
                 # The LLM really wanted to return a mixture of package an inline scripts for script steps.
                 configuration = remove_duplicate_script_sources(configuration)
+
+                # Template default values must be null, not an empty string
+                configuration = template_default_value_null(configuration)
 
             try:
                 if auto_apply:
