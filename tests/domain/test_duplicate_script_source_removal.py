@@ -146,6 +146,9 @@ class DuplicateScriptSourceRemovalTest(unittest.TestCase):
             """  # noqa: W293
 
         fixed_config = remove_duplicate_script_sources(config)
+
+        print(fixed_config)
+
         parsed_fixed_config = hcl2.loads(fixed_config)
 
         self.assertTrue(
