@@ -1,7 +1,5 @@
 import re
 
-import hcl2
-
 
 def sanitize_kuberenetes_yaml_step_config(config):
     """
