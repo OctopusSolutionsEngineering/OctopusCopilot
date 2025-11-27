@@ -17,6 +17,8 @@ class DuplicateScriptSourceRemovalTest(unittest.TestCase):
 
         fixed_config = remove_duplicate_script_sources(config)
 
+        print(fixed_config)
+
         self.assertEqual(hcl2.loads(config), hcl2.loads(fixed_config))
 
     def test_empty_default_values(self):

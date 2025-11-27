@@ -228,7 +228,7 @@ def remove_duplicate_definitions(config):
 
 
 def remove_duplicate_script_sources(config):
-    parsed_config = hcl2.loads(config)
+    parsed_config = hcl2.loads(config, with_meta=True)
 
     resources = parsed_config.get("resource", [])
     steps = [
@@ -289,7 +289,7 @@ def remove_duplicate_script_sources(config):
 
 
 def template_default_value_null(config):
-    parsed_config = hcl2.loads(config)
+    parsed_config = hcl2.loads(config, with_meta=True)
 
     resources = parsed_config.get("resource", [])
     projects = [
