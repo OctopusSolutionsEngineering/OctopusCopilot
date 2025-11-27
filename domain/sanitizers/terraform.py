@@ -327,6 +327,8 @@ def fix_script_source(config):
                     else:
                         # Unknown script type, just output the resource as-is
                         output.extend(resource_lines)
+                else:
+                    output.extend(resource_lines)
         else:
             output.append(line)
 
