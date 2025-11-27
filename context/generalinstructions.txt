@@ -272,6 +272,61 @@ data "octopusdeploy_library_variable_sets" "library_variable_set_variables_examp
 * You will be penalized for creating a "octopusdeploy_tenant_common_variable" resource without a "depends_on" attribute.
 * The "label" attribute in a "template" block of a "octopusdeploy_library_variable_set" resource must be omitted if it is an empty string.
 * You will be penalized for defining the "label" attribute as an empty string in a "template" block of a "octopusdeploy_library_variable_set" resource.
+
+* You must define the "template_id" property for every "octopusdeploy_tenant_common_variable" resource, for example:
+
+```
+# This is the data source returning existing tenants
+data "octopusdeploy_tenants" "tenant_australian_office" {
+  ids          = null
+  partial_name = "Australian Office"
+  skip         = 0
+  take         = 1
+  project_id   = ""
+  tags         = null
+}
+
+# This is the data source returning existing library variable sets
+data "octopusdeploy_library_variable_sets" "library_variable_set_variables_example_variable_set" {
+  ids          = null
+  partial_name = "Example Variable Set"
+  skip         = 0
+  take         = 1
+}
+
+# This is the library variable set resource
+resource "octopusdeploy_library_variable_set" "library_variable_set_variables_example_variable_set" {
+  count       = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? 0 : 1}"
+  name        = "Example Variable Set"
+  description = ""
+
+  template {
+    name             = "Common.Variable"
+    label            = "A common variable that must be defined for each tenant"
+    help_text        = "The help text associated with the variable is defined here."
+    default_value    = ""
+    display_settings = { "Octopus.ControlType" = "MultiLineText" }
+  }
+}
+
+# This is the tenant resource
+resource "octopusdeploy_tenant" "tenant_australian_office" {
+  count       = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
+  name        = "Australian Office"
+  description = "An example tenant that represents an Australian office"
+  tenant_tags = []
+}
+
+# This is the tenant common variable resource.
+resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable5_australian_office" {
+  count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
+  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[0].id}"
+  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
+  value                   = "Option1"
+}
+```
+
 * You will be penalized for defining a "octopusdeploy_tenant_common_variable" resource with an empty string for the "template_id" attribute.
 * You will be penalized for defining a "octopusdeploy_tenant_common_variable" resource with an empty string for the "library_variable_set_id" attribute.
 * The "library_variable_set_id" property for a "octopusdeploy_tenant_common_variable" resource must be defined.
