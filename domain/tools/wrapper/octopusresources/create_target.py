@@ -9,6 +9,7 @@ def create_target_wrapper(query, callback, logging):
 
         You must only select this function when the prompt is specifically requesting to create a single target.
         You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
+        If the prompt contains instructions to create a project, you must consider this function as not applicable.
 
         Example prompts include:
         * Create an Azure Web App target called "My Web App" in the space "My Space"
