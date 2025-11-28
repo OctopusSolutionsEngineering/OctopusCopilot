@@ -780,6 +780,7 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
   * "Failure"
   * "Success"
   * "Variable"
+* You will be penalized for setting the "condition" attribute to "ManualOnly".
 * When the "condition"attribute is set to "Variable", the "properties" block must include the "Octopus.Step.ConditionVariableExpression" property.
 * You will be penalized for setting the "condition" attribute to "Variable" without defining the "Octopus.Step.ConditionVariableExpression" property in the "properties" block.
 * Adding a step requires a new "octopusdeploy_process_step" resource to be defined and then added to the "octopusdeploy_process_steps_order" resource in the "steps" array. For example, if this is the initial set of steps:
