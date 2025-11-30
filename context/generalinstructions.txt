@@ -239,7 +239,9 @@ data "octopusdeploy_tenants" "tenant_australian_office" {
   project_id   = ""
   tags         = null
 }
-``
+```
+
+* When the prompt includes instructions to define the value of project tenant variables, you must define the value for all environment unless explicitly instructed otherwise.
 
 ## Library Variable Set Instructions
 
