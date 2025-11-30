@@ -1281,6 +1281,23 @@ resource "octopusdeploy_community_step_template" "my_community_step_template" {
 
 * You will be penalized for setting the "image" property in the "container" block to an empty string.
 * If the prompt indicates that a container image should be used, but does not specify an image name, you must set the "image" property in the "container" block to "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04".
+* Additional packages (also known as "referenced packages") are defined in the "packages" block of a "octopusdeploy_process_step" resource, for example:
+
+```
+packages = {
+    octopub-selfcontained = {
+        acquisition_location = "NotAcquired",
+        feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}",
+        id = null,
+        package_id = "${var.project_kubernetes_web_app_step_deploy_a_kubernetes_web_app_via_yaml_package_octopub_selfcontained_packageid}",
+        properties = {
+            Extract = "False",
+            Purpose = "DockerImageReference",
+            SelectionMode = "immediate"
+        }
+    }
+}
+```
 
 ## Octopus step template instructions
 
