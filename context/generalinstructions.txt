@@ -535,6 +535,7 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
 * You will be penalized for creating a resource of type resource "octopusdeploy_generic_artifact_feed".
 * When creating a Maven feed with anonymous authentication, you must set the "username" and "password" attributes to null.
 * You will be penalized for setting the "username" and "password" attributes to empty strings when creating a Maven feed with anonymous authentication.
+* You will be penalized for defining the "is_enhanced_mode" property on a "octopusdeploy_maven_feed" resource.
 
 
 ## Project Group Instructions
@@ -631,6 +632,8 @@ resource "octopusdeploy_project" "project_my_project" {
   # Define other properties here
 }
 ```
+* You must ignore the instruction to "Set the prompt to disabled" when defining a resource "octopusdeploy_project".
+* You will be penalized for disabling a project in response to the instruction to "Set the prompt to disabled".
 
 ## Octopus Project Trigger Instructions
 
