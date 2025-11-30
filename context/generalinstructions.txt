@@ -1292,7 +1292,7 @@ resource "octopusdeploy_community_step_template" "my_community_step_template" {
 
 ```
 packages = {
-    octopub-selfcontained = {
+    package-id = {
         acquisition_location = "NotAcquired",
         feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}",
         id = null,
