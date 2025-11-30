@@ -1309,7 +1309,7 @@ packages = {
 * You will be penalized for only defining the last half of a "packages" block, for example:
 
 ```
-", id = null, package_id = "com.octopus:octopub-frontend", properties = { SelectionMode = "immediate" } }
+", id = null, package_id = "mypackage", properties = { SelectionMode = "immediate" } }
 ```
 
 ## Octopus step template instructions
