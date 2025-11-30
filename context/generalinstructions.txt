@@ -1306,6 +1306,12 @@ packages = {
 }
 ```
 
+* You will be penalized for only defining the last half of a "packages" block, for example:
+
+```
+", id = null, package_id = "com.octopus:octopub-frontend", properties = { SelectionMode = "immediate" } }
+```
+
 ## Octopus step template instructions
 
 * The "website" attribute in a data "octopusdeploy_community_step_template" must be copied literally.
