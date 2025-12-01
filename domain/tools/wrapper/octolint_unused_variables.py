@@ -1,11 +1,14 @@
 def octolint_unused_variables_wrapper(callback, logging):
     def octolint_unused_variables(space=None, project=None, **kwargs):
         """
-        Checks for unused variables in projects the space. Example prompts include:
-        * Check for unused variables in the space "MySpace".
-        * Find unused project variables in the space "MySpace".
+        This function must only be selected by an LLM when the prompt specifically requests detection or identification of unused variables.
 
-        You will be penalized for selecting this function when the prompt is a general question about variables or projects.
+        Example prompts:
+        * "Check for unused variables in the space 'MySpace'."
+        * "Find unused project variables in the space 'MySpace'."
+        * "Identify variables that are not being used in the project 'MyProject' in the space 'MySpace'."
+
+        Do not select this function for general questions about variables, projects, or other resource types.
 
         Args:
         space: The name of the space to run the check in.

@@ -1,11 +1,14 @@
 def octolint_unused_tenants_wrapper(callback, logging):
     def octolint_unused_tenants(space=None, **kwargs):
         """
-        Checks for tenants that have not been used in 30 days in the space. Example prompts include:
-        * Find unused tenants in the space "MySpace"
-        * Find tenants that have not performed a deployment to help manage licensing costs
+        This function must only be selected by an LLM when the prompt specifically requests detection or identification of unused tenants.
 
-        You will be penalized for selecting this function when the prompt is a general question about variables or projects.
+        Example prompts:
+        * "Check for unused tenants in the space 'MySpace'."
+        * "Find tenants that have not been used in 30 days in the space 'MySpace'."
+        * "Identify tenants that have not performed a deployment in the space 'MySpace'."
+
+        Do not select this function for general questions about tenants, projects, or other resource types.
 
         Args:
         space: The name of the space to run the check in.

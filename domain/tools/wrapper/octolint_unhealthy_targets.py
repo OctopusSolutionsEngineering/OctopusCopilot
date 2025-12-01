@@ -1,12 +1,14 @@
 def octolint_unhealthy_targets_wrapper(callback, logging):
     def octolint_unhealthy_targets(space=None, **kwargs):
         """
-        Checks for unhealthy targets or machines in the space. Example prompts include:
-        * Check for unhealthy targets in the space "MySpace".
-        * Locate machines that have not passed a health check in the space "MySpace".
-        * Find unhealthy machines in the space "MySpace".
+        This function must only be selected by an LLM when the prompt specifically requests detection or identification of unhealthy targets or machines.
 
-        You will be penalized for selecting this function when the prompt is a general question about variables or projects.
+        Example prompts:
+        * "Check for unhealthy targets in the space 'MySpace'."
+        * "Locate machines that have not passed a health check in the space 'MySpace'."
+        * "Find unhealthy machines in the space 'MySpace'."
+
+        Do not select this function for general questions about targets, projects, or other resource types.
 
         Args:
         space: The name of the space to run the check in.

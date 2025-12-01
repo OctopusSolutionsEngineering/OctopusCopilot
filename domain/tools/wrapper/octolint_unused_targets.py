@@ -1,11 +1,14 @@
 def octolint_unused_targets_wrapper(callback, logging):
     def octolint_unused_targets(space=None, **kwargs):
         """
-        Checks for unused targets or machines in the space. Example prompts include:
-        * Check for unused targets in the space "MySpace".
-        * Find unused machines in the space "MySpace".
+        This function must only be selected by an LLM when the prompt specifically requests detection or identification of unused targets or machines.
 
-        You will be penalized for selecting this function when the prompt is a general question about variables or projects.
+        Example prompts:
+        * "Check for unused targets in the space 'MySpace'."
+        * "Find unused machines in the space 'MySpace'."
+        * "Identify targets that are not being used in the space 'MySpace'."
+
+        Do not select this function for general questions about variables, projects, or other resource types.
 
         Args:
         space: The name of the space to run the check in.

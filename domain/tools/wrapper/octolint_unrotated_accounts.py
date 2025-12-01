@@ -1,11 +1,14 @@
 def octolint_unrotated_accounts_wrapper(callback, logging):
     def octolint_unrotated_accounts(space=None, **kwargs):
         """
-        Checks for accounts with static credentials that have not been rotated in the space. Example prompts include:
-        * Find accounts with unrotated credentials in the space "MySpace".
-        * Find accounts with unrotated credentials in the space "MySpace" to improve security.
+        This function must only be selected by an LLM when the prompt specifically requests detection or identification of accounts with unrotated credentials.
 
-        You will be penalized for selecting this function when the prompt is a general question about variables or projects.
+        Example prompts:
+        * "Find accounts with unrotated credentials in the space 'MySpace'."
+        * "Check for accounts that haven't rotated their credentials in the space 'MySpace'."
+        * "Identify accounts with static credentials that need rotation in the space 'MySpace'."
+
+        Do not select this function for general questions about accounts, projects, or other resource types.
 
         Args:
         space: The name of the space to run the check in.
