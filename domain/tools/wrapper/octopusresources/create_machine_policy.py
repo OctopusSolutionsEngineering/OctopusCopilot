@@ -6,17 +6,25 @@ def create_machine_policy_wrapper(query, callback, logging):
     ):
         """Creates a machine policy in Octopus Deploy.
 
-        You must only select this function when the prompt is specifically requesting to create a single machine policy.
-        You will be penalized for selecting this function for a prompt that asks a general question about machine policies.
-        You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
-        If the prompt contains instructions to create a project, you must consider this function as not applicable.
+        IMPORTANT - Tool Selection Criteria:
+        - ONLY select this function when the prompt explicitly asks to create machine policies
+        - DO NOT select this function for general questions about machine policies
+        - DO NOT select this function if the prompt mentions creating projects, steps, or other resources
+        - DO NOT select this function if the prompt starts with phrases like "Create a Kubernetes project", "Create an Azure Web App project", etc.
 
-        Example prompts include:
-        * Create a machine policy called "Virtual Machines" in the space "My Space"
+        This function is ONLY for prompts that specifically request machine policy creation, such as:
+        * "Create a machine policy called 'Virtual Machines' in the space 'My Space'"
+        * "Add a machine policy named 'Production Servers'"
+        * "Create the Development machine policy"
+
+        You will be penalized for selecting this function when:
+        - The prompt asks general questions about machine policies
+        - The prompt contains instructions to create projects or other resources
+        - The prompt is about anything other than creating machine policies
 
         Args:
-        space_name: The name of the space
-        machine_policy_name: The name of the machine policy
+            space_name: The name of the space
+            machine_policy_name: The name of the machine policy
         """
 
         if logging:

@@ -6,17 +6,25 @@ def create_lifecycle_wrapper(query, callback, logging):
     ):
         """Creates a lifecycle in Octopus Deploy.
 
-        You must only select this function when the prompt is specifically requesting to create a single lifecycle.
-        You will be penalized for selecting this function for a prompt that asks a general question about lifecycles.
-        You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
-        If the prompt contains instructions to create a project, you must consider this function as not applicable.
+        IMPORTANT - Tool Selection Criteria:
+        - ONLY select this function when the prompt explicitly asks to create lifecycles
+        - DO NOT select this function for general questions about lifecycles
+        - DO NOT select this function if the prompt mentions creating projects, steps, or other resources
+        - DO NOT select this function if the prompt starts with phrases like "Create a Kubernetes project", "Create an Azure Web App project", etc.
 
-        Example prompts include:
-        * Create a lifecycle called "Application" in the space "My Space"
+        This function is ONLY for prompts that specifically request lifecycle creation, such as:
+        * "Create a lifecycle called 'Application' in the space 'My Space'"
+        * "Add a lifecycle named 'Production'"
+        * "Create the Development lifecycle"
+
+        You will be penalized for selecting this function when:
+        - The prompt asks general questions about lifecycles
+        - The prompt contains instructions to create projects or other resources
+        - The prompt is about anything other than creating lifecycles
 
         Args:
-        space_name: The name of the space
-        lifecycle_name: The name of the lifecycle
+            space_name: The name of the space
+            lifecycle_name: The name of the lifecycle
         """
 
         if logging:

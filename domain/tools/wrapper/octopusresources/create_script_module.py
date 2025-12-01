@@ -4,19 +4,27 @@ def create_script_module_wrapper(query, callback, logging):
         script_module_name=None,
         **kwargs,
     ):
-        """Creates a script_module in Octopus Deploy.
+        """Creates a script module in Octopus Deploy.
 
-        You must only select this function when the prompt is specifically requesting to create a single script module.
-        You will be penalized for selecting this function for a prompt that asks a general question about script modules.
-        You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
-        If the prompt contains instructions to create a project, you must consider this function as not applicable.
+        IMPORTANT - Tool Selection Criteria:
+        - ONLY select this function when the prompt explicitly asks to create script modules
+        - DO NOT select this function for general questions about script modules
+        - DO NOT select this function if the prompt mentions creating projects, steps, or other resources
+        - DO NOT select this function if the prompt starts with phrases like "Create a Kubernetes project", "Create an Azure Web App project", etc.
 
-        Example prompts include:
-        * Create a script_module called "List Files" in the space "My Space"
+        This function is ONLY for prompts that specifically request script module creation, such as:
+        * "Create a script module called 'List Files' in the space 'My Space'"
+        * "Add a script module named 'Utilities'"
+        * "Create the Common Functions script module"
+
+        You will be penalized for selecting this function when:
+        - The prompt asks general questions about script modules
+        - The prompt contains instructions to create projects or other resources
+        - The prompt is about anything other than creating script modules
 
         Args:
-        space_name: The name of the space
-        script_module_name: The name of the script_module
+            space_name: The name of the space
+            script_module_name: The name of the script module
         """
 
         if logging:

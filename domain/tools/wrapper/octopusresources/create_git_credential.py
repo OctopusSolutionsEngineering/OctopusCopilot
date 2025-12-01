@@ -4,19 +4,27 @@ def create_git_credential_wrapper(query, callback, logging):
         git_credential_name=None,
         **kwargs,
     ):
-        """Creates a git_credential in Octopus Deploy.
+        """Creates a git credential in Octopus Deploy.
 
-        You must only select this function when the prompt is specifically requesting to create a single git credential.
-        You will be penalized for selecting this function for a prompt that asks a general question about got credentials.
-        You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
-        If the prompt contains instructions to create a project, you must consider this function as not applicable.
+        IMPORTANT - Tool Selection Criteria:
+        - ONLY select this function when the prompt explicitly asks to create git credentials
+        - DO NOT select this function for general questions about git credentials
+        - DO NOT select this function if the prompt mentions creating projects, steps, or other resources
+        - DO NOT select this function if the prompt starts with phrases like "Create a Kubernetes project", "Create an Azure Web App project", etc.
 
-        Example prompts include:
-        * Create a git_credential called "GitHub" in the space "My Space"
+        This function is ONLY for prompts that specifically request git credential creation, such as:
+        * "Create a git credential called 'GitHub' in the space 'My Space'"
+        * "Add a git credential named 'GitLab'"
+        * "Create the Production git credential"
+
+        You will be penalized for selecting this function when:
+        - The prompt asks general questions about git credentials
+        - The prompt contains instructions to create projects or other resources
+        - The prompt is about anything other than creating git credentials
 
         Args:
-        space_name: The name of the space
-        git_credential_name: The name of the git credential
+            space_name: The name of the space
+            git_credential_name: The name of the git credential
         """
 
         if logging:

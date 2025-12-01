@@ -4,19 +4,27 @@ def create_worker_pool_wrapper(query, callback, logging):
         worker_pool_name=None,
         **kwargs,
     ):
-        """Creates a worker_pool in Octopus Deploy.
+        """Creates a worker pool in Octopus Deploy.
 
-        You must only select this function when the prompt is specifically requesting to create a single worker pool.
-        You will be penalized for selecting this function for a prompt that asks a general question about worker pools.
-        You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
-        If the prompt contains instructions to create a project, you must consider this function as not applicable.
+        IMPORTANT - Tool Selection Criteria:
+        - ONLY select this function when the prompt explicitly asks to create worker pools
+        - DO NOT select this function for general questions about worker pools
+        - DO NOT select this function if the prompt mentions creating projects, steps, or other resources
+        - DO NOT select this function if the prompt starts with phrases like "Create a Kubernetes project", "Create an Azure Web App project", etc.
 
-        Example prompts include:
-        * Create a worker_pool called "Linux" in the space "My Space"
+        This function is ONLY for prompts that specifically request worker pool creation, such as:
+        * "Create a worker pool called 'Linux' in the space 'My Space'"
+        * "Add a worker pool named 'Windows Pool'"
+        * "Create the Production worker pool"
+
+        You will be penalized for selecting this function when:
+        - The prompt asks general questions about worker pools
+        - The prompt contains instructions to create projects or other resources
+        - The prompt is about anything other than creating worker pools
 
         Args:
-        space_name: The name of the space
-        worker_pool_name: The name of the worker pool
+            space_name: The name of the space
+            worker_pool_name: The name of the worker pool
         """
 
         if logging:
