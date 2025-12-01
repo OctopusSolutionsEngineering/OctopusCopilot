@@ -6,7 +6,7 @@ azure-functions
 azure-storage-blob==12.23.0
 langchain==1.0.5
 langchain-community==0.4.1
-langchain-core==1.0.5
+langchain-core==1.0.7
 langchain-openai==1.0.2
 langchain-aws==1.0.0
 langchain-anthropic==1.1.0
@@ -34,7 +34,7 @@ html-sanitizer==2.5.0
 slack-sdk==3.35.0
 beautifulsoup4==4.13.3
 markdown==3.7
-setuptools==78.1.0
+setuptools==80.9.0
 Jinja2==3.1.6
 gql==3.5.2
 graphql-core==3.2.4
