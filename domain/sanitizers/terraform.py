@@ -178,6 +178,14 @@ def fix_default_value(config):
     return re.sub(r'\s*default_value\s*=\s*""', "", config)
 
 
+def fix_label(config):
+    """
+    The label must be a null value, not an empty string
+    """
+
+    return re.sub(r'\s*label\s*=\s*""', "", config)
+
+
 def remove_duplicate_definitions(config):
     """
     The LLM kept trying to return duplicate definitions for resources, data, variables, and outputs.
