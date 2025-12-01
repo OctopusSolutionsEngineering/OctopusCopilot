@@ -538,6 +538,7 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
 * You will be penalized for creating a resource of type resource "octopusdeploy_generic_artifact_feed".
 * When creating a Maven feed with anonymous authentication, you must set the "username" and "password" attributes to null.
 * You will be penalized for setting the "username" and "password" attributes to empty strings when creating a Maven feed with anonymous authentication.
+* The "is_enhanced_mode" property must only be defined on the "octopusdeploy_nuget_feed" resource.
 * You will be penalized for defining the "is_enhanced_mode" property on a "octopusdeploy_maven_feed" resource.
 
 
