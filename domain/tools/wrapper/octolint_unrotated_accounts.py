@@ -5,6 +5,8 @@ def octolint_unrotated_accounts_wrapper(callback, logging):
         * Find accounts with unrotated credentials in the space "MySpace".
         * Find accounts with unrotated credentials in the space "MySpace" to improve security.
 
+        You will be penalized for selecting this function when the prompt is a general question about variables or projects.
+
         Args:
         space: The name of the space to run the check in.
         """

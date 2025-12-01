@@ -5,6 +5,8 @@ def octolint_direct_tenant_references_wrapper(callback, logging):
         * Find tenants that should be grouped by tags in the space "MySpace"
         * Suggest tenant tags in the space "MySpace" to make tenants more manageable
 
+        You will be penalized for selecting this function when the prompt is a general question about variables or projects.
+
         Args:
         space: The name of the space to run the check in.
         """

@@ -6,6 +6,8 @@ def octolint_sha1_certificates_wrapper(callback, logging):
         * Check for SHA-1 certificate usage in the space "MySpace".
         * Find SHA1 certificates in the space "MySpace" to improve security.
 
+        You will be penalized for selecting this function when the prompt is a general question about variables or projects.
+
         Args:
         space: The name of the space to run the check in.
         project: The name of the project to run the check in.

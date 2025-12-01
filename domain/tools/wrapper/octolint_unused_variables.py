@@ -5,6 +5,8 @@ def octolint_unused_variables_wrapper(callback, logging):
         * Check for unused variables in the space "MySpace".
         * Find unused project variables in the space "MySpace".
 
+        You will be penalized for selecting this function when the prompt is a general question about variables or projects.
+
         Args:
         space: The name of the space to run the check in.
         project: The name of the project to run the check in.

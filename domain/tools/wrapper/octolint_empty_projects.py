@@ -5,6 +5,8 @@ def octolint_empty_projects_wrapper(callback, logging):
         * Check for empty projects in the space "MySpace".
         * Find projects with no steps or runbooks space "MySpace".
 
+        You will be penalized for selecting this function when the prompt is a general question about variables or projects.
+
         Args:
         space: The name of the space to run the check in.
         projects: The name of the projects to run the check in.

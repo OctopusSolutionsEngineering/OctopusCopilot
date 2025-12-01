@@ -5,6 +5,8 @@ def octolint_unused_tenants_wrapper(callback, logging):
         * Find unused tenants in the space "MySpace"
         * Find tenants that have not performed a deployment to help manage licensing costs
 
+        You will be penalized for selecting this function when the prompt is a general question about variables or projects.
+
         Args:
         space: The name of the space to run the check in.
         """

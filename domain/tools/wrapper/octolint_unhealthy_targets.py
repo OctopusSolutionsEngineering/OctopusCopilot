@@ -6,6 +6,8 @@ def octolint_unhealthy_targets_wrapper(callback, logging):
         * Locate machines that have not passed a health check in the space "MySpace".
         * Find unhealthy machines in the space "MySpace".
 
+        You will be penalized for selecting this function when the prompt is a general question about variables or projects.
+
         Args:
         space: The name of the space to run the check in.
         """
