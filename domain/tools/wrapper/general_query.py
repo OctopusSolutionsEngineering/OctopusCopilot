@@ -54,6 +54,8 @@ def answer_general_query_wrapper(query, callback, logging=None):
         """
         Provide details about the configuration or state of resources, provides lists of resources, or answer a general question.
 
+        This function is ONLY for querying existing resources. DO NOT select this function when the prompt requests creating, updating, or deleting any resources.
+
         Use this function when the prompt asks a general question about:
         * projects
         * runbooks
@@ -82,8 +84,12 @@ def answer_general_query_wrapper(query, callback, logging=None):
         You will be penalized for calling this function for a prompt asking for instructions, documentation, general
         explanations, help, or "How do I" questions.
 
-        You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
-        If the prompt contains instructions to create a project, you must consider this function as not applicable.
+        You will be severely penalized for selecting this function when the prompt contains ANY instructions to create resources such as:
+        * "Create a project called..."
+        * "Add a new environment..."
+        * "Set up a tenant..."
+        * "Configure a new target..."
+        If the prompt contains instructions to create, add, set up, or configure ANY resource, you must NOT select this function.
 
         Example prompts:
 
