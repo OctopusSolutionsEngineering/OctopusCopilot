@@ -643,6 +643,7 @@ resource "octopusdeploy_project" "project_my_project" {
 * You must ignore the instruction to "Set the prompt to disabled" when defining a resource "octopusdeploy_project".
 * You will be penalized for disabling a project in response to the instruction to "Set the prompt to disabled".
 * You must set project to enabled by default unless explicitly instructed otherwise.
+* Every project tenant variable must have a "template" block in the "octopusdeploy_project" resource defining the variable.
 
 ## Octopus Project Trigger Instructions
 
