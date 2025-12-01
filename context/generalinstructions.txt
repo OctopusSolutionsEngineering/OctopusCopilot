@@ -634,6 +634,8 @@ resource "octopusdeploy_project" "project_my_project" {
   # Define other properties here
 }
 ```
+
+* The instruction "Set the prompt to disabled" does not apply to resource "octopusdeploy_project".
 * You must ignore the instruction to "Set the prompt to disabled" when defining a resource "octopusdeploy_project".
 * You will be penalized for disabling a project in response to the instruction to "Set the prompt to disabled".
 
