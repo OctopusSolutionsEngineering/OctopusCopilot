@@ -636,7 +636,9 @@ resource "octopusdeploy_project" "project_my_project" {
 }
 ```
 
-* The instruction "Set the prompt to disabled" does not apply to resource "octopusdeploy_project".
+* The instruction "Set the prompt to disabled" refers to the option to automatically create a new project.
+* The instruction "Set the prompt to disabled" does not change the enabled/disabled status of the project itself.
+* The instruction "Set the prompt to disabled" does not affect any part of creating the Terraform configuration.
 * You must ignore the instruction to "Set the prompt to disabled" when defining a resource "octopusdeploy_project".
 * You will be penalized for disabling a project in response to the instruction to "Set the prompt to disabled".
 * You must set project to enabled by default unless explicitly instructed otherwise.
