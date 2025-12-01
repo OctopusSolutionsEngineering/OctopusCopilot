@@ -7,6 +7,7 @@ def create_script_module_wrapper(query, callback, logging):
         """Creates a script_module in Octopus Deploy.
 
         You must only select this function when the prompt is specifically requesting to create a single script module.
+        You will be penalized for selecting this function for a prompt that asks a general question about script modules.
         You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
         If the prompt contains instructions to create a project, you must consider this function as not applicable.
 

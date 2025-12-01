@@ -7,6 +7,7 @@ def create_git_credential_wrapper(query, callback, logging):
         """Creates a git_credential in Octopus Deploy.
 
         You must only select this function when the prompt is specifically requesting to create a single git credential.
+        You will be penalized for selecting this function for a prompt that asks a general question about got credentials.
         You will be penalized for selecting this function when the prompt contains any instructions to create a project, for example, "Create a project called...".
         If the prompt contains instructions to create a project, you must consider this function as not applicable.
 
