@@ -517,6 +517,7 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
 }
 ```
 
+* You will be penalized for not including a "octopusdeploy_feeds" data source that references the built-in feed.
 * The built-in feed always exists and must not be created as a resource.
 
 * The "feed_type" attribute on a "octopusdeploy_feeds" data source must be set to one of the following values:
@@ -638,6 +639,7 @@ resource "octopusdeploy_project" "project_my_project" {
 * The instruction "Set the prompt to disabled" does not apply to resource "octopusdeploy_project".
 * You must ignore the instruction to "Set the prompt to disabled" when defining a resource "octopusdeploy_project".
 * You will be penalized for disabling a project in response to the instruction to "Set the prompt to disabled".
+* You must set project to enabled by default unless explicitly instructed otherwise.
 
 ## Octopus Project Trigger Instructions
 
