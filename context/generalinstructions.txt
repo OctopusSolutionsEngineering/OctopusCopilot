@@ -1321,6 +1321,8 @@ packages = {
 ", id = null, package_id = "mypackage", properties = { SelectionMode = "immediate" } }
 ```
 
+* You will be penalized for defining values in the "execution_properties" block which are empty strings.
+
 ## Octopus step template instructions
 
 * The "website" attribute in a data "octopusdeploy_community_step_template" must be copied literally.
