@@ -170,20 +170,15 @@ def fix_execution_properties_block(config):
     return re.sub(r"execution_properties\s*\{.*?}", "", config, flags=re.DOTALL)
 
 
-def fix_default_value(config):
+def fix_empty_strings(config):
     """
     The default value must be a null value, not an empty string
     """
 
-    return re.sub(r'\s*default_value\s*=\s*""', "", config)
-
-
-def fix_label(config):
-    """
-    The label must be a null value, not an empty string
-    """
-
-    return re.sub(r'\s*label\s*=\s*""', "", config)
+    properties = ["help_text", "default_value", "label"]
+    for prop in properties:
+        config = re.sub(rf'\s*{prop}\s*=\s*""', "", config)
+    return config
 
 
 def remove_duplicate_definitions(config):

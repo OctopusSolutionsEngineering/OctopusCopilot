@@ -4,7 +4,6 @@ import json
 import os
 import uuid
 
-from domain.converters.string_to_int import string_to_int
 from domain.exceptions.none_on_exception import none_on_exception
 from domain.exceptions.spacebuilder import SpaceBuilderRequestFailed
 from domain.lookup.octopus_lookups import (
@@ -13,6 +12,7 @@ from domain.lookup.octopus_lookups import (
 from domain.octopus.authorization import get_auth
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.escape_messages import escape_message
+from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.sanitizers.sanitize_strings import empty_if_none
 from domain.sanitizers.terraform import (
     sanitize_kuberenetes_yaml_step_config,
@@ -29,10 +29,8 @@ from domain.sanitizers.terraform import (
     fix_empty_execution_properties_block,
     fix_empty_properties_block,
     fix_script_source,
-    fix_default_value,
-    fix_label,
+    fix_empty_strings,
 )
-from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
 from infrastructure.llm import llm_message_query, AZURE_PROJECT_SERVICE
@@ -304,10 +302,7 @@ def create_template_project_callback(
                 configuration = fix_script_source(configuration)
 
                 # Remove empty string default values
-                configuration = fix_default_value(configuration)
-
-                # Remove empty string labels
-                configuration = fix_label(configuration)
+                configuration = fix_empty_strings(configuration)
 
             try:
                 if auto_apply:

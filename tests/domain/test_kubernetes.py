@@ -12,7 +12,7 @@ from domain.sanitizers.terraform import (
     fix_execution_properties_block,
     fix_empty_properties_block,
     fix_empty_execution_properties_block,
-    fix_default_value,
+    fix_empty_strings,
 )
 
 
@@ -469,7 +469,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
         expected = """resource "octopusdeploy_project" test" {
             }"""
 
-        result = fix_default_value(input)
+        result = fix_empty_strings(input)
 
         self.assertEqual(result, expected)
 
@@ -483,7 +483,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
                 whatever = ""
             }"""
 
-        result = fix_default_value(input)
+        result = fix_empty_strings(input)
 
         self.assertEqual(result, expected)
 
@@ -492,7 +492,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
                default_value = "blah"
             }"""
 
-        result = fix_default_value(input)
+        result = fix_empty_strings(input)
 
         self.assertEqual(result, input)
 
