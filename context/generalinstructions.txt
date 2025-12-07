@@ -1323,6 +1323,8 @@ packages = {
 
 * You will be penalized for defining values in the "execution_properties" block which are empty strings.
 * You will be penalized for defining the "target_roles" property on a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource.
+* When the prompt includes instructions to generate a custom script that is not provided by the example configurations, you must use provide a script comprised of comments about the intended functionality and a `echo` or `Write-Host` statement indicating that the script is a placeholder.
+* You will be penalized for generating complex scripts for script steps that are not copies of example configurations.
 
 ## Octopus step template instructions
 
