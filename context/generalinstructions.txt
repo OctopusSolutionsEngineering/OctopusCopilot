@@ -1050,12 +1050,12 @@ resource "octopusdeploy_process_step" "my_step" {
 * You will be penalized for defining a "properties_additional" block.
 * You will be penalized for defining multiple "features" attributes.
 * You must include the "container" nested child block if one exists for a "octopusdeploy_process_step" resource in the sample Terraform configurations.
-* The "container" block is used to define the step's "Container Image".
-* Instructions that reference a step's "Container Image" result in the "container" block being defined or edited.
-* The "container" block has the following required properties:
+* The "container" property is used to define the step's "Container Image".
+* Instructions that reference a step's "Container Image" result in the "container" property being defined or edited.
+* The "container" property has the following required properties:
     * "feed_id"
     * "image"
-* For example here is an example "container" block for a "octopusdeploy_process_step":
+* For example here is an example "container" property for a "octopusdeploy_process_step":
 ```
 {
     feed_id = "${length(data.octopusdeploy_feeds.feed_docker_hub.feeds) != 0 ? data.octopusdeploy_feeds.feed_docker_hub.feeds[0].id : octopusdeploy_docker_container_registry.feed_docker_hub[0].id}",
@@ -1063,7 +1063,7 @@ resource "octopusdeploy_process_step" "my_step" {
 }
 ```
 * You will be penalized for editing the "packages" block with a prompt that includes details concerning a "Container Image".
-* For example, if the prompt asks to set the "Container Image" to "octopuslabs/k8s-workertools", and the sample Terraform defines a step with a package of "nginx", you must edit the "container" block with the specific image, while leaving the "packages" blocks unmodified:
+* For example, if the prompt asks to set the "Container Image" to "octopuslabs/k8s-workertools", and the sample Terraform defines a step with a package of "nginx", you must edit the "container" property with the specific image, while leaving the "packages" blocks unmodified:
 ```
 resource "octopusdeploy_process_step" "deploy_k8s_yaml" {
   # The prompt asks to set the Container Image to "octopuslabs/k8s-workertools"
@@ -1083,7 +1083,13 @@ resource "octopusdeploy_process_step" "deploy_k8s_yaml" {
   }
 }
 ```
-* You will be penalized for not including the "container" nested child block if one exists in the sample Terraform configurations.
+* The "container" property must have an equals sign "=" after the property name, for example:
+```
+container = {
+    # map properties here
+}
+```
+* You will be penalized for not including the "container" property if one exists in the sample Terraform configurations.
 * Steps with actions of the following types must have at least one role defined in the "target_roles" array:
    * "Octopus.AzureWebApp"
    * "Octopus.KubernetesDeployRawYaml"
@@ -1101,7 +1107,7 @@ resource "octopusdeploy_process_step" "process_step_orchestrator_project_deploy_
 ```
 
 * You will be penalized for defining a step of type "Octopus.DeployRelease" with a string like "Projects-##" for the "Octopus.Action.DeployRelease.ProjectId" execution property.
-* You will be penalized for setting the "container" block on a step when the "Octopus.Action.RunOnServer" property is set to "false".
+* You will be penalized for setting the "container" property on a step when the "Octopus.Action.RunOnServer" property is set to "false".
 * Steps of type "Octopus.AwsRunScript" must have the "Octopus.Action.Aws.Region" execution_property defined, for example:
 
 ```
@@ -1294,9 +1300,9 @@ resource "octopusdeploy_community_step_template" "my_community_step_template" {
 
 * The "Octopus.Action.RunOnServer" property in the "execution_properties" block must be set to "true" steps of type "Octopus.Script" that do not have any target roles.
 
-* You will be penalized for setting the "image" property in the "container" block to an empty string.
-* If the prompt indicates that a container image should be used, but does not specify an image name, you must set the "image" property in the "container" block to "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04".
-* If the "container" block is defined with a "feed_id" but the prompt does not specify a container image, you must set the "image" property in the "container" block to "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04".
+* You will be penalized for setting the "image" property in the "container" property to an empty string.
+* If the prompt indicates that a container image should be used, but does not specify an image name, you must set the "image" property in the "container" property to "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04".
+* If the "container" property is defined with a "feed_id" but the prompt does not specify a container image, you must set the "image" property in the "container" property to "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04".
 * Additional packages (also known as "referenced packages") are defined in the "packages" block of a "octopusdeploy_process_step" resource, for example:
 
 ```
