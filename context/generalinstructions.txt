@@ -1322,6 +1322,7 @@ packages = {
 ```
 
 * You will be penalized for defining values in the "execution_properties" block which are empty strings.
+* You will be penalized for defining the "target_roles" property on a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource.
 
 ## Octopus step template instructions
 
