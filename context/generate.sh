@@ -1,6 +1,7 @@
 PULL=always
+IMAGE=ghcr.io/octopussolutionsengineering/octoterra:latest
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://samples.octopus.app \
     -space Spaces-302 \
     -apiKey API-GUEST \
@@ -22,7 +23,7 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 
 ./generate_instructions.py vmbluegreen.tf "VM Blue/Green" > instructions_vmbluegreen.md
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
@@ -37,7 +38,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionseng
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > context.tf
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
@@ -54,7 +55,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionseng
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > everystep.tf
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
@@ -71,7 +72,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionseng
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > projectsettings1.tf
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
@@ -91,7 +92,7 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 # The project name (i.e "Kubernetes" in this case) must match the value in copilot_request_context.py
 ./generate_instructions.py k8s.tf "Kubernetes" > instructions_k8s.md
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
@@ -110,7 +111,7 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 
 ./generate_instructions.py azurefunction.tf "Azure Function" > instructions_azurefunction.md
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
@@ -129,7 +130,7 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 
 ./generate_instructions.py azurewebapp.tf "Azure Web App" > instructions_azurewebapp.md
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://samples.octopus.app \
     -space Spaces-1 \
     -apiKey API-GUEST \
@@ -148,7 +149,7 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 
 ./generate_instructions.py awslambda.tf "AWS Lambda" > instructions_lambda.md
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://samples.octopus.app \
     -space Spaces-1194 \
     -apiKey API-GUEST \
@@ -169,7 +170,7 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 
 ./generate_instructions.py argoupdatetags.tf "Argo CD Update Image Tags" > instructions_argoupdatetags.md
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://samples.octopus.app \
     -space Spaces-203 \
     -apiKey API-GUEST \
@@ -188,7 +189,7 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 
 ./generate_instructions.py apachetomcat.tf "Apache Tomcat" > instructions_tomcat.md
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
@@ -207,7 +208,7 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 
 ./generate_instructions.py windowsiis.tf "Windows IIS" > instructions_iis.md
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
@@ -226,7 +227,7 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 
 ./generate_instructions.py windowsservice.tf "Windows IIS" > instructions_windowsservice.md
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
@@ -245,7 +246,7 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 
 ./generate_instructions.py script.tf "Script Execution" > instructions_script.md
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
@@ -264,7 +265,7 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 
 ./generate_instructions.py deploymentorchestration.tf "Deployment Orchestration" > instructions_deploymentorchestration.md
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
@@ -283,7 +284,7 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 
 ./generate_instructions.py terraform.tf "Terraform Deploy" > instructions_terraform.md
 
-docker run --pull $PULL -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
