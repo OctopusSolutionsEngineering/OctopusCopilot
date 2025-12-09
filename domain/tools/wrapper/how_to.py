@@ -13,7 +13,6 @@ def how_to_wrapper(query, callback, logging):
         * How do I configure subscriptions?
         * How do I find releases?
         * How do I use channels?
-        * How do I create accounts?
         * How do I disable tenants?
         * How do I setup SIEM?
         * How do I setup a target?
