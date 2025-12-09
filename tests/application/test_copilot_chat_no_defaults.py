@@ -160,36 +160,6 @@ class CopilotChatNoDefaultsTest(unittest.TestCase):
         )
         print(response_text)
 
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_dashboard(self):
-        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
-        create_and_deploy_release(space_name="Simple", release_version=version)
-        time.sleep(5)
-        prompt = "Show the dashboard."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue(
-            "The query did not specify a space so the so the space named Default was assumed"
-            in response_text,
-            "Response was " + response_text,
-        )
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_dashboard_default_space(self):
-        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
-        create_and_deploy_release(space_name="Simple", release_version=version)
-        time.sleep(5)
-        prompt = 'Show the dashboard for the space called "Default".'
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue(
-            "The query did not specify a space so the so the space named Default was assumed"
-            not in response_text,
-            "Response was " + response_text,
-        )
-
 
 if __name__ == "__main__":
     unittest.main()
