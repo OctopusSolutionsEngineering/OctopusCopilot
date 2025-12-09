@@ -15,6 +15,8 @@ from domain.validation.argument_validation import (
 # Semaphore to limit the number of concurrent requests to GitHub
 zendesk_sem = asyncio.Semaphore(10)
 
+zedesk_url = "https://octopuscd.zendesk.com"
+
 
 def get_zen_authorization_header(zen_user, zen_token):
     return {
@@ -36,7 +38,7 @@ async def get_zen_tickets(keywords, zen_user, zen_token):
     )
 
     keywords_list = quote_safe(" ".join(keywords))
-    api = f"https://octopus.zendesk.com/api/v2/search?query={keywords_list}&sort_by=RELEVANCE&sort_order=DESC"
+    api = f"{zedesk_url}/api/v2/search?query={keywords_list}&sort_by=RELEVANCE&sort_order=DESC"
 
     async with zendesk_sem:
         async with aiohttp.ClientSession(
@@ -64,7 +66,7 @@ async def get_zen_comments(ticket_id, zen_user, zen_token):
         zen_token, "zen_token must be a non-empty string (get_zen_comments)."
     )
 
-    api = f"https://octopus.zendesk.com/api/v2/tickets/{quote_safe(ticket_id)}/comments"
+    api = f"{zedesk_url}/api/v2/tickets/{quote_safe(ticket_id)}/comments"
 
     async with zendesk_sem:
         async with aiohttp.ClientSession(
