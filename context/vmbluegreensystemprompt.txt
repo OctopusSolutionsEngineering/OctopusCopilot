@@ -49,6 +49,12 @@ You must include all the following step resources from the "Example Octopus VM B
 
 You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
 
+## VM Blue/Green Package Instructions
+
+You must use the following packages from the "Example Octopus VM Blue/Green Terraform Configuration" once unless the prompt explicitly states that different packages are to be used:
+* com.octopus:randomquotes-dotnet
+
+
 ## VM Blue/Green Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus VM Blue/Green Terraform Configuration" once:
@@ -67,7 +73,7 @@ You must include all the following variables from the "Example Octopus VM Blue/G
 * resource "octopusdeploy_variable" "random_quotes__net_iis_appsettings_environmentname_1"
 * resource "octopusdeploy_variable" "random_quotes__net_iis_appsettings_appversion_1"
 * resource "octopusdeploy_variable" "random_quotes__net_iis_project_octopus_api_key_1"
-* resource "octopusdeploy_variable" "random_quotes__net_iis_project_workerpool_default_1"
+* resource "octopusdeploy_variable" "random_quotes__net_iis_project_workerpool_default_1" (set the value to "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}")
 
 ## VM Blue/Green Lifecycle Instructions
 

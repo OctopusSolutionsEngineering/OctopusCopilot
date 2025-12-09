@@ -24,6 +24,51 @@ def general_instructions(filename, label):
     )
 
 
+def find_package_names(filename, label):
+    # Pattern to match the resource declarations for octopusdeploy_project_scheduled_trigger
+    pattern = r'variable\s+"([^"]+)"'
+
+    message = ""
+    found = False
+
+    try:
+        # Open and read the file
+        message += f"\n## {label} Package Instructions\n"
+        message += f'\nYou must use the following packages from the "Example Octopus {label} Terraform Configuration" once unless the prompt explicitly states that different packages are to be used:\n'
+        with open(filename, "r") as file:
+            lines = file.readlines()
+
+            for i, line in enumerate(lines):
+                match = re.match(pattern, line)
+                if match:
+                    found_package_variable = False
+                    for j, line2 in enumerate(lines[i + 1 :]):
+
+                        if line2.strip() == "}":
+                            break
+
+                        description_match = re.match(
+                            r'\s*description = "The package ID for the package named',
+                            line2,
+                        )
+                        if description_match:
+                            found_package_variable = True
+
+                        if found_package_variable:
+                            value_match = re.match(r'\s*default\s*=\s*"([^"]+)"', line2)
+                            if value_match:
+                                found = True
+                                message += f"* {value_match.group(1)}\n"
+                                break
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
+    except Exception as e:
+        print(f"Error processing file: {e}")
+
+    if found:
+        print(message)
+
+
 def find_octopus_variables(filename, label):
     # Pattern to match the resource declarations for octopusdeploy_variable
     pattern = r'resource\s+"octopusdeploy_variable"\s+"[^"]+"'
@@ -652,6 +697,7 @@ def main():
     find_runbook_names(filename, label)
     find_project_deployment_process(filename, label)
     find_step_names(filename, label)
+    find_package_names(filename, label)
     find_runbook_step_names(filename, label)
     find_project_deployment_process_step_order(filename, label)
     find_octopus_variables(filename, label)
