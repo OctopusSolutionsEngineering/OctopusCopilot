@@ -42,7 +42,8 @@ def find_package_names(filename, label):
                 match = re.match(pattern, line)
                 if match:
                     found_package_variable = False
-                    for j, line2 in enumerate(lines[i + 1 :]):  # noqa: E203
+                    start_index = i + 1
+                    for j, line2 in enumerate(lines[start_index:]):
                         if line2.strip() == "}":
                             break
 
