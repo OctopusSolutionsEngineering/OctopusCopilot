@@ -50,8 +50,7 @@ You must include all the following step resources from the "Example Octopus AWS 
 * resource "octopusdeploy_process_templated_step" "process_step_aws_lambda_scan_for_vulnerabilities"
 * resource "octopusdeploy_process_step" "process_step_aws_lambda_deployment_success_notification"
 
-* You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
-* All steps must be enabled unless the prompt explicitly specified otherwise.
+You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
 
 ## AWS Lambda Package Instructions
 
@@ -64,6 +63,7 @@ You must use the following packages from the "Example Octopus AWS Lambda Terrafo
 
 You must include all the following project deployment process step order resources from the "Example Octopus AWS Lambda Terraform Configuration" once:
 * resource "octopusdeploy_process_steps_order" "process_step_order_aws_lambda"
+All steps must be enabled unless the prompt explicitly specified otherwise.
 ## AWS Lambda Project Variable Instructions
 
 You must include all the following variables from the "Example Octopus AWS Lambda Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
