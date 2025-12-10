@@ -278,7 +278,7 @@ class CopilotChatTestCreateResources(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_lifecycle(self):
-        prompt = 'Create a lifecycle target called "DevSecOps".'
+        prompt = 'Create a lifecycle called "DevSecOps".'
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
