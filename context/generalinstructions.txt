@@ -339,6 +339,39 @@ resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable5_australia
 
 * The "tenant_tags" attribute must be an array with strings that looks like "<tag set name>/<tag name>", for example "Cities/Sydney" or "BU/Sales".
 * You will be penalized for defining an item in the "tenant_tags" array as a single string like "Sydney".
+* If the prompt defines a tenant tag, but does not define a tenant tag set, you must create a matching tag set. You must use your best judgement when creating a tag set. For example, if the prompt defines a tenant tag called "Washington", but does noy define a tag set, there must be an associated tag set like this:
+
+```
+data "octopusdeploy_tag_sets" "tagset_regions" {
+  ids          = null
+  partial_name = "Regions"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_tag_set" "tagset_cities" {
+  count       = "${length(data.octopusdeploy_tag_sets.tagset_cities.tagset_regions) != 0 ? 0 : 1}"
+  name        = "Regions"
+  description = "An example tag set that captures regions"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "octopusdeploy_tag" "tagset_cities_tag_washington" {
+  name        = "Washington"
+  tag_set_id  = "${length(data.octopusdeploy_tag_sets.tagset_cities.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].id : octopusdeploy_tag_set.tagset_cities[0].id}"
+  color       = "#5ECD9E"
+  description = ""
+  count       = length(try([for item in data.octopusdeploy_tag_sets.tagset_cities.tag_sets[0].tags : item if item.name == "Washington"], [])) != 0 ? 0 : 1
+}
+
+resource "octopusdeploy_process_step" "run_script" {
+  # Other attributes omitted for brevity
+  tenant_tags           = ["Regions/Washington"]
+}
+```
+
 * You will be penalized for defining an item in the "tenant_tags" array like "region:us-east".
 * The "<tag set name>" must match the name of a resource "octopusdeploy_tag_set".
 * The "<tag name>" must match the name of a resource "octopusdeploy_tag".
@@ -349,7 +382,7 @@ resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable5_australia
 ```
 # A data resource to find the existing tag set
 # There is a one-to-one relationship between this resource and the data resource
-data "octopusdeploy_tag_sets" "tagset_cities" {
+data "octopusdeploy_tag_sets" "tagset_cities"tenant_tags {
   ids          = null
   partial_name = "Cities"
   skip         = 0
