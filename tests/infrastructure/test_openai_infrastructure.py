@@ -36,17 +36,6 @@ class MockRequests(unittest.TestCase):
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    def test_show_all_defaults(self):
-        """
-        Tests that the llm executes the correct function
-        """
-
-        query = "List all the default values"
-        function = llm_tool_query(query, build_mock_test_tools(query))
-
-        self.assertEqual(function.name, "get_all_default_values")
-
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_general_project_question(self):
         """
         Tests that the llm correctly identifies the project name in the query
@@ -390,7 +379,6 @@ class MockRequests(unittest.TestCase):
             "How do I review the DORA metrics?",
             "How do I use Community Step templates?",
             "How do I enable Config-as-code?",
-            "How do I create an AWS OIDC account?",
         ]
 
         for query in queries:

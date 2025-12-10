@@ -100,6 +100,7 @@ def answer_general_query_wrapper(query, callback, logging=None):
         * Which runbooks create infrastructure with Terraform?
         * List the variables from the project "MyProject" that are scoped to the "Staging" environment.
         * List the names of the variables defined in the project.
+        * What does the step "migrate database" do in the project "MyProject"?
 
         Args:
         space: Space name
