@@ -22,9 +22,6 @@ def general_instructions(filename, label):
     print(
         f'* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus {label} Terraform Configuration".'
     )
-    print(
-        "* The project must be enabled unless the prompt explicitly states otherwise."
-    )
 
 
 def find_package_names(filename, label):
@@ -210,10 +207,6 @@ def find_project_deployment_process_step_order(filename, label):
                     print(
                         f'* resource "octopusdeploy_process_steps_order" "{match.group(1)}"'
                     )
-
-        print(
-            "All steps must be enabled unless the prompt explicitly specified otherwise."
-        )
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
