@@ -1334,6 +1334,13 @@ packages = {
 * You will be penalized for generating complex scripts for script steps that are not copies of example configurations.
 * If the prompt includes instructions to enable client side apply for a Kubernetes step, you must set the "Octopus.Action.Kubernetes.ServerSideApply.Enabled" property in the "execution_properties" block to "False".
 
+## Octopus.Email Step Instructions
+
+* The "Octopus.Action.Email.To" property in the "execution_properties" block must contain a valid email address.
+* If no email address is provided in the prompt, you must set the "Octopus.Action.Email.To" property to "admin@example.org".
+* The "Octopus.Action.Email.Subject" property in the "execution_properties" block must contain a subject line.
+* If no subject line is provided in the prompt, you must set the "Octopus.Action.Email.Subject" property to "Notification from Octopus Deploy".
+
 ## Octopus step template instructions
 
 * The "website" attribute in a data "octopusdeploy_community_step_template" must be copied literally.
