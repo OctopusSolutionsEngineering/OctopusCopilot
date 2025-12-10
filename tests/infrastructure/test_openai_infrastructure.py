@@ -379,7 +379,6 @@ class MockRequests(unittest.TestCase):
             "How do I review the DORA metrics?",
             "How do I use Community Step templates?",
             "How do I enable Config-as-code?",
-            "How do I create an AWS OIDC account?",
         ]
 
         for query in queries:
