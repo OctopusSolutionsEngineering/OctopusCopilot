@@ -210,10 +210,6 @@ def find_project_deployment_process_step_order(filename, label):
                     print(
                         f'* resource "octopusdeploy_process_steps_order" "{match.group(1)}"'
                     )
-
-        print(
-            "All steps must be enabled unless the prompt explicitly specified otherwise."
-        )
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
@@ -495,7 +491,10 @@ def find_step_names(filename, label):
                             )
 
         print(
-            f"\nYou will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified."
+            f"\n* You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified."
+        )
+        print(
+            "* All steps must be enabled unless the prompt explicitly specified otherwise."
         )
 
     except FileNotFoundError:
