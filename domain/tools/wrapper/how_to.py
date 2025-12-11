@@ -13,7 +13,6 @@ def how_to_wrapper(query, callback, logging):
         * How do I configure subscriptions?
         * How do I find releases?
         * How do I use channels?
-        * How do I create accounts?
         * How do I disable tenants?
         * How do I setup SIEM?
         * How do I setup a target?
@@ -55,7 +54,7 @@ def how_to_wrapper(query, callback, logging):
         return provide_help_and_instructions(keywords, **kwargs)
 
     def provide_help_and_instructions(keywords=None, **kwargs):
-        """Answers questions like how or where to manually create, use, manually add, remove, manually setup, enable,
+        """Answers questions like how or where to manually use, manually add, remove, manually setup, enable,
         disable, manually configure, or find Octopus Deploy features like:
 
         * Projects
@@ -95,11 +94,12 @@ def how_to_wrapper(query, callback, logging):
         these metrics.
 
         You will be penalized for choosing this function when:
-          * The query relates to running a runbook.
-          * The query relates to cancelling a task.
-          * The query relates to the general configuration or state of Octopus resources.
-          * The query explicitly requests resources like the examples listed above to be created with specific settings, such as the name of a project, account, or environment.
-             * For example, you must not choose this function for a query like: Create an AWS account called "My AWS Account".
+        * The query relates to creating any Octopus resources.
+        * The query relates to running a runbook.
+        * The query relates to cancelling a task.
+        * The query relates to the general configuration or state of Octopus resources.
+        * The query explicitly requests resources like the examples listed above to be created with specific settings, such as the name of a project, account, or environment.
+        * For example, you must not choose this function for a query like: Create an AWS account called "My AWS Account".
 
         Args:
         keywords: The keywords extracted from the query

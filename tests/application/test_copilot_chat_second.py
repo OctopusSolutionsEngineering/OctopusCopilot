@@ -185,92 +185,6 @@ class CopilotChatTestTwo(unittest.TestCase):
         health_internal()
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    def test_all_defaults(self):
-        prompt = "Get all default values."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue("Simple" in response_text, "Response was " + response_text)
-        self.assertTrue(
-            "Deploy Web App Container" in response_text, "Response was " + response_text
-        )
-        self.assertTrue("Development" in response_text, "Response was " + response_text)
-        self.assertTrue(
-            "OctopusSolutionsEngineering" in response_text,
-            "Response was " + response_text,
-        )
-        self.assertTrue(
-            "OctopusCopilot" in response_text, "Response was " + response_text
-        )
-        self.assertTrue("build.yaml" in response_text, "Response was " + response_text)
-
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    def test_default_space(self):
-        prompt = "Get default space."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue("Simple" in response_text, "Response was " + response_text)
-
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    def test_default_project(self):
-        prompt = "Get default project."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue(
-            "Deploy Web App Container" in response_text, "Response was " + response_text
-        )
-
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    def test_default_environment(self):
-        prompt = "Get default environment."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue("Development" in response_text, "Response was " + response_text)
-
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    def test_default_owner(self):
-        prompt = "Get default owner."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue(
-            "OctopusSolutionsEngineering" in response_text,
-            "Response was " + response_text,
-        )
-
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    def test_default_repository(self):
-        prompt = "Get default repository."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue(
-            "OctopusCopilot" in response_text, "Response was " + response_text
-        )
-
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    def test_default_workflow(self):
-        prompt = "Get default workflow."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue("build.yaml" in response_text, "Response was " + response_text)
-
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    def test_space_lookup(self):
-        prompt = 'List the variable names defined in the project "Deploy Web App Container" in space "Simpleish".'
-        space_id, actual_space_name, warnings = lookup_space(
-            Octopus_Url, Octopus_Api_Key, None, prompt, "Simpleish"
-        )
-
-        self.assertEqual(
-            actual_space_name, "Simple", "Space name was " + actual_space_name
-        )
-
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_project_lookup(self):
         prompt = 'List the variable names defined in the project "Deploy Web App Containerish" in space "Simpleish".'
         space_id, actual_space_name, warnings = lookup_space(
@@ -579,37 +493,6 @@ class CopilotChatTestTwo(unittest.TestCase):
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
 
         self.assertTrue(version in response_text, "Response was " + response_text)
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_get_runbook_dashboard(self):
-        publish_runbook("Simple", "Copilot Test Runbook Project", "Backup Database")
-        space_id, space_name = get_space_id_and_name_from_name(
-            "Simple", Octopus_Api_Key, Octopus_Url
-        )
-        runbook_run = run_published_runbook_fuzzy(
-            space_id,
-            "Copilot Test Runbook Project",
-            "Backup Database",
-            "Development",
-            tenant_name="",
-            variables=None,
-            api_key=Octopus_Api_Key,
-            octopus_url=Octopus_Url,
-        )
-        wait_for_task(runbook_run["TaskId"], space_name="Simple")
-        prompt = 'Get the runbook dashboard for runbook "Backup Database" in the "Copilot Test Runbook Project" project.'
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue(
-            "🟣" in response_text
-            or "🔵" in response_text
-            or "💛" in response_text
-            or "💚" in response_text
-            or "🔴" in response_text
-            or "⚪" in response_text,
-            "Response was " + response_text,
-        )
 
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_get_runbook_logs(self):

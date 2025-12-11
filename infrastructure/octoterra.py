@@ -60,6 +60,59 @@ sem = asyncio.Semaphore(10)
 
 @retry(HTTPError, tries=3, delay=2)
 @logging_wrapper
+async def get_octoterra_project_async(
+    api_key,
+    access_token,
+    octopus_url,
+    query,
+    space_id,
+    project_name,
+):
+    ensure_string_not_empty(
+        space_id, "space_id must be a non-empty string (get_octoterra_project_async)."
+    )
+    ensure_string_not_empty(
+        query, "query must be a non-empty string (get_octoterra_project_async)."
+    )
+    ensure_string_not_empty(
+        octopus_url,
+        "octopus_url must be a non-empty string (get_octoterra_project_async).",
+    )
+    ensure_string_not_empty(
+        project_name,
+        "project_name must be a non-empty string (get_octoterra_project_async).",
+    )
+
+    octoterra_request_body = {
+        "space": space_id,
+        "ignoreCacManagedValues": False,
+        "excludeCaCProjectSettings": True,
+        # Ignore any errors with projects that have bad CaC settings
+        "ignoreCacErrors": True,
+        "projectName": project_name,
+        "lookupProjectDependencies": True,
+    }
+
+    api = os.environ["APPLICATION_OCTOTERRA_URL"] + "/api/octoterra"
+    headers = {
+        "X-Octopus-ApiKey": api_key,
+        "X-Octopus-Url": octopus_url,
+        "X-Octopus-AccessToken": access_token,
+    }
+
+    async with sem:
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.post(
+                api, data=json.dumps(octoterra_request_body)
+            ) as response:
+                if response.status != 200:
+                    body = await response.text()
+                    raise OctoterraRequestFailed(f"Request failed with " + body)
+                return await response.text()
+
+
+@retry(HTTPError, tries=3, delay=2)
+@logging_wrapper
 async def get_octoterra_space_async(
     api_key,
     access_token,

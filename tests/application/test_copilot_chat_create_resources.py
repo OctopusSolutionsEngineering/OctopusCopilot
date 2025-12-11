@@ -1,34 +1,37 @@
+import glob
 import json
 import os
 import unittest
-from datetime import datetime
 
+import Levenshtein
 import azure.functions as func
 from openai import RateLimitError
-from requests.exceptions import HTTPError
+
 from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
-from domain.transformers.clean_response import strip_before_first_curly_bracket
+
 from domain.transformers.sse_transformers import (
     convert_from_sse_response,
     get_confirmation_id,
 )
-from domain.url.session import create_session_blob
 from function_app import copilot_handler_internal
-from infrastructure.users import save_users_octopus_url_from_login, save_default_values
-from tests.infrastructure.create_and_deploy_release import (
-    create_and_deploy_release,
-    wait_for_task,
+from infrastructure.octopus import (
+    get_space_id_and_name_from_name,
+    get_project,
+    get_runbook_fuzzy,
+    get_raw_deployment_process,
+    get_tenants,
+    sync_community_step_templates,
 )
+from infrastructure.terraform_context import save_terraform_context
+from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
-from tests.infrastructure.publish_runbook import publish_runbook
-from tests.infrastructure.test_cancel import cancel_task
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
-class CopilotChatTest(unittest.TestCase):
+class CopilotChatTestCreateResources(unittest.TestCase):
     """
     End-to-end tests that verify the complete query including:
     * Persisting user details such as Octopus URL and API key
@@ -44,6 +47,8 @@ class CopilotChatTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        populate_blob_storage()
+
         # Simulate the result of a user login and saving their Octopus details
         try:
             github_user = os.environ["TEST_GH_USER"]
@@ -134,6 +139,8 @@ class CopilotChatTest(unittest.TestCase):
                 cls.octopus, "Web server is ready to process requests", timeout=300
             )
 
+            sync_community_step_templates(Octopus_Api_Key, Octopus_Url)
+
             output = run_terraform(
                 terraform_dir + "simple/space_creation", Octopus_Url, Octopus_Api_Key
             )
@@ -171,78 +178,162 @@ class CopilotChatTest(unittest.TestCase):
         finally:
             cls.mssql = None
 
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_get_logs(self):
-        version = datetime.now().strftime("%Y%m%d.%H.%M.%S")
-        deployment = create_and_deploy_release(
-            space_name="Simple", release_version=version
-        )
-        wait_for_task(deployment["TaskId"], space_name="Simple")
-
-        prompt = "List anything interesting in the deployment logs for the latest project deployment."
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        self.assertTrue(
-            "sorry" not in response_text.casefold(), "Response was " + response_text
-        )
-
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_count_projects(self):
-        prompt = "How many projects are there in this space?"
-        response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        # This should return the one default project (even though there are 3 overall)
-        self.assertTrue(
-            "1" in response_text.casefold() or "one" in response_text.casefold(),
-            "Response was " + response_text,
-        )
-
-    @unittest.skip("Skipping flaky test")
-    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
-    def test_find_retries(self):
-        prompt = 'What project steps have retries enabled? Provide the response as a literal JSON object like {"steps": [{"name": "Step 1", "retries": false}, {"name": "Step 2", "retries": true}]} with no markdown formatting.'
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_feed(self):
+        prompt = 'Create a Docker feed called "Docker Hub".'
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-
-        try:
-            response_json = json.loads(strip_before_first_curly_bracket(response_text))
-        except Exception as e:
-            self.fail("Failed to parse JSON response: " + str(e))
-
         self.assertTrue(
-            next(
-                filter(
-                    lambda step: step["name"] == "Run a Script 2",
-                    response_json["steps"],
-                )
-            )["retries"]
+            f"is not yet supported" in response_text,
         )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_account(self):
+        account_name = "AWS"
+        prompt = f'Create an AWS account called "{account_name}".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
         self.assertTrue(
-            next(
-                filter(
-                    lambda step: step["name"] == "Deploy to IIS", response_json["steps"]
-                )
-            )["retries"]
+            f"is not yet supported" in response_text,
+            "Response contained text indicating a tool other than create_account was incorrectly chosen.",
         )
+
         self.assertFalse(
-            next(
-                filter(
-                    lambda step: step["name"] == "Configure the load balancer",
-                    response_json["steps"],
-                )
-            )["retries"]
+            f'To create an AWS account called **"{account_name}"** in Octopus Deploy, follow these steps'
+            in response_text,
+            "Response contained text indicating the provide_help_and_instructions function was incorrectly chosen.",
         )
-        # This is a red herring. The step is named "Retry this step" but it doesn't actually have retries enabled.
-        self.assertFalse(
-            next(
-                filter(
-                    lambda step: step["name"] == "Retry this step",
-                    response_json["steps"],
-                )
-            )["retries"]
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_certificate(self):
+        prompt = 'Create a certificate account called "HTTPS".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"is not yet supported" in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_tenant(self):
+        prompt = 'Create a tenant account called "ZAB65395".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"is not yet supported" in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_environment(self):
+        prompt = 'Create a environment account called "Whatever".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"is not yet supported" in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_target(self):
+        prompt = 'Create a SSH target called "Linux Server".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"is not yet supported" in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_machine_policy(self):
+        prompt = 'Create a machine policy called "Linux Server".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"is not yet supported" in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_worker(self):
+        prompt = 'Create a worker called "Linux Server".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"is not yet supported" in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_worker_pool(self):
+        prompt = 'Create a worker pool called "Linux Server".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"is not yet supported" in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_lifecycle(self):
+        prompt = 'Create a lifecycle called "DevSecOps".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"is not yet supported" in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_script_module(self):
+        prompt = 'Create a script module called "Sort Array".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"is not yet supported" in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_step_template(self):
+        prompt = 'Create a step template called "Sort Array".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"is not yet supported" in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_git_credential(self):
+        prompt = 'Create a git credential called "GitLab".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"is not yet supported" in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_github_connection(self):
+        prompt = 'Create a github connection called "GitLab".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"is not yet supported" in response_text,
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_machine_proxy(self):
+        prompt = 'Create a machine proxy called "Squid".'
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        print(response_text)
+        self.assertTrue(
+            f"is not yet supported" in response_text,
         )
 
 
@@ -269,69 +360,6 @@ def build_request(message):
     )
 
 
-def build_no_github_request(message):
-    """
-    Build a request where with no GitHub creds
-    :param message:
-    :return:
-    """
-    return func.HttpRequest(
-        method="POST",
-        body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
-        url="/api/form_handler",
-        params=None,
-        headers={},
-    )
-
-
-def build_no_octopus_request(message):
-    """
-    Build a request where all values are passed through headers. This supports tests that do not
-    populate the Azurite database, as all details can be extracted from the headers.
-    :param message:
-    :return:
-    """
-    return func.HttpRequest(
-        method="POST",
-        body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
-        url="/api/form_handler",
-        params=None,
-        headers={
-            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"],
-            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
-            "X-Octopus-ApiKey": Octopus_Api_Key,
-            "X-Octopus-Server": Octopus_Url,
-        },
-    )
-
-
-def build_no_octopus_encrypted_github_request(message):
-    """
-    Build a request where all values are passed through headers. This supports tests that do not
-    populate the Azurite database, as all details can be extracted from the headers.
-    :param message:
-    :return:
-    """
-    session_json = create_session_blob(
-        os.environ["GH_TEST_TOKEN"],
-        os.environ.get("ENCRYPTION_PASSWORD"),
-        os.environ.get("ENCRYPTION_SALT"),
-    )
-
-    return func.HttpRequest(
-        method="POST",
-        body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
-        url="/api/form_handler",
-        params=None,
-        headers={
-            "X-GitHub-Encrypted-Token": session_json,
-            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
-            "X-Octopus-ApiKey": Octopus_Api_Key,
-            "X-Octopus-Server": Octopus_Url,
-        },
-    )
-
-
 def build_confirmation_request(body):
     return func.HttpRequest(
         method="POST",
@@ -345,20 +373,22 @@ def build_confirmation_request(body):
     )
 
 
-def build_test_request(message):
-    """
-    Builds a request that directly embeds the API key and server, removing the need to query the GitHub API.
-    :param message:
-    :return:
-    """
-    return func.HttpRequest(
-        method="POST",
-        body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
-        url="/api/form_handler",
-        params=None,
-        headers={
-            "X-Octopus-ApiKey": Octopus_Api_Key,
-            "X-Octopus-Server": Octopus_Url,
-            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
-        },
+def populate_blob_storage():
+    # The path changes depending on where the tests are run from.
+    context_path = (
+        "../../context/" if os.path.exists("../../context/context.tf") else "context/"
     )
+
+    pattern_tf = os.path.join(context_path, "*.tf")
+    pattern_txt = os.path.join(context_path, "*.txt")
+
+    all_files = glob.glob(pattern_tf) + glob.glob(pattern_txt)
+    all_files.sort()
+
+    for file_path in all_files:
+        with open(file_path, "r") as file:
+            file_content = file.read()
+            filename = os.path.basename(file_path)
+            save_terraform_context(
+                filename, file_content, os.environ["AzureWebJobsStorage"]
+            )

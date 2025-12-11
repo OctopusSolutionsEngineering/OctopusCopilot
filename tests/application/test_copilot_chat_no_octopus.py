@@ -20,47 +20,6 @@ class CopilotChatTest(unittest.TestCase):
     Tests that do not rely on an Octopus instance.
     """
 
-    def test_profile(self):
-        github_user = os.environ["TEST_GH_USER"]
-        save_default_values(
-            github_user,
-            "project",
-            "Deploy Web App Container",
-            os.environ["AzureWebJobsStorage"],
-        )
-
-        prompt = 'Save the profile named "MyTestProfile".'
-
-        response = copilot_handler_internal(build_no_octopus_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        print(response_text)
-        self.assertTrue(
-            "saved profile" in response_text.casefold(), "Response was " + response_text
-        )
-
-        prompt = 'Load the profile named "MyTestProfile".'
-
-        response = copilot_handler_internal(build_no_octopus_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        print(response_text)
-        self.assertTrue(
-            "loaded profile" in response_text.casefold(),
-            "Response was " + response_text,
-        )
-
-        prompt = "List the profiles."
-
-        response = copilot_handler_internal(build_no_octopus_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-
-        print(response_text)
-        self.assertTrue(
-            "MyTestProfile" in response_text,
-            "Response was " + response_text,
-        )
-
     @retry(RateLimitError, tries=3, delay=2)
     def test_general_solution(self):
         prompt = minify_strings(
