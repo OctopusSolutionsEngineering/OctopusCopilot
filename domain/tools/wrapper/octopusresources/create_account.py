@@ -8,7 +8,7 @@ def create_account_wrapper(query, callback, logging):
         """Creates an account in Octopus Deploy.
 
         IMPORTANT - Tool Selection Criteria:
-        - ONLY select this function when the prompt explicitly asks to create accounts
+        - ONLY select this function when the prompt explicitly asks to create accounts and only accounts
         - DO NOT select this function for general questions about accounts
         - DO NOT select this function if the prompt mentions creating projects, steps, or other resources
         - DO NOT select this function if the prompt starts with phrases like "Create a Kubernetes project", "Create an Azure Web App project", etc.

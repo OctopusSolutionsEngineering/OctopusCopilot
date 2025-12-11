@@ -7,7 +7,7 @@ def create_environment_wrapper(query, callback, logging):
         """Creates an environment in Octopus Deploy.
 
         IMPORTANT - Tool Selection Criteria:
-        - ONLY select this function when the prompt explicitly asks to create environments
+        - ONLY select this function when the prompt explicitly asks to create environments and only environments
         - DO NOT select this function for general questions about environments
         - DO NOT select this function if the prompt mentions creating projects, steps, or other resources
         - DO NOT select this function if the prompt starts with phrases like "Create a Kubernetes project", "Create an Azure Web App project", etc.

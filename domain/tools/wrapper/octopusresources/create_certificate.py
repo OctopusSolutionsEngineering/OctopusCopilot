@@ -7,7 +7,7 @@ def create_certificate_wrapper(query, callback, logging):
         """Creates a certificate in Octopus Deploy.
 
         IMPORTANT - Tool Selection Criteria:
-        - ONLY select this function when the prompt explicitly asks to create certificates
+        - ONLY select this function when the prompt explicitly asks to create certificates and only certificates
         - DO NOT select this function for general questions about certificates
         - DO NOT select this function if the prompt mentions creating projects, steps, or other resources
         - DO NOT select this function if the prompt starts with phrases like "Create a Kubernetes project", "Create an Azure Web App project", etc.

@@ -7,7 +7,7 @@ def create_script_module_wrapper(query, callback, logging):
         """Creates a script module in Octopus Deploy.
 
         IMPORTANT - Tool Selection Criteria:
-        - ONLY select this function when the prompt explicitly asks to create script modules
+        - ONLY select this function when the prompt explicitly asks to create script modules and only script modules
         - DO NOT select this function for general questions about script modules
         - DO NOT select this function if the prompt mentions creating projects, steps, or other resources
         - DO NOT select this function if the prompt starts with phrases like "Create a Kubernetes project", "Create an Azure Web App project", etc.

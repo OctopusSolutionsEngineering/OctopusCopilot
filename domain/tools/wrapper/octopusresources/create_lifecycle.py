@@ -7,7 +7,7 @@ def create_lifecycle_wrapper(query, callback, logging):
         """Creates a lifecycle in Octopus Deploy.
 
         IMPORTANT - Tool Selection Criteria:
-        - ONLY select this function when the prompt explicitly asks to create lifecycles
+        - ONLY select this function when the prompt explicitly asks to create lifecycles and only lifecycles
         - DO NOT select this function for general questions about lifecycles
         - DO NOT select this function if the prompt mentions creating projects, steps, or other resources
         - DO NOT select this function if the prompt starts with phrases like "Create a Kubernetes project", "Create an Azure Web App project", etc.
