@@ -17,6 +17,9 @@ from domain.tools.githubactions.projects.unsupported_resource import (
 from domain.tools.githubactions.suggest_solution import (
     suggest_solution_callback_wrapper,
 )
+from domain.tools.wrapper.create_general_resources import (
+    create_general_resources_wrapper,
+)
 from domain.tools.wrapper.function_definition import (
     FunctionDefinitions,
     FunctionDefinition,
@@ -131,114 +134,6 @@ def build_mock_test_tools(tool_query):
         )
     ]
 
-    resource_functions = [
-        FunctionDefinition(
-            create_feed_wrapper(
-                tool_query,
-                callback=unsupported_resource("feed"),
-                logging=log_query,
-            ),
-        ),
-        FunctionDefinition(
-            create_tenant_wrapper(
-                tool_query,
-                callback=unsupported_resource("tenant"),
-                logging=log_query,
-            ),
-        ),
-        FunctionDefinition(
-            create_environment_wrapper(
-                tool_query,
-                callback=unsupported_resource("environment"),
-                logging=log_query,
-            ),
-        ),
-        FunctionDefinition(
-            create_machine_policy_wrapper(
-                tool_query,
-                callback=unsupported_resource("machine policy"),
-                logging=log_query,
-            ),
-        ),
-        FunctionDefinition(
-            create_worker_wrapper(
-                tool_query,
-                callback=unsupported_resource("worker"),
-                logging=log_query,
-            ),
-        ),
-        FunctionDefinition(
-            create_worker_pool_wrapper(
-                tool_query,
-                callback=unsupported_resource("worker pool"),
-                logging=log_query,
-            ),
-        ),
-        FunctionDefinition(
-            create_lifecycle_wrapper(
-                tool_query,
-                callback=unsupported_resource("lifecycle"),
-                logging=log_query,
-            ),
-        ),
-        FunctionDefinition(
-            create_script_module_wrapper(
-                tool_query,
-                callback=unsupported_resource("script module"),
-                logging=log_query,
-            ),
-        ),
-        FunctionDefinition(
-            create_git_credential_wrapper(
-                tool_query,
-                callback=unsupported_resource("git credential"),
-                logging=log_query,
-            ),
-        ),
-        FunctionDefinition(
-            create_github_connection_wrapper(
-                tool_query,
-                callback=unsupported_resource("github connection"),
-                logging=log_query,
-            ),
-        ),
-        FunctionDefinition(
-            create_machine_proxy_wrapper(
-                tool_query,
-                callback=unsupported_resource("machine proxy"),
-                logging=log_query,
-            ),
-        ),
-        FunctionDefinition(
-            create_step_template_wrapper(
-                tool_query,
-                callback=unsupported_resource("step template"),
-                logging=log_query,
-            ),
-        ),
-        FunctionDefinition(
-            create_certificate_wrapper(
-                tool_query,
-                callback=unsupported_resource("certificate"),
-                logging=log_query,
-            ),
-        ),
-        FunctionDefinition(
-            create_target_wrapper(
-                tool_query,
-                callback=unsupported_resource("target"),
-                logging=log_query,
-            ),
-        ),
-        FunctionDefinition(
-            create_account_wrapper(
-                tool_query,
-                callback=unsupported_resource("account"),
-                logging=log_query,
-            ),
-        ),
-    ]
-
     return FunctionDefinitions(
         [
             FunctionDefinition(set_default_value),
@@ -298,8 +193,21 @@ def build_mock_test_tools(tool_query):
                     log_query,
                 )
             ),
+            FunctionDefinition(
+                create_general_resources_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
             *deployment_functions,
-            *resource_functions,
         ],
         fallback=FunctionDefinitions(docs_functions),
     )

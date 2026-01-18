@@ -184,9 +184,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_account(self):
@@ -195,16 +194,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-            "Response contained text indicating a tool other than create_account was incorrectly chosen.",
-        )
-
-        self.assertFalse(
-            f'To create an AWS account called **"{account_name}"** in Octopus Deploy, follow these steps'
-            in response_text,
-            "Response contained text indicating the provide_help_and_instructions function was incorrectly chosen.",
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_certificate(self):
@@ -212,9 +203,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_tenant(self):
@@ -222,9 +212,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_environment(self):
@@ -232,9 +221,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_target(self):
@@ -242,9 +230,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_machine_policy(self):
@@ -252,9 +239,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_worker(self):
@@ -262,9 +248,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_worker_pool(self):
@@ -272,9 +257,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_lifecycle(self):
@@ -282,9 +266,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_script_module(self):
@@ -292,9 +275,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_step_template(self):
@@ -302,9 +284,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_git_credential(self):
@@ -312,9 +293,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_github_connection(self):
@@ -322,9 +302,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_machine_proxy(self):
@@ -332,9 +311,8 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = convert_from_sse_response(response.get_body().decode("utf8"))
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
 
 if __name__ == "__main__":

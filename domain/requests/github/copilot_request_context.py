@@ -877,6 +877,14 @@ def build_form_tools(query, req: func.HttpRequest):
                     ),
                     logging=log_query,
                 ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
             ),
             FunctionDefinition(
                 create_k8s_project_wrapper(
