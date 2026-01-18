@@ -55,6 +55,7 @@ from domain.tools.githubactions.project_dashboard import get_project_dashboard_c
 from domain.tools.githubactions.projects.create_template_project import (
     create_template_project_callback,
     create_template_project_confirm_callback_wrapper,
+    create_general_resources_callback,
 )
 from domain.tools.githubactions.projects.unsupported_resource import (
     unsupported_resource,
@@ -88,6 +89,9 @@ from domain.tools.wrapper.cancel_deployment import cancel_deployment_wrapper
 from domain.tools.wrapper.cancel_runbook_run import cancel_runbook_run_wrapper
 from domain.tools.wrapper.cancel_task import cancel_task_wrapper
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
+from domain.tools.wrapper.create_general_resources import (
+    create_general_resources_wrapper,
+)
 from domain.tools.wrapper.create_release import create_release_wrapper
 from domain.tools.wrapper.dashboard_wrapper import show_space_dashboard_wrapper
 from domain.tools.wrapper.deploy_release import deploy_release_wrapper
@@ -859,107 +863,18 @@ def build_form_tools(query, req: func.HttpRequest):
                 ),
             ),
             FunctionDefinition(
-                create_feed_wrapper(
+                create_general_resources_wrapper(
                     query,
-                    callback=unsupported_resource("feed"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_tenant_wrapper(
-                    query,
-                    callback=unsupported_resource("tenant"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_environment_wrapper(
-                    query,
-                    callback=unsupported_resource("environment"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_machine_policy_wrapper(
-                    query,
-                    callback=unsupported_resource("machine policy"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_worker_wrapper(
-                    query,
-                    callback=unsupported_resource("worker"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_worker_pool_wrapper(
-                    query,
-                    callback=unsupported_resource("worker pool"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_lifecycle_wrapper(
-                    query,
-                    callback=unsupported_resource("lifecycle"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_script_module_wrapper(
-                    query,
-                    callback=unsupported_resource("script module"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_git_credential_wrapper(
-                    query,
-                    callback=unsupported_resource("git credential"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_github_connection_wrapper(
-                    query,
-                    callback=unsupported_resource("github connection"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_machine_proxy_wrapper(
-                    query,
-                    callback=unsupported_resource("machine proxy"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_step_template_wrapper(
-                    query,
-                    callback=unsupported_resource("step template"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_certificate_wrapper(
-                    query,
-                    callback=unsupported_resource("certificate"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_target_wrapper(
-                    query,
-                    callback=unsupported_resource("target"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_account_wrapper(
-                    query,
-                    callback=unsupported_resource("account"),
+                    callback=create_general_resources_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "generalinstructions.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
                     logging=log_query,
                 ),
             ),

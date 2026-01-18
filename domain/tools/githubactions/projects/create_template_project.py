@@ -45,7 +45,7 @@ from infrastructure.terraform_context import (
     cache_terraform,
 )
 
-project_prompt_error_message = "The project could not be generated from the prompt. This is usually because the prompt is too complex or the LLM is not able to generate a valid Terraform configuration. Please try again with a simpler prompt."
+project_prompt_error_message = "The Octopus resources could not be generated from the prompt. This is usually because the prompt is too complex or the LLM is not able to generate a valid Terraform configuration. Please try again with a simpler prompt."
 
 
 def create_template_project_confirm_callback_wrapper(
@@ -114,6 +114,45 @@ def create_template_project_confirm_callback_wrapper(
         return asyncio.run(inner_function())
 
     return create_template_project_confirm_callback
+
+
+def create_general_resources_callback(
+    octopus_details,
+    github_user,
+    connection_string,
+    log_query,
+    general_examples,
+    general_system_message,
+    redirections,
+    redirector_api_key,
+):
+    """
+    This function is used to create general resources in Octopus Deploy, such as feeds, accounts, lifecycles etc.
+    It is not used to create projects.
+    :param octopus_details: A function to get the Octopus server URL and credentials
+    :param github_user: The github user id
+    :param connection_string: The connection string to the storage account
+    :param log_query: A logging function
+    :param general_examples: The RowKeys that contain general examples of Octopus projects in Terraform. This can be an empty list when using an LLM that has been fine-tuned on Octopus Deploy projects.
+    :param general_system_message: The system message to pass to the LLM when generating the Terraform configuration
+    :param redirections: Any redirection headers
+    :param redirector_api_key: The redirection api key
+    :return: The response to send to the client
+    """
+
+    return create_template_project_callback(
+        octopus_details,
+        github_user,
+        connection_string,
+        log_query,
+        general_examples,
+        project_example=None,
+        project_example_context_name=None,
+        general_system_message=general_system_message,
+        project_system_message=None,
+        redirections=redirections,
+        redirector_api_key=redirector_api_key,
+    )
 
 
 def create_template_project_callback(
@@ -202,14 +241,23 @@ def create_template_project_callback(
                 for context in general_examples
                 if context.strip()
             ]
-            project_example_values = load_terraform_context(
-                project_example, connection_string
+
+            # A sample project is only required for project generation.
+            # Other Octopus resources are based on the general examples.
+            project_example_values = (
+                load_terraform_context(project_example, connection_string)
+                if project_example
+                else None
             )
+
             general_system_message_values = load_terraform_context(
                 general_system_message, connection_string
             )
-            project_system_message_values = load_terraform_context(
-                project_system_message, connection_string
+
+            project_system_message_values = (
+                load_terraform_context(project_system_message, connection_string)
+                if project_system_message
+                else None
             )
 
             # We build a unique sha for the inputs that generate a terraform configuration
@@ -238,13 +286,21 @@ def create_template_project_callback(
             )
 
             if not configuration:
-                messages = project_context(
-                    general_examples_values,
+                # These are the general examples of projects, feeds, accounts etc
+                base_messages = generate_base_messages(
+                    general_examples_values, general_system_message_values
+                )
+
+                # These are examples of specific project types, like Kubernetes, Azure Web Apps etc
+                project_messages = generate_project_messages(
+                    base_messages,
                     project_example_values,
                     project_example_context_name,
-                    general_system_message_values,
                     project_system_message_values,
                 )
+
+                # These are the common messages used to generate the final configuration
+                messages = final_messages(project_messages)
 
                 configuration = llm_message_query(
                     messages,
@@ -396,18 +452,7 @@ def create_template_project_callback(
     return create_template_project
 
 
-def project_context(
-    general_examples,
-    project_example,
-    project_example_context_name,
-    general_system_message_values,
-    project_system_message_values,
-):
-    """
-    Builds the messages used when building an octopus project
-    :return: The LLM messages
-    """
-
+def generate_base_messages(general_examples, general_system_message_values):
     general_examples_messages = [
         (
             "system",
@@ -415,14 +460,6 @@ def project_context(
         )
         for example in general_examples
     ]
-    project_example_message = (
-        "system",
-        f"# Example Octopus {project_example_context_name} Terraform Configuration"
-        + "\n"
-        + escape_message(project_example)
-        + "\n"
-        + escape_message(project_system_message_values),
-    )
 
     return [
         (
@@ -434,8 +471,34 @@ def project_context(
             "system",
             escape_message(general_system_message_values),
         ),
+    ]
+
+
+def generate_project_messages(
+    base_messages,
+    project_example,
+    project_example_context_name,
+    project_system_message_values,
+):
+    if not (
+        project_example
+        and project_example_context_name
+        and project_system_message_values
+    ):
+        return base_messages
+
+    project_example_message = (
+        "system",
+        f"# Example Octopus {project_example_context_name} Terraform Configuration"
+        + "\n"
+        + escape_message(project_example)
+        + "\n"
+        + escape_message(project_system_message_values),
+    )
+
+    return [
+        *base_messages,
         project_example_message,
-        ("user", "Question: {input}"),
         # The LLM was constantly removing the sample resources when the prompt indicated that a new resource, like a new lifecycle, should be created.
         # We reinforce the need to keep any template resources by adding this message after the user prompt.
         (
@@ -446,5 +509,12 @@ def project_context(
             "user",
             f'You must include all the resources from the "{project_example_context_name}" unless the prompt explicitly asks to remove them.',
         ),
+    ]
+
+
+def final_messages(base_messages):
+    return [
+        *base_messages,
+        ("user", "Question: {input}"),
         ("user", f"Generated Terraform Configuration:"),
     ]
