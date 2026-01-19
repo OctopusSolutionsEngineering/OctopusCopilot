@@ -1344,6 +1344,7 @@ packages = {
 `"Octopus.Action.Azure.ResourceGroupTemplateParameters" = jsonencode({})"`
 * You must define a value in the "execution_properties" block with `jsonencode({})` without ending with a double quote or new line, for example:
 `"Octopus.Action.Azure.ResourceGroupTemplateParameters" = jsonencode({})`
+* You will be penalized for defining the "Octopus.Action.Aws.S3.BucketName" value in the "execution_properties" block for a step of type "Octopus.AwsRunCloudFormation".
 
 ## Octopus step template instructions
 
