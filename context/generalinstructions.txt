@@ -1641,6 +1641,8 @@ data "octopusdeploy_accounts" "my_other_oidc_account" {
 * When the prompt indicates that a step requires an account, the associated account data source and resource must be created.
 
 ## Terraform Instructions
+* All resource and data names must start with a character or underscore.
+* When resources are based on a name that starts with a number, for example "123 My Resource", you must prefix the resource name with an underscore, for example " _123_my_resource".
 * You can only use the following built-in terraform functions:
     * "jsondecode"
     * "jsonencode"
