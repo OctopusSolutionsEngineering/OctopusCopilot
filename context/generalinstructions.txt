@@ -1495,6 +1495,15 @@ data "octopusdeploy_deployment_targets" "kubernetes_cluster_target_example" {
 }
 ```
 
+* You will be penalized for defining a "description" attribute on a resource "octopusdeploy_ssh_connection_deployment_target".
+* You will be penalized for defining a "description" attribute on a resource "octopusdeploy_listening_tentacle_deployment_target".
+* You will be penalized for defining a "description" attribute on a resource "octopusdeploy_polling_tentacle_deployment_target".
+* You will be penalized for defining a "description" attribute on a resource "octopusdeploy_cloud_region_deployment_target".
+* You will be penalized for defining a "description" attribute on a resource "octopusdeploy_offline_package_drop_deployment_target".
+* You will be penalized for defining a "description" attribute on a resource "octopusdeploy_azure_cloud_service_deployment_target".
+* You will be penalized for defining a "description" attribute on a resource "octopusdeploy_azure_service_fabric_cluster_deployment_target".
+* You will be penalized for defining a "description" attribute on a resource "octopusdeploy_azure_web_app_deployment_target".
+
 ## Octopus Machine Policy Instructions
 * You will be penalized for adding the "tenant_ids" attribute to a resource "octopusdeploy_machine_policies" data source.
 * You will be penalized for adding the "environment_ids" attribute to a resource "octopusdeploy_machine_policies" data source.
