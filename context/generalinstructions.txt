@@ -650,6 +650,7 @@ resource "octopusdeploy_project" "project_my_project" {
 * You will be penalized for disabling a project in response to the instruction to "Set the prompt to disabled".
 * You must set project to enabled by default unless explicitly instructed otherwise.
 * Every project tenant variable must have a "template" block in the "octopusdeploy_project" resource defining the variable.
+* You will be penalized for creating a resource of type "octopusdeploy_project_deployment_settings".
 
 ## Octopus Project Trigger Instructions
 
