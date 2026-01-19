@@ -1335,6 +1335,7 @@ packages = {
 * If the prompt includes instructions to enable client side apply for a Kubernetes step, you must set the "Octopus.Action.Kubernetes.ServerSideApply.Enabled" property in the "execution_properties" block to "False".
 * Steps of type "Octopus.Manual" must have a "Octopus.Action.Manual.Instructions" property in the "execution_properties" block.
 * You will be penalized for defining the "Octopus.Step.Manual.Instructions" property in the "execution_properties" block.
+* When a package is defined with a fixed version, the version number is specified in the "Version" block of the package, for example:
 
 ## Octopus step template instructions
 
@@ -1450,6 +1451,7 @@ resource "octopusdeploy_variable" "worker_pool_variable" {
 * You will be penalized for defining a resource "octopusdeploy_variable" of type "WorkerPool" with the "value" attribute to "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : null}".
 * If the prompt includes instructions to create a variable in a library variable set or as a tenant variable, you must not create any project variables with the same name. Custom variables defined in tenants or library variables sets take precedence over project variables.
 * You will be penalized for defining a "tenant_id" property in a "octopusdeploy_variable" resource.
+* You will be penalized for defining an empty `scope` block for a `octopusdeploy_variable` resource.
 
 ## Runbook Instructions
 
