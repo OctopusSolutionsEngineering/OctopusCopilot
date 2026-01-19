@@ -1338,6 +1338,7 @@ packages = {
 
 * The "website" attribute in a data "octopusdeploy_community_step_template" must be copied literally.
 * You will be penalized for changing the "website" attribute in a data "octopusdeploy_community_step_template".
+* The "properties" attribute must be added to "octopusdeploy_step_template" resources.
 
 ## Octopus Variable Syntax Instructions
 
