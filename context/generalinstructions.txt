@@ -1333,6 +1333,8 @@ packages = {
 * When the prompt includes instructions to generate a custom script that is not provided by the example configurations, you must use provide a script comprised of comments about the intended functionality and a `echo` or `Write-Host` statement indicating that the script is a placeholder.
 * You will be penalized for generating complex scripts for script steps that are not copies of example configurations.
 * If the prompt includes instructions to enable client side apply for a Kubernetes step, you must set the "Octopus.Action.Kubernetes.ServerSideApply.Enabled" property in the "execution_properties" block to "False".
+* Steps of type "Octopus.Manual" must have a "Octopus.Action.Manual.Instructions" property in the "execution_properties" block.
+* You will be penalized for defining the "Octopus.Step.Manual.Instructions" property in the "execution_properties" block.
 
 ## Octopus step template instructions
 
