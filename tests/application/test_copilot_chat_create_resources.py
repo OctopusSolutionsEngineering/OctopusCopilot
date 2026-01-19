@@ -298,7 +298,7 @@ class CopilotChatTestCreateResources(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_github_connection(self):
-        prompt = 'Create a github connection called "GitLab".'
+        prompt = 'Create a GitHub connection called "Work".'
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
