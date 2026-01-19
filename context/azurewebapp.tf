@@ -307,12 +307,12 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
         "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub\" -CheckForTargets $true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
       }
 }
 
@@ -335,11 +335,11 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_check_smtp_con
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.Script.ScriptFileName" = "octopus/CheckSMTPConfigured.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/CheckSMTPConfigured.ps1"
       }
 }
 
@@ -368,8 +368,8 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_deploy_azure_w
   tenant_tags           = null
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
   properties            = {
-        "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
         "Octopus.Action.TargetRoles" = "Octopub"
+        "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
         "Octopus.Action.Script.Syntax" = "PowerShell"
@@ -427,10 +427,10 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_manual_approva
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
-        "Octopus.Action.Manual.Instructions" = "Please review the Staging slot for the function apps"
         "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-managers"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.Manual.Instructions" = "Please review the Staging slot for the function apps"
       }
 }
 
@@ -499,11 +499,11 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_scan_for_vulne
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptFileName" = "octopus/DockerImageSbomScan.ps1"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/DockerImageSbomScan.ps1"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
       }
 }
 
@@ -525,11 +525,11 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deploymen
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Check SMTP configuration].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} has failed deployed to #{Octopus.Environment.Name}\n\n#{Octopus.Deployment.Error}:\n#{Octopus.Deployment.ErrorDetail}"
         "Octopus.Action.Email.Priority" = "High"
         "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} failed to deploy to #{Octopus.Environment.Name}!"
+        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
       }
 }
 

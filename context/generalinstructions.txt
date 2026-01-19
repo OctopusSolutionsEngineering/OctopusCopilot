@@ -1499,6 +1499,8 @@ data "octopusdeploy_deployment_targets" "kubernetes_cluster_target_example" {
 * You will be penalized for adding the "tenant_ids" attribute to a resource "octopusdeploy_machine_policies" data source.
 * You will be penalized for adding the "environment_ids" attribute to a resource "octopusdeploy_machine_policies" data source.
 * You will be penalized for adding the "project_ids" attribute to a resource "octopusdeploy_machine_policies" data source.
+* The valid values for the "tentacle_update_behavior" attribute are "NeverUpdate" or "Update" for a "octopusdeploy_machine_policy" resource.
+* You will be penalized for setting the "tentacle_update_behavior" attribute to "UpdateAutomatically" for a "octopusdeploy_machine_policy" resource.
 
 ## Octopus Account Instructions
 
