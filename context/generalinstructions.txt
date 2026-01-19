@@ -1717,6 +1717,7 @@ variable "project_group_name" {
 
 ## Penalties
 
+* You will be penalized for creating resources with names that start with a number, for example, a resource named "123_my_resource" is invalid.
 * You will be penalized for generating invalid Terraform.
 * You will be penalized for setting the "space_id" attribute in the "octopusdeploy" provider to a value like "Spaces-1".
 * You will be penalized if you include any markdown.
