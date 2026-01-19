@@ -500,6 +500,7 @@ resource "octopusdeploy_lifecycle" "simple_lifecycle" {
   * "OciRegistry"
   * "OctopusProject"
   * "ArtifactoryGeneric"
+* You will be penalized for setting the "feed_type" attribute to "Git".
 
 ## Feed Instructions
 
