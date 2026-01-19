@@ -184,6 +184,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
@@ -194,6 +197,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
@@ -203,6 +209,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
@@ -212,6 +221,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
@@ -221,6 +233,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
@@ -230,6 +245,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
@@ -239,6 +257,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
@@ -248,6 +269,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
@@ -257,6 +281,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
@@ -266,6 +293,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
@@ -275,6 +305,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
@@ -284,6 +317,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
@@ -293,6 +329,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
@@ -302,6 +341,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
@@ -311,6 +353,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
