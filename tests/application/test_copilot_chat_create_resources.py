@@ -208,7 +208,7 @@ class CopilotChatTestCreateResources(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_tenant(self):
-        prompt = 'Create a tenant account called "ZAB65395".'
+        prompt = 'Create a tenant called "ZAB65395".'
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
@@ -217,7 +217,7 @@ class CopilotChatTestCreateResources(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_environment(self):
-        prompt = 'Create a environment account called "Whatever".'
+        prompt = 'Create a environment called "Whatever".'
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
