@@ -1356,6 +1356,41 @@ packages = {
 `"Octopus.Action.Azure.ResourceGroupTemplateParameters" = jsonencode({})`
 * You will be penalized for defining the "Octopus.Action.Aws.S3.BucketName" value in the "execution_properties" block for a step of type "Octopus.AwsRunCloudFormation".
 * You will be penalized for defining both the "excluded_environments" and "environments" attributes on a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource.
+* You will be penalized for including an incomplete primary_package block, for example:
+```
+resource "octopusdeploy_process_step" "process_step_serverless_api_9231_deploy_lambda" {
+ count                 = "${length(data.octopusdeploy_projects.project_serverless_api_9231.projects) != 0 ? 0 : 1}"
+ name                  = "Deploy Lambda"
+ type                  = "Octopus.AwsRunScript"
+ process_id            = "${length(data.octopusdeploy_projects.project_serverless_api_9231.projects) != 0 ? null : octopusdeploy_process.process_serverless_api_9231[0].id}"
+ channels              = null
+ condition             = "Success"
+ container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", image = "octopuslabs/aws-workertools" }
+ environments          = null
+ excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+ notes                 = "Deploy Lambda function from S3 package."
+ package_requirement   = "LetOctopusDecide"
+ # The primary_package block is incomplete
+ ", id = null, package_id = "${var.project_serverless_api_9231_step_deploy_lambda_packageid}", properties = { SelectionMode = "immediate" } }
+ slug                  = "deploy-lambda"
+ start_trigger         = "StartAfterPrevious"
+ tenant_tags           = null
+ worker_pool_variable  = "Project.WorkerPool"
+ 
+ execution_properties  = {
+       "Octopus.Action.Script.ScriptBody" = "Write-Host \"Deploying Lambda function from package\""
+       "Octopus.Action.Aws.Region" = "#{AWS_REGION}"
+       "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+       "Octopus.Action.RunOnServer" = "true"
+       "Octopus.Action.Script.ScriptSource" = "Inline"
+       "OctopusUseBundledTooling" = "False"
+       "Octopus.Action.Script.Syntax" = "PowerShell"
+       "Octopus.Action.Aws.AssumeRole" = "False"
+       "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
+     }
+}
+```
+
 
 ## Octopus step template instructions
 
