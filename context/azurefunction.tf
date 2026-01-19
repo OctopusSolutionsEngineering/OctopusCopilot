@@ -327,12 +327,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_validate_setu
   properties            = {
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
         "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -355,11 +355,11 @@ resource "octopusdeploy_process_step" "process_step_azure_function_check_smtp_co
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/CheckSMTPConfigured.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.Script.ScriptFileName" = "octopus/CheckSMTPConfigured.ps1"
       }
 }
 
@@ -390,11 +390,11 @@ resource "octopusdeploy_process_step" "process_step_azure_function_deploy_produc
         "Octopus.Action.TargetRoles" = "Octopub-Products-Function"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Azure.DeploymentSlot" = "staging"
         "Octopus.Action.Azure.DeploymentType" = "Package"
-        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Azure.DeploymentSlot" = "staging"
+        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -470,12 +470,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_swap_deployme
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = $OctopusParameters[\"Project.Azure.ResourceGroup.Name\"]\n$functionAppName = $OctopusParameters[\"Project.Azure.Function.Octopub.Products.Name\"]\n\n# Swap the staging and production slots\nWrite-Host \"Swapping Staging and Production slots...\"\naz functionapp deployment slot swap --slot \"Staging\" --target-slot \"Production\" --resource-group $resourceGroupName --name $functionAppName\nWrite-Host \"Swap complete!\""
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -506,11 +506,11 @@ resource "octopusdeploy_process_step" "process_step_azure_function_scan_for_vuln
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
       }
 }
 
@@ -699,6 +699,7 @@ resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_na
     machines     = null
     roles        = null
     tenant_tags  = null
+    processes    = null
   }
   lifecycle {
     ignore_changes  = [sensitive_value]
@@ -723,6 +724,7 @@ resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_na
     machines     = null
     roles        = null
     tenant_tags  = null
+    processes    = null
   }
   lifecycle {
     ignore_changes  = [sensitive_value]
@@ -747,6 +749,7 @@ resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_na
     machines     = null
     roles        = null
     tenant_tags  = null
+    processes    = null
   }
   lifecycle {
     ignore_changes  = [sensitive_value]

@@ -23,27 +23,9 @@ from domain.tools.githubactions.approve_manual_intervention import (
     approve_manual_intervention_callback,
     approve_manual_intervention_confirm_callback_wrapper,
 )
-from domain.tools.githubactions.cancel_deployment import cancel_deployment_callback
-from domain.tools.githubactions.cancel_runbook_run import cancel_runbook_run_callback
-from domain.tools.githubactions.cancel_task import (
-    cancel_task_confirm_callback_wrapper,
-    cancel_task_callback,
-)
-from domain.tools.githubactions.create_release import (
-    create_release_confirm_callback_wrapper,
-    create_release_callback,
-)
-from domain.tools.githubactions.dashboard import get_dashboard_callback
 from domain.tools.githubactions.default_values import default_value_callbacks
-from domain.tools.githubactions.deploy_release import (
-    deploy_release_confirm_callback_wrapper,
-    deploy_release_callback,
-)
 from domain.tools.githubactions.deployment_logs import logs_callback
 from domain.tools.githubactions.general_query import general_query_callback
-from domain.tools.githubactions.generate_terraform import (
-    generate_terraform_callback_wrapper,
-)
 from domain.tools.githubactions.github_job_summary import get_job_summary_callback
 from domain.tools.githubactions.github_logs import get_github_logs_callback
 from domain.tools.githubactions.how_to import how_to_callback
@@ -51,13 +33,10 @@ from domain.tools.githubactions.logout import logout
 from domain.tools.githubactions.octolint_unused_projects import (
     octolint_callback,
 )
-from domain.tools.githubactions.project_dashboard import get_project_dashboard_callback
 from domain.tools.githubactions.projects.create_template_project import (
     create_template_project_callback,
     create_template_project_confirm_callback_wrapper,
-)
-from domain.tools.githubactions.projects.unsupported_resource import (
-    unsupported_resource,
+    create_general_resources_callback,
 )
 from domain.tools.githubactions.provide_help import provide_help_wrapper
 from domain.tools.githubactions.reject_manual_intervention import (
@@ -70,12 +49,7 @@ from domain.tools.githubactions.release_what_changed import (
 from domain.tools.githubactions.resource_specific_callback import (
     resource_specific_callback,
 )
-from domain.tools.githubactions.run_runbook import (
-    run_runbook_confirm_callback_wrapper,
-    run_runbook_callback,
-)
 from domain.tools.githubactions.runbook_logs import get_runbook_logs_wrapper
-from domain.tools.githubactions.runbooks_dashboard import get_runbook_dashboard_callback
 from domain.tools.githubactions.suggest_solution import (
     suggest_solution_callback_wrapper,
 )
@@ -84,19 +58,15 @@ from domain.tools.githubactions.variables import variable_query_callback
 from domain.tools.wrapper.approve_manual_intervention import (
     approve_manual_intervention_wrapper,
 )
-from domain.tools.wrapper.cancel_deployment import cancel_deployment_wrapper
-from domain.tools.wrapper.cancel_runbook_run import cancel_runbook_run_wrapper
-from domain.tools.wrapper.cancel_task import cancel_task_wrapper
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
-from domain.tools.wrapper.create_release import create_release_wrapper
-from domain.tools.wrapper.dashboard_wrapper import show_space_dashboard_wrapper
-from domain.tools.wrapper.deploy_release import deploy_release_wrapper
+from domain.tools.wrapper.create_general_resources import (
+    create_general_resources_wrapper,
+)
 from domain.tools.wrapper.function_definition import (
     FunctionDefinition,
     FunctionDefinitions,
 )
 from domain.tools.wrapper.general_query import answer_general_query_wrapper
-from domain.tools.wrapper.generate_terraform import generate_terraform_wrapper
 from domain.tools.wrapper.github_job_summary_wrapper import (
     show_github_job_summary_wrapper,
 )
@@ -126,30 +96,10 @@ from domain.tools.wrapper.octolint_unused_tenants import octolint_unused_tenants
 from domain.tools.wrapper.octolint_unused_variables import (
     octolint_unused_variables_wrapper,
 )
-from domain.tools.wrapper.octopusresources.create_machine_proxy import (
-    create_machine_proxy_wrapper,
-)
-from domain.tools.wrapper.project_dashboard_wrapper import (
-    show_project_dashboard_wrapper,
-)
 from domain.tools.wrapper.project_logs import answer_project_deployment_logs_wrapper
 from domain.tools.wrapper.project_variables import (
     answer_project_variables_wrapper,
     answer_project_variables_usage_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_account import create_account_wrapper
-from domain.tools.wrapper.octopusresources.create_certificate import (
-    create_certificate_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_environment import (
-    create_environment_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_feed import create_feed_wrapper
-from domain.tools.wrapper.octopusresources.create_git_credential import (
-    create_git_credential_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_github_connection import (
-    create_github_connection_wrapper,
 )
 from domain.tools.wrapper.projects.create_argo_cd_update_image_tags_project_wrapper import (
     create_argocdimagetag_project_wrapper,
@@ -162,24 +112,6 @@ from domain.tools.wrapper.projects.create_azure_web_app_project import (
 )
 from domain.tools.wrapper.projects.create_iis_project import create_iis_project_wrapper
 from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_wrapper
-from domain.tools.wrapper.octopusresources.create_lifecycle import (
-    create_lifecycle_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_machine_policy import (
-    create_machine_policy_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_script_module import (
-    create_script_module_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_step_template import (
-    create_step_template_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_target import create_target_wrapper
-from domain.tools.wrapper.octopusresources.create_tenant import create_tenant_wrapper
-from domain.tools.wrapper.octopusresources.create_worker import create_worker_wrapper
-from domain.tools.wrapper.octopusresources.create_worker_pool import (
-    create_worker_pool_wrapper,
-)
 from domain.tools.wrapper.projects.create_lambda_project import (
     create_lambda_project_wrapper,
 )
@@ -206,11 +138,7 @@ from domain.tools.wrapper.reject_manual_intervention import (
     reject_manual_intervention_wrapper,
 )
 from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
-from domain.tools.wrapper.run_runbook import run_runbook_wrapper
 from domain.tools.wrapper.runbook_logs import answer_runbook_run_logs_wrapper
-from domain.tools.wrapper.runbooks_dashboard_wrapper import (
-    show_runbook_dashboard_wrapper,
-)
 from domain.tools.wrapper.step_features import answer_step_features_wrapper
 from domain.tools.wrapper.suggest_solution import suggest_solution_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
@@ -859,108 +787,27 @@ def build_form_tools(query, req: func.HttpRequest):
                 ),
             ),
             FunctionDefinition(
-                create_feed_wrapper(
+                create_general_resources_wrapper(
                     query,
-                    callback=unsupported_resource("feed"),
+                    callback=create_general_resources_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "generalinstructions.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
                     logging=log_query,
                 ),
-            ),
-            FunctionDefinition(
-                create_tenant_wrapper(
+                callback=create_template_project_confirm_callback_wrapper(
                     query,
-                    callback=unsupported_resource("tenant"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_environment_wrapper(
-                    query,
-                    callback=unsupported_resource("environment"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_machine_policy_wrapper(
-                    query,
-                    callback=unsupported_resource("machine policy"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_worker_wrapper(
-                    query,
-                    callback=unsupported_resource("worker"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_worker_pool_wrapper(
-                    query,
-                    callback=unsupported_resource("worker pool"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_lifecycle_wrapper(
-                    query,
-                    callback=unsupported_resource("lifecycle"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_script_module_wrapper(
-                    query,
-                    callback=unsupported_resource("script module"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_git_credential_wrapper(
-                    query,
-                    callback=unsupported_resource("git credential"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_github_connection_wrapper(
-                    query,
-                    callback=unsupported_resource("github connection"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_machine_proxy_wrapper(
-                    query,
-                    callback=unsupported_resource("machine proxy"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_step_template_wrapper(
-                    query,
-                    callback=unsupported_resource("step template"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_certificate_wrapper(
-                    query,
-                    callback=unsupported_resource("certificate"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_target_wrapper(
-                    query,
-                    callback=unsupported_resource("target"),
-                    logging=log_query,
-                ),
-            ),
-            FunctionDefinition(
-                create_account_wrapper(
-                    query,
-                    callback=unsupported_resource("account"),
-                    logging=log_query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
                 ),
             ),
             FunctionDefinition(

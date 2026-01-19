@@ -13,6 +13,8 @@ from domain.sanitizers.terraform import (
     fix_empty_properties_block,
     fix_empty_execution_properties_block,
     fix_empty_strings,
+    replace_certificate_data,
+    replace_passwords,
 )
 
 
@@ -495,6 +497,52 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = fix_empty_strings(input)
 
         self.assertEqual(result, input)
+
+    def test_cert_data(self):
+        input = """resource "octopusdeploy_certificate" "certificate_development_certificate" {
+          count                             = "${length(data.octopusdeploy_certificates.certificate_development_certificate.certificates) != 0 ? 0 : 1}"
+          name                              = "Development Certificate"
+          password                          = "A leaked password"
+          certificate_data                  = "SomeValue"
+          archived                          = ""
+          environments                      = []
+          notes                             = ""
+          tenant_tags                       = []
+          tenanted_deployment_participation = "Untenanted"
+          tenants                           = []
+          depends_on                        = []
+          lifecycle {
+            ignore_changes  = [password, certificate_data]
+            prevent_destroy = true
+          }
+        }"""
+
+        result = replace_certificate_data(input)
+
+        self.assertNotIn("SomeValue", result)
+
+    def test_password(self):
+        input = """resource "octopusdeploy_certificate" "certificate_development_certificate" {
+          count                             = "${length(data.octopusdeploy_certificates.certificate_development_certificate.certificates) != 0 ? 0 : 1}"
+          name                              = "Development Certificate"
+          password                          = "A leaked password"
+          certificate_data                  = "SomeValue"
+          archived                          = ""
+          environments                      = []
+          notes                             = ""
+          tenant_tags                       = []
+          tenanted_deployment_participation = "Untenanted"
+          tenants                           = []
+          depends_on                        = []
+          lifecycle {
+            ignore_changes  = [password, certificate_data]
+            prevent_destroy = true
+          }
+        }"""
+
+        result = replace_passwords(input)
+
+        self.assertNotIn("A leaked password", result)
 
 
 if __name__ == "__main__":

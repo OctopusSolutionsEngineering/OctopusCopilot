@@ -182,159 +182,182 @@ class CopilotChatTestCreateResources(unittest.TestCase):
     def test_create_feed(self):
         prompt = 'Create a Docker feed called "Docker Hub".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_account(self):
         account_name = "AWS"
         prompt = f'Create an AWS account called "{account_name}".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-            "Response contained text indicating a tool other than create_account was incorrectly chosen.",
-        )
 
-        self.assertFalse(
-            f'To create an AWS account called **"{account_name}"** in Octopus Deploy, follow these steps'
-            in response_text,
-            "Response contained text indicating the provide_help_and_instructions function was incorrectly chosen.",
-        )
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_certificate(self):
         prompt = 'Create a certificate account called "HTTPS".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_tenant(self):
-        prompt = 'Create a tenant account called "ZAB65395".'
+        prompt = 'Create a tenant called "ZAB65395".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_environment(self):
-        prompt = 'Create a environment account called "Whatever".'
+        prompt = 'Create a environment called "Whatever".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_target(self):
         prompt = 'Create a SSH target called "Linux Server".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_machine_policy(self):
         prompt = 'Create a machine policy called "Linux Server".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_worker(self):
         prompt = 'Create a worker called "Linux Server".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_worker_pool(self):
         prompt = 'Create a worker pool called "Linux Server".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_lifecycle(self):
         prompt = 'Create a lifecycle called "DevSecOps".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_script_module(self):
         prompt = 'Create a script module called "Sort Array".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_step_template(self):
         prompt = 'Create a step template called "Sort Array".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_git_credential(self):
         prompt = 'Create a git credential called "GitLab".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_github_connection(self):
-        prompt = 'Create a github connection called "GitLab".'
+        prompt = 'Create a GitHub connection called "Work".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_machine_proxy(self):
         prompt = 'Create a machine proxy called "Squid".'
         response = copilot_handler_internal(build_request(prompt))
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+        response_text = response.get_body().decode("utf8")
         print(response_text)
-        self.assertTrue(
-            f"is not yet supported" in response_text,
-        )
+
+        self.assertNotIn("Sorry, I did not understand that request.", response_text)
+
+        confirmation_id = get_confirmation_id(response_text)
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
 
 if __name__ == "__main__":
