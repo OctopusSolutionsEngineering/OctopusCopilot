@@ -30,6 +30,8 @@ from domain.sanitizers.terraform import (
     fix_empty_properties_block,
     fix_script_source,
     fix_empty_strings,
+    replace_passwords,
+    replace_certificate_data,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -308,6 +310,12 @@ def create_template_project_callback(
                     log_query,
                     purpose=os.getenv("PROJECT_GEN_SERVICE") or AZURE_PROJECT_SERVICE,
                 )
+
+                # Replace anything that looks like a password
+                configuration = replace_passwords(configuration)
+
+                # The certificate data needs to be valid but generic to prevent leaking sensitive information
+                configuration = replace_certificate_data(configuration)
 
                 # Deal with the LLM returning code in markdown code blocks
                 configuration = remove_markdown_code_block(configuration)
