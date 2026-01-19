@@ -1340,7 +1340,8 @@ packages = {
 * If the prompt includes instructions to enable client side apply for a Kubernetes step, you must set the "Octopus.Action.Kubernetes.ServerSideApply.Enabled" property in the "execution_properties" block to "False".
 * Steps of type "Octopus.Manual" must have a "Octopus.Action.Manual.Instructions" property in the "execution_properties" block.
 * You will be penalized for defining the "Octopus.Step.Manual.Instructions" property in the "execution_properties" block.
-* When a package is defined with a fixed version, the version number is specified in the "Version" block of the package, for example:
+* You will be penalized for defining a value in the "execution_properties" block with `jsonencode({})` and then ending with a double quote, for example:
+`"Octopus.Action.Azure.ResourceGroupTemplateParameters" = jsonencode({})"`
 
 ## Octopus step template instructions
 
