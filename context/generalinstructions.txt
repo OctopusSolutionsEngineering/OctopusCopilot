@@ -1342,6 +1342,8 @@ packages = {
 * You will be penalized for defining the "Octopus.Step.Manual.Instructions" property in the "execution_properties" block.
 * You will be penalized for defining a value in the "execution_properties" block with `jsonencode({})` and then ending with a double quote, for example:
 `"Octopus.Action.Azure.ResourceGroupTemplateParameters" = jsonencode({})"`
+* You must define a value in the "execution_properties" block with `jsonencode({})` without ending with a double quote or new line, for example:
+`"Octopus.Action.Azure.ResourceGroupTemplateParameters" = jsonencode({})`
 
 ## Octopus step template instructions
 
