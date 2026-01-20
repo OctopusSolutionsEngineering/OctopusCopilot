@@ -643,7 +643,7 @@ resource "octopusdeploy_project" "test_project" {
 
     def test_valid_primary_package_sanitization(self):
         """
-        Tests that a malformed primary_package block is corrected.
+        Tests that a valid primary_package block is ignored.
         """
         config = """
 resource "octopusdeploy_deployment_process" "deployment_process_my_app" {
