@@ -1644,7 +1644,8 @@ data "octopusdeploy_accounts" "my_other_oidc_account" {
 
 ## Terraform Instructions
 * All resource and data names must start with a character or underscore.
-* When resources are based on a name that starts with a number, for example "123 My Resource", you must prefix the resource name with an underscore, for example " _123_my_resource".
+* When resources are based on a name that starts with a number, for example "123 My Resource", you must prefix the resource name with an underscore, for example " _123_my_resource" or "_08_script_project".
+* You will be penalized for creating resource names or data names that start with a number.
 * You can only use the following built-in terraform functions:
     * "jsondecode"
     * "jsonencode"
@@ -1756,7 +1757,7 @@ variable "project_group_name" {
 
 ## Penalties
 
-* You will be penalized for creating resources with names that start with a number, for example, a resource named "123_my_resource" is invalid.
+* You will be penalized for creating resources with names that start with a number, for example, a resource named "123_my_resource" or "05_script_project" is invalid.
 * You will be penalized for generating invalid Terraform.
 * You will be penalized for setting the "space_id" attribute in the "octopusdeploy" provider to a value like "Spaces-1".
 * You will be penalized if you include any markdown.
