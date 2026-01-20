@@ -33,6 +33,7 @@ from domain.sanitizers.terraform import (
     replace_passwords,
     replace_certificate_data,
     sanitize_slugs,
+    sanitize_primary_package,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -329,6 +330,9 @@ def create_template_project_callback(
 
                 # Remove invalid slugs
                 configuration = sanitize_slugs(configuration)
+
+                # Fix up half created primary package definitions
+                configuration = sanitize_primary_package(configuration)
 
                 # Deal with the LLM using invalid characters for names
                 configuration = sanitize_name_attributes(configuration)

@@ -62,6 +62,20 @@ def sanitize_slugs(config):
     return re.sub(r'slug\s*=\s*"[^"]*?\*+[^"]*?"', "", config)
 
 
+def sanitize_primary_package(config):
+    """
+    Claude would often generate half of the primary_package block, but not the whole thing.
+    We can fix this up by replacing the incomplete block with a complete one. It is not perfect - we
+    don't know the feed that the package is coming from - but at least it makes the terraform configuration valid.
+    """
+
+    return re.sub(
+        r'\s*", id = null, package_id = "(.*?)", properties = { SelectionMode = "immediate" } }',
+        r'\n      primary_package = { acquisition_location = "Server", feed_id = "data.octopusdeploy_feeds.feed_octopus_server__built_in_.feeds[0].id", id = null, package_id = "\1", properties = { SelectionMode = "immediate" } }',
+        config,
+    )
+
+
 def sanitize_account_type(config):
     """
     Sanitize Kubernetes config by fixing the account type capitalisation. This is because GTP4 kept trying to set the
