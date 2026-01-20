@@ -1540,6 +1540,8 @@ resource "octopusdeploy_variable" "worker_pool_variable" {
 * If the prompt includes instructions to create a variable in a library variable set or as a tenant variable, you must not create any project variables with the same name. Custom variables defined in tenants or library variables sets take precedence over project variables.
 * You will be penalized for defining a "tenant_id" property in a "octopusdeploy_variable" resource.
 * You will be penalized for defining an empty `scope` block for a `octopusdeploy_variable` resource.
+* The names of "octopusdeploy_variable" resources must start with a letter or underscore.
+* You will be penalized for defining a name for a "octopusdeploy_variable" resource that starts with a number or special character.
 
 ## Runbook Instructions
 
