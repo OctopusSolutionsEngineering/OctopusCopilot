@@ -1451,6 +1451,34 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 * You will be penalized for setting the "value" and "sensitive_value" attributes in the same resource "octopusdeploy_variable".
 * You will be penalized for setting the "sensitive_value" attribute to anything other than "CHANGEME".
 * You will be penalized for assigning an empty scope like "scope {}" to a resource "octopusdeploy_variable".
+* You will be penalized for assigning a "scope" block in a resource "octopusdeploy_variable" with all null values, for example:
+```
+resource "octopusdeploy_variable" "variables_common_settings_apiendpoint_1" {
+count        = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_common_settings.library_variable_sets) != 0 ? 0 : 1}"
+owner_id     = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_common_settings.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_common_settings.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_common_settings[0].id}"
+value        = "https://api.example.com"
+name         = "ApiEndpoint"
+type         = "String"
+description  = ""
+is_sensitive = false
+# This is invalid as all the attributes in the scope block are null
+scope {
+  actions      = null
+  channels     = null
+  environments = null
+  machines     = null
+  roles        = null
+  tenant_tags  = null
+  processes    = null
+}
+lifecycle {
+  ignore_changes  = [sensitive_value]
+  prevent_destroy = true
+}
+depends_on = []
+}
+```
+
 * You will be penalized for including more than one resource "octopusdeploy_variable" with the same name.
 * The only valid attributes for the "scope" block  for a "octopusdeploy_variable" resource are:
   * "actions"
