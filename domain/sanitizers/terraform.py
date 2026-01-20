@@ -51,6 +51,17 @@ def sanitize_name_attributes(config):
     return fixed_config
 
 
+def sanitize_slugs(config):
+    """
+    Claude would often try to create slugs with asterisks, like:
+    slug = "deploy-*****-kustomize"
+
+    This is not valid. We just remove these slugs.
+    """
+
+    return re.sub(r'slug\s*=\s*"[^"]*?\*+[^"]*?"', "", config)
+
+
 def sanitize_account_type(config):
     """
     Sanitize Kubernetes config by fixing the account type capitalisation. This is because GTP4 kept trying to set the

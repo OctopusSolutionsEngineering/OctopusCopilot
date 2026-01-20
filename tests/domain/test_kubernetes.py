@@ -15,6 +15,7 @@ from domain.sanitizers.terraform import (
     fix_empty_strings,
     replace_certificate_data,
     replace_passwords,
+    sanitize_slugs,
 )
 
 
@@ -543,6 +544,32 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = replace_passwords(input)
 
         self.assertNotIn("A leaked password", result)
+
+    def test_sanitize_slugs(self):
+        cases = [
+            (
+                'resource "octopusdeploy_project" "example" {\n  slug = "my***bad***slug"\n}\n',
+                'resource "octopusdeploy_project" "example" {\n  \n}\n',
+            ),
+            (
+                '  resource "octopusdeploy_project" "example" {\n  slug = "my***bad***slug"\n} ',
+                '  resource "octopusdeploy_project" "example" {\n  \n} ',
+            ),
+            (
+                'resource "octopusdeploy_project" "example" {\n  slug = "my-good-slug"\n}\n',
+                'resource "octopusdeploy_project" "example" {\n  slug = "my-good-slug"\n}\n',
+            ),
+            (
+                'resource "octopusdeploy_project" "a" {\n  slug = "ok-slug"\n}\n'
+                'resource "octopusdeploy_project" "b" {\n  slug = "bad*slug"\n}\n',
+                'resource "octopusdeploy_project" "a" {\n  slug = "ok-slug"\n}\n'
+                'resource "octopusdeploy_project" "b" {\n  \n}\n',
+            ),
+        ]
+
+        for input_config, expected in cases:
+            with self.subTest(input=input_config):
+                self.assertEqual(sanitize_slugs(input_config), expected)
 
 
 if __name__ == "__main__":
