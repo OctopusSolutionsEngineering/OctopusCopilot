@@ -1391,7 +1391,7 @@ resource "octopusdeploy_process_step" "process_step_serverless_api_9231_deploy_l
      }
 }
 ```
-* Every item in the "tenant_tags" array must reference a tag defined in a resource "octopusdeploy_tag".
+* Every item in the "tenant_tags" array must reference a tag defined in a resource "octopusdeploy_tag" and the tag set defined in a resource "octopusdeploy_tag_set".
 
 
 ## Octopus step template instructions
