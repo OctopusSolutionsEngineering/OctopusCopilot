@@ -70,9 +70,10 @@ def sanitize_primary_package(config):
     """
 
     return re.sub(
-        r'\s*", id = null, package_id = "(.*?)", properties = { SelectionMode = "immediate" } }',
-        r'\n      primary_package = { acquisition_location = "Server", feed_id = "data.octopusdeploy_feeds.feed_octopus_server__built_in_.feeds[0].id", id = null, package_id = "\1", properties = { SelectionMode = "immediate" } }',
+        r'^\s*", id = null, package_id = "(.*?)", properties = { SelectionMode = "immediate" } }',
+        r'      primary_package = { acquisition_location = "Server", feed_id = "data.octopusdeploy_feeds.feed_octopus_server__built_in_.feeds[0].id", id = null, package_id = "\1", properties = { SelectionMode = "immediate" } }',
         config,
+        flags=re.MULTILINE,
     )
 
 

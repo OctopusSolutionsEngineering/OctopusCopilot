@@ -572,7 +572,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
             with self.subTest(input=input_config):
                 self.assertEqual(sanitize_slugs(input_config), expected)
 
-    def test_sanitization(self):
+    def test_primary_package_sanitization(self):
         """
         Tests that a malformed primary_package block is corrected.
         """
@@ -640,6 +640,61 @@ resource "octopusdeploy_project" "test_project" {
 """
         sanitized_config = sanitize_primary_package(config)
         self.assertEqual(config.strip(), sanitized_config.strip())
+
+    def test_valid_primary_package_sanitization(self):
+        """
+        Tests that a malformed primary_package block is corrected.
+        """
+        config = """
+resource "octopusdeploy_deployment_process" "deployment_process_my_app" {
+  project_id = octopusdeploy_project.my_app.id
+
+  step {
+    name = "Deploy a Package"
+    package_requirement = "LetOctopusDecide"
+    properties = {
+      "Octopus.Action.TargetRoles" = "my-role"
+    }
+    condition = "Success"
+    start_trigger = "StartWithPrevious"
+
+    action {
+      action_type = "Octopus.DeployPackage"
+      name = "Deploy a Package"
+      notes = "Deploys the application package."
+      run_on_server = false
+      worker_pool_id = "data.octopusdeploy_worker_pools.workerpool_aws_ubuntu_2204.worker_pools[0].id"
+      primary_package = { acquisition_location = "Server", feed_id = "data.octopusdeploy_feeds.feed_octopus_server__built_in_.feeds[0].id", id = null, package_id = "${var.project_azure_static_content_2891_step_deploy_azure_web_app_package_staticcontent_packageid}", properties = { SelectionMode = "immediate" } }
+    }
+  }
+}
+"""
+        expected = """
+resource "octopusdeploy_deployment_process" "deployment_process_my_app" {
+  project_id = octopusdeploy_project.my_app.id
+
+  step {
+    name = "Deploy a Package"
+    package_requirement = "LetOctopusDecide"
+    properties = {
+      "Octopus.Action.TargetRoles" = "my-role"
+    }
+    condition = "Success"
+    start_trigger = "StartWithPrevious"
+
+    action {
+      action_type = "Octopus.DeployPackage"
+      name = "Deploy a Package"
+      notes = "Deploys the application package."
+      run_on_server = false
+      worker_pool_id = "data.octopusdeploy_worker_pools.workerpool_aws_ubuntu_2204.worker_pools[0].id"
+      primary_package = { acquisition_location = "Server", feed_id = "data.octopusdeploy_feeds.feed_octopus_server__built_in_.feeds[0].id", id = null, package_id = "${var.project_azure_static_content_2891_step_deploy_azure_web_app_package_staticcontent_packageid}", properties = { SelectionMode = "immediate" } }
+    }
+  }
+}
+"""
+        sanitized_config = sanitize_primary_package(config)
+        self.assertEqual(expected.strip(), sanitized_config.strip())
 
 
 if __name__ == "__main__":
