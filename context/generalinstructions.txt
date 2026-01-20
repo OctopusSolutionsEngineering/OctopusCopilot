@@ -576,7 +576,7 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
   * "octopusdeploy_username_password_account"
 * The "role_arn" property on the resource "octopusdeploy_aws_openid_connect_account" is mandatory.
 * You will be penalized for omitting the "role_arn" property on the resource "octopusdeploy_aws_openid_connect_account".
-* The resource "octopusdeploy_aws_openid_connect_account" must have a "role_arn" property set to "arn:aws:iam::123456789012:role/S3Access"
+* The resource "octopusdeploy_aws_openid_connect_account" must have a "role_arn" property set to "arn:aws:iam::123456789012:role/MyRole"
 * The "azure_environment" attribute for a "octopusdeploy_azure_openid_connect" resource must be set to "AzureCloud" unless specifically instructed otherwise in the prompt.
 * The resource "octopusdeploy_azure_openid_connect" must have a "azure_environment" attribute set to one of:
   * "AzureCloud"
