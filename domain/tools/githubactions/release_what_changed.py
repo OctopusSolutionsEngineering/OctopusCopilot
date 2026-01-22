@@ -27,9 +27,6 @@ from domain.sanitizers.sanitized_list import (
     get_item_or_default,
 )
 from domain.tools.debug import get_params_message
-from domain.tools.githubactions.approve_manual_intervention import (
-    approve_manual_intervention_confirm_callback_wrapper,
-)
 from domain.transformers.deployments_from_release import get_deployments_for_project
 from domain.transformers.limit_array import (
     limit_array_to_max_char_length,
