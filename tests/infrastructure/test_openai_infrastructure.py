@@ -465,6 +465,18 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "create_script_project")
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_generic_project_with_lifecycle(self):
+        """
+        Tests that the llm can correctly identify that we are trying to create a project and then modify it rather
+        than creating general resources.
+        """
+
+        query = 'Create a project called "01. My Test Project" and then create a lifecycle called "My Lifecycle" with environments "Dev", "QA", and "Prod".'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_k8s_project_2(self):
         """
         Tests that the llm can correctly identify the function to call when the prompt is

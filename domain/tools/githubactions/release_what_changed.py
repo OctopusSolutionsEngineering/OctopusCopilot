@@ -1,8 +1,6 @@
 import asyncio
 import json
 
-from openai import api_key
-
 from domain.categorization.octopus_target import (
     project_includes_azure_steps,
     project_includes_aws_steps,
@@ -50,13 +48,13 @@ from infrastructure.github import (
     get_issues_comments,
     get_issues,
 )
+from infrastructure.llm import llm_message_query
 from infrastructure.octopus import (
     get_task_details_async,
     activity_logs_to_string,
     get_failed_step,
 )
 from infrastructure.octoterra import get_octoterra_space_async
-from infrastructure.llm import llm_message_query
 from infrastructure.zendesk import get_tickets_comments, get_tickets
 
 max_issues = 10

@@ -28,6 +28,7 @@ from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_
 from domain.tools.wrapper.projects.create_lambda_project import (
     create_lambda_project_wrapper,
 )
+from domain.tools.wrapper.projects.create_project import create_project_wrapper
 from domain.tools.wrapper.projects.create_script_project import (
     create_script_project_wrapper,
 )
@@ -132,6 +133,20 @@ def build_mock_test_tools(tool_query):
             ),
             FunctionDefinition(
                 create_script_project_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                create_project_wrapper(
                     tool_query,
                     create_template_project_confirm_callback_wrapper(
                         tool_query,
