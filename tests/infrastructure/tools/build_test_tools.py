@@ -11,9 +11,6 @@ from domain.tools.githubactions.generate_terraform import (
 from domain.tools.githubactions.projects.create_template_project import (
     create_template_project_confirm_callback_wrapper,
 )
-from domain.tools.githubactions.projects.unsupported_resource import (
-    unsupported_resource,
-)
 from domain.tools.githubactions.suggest_solution import (
     suggest_solution_callback_wrapper,
 )
@@ -27,41 +24,6 @@ from domain.tools.wrapper.function_definition import (
 from domain.tools.wrapper.general_query import answer_general_query_wrapper
 from domain.tools.wrapper.generate_terraform import generate_terraform_wrapper
 from domain.tools.wrapper.how_to import how_to_wrapper
-from domain.tools.wrapper.octopusresources.create_account import create_account_wrapper
-from domain.tools.wrapper.octopusresources.create_certificate import (
-    create_certificate_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_environment import (
-    create_environment_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_feed import create_feed_wrapper
-from domain.tools.wrapper.octopusresources.create_git_credential import (
-    create_git_credential_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_github_connection import (
-    create_github_connection_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_lifecycle import (
-    create_lifecycle_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_machine_policy import (
-    create_machine_policy_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_machine_proxy import (
-    create_machine_proxy_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_script_module import (
-    create_script_module_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_step_template import (
-    create_step_template_wrapper,
-)
-from domain.tools.wrapper.octopusresources.create_target import create_target_wrapper
-from domain.tools.wrapper.octopusresources.create_tenant import create_tenant_wrapper
-from domain.tools.wrapper.octopusresources.create_worker import create_worker_wrapper
-from domain.tools.wrapper.octopusresources.create_worker_pool import (
-    create_worker_pool_wrapper,
-)
 from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_wrapper
 from domain.tools.wrapper.projects.create_lambda_project import (
     create_lambda_project_wrapper,

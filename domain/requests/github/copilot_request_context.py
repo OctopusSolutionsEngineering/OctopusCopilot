@@ -19,10 +19,6 @@ from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyIn
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_logging import log_query
 from domain.security.security import is_admin_user
-from domain.tools.githubactions.approve_manual_intervention import (
-    approve_manual_intervention_callback,
-    approve_manual_intervention_confirm_callback_wrapper,
-)
 from domain.tools.githubactions.default_values import default_value_callbacks
 from domain.tools.githubactions.deployment_logs import logs_callback
 from domain.tools.githubactions.general_query import general_query_callback
@@ -39,10 +35,6 @@ from domain.tools.githubactions.projects.create_template_project import (
     create_general_resources_callback,
 )
 from domain.tools.githubactions.provide_help import provide_help_wrapper
-from domain.tools.githubactions.reject_manual_intervention import (
-    reject_manual_intervention_confirm_callback_wrapper,
-    reject_manual_intervention_callback,
-)
 from domain.tools.githubactions.release_what_changed import (
     release_what_changed_callback_wrapper,
 )
@@ -55,9 +47,6 @@ from domain.tools.githubactions.suggest_solution import (
 )
 from domain.tools.githubactions.task_summary import get_task_summary_callback
 from domain.tools.githubactions.variables import variable_query_callback
-from domain.tools.wrapper.approve_manual_intervention import (
-    approve_manual_intervention_wrapper,
-)
 from domain.tools.wrapper.certificates_query import answer_certificates_wrapper
 from domain.tools.wrapper.create_general_resources import (
     create_general_resources_wrapper,
@@ -133,9 +122,6 @@ from domain.tools.wrapper.projects.create_vm_bluegreen_project import (
 )
 from domain.tools.wrapper.projects.create_winservice_project import (
     create_winservice_project_wrapper,
-)
-from domain.tools.wrapper.reject_manual_intervention import (
-    reject_manual_intervention_wrapper,
 )
 from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
 from domain.tools.wrapper.runbook_logs import answer_runbook_run_logs_wrapper
@@ -430,49 +416,6 @@ def build_form_tools(query, req: func.HttpRequest):
             query,
             how_to_callback(
                 get_github_token(req), get_github_user_from_form(req), log_query
-            ),
-            log_query,
-        )
-    ]
-
-    # tools to handle approval of manual intervention
-    approval_interruption_functions = [
-        FunctionDefinition(
-            tool,
-            callback=approve_manual_intervention_confirm_callback_wrapper(
-                get_github_user_from_form(req),
-                lambda: get_api_key_and_url(req),
-                log_query,
-            ),
-        )
-        for tool in approve_manual_intervention_wrapper(
-            query,
-            approve_manual_intervention_callback(
-                lambda: get_api_key_and_url(req),
-                get_github_user_from_form(req),
-                get_functions_connection_string(),
-                log_query,
-            ),
-            log_query,
-        )
-    ]
-    # tools to handle rejection of manual intervention
-    reject_interruption_functions = [
-        FunctionDefinition(
-            tool,
-            callback=reject_manual_intervention_confirm_callback_wrapper(
-                get_github_user_from_form(req),
-                lambda: get_api_key_and_url(req),
-                log_query,
-            ),
-        )
-        for tool in reject_manual_intervention_wrapper(
-            query,
-            reject_manual_intervention_callback(
-                lambda: get_api_key_and_url(req),
-                get_github_user_from_form(req),
-                get_functions_connection_string(),
-                log_query,
             ),
             log_query,
         )

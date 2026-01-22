@@ -1,7 +1,6 @@
 import datetime
 import json
 import os
-import urllib.parse
 from http.cookies import SimpleCookie
 
 import requests
@@ -47,7 +46,7 @@ from domain.sanitizers.url_sanitizer import quote_safe
 from domain.tools.wrapper.function_call import FunctionCall
 from domain.transformers.sse_transformers import convert_to_sse_response
 from domain.url.build_cookie import get_cookie_expiration
-from domain.url.build_url import build_url, build_unredirected_url
+from domain.url.build_url import build_unredirected_url
 from domain.url.session import create_session_blob, extract_session_blob
 from domain.url.url_builder import base_request_url
 from domain.versions.octopus_version import octopus_version_at_least
@@ -64,8 +63,8 @@ from infrastructure.callbacks import (
 from infrastructure.codefresh import get_codefresh_user
 from infrastructure.github import get_github_user, exchange_github_code
 from infrastructure.http_pool import http
-from infrastructure.octopus import get_current_user, create_limited_api_key, get_version
 from infrastructure.llm import llm_tool_query, NO_FUNCTION_RESPONSE
+from infrastructure.octopus import get_current_user, create_limited_api_key, get_version
 from infrastructure.terraform_context import delete_old_cached_items
 from infrastructure.users import (
     delete_old_user_details,
