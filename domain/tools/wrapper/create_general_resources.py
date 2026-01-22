@@ -26,6 +26,7 @@ def create_general_resources_wrapper(query, callback, logging):
         * Runbooks
 
         You will be penalized for selecting this function if the prompt mentions creating projects.
+        You will be penalized for selecting this function for a prompt like "Create a script project called My Project and then add a lifecycle called Application".
 
         Args:
             space_name: The optional name of the space
