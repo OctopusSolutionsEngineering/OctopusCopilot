@@ -1729,7 +1729,16 @@ data "octopusdeploy_accounts" "my_other_oidc_account" {
   * "Octopus.ArgoCDUpdateImageTags" - Update ArgoCD Image Tags step
   * "Octopus.DeployRelease" - Deploy a Release step
 * The "octopusdeploy" provider must set the "space_id" attribute to the value "trimspace(var.octopus_space_id)".
-* The Terraform variable "octopus_space_id" must be included.
+* The Terraform variable "octopus_space_id" must be included, for example:
+```
+variable "octopus_space_id" {
+    type        = string
+    nullable    = false
+    sensitive   = false
+    description = "The ID of the Octopus space to populate."
+}
+```
+
 * Terraform string interpolation must be implemented as "${}".
 * You will be penalized for using two curly brackets for string interpolation like "${{}}".
 * Dollar signs in script steps must be escaped with a second dollar sign like "$$", for example:
