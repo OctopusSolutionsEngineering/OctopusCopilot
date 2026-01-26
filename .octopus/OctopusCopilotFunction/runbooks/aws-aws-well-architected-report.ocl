@@ -261,7 +261,7 @@ process {
                     
                     You will be penalized for using the 🟡 ("Partially Compliant") status for best practices that the project is not compliant with.
                     
-                    You must use the 🔴 (meaning "Non-Compliant") status for best practices that the project is not compliant with.
+                    You must use the 🔴 (meaning "Non-Compliant") status for best practices that the project is not compliant with. For example, if the report for a best practice includes a phrase like "Therefore, the project does not meet the requirements for <requirment>.", the status must be 🔴.
                     
                     Provide a brief explanation for each assessment.
                     
