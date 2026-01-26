@@ -20,7 +20,7 @@ process {
             properties = {
                 Octopus.Action.Template.Id = "ActionTemplates-4021"
                 Octopus.Action.Template.Version = "1"
-                OctopusAI.Octopus.APIKey = "#{Octopus.Deploy.ApiKey}"
+                OctopusAI.Octopus.APIKey = "#{Octopus.ApiKey}"
                 OctopusAI.Octopus.Url = "#{Octopus.Web.ServerUri}"
                 OctopusAI.Prompt = <<-EOT
                     ## Introduction
