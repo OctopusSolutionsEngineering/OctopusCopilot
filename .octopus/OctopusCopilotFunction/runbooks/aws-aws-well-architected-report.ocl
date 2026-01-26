@@ -142,6 +142,8 @@ process {
                     
                     To be compliant with this requirement, the project must include a runbook to perform load testing.
                     
+                    Smoke tests do not satisfy this requirement.
+                    
                     To be non-compliant, the project does not include any step or runbook that performs load testing.
                     
                     # REL08-BP02: Integrate functional testing as part of your deployment
@@ -229,6 +231,8 @@ process {
                     # COST03-BP02 Add organization information to cost and usage
                     
                     To be compliant with this requirement, projects that deploy cloud resources must include tags that indicate the associated cost center or business unit.
+                    
+                    Tenant tags do not satisfy this requirement.
                     
                     To be non-compliant, projects do not include tags that indicate the associated cost center or business unit.
                     ## Project Compliance Report
