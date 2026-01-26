@@ -257,6 +257,8 @@ process {
                     
                     You will be penalized for using the ⚪ ("Not Applicable") status for best practices that do not include selection criteria.
                     
+                    You will be penalized for using the 🟢 (meaning "Compliant") status for best practices that the project is not compliant with.
+                    
                     Provide a brief explanation for each assessment.
                     
                     If a project is compliant, the 🟢 emoji must be used.
@@ -272,7 +274,7 @@ process {
                     
                     Add a line break between each section.
                     
-                    This is an example report:
+                    This is an example report format:
                     
                     🟢 ABCD-BVN12 Awesome Best Practice
                     
