@@ -268,6 +268,8 @@ process {
                     
                     Add a line break between each section.
                     
+                    Add the compliance status at the end of the section.
+                    
                     This is an example report format:
                     
                     [ABCD-BVN12 Awesome Best Practice](https://example.com/best-practice-url)
