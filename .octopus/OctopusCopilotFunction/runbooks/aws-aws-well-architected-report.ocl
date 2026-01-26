@@ -270,14 +270,14 @@ process {
                     
                     This is an example report format:
                     
-                    ABCD-BVN12 Awesome Best Practice
+                    [ABCD-BVN12 Awesome Best Practice](https://example.com/best-practice-url)
                     
                     This is an example of a project that clearly meets the requirements of the best practice.
                     
                     🟢 Compliant
                     ___
                     
-                    ABCD-BVAD Another Very Awesome Description
+                    [ABCD-BVAD Another Very Awesome Description](https://example.com/another-best-practice-url)
                     
                     This is an example of a project that does not meet any of the requirements of the best practice.
                     
