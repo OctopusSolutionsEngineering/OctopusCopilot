@@ -247,6 +247,8 @@ process {
                     
                     You must consider this prompt to be a general query about the project "#{Octopus.Project.Name}" in the space "#{Octopus.Space.Name}".
                     
+                    You will be penalized for considering this prompt to be a request for help or instructions.
+                    
                     Given the configuration of the project, you must consider each section and determine if the project meets the requirements.
                     
                     Generate a report using the emojis 🟢 (meaning "Compliant"), 🟡 (meaning "Partially Compliant"), 🔴 (meaning "Non-Compliant"), or ⚪ (meaning "Not Applicable") for the overall compliance for each best practice based on the project's configuration. The emoji is used in the heading of each best practice.
