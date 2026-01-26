@@ -130,7 +130,7 @@ def general_query_callback(github_user, octopus_details, log_query):
         # the details of all the steps. However, it is useful to know if the project was configured to use Config-as-Code.
         # We add these details manually.
         for project_name in project_names:
-            if not project_name:
+            if not project_name or not project_name.strip():
                 continue
 
             project = get_project(space_id, project_name, api_key, url)
