@@ -130,17 +130,23 @@ def general_query_callback(github_user, octopus_details, log_query):
         # the details of all the steps. However, it is useful to know if the project was configured to use Config-as-Code.
         # We add these details manually.
         for project_name in project_names:
+            if not project_name:
+                continue
+
             project = get_project(space_id, project_name, api_key, url)
-            if project:
-                uses_cac = project.get("IsVersionControlled", False)
-                if uses_cac:
-                    response.append(
-                        f"Project '{project_name}' is configured to use Config-as-Code. This information takes precedence over the is_version_controlled property."
-                    )
-                else:
-                    response.append(
-                        f"Project '{project_name}' is not configured to use Config-as-Code."
-                    )
+
+            if not project:
+                continue
+
+            uses_cac = project.get("IsVersionControlled", False)
+            if uses_cac:
+                response.append(
+                    f"Project '{project_name}' is configured to use Config-as-Code. This information takes precedence over the is_version_controlled property."
+                )
+            else:
+                response.append(
+                    f"Project '{project_name}' is not configured to use Config-as-Code."
+                )
 
         debug_text.extend(
             get_params_message(
