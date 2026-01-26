@@ -30,7 +30,7 @@ process {
                     
                     Each section contains a checklist of best practices to follow. Some sections include a rationale for why the provided Octopus implementation supports the best practice.
                     
-                    # OPS05-BP01 Use version control
+                    # [OPS05-BP01 Use version control](https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/ops_dev_integ_version_control.html)
                     
                     To be compliant with this requirement, the following steps must source their scripts and templates from Git:
                       * Script steps
@@ -50,7 +50,7 @@ process {
                     
                     Configuring steps that use scripts and templates to source their code from Git ensures they meet the requirement of using version control.
                     
-                    # OPS05-BP03 Use configuration management systems
+                    # [OPS05-BP03 Use configuration management systems](https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/ops_dev_integ_conf_mgmt_sys.html)
                     
                     The project is compliant if it sources values from variables.
                     The project is compliant if it use external configuration management systems such as Hashicorp Vault, AWS Systems Manager Parameter Store, or AWS Secrets Manager.
@@ -61,13 +61,13 @@ process {
                     
                     To be non-compliant, the deployment process uses duplicate values across multiple steps.
                     
-                    # OPS02-BP01 Resources have identified owners
+                    # [OPS02-BP01 Resources have identified owners](https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/ops_ops_model_def_resource_owners.html)
                     
                     To be compliant with this requirement, all projects must indicate who owns them.
                     
                     To be non-compliant, the project does not indicate who owns them.
                     
-                    # OPS03-BP05 Experimentation is encouraged
+                    # [OPS03-BP05 Experimentation is encouraged](https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/ops_org_culture_team_enc_experiment.html)
                     
                     To be compliant with this requirement, the project must use Config-as-Code.
                     
@@ -77,15 +77,7 @@ process {
                     
                     Config-as-Code allows the deployment process to be modified in a Git branch, tested, and reviewed before being merged into the main branch. This allows teams to experiment with changes without impacting production workloads.
                     
-                    # OPS04-BP01 Identify key performance indicators
-                    
-                    To be compliant with this requirement, the project must be included in an insights dashboard.
-                    
-                    This requirement also contributes to:
-                    
-                    * OPS09-BP01 Measure operations goals and KPIs with metrics
-                    
-                    # OPS05-BP02 Test and validate changes
+                    # [OPS05-BP02 Test and validate changes](https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/ops_dev_integ_test_val_chg.html)
                     
                     To be compliant with this requirement, the deployment process must include one or more steps that test or validate changes during deployments such as:
                     * Unit tests
@@ -140,7 +132,7 @@ process {
                     
                     
                     
-                    # REL07-BP04 Load test your workload
+                    # [REL07-BP04 Load test your workload](https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/rel_adapt_to_changes_load_tested_adapt.html)
                     
                     To be compliant with this requirement, the project must include a runbook to perform load testing.
                     
@@ -148,7 +140,7 @@ process {
                     
                     To be non-compliant, the project does not include any step or runbook that performs load testing.
                     
-                    # REL08-BP02: Integrate functional testing as part of your deployment
+                    # [REL08-BP02: Integrate functional testing as part of your deployment](https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/rel_tracking_change_management_functional_testing.html)
                     
                     To be compliant with this requirement, the deployment process must:
                     
@@ -160,45 +152,45 @@ process {
                         * Load tests
                     * Include steps that implement rollbacks
                     
-                    # REL08-BP03 Integrate resiliency testing as part of your deployment
+                    # [REL08-BP03 Integrate resiliency testing as part of your deployment](https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/rel_tracking_change_management_resiliency_testing.html)
                     
                     To be compliant with this requirement, the deployment process or runbooks must include chaos testing.
                     
                     To be non-compliant, there are no steps or runbooks that perform chaos testing.
                     
-                    # REL09-BP01 Identify and back up all data that needs to be backed up, or reproduce the data from sources
+                    # [REL09-BP01 Identify and back up all data that needs to be backed up, or reproduce the data from sources](https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/rel_backing_up_data_identified_backups_data.html)
                     
                     To be compliant with this requirement, the project must include a runbook to back up data.
                     
                     To be non-compliant, there is no step or runbook that automates the backup process.
                     
-                    # REL09-BP03 Perform data backup automatically
+                    # [REL09-BP03 Perform data backup automatically](https://docs.aws.amazon.com/wellarchitected/2023-10-03/framework/rel_backing_up_data_automated_backups_data.html)
                     
                     To be compliant with this requirement, the backup runbook must be run on a trigger.
                     
                     To be non-compliant, there is no runbook or step that performs a backup, or the backup runbook is only run manually.
                     
-                    # REL10-BP01 Deploy the workload to multiple locations
+                    # [REL10-BP01 Deploy the workload to multiple locations](https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/rel_fault_isolation_multiaz_region_system.html)
                     
                     To be compliant with this requirement, cloud deployments must be deployed to multiple regions or availability zones.
                     
                     To be non-compliant, the deployment process only deploys to a single region or availability zone.
                     
                     Deploying to multiple environments does not indicate compliance unless those environments are in different regions or availability zones.
-                    # SEC01-BP01 Separate workloads using accounts
+                    # [SEC01-BP01 Separate workloads using accounts](https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_securely_operate_multi_accounts.html)
                     
                     To be compliant with this requirement, accounts must be scoped to different environments.
                     
                     To be non-compliant, the same account is used for multiple environments.
                     
-                    # SEC11-BP02: Automate testing throughout the development and release lifecycle
+                    # [SEC11-BP02: Automate testing throughout the development and release lifecycle](https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_appsec_automate_testing_throughout_lifecycle.html)
                     
                     To be compliant with this requirement, the deployment process must include security or vulnerability scanning steps.
                     
                     This requirement also contributes to:
                     * SEC06-BP01 Perform vulnerability management
                     
-                    # SEC11-BP07: Regularly assess security properties of the pipelines
+                    # [SEC11-BP07: Regularly assess security properties of the pipelines](https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_appsec_regularly_assess_security_properties_of_pipelines.html)
                     
                     To be compliant with this requirement:
                     
@@ -224,13 +216,13 @@ process {
                     
                     OIDC accounts remove the need to store long-lived credentials within Octopus Deploy.
                     
-                    # SEC10-BP01 Identify key personnel and external resources
+                    # [SEC10-BP01 Identify key personnel and external resources](https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_incident_response_identify_personnel.html)
                     
                     To be compliant with this requirement, all projects must identify security personnel responsible for the project.
                     
                     To be non-compliant, security personnel are not identified for the project.
                     
-                    # COST03-BP02 Add organization information to cost and usage
+                    # [COST03-BP02 Add organization information to cost and usage](https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/cost_monitor_usage_org_information.html)
                     
                     Top meet the selection criteria for this best practice, the project must deploy cloud resources.
                     
