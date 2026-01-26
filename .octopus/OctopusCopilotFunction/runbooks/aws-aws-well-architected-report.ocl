@@ -274,13 +274,13 @@ process {
                     
                     🟢 ABCD-BVN12 Awesome Best Practice
                     
-                    Scripts and templates (Script steps, CloudFormation, Kubernetes YAML, Terraform) are sourced from Git. Config-as-Code is used.
+                    This is an example of a project that clearly meets the requirements of the best practice.
                     
                     ___
                     
                     🔴 ABCD-BVAD Another Very Awesome Description
                     
-                    Config-as-Code is required for experimentation, and the project does not use Config-as-Code.
+                    This is an example of a project that does not meet any of the requirements of the best practice.
                     EOT
             }
             worker_pool = "hosted-ubuntu"
