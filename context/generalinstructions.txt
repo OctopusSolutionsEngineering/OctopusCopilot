@@ -1677,6 +1677,11 @@ data "octopusdeploy_accounts" "my_other_oidc_account" {
 
 * When the prompt indicates that a step requires an account, the associated account data source and resource must be created.
 
+## Worker Instructions
+
+* The "octopusdeploy_ssh_connection_worker" resources must define the "account_id", "fingerprint", and "host" attributes.
+* You will be penalized for supplying empty strings to the "account_id", "fingerprint", and "host" attributes in the "octopusdeploy_ssh_connection_worker" resource.
+
 ## Terraform Instructions
 * All resource and data names must start with a character or underscore.
 * When resource names are based on a string that starts with a number, for example "123 My Resource", you must prefix the resource name with an underscore, for example " _123_my_resource", "_08_script_project", or "_14_kubernetes_with_mock_target_octopus_project_workerpool_1".
