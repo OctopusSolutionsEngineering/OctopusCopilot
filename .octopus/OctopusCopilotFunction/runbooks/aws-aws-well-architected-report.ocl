@@ -261,6 +261,8 @@ process {
                     
                     You will be penalized for using the 🟡 ("Partially Compliant") status for best practices that the project is not compliant with.
                     
+                    You must use the 🔴 (meaning "Non-Compliant") status for best practices that the project is not compliant with.
+                    
                     Provide a brief explanation for each assessment.
                     
                     If a project is compliant, the 🟢 emoji must be used.
