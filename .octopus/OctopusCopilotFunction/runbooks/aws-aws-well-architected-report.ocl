@@ -272,23 +272,24 @@ process {
                     
                     You must include a blank line between the heading and the explanation.
                     
-                    You will be penalized for using phrases like "Status: Compliant", "Non-Compliant", or "Therefore, only partial compliance", as the emojis indicates the compliance level.
-                    
                     You will be penalized for reporting on an assumed space or project.
                     
                     Add a line break between each section.
                     
                     This is an example report format:
                     
-                    🟢 ABCD-BVN12 Awesome Best Practice
+                    ABCD-BVN12 Awesome Best Practice
                     
                     This is an example of a project that clearly meets the requirements of the best practice.
                     
+                    🟢 Compliant
                     ___
                     
-                    🔴 ABCD-BVAD Another Very Awesome Description
+                    ABCD-BVAD Another Very Awesome Description
                     
                     This is an example of a project that does not meet any of the requirements of the best practice.
+                    
+                    🔴 Not Compliant
                     EOT
             }
             worker_pool = "hosted-ubuntu"
