@@ -230,11 +230,15 @@ process {
                     
                     # COST03-BP02 Add organization information to cost and usage
                     
+                    Top meet the selection criteria for this best practice, the project must deploy cloud resources.
+                    
                     To be compliant with this requirement, projects that deploy cloud resources must include tags that indicate the associated cost center or business unit.
                     
                     Tenant tags do not satisfy this requirement.
                     
                     To be non-compliant, projects do not include tags that indicate the associated cost center or business unit.
+                    
+                    You will be penalized for reporting this project as partially compliant if there are no tags that indicate the associated cost center or business unit.
                     ## Project Compliance Report
                     
                     You must consider this prompt to be a general query about the project "#{Octopus.Project.Name}" in the space "#{Octopus.Space.Name}".
