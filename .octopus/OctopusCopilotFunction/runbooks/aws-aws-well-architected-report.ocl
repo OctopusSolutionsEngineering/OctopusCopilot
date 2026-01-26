@@ -1,0 +1,277 @@
+name = "AWS AWS Well-Architected Report"
+default_guided_failure_mode = "EnvironmentDefault"
+description = ""
+environment_scope = "Specified"
+environments = ["administration"]
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    type = "Default"
+}
+
+process {
+    step "octopus-prompt-ai" {
+        name = "Octopus - Prompt AI"
+
+        action {
+            properties = {
+                Octopus.Action.Template.Id = "ActionTemplates-4021"
+                Octopus.Action.Template.Version = "1"
+                OctopusAI.Octopus.APIKey = "#{Octopus.Deploy.ApiKey}"
+                OctopusAI.Octopus.Url = "#{Octopus.Web.ServerUri}"
+                OctopusAI.Prompt = <<-EOT
+                    ## Introduction
+                    
+                    This document describes the best practices and principals for achieving operational excellence in an organization based on the
+                    AWS Well-Architected Framework.
+                    
+                    Each section contains a checklist of best practices to follow. Some sections include a rationale for why the provided Octopus implementation supports the best practice.
+                    
+                    # OPS05-BP01 Use version control
+                    
+                    To be compliant with this requirement, the following steps must source their scripts and templates from Git:
+                      * Script steps
+                      * Cloudformation steps
+                      * Kubernetes raw YAML steps
+                      * Terraform steps
+                    
+                    The project must also use Config-as-Code.
+                    
+                    To be non-compliant, script steps must set the property "Octopus.Action.Script.ScriptSource" to "Inline".
+                    
+                    ## Rational
+                    
+                    Config-as-Code allows the deployment process to be persisted in version control.
+                    
+                    Configuring steps that use scripts and templates to source their code from Git ensures they meet the requirement of using version control.
+                    
+                    # OPS05-BP03 Use configuration management systems
+                    
+                    The project is compliant if it sources values from variables.
+                    The project is compliant if it use external configuration management systems such as Hashicorp Vault, AWS Systems Manager Parameter Store, or AWS Secrets Manager.
+                    
+                    You will be penalized for reporting this project as non-compliant if it uses both variables and external configuration management systems.
+                    You will be penalized for reporting this project as non-compliant if it only uses variables and do not use external configuration management systems.
+                    You will be penalized for reporting this project as non-compliant if it uses hard-coded values for non-sensitive data that is unique to each step.
+                    
+                    To be non-compliant, the deployment process uses duplicate values across multiple steps.
+                    
+                    # OPS02-BP01 Resources have identified owners
+                    
+                    To be compliant with this requirement, all projects must indicate who owns them.
+                    
+                    To be non-compliant, the project does not indicate who owns them.
+                    
+                    # OPS03-BP05 Experimentation is encouraged
+                    
+                    To be compliant with this requirement, the project must use Config-as-Code.
+                    
+                    To be non-compliant, the project does not use Config-as-Code.
+                    
+                    ## Rational
+                    
+                    Config-as-Code allows the deployment process to be modified in a Git branch, tested, and reviewed before being merged into the main branch. This allows teams to experiment with changes without impacting production workloads.
+                    
+                    # OPS04-BP01 Identify key performance indicators
+                    
+                    To be compliant with this requirement, the project must be included in an insights dashboard.
+                    
+                    This requirement also contributes to:
+                    
+                    * OPS09-BP01 Measure operations goals and KPIs with metrics
+                    
+                    # OPS05-BP02 Test and validate changes
+                    
+                    To be compliant with this requirement, the deployment process must include one or more steps that test or validate changes during deployments such as:
+                    * Unit tests
+                    * Integration tests
+                    * End-to-end tests
+                    * Smoke tests
+                    * Load tests
+                    
+                    This requirements also contributes:
+                    
+                    * REL08-BP02: Integrate functional testing as part of your deployment
+                    * REL08-BP04: Deploy using immutable infrastructure
+                    * REL07-BP04: Load test your workload
+                    * OPS06-BP02 Test deployments
+                    
+                    
+                    
+                    # OPS06-BP01 Plan for unsuccessful changes
+                    
+                    To be compliant with this requirement, the deployment process must include steps that indicate rollback behaviour.
+                    
+                    This requirement also contributes to:
+                    
+                    * OPS06-BP04 Automate testing and rollback
+                    * OPS07-BP05 Make informed decisions to deploy systems and changes
+                    * SEC11-BP06: Deploy software programmatically
+                    * REL08-BP02: Integrate functional testing as part of your deployment
+                    * REL08-BP04: Deploy using immutable infrastructure
+                    * REL08-BP05: Deploy changes with automation
+                    
+                    # OPS06-BP03 Employ safe deployment strategies
+                    
+                    To be compliant with this requirement, the deployment process must include one or more of the following deployment strategies:
+                    * Blue/Green deployments
+                    * Canary deployments
+                    * Rolling deployments
+                    * Traffic Splitting
+                    * Feature Toggles or Flags
+                    
+                    Features that indicate blue/green deployments are:
+                    * Azure functions using deployment slots
+                    * AWS Lambda using aliases
+                    
+                    To be non-compliant, the deployment process uses only all-at-once deployments.
+                    
+                    This requirement also contributes to:
+                    * REL08-BP04: Deploy using immutable infrastructure
+                    
+                    # OPS10-BP07 Automate responses to events
+                    
+                    To be compliant with this requirement, the deployment process must include steps that generate notifications on failure.
+                    
+                    
+                    
+                    # REL07-BP04 Load test your workload
+                    
+                    To be compliant with this requirement, the project must include a runbook to perform load testing.
+                    
+                    To be non-compliant, the project does not include any step or runbook that performs load testing.
+                    
+                    # REL08-BP02: Integrate functional testing as part of your deployment
+                    
+                    To be compliant with this requirement, the deployment process must:
+                    
+                    * Include steps that implement one or more of the following tests:
+                        * Unit tests
+                        * Integration tests
+                        * End-to-end tests
+                        * Smoke tests
+                        * Load tests
+                    * Include steps that implement rollbacks
+                    
+                    # REL08-BP03 Integrate resiliency testing as part of your deployment
+                    
+                    To be compliant with this requirement, the deployment process or runbooks must include chaos testing.
+                    
+                    To be non-compliant, there are no steps or runbooks that perform chaos testing.
+                    
+                    # REL09-BP01 Identify and back up all data that needs to be backed up, or reproduce the data from sources
+                    
+                    To be compliant with this requirement, the project must include a runbook to back up data.
+                    
+                    To be non-compliant, there is no step or runbook that automates the backup process.
+                    
+                    # REL09-BP03 Perform data backup automatically
+                    
+                    To be compliant with this requirement, the backup runbook must be run on a trigger.
+                    
+                    To be non-compliant, there is no runbook or step that performs a backup, or the backup runbook is only run manually.
+                    
+                    # REL10-BP01 Deploy the workload to multiple locations
+                    
+                    To be compliant with this requirement, cloud deployments must be deployed to multiple regions or availability zones.
+                    
+                    To be non-compliant, the deployment process only deploys to a single region or availability zone.
+                    
+                    Deploying to multiple environments does not indicate compliance unless those environments are in different regions or availability zones.
+                    # SEC01-BP01 Separate workloads using accounts
+                    
+                    To be compliant with this requirement, accounts must be scoped to different environments.
+                    
+                    To be non-compliant, the same account is used for multiple environments.
+                    
+                    # SEC11-BP02: Automate testing throughout the development and release lifecycle
+                    
+                    To be compliant with this requirement, the deployment process must include security or vulnerability scanning steps.
+                    
+                    This requirement also contributes to:
+                    * SEC06-BP01 Perform vulnerability management
+                    
+                    # SEC11-BP07: Regularly assess security properties of the pipelines
+                    
+                    To be compliant with this requirement:
+                    
+                    * Teams must be used to provide separate duties for deployment and editing of projects.
+                    * Projects must also only use OIDC accounts.
+                    * Projects that have prompted variables must have steps to validate the inputs.
+                    
+                    The project is non-compliant if it uses any of the following account types, as these do not support OIDC:
+                    
+                    * octopusdeploy_azure_service_principal
+                    * octopusdeploy_aws_account
+                    * octopusdeploy_gcp_account
+                    * octopusdeploy_username_password_account
+                    * octopusdeploy_token_account
+                    
+                    This requirement also contributes to:
+                    * SEC02-BP02 Use temporary credentials
+                    * SEC02-BP04 Rely on a centralized identity provider
+                    * SEC02-BP06 Employ user groups and attributes
+                    * SEC03-BP02 Grant least privilege access
+                    
+                    ## Rational
+                    
+                    OIDC accounts remove the need to store long-lived credentials within Octopus Deploy.
+                    
+                    # SEC10-BP01 Identify key personnel and external resources
+                    
+                    To be compliant with this requirement, all projects must identify security personnel responsible for the project.
+                    
+                    To be non-compliant, security personnel are not identified for the project.
+                    
+                    # COST03-BP02 Add organization information to cost and usage
+                    
+                    To be compliant with this requirement, projects that deploy cloud resources must include tags that indicate the associated cost center or business unit.
+                    
+                    To be non-compliant, projects do not include tags that indicate the associated cost center or business unit.
+                    ## Project Compliance Report
+                    
+                    You must consider this prompt to be a general query about the project "#{Octopus.Project.Name}" in the space "#{Octopus.Space.Name}".
+                    
+                    Given the configuration of the project, you must consider each section and determine if the project meets the requirements.
+                    
+                    Generate a report using the emojis 🟢 (meaning "Compliant"), 🟡 (meaning "Partially Compliant"), 🔴 (meaning "Non-Compliant"), or ⚪ (meaning "Not Applicable") for the overall compliance for each best practice based on the project's configuration. The emoji is used in the heading of each best practice.
+                    
+                    The ⚪ ("Not Applicable") status is only used when the best practice specifically indicates the selection criteria used to determine that the best practice applies to a project or step, and the project or step does not meet those criteria.
+                    
+                    You will be penalized for using the ⚪ ("Not Applicable") status for best practices that do not include selection criteria.
+                    
+                    Provide a brief explanation for each assessment.
+                    
+                    If a project is compliant, the 🟢 emoji must be used.
+                    If a project is partially compliant, the 🟡 emoji must be used.
+                    If a project is non-compliant, the 🔴 emoji must be used.
+                    If a project is not applicable, the ⚪ emoji must be used.
+                    
+                    You must include a blank line between the heading and the explanation.
+                    
+                    You will be penalized for using phrases like "Status: Compliant", "Non-Compliant", or "Therefore, only partial compliance", as the emojis indicates the compliance level.
+                    
+                    You will be penalized for reporting on an assumed space or project.
+                    
+                    Add a line break between each section.
+                    
+                    This is an example report:
+                    
+                    🟢 ABCD-BVN12 Awesome Best Practice
+                    
+                    Scripts and templates (Script steps, CloudFormation, Kubernetes YAML, Terraform) are sourced from Git. Config-as-Code is used.
+                    
+                    ___
+                    
+                    🔴 ABCD-BVAD Another Very Awesome Description
+                    
+                    Config-as-Code is required for experimentation, and the project does not use Config-as-Code.
+                    EOT
+            }
+            worker_pool = "hosted-ubuntu"
+        }
+    }
+}
