@@ -257,7 +257,9 @@ process {
                     
                     You will be penalized for using the ⚪ ("Not Applicable") status for best practices that do not include selection criteria.
                     
-                    You will be penalized for using the 🟢 (meaning "Compliant") status for best practices that the project is not compliant with.
+                    You will be penalized for using the 🟢 ("Compliant") status for best practices that the project is not compliant with.
+                    
+                    You will be penalized for using the 🟡 ("Partially Compliant") status for best practices that the project is not compliant with.
                     
                     Provide a brief explanation for each assessment.
                     
