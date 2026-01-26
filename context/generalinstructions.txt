@@ -1402,6 +1402,8 @@ resource "octopusdeploy_process_step" "process_step_serverless_api_9231_deploy_l
 * The "website" attribute in a data "octopusdeploy_community_step_template" must be copied literally.
 * You will be penalized for changing the "website" attribute in a data "octopusdeploy_community_step_template".
 * The "properties" attribute must be added to "octopusdeploy_step_template" resources.
+* The "id" property in the objects in the "parameters" array must be a GUID.
+* You will be penalized for defining an "id" property in the objects in the "parameters" array to plain text like "array-input".
 
 ## Octopus Variable Syntax Instructions
 
