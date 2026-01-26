@@ -40,7 +40,9 @@ process {
                     
                     The project must also use Config-as-Code.
                     
-                    To be non-compliant, script steps must set the property "Octopus.Action.Script.ScriptSource" to "Inline".
+                    This project is non-compliant if script steps set the property "Octopus.Action.Script.ScriptSource" to "Inline".
+                    
+                    You will be penalized for reporting this project as compliant if the project does not use Config-as-Code.
                     
                     ## Rational
                     
