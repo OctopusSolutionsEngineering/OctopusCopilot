@@ -20,7 +20,7 @@ process {
             properties = {
                 Octopus.Action.Template.Id = "ActionTemplates-4021"
                 Octopus.Action.Template.Version = "1"
-                OctopusAI.Octopus.APIKey = "#{Octopus.Deploy.ApiKey}"
+                OctopusAI.Octopus.APIKey = "#{Octopus.ApiKey}"
                 OctopusAI.Octopus.Url = "#{Octopus.Web.ServerUri}"
                 OctopusAI.Prompt = <<-EOT
                     ## Introduction
@@ -40,7 +40,9 @@ process {
                     
                     The project must also use Config-as-Code.
                     
-                    To be non-compliant, script steps must set the property "Octopus.Action.Script.ScriptSource" to "Inline".
+                    This project is non-compliant if script steps set the property "Octopus.Action.Script.ScriptSource" to "Inline".
+                    
+                    You will be penalized for reporting this project as compliant if the project does not use Config-as-Code.
                     
                     ## Rational
                     
@@ -142,6 +144,8 @@ process {
                     
                     To be compliant with this requirement, the project must include a runbook to perform load testing.
                     
+                    Smoke tests do not satisfy this requirement.
+                    
                     To be non-compliant, the project does not include any step or runbook that performs load testing.
                     
                     # REL08-BP02: Integrate functional testing as part of your deployment
@@ -228,9 +232,17 @@ process {
                     
                     # COST03-BP02 Add organization information to cost and usage
                     
-                    To be compliant with this requirement, projects that deploy cloud resources must include tags that indicate the associated cost center or business unit.
+                    Top meet the selection criteria for this best practice, the project must deploy cloud resources.
                     
-                    To be non-compliant, projects do not include tags that indicate the associated cost center or business unit.
+                    This project is compliant if it deploys cloud resources and defines tags that indicate the associated cost center or business unit.
+                    
+                    Tenant tags do not satisfy this best practice.
+                    
+                    This project is non-compliant if it does not include tags that indicate the associated cost center or business unit.
+                    
+                    You will be penalized for reporting this project as partially compliant if there are no tags that indicate the associated cost center or business unit.
+                    
+                    You will be penalized for reporting this project as partially compliant if it only includes tenant tags.
                     ## Project Compliance Report
                     
                     You must consider this prompt to be a general query about the project "#{Octopus.Project.Name}" in the space "#{Octopus.Space.Name}".
@@ -262,13 +274,13 @@ process {
                     
                     🟢 ABCD-BVN12 Awesome Best Practice
                     
-                    Scripts and templates (Script steps, CloudFormation, Kubernetes YAML, Terraform) are sourced from Git. Config-as-Code is used.
+                    This is an example of a project that clearly meets the requirements of the best practice.
                     
                     ___
                     
                     🔴 ABCD-BVAD Another Very Awesome Description
                     
-                    Config-as-Code is required for experimentation, and the project does not use Config-as-Code.
+                    This is an example of a project that does not meet any of the requirements of the best practice.
                     EOT
             }
             worker_pool = "hosted-ubuntu"
