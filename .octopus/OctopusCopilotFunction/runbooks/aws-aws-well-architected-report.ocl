@@ -44,6 +44,8 @@ process {
                     
                     You will be penalized for reporting this project as compliant if the project does not use Config-as-Code.
                     
+                    You must ignore the "is_version_controlled" settings when evaluating this requirement. You must only consider the instructions like "Project '#{Octopus.Project.Name}' is configured to use Config-as-Code" or "Project '#{Octopus.Project.Name}' is not configured to use Config-as-Code."
+                    
                     ## Rational
                     
                     Config-as-Code allows the deployment process to be persisted in version control.
