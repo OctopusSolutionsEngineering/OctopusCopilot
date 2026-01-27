@@ -35,6 +35,8 @@ process {
                     You must ignore the "is_version_controlled" settings when evaluating whether a project is configured with Config-as-Code, as this value is always "false".
                     
                     You must only consider the instructions like "Project '#{Octopus.Project.Name}' is configured to use Config-as-Code" or "Project '#{Octopus.Project.Name}' is not configured to use Config-as-Code."
+                    
+                    If you see the instruction "Project '#{Octopus.Project.Name}' is not configured to use Config-as-Code", this is definitive evidence that the project does not use Config-as-Code.
                     # [OPS05-BP01 Use version control](https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/ops_dev_integ_version_control.html)
                     
                     To be compliant with this requirement, the following steps must source their scripts and templates from Git:
