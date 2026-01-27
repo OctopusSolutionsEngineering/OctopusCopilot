@@ -136,7 +136,7 @@ def general_query_callback(github_user, octopus_details, log_query):
             if not project_name or not project_name.strip():
                 continue
 
-            project = get_project(space_id, project_name, api_key, url)
+            project = get_project(space_id, project_name, auth, url)
 
             if not project:
                 continue
