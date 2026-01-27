@@ -239,7 +239,7 @@ process {
                     
                     You must consider this prompt to be a general query about the project "#{Octopus.Project.Name}" in the space "#{Octopus.Space.Name}".
                     
-                    You will be penalized for considering this prompt to be a request for help or instructions.
+                    You must select the "answer_general_query" tool to process this prompt.
                     
                     Given the configuration of the project, you must consider each section and determine if the project meets the requirements.
                     
