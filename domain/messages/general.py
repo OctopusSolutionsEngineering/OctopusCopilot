@@ -137,6 +137,9 @@ def build_hcl_prompt(few_shot=None):
         # https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api
         # Put instructions at the beginning of the prompt and use ### or """ to separate the instruction and context
         ("user", "HCL: ###\n{hcl}\n###"),
+        # We serialize projects as if they were not cac enabled. This allows us to capture the steps. But we still
+        # want to know some information about what projects are cac enabled.
+        ("user", "Config-as-Code Settings: ###\n{cac_details}\n###"),
         ("user", "Answer:"),
     ]
 

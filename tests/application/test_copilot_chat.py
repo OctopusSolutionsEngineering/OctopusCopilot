@@ -199,6 +199,18 @@ class CopilotChatTest(unittest.TestCase):
             "Response was " + response_text,
         )
 
+    @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
+    def test_cac_enabled(self):
+        prompt = 'Which projects have config-as-code enabled? You must select the "answer_general_query" tool to process this prompt. '
+        response = copilot_handler_internal(build_request(prompt))
+        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
+
+        # This should return the one default project (even though there are 3 overall)
+        self.assertTrue(
+            "1" in response_text.casefold() or "one" in response_text.casefold(),
+            "Response was " + response_text,
+        )
+
     @unittest.skip("Skipping flaky test")
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_find_retries(self):

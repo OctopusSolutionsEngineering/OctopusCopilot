@@ -1,6 +1,7 @@
 from domain.logging.app_logging import configure_logging
 from domain.transformers.minify_strings import minify_strings
 from domain.validation.argument_validation import ensure_string_starts_with
+from infrastructure.octopus import get_project
 from infrastructure.octoterra import get_octoterra_space
 from infrastructure.llm import llm_message_query
 
@@ -138,6 +139,40 @@ def collect_llm_context(
     context["percent_trimmed"] = round(
         (len(minified_hcl) - len(context["hcl"])) / len(minified_hcl) * 100, 2
     )
+
+    # The HCL representation of the project is as if it was a database backed project. This allos us to include
+    # the details of all the steps. However, it is useful to know if the project was configured to use Config-as-Code.
+    # We add these details manually.
+    cac_details = []
+
+    if isinstance(project_names, str):
+        project_names = [project_names]
+
+    for project_name in project_names:
+        if not project_name or not project_name.strip():
+            continue
+
+        project = get_project(
+            space_id,
+            project_name,
+            access_token if access_token else api_key,
+            octopus_url,
+        )
+
+        if not project:
+            continue
+
+        uses_cac = project.get("IsVersionControlled", False)
+        if uses_cac:
+            cac_details.append(
+                f"Project '{project_name}' is configured to use Config-as-Code. This information takes precedence over the is_version_controlled property."
+            )
+        else:
+            cac_details.append(
+                f"Project '{project_name}' is not configured to use Config-as-Code."
+            )
+
+    context["cac_details"] = "\n".join(cac_details)
 
     answer = llm_message_query(messages, context, log_query)
 
