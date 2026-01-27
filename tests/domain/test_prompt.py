@@ -3,7 +3,9 @@ import unittest
 from langchain_core.prompts import ChatPromptTemplate
 
 from domain.messages.deployment_logs import build_plain_text_prompt
-from domain.messages.deployments_and_releases import build_deployments_and_releases_prompt
+from domain.messages.deployments_and_releases import (
+    build_deployments_and_releases_prompt,
+)
 from domain.messages.general import build_hcl_prompt
 
 
@@ -16,8 +18,7 @@ class PromptTest(unittest.TestCase):
         messages = build_hcl_prompt()
         template = ChatPromptTemplate.from_messages(messages)
         template.format_messages(
-            hcl="hcl_context",
-            input="What is your name?"
+            hcl="hcl_context", input="What is your name?", cac_details=""
         )
 
     def test_plain_text_prompt(self):
@@ -27,10 +28,7 @@ class PromptTest(unittest.TestCase):
         """
         messages = build_plain_text_prompt()
         template = ChatPromptTemplate.from_messages(messages)
-        template.format_messages(
-            context="hcl_context",
-            input="What is your name?"
-        )
+        template.format_messages(context="hcl_context", input="What is your name?")
 
     def test_build_deployments_and_releases_prompt(self):
         """
@@ -42,5 +40,5 @@ class PromptTest(unittest.TestCase):
         template.format_messages(
             hcl="hcl_context",
             json="json_context",
-            input="What is your name?"
+            input="What is your name?",
         )
