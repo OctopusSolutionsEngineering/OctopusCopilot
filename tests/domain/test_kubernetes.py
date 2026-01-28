@@ -729,8 +729,7 @@ resource "octopusdeploy_deployment_process" "deployment_process_my_app" {
         resource "octopusdeploy_project" "project" {
           name = "A new value"
           something = octopusdeploy_kubernetes_cluster_deployment_target.test.id
-        }
-        
+        }        
         # 1blah
         2blah
         """
