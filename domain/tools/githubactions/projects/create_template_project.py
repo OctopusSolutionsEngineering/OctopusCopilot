@@ -34,6 +34,7 @@ from domain.sanitizers.terraform import (
     replace_certificate_data,
     sanitize_slugs,
     sanitize_primary_package,
+    replace_resource_names_with_digit,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -315,6 +316,9 @@ def create_template_project_callback(
 
                 # Replace anything that looks like a password
                 configuration = replace_passwords(configuration)
+
+                # Fix up invalid resource and data names
+                configuration = replace_resource_names_with_digit(configuration)
 
                 # The certificate data needs to be valid but generic to prevent leaking sensitive information
                 configuration = replace_certificate_data(configuration)

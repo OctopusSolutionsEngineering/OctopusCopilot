@@ -100,6 +100,18 @@ def replace_passwords(config):
     )
 
 
+def replace_resource_names_with_digit(config):
+    """
+    LLMs seemed to struggle with the rule to build resources that start with a character rather than a digit.
+    """
+
+    fixed_config = config
+    for match in re.finditer(r'(resource|data)\s+".*?"\s+"([0-9].*?)"', config):
+        fixed_config = fixed_config.replace(match.group(2), f"_{match.group(2)}")
+
+    return fixed_config
+
+
 def replace_certificate_data(config):
     """
     Replace any certificate data with a placeholder value.

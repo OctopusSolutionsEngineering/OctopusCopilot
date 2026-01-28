@@ -17,6 +17,7 @@ from domain.sanitizers.terraform import (
     replace_passwords,
     sanitize_slugs,
     sanitize_primary_package,
+    replace_resource_names_with_digit,
 )
 
 
@@ -695,6 +696,47 @@ resource "octopusdeploy_deployment_process" "deployment_process_my_app" {
 """
         sanitized_config = sanitize_primary_package(config)
         self.assertEqual(expected.strip(), sanitized_config.strip())
+
+    def test_resource_names(self):
+        input_config = """
+        resource "octopusdeploy_kubernetes_cluster_deployment_target" "1test" {
+          name = "A value"
+        }
+        resource "octopusdeploy_project" "project" {
+          name = "A new value"
+          something = octopusdeploy_kubernetes_cluster_deployment_target.1test.id
+        }
+        """
+
+        expected_output = """
+        resource "octopusdeploy_kubernetes_cluster_deployment_target" "_1test" {
+          name = "A value"
+        }
+        resource "octopusdeploy_project" "project" {
+          name = "A new value"
+          something = octopusdeploy_kubernetes_cluster_deployment_target._1test.id
+        }
+        """
+
+        result = replace_resource_names_with_digit(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_valid_resource_names(self):
+        input_config = """
+        resource "octopusdeploy_kubernetes_cluster_deployment_target" "test" {
+          name = "A value"
+        }
+        resource "octopusdeploy_project" "project" {
+          name = "A new value"
+          something = octopusdeploy_kubernetes_cluster_deployment_target.test.id
+        }
+        
+        # 1blah
+        2blah
+        """
+
+        result = replace_resource_names_with_digit(input_config)
+        self.assertEqual(result, input_config)
 
 
 if __name__ == "__main__":
