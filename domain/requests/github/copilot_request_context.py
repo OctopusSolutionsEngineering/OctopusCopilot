@@ -68,6 +68,9 @@ from domain.tools.wrapper.octolint_duplicate_variables import (
     octolint_duplicate_variables_wrapper,
 )
 from domain.tools.wrapper.octolint_empty_projects import octolint_empty_projects_wrapper
+from domain.tools.wrapper.octolint_queued_deployments_wrapper import (
+    octolint_deployment_queue_wrapper,
+)
 from domain.tools.wrapper.octolint_sha1_certificates import (
     octolint_sha1_certificates_wrapper,
 )
@@ -724,6 +727,19 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_github_user_from_form(req),
                         query,
                         "OctoLintSha1Certificates",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    log_query,
+                ),
+            ),
+            FunctionDefinition(
+                octolint_deployment_queue_wrapper(
+                    octolint_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        query,
+                        "OctoLintDeploymentQueuedTime",
                         get_redirections(req),
                         get_redirections_api_key(req),
                     ),
