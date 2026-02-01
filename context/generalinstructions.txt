@@ -1404,6 +1404,11 @@ resource "octopusdeploy_process_step" "process_step_serverless_api_9231_deploy_l
 * The "properties" attribute must be added to "octopusdeploy_step_template" resources.
 * The "id" property in the objects in the "parameters" array must be a GUID.
 * You will be penalized for defining an "id" property in the objects in the "parameters" array to plain text like "array-input".
+* You will be penalized for including two commas to separate items in the "parameters" array, for example:
+```
+# Thsi is invalid because there are two commands after the default_sensitive_value property
+parameters      = [{ default_sensitive_value = null,, display_settings = { "Octopus.ControlType" = "MultiLineText" }, help_text = "The array to sort", id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890", label = "Array", name = "Array" }]
+```
 
 ## Octopus Variable Syntax Instructions
 
