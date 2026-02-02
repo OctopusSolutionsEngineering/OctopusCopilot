@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.6.0" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.8.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -366,8 +366,8 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
         "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
-        "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
         "BlueGreen.Environment.Blue.Name" = "Production - Blue"
+        "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
         "BlueGreen.Environment.Green.Name" = "Production - Green"
       }
 }
@@ -414,8 +414,8 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "CheckTargets.Octopus.Role" = "randomquotes-iis-website"
@@ -443,8 +443,8 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -499,10 +499,10 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
         "Octopus.Action.Email.Body" = "The deployment succeeded."
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "releases@example.org"
+        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
       }
 }
 
