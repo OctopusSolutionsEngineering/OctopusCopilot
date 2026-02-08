@@ -592,7 +592,35 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
 
 * The "retention_policy" block can only be defined for a resource "octopusdeploy_runbook".
 * You will be penalized for defining a "octopusdeploy_project_runbook" resource.
-* You will be penalized for defining the "unit" property in a "retention_policy" block in a "octopusdeploy_runbook" resource.
+* You will be penalized for defining the "unit" property in a "retention_policy" block in a "octopusdeploy_runbook" resource, for example:
+
+```
+resource "octopusdeploy_runbook" "runbook_my_script_app_4_retrieve_logs" {
+    count                       = "${length(data.octopusdeploy_projects.project_my_script_app_4.projects) != 0 ? 0 : 1}"
+    name                        = "${var.runbook_my_script_app_4_retrieve_logs_name}"
+    project_id                  = "${length(data.octopusdeploy_projects.project_my_script_app_4.projects) != 0 ? data.octopusdeploy_projects.project_my_script_app_4.projects[0].id : octopusdeploy_project.project_my_script_app_4[0].id}"
+    environment_scope           = "Unscoped"
+    environments                = []
+    force_package_download      = false
+    default_guided_failure_mode = "EnvironmentDefault"
+    description                 = "Simulate the retrieval of logs"
+    multi_tenancy_mode          = "Untenanted"
+
+    retention_policy {
+      should_keep_forever = false
+      quantity_to_keep    = 1
+      # The unit property is invalid and must not be defined in a retention_policy block for a runbook resource
+      unit                = "Items"
+    }
+
+    connectivity_policy {
+      allow_deployments_to_no_targets = true
+      exclude_unhealthy_targets       = false
+      skip_machine_behavior           = "None"
+      target_roles                    = []
+    }
+}
+```
 
 ## Octopus Project Instructions
 
