@@ -592,7 +592,7 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
 
 * The "retention_policy" block can only be defined for a resource "octopusdeploy_runbook".
 * You will be penalized for defining a "octopusdeploy_project_runbook" resource.
-* You will be penalized for defining the "unit" property in a "retention_policy" block in a "octopusdeploy_runbook" resource, for example:
+* You will be penalized for defining the "unit" property in a "retention_policy" block in a "octopusdeploy_runbook" resource, for example, this resource "octopusdeploy_runbook" is invalid because it includes the "unit" property in the "retention_policy" block:
 
 ```
 resource "octopusdeploy_runbook" "runbook_my_script_app_4_retrieve_logs" {
