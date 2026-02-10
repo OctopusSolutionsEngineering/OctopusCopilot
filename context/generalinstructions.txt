@@ -739,8 +739,6 @@ resource "octopusdeploy_external_feed_create_release_trigger" "projecttrigger_ev
 
 * If the prompt specifies that a external feed trigger is to be created, and does not specify that a channel is to be created, you must create a channel called "Application" and link that channel to the external feed trigger.
 * You will be penalized for creating resources of type "octopusdeploy_project_automatic_release_trigger".
-* The "package_reference" property in the "octopusdeploy_external_feed_create_release_trigger" resource must reference the package ID from the deployment process of the associated project.
-* You will be penalized for setting the "package_reference" property in the "octopusdeploy_external_feed_create_release_trigger" resource to an empty string.
 
 ## Tenant Variable Instructions
 
