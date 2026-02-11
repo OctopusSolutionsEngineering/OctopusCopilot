@@ -2533,7 +2533,7 @@ data "octopusdeploy_deployment_freezes" "deploymentfreeze_xmas" {
   take            = 1
 }
 resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
-  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
+  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.deployment_freezes ) != 0 ? 0 : 1}"
   name  = "Xmas"
   start = "2024-12-24T14:00:00.000+00:00"
   end   = "2025-12-26T16:00:00.000+00:00"
@@ -2552,7 +2552,7 @@ data "octopusdeploy_deployment_freezes" "deploymentfreeze_xmas" {
   take            = 1
 }
 resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
-  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
+  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.deployment_freezes ) != 0 ? 0 : 1}"
   name  = "Xmas"
   start = "2024-12-24T14:00:00.000+00:00"
   end   = "2025-12-26T16:00:00.000+00:00"
@@ -2571,7 +2571,7 @@ data "octopusdeploy_deployment_freezes" "deploymentfreeze_xmas" {
   take            = 1
 }
 resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
-  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
+  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.deployment_freezes ) != 0 ? 0 : 1}"
   name  = "Xmas"
   start = "2024-12-24T14:00:00.000+00:00"
   end   = "2025-12-26T16:00:00.000+00:00"
@@ -2609,7 +2609,7 @@ data "octopusdeploy_deployment_freezes" "deploymentfreeze_xmas" {
   take            = 1
 }
 resource "octopusdeploy_deployment_freeze" "deploymentfreeze_xmas" {
-  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.machine_policies) != 0 ? 0 : 1}"
+  count = "${length(data.octopusdeploy_deployment_freezes.deploymentfreeze_xmas.deployment_freezes ) != 0 ? 0 : 1}"
   name  = "Xmas"
   start = "2024-12-24T14:00:00.000+00:00"
   end   = "2025-12-26T16:00:00.000+00:00"
