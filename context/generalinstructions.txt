@@ -822,6 +822,7 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
 
 * You will be penalized for adding the "description" property to the "octopusdeploy_deployment_freeze" resource.
 * You will be penalized for adding the "space_id" property to the "octopusdeploy_deployment_freeze" resource.
+* The "end" property of the "octopusdeploy_deployment_freeze" resource must be in the future.
 
 ## Octopus Deployment Process Instructions
 
