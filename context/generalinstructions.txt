@@ -818,6 +818,10 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
 }
 ```
 
+## Octopus Global Deployment Freeze Instructions
+
+* You will be penalized for adding the "description" property to the "octopusdeploy_deployment_freeze" resource.
+
 ## Octopus Deployment Process Instructions
 
 * You must consider the attributes in the "execution_properties" block and the "properties" block of the example steps to be mandatory, unless otherwise specified (the properties on script steps that define inline scripts or those sourced from packages is an example where example properties should not be considered mandatory).
