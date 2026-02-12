@@ -24,22 +24,22 @@ data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle" {
   take         = 1
 }
 
-data "octopusdeploy_project_groups" "project_group_terraform" {
+data "octopusdeploy_project_groups" "project_group_llm" {
   ids          = null
-  partial_name = "${var.project_group_terraform_name}"
+  partial_name = "${var.project_group_llm_name}"
   skip         = 0
   take         = 1
 }
-variable "project_group_terraform_name" {
+variable "project_group_llm_name" {
   type        = string
   nullable    = false
   sensitive   = false
   description = "The name of the project group to lookup"
-  default     = "Terraform"
+  default     = "LLM"
 }
-resource "octopusdeploy_project_group" "project_group_terraform" {
-  count = "${length(data.octopusdeploy_project_groups.project_group_terraform.project_groups) != 0 ? 0 : 1}"
-  name  = "${var.project_group_terraform_name}"
+resource "octopusdeploy_project_group" "project_group_llm" {
+  count = "${length(data.octopusdeploy_project_groups.project_group_llm.project_groups) != 0 ? 0 : 1}"
+  name  = "${var.project_group_llm_name}"
   lifecycle {
     prevent_destroy = true
   }
@@ -135,20 +135,50 @@ resource "octopusdeploy_environment" "environment_production" {
   }
 }
 
-data "octopusdeploy_lifecycles" "lifecycle_application" {
+data "octopusdeploy_environments" "environment_security" {
   ids          = null
-  partial_name = "Application"
+  partial_name = "Security"
   skip         = 0
   take         = 1
 }
-resource "octopusdeploy_lifecycle" "lifecycle_application" {
-  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_application.lifecycles) != 0 ? 0 : 1}"
-  name        = "Application"
-  description = "This is an example lifecycle that automatically deploys to the first environment"
+resource "octopusdeploy_environment" "environment_security" {
+  count                        = "${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? 0 : 1}"
+  name                         = "Security"
+  description                  = ""
+  allow_dynamic_infrastructure = true
+  use_guided_failure           = false
+
+  jira_extension_settings {
+    environment_type = "unmapped"
+  }
+
+  jira_service_management_extension_settings {
+    is_enabled = false
+  }
+
+  servicenow_extension_settings {
+    is_enabled = false
+  }
+  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test,octopusdeploy_environment.environment_production]
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_lifecycles" "lifecycle_devsecops" {
+  ids          = null
+  partial_name = "DevSecOps"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
+  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_devsecops.lifecycles) != 0 ? 0 : 1}"
+  name        = "DevSecOps"
+  description = "This lifecycle automatically deploys to the Development environment, progresses through the Test and Production environments, and then automatically deploys to the Security environment. The Security environment is used to scan SBOMs for any vulnerabilities and deployments to the Security environment are initiated by triggers on a daily basis."
 
   phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+    optional_deployment_targets           = []
     name                                  = "Development"
     is_optional_phase                     = false
     minimum_environments_before_promotion = 0
@@ -164,6 +194,13 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
     automatic_deployment_targets          = []
     optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
     name                                  = "Production"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+    optional_deployment_targets           = []
+    name                                  = "Security"
     is_optional_phase                     = false
     minimum_environments_before_promotion = 0
   }
@@ -189,11 +226,63 @@ data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
   take         = 1
 }
 
-data "octopusdeploy_channels" "channel_terraform_default" {
+data "octopusdeploy_channels" "channel_llm_in_kubernetes_default" {
   ids          = []
   partial_name = "Default"
   skip         = 0
   take         = 1
+}
+
+data "octopusdeploy_lifecycles" "lifecycle_hotfix" {
+  ids          = null
+  partial_name = "Hotfix"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_lifecycle" "lifecycle_hotfix" {
+  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles) != 0 ? 0 : 1}"
+  name        = "Hotfix"
+  description = "This channel allows deployments directly to production."
+
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+    name                                  = "Production"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+
+  release_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_projects" "channel_llm_in_kubernetes_hotfix" {
+  ids          = null
+  partial_name = "LLM in Kubernetes"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_channel" "channel_llm_in_kubernetes_hotfix" {
+  count        = "${length(data.octopusdeploy_projects.channel_llm_in_kubernetes_hotfix.projects) != 0 ? 0 : 1}"
+  lifecycle_id = "${length(data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_hotfix[0].id}"
+  name         = "Hotfix"
+  project_id   = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id : octopusdeploy_project.project_llm_in_kubernetes[0].id}"
+  is_default   = false
+  tenant_tags  = []
+  depends_on   = [octopusdeploy_process_steps_order.process_step_order_llm_in_kubernetes]
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
@@ -230,111 +319,225 @@ resource "octopusdeploy_docker_container_registry" "feed_github_container_regist
   }
 }
 
-resource "octopusdeploy_process" "process_terraform" {
-  count      = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
-  project_id = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? data.octopusdeploy_projects.project_terraform.projects[0].id : octopusdeploy_project.project_terraform[0].id}"
+data "octopusdeploy_feeds" "feed_ghcr_anonymous" {
+  feed_type    = "Docker"
+  ids          = null
+  partial_name = "GHCR Anonymous"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? 0 : 1}"
+  name                                 = "GHCR Anonymous"
+  registry_path                        = ""
+  api_version                          = "v2"
+  feed_uri                             = "https://ghcrfacade-a6awccayfpcpg4cg.eastus-01.azurewebsites.net"
+  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+resource "octopusdeploy_process" "process_llm_in_kubernetes" {
+  count      = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id : octopusdeploy_project.project_llm_in_kubernetes[0].id}"
   depends_on = []
 }
 
-resource "octopusdeploy_process_step" "process_step_terraform_plan_to_apply_a_terraform_template" {
-  count                 = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
-  name                  = "Plan to apply a Terraform template"
-  type                  = "Octopus.TerraformPlan"
-  process_id            = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? null : octopusdeploy_process.process_terraform[0].id}"
-  channels              = null
-  condition             = "Success"
-  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id : octopusdeploy_docker_container_registry.feed_github_container_registry[0].id}", image = "ghcr.io/octopusdeploylabs/terraform-workertools" }
-  environments          = null
-  excluded_environments = null
-  notes                 = "This step plans the changes made by the Terraform configuration and saves the changes in an output variable."
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "plan-to-apply-a-terraform-template"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_variable  = "Project.WorkerPool"
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-      }
-}
-
-resource "octopusdeploy_process_step" "process_step_terraform_approve_plan" {
-  count                 = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
-  name                  = "Approve Plan"
+resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_approve_production_deployment" {
+  count                 = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  name                  = "Approve Production Deployment"
   type                  = "Octopus.Manual"
-  process_id            = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? null : octopusdeploy_process.process_terraform[0].id}"
+  process_id            = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process.process_llm_in_kubernetes[0].id}"
   channels              = null
   condition             = "Success"
-  environments          = null
+  environments          = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
   excluded_environments = null
-  notes                 = "This step displays the changes to be applied and asks for the changes to be approved."
+  notes                 = "This manual intervention is used to provide a prompt before a production deployment."
   package_requirement   = "LetOctopusDecide"
-  slug                  = "approve-plan"
+  slug                  = "approve-production-deployment"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   properties            = {
       }
   execution_properties  = {
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Manual.Instructions" = "Do you approve the planned changes?\n\n#{Octopus.Action[Plan to apply a Terraform template].Output.TerraformPlanOutput}"
       }
 }
 
-resource "octopusdeploy_process_step" "process_step_terraform_apply_a_terraform_template" {
-  count                 = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
-  name                  = "Apply a Terraform template"
-  type                  = "Octopus.TerraformApply"
-  process_id            = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? null : octopusdeploy_process.process_terraform[0].id}"
+variable "project_llm_in_kubernetes_step_deploy_a_kubernetes_llm_web_app_via_yaml_package_ollamainference_packageid" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The package ID for the package named ollamainference from step Deploy a Kubernetes LLM Web App via YAML in project LLM in Kubernetes"
+  default     = "octopussolutionsengineering/ollamainference"
+}
+resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_deploy_a_kubernetes_llm_web_app_via_yaml" {
+  count                 = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  name                  = "Deploy a Kubernetes LLM Web App via YAML"
+  type                  = "Octopus.KubernetesDeployRawYaml"
+  process_id            = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process.process_llm_in_kubernetes[0].id}"
   channels              = null
   condition             = "Success"
-  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id : octopusdeploy_docker_container_registry.feed_github_container_registry[0].id}", image = "ghcr.io/octopusdeploylabs/terraform-workertools" }
+  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id : octopusdeploy_docker_container_registry.feed_github_container_registry[0].id}", image = "ghcr.io/octopusdeploylabs/k8s-workertools" }
   environments          = null
-  excluded_environments = null
-  notes                 = "This step applies the Terraform configuration."
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  notes                 = "This step deploys a Kubernetes Deployment resource defined as raw YAML to deploy a pod hosting Ollama."
   package_requirement   = "LetOctopusDecide"
-  slug                  = "apply-a-terraform-template"
+  packages              = { ollamainference = { acquisition_location = "NotAcquired", feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", id = null, package_id = "${var.project_llm_in_kubernetes_step_deploy_a_kubernetes_llm_web_app_via_yaml_package_ollamainference_packageid}", properties = { Extract = "False", Purpose = "DockerImageReference", SelectionMode = "immediate" } } }
+  slug                  = "deploy-a-kubernetes-web-app-via-yaml"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_variable  = "Project.WorkerPool"
+  worker_pool_variable  = "Octopus.Project.WorkerPool"
+  properties            = {
+        "Octopus.Action.TargetRoles" = "Kubernetes"
+      }
+  execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: v1\nkind: Service\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  selector:\n    app: \"#{Kubernetes.Deployment.Name}\"\n  ports:\n    - protocol: TCP\n      port: 8080\n      targetPort: 8080\n  type: ClusterIP\n---\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[ollamainference].PackageId}:#{Octopus.Action.Package[ollamainference].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"2\"\n            memory: \"2Gi\"\n          requests:\n            cpu: \"1\"\n            memory: \"1Gi\"\n        livenessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
+      }
+}
+
+resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_smoke_test" {
+  count                 = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  name                  = "Smoke Test"
+  type                  = "Octopus.Script"
+  process_id            = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process.process_llm_in_kubernetes[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", github_connection_id = "", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
+  notes                 = "See the script in [GitHub](https://github.com/OctopusSolutionsEngineering/Octopub/blob/main/octopus/HttpTest.ps1)"
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "smoke-test"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  properties            = {
+        "Octopus.Action.TargetRoles" = "Kubernetes"
+      }
+  execution_properties  = {
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptParameters" = "-URL \"http://#{Kubernetes.Deployment.Name}.#{Octopus.Environment.Name | ToLower}.svc.cluster.local:8080/v1/chat/completions\" -Body '{\"model\": \"gemma3:1b\", \"messages\": [{\"role\": \"user\",\"content\": \"What is the capital of France?\"}]}'"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/HttpTest.ps1"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+      }
+}
+
+resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_print_message_when_no_targets" {
+  count                 = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  name                  = "Print Message When no Targets"
+  type                  = "Octopus.Script"
+  process_id            = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process.process_llm_in_kubernetes[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  notes                 = "This step detects when the previous steps were skipped due to no targets being defined and prints a message with a link to documentation for creating targets."
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "print-message-when-no-targets"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_variable  = "Octopus.Project.WorkerPool"
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
+        "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy a Kubernetes Web App via YAML].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Kubernetes target with the tag 'Kubernetes'.\"\n  Write-Highlight \"We recommend the [Kubernetes Agent](https://octopus.com/docs/kubernetes/targets/kubernetes-agent).\"\n}"
       }
 }
 
-resource "octopusdeploy_process_steps_order" "process_step_order_terraform" {
-  count      = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
-  process_id = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? null : octopusdeploy_process.process_terraform[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? null : octopusdeploy_process_step.process_step_terraform_plan_to_apply_a_terraform_template[0].id}", "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? null : octopusdeploy_process_step.process_step_terraform_approve_plan[0].id}", "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? null : octopusdeploy_process_step.process_step_terraform_apply_a_terraform_template[0].id}"]
+resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_scan_for_vulnerabilities" {
+  count                 = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  name                  = "Scan for Vulnerabilities"
+  type                  = "Octopus.Script"
+  process_id            = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process.process_llm_in_kubernetes[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = null
+  git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", github_connection_id = "", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
+  notes                 = "This step extracts the Docker image, finds any bom.json files, and scans them for vulnerabilities using Trivy. \n\nThis step is expected to be run with each deployment to ensure vulnerabilities are discovered as early as possible. \n\nIt is also run daily via a project trigger that reruns the deployment in the Security environment. This allows unknown vulnerabilities to be discovered after a production deployment.\n\nSee the script in [GitHub](https://github.com/OctopusSolutionsEngineering/Octopub/blob/main/octopus/DirectorySbomScan.ps1)"
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "scan-for-vulnerabilities"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_variable  = "Octopus.Project.WorkerPool"
+  properties            = {
+      }
+  execution_properties  = {
+        "Octopus.Action.Script.ScriptFileName" = "octopus/DockerImageSbomScan.ps1"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.RunOnServer" = "true"
+      }
+}
+
+resource "octopusdeploy_process_steps_order" "process_step_order_llm_in_kubernetes" {
+  count      = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  process_id = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process.process_llm_in_kubernetes[0].id}"
+  steps      = ["${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process_step.process_step_llm_in_kubernetes_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process_step.process_step_llm_in_kubernetes_deploy_a_kubernetes_llm_web_app_via_yaml[0].id}", "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process_step.process_step_llm_in_kubernetes_smoke_test[0].id}", "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process_step.process_step_llm_in_kubernetes_print_message_when_no_targets[0].id}", "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process_step.process_step_llm_in_kubernetes_scan_for_vulnerabilities[0].id}"]
+}
+
+resource "octopusdeploy_variable" "llm_in_kubernetes_octopusprintevaluatedvariables_1" {
+  count        = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) == 0 ?octopusdeploy_project.project_llm_in_kubernetes[0].id : data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id}"
+  value        = "False"
+  name         = "OctopusPrintEvaluatedVariables"
+  type         = "String"
+  description  = "Set this variable to true to log the evaluated value of variables available at the beginning of each step in the deployment as Verbose messages. See https://octopus.com/docs/support/debug-problems-with-octopus-variables for more details."
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_variable" "llm_in_kubernetes_octopusprintvariables_1" {
+  count        = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) == 0 ?octopusdeploy_project.project_llm_in_kubernetes[0].id : data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id}"
+  value        = "False"
+  name         = "OctopusPrintVariables"
+  type         = "String"
+  description  = "Set this variable to true to log the variables available at the beginning of each step in the deployment as Verbose messages. See https://octopus.com/docs/support/debug-problems-with-octopus-variables for more details."
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_variable" "llm_in_kubernetes_kubernetes_deployment_name_1" {
+  count        = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) == 0 ?octopusdeploy_project.project_llm_in_kubernetes[0].id : data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id}"
+  value        = "#{Octopus.Project.Name | Replace \"[^0-9a-zA-Z]\" \"\" | ToLower }"
+  name         = "Kubernetes.Deployment.Name"
+  type         = "String"
+  description  = "This is the name of the Kubernetes deployment. It is exposed as a variable to allow the name to be shared between the deployment process and the runbooks."
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
 }
 
 data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
@@ -351,13 +554,13 @@ data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
   take         = 1
 }
 
-resource "octopusdeploy_variable" "terraform_project_workerpool_1" {
-  count        = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_terraform.projects) == 0 ?octopusdeploy_project.project_terraform[0].id : data.octopusdeploy_projects.project_terraform.projects[0].id}"
+resource "octopusdeploy_variable" "llm_in_kubernetes_octopus_project_workerpool_1" {
+  count        = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) == 0 ?octopusdeploy_project.project_llm_in_kubernetes[0].id : data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id}"
   value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  name         = "Project.WorkerPool"
+  name         = "Octopus.Project.WorkerPool"
   type         = "WorkerPool"
-  description  = "The workerpool used by the steps. Defining the workerpool as a variable allows it to be changed in a single location for multiple steps."
+  description  = "Using a variable to define the worker pool used by steps allows the worker pool to be easily changed in a central location."
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
@@ -366,12 +569,13 @@ resource "octopusdeploy_variable" "terraform_project_workerpool_1" {
   depends_on = []
 }
 
-resource "octopusdeploy_variable" "terraform_project_terraform_configuration_1" {
-  count        = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_terraform.projects) == 0 ?octopusdeploy_project.project_terraform[0].id : data.octopusdeploy_projects.project_terraform.projects[0].id}"
-  value        = "variable \"message\" {\n  type = string\n  default = \"Hello World!\"\n}\n\nresource \"terraform_data\" \"replacement\" {\n  input = var.message\n}\n"
-  name         = "Project.Terraform.Configuration"
+resource "octopusdeploy_variable" "llm_in_kubernetes_application_image_1" {
+  count        = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) == 0 ?octopusdeploy_project.project_llm_in_kubernetes[0].id : data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id}"
+  value        = "ghcr.io/#{Octopus.Action[Deploy a Kubernetes LLM Web App via YAML].Package[ollamainference].PackageId}:#{Octopus.Action[Deploy a Kubernetes LLM Web App via YAML].Package[ollamainference].PackageVersion}"
+  name         = "Application.Image"
   type         = "String"
+  description  = "The image name is in the format \"ghcr.io/#{Octopus.Action[<Name of the step applying the Kubernetes deployment resource>].Package[<Name of the referenced package>].PackageId}:#{Octopus.Action[<Name of the step applying the Kubernetes deployment resource>].Package[Name of the referenced package>].PackageVersion}\". This variable allows the packages used by the \"Deploy a Kubernetes Web App via YAML\" step to be referenced in subsequent steps."
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
@@ -380,77 +584,18 @@ resource "octopusdeploy_variable" "terraform_project_terraform_configuration_1" 
   depends_on = []
 }
 
-resource "octopusdeploy_variable" "terraform_terraform_variable_message_1" {
-  count        = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_terraform.projects) == 0 ?octopusdeploy_project.project_terraform[0].id : data.octopusdeploy_projects.project_terraform.projects[0].id}"
-  value        = "Hi world!"
-  name         = "Terraform.Variable.Message"
-  type         = "String"
-  is_sensitive = false
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "terraform_octopusprintvariables_1" {
-  count        = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_terraform.projects) == 0 ?octopusdeploy_project.project_terraform[0].id : data.octopusdeploy_projects.project_terraform.projects[0].id}"
-  value        = "False"
-  name         = "OctopusPrintVariables"
-  type         = "String"
-  description  = "Set this variable to true to log the variables available at the beginning of each step in the deployment as Verbose messages. See https://octopus.com/docs/support/debug-problems-with-octopus-variables for more details."
-  is_sensitive = false
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-data "octopusdeploy_environments" "environment_security" {
-  ids          = null
-  partial_name = "Security"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_environment" "environment_security" {
-  count                        = "${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? 0 : 1}"
-  name                         = "Security"
-  description                  = ""
-  allow_dynamic_infrastructure = true
-  use_guided_failure           = false
-
-  jira_extension_settings {
-    environment_type = "unmapped"
-  }
-
-  jira_service_management_extension_settings {
-    is_enabled = false
-  }
-
-  servicenow_extension_settings {
-    is_enabled = false
-  }
-  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test,octopusdeploy_environment.environment_production]
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_terraform_daily_security_scan" {
-  count       = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
+resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_llm_in_kubernetes_daily_security_scan" {
+  count       = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
   space_id    = "${trimspace(var.octopus_space_id)}"
   name        = "Daily Security Scan"
-  description = ""
+  description = "This trigger reruns the deployment in the Security environment. This means any new vulnerabilities detected after a production deployment will be identified."
   timezone    = "UTC"
   is_disabled = false
-  project_id  = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? data.octopusdeploy_projects.project_terraform.projects[0].id : octopusdeploy_project.project_terraform[0].id}"
+  project_id  = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id : octopusdeploy_project.project_llm_in_kubernetes[0].id}"
   tenant_ids  = []
 
   once_daily_schedule {
-    start_time   = "2025-05-12T09:00:00"
+    start_time   = "2025-04-26T09:00:00"
     days_of_week = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
   }
 
@@ -464,59 +609,59 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_terraform_dai
   }
 }
 
-variable "project_terraform_name" {
+variable "project_llm_in_kubernetes_name" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The name of the project exported from Terraform"
-  default     = "Terraform"
+  description = "The name of the project exported from LLM in Kubernetes"
+  default     = "LLM in Kubernetes"
 }
-variable "project_terraform_description_prefix" {
+variable "project_llm_in_kubernetes_description_prefix" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "An optional prefix to add to the project description for the project Terraform"
+  description = "An optional prefix to add to the project description for the project LLM in Kubernetes"
   default     = ""
 }
-variable "project_terraform_description_suffix" {
+variable "project_llm_in_kubernetes_description_suffix" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "An optional suffix to add to the project description for the project Terraform"
+  description = "An optional suffix to add to the project description for the project LLM in Kubernetes"
   default     = ""
 }
-variable "project_terraform_description" {
+variable "project_llm_in_kubernetes_description" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The description of the project exported from Terraform"
-  default     = "This project runs a script step."
+  description = "The description of the project exported from LLM in Kubernetes"
+  default     = "This project provides an example Kubernetes deployment using YAML."
 }
-variable "project_terraform_tenanted" {
+variable "project_llm_in_kubernetes_tenanted" {
   type        = string
   nullable    = false
   sensitive   = false
   description = "The tenanted setting for the project Untenanted"
   default     = "Untenanted"
 }
-data "octopusdeploy_projects" "project_terraform" {
+data "octopusdeploy_projects" "project_llm_in_kubernetes" {
   ids          = null
-  partial_name = "${var.project_terraform_name}"
+  partial_name = "${var.project_llm_in_kubernetes_name}"
   skip         = 0
   take         = 1
 }
-resource "octopusdeploy_project" "project_terraform" {
-  count                                = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
-  name                                 = "${var.project_terraform_name}"
+resource "octopusdeploy_project" "project_llm_in_kubernetes" {
+  count                                = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  name                                 = "${var.project_llm_in_kubernetes_name}"
   default_guided_failure_mode          = "EnvironmentDefault"
   default_to_skip_if_already_installed = false
   is_discrete_channel_release          = false
   is_disabled                          = false
   is_version_controlled                = false
-  lifecycle_id                         = "${length(data.octopusdeploy_lifecycles.lifecycle_application.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_application.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_application[0].id}"
-  project_group_id                     = "${length(data.octopusdeploy_project_groups.project_group_terraform.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_terraform.project_groups[0].id : octopusdeploy_project_group.project_group_terraform[0].id}"
+  lifecycle_id                         = "${length(data.octopusdeploy_lifecycles.lifecycle_devsecops.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_devsecops.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_devsecops[0].id}"
+  project_group_id                     = "${length(data.octopusdeploy_project_groups.project_group_llm.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_llm.project_groups[0].id : octopusdeploy_project_group.project_group_llm[0].id}"
   included_library_variable_sets       = []
-  tenanted_deployment_participation    = "${var.project_terraform_tenanted}"
+  tenanted_deployment_participation    = "${var.project_llm_in_kubernetes_tenanted}"
 
   connectivity_policy {
     allow_deployments_to_no_targets = true
@@ -524,14 +669,14 @@ resource "octopusdeploy_project" "project_terraform" {
     skip_machine_behavior           = "None"
     target_roles                    = []
   }
-  description = "${var.project_terraform_description_prefix}${var.project_terraform_description}${var.project_terraform_description_suffix}"
+  description = "${var.project_llm_in_kubernetes_description_prefix}${var.project_llm_in_kubernetes_description}${var.project_llm_in_kubernetes_description_suffix}"
   lifecycle {
     prevent_destroy = true
   }
 }
-resource "octopusdeploy_project_versioning_strategy" "project_terraform" {
-  count      = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
-  project_id = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? data.octopusdeploy_projects.project_terraform.projects[0].id : octopusdeploy_project.project_terraform[0].id}"
+resource "octopusdeploy_project_versioning_strategy" "project_llm_in_kubernetes" {
+  count      = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id : octopusdeploy_project.project_llm_in_kubernetes[0].id}"
   template   = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
 }
 

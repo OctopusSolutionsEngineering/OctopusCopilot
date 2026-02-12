@@ -313,7 +313,7 @@ data "octopusdeploy_step_template" "steptemplate_octopus___check_blue_green_depl
 }
 resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_blue_green_deployment" {
   community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_blue_green_deployment.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_blue_green_deployment.steps[0].id : null}"
-  count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_blue_green_deployment.step_template != null ? 0 : 1}"
+  count                        = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_blue_green_deployment.steps) != 0 ? 0 : 1}"
 }
 
 data "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_targets_available" {
@@ -324,7 +324,7 @@ data "octopusdeploy_step_template" "steptemplate_octopus___check_targets_availab
 }
 resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_targets_available" {
   community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available.steps[0].id : null}"
-  count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_targets_available.step_template != null ? 0 : 1}"
+  count                        = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available.steps) != 0 ? 0 : 1}"
 }
 
 data "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_smtp_server_configured" {
@@ -335,7 +335,7 @@ data "octopusdeploy_step_template" "steptemplate_octopus___check_smtp_server_con
 }
 resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_smtp_server_configured" {
   community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured.steps[0].id : null}"
-  count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_smtp_server_configured.step_template != null ? 0 : 1}"
+  count                        = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured.steps) != 0 ? 0 : 1}"
 }
 
 resource "octopusdeploy_process" "process_random_quotes__net_iis" {
@@ -366,9 +366,9 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
         "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "BlueGreen.Environment.Green.Name" = "Production - Green"
-        "BlueGreen.Environment.Blue.Name" = "Production - Blue"
         "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "BlueGreen.Environment.Blue.Name" = "Production - Blue"
+        "BlueGreen.Environment.Green.Name" = "Production - Green"
       }
 }
 
@@ -389,9 +389,9 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_appro
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?\n\n#{if Octopus.Action[Octopus - Check Blue Green Deployment].Output.SequentialDeploy}WARNING! You appear to be deploying to the #{Octopus.Environment.Name} environment twice. It is expected that blue/green deployments alternate between environments.#{/if}"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?\n\n#{if Octopus.Action[Octopus - Check Blue Green Deployment].Output.SequentialDeploy}WARNING! You appear to be deploying to the #{Octopus.Environment.Name} environment twice. It is expected that blue/green deployments alternate between environments.#{/if}"
       }
 }
 
@@ -414,13 +414,13 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "CheckTargets.Octopus.Role" = "randomquotes-iis-website"
         "CheckTargets.Message" = "See the [documentation](https://octopus.com/docs/infrastructure/deployment-targets) for details on creating targets."
         "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "CheckTargets.Octopus.Role" = "randomquotes-iis-website"
       }
 }
 
@@ -500,8 +500,8 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_
       }
   execution_properties  = {
         "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
-        "Octopus.Action.Email.Body" = "The deployment succeeded."
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Email.Body" = "The deployment succeeded."
         "Octopus.Action.Email.To" = "releases@example.org"
       }
 }
