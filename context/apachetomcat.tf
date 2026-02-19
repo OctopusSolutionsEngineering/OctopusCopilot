@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.8.0" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.8.1" }
   }
   required_version = ">= 1.6.0"
 }
@@ -325,9 +325,9 @@ resource "octopusdeploy_process_step" "process_step_octopub_approve_production_d
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
       }
 }
 
@@ -354,9 +354,9 @@ resource "octopusdeploy_process_templated_step" "process_step_octopub_octopus___
         "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
-        "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
-        "CheckTargets.Octopus.Role" = "Tomcat.Web"
         "CheckTargets.Message" = "You must add a [Tentacle](https://octopus.com/docs/infrastructure/deployment-targets/tentacle) with the target tag `Tomcat.Web`."
+        "CheckTargets.Octopus.Role" = "Tomcat.Web"
+        "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
       }
 }
 
@@ -421,12 +421,12 @@ resource "octopusdeploy_process_step" "process_step_octopub_deploy_to_tomcat_via
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check Targets Available].Output.SetupValid}"
       }
   execution_properties  = {
-        "Tomcat.Deploy.Password" = "${var.action_b5db3976a6058b846e2ef726ee139fcf26756a43d95da3aed7f951beadf6377a_sensitive_value}"
-        "Tomcat.Deploy.Controller" = "http://localhost:8080/manager"
-        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.TomcatDeployManager"
-        "Tomcat.Deploy.User" = "admin"
         "Tomcat.Deploy.Name" = "octopub"
+        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.TomcatDeployManager"
         "Tomcat.Deploy.Enabled" = "True"
+        "Tomcat.Deploy.Password" = "${var.action_b5db3976a6058b846e2ef726ee139fcf26756a43d95da3aed7f951beadf6377a_sensitive_value}"
+        "Tomcat.Deploy.User" = "admin"
+        "Tomcat.Deploy.Controller" = "http://localhost:8080/manager"
       }
 }
 
