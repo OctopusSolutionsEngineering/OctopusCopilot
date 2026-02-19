@@ -743,13 +743,23 @@ resource "octopusdeploy_external_feed_create_release_trigger" "projecttrigger_ev
 * You will be penalized for setting the "channel_id" attribute to a fixed value like "Channels-1".
 * The "package" block in a "octopusdeploy_external_feed_create_release_trigger" resource must have a "deployment_action_slug" property that references a deployment action in the associated project.
 * You will be penalized for setting the "deployment_action_slug" property in the "package" block of a "octopusdeploy_external_feed_create_release_trigger" resource to an empty string or null when the step it references has no primary package.
-* The "package" block in a "octopusdeploy_external_feed_create_release_trigger" resource must have an empty string when referencing the "primary_package" of a step, or "package_reference" must be the name of a key in the "packages" block of the referenced step. For example:
+* The "package_reference" property in the "package" block in a "octopusdeploy_external_feed_create_release_trigger" resource must have an empty string when referencing the "primary_package" of a step.
+* The "package_reference" property in the "package" block in a "octopusdeploy_external_feed_create_release_trigger" resource must be the name of a key in the "packages" block of the referenced step if referencing a named package. For example:
 
 ```
 resource "octopusdeploy_process_step" "process_step" {
   name          = "Run a script"
   process_id    = "octopusdeploy_process.process_octopub.id"
-  packages      = { webapp = { acquisition_location = "Server", feed_id = "octopusdeploy_maven_feed.feed_octopus_maven_feed.id", id = null, package_id = "MyPackage", properties = { Extract = "True", Purpose = "", SelectionMode = "immediate" } } }
+  packages      = {
+    # webapp is a named package
+    webapp = {
+        acquisition_location = "Server",
+        feed_id = "octopusdeploy_maven_feed.feed_octopus_maven_feed.id",
+        id = null,
+        package_id = "MyPackage",
+        properties = { Extract = "True", Purpose = "", SelectionMode = "immediate" }
+    }
+  }
 }
 
 resource "octopusdeploy_process" "process_octopub" {
