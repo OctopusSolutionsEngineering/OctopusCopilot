@@ -741,6 +741,39 @@ resource "octopusdeploy_external_feed_create_release_trigger" "projecttrigger_ev
 
 * If the prompt specifies that a external feed trigger is to be created, and does not specify that a channel is to be created, you must create a channel called "Application" and link that channel to the external feed trigger.
 * You will be penalized for setting the "channel_id" attribute to a fixed value like "Channels-1".
+* The "package" block in a "octopusdeploy_external_feed_create_release_trigger" resource must have a "deployment_action_slug" property that references a deployment action in the associated project.
+* You will be penalized for setting the "deployment_action_slug" property in the "package" block of a "octopusdeploy_external_feed_create_release_trigger" resource to an empty string or null when the step it references has no primary package.
+* The "package" block in a "octopusdeploy_external_feed_create_release_trigger" resource must have an empty string when referencing the "primary_package" of a step, or "package_reference" must be the name of a key in the "packages" block of the referenced step. For example:
+
+```
+resource "octopusdeploy_process_step" "process_step" {
+  name          = "Run a script"
+  process_id    = "octopusdeploy_process.process_octopub.id"
+  packages      = { webapp = { acquisition_location = "Server", feed_id = "octopusdeploy_maven_feed.feed_octopus_maven_feed.id", id = null, package_id = "MyPackage", properties = { Extract = "True", Purpose = "", SelectionMode = "immediate" } } }
+}
+
+resource "octopusdeploy_process" "process_octopub" {
+  project_id = "octopusdeploy_project.my_project.id}"
+}
+
+resource "octopusdeploy_external_feed_create_release_trigger" "project_trigger" {
+  space_id   = "${trimspace(var.octopus_space_id)}"
+  project_id = "octopusdeploy_project.my_project.id}"
+  name       = "Second External Feed Trigger"
+  channel_id = "octopusdeploy_channel.application.id}"
+
+  package {
+    deployment_action_slug = "run-a-script"
+    # The package_reference must match the key "webapp" from the "packages" block in the octopusdeploy_process_step resource because there is no primary package
+    package_reference      = "webapp"
+  }
+  depends_on = [octopusdeploy_process_steps_order.process_step_order_every_step_project]
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
 * You will be penalized for creating resources of type "octopusdeploy_project_automatic_release_trigger".
 
 ## Tenant Variable Instructions
