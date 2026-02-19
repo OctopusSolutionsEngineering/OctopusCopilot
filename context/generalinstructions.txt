@@ -1491,6 +1491,8 @@ resource "octopusdeploy_process_step" "process_step_serverless_api_9231_deploy_l
 
 ## Octopus step template instructions
 
+* When the prompt includes instructions to create a community step template and includes a url to https://library.octopus.com/step-templates, you must create both a resource "octopusdeploy_community_step_template" and a data "octopusdeploy_community_step_template" to check for the existence of the community step template before creating it.
+* You will be penalized for creating a "octopusdeploy_process_step" resource instead of a "octopusdeploy_community_step_template" resource when the prompt includes instructions to create a community step template.
 * The "website" attribute in a data "octopusdeploy_community_step_template" must be copied literally.
 * You will be penalized for changing the "website" attribute in a data "octopusdeploy_community_step_template".
 * The "properties" attribute must be added to "octopusdeploy_step_template" resources.
