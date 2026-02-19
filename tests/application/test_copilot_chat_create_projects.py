@@ -27,6 +27,7 @@ from infrastructure.octopus import (
 )
 from infrastructure.terraform_context import save_terraform_context
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
+from tests.infrastructure.create_and_deploy_release import wait_for_task
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
@@ -139,7 +140,9 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
                 cls.octopus, "Web server is ready to process requests", timeout=300
             )
 
-            sync_community_step_templates(Octopus_Api_Key, Octopus_Url)
+            sync = sync_community_step_templates(Octopus_Api_Key, Octopus_Url)
+
+            wait_for_task(sync["Id"], Octopus_Url, Octopus_Api_Key)
 
             output = run_terraform(
                 terraform_dir + "simple/space_creation", Octopus_Url, Octopus_Api_Key
