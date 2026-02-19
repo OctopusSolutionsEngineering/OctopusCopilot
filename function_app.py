@@ -556,7 +556,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     except UserNotLoggedIn as e:
-        return handle_user_not_logged_in(e)
+        return handle_user_not_logged_in(e, req)
     except OctopusRequestFailed as e:
         return handle_octopus_request_failed(e)
     except GitHubRequestFailed as e:
@@ -637,7 +637,9 @@ def handle_github_request_failed(e):
 
 def handle_user_not_logged_in(e):
     return func.HttpResponse(
-        convert_to_sse_response("The provided API key or access token was invalid."),
+        convert_to_sse_response(
+            "Your Octopus instance may not accept inbound connections from the AI Assistant, or the provided API key or access token was invalid. See https://octopus.com/docs/octopus-ai/assistant/getting-started#using-with-on-premises-instances for details on using the AI Assistant with on-premises Octopus instances."
+        ),
         headers=get_sse_headers(),
     )
 
