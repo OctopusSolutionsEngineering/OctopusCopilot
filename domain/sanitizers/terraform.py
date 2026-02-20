@@ -222,6 +222,18 @@ def fix_double_comma(config):
     )
 
 
+def add_space_id_variable(config):
+    """
+    The LLM kept forgetting to include the space_id variable in the generated terraform config. This is required for the terraform provider to work.
+    """
+
+    if 'variable "space_id"' not in config:
+        space_id_variable = 'variable "space_id" {\n  type = string\n}\n\n'
+        return space_id_variable + config
+
+    return config
+
+
 def fix_variable_type(config):
     """
     The LLM kept trying to define a variable type like type = "string". This is not valid HCL2 syntax. It should be type = string without the quotes.

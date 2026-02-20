@@ -20,6 +20,7 @@ from domain.sanitizers.terraform import (
     replace_resource_names_with_digit,
     fix_double_comma,
     fix_variable_type,
+    add_space_id_variable,
 )
 
 
@@ -444,6 +445,20 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
         result = fix_variable_type(input_config)
         self.assertEqual(result, expected)
+
+    def test_add_space_id_variable(self):
+        input_config = "hi there"
+
+        expected = 'variable "space_id" {\n  type = string\n}\n\nhi there'
+
+        result = add_space_id_variable(input_config)
+        self.assertEqual(result, expected)
+
+    def test_add_space_id_variable_2(self):
+        input_config = 'hi there\n  variable "space_id" {\n  type = string\n}'
+
+        result = add_space_id_variable(input_config)
+        self.assertEqual(result, input_config)
 
     def test_fix_execution_properties_block(self):
         input_config = """resource "octopusdeploy_project" "test" {
