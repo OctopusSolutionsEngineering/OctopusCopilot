@@ -8,6 +8,7 @@ import azure.functions as func
 from openai import RateLimitError
 from retry import retry
 from testcontainers.core.container import DockerContainer
+from testcontainers.core.wait_strategies import LogMessageWaitStrategy
 from testcontainers.core.waiting_utils import wait_for_logs
 
 from domain.transformers.sse_transformers import (
@@ -112,7 +113,9 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
                 .with_env("SA_PASSWORD", "Password01!")
             )
             cls.mssql.start()
-            wait_for_logs(cls.mssql, "SQL Server is now ready for client connections")
+            cls.mssql.waiting_for(
+                LogMessageWaitStrategy("SQL Server is now ready for client connections")
+            )
 
             mssql_ip = cls.mssql.get_docker_client().bridge_ip(
                 cls.mssql.get_wrapped_container().id
@@ -136,8 +139,8 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
                 .with_env("ENABLE_USAGE", "N")
             )
             cls.octopus.start()
-            wait_for_logs(
-                cls.octopus, "Web server is ready to process requests", timeout=300
+            cls.octopus.waiting_for(
+                LogMessageWaitStrategy("Web server is ready to process requests")
             )
 
             sync_community_step_templates(Octopus_Api_Key, Octopus_Url)
