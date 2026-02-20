@@ -1905,6 +1905,7 @@ variable "project_group_name" {
 ```
 
 * You will be penalized for defining a "scope" block in a terraform variable.
+You will be penalized for defining the "type" with an value that includes double quotes, for example `type = "string"`. The correct syntax is `type = string` without double quotes.
 
 ## Penalties
 
