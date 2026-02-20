@@ -18,6 +18,7 @@ from domain.sanitizers.terraform import (
     sanitize_slugs,
     sanitize_primary_package,
     replace_resource_names_with_digit,
+    fix_double_comma,
 )
 
 
@@ -425,6 +426,14 @@ class TestKubernetesSanitizer(unittest.TestCase):
             }"""  # noqa: W293
 
         result = fix_properties_block(input_config)
+        self.assertEqual(result, expected)
+
+    def test_fix_double_comma(self):
+        input_config = 'parameters      = [{ default_sensitive_value = null,, display_settings = { "Octopus.ControlType" = "MultiLineText" }, help_text = "The array to sort", id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890", label = "Array", name = "Array" }]'
+
+        expected = 'parameters      = [{ default_sensitive_value = null, display_settings = { "Octopus.ControlType" = "MultiLineText" }, help_text = "The array to sort", id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890", label = "Array", name = "Array" }]'
+
+        result = fix_double_comma(input_config)
         self.assertEqual(result, expected)
 
     def test_fix_execution_properties_block(self):

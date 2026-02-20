@@ -208,6 +208,20 @@ def fix_properties_block(config):
     return re.sub(r"properties\s*\{.*?}", "", config, flags=re.DOTALL)
 
 
+def fix_double_comma(config):
+    """
+    The LLM kept trying to define a block like
+    parameters      = [{ default_sensitive_value = null,, display_settings = { "Octopus.ControlType" = "MultiLineText" }, help_text = "The array to sort", id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890", label = "Array", name = "Array" }]
+    """
+
+    return re.sub(
+        r"default_sensitive_value\s*=\s*null,,",
+        "default_sensitive_value = null,",
+        config,
+        flags=re.DOTALL,
+    )
+
+
 def fix_empty_properties_block(config):
     """
     The LLM kept trying to define empty properties blocks like properties {}
