@@ -222,6 +222,19 @@ def fix_double_comma(config):
     )
 
 
+def fix_variable_type(config):
+    """
+    The LLM kept trying to define a variable type like type = "string". This is not valid HCL2 syntax. It should be type = string without the quotes.
+    """
+
+    return re.sub(
+        r'type\s*=\s*"string"',
+        "type = string",
+        config,
+        flags=re.DOTALL,
+    )
+
+
 def fix_empty_properties_block(config):
     """
     The LLM kept trying to define empty properties blocks like properties {}

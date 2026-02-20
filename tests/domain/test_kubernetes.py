@@ -19,6 +19,7 @@ from domain.sanitizers.terraform import (
     sanitize_primary_package,
     replace_resource_names_with_digit,
     fix_double_comma,
+    fix_variable_type,
 )
 
 
@@ -434,6 +435,14 @@ class TestKubernetesSanitizer(unittest.TestCase):
         expected = 'parameters      = [{ default_sensitive_value = null, display_settings = { "Octopus.ControlType" = "MultiLineText" }, help_text = "The array to sort", id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890", label = "Array", name = "Array" }]'
 
         result = fix_double_comma(input_config)
+        self.assertEqual(result, expected)
+
+    def test_fix_variable_type(self):
+        input_config = 'type =  "string"'
+
+        expected = "type = string"
+
+        result = fix_variable_type(input_config)
         self.assertEqual(result, expected)
 
     def test_fix_execution_properties_block(self):

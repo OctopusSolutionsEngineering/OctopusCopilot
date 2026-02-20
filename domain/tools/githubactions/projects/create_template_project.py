@@ -36,6 +36,7 @@ from domain.sanitizers.terraform import (
     sanitize_primary_package,
     replace_resource_names_with_digit,
     fix_double_comma,
+    fix_variable_type,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -368,6 +369,9 @@ def create_template_project_callback(
 
                 # Deal with double commas in parameters blocks
                 configuration = fix_double_comma(configuration)
+
+                # Fix the variable type
+                configuration = fix_variable_type(configuration)
 
                 # Deal with the LLM returning a execution_properties blocks
                 configuration = fix_execution_properties_block(configuration)
