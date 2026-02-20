@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.8.1" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.8.2" }
   }
   required_version = ">= 1.6.0"
 }
@@ -313,7 +313,7 @@ data "octopusdeploy_step_template" "steptemplate_octopus___check_blue_green_depl
 }
 resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_blue_green_deployment" {
   community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_blue_green_deployment.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_blue_green_deployment.steps[0].id : null}"
-  count                        = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_blue_green_deployment.steps) != 0 ? 0 : 1}"
+  count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_blue_green_deployment.step_template != null ? 0 : 1}"
 }
 
 data "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_targets_available" {
@@ -324,7 +324,7 @@ data "octopusdeploy_step_template" "steptemplate_octopus___check_targets_availab
 }
 resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_targets_available" {
   community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available.steps[0].id : null}"
-  count                        = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available.steps) != 0 ? 0 : 1}"
+  count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_targets_available.step_template != null ? 0 : 1}"
 }
 
 data "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_smtp_server_configured" {
@@ -335,7 +335,7 @@ data "octopusdeploy_step_template" "steptemplate_octopus___check_smtp_server_con
 }
 resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_smtp_server_configured" {
   community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured.steps[0].id : null}"
-  count                        = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured.steps) != 0 ? 0 : 1}"
+  count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_smtp_server_configured.step_template != null ? 0 : 1}"
 }
 
 resource "octopusdeploy_process" "process_random_quotes__net_iis" {
@@ -366,9 +366,9 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
         "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
+        "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
         "BlueGreen.Environment.Blue.Name" = "Production - Blue"
         "BlueGreen.Environment.Green.Name" = "Production - Green"
-        "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
       }
 }
 
@@ -389,9 +389,9 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_appro
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?\n\n#{if Octopus.Action[Octopus - Check Blue Green Deployment].Output.SequentialDeploy}WARNING! You appear to be deploying to the #{Octopus.Environment.Name} environment twice. It is expected that blue/green deployments alternate between environments.#{/if}"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -443,8 +443,8 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -499,10 +499,10 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.Body" = "The deployment succeeded."
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "releases@example.org"
         "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
-        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Email.Body" = "The deployment succeeded."
       }
 }
 

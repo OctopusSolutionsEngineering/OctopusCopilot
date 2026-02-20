@@ -140,9 +140,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
                 cls.octopus, "Web server is ready to process requests", timeout=300
             )
 
-            sync = sync_community_step_templates(Octopus_Api_Key, Octopus_Url)
-
-            wait_for_task(sync["Id"], Octopus_Url, Octopus_Api_Key)
+            sync_community_step_templates(Octopus_Api_Key, Octopus_Url)
 
             output = run_terraform(
                 terraform_dir + "simple/space_creation", Octopus_Url, Octopus_Api_Key
