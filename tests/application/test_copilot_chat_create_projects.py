@@ -9,7 +9,6 @@ from openai import RateLimitError
 from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.wait_strategies import LogMessageWaitStrategy
-from testcontainers.core.waiting_utils import wait_for_logs
 
 from domain.transformers.sse_transformers import (
     convert_from_sse_response,
