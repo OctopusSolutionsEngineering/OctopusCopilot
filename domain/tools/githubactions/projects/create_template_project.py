@@ -536,5 +536,6 @@ def final_messages(base_messages):
     return [
         *base_messages,
         ("user", "Question: {input}"),
+        ("user", "Use minimal whitespace when creating the Terraform configuration."),
         ("user", f"Generated Terraform Configuration:"),
     ]
