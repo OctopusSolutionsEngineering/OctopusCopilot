@@ -449,13 +449,13 @@ class TestKubernetesSanitizer(unittest.TestCase):
     def test_add_space_id_variable(self):
         input_config = "hi there"
 
-        expected = 'variable "space_id" {\n  type = string\n}\n\nhi there'
+        expected = 'variable "octopus_space_id" {\n  type = string\n}\n\nhi there'
 
         result = add_space_id_variable(input_config)
         self.assertEqual(result, expected)
 
     def test_add_space_id_variable_2(self):
-        input_config = 'hi there\n  variable "space_id" {\n  type = string\n}'
+        input_config = 'hi there\n  variable "octopus_space_id" {\n  type = string\n}'
 
         result = add_space_id_variable(input_config)
         self.assertEqual(result, input_config)

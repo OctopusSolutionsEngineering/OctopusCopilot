@@ -228,7 +228,7 @@ def add_space_id_variable(config):
     """
 
     if 'variable "space_id"' not in config:
-        space_id_variable = 'variable "space_id" {\n  type = string\n}\n\n'
+        space_id_variable = 'variable "octopus_space_id" {\n  type = string\n}\n\n'
         return space_id_variable + config
 
     return config
