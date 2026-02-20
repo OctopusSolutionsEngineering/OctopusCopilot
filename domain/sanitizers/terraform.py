@@ -227,7 +227,7 @@ def add_space_id_variable(config):
     The LLM kept forgetting to include the space_id variable in the generated terraform config. This is required for the terraform provider to work.
     """
 
-    if 'variable "space_id"' not in config:
+    if 'variable "octopus_space_id"' not in config:
         space_id_variable = 'variable "octopus_space_id" {\n  type = string\n}\n\n'
         return space_id_variable + config
 
