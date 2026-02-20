@@ -6,11 +6,9 @@ import unittest
 import Levenshtein
 import azure.functions as func
 from openai import RateLimitError
-
 from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
-
 
 from domain.transformers.sse_transformers import (
     convert_from_sse_response,
@@ -27,7 +25,6 @@ from infrastructure.octopus import (
 )
 from infrastructure.terraform_context import save_terraform_context
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
-from tests.infrastructure.create_and_deploy_release import wait_for_task
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
