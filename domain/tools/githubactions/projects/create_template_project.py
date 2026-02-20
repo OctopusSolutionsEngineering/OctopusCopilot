@@ -37,6 +37,7 @@ from domain.sanitizers.terraform import (
     replace_resource_names_with_digit,
     fix_double_comma,
     fix_variable_type,
+    add_space_id_variable,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -336,6 +337,9 @@ def create_template_project_callback(
 
                 # Remove invalid slugs
                 configuration = sanitize_slugs(configuration)
+
+                # Add the space ID variable
+                configuration = add_space_id_variable(configuration)
 
                 # Fix up half created primary package definitions
                 configuration = sanitize_primary_package(configuration)

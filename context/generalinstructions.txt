@@ -1787,6 +1787,8 @@ data "octopusdeploy_accounts" "my_other_oidc_account" {
 
 * The "octopusdeploy_ssh_connection_worker" resources must define the "account_id", "fingerprint", and "host" attributes.
 * You will be penalized for supplying empty strings to the "account_id", "fingerprint", and "host" attributes in the "octopusdeploy_ssh_connection_worker" resource.
+* If no machine policy is specified in the prompt for a worker, the "machine_policy_id" attribute must be set by looking up the existing machine policy called "Default Machine Policy".
+* If no worker pool is specified in the prompt for a worker, you must create a new worker pool with a suitable name and assign the worker to that worker pool.
 
 ## Terraform Instructions
 * All resource and data names must start with a character or underscore.

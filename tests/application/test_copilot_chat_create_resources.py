@@ -3,26 +3,17 @@ import json
 import os
 import unittest
 
-import Levenshtein
 import azure.functions as func
 from openai import RateLimitError
-
 from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
 
-
 from domain.transformers.sse_transformers import (
-    convert_from_sse_response,
     get_confirmation_id,
 )
 from function_app import copilot_handler_internal
 from infrastructure.octopus import (
-    get_space_id_and_name_from_name,
-    get_project,
-    get_runbook_fuzzy,
-    get_raw_deployment_process,
-    get_tenants,
     sync_community_step_templates,
 )
 from infrastructure.terraform_context import save_terraform_context
@@ -31,7 +22,6 @@ from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
-@unittest.skip("These tests are flaky and need to be reworked to be more reliable.")
 class CopilotChatTestCreateResources(unittest.TestCase):
     """
     End-to-end tests that verify the complete query including:
@@ -314,7 +304,7 @@ class CopilotChatTestCreateResources(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_step_template(self):
-        prompt = 'Create a step template called "Sort Array".'
+        prompt = 'Create a step template called "Sort Array" with a script body that includes only a comment saying "# Array sorting logic goes here".'
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
