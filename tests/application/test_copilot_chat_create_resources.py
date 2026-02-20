@@ -205,7 +205,7 @@ class CopilotChatTestCreateResources(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_certificate(self):
-        prompt = 'Create a certificate account called "HTTPS".'
+        prompt = 'Create a certificate called "HTTPS".'
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
