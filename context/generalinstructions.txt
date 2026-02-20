@@ -1699,6 +1699,7 @@ data "octopusdeploy_deployment_targets" "kubernetes_cluster_target_example" {
 * You will be penalized for defining a "description" attribute on a resource "octopusdeploy_azure_cloud_service_deployment_target".
 * You will be penalized for defining a "description" attribute on a resource "octopusdeploy_azure_service_fabric_cluster_deployment_target".
 * You will be penalized for defining a "description" attribute on a resource "octopusdeploy_azure_web_app_deployment_target".
+* You will be penalized for setting the "machine_policy_id" attribute to an empty string.
 
 ## Octopus Machine Policy Instructions
 * You will be penalized for adding the "tenant_ids" attribute to a resource "octopusdeploy_machine_policies" data source.
