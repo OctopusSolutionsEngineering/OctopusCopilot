@@ -28,6 +28,25 @@ def create_general_resources_wrapper(query, callback, logging):
         You will be penalized for selecting this function if the prompt mentions creating projects.
         You will be penalized for selecting this function for a prompt like "Create a script project called My Project and then add a lifecycle called Application".
 
+        Example prompts are:
+        * Create an environment called "My Environment" in the space "My Space"
+        * Create an account called "My Account" in the space "My Space"
+        * Create a lifecycle called "My Lifecycle" in the space "My Space"
+        * Create a variable set called "My Variable Set" in the space "My Space"
+        * Create a worker pool called "My Worker Pool" in the space "My Space"
+        * Create a step template called "My Step Template" in the space "My Space"
+        * Create a machine policy called "My Machine Policy" in the space "My Space"
+        * Create a tenant called "My Tenant" in the space "My Space"
+        * Create a target called "My Target" in the space "My Space"
+        * Create a machine called "My Machine" in the space "My Space"
+        * Create a worker called "My Worker" in the space "My Space"
+        * Create a feed called "My Feed" in the space "My Space"
+        * Create a certificate called "My Certificate" in the space "My Space"
+        * Create a git credential called "My Git Credential" in the space "My Space"
+        * Create a GitHub connection called "My GitHub Connection" in the space "My Space"
+        * Create a script module called "My Script Module" in the space "My Space"
+        * Create a machine proxy called "My Machine Proxy" in the space "My Space"
+
         Args:
             space_name: The optional name of the space
         """
