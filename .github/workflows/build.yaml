@@ -438,27 +438,6 @@ jobs:
             -x "tests/*" \
             -x local.settings.json
         shell: bash
-      - name: Tag Release
-        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'schedule' }}
-        uses: mathieudutour/github-tag-action@v6.1
-        with:
-          custom_tag: ${{ steps.determine_version.outputs.semVer }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-      - id: create_release
-        name: Create Release
-        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'schedule' }}
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.determine_version.outputs.semVer }}+run${{ github.run_number }}-attempt${{ github.run_attempt }}
-          release_name: Release ${{ steps.determine_version.outputs.semVer }} Run ${{ github.run_number }} Attempt ${{ github.run_attempt }}
-          draft: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
-          name: Release ${{ steps.determine_version.outputs.semVer }} Run ${{ github.run_number }} Attempt ${{ github.run_attempt }}
-      - name: Upload Release Asset
-        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'schedule' }}
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.determine_version.outputs.semVer }}+run${{ github.run_number }}-attempt${{ github.run_attempt }}
-          files: OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip
       - name: Push packages to Octopus Deploy
         if: ${{ github.event_name != 'schedule' }}
         uses: OctopusDeploy/push-package-action@v3
@@ -511,6 +490,27 @@ jobs:
                 - [#{workItem.Id}](#{workItem.LinkUrl}) - #{workItem.Description}
             #{/each}
             #{/each}
+      - name: Tag Release
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'schedule' }}
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          custom_tag: ${{ steps.determine_version.outputs.semVer }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - id: create_release
+        name: Create Release
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'schedule' }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.determine_version.outputs.semVer }}+run${{ github.run_number }}-attempt${{ github.run_attempt }}
+          release_name: Release ${{ steps.determine_version.outputs.semVer }} Run ${{ github.run_number }} Attempt ${{ github.run_attempt }}
+          draft: ${{ github.ref == 'refs/heads/main' && 'false' || 'true' }}
+          name: Release ${{ steps.determine_version.outputs.semVer }} Run ${{ github.run_number }} Attempt ${{ github.run_attempt }}
+      - name: Upload Release Asset
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'schedule' }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.determine_version.outputs.semVer }}+run${{ github.run_number }}-attempt${{ github.run_attempt }}
+          files: OctopusCopilot.${{ steps.determine_version.outputs.semVer }}.zip
 permissions:
   id-token: write
   checks: write
