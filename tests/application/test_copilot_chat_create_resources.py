@@ -268,7 +268,7 @@ class CopilotChatTestCreateResources(unittest.TestCase):
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_worker_pool(self):
-        prompt = 'Create a worker pool called "Linux Server".'
+        prompt = 'Create a worker pool called "Kubernetes Workers".'
         response = copilot_handler_internal(build_request(prompt))
         response_text = response.get_body().decode("utf8")
         print(response_text)
