@@ -1704,6 +1704,21 @@ data "octopusdeploy_deployment_targets" "kubernetes_cluster_target_example" {
 * You will be penalized for defining a "description" attribute on a resource "octopusdeploy_azure_service_fabric_cluster_deployment_target".
 * You will be penalized for defining a "description" attribute on a resource "octopusdeploy_azure_web_app_deployment_target".
 * You will be penalized for setting the "machine_policy_id" attribute to an empty string.
+* If no machine policy is specified in the prompt for a worker, the "machine_policy_id" attribute must be set by looking up the existing machine policy called "Default Machine Policy", for example:
+
+```
+data "octopusdeploy_machine_policies" "default_machine_policy" {
+  ids          = null
+  partial_name = "Default Machine Policy"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_mock_k8s" {
+  # The machine policy must be assigned by looking up the existing machine policy called "Default Machine Policy"
+  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
+}
+```
 
 ## Octopus Machine Policy Instructions
 * You will be penalized for adding the "tenant_ids" attribute to a resource "octopusdeploy_machine_policies" data source.
@@ -1787,7 +1802,7 @@ data "octopusdeploy_accounts" "my_other_oidc_account" {
 
 * The "octopusdeploy_ssh_connection_worker" resources must define the "account_id", "fingerprint", and "host" attributes.
 * You will be penalized for supplying empty strings to the "account_id", "fingerprint", and "host" attributes in the "octopusdeploy_ssh_connection_worker" resource.
-* If no machine policy is specified in the prompt for a worker, the "machine_policy_id" attribute must be set by looking up the existing machine policy called "Default Machine Policy".
+* If no machine policy is specified in the prompt for a worker, the "machine_policy_id" attribute must be set by looking up the existing machine policy called "Default Machine Policy"
 * If no worker pool is specified in the prompt for a worker, you must use a data source to look for an existing worker pool with a suitable name and assign the worker to that worker pool, and if that pool does not exist, create a new worker pool and assign the worker to that worker pool.
 
 ## Terraform Instructions
