@@ -1704,7 +1704,7 @@ data "octopusdeploy_deployment_targets" "kubernetes_cluster_target_example" {
 * You will be penalized for defining a "description" attribute on a resource "octopusdeploy_azure_service_fabric_cluster_deployment_target".
 * You will be penalized for defining a "description" attribute on a resource "octopusdeploy_azure_web_app_deployment_target".
 * You will be penalized for setting the "machine_policy_id" attribute to an empty string.
-* If no machine policy is specified in the prompt for a worker, the "machine_policy_id" attribute must be set by looking up the existing machine policy called "Default Machine Policy", for example:
+* If no machine policy is specified in the prompt for a target, the "machine_policy_id" attribute must be set by looking up the existing machine policy called "Default Machine Policy", for example:
 
 ```
 data "octopusdeploy_machine_policies" "default_machine_policy" {
