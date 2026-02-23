@@ -1964,4 +1964,4 @@ data "octopusdeploy_projects" "project1" { ... }
 ```
 
 * You will be penalized for not including all required resources and data blocks.
-* You will be penalized for generating a partial Terraform configuration that does not include all required resources and data blocks.
+* You will be penalized for stopping the Terraform configuration generation before it is complete.
