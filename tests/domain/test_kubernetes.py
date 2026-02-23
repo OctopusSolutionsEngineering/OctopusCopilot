@@ -21,6 +21,7 @@ from domain.sanitizers.terraform import (
     fix_double_comma,
     fix_variable_type,
     add_space_id_variable,
+    fix_single_line_lifecycle_phase,
 )
 
 
@@ -398,6 +399,21 @@ class TestKubernetesSanitizer(unittest.TestCase):
         )
 
         result = fix_single_line_retention_policy(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_fix_single_line_lifecycle_phase(self):
+        input_config = 'phase { automatic_deployment_targets = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"], optional_deployment_targets = [], name = "Security", is_optional_phase = false, minimum_environments_before_promotion = 0 }'
+        expected_output = (
+            "phase {\n"
+            ' automatic_deployment_targets = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]\n'
+            " optional_deployment_targets = []\n"
+            ' name = "Security"\n'
+            " is_optional_phase = false\n"
+            " minimum_environments_before_promotion = 0\n"
+            "}"
+        )
+
+        result = fix_single_line_lifecycle_phase(input_config)
         self.assertEqual(result, expected_output)
 
     def test_with_whitespace_variations(self):

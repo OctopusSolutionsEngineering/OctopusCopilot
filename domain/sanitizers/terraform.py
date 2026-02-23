@@ -159,6 +159,24 @@ def fix_single_line_retention_policy(config):
     )
 
 
+def fix_single_line_lifecycle_phase(config):
+    """
+    The LLM kept insisting on using a single line phase block in the lifecycle. This is not valid HCL2 syntax.
+    """
+
+    return re.sub(
+        r"phase { automatic_deployment_targets\s*=\s*(.*?)\s*,?\s*optional_deployment_targets\s*=\s*(.*?)\s*,?\s*name\s*=\s*\"(.*?)\"\s*,?\s*is_optional_phase\s*=\s*(.*?)\s*,?\s*minimum_environments_before_promotion\s*=\s*(.*?)\s*}",
+        r"phase {\n"
+        r" automatic_deployment_targets = \1\n"
+        r" optional_deployment_targets = \2\n"
+        r' name = "\3"\n'
+        r" is_optional_phase = \4\n"
+        r" minimum_environments_before_promotion = \5\n"
+        "}",
+        config,
+    )
+
+
 def fix_single_line_tentacle_retention_policy(config):
     """
     The LLM kept insisting on using a single line tentacle_retention_policy block. This is not valid HCL2 syntax.

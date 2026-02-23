@@ -38,6 +38,7 @@ from domain.sanitizers.terraform import (
     fix_double_comma,
     fix_variable_type,
     add_space_id_variable,
+    fix_single_line_lifecycle_phase,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -352,6 +353,9 @@ def create_template_project_callback(
 
                 # Deal with the LLM returning a single line for a release_retention_policy block
                 configuration = fix_single_line_retention_policy(configuration)
+
+                # Deal with the LLM returning a single line for a phase blocks
+                configuration = fix_single_line_lifecycle_phase(configuration)
 
                 # Deal with the LLM returning a single line for a tentacle_retention_policy block
                 configuration = fix_single_line_tentacle_retention_policy(configuration)
