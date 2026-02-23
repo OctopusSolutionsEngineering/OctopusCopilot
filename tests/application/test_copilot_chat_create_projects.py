@@ -9,6 +9,7 @@ from openai import RateLimitError
 from retry import retry
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.wait_strategies import LogMessageWaitStrategy
+from testcontainers.core.waiting_utils import wait_for_logs
 
 from domain.transformers.sse_transformers import (
     convert_from_sse_response,
@@ -29,9 +30,6 @@ from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
-@unittest.skip(
-    "Project generation is exceeding token limits, disabling until the templates are trimmed down."
-)
 class CopilotChatTestCreateProjects(unittest.TestCase):
     """
     End-to-end tests that verify the complete query including:
@@ -112,9 +110,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
                 .with_env("SA_PASSWORD", "Password01!")
             )
             cls.mssql.start()
-            cls.mssql.waiting_for(
-                LogMessageWaitStrategy("SQL Server is now ready for client connections")
-            )
+            wait_for_logs(cls.mssql, "SQL Server is now ready for client connections")
 
             mssql_ip = cls.mssql.get_docker_client().bridge_ip(
                 cls.mssql.get_wrapped_container().id
@@ -138,9 +134,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
                 .with_env("ENABLE_USAGE", "N")
             )
             cls.octopus.start()
-            cls.octopus.waiting_for(
-                LogMessageWaitStrategy("Web server is ready to process requests")
-            )
+            wait_for_logs(cls.octopus, "Web server is ready to process requests", 300)
 
             sync_community_step_templates(Octopus_Api_Key, Octopus_Url)
 
