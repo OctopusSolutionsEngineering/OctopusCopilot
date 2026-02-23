@@ -827,6 +827,8 @@ resource "octopusdeploy_external_feed_create_release_trigger" "project_trigger" 
     * A "tenant_tags" property is a list of strings, used to associate a channel with specific tenant tags
 * A project can have multiple "octopusdeploy_channel" resources.
 * The "count" attribute for the "octopusdeploy_channel" resource must be set to "${length(data.octopusdeploy_projects.<name>.projects) != 0 ? 0 : 1}" where "<name>" is the name of a data source "octopusdeploy_projects" that matches the name of the project that the channel is associated with.
+* Every "octopusdeploy_channel" resource must have an associated "octopusdeploy_channels" data source.
+* You will be penalized for defining a "octopusdeploy_channel" resource without an associated "octopusdeploy_channels" data source.
 * You will be penalized for having the "count" attribute for the "octopusdeploy_channel" resource reference a "octopusdeploy_channels" data source, for example:
 
 ```
