@@ -30,6 +30,7 @@ def create_general_resources_wrapper(query, callback, logging):
 
         Example prompts are:
         * Create an environment called "My Environment" in the space "My Space"
+        * Create an environment called "My Environment"
         * Create an account called "My Account" in the space "My Space"
         * Create a lifecycle called "My Lifecycle" in the space "My Space"
         * Create a variable set called "My Variable Set" in the space "My Space"
@@ -42,6 +43,7 @@ def create_general_resources_wrapper(query, callback, logging):
         * Create a worker called "My Worker" in the space "My Space"
         * Create a feed called "My Feed" in the space "My Space"
         * Create a certificate called "My Certificate" in the space "My Space"
+        * Create a certificate called "My Certificate"
         * Create a git credential called "My Git Credential" in the space "My Space"
         * Create a GitHub connection called "My GitHub Connection" in the space "My Space"
         * Create a script module called "My Script Module" in the space "My Space"
