@@ -559,8 +559,21 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
   partial_name = ""
   skip         = 0
   take         = 1
-  # This curly bracket is unbalanced and should be removed
+  # This curly bracket is unbalanced and must be removed
    }
+}
+
+resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? 0 : 1}"
+  name                                 = "Octopus Maven Feed"
+  feed_uri                             = "http://octopus-sales-public-maven-repo.s3-website-ap-southeast-2.amazonaws.com/snapshot"
+  package_acquisition_location_options = ["Server", "ExecutionTarget"]
+  download_attempts                    = 5
+  download_retry_backoff_seconds       = 10
+  # The lifecycle block below has unbalanced brackets. There must be a closing curly bracket after the prevent_destroy attribute and before the closing curly bracket for the resource.
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
 }
 ```
 
