@@ -613,7 +613,6 @@ resource "octopusdeploy_runbook" "runbook_my_script_app_4_retrieve_logs" {
     multi_tenancy_mode          = "Untenanted"
 
     retention_policy {
-      should_keep_forever = false
       quantity_to_keep    = 1
       # The unit property is invalid and must not be defined in a retention_policy block for a runbook resource
       unit                = "Items"
@@ -627,6 +626,9 @@ resource "octopusdeploy_runbook" "runbook_my_script_app_4_retrieve_logs" {
     }
 }
 ```
+
+* You will be penalized for setting both the "should_keep_forever" attribute and defining the "quantity_to_keep" attribute in a "octopusdeploy_runbook" resource.
+* If the "quantity_to_keep" attribute is defined in a "retention_policy" block in a "octopusdeploy_runbook" resource, the "should_keep_forever" attribute must be omitted.
 
 ## Octopus Project Instructions
 
