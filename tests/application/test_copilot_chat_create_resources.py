@@ -194,7 +194,6 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-    @unittest.skip("Still can't get this tool to be called reliably")
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_certificate(self):
         prompt = 'Create a certificate called "HTTPS".'
