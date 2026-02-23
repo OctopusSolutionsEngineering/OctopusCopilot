@@ -192,6 +192,7 @@ data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
 data "octopusdeploy_channels" "channel_script_default" {
   ids          = []
   partial_name = "Default"
+  project_id   = "Projects-8881"
   skip         = 0
   take         = 1
 }
@@ -234,11 +235,11 @@ resource "octopusdeploy_process_step" "process_step_script_hello_world" {
   properties            = {
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"#{Project.Message}\""
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 

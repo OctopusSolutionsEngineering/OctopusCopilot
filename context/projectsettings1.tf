@@ -54,6 +54,7 @@ data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
 data "octopusdeploy_channels" "channel_project_settings_example_default" {
   ids          = []
   partial_name = "Default"
+  project_id   = "Projects-8621"
   skip         = 0
   take         = 1
 }
