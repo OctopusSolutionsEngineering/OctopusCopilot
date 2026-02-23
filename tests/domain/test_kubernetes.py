@@ -22,6 +22,7 @@ from domain.sanitizers.terraform import (
     fix_variable_type,
     add_space_id_variable,
     fix_single_line_lifecycle_phase,
+    fix_single_line_variable,
 )
 
 
@@ -414,6 +415,21 @@ class TestKubernetesSanitizer(unittest.TestCase):
         )
 
         result = fix_single_line_lifecycle_phase(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_fix_single_line_lifecycle_phase(self):
+        input_config = 'variable "project_my_azure_function_app_step_deploy_products_microservice_azurefunction_jvm_azure_function___staging_slot_packageid" { type = string nullable = false sensitive = false description = "The package ID" default = "com.octopus:products-microservice-azurefunction-jvm" }'
+        expected_output = (
+            'variable "project_my_azure_function_app_step_deploy_products_microservice_azurefunction_jvm_azure_function___staging_slot_packageid" {\n'
+            "type = string\n"
+            "nullable = false\n"
+            "sensitive = false\n"
+            'description = "The package ID"\n'
+            'default = "com.octopus:products-microservice-azurefunction-jvm"\n'
+            "}"
+        )
+
+        result = fix_single_line_variable(input_config)
         self.assertEqual(result, expected_output)
 
     def test_with_whitespace_variations(self):

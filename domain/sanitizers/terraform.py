@@ -177,6 +177,24 @@ def fix_single_line_lifecycle_phase(config):
     )
 
 
+def fix_single_line_variable(config):
+    """
+    The LLM kept insisting on using a single line for variables
+    """
+
+    return re.sub(
+        r'variable\s*"(.*?)"\s*{\s*type\s*=\s*(.*?)\s*nullable\s*=\s*(.*?)\s*sensitive\s*=\s*(.*?)\s*description\s*=\s*"(.*?)"\s*default\s*=\s*"(.*?)"\s*}',
+        r'variable "\1" {\n'
+        r"type = \2\n"
+        r"nullable = \3\n"
+        r"sensitive = \4\n"
+        r'description = "\5"\n'
+        r'default = "\6"\n'
+        r"}",
+        config,
+    )
+
+
 def fix_single_line_tentacle_retention_policy(config):
     """
     The LLM kept insisting on using a single line tentacle_retention_policy block. This is not valid HCL2 syntax.
