@@ -207,6 +207,19 @@ def fix_empty_teams(config):
     )
 
 
+def fix_bad_feed_block(config):
+    """
+    The LLM kept building feed blocks with unmatched curly quotes
+    """
+
+    return re.sub(
+        r'data "octopusdeploy_feeds" "(.*?)" \{(.*?)\n\s*}\n}',
+        r'data "octopusdeploy_feeds" "\1" {\2\n}',
+        config,
+        flags=re.DOTALL,
+    )
+
+
 def fix_single_line_tentacle_retention_policy(config):
     """
     The LLM kept insisting on using a single line tentacle_retention_policy block. This is not valid HCL2 syntax.

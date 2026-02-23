@@ -24,6 +24,7 @@ from domain.sanitizers.terraform import (
     fix_single_line_lifecycle_phase,
     fix_single_line_variable,
     fix_empty_teams,
+    fix_bad_feed_block,
 )
 
 
@@ -439,6 +440,65 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
         result = fix_empty_teams(input_config)
         self.assertEqual(result, expected_output)
+
+    def test_fix_bad_feed_block(self):
+        input_config = (
+            'data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {\n'
+            '  feed_type    = "BuiltIn"\n'
+            "  ids          = null\n"
+            '  partial_name = ""\n'
+            "  skip         = 0\n"
+            "  take         = 1\n"
+            "   }\n"
+            "}"
+        )
+        expected_output = (
+            'data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {\n'
+            '  feed_type    = "BuiltIn"\n'
+            "  ids          = null\n"
+            '  partial_name = ""\n'
+            "  skip         = 0\n"
+            "  take         = 1\n"
+            "}"
+        )
+
+        result = fix_bad_feed_block(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_fix_empty_teams(self):
+        input_config = '"Octopus.Action.Manual.ResponsibleTeamIds" = ""'
+        expected_output = ""
+
+        result = fix_empty_teams(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_fix_bad_feed_block2(self):
+        input_config = (
+            'data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {\n'
+            '  feed_type    = "BuiltIn"\n'
+            "  ids          = null\n"
+            '  partial_name = ""\n'
+            "  skip         = 0\n"
+            "  take         = 1\n"
+            "  }"
+        )
+
+        result = fix_bad_feed_block(input_config)
+        self.assertEqual(result, input_config)
+
+    def test_fix_bad_feed_block3(self):
+        input_config = (
+            'data "whatever" "feed_octopus_server__built_in_" {\n'
+            '  feed_type    = "BuiltIn"\n'
+            "  ids          = null\n"
+            '  partial_name = ""\n'
+            "  skip         = 0\n"
+            "  take         = 1\n}\n"
+            "}"
+        )
+
+        result = fix_bad_feed_block(input_config)
+        self.assertEqual(result, input_config)
 
     def test_with_whitespace_variations(self):
         # Test with different whitespace formatting
