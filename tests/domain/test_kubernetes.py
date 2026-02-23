@@ -23,6 +23,7 @@ from domain.sanitizers.terraform import (
     add_space_id_variable,
     fix_single_line_lifecycle_phase,
     fix_single_line_variable,
+    fix_empty_teams,
 )
 
 
@@ -430,6 +431,13 @@ class TestKubernetesSanitizer(unittest.TestCase):
         )
 
         result = fix_single_line_variable(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_fix_empty_teams(self):
+        input_config = '"Octopus.Action.Manual.ResponsibleTeamIds" = ""'
+        expected_output = ""
+
+        result = fix_empty_teams(input_config)
         self.assertEqual(result, expected_output)
 
     def test_with_whitespace_variations(self):

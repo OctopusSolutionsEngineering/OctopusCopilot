@@ -195,6 +195,18 @@ def fix_single_line_variable(config):
     )
 
 
+def fix_empty_teams(config):
+    """
+    The LLM kept insisting on using adding "Octopus.Action.Manual.ResponsibleTeamIds" = ""
+    """
+
+    return re.sub(
+        r'"Octopus.Action.Manual.ResponsibleTeamIds"\s*=\s*""',
+        "",
+        config,
+    )
+
+
 def fix_single_line_tentacle_retention_policy(config):
     """
     The LLM kept insisting on using a single line tentacle_retention_policy block. This is not valid HCL2 syntax.

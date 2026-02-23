@@ -40,6 +40,7 @@ from domain.sanitizers.terraform import (
     add_space_id_variable,
     fix_single_line_lifecycle_phase,
     fix_single_line_variable,
+    fix_empty_teams,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -360,6 +361,9 @@ def create_template_project_callback(
 
                 # Deal with the LLM returning a single line for a variable
                 configuration = fix_single_line_variable(configuration)
+
+                # Deal with the LLM returning empty teams in a manual intervention block
+                configuration = fix_empty_teams(configuration)
 
                 # Deal with the LLM returning a single line for a tentacle_retention_policy block
                 configuration = fix_single_line_tentacle_retention_policy(configuration)
