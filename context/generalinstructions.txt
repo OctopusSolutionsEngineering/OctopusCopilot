@@ -1931,7 +1931,7 @@ variable "project_group_name" {
 * You will be penalized for defining a "scope" block in a terraform variable.
 * You will be penalized for defining the "type" in a variable with an value that includes double quotes, for example `type = "string"`. The correct syntax is `type = string` without double quotes.
 
-## Penalties
+## Penalties and General Instructions
 
 * You will be penalized for creating resources with names that start with a number, for example, a resource named "123_my_resource" or "05_script_project" is invalid.
 * You will be penalized for generating invalid Terraform.
@@ -1965,3 +1965,8 @@ data "octopusdeploy_projects" "project1" { ... }
 
 * You will be penalized for not including all required resources and data blocks.
 * You will be penalized for stopping the Terraform configuration generation before it is complete.
+* You will be penalized for stopping generation mid-resource or mid-block.
+* You will be penalized for generating partial configurations that reference undefined resources or data sources.
+* You must generate the complete Terraform configuration in a single response.
+* You must verify that all opening braces { have corresponding closing braces } before completing your response.
+* If you cannot complete the entire configuration due to length constraints, you must prioritize completing the current resource block rather than leaving it incomplete.
