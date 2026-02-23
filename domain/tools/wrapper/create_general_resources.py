@@ -49,6 +49,8 @@ def create_general_resources_wrapper(query, callback, logging):
         * Create a script module called "My Script Module" in the space "My Space"
         * Create a machine proxy called "My Machine Proxy" in the space "My Space"
 
+        The names in the prompts above are examples only and can be replaced with any name for the resource.
+
         Args:
             space_name: The optional name of the space
         """
