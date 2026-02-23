@@ -1345,8 +1345,18 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
 * You will be penalized for defining a property in the "execution_properties" block called "Octopus.Action.Aws.CloudFormation.TagsEnabled".
 * You will be penalized for defining a property in the "execution_properties" block called "Octopus.Action.Aws.CloudFormation.StackName".
 * You will be penalized for defining a property in the "execution_properties" block called "Octopus.Action.Manual.ResponsibleUserIds".
-* You will be penalized for defining a property in the "execution_properties" block called "Octopus.Action.Manual.ResponsibleTeamIds".
 * You will be penalized for defining a property in the "execution_properties" block called "Octopus.Action.Manual.Roles".
+* You will be penalized for defining the Octopus.Action.Manual.ResponsibleTeamIds" property as an empty string, for example:
+```
+resource "octopusdeploy_process_step" "process_step_my_azure_web_app_5_manual_intervention" {
+  execution_properties  = {
+    # An empty string is not a valid value for the "Octopus.Action.Manual.ResponsibleTeamIds" property
+    "Octopus.Action.Manual.ResponsibleTeamIds"         = ""
+  }
+}
+```
+
+
 * You will be penalized for defining multiple "execution_properties" blocks within a single resource.
 * The "execution_properties" property must be defined as a map, for example:
 ```
