@@ -388,6 +388,18 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = fix_single_line_retention_policy(input_config)
         self.assertEqual(result, expected_output)
 
+    def test_commas(self):
+        # Test with different values
+        input_config = (
+            'release_retention_policy { quantity_to_keep = 10, unit = "Items" }'
+        )
+        expected_output = (
+            'release_retention_policy {\n quantity_to_keep = 10\n unit = "Items"\n}'
+        )
+
+        result = fix_single_line_retention_policy(input_config)
+        self.assertEqual(result, expected_output)
+
     def test_with_whitespace_variations(self):
         # Test with different whitespace formatting
         input_config = 'release_retention_policy{quantity_to_keep=5 unit="Weeks"}'

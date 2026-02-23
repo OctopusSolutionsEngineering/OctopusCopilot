@@ -150,7 +150,7 @@ def fix_single_line_retention_policy(config):
     """
 
     return re.sub(
-        r"release_retention_policy\s*{\s*quantity_to_keep\s*=\s*(\d+)\s*unit\s*=\s*\"([^\"]+)\"\s*}",
+        r"release_retention_policy\s*{\s*quantity_to_keep\s*=\s*(\d+),?\s*unit\s*=\s*\"([^\"]+)\"\s*}",
         r"release_retention_policy {\n"
         r" quantity_to_keep = \1\n"
         r' unit = "\2"\n'
@@ -165,7 +165,7 @@ def fix_single_line_tentacle_retention_policy(config):
     """
 
     return re.sub(
-        r"tentacle_retention_policy\s*{\s*quantity_to_keep\s*=\s*(\d+)\s*unit\s*=\s*\"([^\"]+)\"\s*}",
+        r"tentacle_retention_policy\s*{\s*quantity_to_keep\s*=\s*(\d+),?\s*unit\s*=\s*\"([^\"]+)\"\s*}",
         r"tentacle_retention_policy {\n"
         r" quantity_to_keep = \1\n"
         r' unit = "\2"\n'
