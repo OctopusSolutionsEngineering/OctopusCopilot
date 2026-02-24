@@ -44,6 +44,7 @@ from domain.sanitizers.terraform import (
     fix_bad_feed_data,
     fix_bad_maven_feed_resource,
     fix_single_line_connectivity_policy,
+    trim_descriptions,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -376,6 +377,9 @@ def create_template_project_callback(
 
                 # Deal with the LLM returning feed blocks with unmatched opening and closing brackets
                 configuration = fix_bad_feed_data(configuration)
+
+                # Deal with the Octopus API timing strings
+                configuration = trim_descriptions(configuration)
 
                 # Deal with the LLM returning feed resources with unmatched opening and closing brackets
                 configuration = fix_bad_maven_feed_resource(configuration)

@@ -220,6 +220,26 @@ def fix_bad_feed_data(config):
     )
 
 
+def trim_descriptions(config):
+    """
+    Octopus will trim whitespace around descriptions, leading to errors like:
+    When applying changes to octopusdeploy_project.project_my_tenanted_lambda[0],
+    provider "provider[\"registry.opentofu.org/octopusdeploy/octopusdeploy\"]"
+    produced an unexpected new value: .description: was cty.StringVal("This
+    project provides an example AWS Lambda deployment using an AWS OIDC Account,
+    and SBOM scanning to an AWS Lambda function.\n\n"), but now
+    cty.StringVal("This project provides an example AWS Lambda deployment using
+    an AWS OIDC Account, and SBOM scanning to an AWS Lambda function.").
+    """
+
+    return re.sub(
+        r'(description|default)\s*=\s*"(?:\\n)*(.*?)(?:\\n)*"',
+        r'\1 = "\2"',
+        config,
+        flags=re.DOTALL,
+    )
+
+
 def fix_bad_maven_feed_resource(config):
     """
     The LLM kept building feed blocks with unmatched curly quotes

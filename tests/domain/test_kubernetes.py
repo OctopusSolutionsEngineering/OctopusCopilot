@@ -27,6 +27,7 @@ from domain.sanitizers.terraform import (
     fix_bad_feed_data,
     fix_bad_maven_feed_resource,
     fix_single_line_connectivity_policy,
+    trim_descriptions,
 )
 
 
@@ -608,6 +609,75 @@ class TestKubernetesSanitizer(unittest.TestCase):
         )
 
         result = fix_single_line_retention_policy(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_trim_descriptions(self):
+        input_config = (
+            'variable "project_my_tenanted_lambda_description" {\n'
+            "  type = string\n"
+            "  nullable = false\n"
+            "  sensitive = false\n"
+            '  description = "The description of the project exported from My tenanted Lambda"\n'
+            '  default = "This project provides an example AWS Lambda deployment using an AWS OIDC Account, and SBOM scanning to an AWS Lambda function.\\n\\n"\n'
+            "}"
+        )
+        expected_output = (
+            'variable "project_my_tenanted_lambda_description" {\n'
+            "  type = string\n"
+            "  nullable = false\n"
+            "  sensitive = false\n"
+            '  description = "The description of the project exported from My tenanted Lambda"\n'
+            '  default = "This project provides an example AWS Lambda deployment using an AWS OIDC Account, and SBOM scanning to an AWS Lambda function."\n'
+            "}"
+        )
+
+        result = trim_descriptions(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_trim_descriptions2(self):
+        input_config = (
+            'variable "project_my_tenanted_lambda_description" {\n'
+            "  type = string\n"
+            "  nullable = false\n"
+            "  sensitive = false\n"
+            '  description = "The description of the project exported from My tenanted Lambda"\n'
+            '  default = "\\nThis project provides an example AWS Lambda deployment using an AWS OIDC Account, and SBOM scanning to an AWS Lambda function.\\n\\n"\n'
+            "}"
+        )
+        expected_output = (
+            'variable "project_my_tenanted_lambda_description" {\n'
+            "  type = string\n"
+            "  nullable = false\n"
+            "  sensitive = false\n"
+            '  description = "The description of the project exported from My tenanted Lambda"\n'
+            '  default = "This project provides an example AWS Lambda deployment using an AWS OIDC Account, and SBOM scanning to an AWS Lambda function."\n'
+            "}"
+        )
+
+        result = trim_descriptions(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_trim_descriptions3(self):
+        input_config = (
+            'variable "project_my_tenanted_lambda_description" {\n'
+            "  type = string\n"
+            "  nullable = false\n"
+            "  sensitive = false\n"
+            '  description = "The description of the project exported from My tenanted Lambda"\n'
+            '  whatever = "\\nThis project provides an example AWS Lambda deployment using an AWS OIDC Account, and SBOM scanning to an AWS Lambda function.\\n\\n"\n'
+            "}"
+        )
+        expected_output = (
+            'variable "project_my_tenanted_lambda_description" {\n'
+            "  type = string\n"
+            "  nullable = false\n"
+            "  sensitive = false\n"
+            '  description = "The description of the project exported from My tenanted Lambda"\n'
+            '  whatever = "\\nThis project provides an example AWS Lambda deployment using an AWS OIDC Account, and SBOM scanning to an AWS Lambda function.\\n\\n"\n'
+            "}"
+        )
+
+        result = trim_descriptions(input_config)
         self.assertEqual(result, expected_output)
 
     def test_no_change_for_multiline_policy(self):
