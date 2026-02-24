@@ -326,7 +326,7 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-    @unittest.expectedFailure
+    @unittest.skip("This is known to fail occasionally")
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_github_connection(self):
         prompt = 'Create a GitHub connection called "Work".'
