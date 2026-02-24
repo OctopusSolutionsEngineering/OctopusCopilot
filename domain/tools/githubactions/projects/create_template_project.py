@@ -42,6 +42,7 @@ from domain.sanitizers.terraform import (
     fix_single_line_variable,
     fix_empty_teams,
     fix_bad_feed_data,
+    fix_bad_maven_feed_resource,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -371,6 +372,9 @@ def create_template_project_callback(
 
                 # Deal with the LLM returning feed blocks with unmatched opening and closing brackets
                 configuration = fix_bad_feed_data(configuration)
+
+                # Deal with the LLM returning feed resources with unmatched opening and closing brackets
+                configuration = fix_bad_maven_feed_resource(configuration)
 
                 # Deal with bad count attributes
                 configuration = fix_bad_logic_characters(configuration)
