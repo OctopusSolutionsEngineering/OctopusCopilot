@@ -248,6 +248,23 @@ def fix_single_line_tentacle_retention_policy(config):
     )
 
 
+def fix_single_line_connectivity_policy(config):
+    """
+    The LLM kept insisting on using a single line tentacle_retention_policy block. This is not valid HCL2 syntax.
+    """
+
+    return re.sub(
+        r'connectivity_policy\s*{\s*allow_deployments_to_no_targets\s*=\s*(.*?)\s*exclude_unhealthy_targets\s*=\s*(.*?)\s*skip_machine_behavior\s*=\s*"(.*?)"\s*target_roles\s*=\s*(.*?)\s*}',
+        r"connectivity_policy {\n"
+        r" allow_deployments_to_no_targets = \1\n"
+        r" exclude_unhealthy_targets = \2\n"
+        r' skip_machine_behavior = "\3"\n'
+        r" target_roles = \4\n"
+        "}",
+        config,
+    )
+
+
 def fix_bad_logic_characters(config):
     """
     The LLM kept on building expressions with underscores in place of brackets or other characters.

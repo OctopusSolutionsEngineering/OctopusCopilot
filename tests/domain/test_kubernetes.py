@@ -26,6 +26,7 @@ from domain.sanitizers.terraform import (
     fix_empty_teams,
     fix_bad_feed_data,
     fix_bad_maven_feed_resource,
+    fix_single_line_connectivity_policy,
 )
 
 
@@ -379,6 +380,14 @@ class TestKubernetesSanitizer(unittest.TestCase):
         )
 
         result = fix_single_line_tentacle_retention_policy(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_fix_single_line_connectivity_policy(self):
+        # Test with a single-line retention policy
+        input_config = 'connectivity_policy { allow_deployments_to_no_targets = true exclude_unhealthy_targets = false skip_machine_behavior = "None" target_roles = [] }'
+        expected_output = 'connectivity_policy {\n allow_deployments_to_no_targets = true\n exclude_unhealthy_targets = false\n skip_machine_behavior = "None"\n target_roles = []\n}'
+
+        result = fix_single_line_connectivity_policy(input_config)
         self.assertEqual(result, expected_output)
 
     def test_different_values(self):
