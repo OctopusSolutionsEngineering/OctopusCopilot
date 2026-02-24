@@ -852,7 +852,27 @@ resource "octopusdeploy_external_feed_create_release_trigger" "project_trigger" 
     * A "tenant_tags" property is a list of strings, used to associate a channel with specific tenant tags
 * A project can have multiple "octopusdeploy_channel" resources.
 * The "count" attribute for the "octopusdeploy_channel" resource must be set to "${length(data.octopusdeploy_projects.<name>.projects) != 0 ? 0 : 1}" where "<name>" is the name of a data source "octopusdeploy_projects" that matches the name of the project that the channel is associated with.
-* Every "octopusdeploy_channel" resource must have an associated "octopusdeploy_channels" data source.
+* Every "octopusdeploy_channel" resource must have an associated "octopusdeploy_channels" data source, for example:
+```
+data "octopusdeploy_channels" "application" {
+  ids          = []
+  partial_name = "Application"
+  project_id   = "${length(data.octopusdeploy_projects.project_my_argo_cd_webapp.projects) != 0 ? data.octopusdeploy_projects.project_my_argo_cd_webapp.projects[0].id : octopusdeploy_project.project_my_argo_cd_webapp[0].id}"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_channel" "application" {
+  count         = "${length(data.octopusdeploy_projects.project_my_argo_cd_webapp.projects) != 0 ? 0 : 1}"
+  name          = "Application"
+  project_id    = "${length(data.octopusdeploy_projects.project_my_argo_cd_webapp.projects) != 0 ? data.octopusdeploy_projects.project_my_argo_cd_webapp.projects[0].id : octopusdeploy_project.project_my_argo_cd_webapp[0].id}"
+  is_default    = true
+  lifecycle_id  = "${length(data.octopusdeploy_lifecycles.lifecycle_devsecops.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_devsecops.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_devsecops[0].id}"
+  space_id      = "${trimspace(var.octopus_space_id)}"
+}
+```
+
+
 * You will be penalized for defining a "octopusdeploy_channel" resource without an associated "octopusdeploy_channels" data source.
 * You will be penalized for having the "count" attribute for the "octopusdeploy_channel" resource reference a "octopusdeploy_channels" data source, for example:
 
