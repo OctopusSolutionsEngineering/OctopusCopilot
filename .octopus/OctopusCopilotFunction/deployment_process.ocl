@@ -112,26 +112,6 @@ step "deploy-with-cli" {
                       "slotSetting": false
                    },
                    {
-                      "name": "OPENAI_ENDPOINT",
-                      "value": "#{Azure.US.OpenAI.Endpoint}",
-                      "slotSetting": false
-                   },
-                   {
-                      "name": "OPENAI_API_DEPLOYMENT",
-                      "value": "#{Azure.US.OpenAI.Deployment}",
-                      "slotSetting": false
-                   },
-                   {
-                      "name": "OPENAI_API_DEPLOYMENT_FUNCTIONS",
-                      "value": "#{Azure.US.OpenAI.Deployment.Functions}",
-                      "slotSetting": false
-                   },
-                   {
-                      "name": "OPENAI_API_DEPLOYMENT_QUERY",
-                      "value": "#{Azure.US.OpenAI.Deployment.Query}",
-                      "slotSetting": false
-                   },
-                   {
                      "name": "AISERVICES_ENDPOINT",
                      "value": "#{Azure.US.AIServices.Endpoint}",
                      "slotSetting": false
