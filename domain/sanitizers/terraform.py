@@ -226,7 +226,7 @@ def fix_bad_maven_feed_resource(config):
     """
 
     return re.sub(
-        r'resource "octopusdeploy_(.*?)_feed" "(.*?)" \{(.*?)\n\s*lifecycle \{(.*?)\n}',
+        r'resource "octopusdeploy_(.*?)_feed" "(.*?)" \{(.*?)\n\s*lifecycle \{([^{}]*?)\n}',
         r'resource "octopusdeploy_\1_feed" "\2" {\3\n  lifecycle {\4\n  }\n}',
         config,
         flags=re.DOTALL,
