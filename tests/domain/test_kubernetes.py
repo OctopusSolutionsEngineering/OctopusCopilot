@@ -553,6 +553,25 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = fix_bad_feed_data(input_config)
         self.assertEqual(result, input_config)
 
+    def test_fix_bad_feed_block5(self):
+        input_config = (
+            'resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {\n'
+            '  count                                = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? 0 : 1}"\n'
+            '  name                                 = "Octopus Maven Feed"\n'
+            '  feed_uri                             = "http://octopus-sales-public-maven-repo.s3-website-ap-southeast-2.amazonaws.com/snapshot"\n'
+            '  package_acquisition_location_options = ["Server", "ExecutionTarget"]\n'
+            "  download_attempts                    = 5\n"
+            "  download_retry_backoff_seconds       = 10\n"
+            "  lifecycle {\n"
+            "    ignore_changes  = [password]\n"
+            "    prevent_destroy = true\n"
+            "  }\n"
+            "}"
+        )
+
+        result = fix_bad_feed_data(input_config)
+        self.assertEqual(result, input_config)
+
     def test_with_whitespace_variations(self):
         # Test with different whitespace formatting
         input_config = 'release_retention_policy{quantity_to_keep=5 unit="Weeks"}'
