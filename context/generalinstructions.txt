@@ -1534,7 +1534,7 @@ resource "octopusdeploy_process_step" "process_step_serverless_api_9231_deploy_l
 * Every item in the "tenant_tags" array must reference a tag defined in a resource "octopusdeploy_tag" and the tag set defined in a resource "octopusdeploy_tag_set".
 * Step template and community step template steps must use the "octopusdeploy_process_templated_step" resource.
 * You will be penalized for using the "octopusdeploy_process_step" resource for steps that are based on step templates or community step templates.
-
+* You will be penalized for defining a property called "Octopus.Action.Script.FileName" in the execution_properties block of a "octopusdeploy_process_step" resource of type "Octopus.Script". The correct property name is "Octopus.Action.Script.ScriptFileName".
 
 ## Octopus step template instructions
 
