@@ -1568,6 +1568,8 @@ resource "octopusdeploy_process_step" "process_step_serverless_api_9231_deploy_l
 * You will be penalized for using the "octopusdeploy_process_step" resource for steps that are based on step templates or community step templates.
 * You will be penalized for defining a property called "Octopus.Action.Script.FileName" in the execution_properties block of a "octopusdeploy_process_step" resource of type "Octopus.Script". The correct property name is "Octopus.Action.Script.ScriptFileName".
 * If the prompt includes instructions to retain the original steps from the sample Terraform configurations, you will be penalized for including comments like "# ... include all original Azure Web App steps here, in order" in place of the original steps.
+* Every step defined in a "octopusdeploy_process_steps_order" resource must also be defined as a resource, for example "octopusdeploy_process_step" or "octopusdeploy_process_templated_step".
+* You will be penalized for defining a step in a "octopusdeploy_process_steps_order" resource that is not defined as a resource.
 
 ## Octopus step template instructions
 
