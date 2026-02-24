@@ -287,8 +287,14 @@ jobs:
           include-hidden-files: true
           path: coverage.xml
 
+#      - name: Coverage Badge
+#        uses: tj-actions/coverage-badge-py@v2
+
+      # See https://github.com/tj-actions/coverage-badge-py/issues/180
       - name: Coverage Badge
-        uses: tj-actions/coverage-badge-py@v2
+        run: |
+          pip install -U genbadge
+          genbadge coverage -i  coverage.xml -o coverage.svg
 
       - name: Verify Changed files
         uses: tj-actions/verify-changed-files@v17
