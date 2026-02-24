@@ -41,7 +41,7 @@ from domain.sanitizers.terraform import (
     fix_single_line_lifecycle_phase,
     fix_single_line_variable,
     fix_empty_teams,
-    fix_bad_feed_block,
+    fix_bad_feed_data,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -370,7 +370,7 @@ def create_template_project_callback(
                 configuration = fix_single_line_tentacle_retention_policy(configuration)
 
                 # Deal with the LLM returning feed blocks with unmatched opening and closing brackets
-                configuration = fix_bad_feed_block(configuration)
+                configuration = fix_bad_feed_data(configuration)
 
                 # Deal with bad count attributes
                 configuration = fix_bad_logic_characters(configuration)

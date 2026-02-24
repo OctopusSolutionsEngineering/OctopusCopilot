@@ -24,7 +24,8 @@ from domain.sanitizers.terraform import (
     fix_single_line_lifecycle_phase,
     fix_single_line_variable,
     fix_empty_teams,
-    fix_bad_feed_block,
+    fix_bad_feed_data,
+    fix_bad_maven_feed_resource,
 )
 
 
@@ -441,6 +442,38 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = fix_empty_teams(input_config)
         self.assertEqual(result, expected_output)
 
+    def test_fix_bad_maven_resource(self):
+        input_config = (
+            'resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {\n'
+            '  count                                = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? 0 : 1}"\n'
+            '  name                                 = "Octopus Maven Feed"\n'
+            '  feed_uri                             = "http://octopus-sales-public-maven-repo.s3-website-ap-southeast-2.amazonaws.com/snapshot"\n'
+            '  package_acquisition_location_options = ["Server", "ExecutionTarget"]\n'
+            "  download_attempts                    = 5\n"
+            "  download_retry_backoff_seconds       = 10\n"
+            "  lifecycle {\n"
+            "    ignore_changes  = [password]\n"
+            "    prevent_destroy = true\n"
+            "}"
+        )
+        expected_output = (
+            'resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {\n'
+            '  count                                = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? 0 : 1}"\n'
+            '  name                                 = "Octopus Maven Feed"\n'
+            '  feed_uri                             = "http://octopus-sales-public-maven-repo.s3-website-ap-southeast-2.amazonaws.com/snapshot"\n'
+            '  package_acquisition_location_options = ["Server", "ExecutionTarget"]\n'
+            "  download_attempts                    = 5\n"
+            "  download_retry_backoff_seconds       = 10\n"
+            "  lifecycle {\n"
+            "    ignore_changes  = [password]\n"
+            "    prevent_destroy = true\n"
+            "  }\n"
+            "}"
+        )
+
+        result = fix_bad_maven_feed_resource(input_config)
+        self.assertEqual(result, expected_output)
+
     def test_fix_bad_feed_block(self):
         input_config = (
             'data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {\n'
@@ -462,7 +495,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
             "}"
         )
 
-        result = fix_bad_feed_block(input_config)
+        result = fix_bad_feed_data(input_config)
         self.assertEqual(result, expected_output)
 
     def test_fix_empty_teams(self):
@@ -483,7 +516,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
             "  }"
         )
 
-        result = fix_bad_feed_block(input_config)
+        result = fix_bad_feed_data(input_config)
         self.assertEqual(result, input_config)
 
     def test_fix_bad_feed_block3(self):
@@ -497,7 +530,27 @@ class TestKubernetesSanitizer(unittest.TestCase):
             "}"
         )
 
-        result = fix_bad_feed_block(input_config)
+        result = fix_bad_feed_data(input_config)
+        self.assertEqual(result, input_config)
+
+    def test_fix_bad_feed_block4(self):
+        input_config = (
+            'data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {\n'
+            '  feed_type    = "BuiltIn"\n'
+            "  ids          = null\n"
+            '  partial_name = ""\n'
+            "  skip         = 0\n"
+            "  take         = 1\n"
+            "  lifecycle {\n"
+            "    postcondition {\n"
+            '      error_message = "Failed to resolve a feed called "BuiltIn". This resource must exist in the space before this Terraform configuration is applied."\n'
+            "      condition     = length(self.feeds) != 0\n"
+            "    }\n"
+            "  }\n"
+            "}"
+        )
+
+        result = fix_bad_feed_data(input_config)
         self.assertEqual(result, input_config)
 
     def test_with_whitespace_variations(self):

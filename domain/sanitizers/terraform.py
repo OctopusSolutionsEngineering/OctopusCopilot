@@ -207,14 +207,27 @@ def fix_empty_teams(config):
     )
 
 
-def fix_bad_feed_block(config):
+def fix_bad_feed_data(config):
     """
     The LLM kept building feed blocks with unmatched curly quotes
     """
 
     return re.sub(
-        r'data "octopusdeploy_feeds" "(.*?)" \{(.*?)\n\s*}\n}',
+        r'data "octopusdeploy_feeds" "(.*?)" \{([^{}]*?)\n\s*}\n}',
         r'data "octopusdeploy_feeds" "\1" {\2\n}',
+        config,
+        flags=re.DOTALL,
+    )
+
+
+def fix_bad_maven_feed_resource(config):
+    """
+    The LLM kept building feed blocks with unmatched curly quotes
+    """
+
+    return re.sub(
+        r'resource "octopusdeploy_maven_feed" "(.*?)" \{(.*?)\n\s*lifecycle \{(.*?)\n}',
+        r'resource "octopusdeploy_maven_feed" "\1" {\2\n  lifecycle {\3\n  }\n}',
         config,
         flags=re.DOTALL,
     )
