@@ -213,7 +213,7 @@ def fix_bad_feed_data(config):
     """
 
     return re.sub(
-        r'data "octopusdeploy_feeds" "(.*?)" \{([^{}]*?)\n\s*}\n}',
+        r'data\s*"octopusdeploy_feeds"\s*"(.*?)"\s*\{([^{}]*?)\n\s*}\n}',
         r'data "octopusdeploy_feeds" "\1" {\2\n}',
         config,
         flags=re.DOTALL,

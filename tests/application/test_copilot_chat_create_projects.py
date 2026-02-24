@@ -698,9 +698,9 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             f'The deployment process should have a step called "{mandatory_step}".',
         )
 
-    # We expect failure here sometimes because teh TF provider needs to have a data source for individual tags to
-    # allow stateless terraform modules to work reliably.
-    @unittest.expectedFailure
+    @unittest.skip(
+        "This test is currently unreliable because of limitations in the TF provider around tag creation. We need to add a data source for individual tags to reliably support stateless module creation."
+    )
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
     def test_create_lambda_project_tenanted(self):
         project_name = "My tenanted Lambda"
