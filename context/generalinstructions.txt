@@ -245,6 +245,7 @@ data "octopusdeploy_tenants" "tenant_australian_office" {
 
 * When the prompt includes instructions to define the value of project tenant variables, you must define the value for all environment unless explicitly instructed otherwise.
 * When the prompt includes instructions to link a tenant to a project, you must include a "octopusdeploy_tenant_project" resource.
+* You will be penalized for defining a "octopusdeploy_tags" data source as this data source does not exist.
 
 ## Library Variable Set Instructions
 
