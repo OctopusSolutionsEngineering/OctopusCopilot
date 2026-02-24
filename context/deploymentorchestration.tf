@@ -192,7 +192,7 @@ data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
 data "octopusdeploy_channels" "channel_deployment_orchestration_default" {
   ids          = []
   partial_name = "Default"
-  project_id   = "Projects-8905"
+  project_id   = "${length(data.octopusdeploy_projects.project_deployment_orchestration.projects) != 0 ? data.octopusdeploy_projects.project_deployment_orchestration.projects[0].id : octopusdeploy_project.project_deployment_orchestration[0].id}"
   skip         = 0
   take         = 1
 }
@@ -242,7 +242,7 @@ data "octopusdeploy_worker_pools" "workerpool_hosted_windows" {
 data "octopusdeploy_channels" "channel_child_project_default" {
   ids          = []
   partial_name = "Default"
-  project_id   = "Projects-8906"
+  project_id   = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"
   skip         = 0
   take         = 1
 }
@@ -270,11 +270,11 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "echo \"Hello world\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptBody" = "echo \"Hello world\""
       }
 }
 
@@ -379,9 +379,9 @@ resource "octopusdeploy_process_step" "process_step_deployment_orchestration_dep
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.DeployRelease.DeploymentCondition" = "IfNotCurrentVersion"
         "Octopus.Action.DeployRelease.ProjectId" = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
