@@ -870,6 +870,7 @@ data "octopusdeploy_channels" "application" {
 }
 
 resource "octopusdeploy_channel" "application" {
+  # It is important that the "count" attribute references the "octopusdeploy_projects" data source and not the "octopusdeploy_channels" data source.
   count         = "${length(data.octopusdeploy_projects.project_my_argo_cd_webapp.projects) != 0 ? 0 : 1}"
   name          = "Application"
   project_id    = "${length(data.octopusdeploy_projects.project_my_argo_cd_webapp.projects) != 0 ? data.octopusdeploy_projects.project_my_argo_cd_webapp.projects[0].id : octopusdeploy_project.project_my_argo_cd_webapp[0].id}"
