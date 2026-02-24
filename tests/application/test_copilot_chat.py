@@ -209,7 +209,7 @@ class CopilotChatTest(unittest.TestCase):
             "sorry" not in response_text.casefold(), "Response was " + response_text
         )
 
-    @unittest.skip("Skipping flaky test")
+    @unittest.expectedFailure
     @retry((AssertionError, RateLimitError, HTTPError), tries=3, delay=2)
     def test_find_retries(self):
         prompt = 'What project steps have retries enabled? Provide the response as a literal JSON object like {"steps": [{"name": "Step 1", "retries": false}, {"name": "Step 2", "retries": true}]} with no markdown formatting.'

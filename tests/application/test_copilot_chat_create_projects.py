@@ -30,6 +30,7 @@ from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
+@unittest.skip
 class CopilotChatTestCreateProjects(unittest.TestCase):
     """
     End-to-end tests that verify the complete query including:

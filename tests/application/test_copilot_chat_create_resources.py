@@ -326,9 +326,7 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-    @unittest.skip(
-        "Github connections are not working correctly - the LLM keeps trying to create a octopusdeploy_github_connections data source"
-    )
+    @unittest.expectedFailure
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_github_connection(self):
         prompt = 'Create a GitHub connection called "Work".'
