@@ -730,6 +730,13 @@ resource "octopusdeploy_project" "project_my_project" {
 * You must set project to enabled by default unless explicitly instructed otherwise.
 * Every project tenant variable must have a "template" block in the "octopusdeploy_project" resource defining the variable.
 * You will be penalized for creating a resource of type "octopusdeploy_project_deployment_settings".
+* You will be penalized for adding whitespace to the "description" attribute of a resource "octopusdeploy_project", for example:
+```
+resource "octopusdeploy_project" "project_my_azure_web_app" {
+  # The whitespace characters at the end of the description are invalid
+  description = "This is a description with line breaks\n\n"
+}
+```
 
 ## Octopus Project Trigger Instructions
 
