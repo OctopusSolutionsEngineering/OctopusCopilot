@@ -478,6 +478,17 @@ resource "octopusdeploy_lifecycle" "simple_lifecycle" {
 
 * You will be penalized for setting the "default_value" to an empty string.
 
+* You must always include the following data source:
+
+```
+data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle" {
+  ids          = null
+  partial_name = ""
+  skip         = 0
+  take         = 1
+}
+```
+
 ## GitHub Connection Instructions
 
 * You will be penalized for defining a data source of type "octopusdeploy_github_connections".
