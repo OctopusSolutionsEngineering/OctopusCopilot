@@ -1830,6 +1830,25 @@ resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_mock_k8s" 
 ```
 * If no machine policy is specified in the prompt for a target, you will be penalized for setting the "machine_policy_id" attribute to "MachinePolicies-1" or any other fixed value.
 * You will be penalized for defining a block with the name "health_check_container" in a resource "octopusdeploy_kubernetes_cluster_deployment_target". The correct block name is "container".
+* The "octopusdeploy_kubernetes_cluster_deployment_target" resource has a container block with no equals sign, for example:
+```
+resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_target" {
+  container {
+    feed_id = "Feeds-5455"
+    image   = "octopusdeploy/worker-tools:6.4.0-ubuntu.22.04"
+  }
+}
+```
+* You will be penalized for defining a "conatiner" argument with an equals sign, for example:
+```
+resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_target" {
+  # This is invalid because "container" should not have an equals sign
+  container = {
+    feed_id = "Feeds-5455"
+    image   = "octopusdeploy/worker-tools:6.4.0-ubuntu.22.04"
+  }
+}
+```
 
 ## Octopus Machine Policy Instructions
 * You will be penalized for adding the "tenant_ids" attribute to a resource "octopusdeploy_machine_policies" data source.
