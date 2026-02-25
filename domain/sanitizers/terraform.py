@@ -144,6 +144,18 @@ def fix_single_line_lifecycle(config):
     return config
 
 
+def fix_single_line_lifecycle2(config):
+    """
+    The LLM kept insisting generating a one line lifecycle block
+    """
+
+    return re.sub(
+        r"lifecycle\s*\{\s*postcondition\s*\{\n([^{}]+)\n}}",
+        r"lifecycle {\n postcondition {\n\1\n}\n}",
+        config,
+    )
+
+
 def fix_single_line_retention_policy(config):
     """
     The LLM kept insisting on using a single line release_retention_policy block. This is not valid HCL2 syntax.

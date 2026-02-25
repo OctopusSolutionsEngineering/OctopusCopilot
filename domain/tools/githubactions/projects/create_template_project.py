@@ -45,6 +45,7 @@ from domain.sanitizers.terraform import (
     fix_bad_maven_feed_resource,
     fix_single_line_connectivity_policy,
     trim_descriptions,
+    fix_single_line_lifecycle2,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -356,6 +357,9 @@ def create_template_project_callback(
 
                 # Deal with the LLM returning a single line for a lifecycle block
                 configuration = fix_single_line_lifecycle(configuration)
+
+                # Deal with the LLM returning a single line for a lifecycle block
+                configuration = fix_single_line_lifecycle2(configuration)
 
                 # Deal with the LLM returning a single line for a release_retention_policy block
                 configuration = fix_single_line_retention_policy(configuration)

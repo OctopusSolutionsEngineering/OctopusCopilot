@@ -28,6 +28,7 @@ from domain.sanitizers.terraform import (
     fix_bad_maven_feed_resource,
     fix_single_line_connectivity_policy,
     trim_descriptions,
+    fix_single_line_lifecycle2,
 )
 
 
@@ -328,6 +329,40 @@ class TestKubernetesSanitizer(unittest.TestCase):
         input_config = "lifecycle { ignore_changes = [tags] }"
 
         result = fix_single_line_lifecycle(input_config)
+        self.assertEqual(result, input_config)
+
+    def test_fix_single_line_lifecycle2(self):
+        # Test a lifecycle block with different content
+        input_config = (
+            "lifecycle { postcondition {\n"
+            '  error_message = "Failed to resolve a feed called "BuiltIn". This resource must exist in the space before this Terraform configuration is applied."\n'
+            "  condition     = length(self.feeds) != 0\n"
+            "}}"
+        )
+
+        expected_output = (
+            "lifecycle {\n"
+            " postcondition {\n"
+            '  error_message = "Failed to resolve a feed called "BuiltIn". This resource must exist in the space before this Terraform configuration is applied."\n'
+            "  condition     = length(self.feeds) != 0\n"
+            "}\n"
+            "}"
+        )
+
+        result = fix_single_line_lifecycle2(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_fix_single_line_lifecycle3(self):
+        input_config = (
+            "lifecycle {\n"
+            " postcondition {\n"
+            '  error_message = "Failed to resolve a feed called "BuiltIn". This resource must exist in the space before this Terraform configuration is applied."\n'
+            "  condition     = length(self.feeds) != 0\n"
+            "}\n"
+            "}"
+        )
+
+        result = fix_single_line_lifecycle2(input_config)
         self.assertEqual(result, input_config)
 
     def test_fix_lifecycle(self):
