@@ -737,6 +737,14 @@ resource "octopusdeploy_project" "project_my_azure_web_app" {
   description = "This is a description with line breaks\n\n"
 }
 ```
+* You will be penalized for splitting the "release_notes_template" attribute over two lines, for example:
+```
+resource "octopusdeploy_project" "project_my_k8s_webapp" {
+  # This is invalid because the string is on a new line.
+  release_notes_template =
+  "Here are the notes for the packages\n#{each package in Octopus.Release.Package}\n- #{package.PackageId} #{package.Version}\n#{each workItem in package.WorkItems}\n  - [#{workItem.Id}](#{workItem.LinkUrl}) - #{workItem.Description}\n#{/each}\n#{each commit in package.Commits}\n  - [#{commit.CommitId}](#{commit.LinkUrl}) - #{commit.Comment}\n#{/each}\n#{/each}"
+}
+```
 
 ## Octopus Project Trigger Instructions
 
