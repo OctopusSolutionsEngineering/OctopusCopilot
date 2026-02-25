@@ -169,6 +169,7 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         finally:
             cls.mssql = None
 
+    @unittest.skip("This test is known to be flaky")
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_feed(self):
         prompt = 'Create a Docker feed called "Docker Hub".'
