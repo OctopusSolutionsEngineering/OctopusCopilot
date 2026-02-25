@@ -3,23 +3,7 @@
 * The supplied "Example Octopus Kubernetes Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus Kubernetes Terraform Configuration".
 * You must include the steps defined in the "Example Octopus Kubernetes Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
-* If the prompt specifies that tenants, targets, machines, feeds, accounts, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus Kubernetes Terraform Configuration".
-
-## Kubernetes YAML Instructions
-
-* You will be penalized for using asterisks as placeholders in the "Octopus.Action.KubernetesContainers.CustomResourceYaml" property.
-* You will be penalized for using "*****" as a placeholder in the "Octopus.Action.KubernetesContainers.CustomResourceYaml" property.
-* You will be penalized for generating invalid Kubernetes YAML.
-* Sample Kubernetes names must follow these rules:
-  * contain at most 63 characters
-  * contain only lowercase alphanumeric characters or '-'
-  * start with an alphabetic character
-  * end with an alphanumeric character
-* You will be penalized for creating a Kubernetes resource with a name that starts with "*****".
-* You must respond with Terraform configuration to create an Octopus project deploying an application to Kubernetes using raw yaml based on examples provided.
-* You must use define the "package" block in the "action" block for any image deployed by the project.
-* The image defined in the "package" block is referenced in the YAML as "#{Octopus.Action.Package[<package name>].PackageId}:#{Octopus.Action.Package[<package name>].PackageVersion}"
-* You will be penalized for directly referencing an image in the YAML.
+* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus Kubernetes Terraform Configuration".
 
 ## Kubernetes Environment Instructions
 
@@ -64,6 +48,12 @@ You must include all the following step resources from the "Example Octopus Kube
 
 You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
 
+## Kubernetes Package Instructions
+
+You must use the following packages from the "Example Octopus Kubernetes Terraform Configuration" once unless the prompt explicitly states that different packages are to be used:
+* octopussolutionsengineering/octopub-selfcontained
+
+
 ## Kubernetes Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus Kubernetes Terraform Configuration" once:
@@ -80,6 +70,7 @@ You must include all the following variables from the "Example Octopus Kubernete
 ## Kubernetes Lifecycle Instructions
 
 You must include all the following lifecycle resources from the "Example Octopus Kubernetes Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
+* data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle"
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
