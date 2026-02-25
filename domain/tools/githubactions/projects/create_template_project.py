@@ -611,7 +611,9 @@ def generate_retry_messages(base_messages, configuration, errors):
     retry_message = (
         "system",
         "# Previous Terraform Configuration:\n"
+        + "```hcl\n"
         + escape_message(configuration)
+        + "\n```\n"
         + "# Terraform errors:\n"
         + escape_message(errors)
         + "# Instructions to fix the Terraform Configuration:\n"
