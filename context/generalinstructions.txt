@@ -1747,6 +1747,7 @@ resource "octopusdeploy_variable" "worker_pool_variable" {
 ## Runbook Instructions
 
 * The "runbook_id" attribute of resource "octopusdeploy_runbook_process" is in the format "${length(data.octopusdeploy_projects.<project>.projects) != 0 ? null : octopusdeploy_runbook.<runbook>[0].id}"
+* You will be penalized for creating a "octopusdeploy_runbook" data source as this data source does not exist.
 
 ## Worker Pool Instructions
 
