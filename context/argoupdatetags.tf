@@ -344,10 +344,10 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_app
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-everyone"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
       }
 }
 
@@ -370,8 +370,8 @@ resource "octopusdeploy_process_templated_step" "process_step_update_image_tags_
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.API.Key}"
@@ -445,10 +445,10 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_upd
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check for Argo CD Instances].Output.ArgoPresent == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Octopus Deploy updated image versions"
         "Octopus.Action.ArgoCD.CommitMethod" = "PullRequest"
         "Octopus.Action.ArgoCD.CommitMessageDescription" = "If we merge this PR, then the next deployment will be a no-op. \n\n[Release link](#{Octopus.Web.ServerUri}#{Octopus.Web.ReleaseLink})\n[Deployment link](#{Octopus.Web.ServerUri}#{Octopus.Web.DeploymentLink})\n\n"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Octopus Deploy updated image versions"
       }
 }
 
@@ -471,11 +471,11 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_smo
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check for Argo CD Instances].Output.ArgoPresent == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "Bash"
         "Octopus.Action.Script.ScriptBody" = "echo \"Running smoke test...\"\n\necho \".\"\necho \".\"\necho \".\"\necho \".\"\necho \".\"\n\necho \"Smoke test passed!\""
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -497,10 +497,10 @@ resource "octopusdeploy_process_step" "process_step_update_image_tags___helm_sen
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
         "Octopus.Action.Email.Subject" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name} has failed!"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.Body" = "Deployment to #{Octopus.Environment.Name} for project #{Octopus.Project.Name}, version #{Octopus.Release.Number} has failed!"
+        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
       }
 }
 
@@ -523,8 +523,8 @@ resource "octopusdeploy_process_templated_step" "process_step_update_image_tags_
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
