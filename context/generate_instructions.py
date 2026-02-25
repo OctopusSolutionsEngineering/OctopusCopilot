@@ -48,7 +48,7 @@ def find_package_names(filename, label):
                             break
 
                         description_match = re.match(
-                            r'\s*description = "The package ID for the package named',
+                            r'\s*description\s*=\s*"The package ID for the package named',
                             line2,
                         )
                         if description_match:
