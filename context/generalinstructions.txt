@@ -1748,6 +1748,18 @@ resource "octopusdeploy_variable" "worker_pool_variable" {
 
 * The "runbook_id" attribute of resource "octopusdeploy_runbook_process" is in the format "${length(data.octopusdeploy_projects.<project>.projects) != 0 ? null : octopusdeploy_runbook.<runbook>[0].id}"
 * You will be penalized for creating a "octopusdeploy_runbook" or "octopusdeploy_runbooks" data source as these data sources do not exist.
+* The "count" property for a "octopusdeploy_runbook" resource is based on the parent project, for example:
+```
+data "octopusdeploy_projects" "project_my_project" {
+  ids          = null
+  partial_name = "My project"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_runbook" "runbook_my_runbook" {
+  count                       = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
+}
+```
 
 ## Worker Pool Instructions
 
