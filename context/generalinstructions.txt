@@ -2106,3 +2106,5 @@ data "octopusdeploy_projects" "project1" { ... }
 * You must verify that all opening braces { have corresponding closing braces } before completing your response.
 * If you cannot complete the entire configuration due to length constraints, you must prioritize completing the current resource block rather than leaving it incomplete.
 * You will be penalized for using syntax like `${var.step_name | lower | replace(" ", "-")}`, as Terraform does not support the pipe character to modify varibale values.
+* You will be penalized for leaving any resources out for brevity.
+* You must include all requested resources.
