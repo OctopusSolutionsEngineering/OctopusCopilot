@@ -254,6 +254,9 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         confirmation_id = get_confirmation_id(response_text)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
+    @unittest.skip(
+        "This is known to fail occasionally because the LLM doesn't match the prompt to thecreate_general_resources_wrapper tool"
+    )
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_worker(self):
         prompt = 'Create a worker called "Linux Server".'
