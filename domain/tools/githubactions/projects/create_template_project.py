@@ -448,17 +448,48 @@ def create_template_project_callback(
                     response_text.extend(debug_text)
                     return CopilotResponse("\n\n".join(response_text))
 
-                response = await create_terraform_plan(
-                    api_key,
-                    access_token,
-                    url,
-                    space_id,
-                    project_name,
-                    original_query,
-                    configuration,
-                    redirections,
-                    redirector_api_key,
-                )
+                response = None
+
+                try:
+                    response = await create_terraform_plan(
+                        api_key,
+                        access_token,
+                        url,
+                        space_id,
+                        project_name,
+                        original_query,
+                        configuration,
+                        redirections,
+                        redirector_api_key,
+                    )
+                except SpaceBuilderRequestFailed:
+                    # This is our agentic loop where we get the LLM to try and fix its own problems based
+                    # on the error messages from the Terraform plan creation.
+                    # We'll do this once to try and produce valid Terraform
+                    new_messages = generate_retry_messages(
+                        messages, configuration, response["error"]
+                    )
+
+                    configuration = llm_message_query(
+                        new_messages,
+                        context,
+                        log_query,
+                        purpose=os.getenv("PROJECT_GEN_SERVICE")
+                        or AZURE_PROJECT_SERVICE,
+                    )
+
+                    response = await create_terraform_plan(
+                        api_key,
+                        access_token,
+                        url,
+                        space_id,
+                        project_name,
+                        original_query,
+                        configuration,
+                        redirections,
+                        redirector_api_key,
+                    )
+
             except SpaceBuilderRequestFailed as e:
                 log_query(create_template_project_callback.__name__, str(e))
                 return CopilotResponse(project_prompt_error_message)
@@ -573,6 +604,23 @@ def generate_project_messages(
             "user",
             f'You must include all the resources from the "{project_example_context_name}" unless the prompt explicitly asks to remove them.',
         ),
+    ]
+
+
+def generate_retry_messages(base_messages, configuration, errors):
+    retry_message = (
+        "system",
+        "# Previous Terraform Configuration:\n"
+        + escape_message(configuration)
+        + "# Terraform errors:\n"
+        + escape_message(errors)
+        + "# Instructions to fix the Terraform Configuration:\n"
+        + "Based on the errors above, fix the Previous Terraform Configuration and return a new Terraform configuration that will not produce the same errors. Only return the Terraform configuration without any additional explanation or text.",
+    )
+
+    return [
+        *base_messages,
+        retry_message,
     ]
 
 
