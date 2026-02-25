@@ -207,21 +207,6 @@ step "deploy-with-cli" {
                       "slotSetting": false
                    },
                    {
-                      "name": "SLACK_CLIENT_ID",
-                      "value": "#{Slack.App.ClientID}",
-                      "slotSetting": false
-                   },
-                   {
-                      "name": "SLACK_CLIENT_SECRET",
-                      "value": "#{Slack.App.ClientSecret}",
-                      "slotSetting": false
-                   },
-                   {
-                      "name": "SLACK_CLIENT_REDIRECT",
-                      "value": "#{Slack.App.Redirect}",
-                      "slotSetting": false
-                   },
-                   {
                       "name": "STORYBLOK_TOKEN",
                       "value": "#{Storyblok.Api.Token}",
                       "slotSetting": false
