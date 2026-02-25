@@ -616,7 +616,7 @@ def generate_retry_messages(base_messages, configuration, errors):
         + "\n```\n"
         + "# Terraform errors:\n"
         + escape_message(errors)
-        + "# Instructions to fix the Terraform Configuration:\n"
+        + "\n# Instructions to fix the Terraform Configuration:\n"
         + "Based on the errors above, fix the Previous Terraform Configuration and return a new Terraform configuration that will not produce the same errors. Only return the Terraform configuration without any additional explanation or text.",
     )
 
