@@ -527,6 +527,30 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = fix_bad_feed_data(input_config)
         self.assertEqual(result, expected_output)
 
+    def test_fix_bad_feed_block2(self):
+        input_config = (
+            'data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {\n'
+            '  feed_type    = "BuiltIn"\n'
+            "  ids          = null\n"
+            '  partial_name = ""\n'
+            "  skip         = 0\n"
+            "  take         = 1\n"
+            "}\n"
+            "}"
+        )
+        expected_output = (
+            'data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {\n'
+            '  feed_type    = "BuiltIn"\n'
+            "  ids          = null\n"
+            '  partial_name = ""\n'
+            "  skip         = 0\n"
+            "  take         = 1\n"
+            "}"
+        )
+
+        result = fix_bad_feed_data(input_config)
+        self.assertEqual(result, expected_output)
+
     def test_fix_empty_teams(self):
         input_config = '"Octopus.Action.Manual.ResponsibleTeamIds" = ""'
         expected_output = ""
