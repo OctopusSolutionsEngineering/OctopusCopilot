@@ -1583,7 +1583,7 @@ resource "octopusdeploy_process_step" "process_step_serverless_api_9231_deploy_l
 ```
 resource "octopusdeploy_process_step" "process_step_my_lambda_web_app_swap_loadbalancer" {
   execution_properties  = {
-    "Octopus.Action.Script.ScriptBody" = "# This is a placeholder script that would swap load balanders"
+    "Octopus.Action.Script.ScriptBody" = "# This is a placeholder script that would swap load balancers"
   }
 }
 ```
