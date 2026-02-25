@@ -49,6 +49,14 @@ You must include all the following step resources from the "Example Octopus Azur
 
 You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
 
+## Azure Web App Package Instructions
+
+You must use the following packages from the "Example Octopus Azure Web App Terraform Configuration" once unless the prompt explicitly states that different packages are to be used:
+* octopussolutionsengineering/octopub-selfcontained
+* octopussolutionsengineering/octopub-selfcontained
+* octopussolutionsengineering/octopub-selfcontained
+
+
 ## Azure Web App Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus Azure Web App Terraform Configuration" once:
@@ -70,6 +78,7 @@ You must include all the following variables from the "Example Octopus Azure Web
 ## Azure Web App Lifecycle Instructions
 
 You must include all the following lifecycle resources from the "Example Octopus Azure Web App Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
+* data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle"
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
