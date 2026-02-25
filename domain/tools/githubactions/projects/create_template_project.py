@@ -466,6 +466,12 @@ def create_template_project_callback(
                     # This is our agentic loop where we get the LLM to try and fix its own problems based
                     # on the error messages from the Terraform plan creation.
                     # We'll do this once to try and produce valid Terraform
+
+                    log_query(
+                        create_template_project_callback.__name__,
+                        "Initial plan failed, attempting to rectify with a second pass",
+                    )
+
                     new_messages = generate_retry_messages(
                         messages, configuration, str(e)
                     )
