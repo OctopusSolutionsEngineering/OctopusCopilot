@@ -363,8 +363,8 @@ resource "octopusdeploy_process_templated_step" "process_step_azure_function_oct
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
       }
@@ -397,11 +397,11 @@ resource "octopusdeploy_process_step" "process_step_azure_function_deploy_produc
         "Octopus.Action.TargetRoles" = "Octopub-Products-Function"
       }
   execution_properties  = {
-        "Octopus.Action.Azure.DeploymentType" = "Package"
-        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.DeploymentSlot" = "staging"
+        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Azure.DeploymentType" = "Package"
       }
 }
 
@@ -450,10 +450,10 @@ resource "octopusdeploy_process_step" "process_step_azure_function_manual_approv
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.Instructions" = "Please review the Staging slot for the function apps"
-        "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-managers"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.Manual.Instructions" = "Please review the Staging slot for the function apps"
+        "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-managers"
       }
 }
 
@@ -533,11 +533,11 @@ resource "octopusdeploy_process_step" "process_step_azure_function_send_deployme
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.Priority" = "High"
-        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} failed to deploy to #{Octopus.Environment.Name}!"
         "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} has failed deployed to #{Octopus.Environment.Name}\n\n#{Octopus.Deployment.Error}:\n#{Octopus.Deployment.ErrorDetail}"
+        "Octopus.Action.Email.Priority" = "High"
+        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} failed to deploy to #{Octopus.Environment.Name}!"
       }
 }
 
