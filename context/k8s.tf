@@ -341,18 +341,35 @@ resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous" {
   }
 }
 
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+data "octopusdeploy_feeds" "feed_octopus_maven_feed" {
+  feed_type    = "Maven"
   ids          = null
-  partial_name = "Default Worker Pool"
+  partial_name = "Octopus Maven Feed"
   skip         = 0
   take         = 1
 }
+resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? 0 : 1}"
+  name                                 = "Octopus Maven Feed"
+  feed_uri                             = "http://octopus-sales-public-maven-repo.s3-website-ap-southeast-2.amazonaws.com/snapshot"
+  package_acquisition_location_options = ["Server", "ExecutionTarget"]
+  download_attempts                    = 5
+  download_retry_backoff_seconds       = 10
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
 
-data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
-  ids          = null
-  partial_name = "Hosted Ubuntu"
-  skip         = 0
-  take         = 1
+data "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_targets_available" {
+  website = "https://library.octopus.com/step-templates/81444e7f-d77a-47db-b287-0f1ab5793880"
+}
+data "octopusdeploy_step_template" "steptemplate_octopus___check_targets_available" {
+  name = "Octopus - Check Targets Available"
+}
+resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_targets_available" {
+  community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available.steps[0].id : null}"
+  count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_targets_available.step_template != null ? 0 : 1}"
 }
 
 data "octopusdeploy_community_step_template" "communitysteptemplate_scan_for_vulnerabilities" {
@@ -389,9 +406,37 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_approve_p
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+      }
+}
+
+resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app_octopus___check_targets_available" {
+  count                 = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
+  name                  = "Octopus - Check Targets Available"
+  process_id            = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process.process_kubernetes_web_app[0].id}"
+  template_id           = "${data.octopusdeploy_step_template.steptemplate_octopus___check_targets_available.step_template != null ? data.octopusdeploy_step_template.steptemplate_octopus___check_targets_available.step_template.id : octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available[0].id}"
+  template_version      = "${data.octopusdeploy_step_template.steptemplate_octopus___check_targets_available.step_template != null ? data.octopusdeploy_step_template.steptemplate_octopus___check_targets_available.step_template.version : octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available[0].version}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = null
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "octopus-check-targets-available"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_variable  = "Octopus.Project.WorkerPool"
+  properties            = {
+      }
+  execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+      }
+  parameters            = {
+        "CheckTargets.Octopus.Api.Key" = "#{Octopus.Project.ApiKey}"
+        "CheckTargets.Message" = "We recommend the Kubernetes Agent - https://octopus.com/docs/kubernetes/targets/kubernetes-agent"
+        "CheckTargets.Octopus.Role" = "Kubernetes"
       }
 }
 
@@ -423,41 +468,15 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
         "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
-        "Octopus.Action.RunOnServer" = "true"
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
         "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"1\"\n            memory: \"512Mi\"\n          requests:\n            cpu: \"0.5\"\n            memory: \"256Mi\"\n        livenessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
-      }
-}
-
-resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_print_message_when_no_targets" {
-  count                 = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  name                  = "Print Message When no Targets"
-  type                  = "Octopus.Script"
-  process_id            = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process.process_kubernetes_web_app[0].id}"
-  channels              = null
-  condition             = "Success"
-  environments          = null
-  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
-  notes                 = "This step detects when the previous steps were skipped due to no targets being defined and prints a message with a link to documentation for creating targets."
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "print-message-when-no-targets"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_variable  = "Octopus.Project.WorkerPool"
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"1\"\n            memory: \"512Mi\"\n          requests:\n            cpu: \"0.5\"\n            memory: \"256Mi\"\n        livenessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy a Kubernetes Web App via YAML].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Kubernetes target with the tag 'Kubernetes'.\"\n  Write-Highlight \"We recommend the [Kubernetes Agent](https://octopus.com/docs/kubernetes/targets/kubernetes-agent).\"\n}"
       }
 }
 
@@ -475,7 +494,7 @@ resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app
   slug                  = "scan-for-vulnerabilities-1"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_variable  = "Octopus.Project.WorkerPool"
   properties            = {
       }
   execution_properties  = {
@@ -484,8 +503,8 @@ resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
-        "PackageId" = "octopussolutionsengineering/octopub-selfcontained"
-        "FeedId" = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}"
+        "PackageId" = "com.octopus:octopub-sbom"
+        "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
                 })
       }
 }
@@ -493,7 +512,35 @@ resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app
 resource "octopusdeploy_process_steps_order" "process_step_order_kubernetes_web_app" {
   count      = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
   process_id = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process.process_kubernetes_web_app[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_kubernetes_web_app_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_kubernetes_web_app_deploy_a_kubernetes_web_app_via_yaml[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_kubernetes_web_app_print_message_when_no_targets[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_kubernetes_web_app_scan_for_vulnerabilities[0].id}"]
+  steps      = ["${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_kubernetes_web_app_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_kubernetes_web_app_octopus___check_targets_available[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_kubernetes_web_app_deploy_a_kubernetes_web_app_via_yaml[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_kubernetes_web_app_scan_for_vulnerabilities[0].id}"]
+}
+
+resource "octopusdeploy_variable" "kubernetes_web_app_octopus_project_apikey_1" {
+  count           = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
+  owner_id        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
+  name            = "Octopus.Project.ApiKey"
+  type            = "Sensitive"
+  is_sensitive    = true
+  sensitive_value = "Change Me!"
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+  ids          = null
+  partial_name = "Default Worker Pool"
+  skip         = 0
+  take         = 1
+}
+
+data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
+  ids          = null
+  partial_name = "Hosted Ubuntu"
+  skip         = 0
+  take         = 1
 }
 
 resource "octopusdeploy_variable" "kubernetes_web_app_octopus_project_workerpool_1" {

@@ -24,22 +24,23 @@ data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle" {
   take         = 1
 }
 
-data "octopusdeploy_project_groups" "project_group_kubernetes" {
+data "octopusdeploy_project_groups" "project_group_azure" {
   ids          = null
-  partial_name = "${var.project_group_kubernetes_name}"
+  partial_name = "${var.project_group_azure_name}"
   skip         = 0
   take         = 1
 }
-variable "project_group_kubernetes_name" {
+variable "project_group_azure_name" {
   type        = string
   nullable    = false
   sensitive   = false
   description = "The name of the project group to lookup"
-  default     = "Kubernetes"
+  default     = "Azure"
 }
-resource "octopusdeploy_project_group" "project_group_kubernetes" {
-  count = "${length(data.octopusdeploy_project_groups.project_group_kubernetes.project_groups) != 0 ? 0 : 1}"
-  name  = "${var.project_group_kubernetes_name}"
+resource "octopusdeploy_project_group" "project_group_azure" {
+  count       = "${length(data.octopusdeploy_project_groups.project_group_azure.project_groups) != 0 ? 0 : 1}"
+  name        = "${var.project_group_azure_name}"
+  description = ""
   lifecycle {
     prevent_destroy = true
   }
@@ -226,65 +227,12 @@ data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
   take         = 1
 }
 
-data "octopusdeploy_channels" "channel_kubernetes_web_app_default" {
+data "octopusdeploy_channels" "channel_azure_web_app_default" {
   ids          = []
   partial_name = "Default"
-  project_id   = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id : octopusdeploy_project.project_kubernetes_web_app[0].id}"
+  project_id   = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? data.octopusdeploy_projects.project_azure_web_app.projects[0].id : octopusdeploy_project.project_azure_web_app[0].id}"
   skip         = 0
   take         = 1
-}
-
-data "octopusdeploy_lifecycles" "lifecycle_hotfix" {
-  ids          = null
-  partial_name = "Hotfix"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_lifecycle" "lifecycle_hotfix" {
-  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles) != 0 ? 0 : 1}"
-  name        = "Hotfix"
-  description = "This channel allows deployments directly to production."
-
-  phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-    name                                  = "Production"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-  }
-
-  release_retention_policy {
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-
-  tentacle_retention_policy {
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_projects" "channel_kubernetes_web_app_hotfix" {
-  ids          = null
-  partial_name = "Kubernetes Web App"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_channel" "channel_kubernetes_web_app_hotfix" {
-  count        = "${length(data.octopusdeploy_projects.channel_kubernetes_web_app_hotfix.projects) != 0 ? 0 : 1}"
-  lifecycle_id = "${length(data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_hotfix[0].id}"
-  name         = "Hotfix"
-  description  = ""
-  project_id   = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id : octopusdeploy_project.project_kubernetes_web_app[0].id}"
-  is_default   = false
-  tenant_tags  = []
-  depends_on   = [octopusdeploy_process_steps_order.process_step_order_kubernetes_web_app]
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
@@ -298,26 +246,6 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
       error_message = "Failed to resolve a feed called \"BuiltIn\". This resource must exist in the space before this Terraform configuration is applied."
       condition     = length(self.feeds) != 0
     }
-  }
-}
-
-data "octopusdeploy_feeds" "feed_github_container_registry" {
-  feed_type    = "Docker"
-  ids          = null
-  partial_name = "GitHub Container Registry"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_docker_container_registry" "feed_github_container_registry" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? 0 : 1}"
-  name                                 = "GitHub Container Registry"
-  registry_path                        = ""
-  api_version                          = "v2"
-  feed_uri                             = "https://ghcr.io"
-  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
-  lifecycle {
-    ignore_changes  = [password]
-    prevent_destroy = true
   }
 }
 
@@ -355,155 +283,271 @@ data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
   take         = 1
 }
 
-data "octopusdeploy_community_step_template" "communitysteptemplate_scan_for_vulnerabilities" {
-  website = "https://library.octopus.com/step-templates/a38bfff8-8dde-4dd6-9fd0-c90bb4709d5a"
-}
-data "octopusdeploy_step_template" "steptemplate_scan_for_vulnerabilities" {
-  name = "Scan for Vulnerabilities"
-}
-resource "octopusdeploy_community_step_template" "communitysteptemplate_scan_for_vulnerabilities" {
-  community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_scan_for_vulnerabilities.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_scan_for_vulnerabilities.steps[0].id : null}"
-  count                        = "${data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template != null ? 0 : 1}"
-}
-
-resource "octopusdeploy_process" "process_kubernetes_web_app" {
-  count      = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  project_id = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id : octopusdeploy_project.project_kubernetes_web_app[0].id}"
+resource "octopusdeploy_process" "process_azure_web_app" {
+  count      = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? data.octopusdeploy_projects.project_azure_web_app.projects[0].id : octopusdeploy_project.project_azure_web_app[0].id}"
   depends_on = []
 }
 
-resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_approve_production_deployment" {
-  count                 = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  name                  = "Approve Production Deployment"
-  type                  = "Octopus.Manual"
-  process_id            = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process.process_kubernetes_web_app[0].id}"
-  channels              = null
-  condition             = "Success"
-  environments          = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-  excluded_environments = null
-  notes                 = "This manual intervention is used to provide a prompt before a production deployment."
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "approve-production-deployment"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
-      }
-}
-
-variable "project_kubernetes_web_app_step_deploy_a_kubernetes_web_app_via_yaml_package_octopub_selfcontained_packageid" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The package ID for the package named octopub-selfcontained from step Deploy a Kubernetes Web App via YAML in project Kubernetes Web App"
-  default     = "octopussolutionsengineering/octopub-selfcontained"
-}
-resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_kubernetes_web_app_via_yaml" {
-  count                 = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  name                  = "Deploy a Kubernetes Web App via YAML"
-  type                  = "Octopus.KubernetesDeployRawYaml"
-  process_id            = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process.process_kubernetes_web_app[0].id}"
-  channels              = null
-  condition             = "Success"
-  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id : octopusdeploy_docker_container_registry.feed_github_container_registry[0].id}", image = "ghcr.io/octopusdeploylabs/k8s-workertools" }
-  environments          = null
-  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
-  notes                 = "This step deploys a Kubernetes Deployment resource defined as raw YAML."
-  package_requirement   = "LetOctopusDecide"
-  packages              = { octopub-selfcontained = { acquisition_location = "NotAcquired", feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", id = null, package_id = "${var.project_kubernetes_web_app_step_deploy_a_kubernetes_web_app_via_yaml_package_octopub_selfcontained_packageid}", properties = { Extract = "False", Purpose = "DockerImageReference", SelectionMode = "immediate" } } }
-  slug                  = "deploy-a-kubernetes-web-app-via-yaml"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_variable  = "Octopus.Project.WorkerPool"
-  properties            = {
-        "Octopus.Action.TargetRoles" = "Kubernetes"
-      }
-  execution_properties  = {
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
-        "Octopus.Action.RunOnServer" = "true"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"1\"\n            memory: \"512Mi\"\n          requests:\n            cpu: \"0.5\"\n            memory: \"256Mi\"\n        livenessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
-        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
-      }
-}
-
-resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_print_message_when_no_targets" {
-  count                 = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  name                  = "Print Message When no Targets"
+resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup" {
+  count                 = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  name                  = "Validate setup"
   type                  = "Octopus.Script"
-  process_id            = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process.process_kubernetes_web_app[0].id}"
+  process_id            = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process.process_azure_web_app[0].id}"
   channels              = null
   condition             = "Success"
   environments          = null
   excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
-  notes                 = "This step detects when the previous steps were skipped due to no targets being defined and prints a message with a link to documentation for creating targets."
+  git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", github_connection_id = "", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
+  notes                 = "This step detects any default values that must be updated before a deployment to Azure can be performed."
   package_requirement   = "LetOctopusDecide"
-  slug                  = "print-message-when-no-targets"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_variable  = "Octopus.Project.WorkerPool"
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy a Kubernetes Web App via YAML].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Kubernetes target with the tag 'Kubernetes'.\"\n  Write-Highlight \"We recommend the [Kubernetes Agent](https://octopus.com/docs/kubernetes/targets/kubernetes-agent).\"\n}"
-      }
-}
-
-resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app_scan_for_vulnerabilities" {
-  count                 = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  name                  = "Scan for Vulnerabilities"
-  process_id            = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process.process_kubernetes_web_app[0].id}"
-  template_id           = "${data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template != null ? data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template.id : octopusdeploy_community_step_template.communitysteptemplate_scan_for_vulnerabilities[0].id}"
-  template_version      = "${data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template != null ? data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template.version : octopusdeploy_community_step_template.communitysteptemplate_scan_for_vulnerabilities[0].version}"
-  channels              = null
-  condition             = "Success"
-  environments          = null
-  excluded_environments = null
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "scan-for-vulnerabilities-1"
+  slug                  = "validate-setup"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
+        "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub\" -CheckForTargets $true"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "OctopusUseBundledTooling" = "False"
+      }
+}
+
+resource "octopusdeploy_process_step" "process_step_azure_web_app_check_smtp_configuration" {
+  count                 = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  name                  = "Check SMTP configuration"
+  type                  = "Octopus.Script"
+  process_id            = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process.process_azure_web_app[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", github_connection_id = "", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
+  notes                 = "This step checks to see if SMTP has been configured.  It sets an output variable that can be used in subsequent steps that send email."
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "check-smtp-configuration"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  properties            = {
+      }
+  execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/CheckSMTPConfigured.ps1"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "OctopusUseBundledTooling" = "False"
+      }
+}
+
+variable "project_azure_web_app_step_deploy_azure_web_app_container_package_octopub_selfcontained_packageid" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The package ID for the package named octopub-selfcontained from step Deploy Azure Web App Container in project Azure Web App"
+  default     = "octopussolutionsengineering/octopub-selfcontained"
+}
+resource "octopusdeploy_process_step" "process_step_azure_web_app_deploy_azure_web_app_container" {
+  count                 = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  name                  = "Deploy Azure Web App Container"
+  type                  = "Octopus.AzurePowerShell"
+  process_id            = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process.process_azure_web_app[0].id}"
+  channels              = null
+  condition             = "Variable"
+  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", image = "octopusdeploylabs/azure-workertools" }
+  environments          = null
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  notes                 = "This step deploys a container image as an Azure Web Application."
+  package_requirement   = "LetOctopusDecide"
+  packages              = { octopub-selfcontained = { acquisition_location = "NotAcquired", feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", id = null, package_id = "${var.project_azure_web_app_step_deploy_azure_web_app_container_package_octopub_selfcontained_packageid}", properties = { Extract = "False", Purpose = "", SelectionMode = "immediate" } } }
+  slug                  = "deploy-azure-web-app-container"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  properties            = {
+        "Octopus.Action.TargetRoles" = "Octopub"
+        "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
+      }
+  execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
+        "Octopus.Action.Script.ScriptBody" = "$skuCode = \"#{Project.Azure.WebApp.ServicePlan.SKU}\"\n\nif ($skuCode.StartsWith(\"S\") -or $skuCode.StartsWith(\"P\"))\n{\n  # Create deployment slots\n  Write-Host \"Deploying to staging slot ...\"\n  az webapp config set --name \"#{Project.Azure.WebApp.Octopub.Name}\" --resource-group \"#{Project.Azure.ResourceGroup.Name}\" --linux-fx-version \"DOCKER|ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\" --slot \"staging\"\n}\nelse\n{\n  # Update the web app to use the specified container\n  Write-Highlight \"WebApp Service Plans of #{Project.Azure.WebApp.ServicePlan.SKU} only have one slot, deploying application.\"\n  az webapp config set --name \"#{Project.Azure.WebApp.Octopub.Name}\" --resource-group \"#{Project.Azure.ResourceGroup.Name}\" --linux-fx-version \"DOCKER|ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n}\n\n"
+      }
+}
+
+resource "octopusdeploy_process_step" "process_step_azure_web_app_smoke_test" {
+  count                 = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  name                  = "Smoke test"
+  type                  = "Octopus.AzurePowerShell"
+  process_id            = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process.process_azure_web_app[0].id}"
+  channels              = null
+  condition             = "Variable"
+  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", image = "octopusdeploylabs/azure-workertools" }
+  environments          = null
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  notes                 = "This step performs a simple smoke test by making a web request and checking for a 200 response code."
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "smoke-test"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  properties            = {
+        "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
+      }
+  execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
+        "Octopus.Action.Script.ScriptBody" = "$azureWebApp = $null\n\n# Check to see if the application has a deployment slot\n$azureWebAppSlots = Get-AzWebAppSlot -ResourceGroupName \"#{Project.Azure.ResourceGroup.Name}\" -Name \"#{Project.Azure.WebApp.Octopub.Name}\"\n\nif ($null -eq $azureWebAppSlots)\n{\n  $azureWebApp = Get-AzWebApp -ResourceGroupName \"#{Project.Azure.ResourceGroup.Name}\" -Name \"#{Project.Azure.WebApp.Octopub.Name}\"\n}\nelse\n{\n  # Get the staging slot\n  $azureWebApp = ($azureWebAppSlots | Where-Object {$_.Name.EndsWith(\"staging\")})\n}\n\ntry\n{\n  # Make a web request  \n  $response = Invoke-WebRequest -Uri \"https://$($azureWebApp.DefaultHostName)\"\n\n  # Check for a 200 response\n  if ($response.StatusCode -ne 200)\n  {\n    # Throw an error\n    throw $response.StatusCode\n  }\n  else\n  {\n    Write-Host \"Smoke test succeeded!\"\n  }\n}\ncatch\n{\n  Write-Warning \"An error occurred: $($_.Exception.Message)\"\n}"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+      }
+}
+
+resource "octopusdeploy_process_step" "process_step_azure_web_app_manual_approval" {
+  count                 = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  name                  = "Manual approval"
+  type                  = "Octopus.Manual"
+  process_id            = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process.process_azure_web_app[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+  excluded_environments = null
+  notes                 = "A production deployment must be approved before deploying to the production Web App slot."
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "manual-approval"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  properties            = {
+      }
+  execution_properties  = {
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.Manual.Instructions" = "Please review the Staging slot for the function apps"
+        "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-managers"
+        "Octopus.Action.RunOnServer" = "true"
+      }
+}
+
+variable "project_azure_web_app_step_swap_production_slot_package_octopub_selfcontained_packageid" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The package ID for the package named octopub-selfcontained from step Swap Production Slot in project Azure Web App"
+  default     = "octopussolutionsengineering/octopub-selfcontained"
+}
+resource "octopusdeploy_process_step" "process_step_azure_web_app_swap_production_slot" {
+  count                 = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  name                  = "Swap Production Slot"
+  type                  = "Octopus.AzurePowerShell"
+  process_id            = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process.process_azure_web_app[0].id}"
+  channels              = null
+  condition             = "Variable"
+  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", image = "octopusdeploylabs/azure-workertools" }
+  environments          = null
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  notes                 = "This step swaps the Azure Web App from the `staging` slot to the `production` slot."
+  package_requirement   = "LetOctopusDecide"
+  packages              = { octopub-selfcontained = { acquisition_location = "NotAcquired", feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", id = null, package_id = "${var.project_azure_web_app_step_swap_production_slot_package_octopub_selfcontained_packageid}", properties = { Extract = "False", Purpose = "", SelectionMode = "immediate" } } }
+  slug                  = "swap-production-slot"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  properties            = {
+        "Octopus.Action.TargetRoles" = "Octopub"
+        "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
+      }
+  execution_properties  = {
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
+        "Octopus.Action.Script.ScriptBody" = "$skuCode = \"#{Project.Azure.WebApp.ServicePlan.SKU}\"\nif ($skuCode.StartsWith(\"S\") -or $skuCode.StartsWith(\"P\"))\n{\n  # Swap deployment slots\n  Write-Host \"Swapping Staging and Production slots ...\"\n  az webapp deployment slot swap --slot staging --name \"#{Project.Azure.WebApp.Octopub.Name}\" --resource-group \"#{Project.Azure.ResourceGroup.Name}\" --target-slot production\n}\nelse\n{\n  Write-Highlight \"WebApp Service Plans of #{Project.Azure.WebApp.ServicePlan.SKU} do not support slot deployments.\"\n}\n\n"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+      }
+}
+
+variable "project_azure_web_app_step_scan_for_vulnerabilities_package_octopub_selfcontained_packageid" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "The package ID for the package named octopub-selfcontained from step Scan for Vulnerabilities in project Azure Web App"
+  default     = "octopussolutionsengineering/octopub-selfcontained"
+}
+resource "octopusdeploy_process_step" "process_step_azure_web_app_scan_for_vulnerabilities" {
+  count                 = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  name                  = "Scan for Vulnerabilities"
+  type                  = "Octopus.Script"
+  process_id            = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process.process_azure_web_app[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = null
+  git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", github_connection_id = "", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
+  notes                 = "This step extracts the Docker image, finds any bom.json files, and scans them for vulnerabilities using Trivy. \n\nThis step is expected to be run with each deployment to ensure vulnerabilities are discovered as early as possible. \n\nIt is also run daily via a project trigger that reruns the deployment in the Security environment. This allows unknown vulnerabilities to be discovered after a production deployment."
+  package_requirement   = "LetOctopusDecide"
+  packages              = { octopub-selfcontained = { acquisition_location = "ExecutionTarget", feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", id = null, package_id = "${var.project_azure_web_app_step_scan_for_vulnerabilities_package_octopub_selfcontained_packageid}", properties = { Extract = "False", Purpose = "", SelectionMode = "immediate" } } }
+  slug                  = "scan-for-vulnerabilities"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  properties            = {
+      }
+  execution_properties  = {
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/DockerImageSbomScan.ps1"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
       }
-  parameters            = {
-        "Sbom.Package" = jsonencode({
-        "PackageId" = "octopussolutionsengineering/octopub-selfcontained"
-        "FeedId" = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}"
-                })
+}
+
+resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deployment_failure_notification" {
+  count                 = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  name                  = "Send deployment failure notification"
+  type                  = "Octopus.Email"
+  process_id            = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process.process_azure_web_app[0].id}"
+  channels              = null
+  condition             = "Variable"
+  environments          = null
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  notes                 = "This step sends an email notification that the deployment has failed.  It includes the error details.  This step only runs when `Octopus.Error` has a value and the output variable `Octopus.Action[Check SMTP configuration].Output.SmtpConfigured` is set to true."
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "send-deployment-failure-notification"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  properties            = {
+        "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Check SMTP configuration].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
+      }
+  execution_properties  = {
+        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} has failed deployed to #{Octopus.Environment.Name}\n\n#{Octopus.Deployment.Error}:\n#{Octopus.Deployment.ErrorDetail}"
+        "Octopus.Action.Email.Priority" = "High"
+        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} failed to deploy to #{Octopus.Environment.Name}!"
       }
 }
 
-resource "octopusdeploy_process_steps_order" "process_step_order_kubernetes_web_app" {
-  count      = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  process_id = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process.process_kubernetes_web_app[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_kubernetes_web_app_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_kubernetes_web_app_deploy_a_kubernetes_web_app_via_yaml[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_kubernetes_web_app_print_message_when_no_targets[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_kubernetes_web_app_scan_for_vulnerabilities[0].id}"]
+resource "octopusdeploy_process_steps_order" "process_step_order_azure_web_app" {
+  count      = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  process_id = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process.process_azure_web_app[0].id}"
+  steps      = ["${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_web_app_validate_setup[0].id}", "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_web_app_check_smtp_configuration[0].id}", "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_web_app_deploy_azure_web_app_container[0].id}", "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_web_app_smoke_test[0].id}", "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_web_app_manual_approval[0].id}", "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_web_app_swap_production_slot[0].id}", "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_web_app_scan_for_vulnerabilities[0].id}", "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_web_app_send_deployment_failure_notification[0].id}"]
 }
 
-resource "octopusdeploy_variable" "kubernetes_web_app_octopus_project_workerpool_1" {
-  count        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
-  value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  name         = "Octopus.Project.WorkerPool"
-  type         = "WorkerPool"
-  description  = "Using a variable to define the worker pool used by steps allows the worker pool to be easily changed in a central location."
-  is_sensitive = false
+resource "octopusdeploy_variable" "azure_web_app_project_octopus_api_key_1" {
+  count           = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  owner_id        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
+  name            = "Project.Octopus.Api.Key"
+  type            = "Sensitive"
+  description     = "This API Key is used to make API calls to the Octopus Server."
+  is_sensitive    = true
+  sensitive_value = "Change Me!"
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true
@@ -511,43 +555,13 @@ resource "octopusdeploy_variable" "kubernetes_web_app_octopus_project_workerpool
   depends_on = []
 }
 
-resource "octopusdeploy_variable" "kubernetes_web_app_octopusprintevaluatedvariables_1" {
-  count        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
-  value        = "False"
-  name         = "OctopusPrintEvaluatedVariables"
-  type         = "String"
-  description  = "Set this variable to true to log the evaluated value of variables available at the beginning of each step in the deployment as Verbose messages. See https://octopus.com/docs/support/debug-problems-with-octopus-variables for more details."
-  is_sensitive = false
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "kubernetes_web_app_octopusprintvariables_1" {
-  count        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
-  value        = "False"
-  name         = "OctopusPrintVariables"
-  type         = "String"
-  description  = "Set this variable to true to log the variables available at the beginning of each step in the deployment as Verbose messages. See https://octopus.com/docs/support/debug-problems-with-octopus-variables for more details."
-  is_sensitive = false
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "kubernetes_web_app_application_image_1" {
-  count        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
-  value        = "ghcr.io/#{Octopus.Action[Deploy a Kubernetes Web App via YAML].Package[octopub-selfcontained].PackageId}:#{Octopus.Action[Deploy a Kubernetes Web App via YAML].Package[octopub-selfcontained].PackageVersion}"
+resource "octopusdeploy_variable" "azure_web_app_application_image_1" {
+  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
+  value        = "ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}"
   name         = "Application.Image"
   type         = "String"
-  description  = "The image name is in the format \"ghcr.io/#{Octopus.Action[<Name of the step applying the Kubernetes deployment resource>].Package[<Name of the referenced package>].PackageId}:#{Octopus.Action[<Name of the step applying the Kubernetes deployment resource>].Package[Name of the referenced package>].PackageVersion}\". This variable allows the packages used by the \"Deploy a Kubernetes Web App via YAML\" step to be referenced in subsequent steps."
+  description  = "This variable dictates which image should be scanned by the Scan Vulnerabilities step."
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
@@ -556,13 +570,61 @@ resource "octopusdeploy_variable" "kubernetes_web_app_application_image_1" {
   depends_on = []
 }
 
-resource "octopusdeploy_variable" "kubernetes_web_app_kubernetes_deployment_name_1" {
-  count        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
-  value        = "#{Octopus.Project.Name | Replace \"[^0-9a-zA-Z]\" \"\" | ToLower }"
-  name         = "Kubernetes.Deployment.Name"
+data "octopusdeploy_accounts" "account_octopussamples_azure_account" {
+  ids          = null
+  partial_name = "OctopusSamples Azure Account"
+  skip         = 0
+  take         = 1
+  account_type = "AzureServicePrincipal"
+}
+resource "octopusdeploy_azure_service_principal" "account_octopussamples_azure_account" {
+  count                             = "${length(data.octopusdeploy_accounts.account_octopussamples_azure_account.accounts) != 0 ? 0 : 1}"
+  name                              = "OctopusSamples Azure Account"
+  description                       = "This account was added to give the Octopus Samples projects an account to work with.  It is initially set with dummy values and will need to be configured. Note the \"account_type\" in the associated \"octopusdeploy_accounts\" data source is set to \"AzureServicePrincipal\"."
+  environments                      = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}", "${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}", "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+  tenant_tags                       = []
+  tenants                           = []
+  tenanted_deployment_participation = "Untenanted"
+  application_id                    = "00000000-0000-0000-0000-000000000000"
+  password                          = "${var.account_octopussamples_azure_account}"
+  subscription_id                   = "00000000-0000-0000-0000-000000000000"
+  tenant_id                         = "00000000-0000-0000-0000-000000000000"
+  depends_on                        = []
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+variable "account_octopussamples_azure_account" {
+  type        = string
+  nullable    = false
+  sensitive   = true
+  description = "The Azure secret associated with the account OctopusSamples Azure Account"
+  default     = "Change Me!"
+}
+
+resource "octopusdeploy_variable" "azure_web_app_project_azure_account_1" {
+  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
+  value        = "${length(data.octopusdeploy_accounts.account_octopussamples_azure_account.accounts) != 0 ? data.octopusdeploy_accounts.account_octopussamples_azure_account.accounts[0].id : octopusdeploy_azure_service_principal.account_octopussamples_azure_account[0].id}"
+  name         = "Project.Azure.Account"
+  type         = "AzureAccount"
+  description  = "The Azure Account to use to authenticate to Azure."
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_variable" "azure_web_app_project_azure_location_1" {
+  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
+  value        = "canadacentral"
+  name         = "Project.Azure.Location"
   type         = "String"
-  description  = "This is the name of the Kubernetes deployment. It is exposed as a variable to allow the name to be shared between the deployment process and the runbooks."
+  description  = "This variable tells Azure which location to create resources in."
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
@@ -571,18 +633,137 @@ resource "octopusdeploy_variable" "kubernetes_web_app_kubernetes_deployment_name
   depends_on = []
 }
 
-resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_kubernetes_web_app_daily_security_scan" {
-  count       = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
+resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_1" {
+  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
+  value        = "Octopub-Development"
+  name         = "Project.Azure.ResourceGroup.Name"
+  type         = "String"
+  is_sensitive = false
+
+  scope {
+    actions      = null
+    channels     = null
+    environments = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+    machines     = null
+    roles        = null
+    tenant_tags  = null
+    processes    = null
+  }
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_2" {
+  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
+  value        = "Octopub-Test"
+  name         = "Project.Azure.ResourceGroup.Name"
+  type         = "String"
+  description  = ""
+  is_sensitive = false
+
+  scope {
+    actions      = null
+    channels     = null
+    environments = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
+    machines     = null
+    roles        = null
+    tenant_tags  = null
+    processes    = null
+  }
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_3" {
+  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
+  value        = "Octopub-Production"
+  name         = "Project.Azure.ResourceGroup.Name"
+  type         = "String"
+  description  = ""
+  is_sensitive = false
+
+  scope {
+    actions      = null
+    channels     = null
+    environments = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+    machines     = null
+    roles        = null
+    tenant_tags  = null
+    processes    = null
+  }
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_name_1" {
+  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
+  value        = "octopub-webapp-#{Octopus.Environment.Name | ToLower}"
+  name         = "Project.Azure.WebApp.Octopub.Name"
+  type         = "String"
+  description  = "The name of the Azure Function App to create or deploy to."
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_name_1" {
+  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
+  value        = "octopussamples-octopub-plan-#{Octopus.Environment.Name | ToLower}"
+  name         = "Project.Azure.WebApp.ServicePlan.Name"
+  type         = "String"
+  description  = "This variable is the name of the Azure Web App."
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_sku_1" {
+  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
+  value        = "F1"
+  name         = "Project.Azure.WebApp.ServicePlan.SKU"
+  type         = "String"
+  description  = "This is the SKU used when creating the Azure App Service Plan."
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_azure_web_app_daily_security_scan" {
+  count       = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
   space_id    = "${trimspace(var.octopus_space_id)}"
   name        = "Daily Security Scan"
-  description = "This trigger reruns the deployment in the Security environment. This means any new vulnerabilities detected after a production deployment will be identified."
+  description = "This trigger runs once per day and performs a security scan of the packages deployed to production."
   timezone    = "UTC"
   is_disabled = false
-  project_id  = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id : octopusdeploy_project.project_kubernetes_web_app[0].id}"
+  project_id  = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? data.octopusdeploy_projects.project_azure_web_app.projects[0].id : octopusdeploy_project.project_azure_web_app[0].id}"
   tenant_ids  = []
 
   once_daily_schedule {
-    start_time   = "2025-04-26T09:00:00"
+    start_time   = "2025-06-22T09:00:00"
     days_of_week = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
   }
 
@@ -596,59 +777,59 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_kubernetes_we
   }
 }
 
-variable "project_kubernetes_web_app_name" {
+variable "project_azure_web_app_name" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The name of the project exported from Kubernetes Web App"
-  default     = "Kubernetes Web App"
+  description = "The name of the project exported from Azure Web App"
+  default     = "Azure Web App"
 }
-variable "project_kubernetes_web_app_description_prefix" {
+variable "project_azure_web_app_description_prefix" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "An optional prefix to add to the project description for the project Kubernetes Web App"
+  description = "An optional prefix to add to the project description for the project Azure Web App"
   default     = ""
 }
-variable "project_kubernetes_web_app_description_suffix" {
+variable "project_azure_web_app_description_suffix" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "An optional suffix to add to the project description for the project Kubernetes Web App"
+  description = "An optional suffix to add to the project description for the project Azure Web App"
   default     = ""
 }
-variable "project_kubernetes_web_app_description" {
+variable "project_azure_web_app_description" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The description of the project exported from Kubernetes Web App"
-  default     = "This project provides an example Kubernetes deployment using YAML, Cloud Target Discovery, and SBOM scanning to an AWS EKS Kubernetes cluster."
+  description = "The description of the project exported from Azure Web App"
+  default     = "Demo deploying an Azure Web App."
 }
-variable "project_kubernetes_web_app_tenanted" {
+variable "project_azure_web_app_tenanted" {
   type        = string
   nullable    = false
   sensitive   = false
   description = "The tenanted setting for the project Untenanted"
   default     = "Untenanted"
 }
-data "octopusdeploy_projects" "project_kubernetes_web_app" {
+data "octopusdeploy_projects" "project_azure_web_app" {
   ids          = null
-  partial_name = "${var.project_kubernetes_web_app_name}"
+  partial_name = "${var.project_azure_web_app_name}"
   skip         = 0
   take         = 1
 }
-resource "octopusdeploy_project" "project_kubernetes_web_app" {
-  count                                = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  name                                 = "${var.project_kubernetes_web_app_name}"
+resource "octopusdeploy_project" "project_azure_web_app" {
+  count                                = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  name                                 = "${var.project_azure_web_app_name}"
   default_guided_failure_mode          = "EnvironmentDefault"
   default_to_skip_if_already_installed = false
   is_discrete_channel_release          = false
   is_disabled                          = false
   is_version_controlled                = false
   lifecycle_id                         = "${length(data.octopusdeploy_lifecycles.lifecycle_devsecops.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_devsecops.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_devsecops[0].id}"
-  project_group_id                     = "${length(data.octopusdeploy_project_groups.project_group_kubernetes.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_kubernetes.project_groups[0].id : octopusdeploy_project_group.project_group_kubernetes[0].id}"
+  project_group_id                     = "${length(data.octopusdeploy_project_groups.project_group_azure.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_azure.project_groups[0].id : octopusdeploy_project_group.project_group_azure[0].id}"
   included_library_variable_sets       = []
-  tenanted_deployment_participation    = "${var.project_kubernetes_web_app_tenanted}"
+  tenanted_deployment_participation    = "${var.project_azure_web_app_tenanted}"
 
   connectivity_policy {
     allow_deployments_to_no_targets = true
@@ -656,14 +837,14 @@ resource "octopusdeploy_project" "project_kubernetes_web_app" {
     skip_machine_behavior           = "None"
     target_roles                    = []
   }
-  description = "${var.project_kubernetes_web_app_description_prefix}${var.project_kubernetes_web_app_description}${var.project_kubernetes_web_app_description_suffix}"
+  description = "${var.project_azure_web_app_description_prefix}${var.project_azure_web_app_description}${var.project_azure_web_app_description_suffix}"
   lifecycle {
     prevent_destroy = true
   }
 }
-resource "octopusdeploy_project_versioning_strategy" "project_kubernetes_web_app" {
-  count      = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  project_id = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id : octopusdeploy_project.project_kubernetes_web_app[0].id}"
+resource "octopusdeploy_project_versioning_strategy" "project_azure_web_app" {
+  count      = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? data.octopusdeploy_projects.project_azure_web_app.projects[0].id : octopusdeploy_project.project_azure_web_app[0].id}"
   template   = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
 }
 

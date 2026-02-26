@@ -326,9 +326,9 @@ resource "octopusdeploy_process_step" "process_step_octopub_approve_production_d
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
-        "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
       }
 }
 
@@ -422,12 +422,12 @@ resource "octopusdeploy_process_step" "process_step_octopub_deploy_to_tomcat_via
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check Targets Available].Output.SetupValid}"
       }
   execution_properties  = {
-        "Tomcat.Deploy.User" = "admin"
-        "Tomcat.Deploy.Password" = "${var.action_b5db3976a6058b846e2ef726ee139fcf26756a43d95da3aed7f951beadf6377a_sensitive_value}"
-        "Tomcat.Deploy.Name" = "octopub"
         "Octopus.Action.EnabledFeatures" = ",Octopus.Features.TomcatDeployManager"
-        "Tomcat.Deploy.Controller" = "http://localhost:8080/manager"
+        "Tomcat.Deploy.User" = "admin"
         "Tomcat.Deploy.Enabled" = "True"
+        "Tomcat.Deploy.Controller" = "http://localhost:8080/manager"
+        "Tomcat.Deploy.Name" = "octopub"
+        "Tomcat.Deploy.Password" = "${var.action_b5db3976a6058b846e2ef726ee139fcf26756a43d95da3aed7f951beadf6377a_sensitive_value}"
       }
 }
 
@@ -479,9 +479,9 @@ resource "octopusdeploy_process_step" "process_step_octopub_deployment_success_n
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.To" = "admin@example.org"
         "Octopus.Action.Email.Subject" = "Deployment for #{Octopus.Project.Name} completed successfully!"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Email.To" = "admin@example.org"
       }
 }
 
