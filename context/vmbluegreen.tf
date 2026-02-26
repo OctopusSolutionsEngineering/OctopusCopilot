@@ -24,22 +24,22 @@ data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle" {
   take         = 1
 }
 
-data "octopusdeploy_project_groups" "project_group_blue_green_single_server___environment" {
+data "octopusdeploy_project_groups" "project_group_llm" {
   ids          = null
-  partial_name = "${var.project_group_blue_green_single_server___environment_name}"
+  partial_name = "${var.project_group_llm_name}"
   skip         = 0
   take         = 1
 }
-variable "project_group_blue_green_single_server___environment_name" {
+variable "project_group_llm_name" {
   type        = string
   nullable    = false
   sensitive   = false
   description = "The name of the project group to lookup"
-  default     = "Blue/Green Single Server - Environment"
+  default     = "LLM"
 }
-resource "octopusdeploy_project_group" "project_group_blue_green_single_server___environment" {
-  count = "${length(data.octopusdeploy_project_groups.project_group_blue_green_single_server___environment.project_groups) != 0 ? 0 : 1}"
-  name  = "${var.project_group_blue_green_single_server___environment_name}"
+resource "octopusdeploy_project_group" "project_group_llm" {
+  count = "${length(data.octopusdeploy_project_groups.project_group_llm.project_groups) != 0 ? 0 : 1}"
+  name  = "${var.project_group_llm_name}"
   lifecycle {
     prevent_destroy = true
   }
@@ -55,7 +55,7 @@ resource "octopusdeploy_environment" "environment_development" {
   count                        = "${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? 0 : 1}"
   name                         = "Development"
   description                  = ""
-  allow_dynamic_infrastructure = false
+  allow_dynamic_infrastructure = true
   use_guided_failure           = false
 
   jira_extension_settings {
@@ -85,7 +85,7 @@ resource "octopusdeploy_environment" "environment_test" {
   count                        = "${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? 0 : 1}"
   name                         = "Test"
   description                  = ""
-  allow_dynamic_infrastructure = false
+  allow_dynamic_infrastructure = true
   use_guided_failure           = false
 
   jira_extension_settings {
@@ -101,177 +101,6 @@ resource "octopusdeploy_environment" "environment_test" {
   }
   depends_on = [octopusdeploy_environment.environment_development]
   lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_environments" "environment_production___blue" {
-  ids          = null
-  partial_name = "Production - Blue"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_environment" "environment_production___blue" {
-  count                        = "${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? 0 : 1}"
-  name                         = "Production - Blue"
-  description                  = ""
-  allow_dynamic_infrastructure = false
-  use_guided_failure           = false
-
-  jira_extension_settings {
-    environment_type = "unmapped"
-  }
-
-  jira_service_management_extension_settings {
-    is_enabled = false
-  }
-
-  servicenow_extension_settings {
-    is_enabled = false
-  }
-  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test]
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_environments" "environment_production___green" {
-  ids          = null
-  partial_name = "Production - Green"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_environment" "environment_production___green" {
-  count                        = "${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? 0 : 1}"
-  name                         = "Production - Green"
-  description                  = ""
-  allow_dynamic_infrastructure = false
-  use_guided_failure           = false
-
-  jira_extension_settings {
-    environment_type = "unmapped"
-  }
-
-  jira_service_management_extension_settings {
-    is_enabled = false
-  }
-
-  servicenow_extension_settings {
-    is_enabled = false
-  }
-  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test,octopusdeploy_environment.environment_production___blue]
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_lifecycles" "lifecycle_blue_green" {
-  ids          = null
-  partial_name = "Blue Green"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_lifecycle" "lifecycle_blue_green" {
-  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_blue_green.lifecycles) != 0 ? 0 : 1}"
-  name        = "Blue Green"
-  description = ""
-
-  phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-    name                                  = "Development"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-
-    release_retention_policy {
-      quantity_to_keep = 5
-      unit             = "Days"
-    }
-  }
-  phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
-    name                                  = "Test"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-
-    release_retention_policy {
-      quantity_to_keep = 5
-      unit             = "Days"
-    }
-  }
-  phase {
-    automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}", "${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
-    name                                  = "Production"
-    is_optional_phase                     = false
-    minimum_environments_before_promotion = 0
-
-    release_retention_policy {
-      quantity_to_keep = 5
-      unit             = "Days"
-    }
-  }
-
-  release_retention_policy {
-    quantity_to_keep = 5
-    unit             = "Days"
-  }
-
-  tentacle_retention_policy {
-    quantity_to_keep = 1
-    unit             = "Days"
-  }
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
-  ids          = null
-  partial_name = "Default Lifecycle"
-  skip         = 0
-  take         = 1
-}
-
-data "octopusdeploy_channels" "channel_random_quotes__net_iis_default" {
-  ids          = []
-  partial_name = "Default"
-  project_id   = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id : octopusdeploy_project.project_random_quotes__net_iis[0].id}"
-  skip         = 0
-  take         = 1
-}
-
-data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
-  feed_type    = "BuiltIn"
-  ids          = null
-  partial_name = ""
-  skip         = 0
-  take         = 1
-  lifecycle {
-    postcondition {
-      error_message = "Failed to resolve a feed called \"BuiltIn\". This resource must exist in the space before this Terraform configuration is applied."
-      condition     = length(self.feeds) != 0
-    }
-  }
-}
-
-data "octopusdeploy_feeds" "feed_octopus_maven_feed" {
-  feed_type    = "Maven"
-  ids          = null
-  partial_name = "Octopus Maven Feed"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
-  count                                = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? 0 : 1}"
-  name                                 = "Octopus Maven Feed"
-  feed_uri                             = "http://octopus-sales-public-maven-repo.s3-website-ap-southeast-2.amazonaws.com/snapshot"
-  package_acquisition_location_options = ["Server", "ExecutionTarget"]
-  download_attempts                    = 5
-  download_retry_backoff_seconds       = 10
-  lifecycle {
-    ignore_changes  = [password]
     prevent_destroy = true
   }
 }
@@ -300,89 +129,233 @@ resource "octopusdeploy_environment" "environment_production" {
   servicenow_extension_settings {
     is_enabled = false
   }
-  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test,octopusdeploy_environment.environment_production___blue,octopusdeploy_environment.environment_production___green]
+  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test]
   lifecycle {
     prevent_destroy = true
   }
 }
 
-data "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_blue_green_deployment" {
-  website = "https://library.octopus.com/step-templates/72db001f-ae7f-4a0f-b952-5f80e2fc4cd2"
+data "octopusdeploy_environments" "environment_security" {
+  ids          = null
+  partial_name = "Security"
+  skip         = 0
+  take         = 1
 }
-data "octopusdeploy_step_template" "steptemplate_octopus___check_blue_green_deployment" {
-  name = "Octopus - Check Blue Green Deployment"
-}
-resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_blue_green_deployment" {
-  community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_blue_green_deployment.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_blue_green_deployment.steps[0].id : null}"
-  count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_blue_green_deployment.step_template != null ? 0 : 1}"
+resource "octopusdeploy_environment" "environment_security" {
+  count                        = "${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? 0 : 1}"
+  name                         = "Security"
+  description                  = ""
+  allow_dynamic_infrastructure = true
+  use_guided_failure           = false
+
+  jira_extension_settings {
+    environment_type = "unmapped"
+  }
+
+  jira_service_management_extension_settings {
+    is_enabled = false
+  }
+
+  servicenow_extension_settings {
+    is_enabled = false
+  }
+  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test,octopusdeploy_environment.environment_production]
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
-data "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_targets_available" {
-  website = "https://library.octopus.com/step-templates/81444e7f-d77a-47db-b287-0f1ab5793880"
+data "octopusdeploy_lifecycles" "lifecycle_devsecops" {
+  ids          = null
+  partial_name = "DevSecOps"
+  skip         = 0
+  take         = 1
 }
-data "octopusdeploy_step_template" "steptemplate_octopus___check_targets_available" {
-  name = "Octopus - Check Targets Available"
-}
-resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_targets_available" {
-  community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available.steps[0].id : null}"
-  count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_targets_available.step_template != null ? 0 : 1}"
+resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
+  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_devsecops.lifecycles) != 0 ? 0 : 1}"
+  name        = "DevSecOps"
+  description = "This lifecycle automatically deploys to the Development environment, progresses through the Test and Production environments, and then automatically deploys to the Security environment. The Security environment is used to scan SBOMs for any vulnerabilities and deployments to the Security environment are initiated by triggers on a daily basis."
+
+  phase {
+    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+    optional_deployment_targets           = []
+    name                                  = "Development"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
+    name                                  = "Test"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+    name                                  = "Production"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+  phase {
+    automatic_deployment_targets          = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+    optional_deployment_targets           = []
+    name                                  = "Security"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+
+  release_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
-data "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_smtp_server_configured" {
-  website = "https://library.octopus.com/step-templates/ad8126be-37af-4297-b46e-fce02ba3987a"
-}
-data "octopusdeploy_step_template" "steptemplate_octopus___check_smtp_server_configured" {
-  name = "Octopus - Check SMTP Server Configured"
-}
-resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_smtp_server_configured" {
-  community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured.steps[0].id : null}"
-  count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_smtp_server_configured.step_template != null ? 0 : 1}"
+data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
+  ids          = null
+  partial_name = "Default Lifecycle"
+  skip         = 0
+  take         = 1
 }
 
-resource "octopusdeploy_process" "process_random_quotes__net_iis" {
-  count      = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  project_id = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id : octopusdeploy_project.project_random_quotes__net_iis[0].id}"
+data "octopusdeploy_channels" "channel_llm_in_kubernetes_default" {
+  ids          = []
+  partial_name = "Default"
+  project_id   = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id : octopusdeploy_project.project_llm_in_kubernetes[0].id}"
+  skip         = 0
+  take         = 1
+}
+
+data "octopusdeploy_lifecycles" "lifecycle_hotfix" {
+  ids          = null
+  partial_name = "Hotfix"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_lifecycle" "lifecycle_hotfix" {
+  count       = "${length(data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles) != 0 ? 0 : 1}"
+  name        = "Hotfix"
+  description = "This channel allows deployments directly to production."
+
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+    name                                  = "Production"
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
+  }
+
+  release_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_projects" "channel_llm_in_kubernetes_hotfix" {
+  ids          = null
+  partial_name = "LLM in Kubernetes"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_channel" "channel_llm_in_kubernetes_hotfix" {
+  count        = "${length(data.octopusdeploy_projects.channel_llm_in_kubernetes_hotfix.projects) != 0 ? 0 : 1}"
+  lifecycle_id = "${length(data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_hotfix[0].id}"
+  name         = "Hotfix"
+  project_id   = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id : octopusdeploy_project.project_llm_in_kubernetes[0].id}"
+  is_default   = false
+  tenant_tags  = []
+  depends_on   = [octopusdeploy_process_steps_order.process_step_order_llm_in_kubernetes]
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
+  feed_type    = "BuiltIn"
+  ids          = null
+  partial_name = ""
+  skip         = 0
+  take         = 1
+  lifecycle {
+    postcondition {
+      error_message = "Failed to resolve a feed called \"BuiltIn\". This resource must exist in the space before this Terraform configuration is applied."
+      condition     = length(self.feeds) != 0
+    }
+  }
+}
+
+data "octopusdeploy_feeds" "feed_github_container_registry" {
+  feed_type    = "Docker"
+  ids          = null
+  partial_name = "GitHub Container Registry"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_docker_container_registry" "feed_github_container_registry" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? 0 : 1}"
+  name                                 = "GitHub Container Registry"
+  registry_path                        = ""
+  api_version                          = "v2"
+  feed_uri                             = "https://ghcr.io"
+  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_feeds" "feed_ghcr_anonymous" {
+  feed_type    = "Docker"
+  ids          = null
+  partial_name = "GHCR Anonymous"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous" {
+  count                                = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? 0 : 1}"
+  name                                 = "GHCR Anonymous"
+  registry_path                        = ""
+  api_version                          = "v2"
+  feed_uri                             = "https://ghcrfacade-a6awccayfpcpg4cg.eastus-01.azurewebsites.net"
+  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+
+resource "octopusdeploy_process" "process_llm_in_kubernetes" {
+  count      = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id : octopusdeploy_project.project_llm_in_kubernetes[0].id}"
   depends_on = []
 }
 
-resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net_iis_octopus___check_blue_green_deployment" {
-  count                 = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  name                  = "Octopus - Check Blue Green Deployment"
-  process_id            = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process.process_random_quotes__net_iis[0].id}"
-  template_id           = "${data.octopusdeploy_step_template.steptemplate_octopus___check_blue_green_deployment.step_template != null ? data.octopusdeploy_step_template.steptemplate_octopus___check_blue_green_deployment.step_template.id : octopusdeploy_community_step_template.communitysteptemplate_octopus___check_blue_green_deployment[0].id}"
-  template_version      = "${data.octopusdeploy_step_template.steptemplate_octopus___check_blue_green_deployment.step_template != null ? data.octopusdeploy_step_template.steptemplate_octopus___check_blue_green_deployment.step_template.version : octopusdeploy_community_step_template.communitysteptemplate_octopus___check_blue_green_deployment[0].version}"
-  channels              = null
-  condition             = "Success"
-  environments          = null
-  excluded_environments = null
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "octopus-check-blue-green-deployment"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_variable  = "Project.Workerpool.Default"
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "OctopusUseBundledTooling" = "False"
-      }
-  parameters            = {
-        "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
-        "BlueGreen.Environment.Blue.Name" = "Production - Blue"
-        "BlueGreen.Environment.Green.Name" = "Production - Green"
-      }
-}
-
-resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_approve_production_deployment" {
-  count                 = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
+resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_approve_production_deployment" {
+  count                 = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
   name                  = "Approve Production Deployment"
   type                  = "Octopus.Manual"
-  process_id            = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process.process_random_quotes__net_iis[0].id}"
+  process_id            = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process.process_llm_in_kubernetes[0].id}"
   channels              = null
   condition             = "Success"
-  environments          = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}", "${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}", "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+  environments          = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
   excluded_environments = null
-  notes                 = "This step pauses the deployment and waits for approval before continuing."
+  notes                 = "This manual intervention is used to provide a prompt before a production deployment."
   package_requirement   = "LetOctopusDecide"
   slug                  = "approve-production-deployment"
   start_trigger         = "StartAfterPrevious"
@@ -392,330 +365,144 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_appro
   execution_properties  = {
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
-        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?\n\n#{if Octopus.Action[Octopus - Check Blue Green Deployment].Output.SequentialDeploy}WARNING! You appear to be deploying to the #{Octopus.Environment.Name} environment twice. It is expected that blue/green deployments alternate between environments.#{/if}"
+        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
       }
 }
 
-resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net_iis_octopus___check_targets_available" {
-  count                 = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  name                  = "Octopus - Check Targets Available"
-  process_id            = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process.process_random_quotes__net_iis[0].id}"
-  template_id           = "${data.octopusdeploy_step_template.steptemplate_octopus___check_targets_available.step_template != null ? data.octopusdeploy_step_template.steptemplate_octopus___check_targets_available.step_template.id : octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available[0].id}"
-  template_version      = "${data.octopusdeploy_step_template.steptemplate_octopus___check_targets_available.step_template != null ? data.octopusdeploy_step_template.steptemplate_octopus___check_targets_available.step_template.version : octopusdeploy_community_step_template.communitysteptemplate_octopus___check_targets_available[0].version}"
-  channels              = null
-  condition             = "Success"
-  environments          = null
-  excluded_environments = null
-  notes                 = "This step checks that deployment targets are present, and if not, displays a link to the documentation."
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "octopus-check-targets-available"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_variable  = "Project.Workerpool.Default"
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "OctopusUseBundledTooling" = "False"
-      }
-  parameters            = {
-        "CheckTargets.Message" = "See the [documentation](https://octopus.com/docs/infrastructure/deployment-targets) for details on creating targets."
-        "CheckTargets.Octopus.Role" = "randomquotes-iis-website"
-        "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
-      }
-}
-
-resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net_iis_octopus___check_smtp_server_configured" {
-  count                 = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  name                  = "Octopus - Check SMTP Server Configured"
-  process_id            = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process.process_random_quotes__net_iis[0].id}"
-  template_id           = "${data.octopusdeploy_step_template.steptemplate_octopus___check_smtp_server_configured.step_template != null ? data.octopusdeploy_step_template.steptemplate_octopus___check_smtp_server_configured.step_template.id : octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured[0].id}"
-  template_version      = "${data.octopusdeploy_step_template.steptemplate_octopus___check_smtp_server_configured.step_template != null ? data.octopusdeploy_step_template.steptemplate_octopus___check_smtp_server_configured.step_template.version : octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured[0].version}"
-  channels              = null
-  condition             = "Success"
-  environments          = null
-  excluded_environments = null
-  notes                 = "This step checks that the SMTP server is configured, and if not, provides a link to the documentation."
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "octopus-check-smtp-server-configured"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_variable  = "Project.Workerpool.Default"
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "OctopusUseBundledTooling" = "False"
-      }
-  parameters            = {
-        "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
-      }
-}
-
-variable "project_random_quotes__net_iis_step_transfer_a_package_packageid" {
+variable "project_llm_in_kubernetes_step_deploy_a_kubernetes_llm_web_app_via_yaml_package_ollamainference_packageid" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The package ID for the package named  from step Transfer a Package in project Random Quotes .NET IIS"
-  default     = "com.octopus:randomquotes-dotnet"
+  description = "The package ID for the package named ollamainference from step Deploy a Kubernetes LLM Web App via YAML in project LLM in Kubernetes"
+  default     = "octopussolutionsengineering/ollamainference"
 }
-resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_transfer_a_package" {
-  count                 = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  name                  = "Transfer a Package"
-  type                  = "Octopus.TransferPackage"
-  process_id            = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process.process_random_quotes__net_iis[0].id}"
+resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_deploy_a_kubernetes_llm_web_app_via_yaml" {
+  count                 = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  name                  = "Deploy a Kubernetes LLM Web App via YAML"
+  type                  = "Octopus.KubernetesDeployRawYaml"
+  process_id            = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process.process_llm_in_kubernetes[0].id}"
+  channels              = null
+  condition             = "Success"
+  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id : octopusdeploy_docker_container_registry.feed_github_container_registry[0].id}", image = "ghcr.io/octopusdeploylabs/k8s-workertools" }
+  environments          = null
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  notes                 = "This step deploys a Kubernetes Deployment resource defined as raw YAML to deploy a pod hosting Ollama."
+  package_requirement   = "LetOctopusDecide"
+  packages              = { ollamainference = { acquisition_location = "NotAcquired", feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", id = null, package_id = "${var.project_llm_in_kubernetes_step_deploy_a_kubernetes_llm_web_app_via_yaml_package_ollamainference_packageid}", properties = { Extract = "False", Purpose = "DockerImageReference", SelectionMode = "immediate" } } }
+  slug                  = "deploy-a-kubernetes-web-app-via-yaml"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_variable  = "Octopus.Project.WorkerPool"
+  properties            = {
+        "Octopus.Action.TargetRoles" = "Kubernetes"
+      }
+  execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: v1\nkind: Service\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  selector:\n    app: \"#{Kubernetes.Deployment.Name}\"\n  ports:\n    - protocol: TCP\n      port: 8080\n      targetPort: 8080\n  type: ClusterIP\n---\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[ollamainference].PackageId}:#{Octopus.Action.Package[ollamainference].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"2\"\n            memory: \"2Gi\"\n          requests:\n            cpu: \"1\"\n            memory: \"1Gi\"\n        livenessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
+      }
+}
+
+resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_smoke_test" {
+  count                 = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  name                  = "Smoke Test"
+  type                  = "Octopus.Script"
+  process_id            = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process.process_llm_in_kubernetes[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", github_connection_id = "", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
+  notes                 = "See the script in [GitHub](https://github.com/OctopusSolutionsEngineering/Octopub/blob/main/octopus/HttpTest.ps1)"
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "smoke-test"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  properties            = {
+        "Octopus.Action.TargetRoles" = "Kubernetes"
+      }
+  execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptParameters" = "-URL \"http://#{Kubernetes.Deployment.Name}.#{Octopus.Environment.Name | ToLower}.svc.cluster.local:8080/v1/chat/completions\" -Body '{\"model\": \"gemma3:1b\", \"messages\": [{\"role\": \"user\",\"content\": \"What is the capital of France?\"}]}'"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/HttpTest.ps1"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+      }
+}
+
+resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_print_message_when_no_targets" {
+  count                 = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  name                  = "Print Message When no Targets"
+  type                  = "Octopus.Script"
+  process_id            = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process.process_llm_in_kubernetes[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  notes                 = "This step detects when the previous steps were skipped due to no targets being defined and prints a message with a link to documentation for creating targets."
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "print-message-when-no-targets"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_variable  = "Octopus.Project.WorkerPool"
+  properties            = {
+      }
+  execution_properties  = {
+        "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy a Kubernetes Web App via YAML].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Kubernetes target with the tag 'Kubernetes'.\"\n  Write-Highlight \"We recommend the [Kubernetes Agent](https://octopus.com/docs/kubernetes/targets/kubernetes-agent).\"\n}"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+      }
+}
+
+resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_scan_for_vulnerabilities" {
+  count                 = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  name                  = "Scan for Vulnerabilities"
+  type                  = "Octopus.Script"
+  process_id            = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process.process_llm_in_kubernetes[0].id}"
   channels              = null
   condition             = "Success"
   environments          = null
   excluded_environments = null
-  notes                 = "Transfers a package to the VM."
+  git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", github_connection_id = "", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
+  notes                 = "This step extracts the Docker image, finds any bom.json files, and scans them for vulnerabilities using Trivy. \n\nThis step is expected to be run with each deployment to ensure vulnerabilities are discovered as early as possible. \n\nIt is also run daily via a project trigger that reruns the deployment in the Security environment. This allows unknown vulnerabilities to be discovered after a production deployment.\n\nSee the script in [GitHub](https://github.com/OctopusSolutionsEngineering/Octopub/blob/main/octopus/DirectorySbomScan.ps1)"
   package_requirement   = "LetOctopusDecide"
-  primary_package       = { acquisition_location = "Server", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_random_quotes__net_iis_step_transfer_a_package_packageid}", properties = { SelectionMode = "immediate" } }
-  slug                  = "transfer-a-package"
+  slug                  = "scan-for-vulnerabilities"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
+  worker_pool_variable  = "Octopus.Project.WorkerPool"
   properties            = {
-        "Octopus.Action.TargetRoles" = "randomquotes-web-iis"
       }
   execution_properties  = {
-        "Octopus.Action.Package.TransferPath" = "C:\\New folder\\#{Octopus.Action.Package.PackageId}.#{Octopus.Action.Package.PackageVersion}.zip"
-      }
-}
-
-resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_an_email_on_success" {
-  count                 = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  name                  = "Send an Email on Success"
-  type                  = "Octopus.Email"
-  process_id            = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process.process_random_quotes__net_iis[0].id}"
-  channels              = null
-  condition             = "Variable"
-  environments          = null
-  excluded_environments = null
-  notes                 = "Sends an email when the deployment is successful."
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "send-an-email-on-success"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  properties            = {
-        "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
-      }
-  execution_properties  = {
-        "Octopus.Action.Email.Body" = "The deployment succeeded."
-        "Octopus.Action.Email.To" = "releases@example.org"
+        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/DockerImageSbomScan.ps1"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "OctopusUseBundledTooling" = "False"
       }
 }
 
-resource "octopusdeploy_process_steps_order" "process_step_order_random_quotes__net_iis" {
-  count      = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  process_id = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process.process_random_quotes__net_iis[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_blue_green_deployment[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_random_quotes__net_iis_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_targets_available[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_smtp_server_configured[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_random_quotes__net_iis_transfer_a_package[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_random_quotes__net_iis_send_an_email_on_success[0].id}"]
+resource "octopusdeploy_process_steps_order" "process_step_order_llm_in_kubernetes" {
+  count      = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  process_id = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process.process_llm_in_kubernetes[0].id}"
+  steps      = ["${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process_step.process_step_llm_in_kubernetes_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process_step.process_step_llm_in_kubernetes_deploy_a_kubernetes_llm_web_app_via_yaml[0].id}", "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process_step.process_step_llm_in_kubernetes_smoke_test[0].id}", "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process_step.process_step_llm_in_kubernetes_print_message_when_no_targets[0].id}", "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? null : octopusdeploy_process_step.process_step_llm_in_kubernetes_scan_for_vulnerabilities[0].id}"]
 }
 
-resource "octopusdeploy_variable" "random_quotes__net_iis_prject_iis_application_pool_1" {
-  count        = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) == 0 ?octopusdeploy_project.project_random_quotes__net_iis[0].id : data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id}"
-  value        = "RandomQuotes-Blue"
-  name         = "Prject.IIS.Application.Pool"
+resource "octopusdeploy_variable" "llm_in_kubernetes_octopusprintevaluatedvariables_1" {
+  count        = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) == 0 ?octopusdeploy_project.project_llm_in_kubernetes[0].id : data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id}"
+  value        = "False"
+  name         = "OctopusPrintEvaluatedVariables"
   type         = "String"
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "random_quotes__net_iis_prject_iis_application_pool_2" {
-  count        = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) == 0 ?octopusdeploy_project.project_random_quotes__net_iis[0].id : data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id}"
-  value        = "RandomQuotes-Green"
-  name         = "Prject.IIS.Application.Pool"
-  type         = "String"
-  description  = ""
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_binding_port_1" {
-  count        = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) == 0 ?octopusdeploy_project.project_random_quotes__net_iis[0].id : data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id}"
-  value        = "81"
-  name         = "Project.IIS.Binding.Port"
-  type         = "String"
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_binding_port_2" {
-  count        = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) == 0 ?octopusdeploy_project.project_random_quotes__net_iis[0].id : data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id}"
-  value        = "82"
-  name         = "Project.IIS.Binding.Port"
-  type         = "String"
-  description  = ""
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_website_name_1" {
-  count        = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) == 0 ?octopusdeploy_project.project_random_quotes__net_iis[0].id : data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id}"
-  value        = "RandomQuotes-Blue"
-  name         = "Project.IIS.Website.Name"
-  type         = "String"
-  description  = ""
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_website_name_2" {
-  count        = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) == 0 ?octopusdeploy_project.project_random_quotes__net_iis[0].id : data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id}"
-  value        = "RandomQuotes-Green"
-  name         = "Project.IIS.Website.Name"
-  type         = "String"
-  description  = ""
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_path_1" {
-  count        = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) == 0 ?octopusdeploy_project.project_random_quotes__net_iis[0].id : data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id}"
-  value        = "C:\\inetpub\\wwwroot\\randomquotes-blue"
-  name         = "Project.IIS.Path"
-  type         = "String"
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_path_2" {
-  count        = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) == 0 ?octopusdeploy_project.project_random_quotes__net_iis[0].id : data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id}"
-  value        = "C:\\inetpub\\wwwroot\\randomquotes-green"
-  name         = "Project.IIS.Path"
-  type         = "String"
-  description  = ""
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "random_quotes__net_iis_appsettings_environmentname_1" {
-  count        = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) == 0 ?octopusdeploy_project.project_random_quotes__net_iis[0].id : data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id}"
-  value        = "#{Octopus.Environment.Name}"
-  name         = "AppSettings:EnvironmentName"
-  type         = "String"
+  description  = "Set this variable to true to log the evaluated value of variables available at the beginning of each step in the deployment as Verbose messages. See https://octopus.com/docs/support/debug-problems-with-octopus-variables for more details."
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
@@ -724,12 +511,13 @@ resource "octopusdeploy_variable" "random_quotes__net_iis_appsettings_environmen
   depends_on = []
 }
 
-resource "octopusdeploy_variable" "random_quotes__net_iis_appsettings_appversion_1" {
-  count        = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) == 0 ?octopusdeploy_project.project_random_quotes__net_iis[0].id : data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id}"
-  value        = "#{Octopus.Release.Number}"
-  name         = "AppSettings:AppVersion"
+resource "octopusdeploy_variable" "llm_in_kubernetes_octopusprintvariables_1" {
+  count        = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) == 0 ?octopusdeploy_project.project_llm_in_kubernetes[0].id : data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id}"
+  value        = "False"
+  name         = "OctopusPrintVariables"
   type         = "String"
+  description  = "Set this variable to true to log the variables available at the beginning of each step in the deployment as Verbose messages. See https://octopus.com/docs/support/debug-problems-with-octopus-variables for more details."
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
@@ -738,13 +526,14 @@ resource "octopusdeploy_variable" "random_quotes__net_iis_appsettings_appversion
   depends_on = []
 }
 
-resource "octopusdeploy_variable" "random_quotes__net_iis_project_octopus_api_key_1" {
-  count           = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  owner_id        = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) == 0 ?octopusdeploy_project.project_random_quotes__net_iis[0].id : data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id}"
-  name            = "Project.Octopus.Api.Key"
-  type            = "Sensitive"
-  is_sensitive    = true
-  sensitive_value = "Change Me!"
+resource "octopusdeploy_variable" "llm_in_kubernetes_kubernetes_deployment_name_1" {
+  count        = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) == 0 ?octopusdeploy_project.project_llm_in_kubernetes[0].id : data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id}"
+  value        = "#{Octopus.Project.Name | Replace \"[^0-9a-zA-Z]\" \"\" | ToLower }"
+  name         = "Kubernetes.Deployment.Name"
+  type         = "String"
+  description  = "This is the name of the Kubernetes deployment. It is exposed as a variable to allow the name to be shared between the deployment process and the runbooks."
+  is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true
@@ -766,12 +555,13 @@ data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
   take         = 1
 }
 
-resource "octopusdeploy_variable" "random_quotes__net_iis_project_workerpool_default_1" {
-  count        = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) == 0 ?octopusdeploy_project.project_random_quotes__net_iis[0].id : data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id}"
+resource "octopusdeploy_variable" "llm_in_kubernetes_octopus_project_workerpool_1" {
+  count        = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) == 0 ?octopusdeploy_project.project_llm_in_kubernetes[0].id : data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id}"
   value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  name         = "Project.Workerpool.Default"
+  name         = "Octopus.Project.WorkerPool"
   type         = "WorkerPool"
+  description  = "Using a variable to define the worker pool used by steps allows the worker pool to be easily changed in a central location."
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
@@ -780,59 +570,99 @@ resource "octopusdeploy_variable" "random_quotes__net_iis_project_workerpool_def
   depends_on = []
 }
 
-variable "project_random_quotes__net_iis_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the project exported from Random Quotes .NET IIS"
-  default     = "Random Quotes .NET IIS"
+resource "octopusdeploy_variable" "llm_in_kubernetes_application_image_1" {
+  count        = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) == 0 ?octopusdeploy_project.project_llm_in_kubernetes[0].id : data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id}"
+  value        = "ghcr.io/#{Octopus.Action[Deploy a Kubernetes LLM Web App via YAML].Package[ollamainference].PackageId}:#{Octopus.Action[Deploy a Kubernetes LLM Web App via YAML].Package[ollamainference].PackageVersion}"
+  name         = "Application.Image"
+  type         = "String"
+  description  = "The image name is in the format \"ghcr.io/#{Octopus.Action[<Name of the step applying the Kubernetes deployment resource>].Package[<Name of the referenced package>].PackageId}:#{Octopus.Action[<Name of the step applying the Kubernetes deployment resource>].Package[Name of the referenced package>].PackageVersion}\". This variable allows the packages used by the \"Deploy a Kubernetes Web App via YAML\" step to be referenced in subsequent steps."
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
 }
-variable "project_random_quotes__net_iis_description_prefix" {
+
+resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_llm_in_kubernetes_daily_security_scan" {
+  count       = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  space_id    = "${trimspace(var.octopus_space_id)}"
+  name        = "Daily Security Scan"
+  description = "This trigger reruns the deployment in the Security environment. This means any new vulnerabilities detected after a production deployment will be identified."
+  timezone    = "UTC"
+  is_disabled = false
+  project_id  = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id : octopusdeploy_project.project_llm_in_kubernetes[0].id}"
+  tenant_ids  = []
+
+  once_daily_schedule {
+    start_time   = "2025-04-26T09:00:00"
+    days_of_week = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+  }
+
+  deploy_latest_release_action {
+    source_environment_id      = "${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"
+    destination_environment_id = "${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"
+    should_redeploy            = true
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+variable "project_llm_in_kubernetes_name" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "An optional prefix to add to the project description for the project Random Quotes .NET IIS"
+  description = "The name of the project exported from LLM in Kubernetes"
+  default     = "LLM in Kubernetes"
+}
+variable "project_llm_in_kubernetes_description_prefix" {
+  type        = string
+  nullable    = false
+  sensitive   = false
+  description = "An optional prefix to add to the project description for the project LLM in Kubernetes"
   default     = ""
 }
-variable "project_random_quotes__net_iis_description_suffix" {
+variable "project_llm_in_kubernetes_description_suffix" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "An optional suffix to add to the project description for the project Random Quotes .NET IIS"
+  description = "An optional suffix to add to the project description for the project LLM in Kubernetes"
   default     = ""
 }
-variable "project_random_quotes__net_iis_description" {
+variable "project_llm_in_kubernetes_description" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The description of the project exported from Random Quotes .NET IIS"
-  default     = "Deploys the .NET version of Random Quotes using the Blue/Green environment pattern to a single server with multiple applications.  [Build definition](https://github.com/OctopusSamples/RandomQuotes).\n\nRecreate this project with the AI Assistant using the prompt:\n\n `Create a VM Blue/Green project called \"My VM Blue Green Project\"`"
+  description = "The description of the project exported from LLM in Kubernetes"
+  default     = "This project provides an example Kubernetes deployment using YAML."
 }
-variable "project_random_quotes__net_iis_tenanted" {
+variable "project_llm_in_kubernetes_tenanted" {
   type        = string
   nullable    = false
   sensitive   = false
   description = "The tenanted setting for the project Untenanted"
   default     = "Untenanted"
 }
-data "octopusdeploy_projects" "project_random_quotes__net_iis" {
+data "octopusdeploy_projects" "project_llm_in_kubernetes" {
   ids          = null
-  partial_name = "${var.project_random_quotes__net_iis_name}"
+  partial_name = "${var.project_llm_in_kubernetes_name}"
   skip         = 0
   take         = 1
 }
-resource "octopusdeploy_project" "project_random_quotes__net_iis" {
-  count                                = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  name                                 = "${var.project_random_quotes__net_iis_name}"
+resource "octopusdeploy_project" "project_llm_in_kubernetes" {
+  count                                = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  name                                 = "${var.project_llm_in_kubernetes_name}"
   default_guided_failure_mode          = "EnvironmentDefault"
   default_to_skip_if_already_installed = false
   is_discrete_channel_release          = false
   is_disabled                          = false
   is_version_controlled                = false
-  lifecycle_id                         = "${length(data.octopusdeploy_lifecycles.lifecycle_blue_green.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_blue_green.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_blue_green[0].id}"
-  project_group_id                     = "${length(data.octopusdeploy_project_groups.project_group_blue_green_single_server___environment.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_blue_green_single_server___environment.project_groups[0].id : octopusdeploy_project_group.project_group_blue_green_single_server___environment[0].id}"
+  lifecycle_id                         = "${length(data.octopusdeploy_lifecycles.lifecycle_devsecops.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_devsecops.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_devsecops[0].id}"
+  project_group_id                     = "${length(data.octopusdeploy_project_groups.project_group_llm.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_llm.project_groups[0].id : octopusdeploy_project_group.project_group_llm[0].id}"
   included_library_variable_sets       = []
-  tenanted_deployment_participation    = "${var.project_random_quotes__net_iis_tenanted}"
+  tenanted_deployment_participation    = "${var.project_llm_in_kubernetes_tenanted}"
 
   connectivity_policy {
     allow_deployments_to_no_targets = true
@@ -840,14 +670,14 @@ resource "octopusdeploy_project" "project_random_quotes__net_iis" {
     skip_machine_behavior           = "None"
     target_roles                    = []
   }
-  description = "${var.project_random_quotes__net_iis_description_prefix}${var.project_random_quotes__net_iis_description}${var.project_random_quotes__net_iis_description_suffix}"
+  description = "${var.project_llm_in_kubernetes_description_prefix}${var.project_llm_in_kubernetes_description}${var.project_llm_in_kubernetes_description_suffix}"
   lifecycle {
     prevent_destroy = true
   }
 }
-resource "octopusdeploy_project_versioning_strategy" "project_random_quotes__net_iis" {
-  count      = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
-  project_id = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id : octopusdeploy_project.project_random_quotes__net_iis[0].id}"
+resource "octopusdeploy_project_versioning_strategy" "project_llm_in_kubernetes" {
+  count      = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id : octopusdeploy_project.project_llm_in_kubernetes[0].id}"
   template   = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
 }
 
