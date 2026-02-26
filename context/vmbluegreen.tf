@@ -363,13 +363,13 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
+        "BlueGreen.Environment.Blue.Name" = "Production - Blue"
         "BlueGreen.Environment.Green.Name" = "Production - Green"
         "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
-        "BlueGreen.Environment.Blue.Name" = "Production - Blue"
       }
 }
 
@@ -444,8 +444,8 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
