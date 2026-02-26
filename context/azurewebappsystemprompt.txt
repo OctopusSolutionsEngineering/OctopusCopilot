@@ -23,6 +23,8 @@ You must include all the following feed resources from the "Example Octopus Azur
 * data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
 * data "octopusdeploy_feeds" "feed_ghcr_anonymous"
 * resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
+* data "octopusdeploy_feeds" "feed_octopus_maven_feed"
+* resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed"
 
 ## Azure Web App Project Instructions
 
@@ -39,12 +41,12 @@ You must include all the following project deployment process resources from the
 
 You must include all the following step resources from the "Example Octopus Azure Web App Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup"
-* resource "octopusdeploy_process_step" "process_step_azure_web_app_check_smtp_configuration"
+* resource "octopusdeploy_process_templated_step" "process_step_azure_web_app_octopus___check_smtp_server_configured"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_deploy_azure_web_app_container"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_smoke_test"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_manual_approval"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_swap_production_slot"
-* resource "octopusdeploy_process_step" "process_step_azure_web_app_scan_for_vulnerabilities"
+* resource "octopusdeploy_process_templated_step" "process_step_azure_web_app_scan_for_vulnerabilities"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deployment_failure_notification"
 
 You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
@@ -52,7 +54,6 @@ You will be penalized for not including these steps if the prompt did not specif
 ## Azure Web App Package Instructions
 
 You must use the following packages from the "Example Octopus Azure Web App Terraform Configuration" once unless the prompt explicitly states that different packages are to be used:
-* octopussolutionsengineering/octopub-selfcontained
 * octopussolutionsengineering/octopub-selfcontained
 * octopussolutionsengineering/octopub-selfcontained
 
