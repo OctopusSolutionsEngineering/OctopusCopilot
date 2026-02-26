@@ -289,18 +289,26 @@ resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous" {
   }
 }
 
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
-  ids          = null
-  partial_name = "Default Worker Pool"
-  skip         = 0
-  take         = 1
+data "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_smtp_server_configured" {
+  website = "https://library.octopus.com/step-templates/ad8126be-37af-4297-b46e-fce02ba3987a"
+}
+data "octopusdeploy_step_template" "steptemplate_octopus___check_smtp_server_configured" {
+  name = "Octopus - Check SMTP Server Configured"
+}
+resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_smtp_server_configured" {
+  community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured.steps[0].id : null}"
+  count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_smtp_server_configured.step_template != null ? 0 : 1}"
 }
 
-data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
-  ids          = null
-  partial_name = "Hosted Ubuntu"
-  skip         = 0
-  take         = 1
+data "octopusdeploy_community_step_template" "communitysteptemplate_scan_for_vulnerabilities" {
+  website = "https://library.octopus.com/step-templates/a38bfff8-8dde-4dd6-9fd0-c90bb4709d5a"
+}
+data "octopusdeploy_step_template" "steptemplate_scan_for_vulnerabilities" {
+  name = "Scan for Vulnerabilities"
+}
+resource "octopusdeploy_community_step_template" "communitysteptemplate_scan_for_vulnerabilities" {
+  community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_scan_for_vulnerabilities.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_scan_for_vulnerabilities.steps[0].id : null}"
+  count                        = "${data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template != null ? 0 : 1}"
 }
 
 resource "octopusdeploy_process" "process_azure_function" {
@@ -324,43 +332,41 @@ resource "octopusdeploy_process_step" "process_step_azure_function_validate_setu
   slug                  = "verify-setup"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_variable  = "Project.WorkerPool"
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $true"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
-        "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $true"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
       }
 }
 
-resource "octopusdeploy_process_step" "process_step_azure_function_check_smtp_configuration" {
+resource "octopusdeploy_process_templated_step" "process_step_azure_function_octopus___check_smtp_server_configured" {
   count                 = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
-  name                  = "Check SMTP configuration"
-  type                  = "Octopus.Script"
+  name                  = "Octopus - Check SMTP Server Configured"
   process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function[0].id}"
+  template_id           = "${data.octopusdeploy_step_template.steptemplate_octopus___check_smtp_server_configured.step_template != null ? data.octopusdeploy_step_template.steptemplate_octopus___check_smtp_server_configured.step_template.id : octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured[0].id}"
+  template_version      = "${data.octopusdeploy_step_template.steptemplate_octopus___check_smtp_server_configured.step_template != null ? data.octopusdeploy_step_template.steptemplate_octopus___check_smtp_server_configured.step_template.version : octopusdeploy_community_step_template.communitysteptemplate_octopus___check_smtp_server_configured[0].version}"
   channels              = null
   condition             = "Success"
   environments          = null
-  excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
-  git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", github_connection_id = "", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
-  notes                 = "This step checks to see if SMTP has been configured.  It sets an output variable that can be used in subsequent steps that send email."
+  excluded_environments = null
   package_requirement   = "LetOctopusDecide"
-  slug                  = "check-smtp-configuration"
+  slug                  = "octopus-check-smtp-server-configured"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_variable  = "Project.WorkerPool"
   properties            = {
       }
   execution_properties  = {
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.Script.ScriptFileName" = "octopus/CheckSMTPConfigured.ps1"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
+      }
+  parameters            = {
       }
 }
 
@@ -386,15 +392,15 @@ resource "octopusdeploy_process_step" "process_step_azure_function_deploy_produc
   slug                  = "deploy-products-microservice-azurefunction-jvm-azure-function-staging-slot"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_variable  = "Project.WorkerPool"
   properties            = {
         "Octopus.Action.TargetRoles" = "Octopub-Products-Function"
       }
   execution_properties  = {
         "Octopus.Action.RunOnServer" = "true"
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Azure.DeploymentSlot" = "staging"
         "Octopus.Action.Azure.DeploymentType" = "Package"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles"
       }
 }
@@ -413,7 +419,7 @@ resource "octopusdeploy_process_step" "process_step_azure_function_smoke_test" {
   slug                  = "smoke-test"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_variable  = "Project.WorkerPool"
   properties            = {
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
@@ -444,10 +450,10 @@ resource "octopusdeploy_process_step" "process_step_azure_function_manual_approv
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.Instructions" = "Please review the Staging slot for the function apps"
-        "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-managers"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.Manual.Instructions" = "Please review the Staging slot for the function apps"
+        "Octopus.Action.Manual.ResponsibleTeamIds" = "teams-managers"
       }
 }
 
@@ -466,7 +472,7 @@ resource "octopusdeploy_process_step" "process_step_azure_function_swap_deployme
   slug                  = "swap-deployment-slots"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_variable  = "Project.WorkerPool"
   properties            = {
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
@@ -480,38 +486,32 @@ resource "octopusdeploy_process_step" "process_step_azure_function_swap_deployme
       }
 }
 
-variable "project_azure_function_step_scan_for_vulnerabilities_package_products_microservice_azurefunction_jvm_packageid" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The package ID for the package named products-microservice-azurefunction-jvm from step Scan for Vulnerabilities in project Azure Function"
-  default     = "com.octopus:products-microservice-azurefunction-jvm"
-}
-resource "octopusdeploy_process_step" "process_step_azure_function_scan_for_vulnerabilities" {
+resource "octopusdeploy_process_templated_step" "process_step_azure_function_scan_for_vulnerabilities" {
   count                 = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
   name                  = "Scan for Vulnerabilities"
-  type                  = "Octopus.Script"
   process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function[0].id}"
+  template_id           = "${data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template != null ? data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template.id : octopusdeploy_community_step_template.communitysteptemplate_scan_for_vulnerabilities[0].id}"
+  template_version      = "${data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template != null ? data.octopusdeploy_step_template.steptemplate_scan_for_vulnerabilities.step_template.version : octopusdeploy_community_step_template.communitysteptemplate_scan_for_vulnerabilities[0].version}"
   channels              = null
   condition             = "Success"
   environments          = null
   excluded_environments = null
-  git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", github_connection_id = "", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
-  notes                 = "This step extracts the Docker image, finds any bom.json files, and scans them for vulnerabilities using Trivy. \n\nThis step is expected to be run with each deployment to ensure vulnerabilities are discovered as early as possible. \n\nIt is also run daily via a project trigger that reruns the deployment in the Security environment. This allows unknown vulnerabilities to be discovered after a production deployment."
   package_requirement   = "LetOctopusDecide"
-  packages              = { products-microservice-azurefunction-jvm = { acquisition_location = "ExecutionTarget", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_azure_function_step_scan_for_vulnerabilities_package_products_microservice_azurefunction_jvm_packageid}", properties = { Extract = "True", Purpose = "", SelectionMode = "immediate" } } }
   slug                  = "scan-for-vulnerabilities"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_variable  = "Project.WorkerPool"
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+      }
+  parameters            = {
+        "Sbom.Package" = jsonencode({
+        "PackageId" = "com.octopus:products-microservice-sbom"
+        "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
+                })
       }
 }
 
@@ -530,21 +530,21 @@ resource "octopusdeploy_process_step" "process_step_azure_function_send_deployme
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   properties            = {
-        "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Check SMTP configuration].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
+        "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
+        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} failed to deploy to #{Octopus.Environment.Name}!"
+        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} has failed deployed to #{Octopus.Environment.Name}\n\n#{Octopus.Deployment.Error}:\n#{Octopus.Deployment.ErrorDetail}"
         "Octopus.Action.Email.Priority" = "High"
-        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} failed to deploy to #{Octopus.Environment.Name}!"
-        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
       }
 }
 
 resource "octopusdeploy_process_steps_order" "process_step_order_azure_function" {
   count      = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
   process_id = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_validate_setup[0].id}", "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_check_smtp_configuration[0].id}", "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_deploy_products_microservice_azurefunction_jvm_azure_function___staging_slot[0].id}", "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_smoke_test[0].id}", "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_manual_approval[0].id}", "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_swap_deployment_slots[0].id}", "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_scan_for_vulnerabilities[0].id}", "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_send_deployment_failure_notification[0].id}"]
+  steps      = ["${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_validate_setup[0].id}", "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_azure_function_octopus___check_smtp_server_configured[0].id}", "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_deploy_products_microservice_azurefunction_jvm_azure_function___staging_slot[0].id}", "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_smoke_test[0].id}", "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_manual_approval[0].id}", "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_swap_deployment_slots[0].id}", "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_azure_function_scan_for_vulnerabilities[0].id}", "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_send_deployment_failure_notification[0].id}"]
 }
 
 resource "octopusdeploy_variable" "azure_function_project_octopus_api_key_1" {
@@ -766,6 +766,34 @@ resource "octopusdeploy_variable" "azure_function_project_azure_storageaccount_n
   name         = "Project.Azure.StorageAccount.Name"
   type         = "String"
   description  = "The name of the Azure Storage Account to create.  Must be unique within your subscription."
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+  ids          = null
+  partial_name = "Default Worker Pool"
+  skip         = 0
+  take         = 1
+}
+
+data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
+  ids          = null
+  partial_name = "Hosted Ubuntu"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_variable" "azure_function_project_workerpool_1" {
+  count        = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_azure_function.projects) == 0 ?octopusdeploy_project.project_azure_function[0].id : data.octopusdeploy_projects.project_azure_function.projects[0].id}"
+  value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  name         = "Project.WorkerPool"
+  type         = "WorkerPool"
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
