@@ -1586,7 +1586,7 @@ resource "octopusdeploy_process_step" "process_step_serverless_api_9231_deploy_l
 * If the prompt includes instructions to retain the original steps from the sample Terraform configurations, you will be penalized for including comments like "# ... include all original Azure Web App steps here, in order" in place of the original steps.
 * Every step defined in a "octopusdeploy_process_steps_order" resource must also be defined as a resource, for example "octopusdeploy_process_step" or "octopusdeploy_process_templated_step".
 * You will be penalized for defining a step in a "octopusdeploy_process_steps_order" resource that is not defined as a resource.
-* When the prompt includes instructions to add runbooks or steps not found in the template project, you must only define a script with a single comment in the "Octopus.Action.Script.ScriptBody" property that indicates the intended functionality of the script, for example:
+* When the prompt includes instructions to add runbooks or steps not found in the template project without explicilt defining the script code, you must only define a script with a single comment in the "Octopus.Action.Script.ScriptBody" property that indicates the intended functionality of the script, for example:
 
 ```
 resource "octopusdeploy_process_step" "process_step_my_lambda_web_app_swap_loadbalancer" {
@@ -1595,7 +1595,8 @@ resource "octopusdeploy_process_step" "process_step_my_lambda_web_app_swap_loadb
   }
 }
 ```
-* You will be penalized for generating an example script in the "Octopus.Action.Script.ScriptBody" when the script is not provided in the sample Terraform configurations.
+* You will be penalized for generating an example script in the "Octopus.Action.Script.ScriptBody" when the script is not provided in the sample Terraform configurations or in the prompt.
+* When the prompt contains instructions to create a script, you must recreate the script code exactly.
 * When a prompt defines a container image or other docker image, you must recreate the image name exactly.
 * You will be penalized for changing the image name in any way, for example, when hte prompt indicates to use the image "octopusdeploylabs/azure-workertools", you will be penalized for changing it to "octopuslabs/azure-workertools" or "octopusdeploylabs/azure-workertools:latest".
 
