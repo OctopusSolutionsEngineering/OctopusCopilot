@@ -358,12 +358,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_validate_setu
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
         "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.GitRepository.Source" = "External"
       }
 }
 
@@ -385,8 +385,8 @@ resource "octopusdeploy_process_templated_step" "process_step_azure_function_oct
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -421,12 +421,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_deploy_the_fu
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Action[Validate setup].Output.AzureSetupValid == \"True\"}true#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "$app = Get-AzFunctionApp -Name $OctopusParameters[\"Project.Azure.Function.Octopub.Products.Name\"] -ResourceGroupName $OctopusParameters[\"Project.Azure.ResourceGroup.Name\"] -ErrorAction SilentlyContinue\n\nif ($null -ne $app) {\n    az functionapp deployment source config-zip `\n  --resource-group $OctopusParameters[\"Project.Azure.ResourceGroup.Name\"] `\n  --name $OctopusParameters[\"Project.Azure.Function.Octopub.Products.Name\"]`\n  --src $OctopusParameters[\"Octopus.Action.Package[functionapp].PackageFilePath\"] 2\u003e\u00261\n} else {\n   Write-Host(\"The function app $($OctopusParameters[\"Project.Azure.Function.Octopub.Products.Name\"]) in the resource group $($OctopusParameters[\"Project.Azure.ResourceGroup.Name\"]) was not found. Please create the function app and try again.\")\n}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -481,8 +481,8 @@ resource "octopusdeploy_process_templated_step" "process_step_azure_function_sca
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
-        "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
         "PackageId" = "com.octopus:products-microservice-sbom"
+        "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
                 })
       }
 }
@@ -505,11 +505,11 @@ resource "octopusdeploy_process_step" "process_step_azure_function_send_deployme
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} has failed deployed to #{Octopus.Environment.Name}\n\n#{Octopus.Deployment.Error}:\n#{Octopus.Deployment.ErrorDetail}"
         "Octopus.Action.Email.Priority" = "High"
         "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} failed to deploy to #{Octopus.Environment.Name}!"
         "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} has failed deployed to #{Octopus.Environment.Name}\n\n#{Octopus.Deployment.Error}:\n#{Octopus.Deployment.ErrorDetail}"
       }
 }
 
@@ -613,85 +613,10 @@ resource "octopusdeploy_variable" "azure_function_project_azure_account_1" {
 resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_name_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function.projects) == 0 ?octopusdeploy_project.project_azure_function[0].id : data.octopusdeploy_projects.project_azure_function.projects[0].id}"
-  value        = "octopub-function-development-#{Project.RandomSuffix}"
+  value        = "octopub-function-#{Octopus.Environment.Name | ToLower}"
   name         = "Project.Azure.Function.Octopub.Products.Name"
   type         = "String"
   description  = "The name of the Azure Function App to create or deploy to."
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_name_2" {
-  count        = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_azure_function.projects) == 0 ?octopusdeploy_project.project_azure_function[0].id : data.octopusdeploy_projects.project_azure_function.projects[0].id}"
-  value        = "octopub-function-test-#{Project.RandomSuffix}"
-  name         = "Project.Azure.Function.Octopub.Products.Name"
-  type         = "String"
-  description  = ""
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_name_3" {
-  count        = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_azure_function.projects) == 0 ?octopusdeploy_project.project_azure_function[0].id : data.octopusdeploy_projects.project_azure_function.projects[0].id}"
-  value        = "octopub-function-production-#{Project.RandomSuffix}"
-  name         = "Project.Azure.Function.Octopub.Products.Name"
-  type         = "String"
-  description  = ""
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "azure_function_project_randomsuffix_1" {
-  count        = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_azure_function.projects) == 0 ?octopusdeploy_project.project_azure_function[0].id : data.octopusdeploy_projects.project_azure_function.projects[0].id}"
-  value        = "c2f4662463"
-  name         = "Project.RandomSuffix"
-  type         = "String"
-  description  = "This is a random value used to uniquely identft Azure resources that must have globally unique names."
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
@@ -703,70 +628,10 @@ resource "octopusdeploy_variable" "azure_function_project_randomsuffix_1" {
 resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_function.projects) == 0 ?octopusdeploy_project.project_azure_function[0].id : data.octopusdeploy_projects.project_azure_function.projects[0].id}"
-  value        = "octopub-function-development-#{Project.RandomSuffix}"
+  value        = "octopub-function-#{Octopus.Environment.Name | ToLower}"
   name         = "Project.Azure.ResourceGroup.Name"
   type         = "String"
   is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_2" {
-  count        = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_azure_function.projects) == 0 ?octopusdeploy_project.project_azure_function[0].id : data.octopusdeploy_projects.project_azure_function.projects[0].id}"
-  value        = "octopub-function-test-#{Project.RandomSuffix}"
-  name         = "Project.Azure.ResourceGroup.Name"
-  type         = "String"
-  description  = ""
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_3" {
-  count        = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_azure_function.projects) == 0 ?octopusdeploy_project.project_azure_function[0].id : data.octopusdeploy_projects.project_azure_function.projects[0].id}"
-  value        = "octopub-function-production-#{Project.RandomSuffix}"
-  name         = "Project.Azure.ResourceGroup.Name"
-  type         = "String"
-  description  = ""
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true

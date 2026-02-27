@@ -69,16 +69,9 @@ You must include all the following variables from the "Example Octopus Azure Web
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_sku_1"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_location_1"
 * resource "octopusdeploy_variable" "azure_web_app_project_workerpool_1" (set the value to "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}")
-* resource "octopusdeploy_variable" "azure_web_app_project_randomsuffix_1"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_1"
-* resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_2"
-* resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_3"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_name_1"
-* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_name_2"
-* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_name_3"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_name_1"
-* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_name_2"
-* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_name_3"
 
 ## Azure Web App Lifecycle Instructions
 

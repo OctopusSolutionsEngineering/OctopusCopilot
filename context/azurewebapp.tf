@@ -333,9 +333,9 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_manual_interve
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
       }
 }
 
@@ -358,12 +358,12 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
         "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub\" -CheckForTargets $true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -421,12 +421,12 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_deploy_azure_w
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "az webapp config set --name \"#{Project.Azure.WebApp.Octopub.Name}\" --resource-group \"#{Project.Azure.ResourceGroup.Name}\" --linux-fx-version \"DOCKER|ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\""
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -450,12 +450,12 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_smoke_test" {
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "$azureWebApp = Get-AzWebApp -ResourceGroupName \"#{Project.Azure.ResourceGroup.Name}\" -Name \"#{Project.Azure.WebApp.Octopub.Name}\"\n\ntry\n{\n  Write-Highlight \"Testing [Web App](https://$($azureWebApp.DefaultHostName))\"\n\n  # Make a web request  \n  $response = Invoke-WebRequest -Uri \"https://$($azureWebApp.DefaultHostName)\"\n\n  # Check for a 200 response\n  if ($response.StatusCode -ne 200)\n  {\n    # Throw an error\n    throw $response.StatusCode\n  }\n  else\n  {\n    Write-Host \"Smoke test succeeded!\"\n  }\n}\ncatch\n{\n  Write-Warning \"An error occurred: $($_.Exception.Message)\"\n}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
       }
 }
 
@@ -506,11 +506,11 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deploymen
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
+        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} has failed deployed to #{Octopus.Environment.Name}\n\n#{Octopus.Deployment.Error}:\n#{Octopus.Deployment.ErrorDetail}"
         "Octopus.Action.Email.Priority" = "High"
         "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} failed to deploy to #{Octopus.Environment.Name}!"
-        "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -656,88 +656,14 @@ resource "octopusdeploy_variable" "azure_web_app_project_workerpool_1" {
   depends_on = []
 }
 
-resource "octopusdeploy_variable" "azure_web_app_project_randomsuffix_1" {
-  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
-  value        = "24a55df428"
-  name         = "Project.RandomSuffix"
-  type         = "String"
-  is_sensitive = false
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
 resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
-  value        = "octopub-development-#{Project.RandomSuffix}"
+  value        = "octopub-webapp-#{Octopus.Environment.Name | ToLower}"
   name         = "Project.Azure.ResourceGroup.Name"
   type         = "String"
   description  = "The name of the Azure resource group used for the development environment"
   is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_2" {
-  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
-  value        = "octopub-test-#{Project.RandomSuffix}"
-  name         = "Project.Azure.ResourceGroup.Name"
-  type         = "String"
-  description  = "The name of the Azure resource group used for the test environment"
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_3" {
-  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
-  value        = "octopub-production-#{Project.RandomSuffix}"
-  name         = "Project.Azure.ResourceGroup.Name"
-  type         = "String"
-  description  = "The name of the Azure resource group used for the production environment"
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true
@@ -748,71 +674,11 @@ resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_nam
 resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_name_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
-  value        = "octopub-webapp-development-#{Project.RandomSuffix}"
+  value        = "octopub-webapp-#{Octopus.Environment.Name | ToLower}"
   name         = "Project.Azure.WebApp.Octopub.Name"
   type         = "String"
   description  = "The name of the Azure Function App to create or deploy to."
   is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_name_2" {
-  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
-  value        = "octopub-webapp-test-#{Project.RandomSuffix}"
-  name         = "Project.Azure.WebApp.Octopub.Name"
-  type         = "String"
-  description  = ""
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_name_3" {
-  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
-  value        = "octopub-webapp-production-#{Project.RandomSuffix}"
-  name         = "Project.Azure.WebApp.Octopub.Name"
-  type         = "String"
-  description  = ""
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true
@@ -823,71 +689,11 @@ resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_na
 resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_name_1" {
   count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
-  value        = "ASP-octopub-webapp-development-#{Project.RandomSuffix}"
+  value        = "ASP-octopub-webapp-#{Octopus.Environment.Name | ToLower}"
   name         = "Project.Azure.WebApp.ServicePlan.Name"
   type         = "String"
   description  = "This variable is the name of the Azure Web App."
   is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_name_2" {
-  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
-  value        = "ASP-octopub-webapp-test-#{Project.RandomSuffix}"
-  name         = "Project.Azure.WebApp.ServicePlan.Name"
-  type         = "String"
-  description  = ""
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_name_3" {
-  count        = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_azure_web_app.projects) == 0 ?octopusdeploy_project.project_azure_web_app[0].id : data.octopusdeploy_projects.project_azure_web_app.projects[0].id}"
-  value        = "ASP-octopub-webapp-production-#{Project.RandomSuffix}"
-  name         = "Project.Azure.WebApp.ServicePlan.Name"
-  type         = "String"
-  description  = ""
-  is_sensitive = false
-
-  scope {
-    actions      = null
-    channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-    machines     = null
-    roles        = null
-    tenant_tags  = null
-    processes    = null
-  }
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true

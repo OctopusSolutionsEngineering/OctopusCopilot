@@ -67,12 +67,7 @@ You must include all the following variables from the "Example Octopus Azure Fun
 * resource "octopusdeploy_variable" "azure_function_project_workerpool_1" (set the value to "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}")
 * resource "octopusdeploy_variable" "azure_function_project_azure_account_1"
 * resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_name_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_name_2"
-* resource "octopusdeploy_variable" "azure_function_project_azure_function_octopub_products_name_3"
-* resource "octopusdeploy_variable" "azure_function_project_randomsuffix_1"
 * resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_1"
-* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_2"
-* resource "octopusdeploy_variable" "azure_function_project_azure_resourcegroup_name_3"
 
 ## Azure Function Lifecycle Instructions
 
