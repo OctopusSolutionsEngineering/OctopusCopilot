@@ -36,6 +36,7 @@ You must include all the following project resources from the "Example Octopus A
 
 You must include all the following runbook resources once unless the prompt explicitly states that runbooks should be removed or modified:
 * resource "octopusdeploy_runbook" "runbook_azure_function_create_infrastructure"
+* resource "octopusdeploy_runbook" "runbook_azure_function_destory_infrastructure"
 
 
 ## Azure Function Project Deployment Process Instructions
@@ -43,6 +44,7 @@ You must include all the following runbook resources once unless the prompt expl
 You must include all the following project deployment process resources from the "Example Octopus Azure Function Terraform Configuration" once:
 * resource "octopusdeploy_process" "process_azure_function"
 * resource "octopusdeploy_process" "process_azure_function_create_infrastructure"
+* resource "octopusdeploy_process" "process_azure_function_destory_infrastructure"
 
 ## Azure Function Project Deployment Process Steps Instructions
 
@@ -69,12 +71,16 @@ You must use the following packages from the "Example Octopus Azure Function Ter
 You must include all the following runbook steps from the runbook_azure_function_create_infrastructure runbook once unless the prompt explicitly states that runbook steps should be removed or modified:
 * resource "octopusdeploy_process_step" "process_step_azure_function_create_infrastructure_create_azure_function"
 
+You must include all the following runbook steps from the runbook_azure_function_destory_infrastructure runbook once unless the prompt explicitly states that runbook steps should be removed or modified:
+* resource "octopusdeploy_process_step" "process_step_azure_function_destory_infrastructure_run_an_azure_script"
+
 
 ## Azure Function Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus Azure Function Terraform Configuration" once:
 * resource "octopusdeploy_process_steps_order" "process_step_order_azure_function"
 * resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_create_infrastructure"
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_destory_infrastructure"
 ## Azure Function Project Variable Instructions
 
 You must include all the following variables from the "Example Octopus Azure Function Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
