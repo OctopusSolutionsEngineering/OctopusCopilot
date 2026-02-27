@@ -1596,6 +1596,8 @@ resource "octopusdeploy_process_step" "process_step_my_lambda_web_app_swap_loadb
 }
 ```
 * You will be penalized for generating an example script in the "Octopus.Action.Script.ScriptBody" when the script is not provided in the sample Terraform configurations.
+* When a prompt defines a container image or other docker image, you must recreate the image name exactly.
+* You will be penalized for changing the image name in any way, for example, when hte prompt indicates to use the image "octopusdeploylabs/azure-workertools", you will be penalized for changing it to "octopuslabs/azure-workertools" or "octopusdeploylabs/azure-workertools:latest".
 
 ## Octopus step template instructions
 
