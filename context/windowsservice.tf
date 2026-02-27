@@ -300,17 +300,17 @@ resource "octopusdeploy_process_step" "process_step_windows_service_deploy_a_win
         "Octopus.Action.TargetRoles" = "Windows-Service"
       }
   execution_properties  = {
-        "Octopus.Action.WindowsService.Description" = "A sample windows service"
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.WindowsService.ExecutablePath" = "WindowsServiceDotNETCore.exe"
         "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
-        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.WindowsService,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
+        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
+        "Octopus.Action.WindowsService.Description" = "A sample windows service"
+        "Octopus.Action.WindowsService.DesiredStatus" = "Default"
         "Octopus.Action.WindowsService.DisplayName" = "Joke Service"
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
         "Octopus.Action.WindowsService.ServiceName" = "JokeService"
         "Octopus.Action.WindowsService.StartMode" = "auto"
-        "Octopus.Action.WindowsService.DesiredStatus" = "Default"
-        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
+        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.WindowsService,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
         "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
+        "Octopus.Action.WindowsService.ExecutablePath" = "WindowsServiceDotNETCore.exe"
       }
 }
 
