@@ -32,20 +32,28 @@ You must include all the following project resources from the "Example Octopus A
 * data "octopusdeploy_projects" "project_azure_web_app"
 * resource "octopusdeploy_project" "project_azure_web_app"
 
+## Azure Web App Project Runbook Instructions
+
+You must include all the following runbook resources once unless the prompt explicitly states that runbooks should be removed or modified:
+* resource "octopusdeploy_runbook" "runbook_azure_web_app_create_infrastructure"
+* resource "octopusdeploy_runbook" "runbook_azure_web_app_destroy_infrastructure"
+
+
 ## Azure Web App Project Deployment Process Instructions
 
 You must include all the following project deployment process resources from the "Example Octopus Azure Web App Terraform Configuration" once:
 * resource "octopusdeploy_process" "process_azure_web_app"
+* resource "octopusdeploy_process" "process_azure_web_app_create_infrastructure"
+* resource "octopusdeploy_process" "process_azure_web_app_destroy_infrastructure"
 
 ## Azure Web App Project Deployment Process Steps Instructions
 
 You must include all the following step resources from the "Example Octopus Azure Web App Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_manual_intervention_required"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_validate_setup"
 * resource "octopusdeploy_process_templated_step" "process_step_azure_web_app_octopus___check_smtp_server_configured"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_deploy_azure_web_app_container"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_smoke_test"
-* resource "octopusdeploy_process_step" "process_step_azure_web_app_manual_approval"
-* resource "octopusdeploy_process_step" "process_step_azure_web_app_swap_production_slot"
 * resource "octopusdeploy_process_templated_step" "process_step_azure_web_app_scan_for_vulnerabilities"
 * resource "octopusdeploy_process_step" "process_step_azure_web_app_send_deployment_failure_notification"
 
@@ -55,26 +63,44 @@ You will be penalized for not including these steps if the prompt did not specif
 
 You must use the following packages from the "Example Octopus Azure Web App Terraform Configuration" once unless the prompt explicitly states that different packages are to be used:
 * octopussolutionsengineering/octopub-selfcontained
-* octopussolutionsengineering/octopub-selfcontained
+* com.octopus:azure-infra
+* com.octopus:azure-infra
+
+
+## Azure Web App Project Runbook Deployment Process Steps Instructions
+
+You must include all the following runbook steps from the runbook_azure_web_app_create_infrastructure runbook once unless the prompt explicitly states that runbook steps should be removed or modified:
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_create_infrastructure_run_an_azure_script"
+
+You must include all the following runbook steps from the runbook_azure_web_app_destroy_infrastructure runbook once unless the prompt explicitly states that runbook steps should be removed or modified:
+* resource "octopusdeploy_process_step" "process_step_azure_web_app_destroy_infrastructure_run_an_azure_script"
 
 
 ## Azure Web App Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus Azure Web App Terraform Configuration" once:
 * resource "octopusdeploy_process_steps_order" "process_step_order_azure_web_app"
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_web_app_create_infrastructure"
+* resource "octopusdeploy_process_steps_order" "process_step_order_azure_web_app_destroy_infrastructure"
 ## Azure Web App Project Variable Instructions
 
 You must include all the following variables from the "Example Octopus Azure Web App Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
 * resource "octopusdeploy_variable" "azure_web_app_project_octopus_api_key_1"
 * resource "octopusdeploy_variable" "azure_web_app_application_image_1"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_account_1"
-* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_name_1"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_sku_1"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_location_1"
-* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_name_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_workerpool_1" (set the value to "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}")
+* resource "octopusdeploy_variable" "azure_web_app_project_randomsuffix_1"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_1"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_2"
 * resource "octopusdeploy_variable" "azure_web_app_project_azure_resourcegroup_name_3"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_name_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_name_2"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_octopub_name_3"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_name_1"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_name_2"
+* resource "octopusdeploy_variable" "azure_web_app_project_azure_webapp_serviceplan_name_3"
 
 ## Azure Web App Lifecycle Instructions
 

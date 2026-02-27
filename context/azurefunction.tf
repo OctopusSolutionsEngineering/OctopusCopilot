@@ -333,9 +333,9 @@ resource "octopusdeploy_process_step" "process_step_azure_function_manual_interv
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
-        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
       }
 }
 
@@ -358,12 +358,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_validate_setu
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
         "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
       }
 }
 
@@ -421,12 +421,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_deploy_the_fu
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Action[Validate setup].Output.AzureSetupValid == \"True\"}true#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
-        "Octopus.Action.Script.ScriptBody" = "$app = Get-AzFunctionApp -Name $OctopusParameters[\"Project.Azure.Function.Octopub.Products.Name\"] -ResourceGroupName $OctopusParameters[\"Project.Azure.ResourceGroup.Name\"] -ErrorAction SilentlyContinue\n\nif ($null -ne $app) {\n    az functionapp deployment source config-zip `\n  --resource-group $OctopusParameters[\"Project.Azure.ResourceGroup.Name\"] `\n  --name $OctopusParameters[\"Project.Azure.Function.Octopub.Products.Name\"]`\n  --src $OctopusParameters[\"Octopus.Action.Package[functionapp].PackageFilePath\"] 2\u003e\u00261\n} else {\n   Write-Host(\"The function app $($OctopusParameters[\"Project.Azure.Function.Octopub.Products.Name\"]) in the resource group $($OctopusParameters[\"Project.Azure.ResourceGroup.Name\"]) was not found. Please create the function app and try again.\")\n}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
+        "Octopus.Action.Script.ScriptBody" = "$app = Get-AzFunctionApp -Name $OctopusParameters[\"Project.Azure.Function.Octopub.Products.Name\"] -ResourceGroupName $OctopusParameters[\"Project.Azure.ResourceGroup.Name\"] -ErrorAction SilentlyContinue\n\nif ($null -ne $app) {\n    az functionapp deployment source config-zip `\n  --resource-group $OctopusParameters[\"Project.Azure.ResourceGroup.Name\"] `\n  --name $OctopusParameters[\"Project.Azure.Function.Octopub.Products.Name\"]`\n  --src $OctopusParameters[\"Octopus.Action.Package[functionapp].PackageFilePath\"] 2\u003e\u00261\n} else {\n   Write-Host(\"The function app $($OctopusParameters[\"Project.Azure.Function.Octopub.Products.Name\"]) in the resource group $($OctopusParameters[\"Project.Azure.ResourceGroup.Name\"]) was not found. Please create the function app and try again.\")\n}"
       }
 }
 
@@ -449,12 +449,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_smoke_test" {
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.AzureSetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
-        "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = \"#{Project.Azure.ResourceGroup.Name}\"\n$functionName = \"#{Project.Azure.Function.Octopub.Products.Name}\"\n\n$testUrl = (az functionapp show --resource-group $resourceGroupName --name $functionName | ConvertFrom-JSON).properties.defaultHostName\n\ntry\n{\n  Write-Highlight \"Testing [web site](https://$testUrl)\"\n\n  # Make a web request  \n  $response = Invoke-WebRequest -Uri \"https://$testUrl\"\n\n  # Check for a 200 response\n  if ($response.StatusCode -ne 200)\n  {\n    # Throw an error\n    throw $response.StatusCode\n  }\n  else\n  {\n    Write-Host \"Smoke test succeeded!\"\n  }\n}\ncatch\n{\n  Write-Warning \"An error occurred: $($_.Exception.Message)\"\n}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
+        "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = \"#{Project.Azure.ResourceGroup.Name}\"\n$functionName = \"#{Project.Azure.Function.Octopub.Products.Name}\"\n\n$testUrl = (az functionapp show --resource-group $resourceGroupName --name $functionName | ConvertFrom-JSON).properties.defaultHostName\n\ntry\n{\n  Write-Highlight \"Testing [web site](https://$testUrl)\"\n\n  # Make a web request  \n  $response = Invoke-WebRequest -Uri \"https://$testUrl\"\n\n  # Check for a 200 response\n  if ($response.StatusCode -ne 200)\n  {\n    # Throw an error\n    throw $response.StatusCode\n  }\n  else\n  {\n    Write-Host \"Smoke test succeeded!\"\n  }\n}\ncatch\n{\n  Write-Warning \"An error occurred: $($_.Exception.Message)\"\n}"
       }
 }
 
@@ -505,11 +505,11 @@ resource "octopusdeploy_process_step" "process_step_azure_function_send_deployme
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} has failed deployed to #{Octopus.Environment.Name}\n\n#{Octopus.Deployment.Error}:\n#{Octopus.Deployment.ErrorDetail}"
-        "Octopus.Action.Email.Priority" = "High"
         "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} failed to deploy to #{Octopus.Environment.Name}!"
         "Octopus.Action.Email.To" = "#{Octopus.Deployment.CreatedBy.EmailAddress}"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Email.Body" = "#{Octopus.Project.Name} release version #{Octopus.Release.Number} has failed deployed to #{Octopus.Environment.Name}\n\n#{Octopus.Deployment.Error}:\n#{Octopus.Deployment.ErrorDetail}"
+        "Octopus.Action.Email.Priority" = "High"
       }
 }
 
@@ -796,154 +796,6 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_azure_functio
   }
   lifecycle {
     prevent_destroy = true
-  }
-}
-
-resource "octopusdeploy_process" "process_azure_function_create_infrastructure" {
-  count      = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
-  project_id = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? data.octopusdeploy_projects.project_azure_function.projects[0].id : octopusdeploy_project.project_azure_function[0].id}"
-  runbook_id = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_runbook.runbook_azure_function_create_infrastructure[0].id}"
-  depends_on = []
-}
-
-variable "project_create_infrastructure_step_create_azure_function_package_azure_infra_packageid" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The package ID for the package named azure-infra from step Create Azure Function in project Create Infrastructure"
-  default     = "com.octopus:azure-infra"
-}
-resource "octopusdeploy_process_step" "process_step_azure_function_create_infrastructure_create_azure_function" {
-  count                 = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
-  name                  = "Create Azure Function"
-  type                  = "Octopus.AzurePowerShell"
-  process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function_create_infrastructure[0].id}"
-  channels              = null
-  condition             = "Success"
-  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", image = "octopusdeploylabs/azure-workertools" }
-  environments          = null
-  excluded_environments = null
-  package_requirement   = "LetOctopusDecide"
-  packages              = { azure-infra = { acquisition_location = "Server", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_create_infrastructure_step_create_azure_function_package_azure_infra_packageid}", properties = { Extract = "True", SelectionMode = "immediate" } } }
-  slug                  = "create-azure-function"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_variable  = "Project.WorkerPool"
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
-        "Octopus.Action.Script.ScriptBody" = "cd azure-infra/function-app\n./deploy.ps1 \"#{Octopus.Environment.Name | ToLower}\" \"#{Project.RandomSuffix}\" "
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "OctopusUseBundledTooling" = "False"
-      }
-}
-
-resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_create_infrastructure" {
-  count      = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
-  process_id = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function_create_infrastructure[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_create_infrastructure_create_azure_function[0].id}"]
-}
-
-variable "runbook_azure_function_create_infrastructure_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the runbook exported from Create Infrastructure"
-  default     = "Create Infrastructure"
-}
-resource "octopusdeploy_runbook" "runbook_azure_function_create_infrastructure" {
-  count                       = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
-  name                        = "${var.runbook_azure_function_create_infrastructure_name}"
-  project_id                  = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? data.octopusdeploy_projects.project_azure_function.projects[0].id : octopusdeploy_project.project_azure_function[0].id}"
-  environment_scope           = "Specified"
-  environments                = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}", "${length(data.octopusdeploy_environments.environment_test.environments) != 0 ? data.octopusdeploy_environments.environment_test.environments[0].id : octopusdeploy_environment.environment_test[0].id}", "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
-  force_package_download      = false
-  default_guided_failure_mode = "EnvironmentDefault"
-  description                 = "This runbook creates an Azure Function to be used by the project."
-  multi_tenancy_mode          = "Untenanted"
-
-  retention_policy {
-    should_keep_forever = true
-  }
-
-  connectivity_policy {
-    allow_deployments_to_no_targets = true
-    exclude_unhealthy_targets       = false
-    skip_machine_behavior           = "None"
-    target_roles                    = []
-  }
-}
-
-resource "octopusdeploy_process" "process_azure_function_destory_infrastructure" {
-  count      = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
-  project_id = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? data.octopusdeploy_projects.project_azure_function.projects[0].id : octopusdeploy_project.project_azure_function[0].id}"
-  runbook_id = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_runbook.runbook_azure_function_destory_infrastructure[0].id}"
-  depends_on = []
-}
-
-resource "octopusdeploy_process_step" "process_step_azure_function_destory_infrastructure_run_an_azure_script" {
-  count                 = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
-  name                  = "Run an Azure Script"
-  type                  = "Octopus.AzurePowerShell"
-  process_id            = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function_destory_infrastructure[0].id}"
-  channels              = null
-  condition             = "Success"
-  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", image = "octopusdeploylabs/azure-workertools" }
-  environments          = null
-  excluded_environments = null
-  package_requirement   = "LetOctopusDecide"
-  slug                  = "run-an-azure-script"
-  start_trigger         = "StartAfterPrevious"
-  tenant_tags           = null
-  worker_pool_variable  = "Project.WorkerPool"
-  properties            = {
-      }
-  execution_properties  = {
-        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
-        "Octopus.Action.Script.ScriptBody" = "cd azure-infra/function-app\n./destroy.ps1 \"#{Octopus.Environment.Name | ToLower}\" \"#{Project.RandomSuffix}\""
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-      }
-}
-
-resource "octopusdeploy_process_steps_order" "process_step_order_azure_function_destory_infrastructure" {
-  count      = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
-  process_id = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process.process_azure_function_destory_infrastructure[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? null : octopusdeploy_process_step.process_step_azure_function_destory_infrastructure_run_an_azure_script[0].id}"]
-}
-
-variable "runbook_azure_function_destory_infrastructure_name" {
-  type        = string
-  nullable    = false
-  sensitive   = false
-  description = "The name of the runbook exported from Destory Infrastructure"
-  default     = "Destory Infrastructure"
-}
-resource "octopusdeploy_runbook" "runbook_azure_function_destory_infrastructure" {
-  count                       = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? 0 : 1}"
-  name                        = "${var.runbook_azure_function_destory_infrastructure_name}"
-  project_id                  = "${length(data.octopusdeploy_projects.project_azure_function.projects) != 0 ? data.octopusdeploy_projects.project_azure_function.projects[0].id : octopusdeploy_project.project_azure_function[0].id}"
-  environment_scope           = "All"
-  environments                = []
-  force_package_download      = false
-  default_guided_failure_mode = "EnvironmentDefault"
-  description                 = "This runbook destroys the Azure Functions infrastructure."
-  multi_tenancy_mode          = "Untenanted"
-
-  retention_policy {
-    should_keep_forever = true
-  }
-
-  connectivity_policy {
-    allow_deployments_to_no_targets = true
-    exclude_unhealthy_targets       = false
-    skip_machine_behavior           = "None"
-    target_roles                    = []
   }
 }
 

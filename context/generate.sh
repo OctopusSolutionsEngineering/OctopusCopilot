@@ -86,6 +86,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
     -inlineVariableValues \
+    -excludeAllRunbooks=true \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > k8s.tf
 
@@ -106,6 +107,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
     -inlineVariableValues \
+    -excludeAllRunbooks=true \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > azurefunction.tf
 
