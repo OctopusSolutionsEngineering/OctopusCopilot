@@ -18,6 +18,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -excludeAllLibraryVariableSets=true \
     -inlineVariableValues \
     -excludeTriggersExcept="Daily Security Scan" \
+    -excludeAllRunbooks=true \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > vmbluegreen.tf
 
@@ -127,6 +128,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
     -inlineVariableValues \
+    -excludeAllRunbooks=true \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > azurewebapp.tf
 
@@ -146,6 +148,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
     -inlineVariableValues \
+    -excludeAllRunbooks=true \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > awslambda.tf
 
@@ -186,6 +189,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
     -inlineVariableValues \
+    -excludeAllRunbooks=true \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > apachetomcat.tf
 
@@ -205,6 +209,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
     -inlineVariableValues \
+    -excludeAllRunbooks=true \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > windowsiis.tf
 
@@ -224,6 +229,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
     -inlineVariableValues \
+    -excludeAllRunbooks=true \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > windowsservice.tf
 
@@ -243,6 +249,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
     -inlineVariableValues \
+    -excludeAllRunbooks=true \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > script.tf
 
@@ -262,6 +269,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
     -inlineVariableValues \
+    -excludeAllRunbooks=true \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > deploymentorchestration.tf
 
@@ -281,6 +289,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
     -inlineVariableValues \
+    -excludeAllRunbooks=true \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > terraform.tf
 
@@ -300,6 +309,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
     -inlineVariableValues \
+    -excludeAllRunbooks=true \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > llm.tf
 
