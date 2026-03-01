@@ -777,10 +777,10 @@ Create 5 tag sets that represent counties from England and assign them to the te
     def test_create_lambda_project_with_additional_runbook(self):
         project_name = "Lambda with Runbook"
         new_runbook_name = "Switch Load Balancer"
-        prompt = f"""Create an AWS Lambda project called "{project_name}", retaining the example steps, and include an additional runbook in the new project called "{new_runbook_name}". 
-            The additional runbook should have a single step in the runbook process. 
-            The step is called "Switch load balancer production group" and it is an AWS run a CLI script step. 
-            The step should be a bash script that switches traffic from one target group to the other. 
+        prompt = f"""Create an AWS Lambda project called "{project_name}", retaining the example steps, and include an additional runbook in the new project called "{new_runbook_name}".
+            The additional runbook should have a single step in the runbook process.
+            The step is called "Switch load balancer production group" and it is an AWS run a CLI script step.
+            The step should be a bash script that switches traffic from one target group to the other.
             The runbook should only run in the "Test" and "Production" environments."""
         response = copilot_handler_internal(build_request(prompt))
         response_body = response.get_body().decode("utf8")
