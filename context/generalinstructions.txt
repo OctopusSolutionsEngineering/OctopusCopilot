@@ -1599,6 +1599,8 @@ resource "octopusdeploy_process_step" "process_step_my_lambda_web_app_swap_loadb
 * When the prompt contains instructions to create a script, you must recreate the script code exactly.
 * When a prompt defines a container image or other docker image, you must recreate the image name exactly.
 * You will be penalized for changing the image name in any way, for example, when hte prompt indicates to use the image "octopusdeploylabs/azure-workertools", you will be penalized for changing it to "octopuslabs/azure-workertools" or "octopusdeploylabs/azure-workertools:latest".
+* The name associated with a step must be unique within the process, and must not be the same as any other step name in the process.
+* You will be penalized for defining two steps with the same name within a process.
 
 ## Octopus step template instructions
 
