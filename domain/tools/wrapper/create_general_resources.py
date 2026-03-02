@@ -32,6 +32,7 @@ def create_general_resources_wrapper(query, callback, logging):
         * Create an environment called "My Environment" in the space "My Space"
         * Create an environment called "My Environment"
         * Create an account called "My Account" in the space "My Space"
+        * Create an account called "My Account"
         * Create a lifecycle called "My Lifecycle" in the space "My Space"
         * Create a variable set called "My Variable Set" in the space "My Space"
         * Create a worker pool called "My Worker Pool" in the space "My Space"
