@@ -1,0 +1,74 @@
+# Argo CD Update Manifest Instructions
+
+* The supplied "Example Octopus Argo CD Update Manifest Terraform Configuration" is the primary source of truth for the configuration.
+* You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus Argo CD Update Manifest Terraform Configuration".
+* You must include the steps defined in the "Example Octopus Argo CD Update Manifest Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
+* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus Argo CD Update Manifest Terraform Configuration".
+
+## Argo CD Update Manifest Environment Instructions
+
+You must include all the following environment resources from the "Example Octopus Argo CD Update Manifest Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
+* data "octopusdeploy_environments" "environment_development"
+* resource "octopusdeploy_environment" "environment_development"
+* data "octopusdeploy_environments" "environment_test"
+* resource "octopusdeploy_environment" "environment_test"
+* data "octopusdeploy_environments" "environment_production"
+* resource "octopusdeploy_environment" "environment_production"
+* data "octopusdeploy_environments" "environment_security"
+* resource "octopusdeploy_environment" "environment_security"
+
+## Argo CD Update Manifest Feed Instructions
+
+You must include all the following feed resources from the "Example Octopus Argo CD Update Manifest Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
+* data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+* data "octopusdeploy_feeds" "feed_ghcr_anonymous"
+* resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
+* data "octopusdeploy_feeds" "feed_octopus_maven_feed"
+* resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed"
+
+## Argo CD Update Manifest Project Instructions
+
+You must include all the following project resources from the "Example Octopus Argo CD Update Manifest Terraform Configuration" once:
+* data "octopusdeploy_projects" "project_argo_cd_octopub"
+* resource "octopusdeploy_project" "project_argo_cd_octopub"
+
+## Argo CD Update Manifest Project Deployment Process Instructions
+
+You must include all the following project deployment process resources from the "Example Octopus Argo CD Update Manifest Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_argo_cd_octopub"
+
+## Argo CD Update Manifest Project Deployment Process Steps Instructions
+
+You must include all the following step resources from the "Example Octopus Argo CD Update Manifest Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
+* resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_approve_production_deployment"
+* resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_octopus___check_smtp_server_configured"
+* resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_update_argo_cd_application_image_tags"
+* resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_scan_for_vulnerabilities"
+* resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_send_an_email__deployment_failed_"
+
+You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
+
+## Argo CD Update Manifest Package Instructions
+
+You must use the following packages from the "Example Octopus Argo CD Update Manifest Terraform Configuration" once unless the prompt explicitly states that different packages are to be used:
+* octopussolutionsengineering/octopub-frontend
+
+
+## Argo CD Update Manifest Project Deployment Process Step Order Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus Argo CD Update Manifest Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_argo_cd_octopub"
+## Argo CD Update Manifest Project Variable Instructions
+
+You must include all the following variables from the "Example Octopus Argo CD Update Manifest Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
+* resource "octopusdeploy_variable" "argo_cd_octopub_project_workerpool_1" (set the value to "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}")
+* resource "octopusdeploy_variable" "argo_cd_octopub_project_octopus_apikey_1"
+
+## Argo CD Update Manifest Lifecycle Instructions
+
+You must include all the following lifecycle resources from the "Example Octopus Argo CD Update Manifest Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
+* data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle"
+* data "octopusdeploy_lifecycles" "lifecycle_devsecops"
+* resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
+* data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+

@@ -155,10 +155,10 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 ./generate_instructions.py awslambda.tf "AWS Lambda" > instructions_lambda.md
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
-    -url https://samples.octopus.app \
-    -space Spaces-1194 \
-    -apiKey API-GUEST \
-    -projectName "Update Image Tags - Helm" \
+ -url https://mattc.octopus.app \
+    -space Spaces-3368 \
+    -apiKey $OCTOPUS_CLI_API_KEY \
+    -projectName "Argo CD Octopub" \
     -stepTemplate \
     -stepTemplateName "Space Context" \
     -stepTemplateKey "SpaceContext" \
@@ -168,12 +168,33 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -excludeCaCProjectSettings=true \
     -includeOctopusOutputVars=false \
     -inlineVariableValues \
-    -excludeTrigger="Octopub-frontend container" \
+    -excludeAllTriggers=true \
     -excludeAllRunbooks=true \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > argoupdatetags.tf
 
 ./generate_instructions.py argoupdatetags.tf "Argo CD Update Image Tags" > instructions_argoupdatetags.md
+
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
+ -url https://mattc.octopus.app \
+    -space Spaces-3368 \
+    -apiKey $OCTOPUS_CLI_API_KEY \
+    -projectName "Argo CD Octopub Manifest" \
+    -stepTemplate \
+    -stepTemplateName "Space Context" \
+    -stepTemplateKey "SpaceContext" \
+    -dummySecretVariableValues \
+    -includeProviderServerDetails=false \
+    -ignoreCacManagedValues=false \
+    -excludeCaCProjectSettings=true \
+    -includeOctopusOutputVars=false \
+    -inlineVariableValues \
+    -excludeAllTriggers=true \
+    -excludeAllRunbooks=true \
+    -dest /tmp/octoexport
+cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > argoupdatemanifest.tf
+
+./generate_instructions.py argoupdatetags.tf "Argo CD Update Manifest" > instructions_argoupdatemanifest.md
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://samples.octopus.app \
