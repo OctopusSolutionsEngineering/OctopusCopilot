@@ -333,9 +333,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_approve_prod
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
       }
 }
 
@@ -358,11 +358,11 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_oc
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
-        "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.APIKey}"
+        "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
       }
 }
 
@@ -392,12 +392,12 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_update_argo_
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Octopus Deploy updated image versions"
+        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
         "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
         "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
         "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Octopus Deploy updated image versions"
-        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
       }
 }
 
@@ -420,8 +420,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_sc
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
@@ -489,10 +489,10 @@ resource "octopusdeploy_variable" "argo_cd_octopub_project_workerpool_1" {
   depends_on = []
 }
 
-resource "octopusdeploy_variable" "argo_cd_octopub_project_octopus_apikey_1" {
+resource "octopusdeploy_variable" "argo_cd_octopub_project_octopus_api_key_1" {
   count           = "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? 0 : 1}"
   owner_id        = "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) == 0 ?octopusdeploy_project.project_argo_cd_octopub[0].id : data.octopusdeploy_projects.project_argo_cd_octopub.projects[0].id}"
-  name            = "Project.Octopus.APIKey"
+  name            = "Project.Octopus.Api.Key"
   type            = "Sensitive"
   is_sensitive    = true
   sensitive_value = "Change Me!"
