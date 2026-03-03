@@ -1292,7 +1292,7 @@ resource "octopusdeploy_process_step" "process_step_orchestrator_project_deploy_
 }
 ```
 
-* You will be penalized for defining a step of type "Octopus.DeployRelease" with a string like "Projects-##" for the "Octopus.Action.DeployRelease.ProjectId" execution property.
+* You will be penalized for defining a step of type "Octopus.DeployRelease" with a string like "Projects-#" for the "Octopus.Action.DeployRelease.ProjectId" execution property.
 * You will be penalized for setting the "container" property on a step when the "Octopus.Action.RunOnServer" property is set to "false".
 * Steps of type "Octopus.AwsRunScript" must have the "Octopus.Action.Aws.Region" execution_property defined, for example:
 
@@ -1601,6 +1601,16 @@ resource "octopusdeploy_process_step" "process_step_my_lambda_web_app_swap_loadb
 * You will be penalized for changing the image name in any way, for example, when hte prompt indicates to use the image "octopusdeploylabs/azure-workertools", you will be penalized for changing it to "octopuslabs/azure-workertools" or "octopusdeploylabs/azure-workertools:latest".
 * The name associated with a step must be unique within the process, and must not be the same as any other step name in the process.
 * You will be penalized for defining two steps with the same name within a process.
+* You will be penalized for writing long "notes" field with unbalanced quotes, for example:
+```
+resource "octopusdeploy_process_step" "process_step_argo_cd_manifest_update_update_argo_cd_application_manifests" {
+  # This is invalid syntax because the notes field does not have a closing quote
+  notes                 = "The projects is configured to use the sample application hosted at https://mockgit.octopus.com/repo/argocd in the `octopub-manifest` directory.\n\nThe repo requires credentials, but accepts any username and password, for example:\n\n
+}
+```
+* If the sample project contains a long "notes" field, you must recreate it exactly as it is, including all line breaks and special characters, and ensuring that all quotes are balanced.
+* You will be penalized for producing only half of the "notes" attribute.
+
 
 ## Octopus step template instructions
 
