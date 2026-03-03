@@ -288,6 +288,17 @@ resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
   }
 }
 
+data "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_for_argo_cd_instances" {
+  website = "https://library.octopus.com/step-templates/7da3a76e-57ca-4542-846a-73c00252206c"
+}
+data "octopusdeploy_step_template" "steptemplate_octopus___check_for_argo_cd_instances" {
+  name = "Octopus - Check for Argo CD Instances"
+}
+resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_for_argo_cd_instances" {
+  community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_for_argo_cd_instances.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_octopus___check_for_argo_cd_instances.steps[0].id : null}"
+  count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_for_argo_cd_instances.step_template != null ? 0 : 1}"
+}
+
 data "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_smtp_server_configured" {
   website = "https://library.octopus.com/step-templates/ad8126be-37af-4297-b46e-fce02ba3987a"
 }
@@ -333,9 +344,35 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_approve_prod
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+      }
+}
+
+resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_octopus___check_for_argo_cd_instances" {
+  count                 = "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? 0 : 1}"
+  name                  = "Octopus - Check for Argo CD Instances"
+  process_id            = "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? null : octopusdeploy_process.process_argo_cd_octopub[0].id}"
+  template_id           = "${data.octopusdeploy_step_template.steptemplate_octopus___check_for_argo_cd_instances.step_template != null ? data.octopusdeploy_step_template.steptemplate_octopus___check_for_argo_cd_instances.step_template.id : octopusdeploy_community_step_template.communitysteptemplate_octopus___check_for_argo_cd_instances[0].id}"
+  template_version      = "${data.octopusdeploy_step_template.steptemplate_octopus___check_for_argo_cd_instances.step_template != null ? data.octopusdeploy_step_template.steptemplate_octopus___check_for_argo_cd_instances.step_template.version : octopusdeploy_community_step_template.communitysteptemplate_octopus___check_for_argo_cd_instances[0].version}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = null
+  notes                 = "This step checks that Argo CD Instances are present, and if not, displays a link to the documentation."
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "octopus-check-for-argo-cd-instances"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_variable  = "Project.WorkerPool"
+  properties            = {
+      }
+  execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+      }
+  parameters            = {
+        "Template.Octopus.API.Key" = "#{Project.Octopus.Api.Key}"
       }
 }
 
@@ -420,13 +457,13 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_sc
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
-        "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
         "PackageId" = "com.octopus:octopub-frontend-sbom"
+        "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
                 })
       }
 }
@@ -458,7 +495,7 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_send_an_emai
 resource "octopusdeploy_process_steps_order" "process_step_order_argo_cd_octopub" {
   count      = "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? 0 : 1}"
   process_id = "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? null : octopusdeploy_process.process_argo_cd_octopub[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? null : octopusdeploy_process_step.process_step_argo_cd_octopub_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_argo_cd_octopub_octopus___check_smtp_server_configured[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? null : octopusdeploy_process_step.process_step_argo_cd_octopub_update_argo_cd_application_image_tags[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_argo_cd_octopub_scan_for_vulnerabilities[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? null : octopusdeploy_process_step.process_step_argo_cd_octopub_send_an_email__deployment_failed_[0].id}"]
+  steps      = ["${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? null : octopusdeploy_process_step.process_step_argo_cd_octopub_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_argo_cd_octopub_octopus___check_for_argo_cd_instances[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_argo_cd_octopub_octopus___check_smtp_server_configured[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? null : octopusdeploy_process_step.process_step_argo_cd_octopub_update_argo_cd_application_image_tags[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_argo_cd_octopub_scan_for_vulnerabilities[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub.projects) != 0 ? null : octopusdeploy_process_step.process_step_argo_cd_octopub_send_an_email__deployment_failed_[0].id}"]
 }
 
 data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {

@@ -288,11 +288,12 @@ data "octopusdeploy_git_credentials" "gitcredential_mock" {
   take = 1
 }
 resource "octopusdeploy_git_credential" "gitcredential_mock" {
-  count    = "${length(data.octopusdeploy_git_credentials.gitcredential_mock.git_credentials) != 0 ? 0 : 1}"
-  name     = "Mock"
-  type     = "UsernamePassword"
-  username = "blah"
-  password = "${var.gitcredential_mock_sensitive_value}"
+  count                   = "${length(data.octopusdeploy_git_credentials.gitcredential_mock.git_credentials) != 0 ? 0 : 1}"
+  name                    = "Mock"
+  type                    = "UsernamePassword"
+  username                = "blah"
+  password                = "${var.gitcredential_mock_sensitive_value}"
+  repository_restrictions = { allowed_repositories = ["https://mockgitoctopus.com/*"], enabled = true }
   lifecycle {
     ignore_changes  = [password]
     prevent_destroy = true
@@ -362,9 +363,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_app
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
       }
 }
 
@@ -387,11 +388,11 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_ma
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.ApiKey}"
+        "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
       }
 }
 
@@ -417,7 +418,7 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_ma
         "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "Template.Octopus.API.Key" = "#{Project.Octopus.ApiKey}"
+        "Template.Octopus.API.Key" = "#{Project.Octopus.Api.Key}"
       }
 }
 
@@ -439,16 +440,16 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_upd
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
-        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
-        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
-        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
         "Octopus.Action.ArgoCD.CommitMessageDescription" = "Project: #{Octopus.Project.Slug}\nEnvironment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }\nTenant: #{Octopus.Deployment.Tenant.Slug}#{/if}"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
+        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
+        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
+        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
       }
 }
 
@@ -500,9 +501,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_sen
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
+        "Octopus.Action.Email.To" = "admin@example.org"
         "Octopus.Action.Email.Subject" = "Deployment failed!"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Email.To" = "admin@example.org"
       }
 }
 
@@ -606,26 +607,13 @@ resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_workerpool_1
   depends_on = []
 }
 
-resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_octopus_apikey_1" {
+resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_octopus_api_key_1" {
   count           = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? 0 : 1}"
   owner_id        = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) == 0 ?octopusdeploy_project.project_argo_cd_octopub_manifest[0].id : data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects[0].id}"
-  name            = "Project.Octopus.ApiKey"
+  name            = "Project.Octopus.Api.Key"
   type            = "Sensitive"
   is_sensitive    = true
   sensitive_value = "Change Me!"
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_octopus_api_key_1" {
-  count        = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) == 0 ?octopusdeploy_project.project_argo_cd_octopub_manifest[0].id : data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects[0].id}"
-  name         = "Project.Octopus.Api.Key"
-  type         = "String"
-  is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true
