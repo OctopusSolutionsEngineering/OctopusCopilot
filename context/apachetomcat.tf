@@ -351,8 +351,8 @@ resource "octopusdeploy_process_templated_step" "process_step_octopub_octopus___
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -422,11 +422,11 @@ resource "octopusdeploy_process_step" "process_step_octopub_deploy_to_tomcat_via
         "Octopus.Action.TargetRoles" = "Tomcat.Web"
       }
   execution_properties  = {
-        "Tomcat.Deploy.Password" = "${var.action_b5db3976a6058b846e2ef726ee139fcf26756a43d95da3aed7f951beadf6377a_sensitive_value}"
         "Octopus.Action.EnabledFeatures" = ",Octopus.Features.TomcatDeployManager"
+        "Tomcat.Deploy.User" = "admin"
+        "Tomcat.Deploy.Password" = "${var.action_b5db3976a6058b846e2ef726ee139fcf26756a43d95da3aed7f951beadf6377a_sensitive_value}"
         "Tomcat.Deploy.Enabled" = "True"
         "Tomcat.Deploy.Controller" = "http://localhost:8080/manager"
-        "Tomcat.Deploy.User" = "admin"
         "Tomcat.Deploy.Name" = "octopub"
       }
 }
@@ -479,9 +479,9 @@ resource "octopusdeploy_process_step" "process_step_octopub_deployment_success_n
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "admin@example.org"
         "Octopus.Action.Email.Subject" = "Deployment for #{Octopus.Project.Name} completed successfully!"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 

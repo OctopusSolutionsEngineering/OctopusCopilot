@@ -344,9 +344,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_approve_prod
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -389,14 +389,14 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_oc
   notes                 = "This step checks that the SMTP server is configured, and if not, provides a link to the documentation."
   package_requirement   = "LetOctopusDecide"
   slug                  = "octopus-check-smtp-server-configured"
-  start_trigger         = "StartAfterPrevious"
+  start_trigger         = "StartWithPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.WorkerPool"
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -457,8 +457,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_sc
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
@@ -487,8 +487,8 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_send_an_emai
       }
   execution_properties  = {
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Email.To" = "admin@example.ord"
         "Octopus.Action.Email.Subject" = "Deployment #{Octopus.Deployment.Id} to #{Octopus.Environment.Name} failed"
+        "Octopus.Action.Email.To" = "admin@example.ord"
       }
 }
 
@@ -566,7 +566,7 @@ variable "project_argo_cd_octopub_description" {
   nullable    = false
   sensitive   = false
   description = "The description of the project exported from Argo CD Octopub"
-  default     = "Demonstrates the `Update Argo CD Application Image Tags` step by updating the image tag for the deployment of a sample Helm chart.\n\nThis step assumes that the sample application from the Git repo https://mockgit.octopus.com/repo/argocd and directory `octopub` has been deployed to the Argo CD instance, for example:\n\n```\n# Create a random username. The mock git repo accepts any username, and each user gets an ephemeral repo.\nGIT_USER=$(uuidgen)\n\n# Set the git credentials\nargocd repo add https://mockgit.octopus.com/repo/argocd --username \"$${GIT_USER}\" --password \"anypasswordisaccepted\"\n\n# Add the application\n argocd app create octopub \\\n        --repo https://mockgit.octopus.com/repo/argocd \\\n        --path octopub \\\n        --dest-server https://kubernetes.default.svc \\\n        --dest-namespace octopub\n```"
+  default     = "Demonstrates the `Update Argo CD Application Image Tags` step by updating the image tag for the deployment of a sample Helm chart.\n\nThis step assumes that the sample application from the Git repo https://mockgit.octopus.com/repo/argocd and directory `octopub` has been deployed to the Argo CD instance, for example:\n\nargocd repo add https://mockgit.octopus.com/repo/argocd --username \"anyusernameisaccepted\" --password \"anypasswordisaccepted\"\n\n argocd app create octopub \\\n        --repo https://mockgit.octopus.com/repo/argocd \\\n        --path octopub \\\n        --dest-server https://kubernetes.default.svc \\\n        --dest-namespace octopub"
 }
 variable "project_argo_cd_octopub_tenanted" {
   type        = string
