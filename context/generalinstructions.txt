@@ -1612,7 +1612,7 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_manifest_update_upda
 * You will be penalized for producing only half of the "notes" attribute.
 * The "notes" attribute can contain markdown, for example:
 resource "octopusdeploy_process_step" "process_step_argo_cd_manifest_update_update_argo_cd_application_manifests" {
-  notes                 = "Here is a code block\n\n```\n# This is some code ina code block\n```"
+  notes                 = "Here is a code block\n\n```\n# This is some code in a code block\n```"
 }
 
 ## Octopus step template instructions
