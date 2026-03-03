@@ -429,12 +429,12 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_update_argo_
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Octopus Deploy updated image versions"
         "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
         "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
         "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
         "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Octopus Deploy updated image versions"
       }
 }
 
@@ -457,8 +457,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_sc
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
@@ -486,9 +486,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_send_an_emai
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.Subject" = "Deployment #{Octopus.Deployment.Id} to #{Octopus.Environment.Name} failed"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "admin@example.ord"
+        "Octopus.Action.Email.Subject" = "Deployment #{Octopus.Deployment.Id} to #{Octopus.Environment.Name} failed"
       }
 }
 

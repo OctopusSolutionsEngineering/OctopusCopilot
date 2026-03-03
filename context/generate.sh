@@ -194,7 +194,7 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > argoupdatemanifest.tf
 
-./generate_instructions.py argoupdatetags.tf "Argo CD Update Manifest" > instructions_argoupdatemanifest.md
+./generate_instructions.py argoupdatemanifest.tf "Argo CD Update Manifest" > instructions_argoupdatemanifest.md
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://samples.octopus.app \
