@@ -363,12 +363,12 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "BlueGreen.Environment.Blue.Name" = "Production - Blue"
         "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "BlueGreen.Environment.Blue.Name" = "Production - Blue"
         "BlueGreen.Environment.Green.Name" = "Production - Green"
       }
 }
@@ -390,9 +390,9 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_appro
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?\n\n#{if Octopus.Action[Octopus - Check Blue Green Deployment].Output.SequentialDeploy}WARNING! You appear to be deploying to the #{Octopus.Environment.Name} environment twice. It is expected that blue/green deployments alternate between environments.#{/if}"
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
       }
 }
 
@@ -415,13 +415,13 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
         "CheckTargets.Octopus.Role" = "randomquotes-iis-website"
         "CheckTargets.Message" = "See the [documentation](https://octopus.com/docs/infrastructure/deployment-targets) for details on creating targets."
+        "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
       }
 }
 
@@ -444,8 +444,8 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
