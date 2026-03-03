@@ -13,6 +13,18 @@ def create_k8s_project_wrapper(query, callback, logging):
         * Create a Kubernetes project called "My Project" in the space "My Space"
         * Create a Kubernetes project called "My Project"
 
+        Prompts can also specify some customizations, for example:
+
+        ```
+        Create a Kubernetes project called "K8s Microservice 2", and then:
+        * Retain the sample project steps.
+        * Create a Project Group called "Orchestrator"
+        * Place the project in the "Orchestrator" project group.
+        * Configure the Kubernetes steps to use client side apply (client side apply is required by the "Mock K8s" target).
+        * Disable verification checks in the Kubernetes steps (verification checks are not supported by the "Mock K8s" target).
+        * Create a channel called "Application" and make it the default channel.
+        ```
+
         Args:
         space_name: The name of the space
         project_name: The name of the project
