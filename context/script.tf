@@ -235,11 +235,11 @@ resource "octopusdeploy_process_step" "process_step_script_hello_world" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "echo \"#{Project.Message}\""
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptBody" = "echo \"#{Project.Message}\""
       }
 }
 
@@ -247,6 +247,20 @@ resource "octopusdeploy_process_steps_order" "process_step_order_script" {
   count      = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? 0 : 1}"
   process_id = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? null : octopusdeploy_process.process_script[0].id}"
   steps      = ["${length(data.octopusdeploy_projects.project_script.projects) != 0 ? null : octopusdeploy_process_step.process_step_script_hello_world[0].id}"]
+}
+
+resource "octopusdeploy_variable" "script_project_message_1" {
+  count        = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_script.projects) == 0 ?octopusdeploy_project.project_script[0].id : data.octopusdeploy_projects.project_script.projects[0].id}"
+  value        = "Hello World!"
+  name         = "Project.Message"
+  type         = "String"
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
 }
 
 data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
@@ -270,20 +284,6 @@ resource "octopusdeploy_variable" "script_project_workerpool_1" {
   name         = "Project.WorkerPool"
   type         = "WorkerPool"
   description  = "The workerpool used by the steps. Defining the workerpool as a variable allows it to be changed in a single location for multiple steps."
-  is_sensitive = false
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "script_project_message_1" {
-  count        = "${length(data.octopusdeploy_projects.project_script.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_script.projects) == 0 ?octopusdeploy_project.project_script[0].id : data.octopusdeploy_projects.project_script.projects[0].id}"
-  value        = "Hello World!"
-  name         = "Project.Message"
-  type         = "String"
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]

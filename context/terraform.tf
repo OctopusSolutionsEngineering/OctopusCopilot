@@ -256,20 +256,20 @@ resource "octopusdeploy_process_step" "process_step_terraform_plan_to_apply_a_te
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
-        "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
+        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
+        "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
       }
 }
 
@@ -290,9 +290,9 @@ resource "octopusdeploy_process_step" "process_step_terraform_approve_plan" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
         "Octopus.Action.Manual.Instructions" = "Do you approve the planned changes?\n\n#{Octopus.Action[Plan to apply a Terraform template].Output.TerraformPlanOutput}"
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -315,20 +315,20 @@ resource "octopusdeploy_process_step" "process_step_terraform_apply_a_terraform_
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
         "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
+        "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -336,6 +336,35 @@ resource "octopusdeploy_process_steps_order" "process_step_order_terraform" {
   count      = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
   process_id = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? null : octopusdeploy_process.process_terraform[0].id}"
   steps      = ["${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? null : octopusdeploy_process_step.process_step_terraform_plan_to_apply_a_terraform_template[0].id}", "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? null : octopusdeploy_process_step.process_step_terraform_approve_plan[0].id}", "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? null : octopusdeploy_process_step.process_step_terraform_apply_a_terraform_template[0].id}"]
+}
+
+resource "octopusdeploy_variable" "terraform_octopusprintvariables_1" {
+  count        = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_terraform.projects) == 0 ?octopusdeploy_project.project_terraform[0].id : data.octopusdeploy_projects.project_terraform.projects[0].id}"
+  value        = "False"
+  name         = "OctopusPrintVariables"
+  type         = "String"
+  description  = "Set this variable to true to log the variables available at the beginning of each step in the deployment as Verbose messages. See https://octopus.com/docs/support/debug-problems-with-octopus-variables for more details."
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_variable" "terraform_project_terraform_configuration_1" {
+  count        = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_terraform.projects) == 0 ?octopusdeploy_project.project_terraform[0].id : data.octopusdeploy_projects.project_terraform.projects[0].id}"
+  value        = "variable \"message\" {\n  type = string\n  default = \"Hello World!\"\n}\n\nresource \"terraform_data\" \"replacement\" {\n  input = var.message\n}\n"
+  name         = "Project.Terraform.Configuration"
+  type         = "String"
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
 }
 
 data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
@@ -367,41 +396,12 @@ resource "octopusdeploy_variable" "terraform_project_workerpool_1" {
   depends_on = []
 }
 
-resource "octopusdeploy_variable" "terraform_project_terraform_configuration_1" {
-  count        = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_terraform.projects) == 0 ?octopusdeploy_project.project_terraform[0].id : data.octopusdeploy_projects.project_terraform.projects[0].id}"
-  value        = "variable \"message\" {\n  type = string\n  default = \"Hello World!\"\n}\n\nresource \"terraform_data\" \"replacement\" {\n  input = var.message\n}\n"
-  name         = "Project.Terraform.Configuration"
-  type         = "String"
-  is_sensitive = false
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
 resource "octopusdeploy_variable" "terraform_terraform_variable_message_1" {
   count        = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_terraform.projects) == 0 ?octopusdeploy_project.project_terraform[0].id : data.octopusdeploy_projects.project_terraform.projects[0].id}"
   value        = "Hi world!"
   name         = "Terraform.Variable.Message"
   type         = "String"
-  is_sensitive = false
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-resource "octopusdeploy_variable" "terraform_octopusprintvariables_1" {
-  count        = "${length(data.octopusdeploy_projects.project_terraform.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_terraform.projects) == 0 ?octopusdeploy_project.project_terraform[0].id : data.octopusdeploy_projects.project_terraform.projects[0].id}"
-  value        = "False"
-  name         = "OctopusPrintVariables"
-  type         = "String"
-  description  = "Set this variable to true to log the variables available at the beginning of each step in the deployment as Verbose messages. See https://octopus.com/docs/support/debug-problems-with-octopus-variables for more details."
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
