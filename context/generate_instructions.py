@@ -17,7 +17,7 @@ def general_instructions(filename, label):
         f'* You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus {label} Terraform Configuration".'
     )
     print(
-        f'* You must include the steps defined in the "Example Octopus {label} Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.'
+        f'* You must include the steps defined in the "Example Octopus {label} Terraform Configuration" unless the prompt explicitly states that steps should be removed or modified.'
     )
     print(
         f'* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus {label} Terraform Configuration".'

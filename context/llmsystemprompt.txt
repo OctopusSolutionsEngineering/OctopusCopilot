@@ -2,7 +2,7 @@
 
 * The supplied "Example Octopus LLM Kubernetes Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus LLM Kubernetes Terraform Configuration".
-* You must include the steps defined in the "Example Octopus LLM Kubernetes Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
+* You must include the steps defined in the "Example Octopus LLM Kubernetes Terraform Configuration" unless the prompt explicitly states that steps should be removed or modified.
 * If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus LLM Kubernetes Terraform Configuration".
 
 ## LLM Kubernetes Environment Instructions
@@ -49,6 +49,12 @@ You must include all the following step resources from the "Example Octopus LLM 
 
 You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
 
+## LLM Kubernetes Package Instructions
+
+You must use the following packages from the "Example Octopus LLM Kubernetes Terraform Configuration" once unless the prompt explicitly states that different packages are to be used:
+* octopussolutionsengineering/ollamainference
+
+
 ## LLM Kubernetes Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus LLM Kubernetes Terraform Configuration" once:
@@ -59,12 +65,13 @@ You must include all the following variables from the "Example Octopus LLM Kuber
 * resource "octopusdeploy_variable" "llm_in_kubernetes_octopusprintevaluatedvariables_1"
 * resource "octopusdeploy_variable" "llm_in_kubernetes_octopusprintvariables_1"
 * resource "octopusdeploy_variable" "llm_in_kubernetes_kubernetes_deployment_name_1"
-* resource "octopusdeploy_variable" "llm_in_kubernetes_octopus_project_workerpool_1"
+* resource "octopusdeploy_variable" "llm_in_kubernetes_octopus_project_workerpool_1" (set the value to "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}")
 * resource "octopusdeploy_variable" "llm_in_kubernetes_application_image_1"
 
 ## LLM Kubernetes Lifecycle Instructions
 
 You must include all the following lifecycle resources from the "Example Octopus LLM Kubernetes Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
+* data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle"
 * data "octopusdeploy_lifecycles" "lifecycle_devsecops"
 * resource "octopusdeploy_lifecycle" "lifecycle_devsecops"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"

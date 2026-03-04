@@ -2,7 +2,7 @@
 
 * The supplied "Example Octopus Deployment Orchestration Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus Deployment Orchestration Terraform Configuration".
-* You must include the steps defined in the "Example Octopus Deployment Orchestration Terraform Configuration" unless the prompt explicit states that steps should be removed or modified.
+* You must include the steps defined in the "Example Octopus Deployment Orchestration Terraform Configuration" unless the prompt explicitly states that steps should be removed or modified.
 * If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus Deployment Orchestration Terraform Configuration".
 
 ## Deployment Orchestration Environment Instructions
@@ -56,6 +56,3 @@ You must include all the following lifecycle resources from the "Example Octopus
 * resource "octopusdeploy_lifecycle" "lifecycle_application"
 * data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
 
-# Additional Deployment Orchestration Instructions
-
-* If the prompt specifies which projects to deploy, you must not include the resource "octopusdeploy_project" "project_child_project".
