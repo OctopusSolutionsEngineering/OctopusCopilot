@@ -333,9 +333,9 @@ resource "octopusdeploy_process_step" "process_step_azure_function_manual_interv
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
-        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
       }
 }
 
@@ -358,12 +358,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_validate_setu
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
         "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $true"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
       }
 }
 
@@ -451,12 +451,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_smoke_test" {
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.AzureSetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "# Get variables\n$resourceGroupName = \"#{Project.Azure.ResourceGroup.Name}\"\n$functionName = \"#{Project.Azure.Function.Octopub.Products.Name}\"\n\n$testUrl = (az functionapp show --resource-group $resourceGroupName --name $functionName | ConvertFrom-JSON).properties.defaultHostName\n\ntry\n{\n  Write-Highlight \"Testing [web site](https://$testUrl)\"\n\n  # Make a web request  \n  $response = Invoke-WebRequest -Uri \"https://$testUrl\"\n\n  # Check for a 200 response\n  if ($response.StatusCode -ne 200)\n  {\n    # Throw an error\n    throw $response.StatusCode\n  }\n  else\n  {\n    Write-Host \"Smoke test succeeded!\"\n  }\n}\ncatch\n{\n  Write-Warning \"An error occurred: $($_.Exception.Message)\"\n}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
       }
 }
 
@@ -478,8 +478,8 @@ resource "octopusdeploy_process_templated_step" "process_step_azure_function_sca
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({

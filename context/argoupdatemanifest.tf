@@ -268,20 +268,6 @@ resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
   }
 }
 
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
-  ids          = null
-  partial_name = "Default Worker Pool"
-  skip         = 0
-  take         = 1
-}
-
-data "octopusdeploy_worker_pools" "workerpool_hosted_windows" {
-  ids          = null
-  partial_name = "Hosted Windows"
-  skip         = 0
-  take         = 1
-}
-
 data "octopusdeploy_git_credentials" "gitcredential_mock" {
   name = "Mock"
   skip = 0
@@ -363,9 +349,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_app
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
-        "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
       }
 }
 
@@ -388,8 +374,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_ma
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -437,19 +423,20 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_upd
   slug                  = "update-argo-cd-application-manifests"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
+  worker_pool_variable  = "Project.WorkerPool"
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.ArgoCD.CommitMessageDescription" = "Project: #{Octopus.Project.Slug}\nEnvironment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }\nTenant: #{Octopus.Deployment.Tenant.Slug}#{/if}"
         "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
-        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
-        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
-        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
+        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
+        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
       }
 }
 
@@ -501,9 +488,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_sen
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "admin@example.org"
         "Octopus.Action.Email.Subject" = "Deployment failed!"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -584,6 +571,13 @@ resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_frontend_the
     prevent_destroy = true
   }
   depends_on = []
+}
+
+data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+  ids          = null
+  partial_name = "Default Worker Pool"
+  skip         = 0
+  take         = 1
 }
 
 data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {

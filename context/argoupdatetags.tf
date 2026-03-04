@@ -344,8 +344,8 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_approve_prod
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
       }
 }
@@ -429,12 +429,12 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_update_argo_
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
-        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
         "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
         "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.ArgoCD.CommitMessageSummary" = "Octopus Deploy updated image versions"
+        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
+        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
       }
 }
 
