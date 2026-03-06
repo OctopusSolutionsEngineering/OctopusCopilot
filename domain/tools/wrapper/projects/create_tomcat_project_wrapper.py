@@ -2,7 +2,6 @@ def create_tomcat_project_wrapper(query, callback, logging):
     def create_tomcat_project(
         space_name=None,
         project_name=None,
-        no_prompt=False,
         **kwargs,
     ):
         """
@@ -16,7 +15,6 @@ def create_tomcat_project_wrapper(query, callback, logging):
         Args:
         space_name: The name of the space
         project_name: The name of the project
-        no_prompt: Whether to disable the prompt. Defaults to False.
         """
 
         if logging:
@@ -32,7 +30,7 @@ def create_tomcat_project_wrapper(query, callback, logging):
             query,
             space_name,
             project_name,
-            no_prompt,
+            False,
         )
 
     return create_tomcat_project

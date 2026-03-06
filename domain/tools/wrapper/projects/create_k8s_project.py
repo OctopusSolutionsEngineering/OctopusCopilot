@@ -2,7 +2,6 @@ def create_k8s_project_wrapper(query, callback, logging):
     def create_k8s_project(
         space_name=None,
         project_name=None,
-        no_prompt=False,
         **kwargs,
     ):
         """
@@ -28,7 +27,6 @@ def create_k8s_project_wrapper(query, callback, logging):
         Args:
         space_name: The name of the space
         project_name: The name of the project
-        no_prompt: Whether to disable the prompt. Defaults to False.
         """
 
         if logging:
@@ -40,7 +38,7 @@ def create_k8s_project_wrapper(query, callback, logging):
 
         # This is just a passthrough to the original callback
         return callback(
-            create_k8s_project.__name__, query, space_name, project_name, no_prompt
+            create_k8s_project.__name__, query, space_name, project_name, False
         )
 
     return create_k8s_project
