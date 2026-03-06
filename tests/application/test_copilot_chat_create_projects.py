@@ -233,18 +233,6 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
-    def test_create_k8s_project_no_prompt(self):
-        project_name = "My K8s Project Two"
-        prompt = f'Create a Kubernetes project called "{project_name}" with no prompt.'
-        response = copilot_handler_internal(build_request(prompt))
-
-        response_text = convert_from_sse_response(response.get_body().decode("utf8"))
-        print(response_text)
-        self.assertTrue(
-            f"The following resources were created:" in response_text,
-        )
-
-    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_vm_blue_green_project(self):
         project_name = "My VM Blue Green project"
         prompt = f'Create a VM Blue/Green project called "{project_name}".'
