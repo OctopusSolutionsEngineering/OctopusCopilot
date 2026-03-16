@@ -1968,6 +1968,11 @@ data "octopusdeploy_accounts" "my_other_oidc_account" {
 * If no machine policy is specified in the prompt for a worker, the "machine_policy_id" attribute must be set by looking up the existing machine policy called "Default Machine Policy"
 * If no worker pool is specified in the prompt for a worker, you must use a data source to look for an existing worker pool with a suitable name and assign the worker to that worker pool, and if that pool does not exist, create a new worker pool and assign the worker to that worker pool.
 
+## Platform Hub Instructions
+
+* The Platform Hub version control settings are defined in a "octopusdeploy_platform_hub_version_control_username_password_settings" resource.
+* You will be penalized for creating a "octopusdeploy_git_credential" in conjuction with a "octopusdeploy_platform_hub_version_control_username_password_settings" resource, unless specifically instructed to do so in the prompt.
+
 ## Terraform Instructions
 * All resource and data names must start with a character or underscore.
 * When resource names are based on a string that starts with a number, for example "123 My Resource", you must prefix the resource name with an underscore, for example " _123_my_resource", "_08_script_project", or "_14_kubernetes_with_mock_target_octopus_project_workerpool_1".
