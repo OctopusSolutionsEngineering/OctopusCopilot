@@ -270,6 +270,16 @@ step "deploy-with-cli" {
                      "name": "AISERVICES_DEPLOYMENT_PROJECT_GEN_TOKENS",
                      "value": "#{Azure.US.AIServices.Tokens.ProjectGen}",
                      "slotSetting": false
+                   },
+                   {
+                     "name": "MOCKGIT_API_URL",
+                     "value": "#{Application.MockGit.Url}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "MOCKGIT_API_KEY",
+                     "value": "#{Application.MockGit.ApiKey}",
+                     "slotSetting": false
                    }
                 ] 
                 EOL
