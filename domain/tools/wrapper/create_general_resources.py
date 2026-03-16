@@ -24,6 +24,7 @@ def create_general_resources_wrapper(query, callback, logging):
         * Worker Pools
         * Variable Sets
         * Runbooks
+        * Platform Hub Git Configuration
 
         You will be penalized for selecting this function if the prompt mentions creating projects.
         You will be penalized for selecting this function for a prompt like "Create a script project called My Project and then add a lifecycle called Application".
@@ -49,6 +50,7 @@ def create_general_resources_wrapper(query, callback, logging):
         * Create a GitHub connection called "My GitHub Connection" in the space "My Space"
         * Create a script module called "My Script Module" in the space "My Space"
         * Create a machine proxy called "My Machine Proxy" in the space "My Space"
+        * Configure the platform hub git repo to point to https://mockgit.octopus.com/repo/platformhubrepo using the ".octopus" base path
 
         The names in the prompts above are examples only and can be replaced with any name for the resource.
 
