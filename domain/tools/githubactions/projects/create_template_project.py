@@ -431,7 +431,7 @@ def create_template_project_callback(
             if (
                 "octopusdeploy_platform_hub_version_control_username_password_settings"
                 in configuration
-                and os.getenv("MOCKGIT_API_URL") in configuration
+                and os.getenv("MOCKGIT_API_URL", "") in configuration
             ):
                 mock_git_user, mock_git_pass = save_mockgit_user()
                 configuration = set_mock_git_server(
