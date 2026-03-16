@@ -433,7 +433,8 @@ def create_template_project_callback(
                 in configuration
                 and os.getenv("MOCKGIT_API_URL", "") in configuration
             ):
-                mock_git_user, mock_git_pass = save_mockgit_user()
+                mock_git_user, mock_git_pass = generate_mock_git_user()
+                save_mockgit_user(mock_git_user, mock_git_pass)
                 configuration = set_mock_git_server(
                     configuration, mock_git_user, mock_git_pass
                 )
