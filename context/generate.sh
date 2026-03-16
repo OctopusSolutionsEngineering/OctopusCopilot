@@ -1,4 +1,4 @@
-PULL=always
+PULL=never
 IMAGE=ghcr.io/octopussolutionsengineering/octoterra:latest
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \

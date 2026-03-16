@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.9.0" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.10.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -127,7 +127,7 @@ resource "octopusdeploy_environment" "environment_production" {
   }
 
   servicenow_extension_settings {
-    is_enabled = false
+    is_enabled = true
   }
   depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test]
   lifecycle {
@@ -395,8 +395,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_oc
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -429,12 +429,12 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_update_argo_
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
         "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
         "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
         "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.ArgoCD.CommitMessageSummary" = "Octopus Deploy updated image versions"
+        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
       }
 }
 
@@ -457,8 +457,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_sc
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
