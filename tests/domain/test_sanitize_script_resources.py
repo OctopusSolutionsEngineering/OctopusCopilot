@@ -1,9 +1,42 @@
 import unittest
 
-from domain.sanitizers.terraform import fix_script_source
+from domain.sanitizers.terraform import fix_script_source, set_mock_git_server
 
 
 class SanitizeScriptResourcesTest(unittest.TestCase):
+
+    def test_set_mock_git_server(self):
+        config = """resource "octopusdeploy_platform_hub_version_control_username_password_settings" "example" {
+  url            = "https://github.com/acme/hello-world.git"
+  default_branch = "main"
+  base_path      = ".octopus"
+  username       = "git-user"
+  password       = "blah"
+}"""
+
+        fixed_config = """resource "octopusdeploy_platform_hub_version_control_username_password_settings" "example" {
+  url            = "https://github.com/acme/hello-world.git"
+  default_branch = "main"
+  base_path      = ".octopus"
+  username = "whatever"
+  password = "mypassword"
+}"""
+
+        self.assertEqual(
+            set_mock_git_server(config, "whatever", "mypassword"), fixed_config
+        )
+
+    def test_no_set_mock_git_server(self):
+        config = """resource "this_is_not_the_resource_you_are_looking_for" "example" {
+      url            = "https://github.com/acme/hello-world.git"
+      default_branch = "main"
+      base_path      = ".octopus"
+      username       = "git-user"
+      password       = "blah"
+    }"""
+
+        self.assertEqual(set_mock_git_server(config, "whatever", "mypassword"), config)
+
     def test_no_script(self):
         config = 'resource "octopusdeploy_project" "project" {}'
         self.assertEqual(fix_script_source(config), config)

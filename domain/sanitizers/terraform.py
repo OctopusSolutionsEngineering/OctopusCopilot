@@ -585,3 +585,68 @@ def fix_script_source(config):
         return config
 
     return "\n".join(output)
+
+
+def set_mock_git_server(config, username, password):
+    """
+    We want to add credentials for the mock git server
+    """
+
+    if not config:
+        return ""
+
+    # A quick out if there were no platform hub version control settings
+    if (
+        "octopusdeploy_platform_hub_version_control_username_password_settings"
+        not in config
+    ):
+        return config
+
+    def replace_username(line):
+        if line.strip().startswith("username"):
+            return f'  username = "{username}"'
+        return line
+
+    def replace_password(line):
+        if line.strip().startswith("password"):
+            return f'  password = "{password}"'
+        return line
+
+    splits = config.splitlines()
+
+    output = []
+
+    in_resource = False
+    resource_lines = []
+
+    for line in splits:
+        if not in_resource and line.startswith(
+            'resource "octopusdeploy_platform_hub_version_control_username_password_settings"'
+        ):
+            # We entered a resource block
+            in_resource = True
+            resource_lines = [line]
+        elif in_resource:
+            resource_lines.append(line)
+
+            if line == "}":
+                in_resource = False
+
+                resource_lines = list(
+                    map(
+                        lambda resource_line: replace_username(
+                            replace_password(resource_line)
+                        ),
+                        resource_lines,
+                    )
+                )
+
+                output.extend(resource_lines)
+        else:
+            output.append(line)
+
+    # Our assumptions about the indents of brackets failed, so do no processing
+    if in_resource:
+        return config
+
+    return "\n".join(output)

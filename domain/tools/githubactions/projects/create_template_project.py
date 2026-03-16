@@ -46,10 +46,12 @@ from domain.sanitizers.terraform import (
     fix_single_line_connectivity_policy,
     trim_descriptions,
     fix_single_line_lifecycle2,
+    set_mock_git_server,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
 from infrastructure.llm import llm_message_query, AZURE_PROJECT_SERVICE
+from infrastructure.mockgit import save_mockgit_user
 from infrastructure.space_builder import (
     create_terraform_plan,
     create_terraform_apply,
@@ -424,6 +426,18 @@ def create_template_project_callback(
                 # Remove empty string default values
                 configuration = fix_empty_strings(configuration)
 
+            # If we are configuring a mock git server, we need to save a user to the mock git service
+            # and update the Terraform configuration with the random credentials.
+            if (
+                "octopusdeploy_platform_hub_version_control_username_password_settings"
+                in configuration
+                and os.getenv("MOCKGIT_API_URL") in configuration
+            ):
+                mock_git_user, mock_git_pass = save_mockgit_user()
+                configuration = set_mock_git_server(
+                    configuration, mock_git_user, mock_git_pass
+                )
+
             try:
                 if auto_apply:
                     response = await create_terraform_autoapply(
@@ -638,3 +652,10 @@ def final_messages(base_messages):
         ("user", "Question: {input}"),
         ("user", f"Generated Terraform Configuration:"),
     ]
+
+
+def generate_mock_git_user():
+    user = uuid.uuid4()
+    password = uuid.uuid4()
+    save_mockgit_user(user, password)
+    return user, password
