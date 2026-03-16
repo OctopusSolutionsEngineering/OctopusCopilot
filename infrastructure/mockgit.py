@@ -1,8 +1,8 @@
-import http
 import json
 import os
 
 from domain.logging.app_logging import configure_logging
+from infrastructure.http_pool import http
 from infrastructure.octopus import logging_wrapper
 
 logger = configure_logging(__name__)
