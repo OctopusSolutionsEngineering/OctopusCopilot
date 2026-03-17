@@ -279,29 +279,17 @@ def create_template_project_callback(
             )
 
             # We build a unique sha for the inputs that generate a terraform configuration
-            cache_key = (
-                original_query
-                + "\n"
-                + "\n".join(general_examples_values)
-                + "\n"
-                + empty_if_none(project_example_values)
-                + "\n"
-                + empty_if_none(general_system_message_values)
-                + "\n"
-                + empty_if_none(project_system_message_values)
+            cache_sha = build_cache_sha(
+                original_query,
+                general_examples_values,
+                project_example_values,
+                general_system_message_values,
+                project_system_message_values,
             )
-            cache_sha = hashlib.sha256(cache_key.encode("utf-8")).hexdigest()
 
             # Attempt to load a previously cached terraform configuration,
             # unless the cache is disabled.
-            configuration = (
-                None
-                if os.getenv(
-                    "AISERVICES_CACHE_DISABLED_PROJECT_GEN", "false"
-                ).casefold()
-                == "true"
-                else load_terraform_cache(cache_sha, connection_string)
-            )
+            configuration = load_cached_configuration(cache_sha, connection_string)
 
             if not configuration:
                 # These are the general examples of projects, feeds, accounts etc
@@ -327,117 +315,9 @@ def create_template_project_callback(
                     purpose=os.getenv("PROJECT_GEN_SERVICE") or AZURE_PROJECT_SERVICE,
                 )
 
-                # Replace anything that looks like a password
-                configuration = replace_passwords(configuration)
+                configuration = sanitize_configuration(configuration)
 
-                # Fix up invalid resource and data names
-                configuration = replace_resource_names_with_digit(configuration)
-
-                # The certificate data needs to be valid but generic to prevent leaking sensitive information
-                configuration = replace_certificate_data(configuration)
-
-                # Deal with the LLM returning code in markdown code blocks
-                configuration = remove_markdown_code_block(configuration)
-
-                # Deal with the LLM adding asterisks as placeholders in K8s configuration
-                configuration = sanitize_kuberenetes_yaml_step_config(configuration)
-
-                # Deal with the LLM using the wrong capitalisation for the account type
-                configuration = sanitize_account_type(configuration)
-
-                # Remove invalid slugs
-                configuration = sanitize_slugs(configuration)
-
-                # Add the space ID variable
-                configuration = add_space_id_variable(configuration)
-
-                # Fix up half created primary package definitions
-                configuration = sanitize_primary_package(configuration)
-
-                # Deal with the LLM using invalid characters for names
-                configuration = sanitize_name_attributes(configuration)
-
-                # Deal with the LLM returning a single line for a lifecycle block
-                configuration = fix_single_line_lifecycle(configuration)
-
-                # Deal with the LLM returning a single line for a lifecycle block
-                configuration = fix_single_line_lifecycle2(configuration)
-
-                # Deal with the LLM returning a single line for a release_retention_policy block
-                configuration = fix_single_line_retention_policy(configuration)
-
-                # Deal with the LLM returning a single line for a phase blocks
-                configuration = fix_single_line_lifecycle_phase(configuration)
-
-                # Deal with the LLM returning a single line for a variable
-                configuration = fix_single_line_variable(configuration)
-
-                # Deal with the LLM returning empty teams in a manual intervention block
-                configuration = fix_empty_teams(configuration)
-
-                # Deal with the LLM returning a single line for a tentacle_retention_policy block
-                configuration = fix_single_line_tentacle_retention_policy(configuration)
-
-                # Deal with the LLM returning a single line for a connectivity_policy block
-                configuration = fix_single_line_connectivity_policy(configuration)
-
-                # Deal with the LLM returning feed blocks with unmatched opening and closing brackets
-                configuration = fix_bad_feed_data(configuration)
-
-                # Deal with the Octopus API timing strings
-                configuration = trim_descriptions(configuration)
-
-                # Deal with the LLM returning feed resources with unmatched opening and closing brackets
-                configuration = fix_bad_maven_feed_resource(configuration)
-
-                # Deal with bad count attributes
-                configuration = fix_bad_logic_characters(configuration)
-
-                # Remove lifecycle blocks
-                configuration = fix_lifecycle(configuration)
-
-                # Deal with the LLM returning a duplicate blocks
-                configuration = remove_duplicate_definitions(configuration)
-
-                # Deal with the LLM returning a duplicate blocks
-                configuration = remove_duplicate_definitions(configuration)
-
-                # Deal with the LLM returning a properties blocks
-                configuration = fix_properties_block(configuration)
-
-                # Deal with double commas in parameters blocks
-                configuration = fix_double_comma(configuration)
-
-                # Fix the variable type
-                configuration = fix_variable_type(configuration)
-
-                # Deal with the LLM returning a execution_properties blocks
-                configuration = fix_execution_properties_block(configuration)
-
-                # Deal with the LLM returning an empty execution_properties blocks
-                configuration = fix_empty_execution_properties_block(configuration)
-
-                # Deal with the LLM returning an empty properties blocks
-                configuration = fix_empty_properties_block(configuration)
-
-                # Remove invalid script configuration
-                configuration = fix_script_source(configuration)
-
-                # Remove empty string default values
-                configuration = fix_empty_strings(configuration)
-
-            # If we are configuring a mock git server, we need to save a user to the mock git service
-            # and update the Terraform configuration with the random credentials.
-            if (
-                "octopusdeploy_platform_hub_version_control_username_password_settings"
-                in configuration
-                and os.getenv("MOCKGIT_API_URL", "") in configuration
-            ):
-                mock_git_user, mock_git_pass = generate_mock_git_user()
-                save_mockgit_user(mock_git_user, mock_git_pass)
-                configuration = set_mock_git_server(
-                    configuration, mock_git_user, mock_git_pass
-                )
+            configuration = configure_mock_git_server(configuration)
 
             try:
                 if auto_apply:
@@ -659,3 +539,121 @@ def generate_mock_git_user():
     user = str(uuid.uuid4())
     password = str(uuid.uuid4())
     return user, password
+
+
+def build_cache_sha(
+    original_query,
+    general_examples_values,
+    project_example_values,
+    general_system_message_values,
+    project_system_message_values,
+):
+    """Build a unique SHA-256 hash for the inputs that generate a Terraform configuration."""
+    cache_key = (
+        original_query
+        + "\n"
+        + "\n".join(general_examples_values)
+        + "\n"
+        + empty_if_none(project_example_values)
+        + "\n"
+        + empty_if_none(general_system_message_values)
+        + "\n"
+        + empty_if_none(project_system_message_values)
+    )
+    return hashlib.sha256(cache_key.encode("utf-8")).hexdigest()
+
+
+def load_cached_configuration(cache_sha, connection_string):
+    """Load a previously cached Terraform configuration, or return None if caching is disabled."""
+    if os.getenv("AISERVICES_CACHE_DISABLED_PROJECT_GEN", "false").casefold() == "true":
+        return None
+    return load_terraform_cache(cache_sha, connection_string)
+
+
+def sanitize_configuration(configuration):
+    """Apply all sanitization fixes to a raw LLM-generated Terraform configuration."""
+    # Replace anything that looks like a password
+    configuration = replace_passwords(configuration)
+    # Fix up invalid resource and data names
+    configuration = replace_resource_names_with_digit(configuration)
+    # The certificate data needs to be valid but generic to prevent leaking sensitive information
+    configuration = replace_certificate_data(configuration)
+    # Deal with the LLM returning code in markdown code blocks
+    configuration = remove_markdown_code_block(configuration)
+    # Deal with the LLM adding asterisks as placeholders in K8s configuration
+    configuration = sanitize_kuberenetes_yaml_step_config(configuration)
+    # Deal with the LLM using the wrong capitalisation for the account type
+    configuration = sanitize_account_type(configuration)
+    # Remove invalid slugs
+    configuration = sanitize_slugs(configuration)
+    # Add the space ID variable
+    configuration = add_space_id_variable(configuration)
+    # Fix up half created primary package definitions
+    configuration = sanitize_primary_package(configuration)
+    # Deal with the LLM using invalid characters for names
+    configuration = sanitize_name_attributes(configuration)
+    # Deal with the LLM returning a single line for a lifecycle block
+    configuration = fix_single_line_lifecycle(configuration)
+    # Deal with the LLM returning a single line for a lifecycle block
+    configuration = fix_single_line_lifecycle2(configuration)
+    # Deal with the LLM returning a single line for a release_retention_policy block
+    configuration = fix_single_line_retention_policy(configuration)
+    # Deal with the LLM returning a single line for a phase blocks
+    configuration = fix_single_line_lifecycle_phase(configuration)
+    # Deal with the LLM returning a single line for a variable
+    configuration = fix_single_line_variable(configuration)
+    # Deal with the LLM returning empty teams in a manual intervention block
+    configuration = fix_empty_teams(configuration)
+    # Deal with the LLM returning a single line for a tentacle_retention_policy block
+    configuration = fix_single_line_tentacle_retention_policy(configuration)
+    # Deal with the LLM returning a single line for a connectivity_policy block
+    configuration = fix_single_line_connectivity_policy(configuration)
+    # Deal with the LLM returning feed blocks with unmatched opening and closing brackets
+    configuration = fix_bad_feed_data(configuration)
+    # Deal with the Octopus API timing strings
+    configuration = trim_descriptions(configuration)
+    # Deal with the LLM returning feed resources with unmatched opening and closing brackets
+    configuration = fix_bad_maven_feed_resource(configuration)
+    # Deal with bad count attributes
+    configuration = fix_bad_logic_characters(configuration)
+    # Remove lifecycle blocks
+    configuration = fix_lifecycle(configuration)
+    # Deal with the LLM returning duplicate blocks
+    configuration = remove_duplicate_definitions(configuration)
+    configuration = remove_duplicate_definitions(configuration)
+    # Deal with the LLM returning a properties blocks
+    configuration = fix_properties_block(configuration)
+    # Deal with double commas in parameters blocks
+    configuration = fix_double_comma(configuration)
+    # Fix the variable type
+    configuration = fix_variable_type(configuration)
+    # Deal with the LLM returning a execution_properties blocks
+    configuration = fix_execution_properties_block(configuration)
+    # Deal with the LLM returning an empty execution_properties blocks
+    configuration = fix_empty_execution_properties_block(configuration)
+    # Deal with the LLM returning an empty properties blocks
+    configuration = fix_empty_properties_block(configuration)
+    # Remove invalid script configuration
+    configuration = fix_script_source(configuration)
+    # Remove empty string default values
+    configuration = fix_empty_strings(configuration)
+    return configuration
+
+
+def configure_mock_git_server(configuration):
+    """
+    If we are configuring a mock git server, we need to save a user to the mock git service
+    and update the Terraform configuration with the random credentials.
+    """
+    if (
+        "octopusdeploy_platform_hub_version_control_username_password_settings"
+        in configuration
+        and os.getenv("MOCKGIT_API_URL", "") in configuration
+    ):
+        mock_git_user, mock_git_pass = generate_mock_git_user()
+        save_mockgit_user(mock_git_user, mock_git_pass)
+        configuration = set_mock_git_server(
+            configuration, mock_git_user, mock_git_pass
+        )
+    return configuration
+
