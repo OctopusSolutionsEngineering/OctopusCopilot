@@ -649,7 +649,7 @@ def handle_octopus_request_failed(e):
     return func.HttpResponse(
         convert_to_sse_response(
             "The request to the Octopus API failed. "
-            + "Either your API key is invalid, does not have the required permissions, or there was an issue contacting the server."
+            + "Your Octopus instance may not accept inbound connections from the AI Assistant, or the provided API key or access token was invalid. See https://octopus.com/docs/octopus-ai/assistant/getting-started#using-with-on-premises-instances for details on using the AI Assistant with on-premises Octopus instances, or Cloud instances with IP whitelisting."
         ),
         headers=get_sse_headers(),
     )
