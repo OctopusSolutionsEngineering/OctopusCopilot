@@ -658,5 +658,4 @@ def final_messages(base_messages):
 def generate_mock_git_user():
     user = str(uuid.uuid4())
     password = str(uuid.uuid4())
-    save_mockgit_user(user, password)
     return user, password
