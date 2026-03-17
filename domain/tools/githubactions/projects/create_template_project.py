@@ -652,8 +652,5 @@ def configure_mock_git_server(configuration):
     ):
         mock_git_user, mock_git_pass = generate_mock_git_user()
         save_mockgit_user(mock_git_user, mock_git_pass)
-        configuration = set_mock_git_server(
-            configuration, mock_git_user, mock_git_pass
-        )
+        configuration = set_mock_git_server(configuration, mock_git_user, mock_git_pass)
     return configuration
-
