@@ -13,6 +13,7 @@ step "open-firewall-port" {
 
     action {
         action_type = "Octopus.AzurePowerShell"
+        environments = ["production"]
         properties = {
             Octopus.Action.Azure.AccountId = "azure-copilot"
             Octopus.Action.Script.ScriptBody = <<-EOT
@@ -356,7 +357,6 @@ step "run-an-azure-script" {
         properties = {
             Octopus.Action.AutoRetry.MaximumCount = "3"
             Octopus.Action.Azure.AccountId = "#{Octopus.Azure.Account}"
-            Octopus.Action.RunOnServer = "true"
             Octopus.Action.Script.ScriptBody = <<-EOT
                 az webapp deployment slot swap \
                 	-g "#{Azure.ResourceGroup.Name}" \
@@ -368,6 +368,7 @@ step "run-an-azure-script" {
             Octopus.Action.Script.Syntax = "Bash"
             OctopusUseBundledTooling = "False"
         }
+        worker_pool = "hosted-windows"
         worker_pool_variable = ""
 
         container {
