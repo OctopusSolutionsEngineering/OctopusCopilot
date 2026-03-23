@@ -375,6 +375,11 @@ jobs:
     #      group: ubuntu-large-runner
     #      labels: 4core-ubuntu-runner
     steps:
+      - name: Login to Octopus Deploy
+        uses: OctopusDeploy/login@v1
+        with:
+          server: https://mattc.octopus.app
+          service_account_id: ad1576ef-b053-4c85-b983-c0607045ae1f
       - uses: actions/checkout@v4
         with:
           fetch-depth: '0'
@@ -449,7 +454,6 @@ jobs:
         if: ${{ github.event_name != 'schedule' }}
         uses: OctopusDeploy/push-package-action@v3
         env:
-          OCTOPUS_API_KEY: ${{ secrets.COPILOT_OCTOPUS_API }}
           OCTOPUS_URL: ${{ secrets.COPILOT_OCTOPUS_URL }}
           OCTOPUS_SPACE: ${{ secrets.COPILOT_OCTOPUS_SPACE }}
         with:
@@ -459,7 +463,6 @@ jobs:
         if: ${{ github.event_name != 'schedule' }}
         uses: OctopusDeploy/push-build-information-action@v3
         env:
-          OCTOPUS_API_KEY: ${{ secrets.COPILOT_OCTOPUS_API }}
           OCTOPUS_URL: ${{ secrets.COPILOT_OCTOPUS_URL }}
           OCTOPUS_SPACE: ${{ secrets.COPILOT_OCTOPUS_SPACE }}
         with:
@@ -470,7 +473,6 @@ jobs:
         if: ${{ github.ref == 'refs/heads/main' && github.event_name != 'schedule' }}
         uses: OctopusDeploy/create-release-action@v3
         env:
-          OCTOPUS_API_KEY: ${{ secrets.COPILOT_OCTOPUS_API }}
           OCTOPUS_URL: ${{ secrets.COPILOT_OCTOPUS_URL }}
           OCTOPUS_SPACE: ${{ secrets.COPILOT_OCTOPUS_SPACE }}
         with:
