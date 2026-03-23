@@ -119,7 +119,7 @@ def create_template_project_confirm_callback_wrapper(
 
             response_text = []
             response_text.append(
-                "Your project was created successfully. The next step is to create and deploy a release. The deployment logs provide instructions and links to help you customize your project further."
+                "Your Octopus resources were created successfully."
             )
             response_text.append("The following resources were created:")
             response_text.append(
