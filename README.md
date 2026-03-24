@@ -17,10 +17,6 @@ This allows you to:
 
 To get started with the extension, enter the prompt `hi` to receive a list of available commands.
 
-# Screenshots
-
-![Octopus Copilot screenshot](docs/screenshot-dashboard.png)
-
 # Architecture diagram
 
 ![](docs/architecture.svg)
