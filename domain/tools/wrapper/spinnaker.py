@@ -1,13 +1,15 @@
 def spinnaker_wrapper(query, callback, logging):
     def migrate_spinnaker_pipeline(**kwargs):
         """
-        Select the migrate_spinnaker_pipeline tool for prompts about recreating, migrating, converting, or translating Spinnaker pipeline JSON
-        with a generated prompt to create Octopus projects.
+        Select the migrate_spinnaker_pipeline tool for prompts that focus on recreating, migrating, converting, or translating Spinnaker pipeline JSON
+        as a generated prompt to create Octopus projects.
 
         You MUST use the migrate_spinnaker_pipeline tool when the query involves Spinnaker pipeline migration or any prompt that
         includes instructions on generating a prompt from a Spinnaker pipeline JSON.
 
-        Example prompts include:
+        You will be penalized for selecting another tool when the prompt mentions anything to do with Spinnaker JSON.
+
+        Example prompts will include phrases like:
 
         * Migrate this Spinnaker pipeline JSON to Octopus Deploy
         * Convert the following Spinnaker pipeline to an Octopus project
