@@ -82,6 +82,7 @@ def init_argparse():
         description="Query the Octopus Copilot agent",
     )
     parser.add_argument("--query", action="store")
+    parser.add_argument("--queryFile", action="store")
     return parser.parse_known_args()
 
 
@@ -309,13 +310,6 @@ def build_tools(tool_query):
             ),
             *deployment_functions,
             FunctionDefinition(
-                spinnaker_wrapper(
-                    tool_query,
-                    spinnaker_cli_callback(log_query),
-                    log_query,
-                )
-            ),
-            FunctionDefinition(
                 create_k8s_project_wrapper(
                     tool_query,
                     callback=create_template_project_callback(
@@ -477,6 +471,13 @@ def build_tools(tool_query):
                     None,
                 ),
             ),
+            FunctionDefinition(
+                spinnaker_wrapper(
+                    tool_query,
+                    spinnaker_cli_callback(log_query),
+                    log_query,
+                )
+            ),
         ],
         fallback=FunctionDefinitions(help_functions),
     )
@@ -484,9 +485,16 @@ def build_tools(tool_query):
 
 try:
     populate_blob_storage()
+
+    query = parser.query
+
+    if parser.queryFile:
+        with open(parser.queryFile, "r") as f:
+            query = f.read()
+
     result = llm_tool_query(
-        parser.query,
-        build_tools(parser.query),
+        query,
+        build_tools(query),
         lambda x, y: print(x + " " + ",".join(sanitize_list(y))),
     ).call_function()
 

@@ -1,8 +1,8 @@
-from infrastructure.llm import llm_message_query
+from infrastructure.llm import llm_message_query, AZURE_GENERAL_QUERY_SMALL_LLM
 
 
 def spinnaker_cli_callback(logging):
-    def spinnaker_callback_implementation(original_query, spinnaker_json):
+    def spinnaker_callback_implementation(original_query):
 
         context = {"input": original_query}
 
@@ -11,7 +11,7 @@ def spinnaker_cli_callback(logging):
             ("user", "Answer:"),
         ]
 
-        chat_response = llm_message_query(messages, context, logging)
+        chat_response = llm_message_query(messages, context, logging, purpose=AZURE_GENERAL_QUERY_SMALL_LLM)
 
         return chat_response
 
