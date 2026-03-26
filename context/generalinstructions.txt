@@ -1623,6 +1623,12 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_manifest_update_upda
   notes                 = "Here is a code block\n\n```\n# This is some code in a code block\n```"
 }
 
+* The step start trigger is defined by the "start_trigger" attribute, and must be set to one of the following values:
+  * "StartWithPrevious"
+  * "StartAfterPrevious"
+* The "StartWithPrevious" setting corresponds with the "Run in parallel with the previous step" option in the UI.
+* The "StartAfterPrevious" setting corresponds with the "Wait for all previous steps to complete, then start" option in the UI.
+
 ## Octopus step template instructions
 
 * When the prompt includes instructions to create a community step template and includes a url to https://library.octopus.com/step-templates, you must create both a resource "octopusdeploy_community_step_template" and a data "octopusdeploy_community_step_template" to check for the existence of the community step template before creating it.
