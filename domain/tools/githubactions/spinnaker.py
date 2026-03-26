@@ -1,6 +1,4 @@
-import asyncio
 from domain.messages.spinnaker_messages import spinnaker_migration_prompt
-from functools import reduce
 
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message

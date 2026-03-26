@@ -42,6 +42,7 @@ from domain.tools.githubactions.resource_specific_callback import (
     resource_specific_callback,
 )
 from domain.tools.githubactions.runbook_logs import get_runbook_logs_wrapper
+from domain.tools.githubactions.spinnaker import spinnaker_callback
 from domain.tools.githubactions.suggest_solution import (
     suggest_solution_callback_wrapper,
 )
@@ -132,6 +133,7 @@ from domain.tools.wrapper.projects.create_winservice_project import (
 )
 from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
 from domain.tools.wrapper.runbook_logs import answer_runbook_run_logs_wrapper
+from domain.tools.wrapper.spinnaker import spinnaker_wrapper
 from domain.tools.wrapper.step_features import answer_step_features_wrapper
 from domain.tools.wrapper.suggest_solution import suggest_solution_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
@@ -1177,6 +1179,13 @@ def build_form_tools(query, req: func.HttpRequest):
                     get_redirections(req),
                     get_redirections_api_key(req),
                 ),
+            ),
+            FunctionDefinition(
+                spinnaker_wrapper(
+                    query,
+                    spinnaker_callback(log_query),
+                    log_query,
+                )
             ),
         ],
         fallback=FunctionDefinitions(docs_functions),
