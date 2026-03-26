@@ -11,26 +11,24 @@ from infrastructure.llm import llm_message_query, AZURE_GENERAL_QUERY_SMALL_LLM
 # We expose this tool to be able to control things like selecting the LLM.
 def spinnaker_callback(github_user, log_query):
     def spinnaker_callback_implementation(original_query):
+        debug_text = get_params_message(
+            github_user,
+            True,
+            spinnaker_callback_implementation.__name__,
+            original_query=original_query,
+        )
 
-            debug_text = get_params_message(
-                github_user,
-                True,
-                spinnaker_callback_implementation.__name__,
-                original_query=original_query,
-            )
+        context = {"input": original_query}
 
-            context = {"input": original_query}
+        messages = [
+            ("user", "Question: {input}"),
+            ("user", "Answer:"),
+        ]
 
-            messages = [
-                ("user", "Question: {input}"),
-                ("user", "Answer:"),
-            ]
+        chat_response = [llm_message_query(messages, context, log_query, purpose=AZURE_GENERAL_QUERY_SMALL_LLM)]
 
-            chat_response = [llm_message_query(messages, context, log_query, purpose=AZURE_GENERAL_QUERY_SMALL_LLM)]
+        chat_response.extend(debug_text)
 
-            chat_response.extend(debug_text)
-
-            return CopilotResponse("\n\n".join(chat_response))
+        return CopilotResponse("\n\n".join(chat_response))
 
     return spinnaker_callback_implementation
-

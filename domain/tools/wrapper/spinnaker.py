@@ -28,4 +28,3 @@ def spinnaker_wrapper(query, callback, logging):
         return callback(query)
 
     return migrate_spinnaker_pipeline
-

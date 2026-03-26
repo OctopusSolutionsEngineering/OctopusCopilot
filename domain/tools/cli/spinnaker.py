@@ -16,4 +16,3 @@ def spinnaker_cli_callback(logging):
         return chat_response
 
     return spinnaker_callback_implementation
-
