@@ -37,6 +37,7 @@ AZURE_PROJECT_SERVICE = "azure_project"
 AZURE_PROJECT_ANTHROPIC_SERVICE = "azure_project_anthropic"
 AZURE_GENERAL_SERVICE = "azure_general"
 BEDROCK_PROJECT_SERVICE = "bedrock_project"
+AZURE_GENERAL_QUERY_SMALL_LLM = "azure_general_query_small"
 
 
 def build_llm(purpose):
@@ -45,6 +46,9 @@ def build_llm(purpose):
 
     if purpose == AZURE_PROJECT_ANTHROPIC_SERVICE:
         return build_azure_anthropic_project_llm()
+
+    if purpose == AZURE_GENERAL_QUERY_SMALL_LLM:
+        return build_azure_general_small_query()
 
     if purpose == BEDROCK_PROJECT_SERVICE:
         return build_bedrock_llm()
@@ -102,6 +106,43 @@ def build_azure_project_llm():
 
     use_responses_api = (
         os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_RESPONSES", "").casefold()
+        == "true"
+    )
+
+    api_key = os.environ["AISERVICES_KEY"]
+
+    endpoint = os.environ["AISERVICES_ENDPOINT"]
+
+    return AzureChatOpenAI(
+        temperature=temperature,
+        azure_deployment=deployment,
+        api_key=api_key,
+        azure_endpoint=endpoint,
+        api_version=version,
+        use_responses_api=use_responses_api,
+    )
+
+
+def build_azure_general_small_query():
+    deployment = os.getenv("AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL") or os.getenv(
+        "AISERVICES_DEPLOYMENT"
+    )
+    version = (
+        os.environ.get("AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL_VERSION")
+        or "2025-04-01-preview"  # https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-preview-api-releases
+    )
+
+    temperature = (
+        None
+        if os.getenv("AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL_TEMPERATURE", "") == "None"
+        else string_to_int(
+            os.getenv("AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL_TEMPERATURE", "0"),
+            0,
+        )
+    )
+
+    use_responses_api = (
+        os.getenv("AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL_RESPONSES", "").casefold()
         == "true"
     )
 

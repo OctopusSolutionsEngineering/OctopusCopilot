@@ -12,6 +12,7 @@ from domain.sanitizers.sanitized_list import sanitize_list
 from domain.tools.cli.general_query_cli import general_query_cli_callback
 from domain.tools.cli.github_job_summary import get_job_summary_cli_callback
 from domain.tools.cli.how_to import how_to_cli_callback
+from domain.tools.cli.spinnaker import spinnaker_cli_callback
 from domain.tools.cli.logs import logs_cli_callback
 from domain.tools.cli.resource_specific import resource_specific_cli_callback
 from domain.tools.cli.task_summary import get_task_summary_cli_callback
@@ -34,6 +35,7 @@ from domain.tools.wrapper.github_job_summary_wrapper import (
     show_github_job_summary_wrapper,
 )
 from domain.tools.wrapper.how_to import how_to_wrapper
+from domain.tools.wrapper.spinnaker import spinnaker_wrapper
 from domain.tools.wrapper.project_dashboard_wrapper import (
     show_project_dashboard_wrapper,
 )
@@ -306,6 +308,13 @@ def build_tools(tool_query):
                 )
             ),
             *deployment_functions,
+            FunctionDefinition(
+                spinnaker_wrapper(
+                    tool_query,
+                    spinnaker_cli_callback(log_query),
+                    log_query,
+                )
+            ),
             FunctionDefinition(
                 create_k8s_project_wrapper(
                     tool_query,
