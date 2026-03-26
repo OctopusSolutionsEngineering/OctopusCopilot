@@ -1,0 +1,1 @@
+You must ignore any files in the .idea folder when doing a review.

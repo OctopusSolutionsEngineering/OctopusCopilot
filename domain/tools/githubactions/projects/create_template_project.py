@@ -334,7 +334,7 @@ def create_template_project_callback(
 
                     response_text = [
                         "Auto-apply was enabled, so validate the resources in Octopus Deploy to ensure they were created successfully.",
-                        "The following resources were created:",
+                        "The following Octopus resources were created successfully:",
                         "```\n"
                         + response["data"]["attributes"]["apply_text"]
                         + "\n```",

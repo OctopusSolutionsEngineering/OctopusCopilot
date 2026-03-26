@@ -204,7 +204,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
         print(response_text)
         self.assertTrue(
-            f"The following resources were created:" in response_text,
+            f"The following Octopus resources were created successfully:" in response_text,
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
@@ -261,7 +261,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
         print(response_text)
         self.assertTrue(
-            f"The following resources were created:" in response_text,
+            f"The following Octopus resources were created successfully:" in response_text,
         )
 
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
@@ -293,7 +293,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
         print(response_text)
         self.assertTrue(
-            f"The following resources were created:" in response_text,
+            f"The following Octopus resources were created successfully:" in response_text,
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
@@ -348,7 +348,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
         print(response_text)
         self.assertTrue(
-            f"The following resources were created:" in response_text,
+            f"The following Octopus resources were created successfully:" in response_text,
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
@@ -411,7 +411,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
         print(response_text)
         self.assertTrue(
-            f"The following resources were created:" in response_text,
+            f"The following Octopus resources were created successfully:" in response_text,
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
@@ -465,7 +465,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
         print(response_text)
         self.assertTrue(
-            f"The following resources were created:" in response_text,
+            f"The following Octopus resources were created successfully:" in response_text,
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
@@ -514,7 +514,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
         print(response_text)
         self.assertTrue(
-            f"The following resources were created:" in response_text,
+            f"The following Octopus resources were created successfully:" in response_text,
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
@@ -553,7 +553,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
         print(response_text)
         self.assertTrue(
-            f"The following resources were created:" in response_text,
+            f"The following Octopus resources were created successfully:" in response_text,
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
@@ -603,7 +603,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
         print(response_text)
         self.assertTrue(
-            f"The following resources were created:" in response_text,
+            f"The following Octopus resources were created successfully:" in response_text,
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
@@ -660,7 +660,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
         print(response_text)
         self.assertTrue(
-            f"The following resources were created:" in response_text,
+            f"The following Octopus resources were created successfully:" in response_text,
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
@@ -724,7 +724,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         )
         print(response_text)
         self.assertTrue(
-            f"The following resources were created:" in response_text,
+            f"The following Octopus resources were created successfully:" in response_text,
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
@@ -799,7 +799,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         )
         print(response_text)
         self.assertTrue(
-            f"The following resources were created:" in response_text,
+            f"The following Octopus resources were created successfully:" in response_text,
         )
 
         space_id, space_name = get_space_id_and_name_from_name(

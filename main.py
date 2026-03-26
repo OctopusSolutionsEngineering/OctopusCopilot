@@ -12,6 +12,7 @@ from domain.sanitizers.sanitized_list import sanitize_list
 from domain.tools.cli.general_query_cli import general_query_cli_callback
 from domain.tools.cli.github_job_summary import get_job_summary_cli_callback
 from domain.tools.cli.how_to import how_to_cli_callback
+from domain.tools.cli.spinnaker import spinnaker_cli_callback
 from domain.tools.cli.logs import logs_cli_callback
 from domain.tools.cli.resource_specific import resource_specific_cli_callback
 from domain.tools.cli.task_summary import get_task_summary_cli_callback
@@ -34,6 +35,7 @@ from domain.tools.wrapper.github_job_summary_wrapper import (
     show_github_job_summary_wrapper,
 )
 from domain.tools.wrapper.how_to import how_to_wrapper
+from domain.tools.wrapper.spinnaker import spinnaker_wrapper
 from domain.tools.wrapper.project_dashboard_wrapper import (
     show_project_dashboard_wrapper,
 )
@@ -80,6 +82,7 @@ def init_argparse():
         description="Query the Octopus Copilot agent",
     )
     parser.add_argument("--query", action="store")
+    parser.add_argument("--queryFile", action="store")
     return parser.parse_known_args()
 
 
@@ -468,6 +471,13 @@ def build_tools(tool_query):
                     None,
                 ),
             ),
+            FunctionDefinition(
+                spinnaker_wrapper(
+                    tool_query,
+                    spinnaker_cli_callback(log_query),
+                    log_query,
+                )
+            ),
         ],
         fallback=FunctionDefinitions(help_functions),
     )
@@ -475,9 +485,16 @@ def build_tools(tool_query):
 
 try:
     populate_blob_storage()
+
+    query = parser.query
+
+    if parser.queryFile:
+        with open(parser.queryFile, "r") as f:
+            query = f.read()
+
     result = llm_tool_query(
-        parser.query,
-        build_tools(parser.query),
+        query,
+        build_tools(query),
         lambda x, y: print(x + " " + ",".join(sanitize_list(y))),
     ).call_function()
 
