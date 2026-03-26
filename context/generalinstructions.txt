@@ -9,6 +9,7 @@
   * When given the prompt `Create a project called 'Example Project'. The current project is 'My Web App'. The current space is 'Default'.`, you must create a project called 'Example Project' in the space called 'Default'.
 * You must create valid Terraform.
 * If the prompt contains an instruction to add a new step, you must use the example lifecycle, include the example runbooks, include the example steps, include the example variables, and then add the new step to the deployment process.
+* Instructions to create projects "with no steps" overrides instructions to add steps to the project. When a project is created with no steps, there must not be any "octopusdeploy_process_step" resources defined for that project.
 
 ## Default Lifecycle Instructions
 
