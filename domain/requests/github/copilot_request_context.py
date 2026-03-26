@@ -1183,7 +1183,7 @@ def build_form_tools(query, req: func.HttpRequest):
             FunctionDefinition(
                 spinnaker_wrapper(
                     query,
-                    spinnaker_callback(log_query),
+                    spinnaker_callback(get_github_user_from_form(req), log_query),
                     log_query,
                 )
             ),

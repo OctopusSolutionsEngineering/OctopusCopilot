@@ -1,5 +1,3 @@
-from domain.messages.spinnaker_messages import spinnaker_migration_prompt
-
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
 from infrastructure.llm import llm_message_query, AZURE_GENERAL_QUERY_SMALL_LLM
