@@ -372,8 +372,7 @@ jobs:
     name: Build
     needs: test-results
     runs-on: ubuntu-latest
-    #      group: ubuntu-large-runner
-    #      labels: 4core-ubuntu-runner
+    if: github.event_name != 'schedule' && github.ref == 'refs/heads/main'
     steps:
       - name: Login to Octopus Deploy
         uses: OctopusDeploy/login@v1
