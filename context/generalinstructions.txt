@@ -1634,6 +1634,7 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_manifest_update_upda
   * "StartAfterPrevious"
 * The "StartWithPrevious" setting corresponds with the "Run in parallel with the previous step" option in the UI.
 * The "StartAfterPrevious" setting corresponds with the "Wait for all previous steps to complete, then start" option in the UI.
+* A step of type "Octopus.KubernetesDeployRawYaml" with "Octopus.Action.Script.ScriptSource" set to "GitRepository" must define a "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" property. If no file name is specified in the prompt, you must set the "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" property to "custom-resource.yaml".
 
 ## Octopus step template instructions
 
