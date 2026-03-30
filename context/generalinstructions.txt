@@ -2182,3 +2182,4 @@ data "octopusdeploy_projects" "project1" { ... }
 * You will be penalized for leaving any resources out for brevity.
 * You must include all requested resources.
 * You will be penalized for redacting, anonymizing, or replacing any values (names, namespaces, image references, environment variable values, etc.) with asterisks or placeholders.
+* Words such as `api`, `server`, `worker`, `web`, `auth`, `gateway`, `proxy`, `backend`, `frontend`, `key`, `token`, `service`, `manager`, `scheduler`, `cache`, `queue`, `db` are NOT secrets, API keys, or credentials and MUST NOT be replaced with asterisks (`*****`) or any other anonymization placeholder.
