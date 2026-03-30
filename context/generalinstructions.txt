@@ -863,6 +863,10 @@ resource "octopusdeploy_external_feed_create_release_trigger" "project_trigger" 
 * You will be penalized for setting the "template_id" property on a "octopusdeploy_tenant_project_variable" resource to "null" or an empty string.
 * The "template_id" property on a "octopusdeploy_tenant_project_variable" resource must be set to a value like "${length(data.octopusdeploy_projects.<project name>.projects) != 0 ? null : octopusdeploy_project.<project name>[0].template[0].id}"
 
+## Environment Instructions
+
+* You will be penalized for defining the "use_guided_infrastructure" property on a resource "octopusdeploy_environment". This property is not valid for any environment and must not be included in any environment resource.
+
 ## Octopus Project Channel Instructions
 
 * Channels defined as resource "octopusdeploy_channel" have the following required properties:
