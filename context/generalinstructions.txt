@@ -671,7 +671,7 @@ resource "octopusdeploy_runbook" "runbook_my_script_app_4_retrieve_logs" {
 
 ## Octopus Project Instructions
 
-* The "name" attribute in a "octopusdeploy_project" resource can only contain letters, numbers, periods, commas, dashes, underscores, brackets, or hashes.
+* The "name" attribute in a "octopusdeploy_project" resource can only contain letters, numbers, periods, commas, dashes, underscores, brackets, square brackets, or hashes.
 * The "slug" attribute in a "octopusdeploy_project" resource can only contain lower case letters, numbers, or dashes.
 * You will be penalized for replacing brackets with underscores in the "name" attribute of a "octopusdeploy_project" resource.
 * Retention policies do not apply to resource "octopusdeploy_project".
