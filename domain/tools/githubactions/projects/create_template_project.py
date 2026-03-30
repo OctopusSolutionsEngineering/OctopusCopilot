@@ -366,8 +366,12 @@ def create_template_project_callback(
                         "Initial plan failed, attempting to rectify with a second pass",
                     )
 
+                    base_messages = generate_base_messages(
+                        general_examples_values, general_system_message_values
+                    )
+
                     new_messages = generate_retry_messages(
-                        messages, configuration, str(e)
+                        base_messages, configuration, str(e)
                     )
 
                     configuration = llm_message_query(
