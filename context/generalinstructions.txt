@@ -853,6 +853,7 @@ resource "octopusdeploy_external_feed_create_release_trigger" "project_trigger" 
 
 * You will be penalized for setting the "package_reference" property in the "package" block in a "octopusdeploy_external_feed_create_release_trigger" resource to an empty string when the referenced step has no primary package.
 * You will be penalized for creating resources of type "octopusdeploy_project_automatic_release_trigger".
+* If a trigger for a package feed is defined, but none of the steps define a package, do not define the "package" block.
 
 ## Tenant Variable Instructions
 
