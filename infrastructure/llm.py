@@ -157,6 +157,7 @@ def build_azure_general_small_query():
         azure_endpoint=endpoint,
         api_version=version,
         use_responses_api=use_responses_api,
+        reasoning_effort="medium"
     )
 
 
