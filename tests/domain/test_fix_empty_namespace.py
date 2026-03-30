@@ -18,10 +18,10 @@ class FixEmptyNamespaceTests(unittest.TestCase):
 
     def test_removes_empty_namespace_inline(self):
         config = (
-            'execution_properties = {\n'
+            "execution_properties = {\n"
             '  "Octopus.Action.KubernetesContainers.Namespace" = ""\n'
             '  "Octopus.Action.Script.ScriptSource" = "Inline"\n'
-            '}'
+            "}"
         )
         result = fix_empty_namespace(config)
         self.assertNotIn('"Octopus.Action.KubernetesContainers.Namespace"', result)
