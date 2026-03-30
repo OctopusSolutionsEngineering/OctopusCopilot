@@ -2151,3 +2151,4 @@ data "octopusdeploy_projects" "project1" { ... }
 * You will be penalized for using syntax like `${var.step_name | lower | replace(" ", "-")}`, as Terraform does not support the pipe character to modify varibale values.
 * You will be penalized for leaving any resources out for brevity.
 * You must include all requested resources.
+* You will be penalized for redacting, anonymizing, or replacing any values (names, namespaces, image references, environment variable values, etc.) with asterisks or placeholders.
