@@ -2126,6 +2126,17 @@ variable "project_group_name" {
 
 * You will be penalized for defining a "scope" block in a terraform variable.
 * You will be penalized for defining the "type" in a variable with an value that includes double quotes, for example `type = "string"`. The correct syntax is `type = string` without double quotes.
+* You will be penalized for omitting the equals sign between the variable properties and their values, for example:
+
+```
+variable "project_group_name" {
+  type        = string
+  # This is wrong because there is no equals sign between "nullable" and "false"
+  nullable     false
+  sensitive   = false
+  description = "The name of the project group to lookup"
+  default     = "My Project Group"
+}
 
 ## Penalties and General Instructions
 
