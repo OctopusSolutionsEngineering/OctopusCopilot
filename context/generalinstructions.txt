@@ -1791,7 +1791,7 @@ resource "octopusdeploy_variable" "worker_pool_variable" {
 * The names of "octopusdeploy_variable" resources must start with a letter or underscore.
 * You will be penalized for defining a name for a "octopusdeploy_variable" resource that starts with a number or special character.
 * The "label" attribute in a "prompt" block of a "octopusdeploy_variable" resource must be set to an empty string if the prompt should not display a label for the variable.
-* You will be penalized for omitting the "label" attribute as an empty string in a "template" block of a "octopusdeploy_variable" resource.
+* You will be penalized for omitting the "label" attribute as an empty string in a "prompt" block of a "octopusdeploy_variable" resource.
 
 ## Runbook Instructions
 
