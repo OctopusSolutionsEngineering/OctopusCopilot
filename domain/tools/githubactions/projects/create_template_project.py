@@ -394,6 +394,11 @@ def create_template_project_callback(
                         redirector_api_key,
                     )
 
+                    log_query(
+                        create_template_project_callback.__name__,
+                        "Second pass recovered Terraform configuration",
+                    )
+
             except SpaceBuilderRequestFailed as e:
                 log_query(create_template_project_callback.__name__, str(e))
                 return CopilotResponse(project_prompt_error_message)
