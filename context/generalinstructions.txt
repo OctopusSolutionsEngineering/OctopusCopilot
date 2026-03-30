@@ -2093,6 +2093,19 @@ EOT
     * "Octopus.Kubernetes.Kustomize"
     * "Octopus.TransferPackage"
 
+ * You must take EXTREME CARE when escaping quotes in the generated Terraform.
+ * This is an example of a property that is not escaped correctly:
+
+ ```
+ "ssn_Message" = "Image: $${trigger[\"artifacts\"].?[name == _"registry.example.invalid_image-0095_"][0][_"version_"]}"
+ ```
+
+ * This is an example of the same property with correct escaping:
+
+ ```
+ "ssn_Message" = "Image: $${trigger[\"artifacts\"].?[name == _\"registry.example.invalid_image-0095_\"][0][_\"version_\"]}"
+ ```
+
 ## Terraform Variable Instructions
 
 * All terraform variables must have default values, for example:
