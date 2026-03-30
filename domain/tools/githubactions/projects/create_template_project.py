@@ -46,7 +46,7 @@ from domain.sanitizers.terraform import (
     fix_single_line_connectivity_policy,
     trim_descriptions,
     fix_single_line_lifecycle2,
-    set_mock_git_server,
+    set_mock_git_server, fix_empty_namespace,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -590,6 +590,8 @@ def sanitize_configuration(configuration):
     configuration = remove_markdown_code_block(configuration)
     # Deal with the LLM adding asterisks as placeholders in K8s configuration
     configuration = sanitize_kuberenetes_yaml_step_config(configuration)
+    # Remove empty namespace properties
+    configuration = fix_empty_namespace(configuration)
     # Deal with the LLM using the wrong capitalisation for the account type
     configuration = sanitize_account_type(configuration)
     # Remove invalid slugs
@@ -627,7 +629,6 @@ def sanitize_configuration(configuration):
     # Remove lifecycle blocks
     configuration = fix_lifecycle(configuration)
     # Deal with the LLM returning duplicate blocks
-    configuration = remove_duplicate_definitions(configuration)
     configuration = remove_duplicate_definitions(configuration)
     # Deal with the LLM returning a properties blocks
     configuration = fix_properties_block(configuration)
