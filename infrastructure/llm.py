@@ -134,10 +134,11 @@ def build_azure_general_small_query():
 
     temperature = (
         None
-        if os.getenv("AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL_TEMPERATURE", "") == "None"
+        if os.getenv("AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL_TEMPERATURE", "")
+        == "None"
         else string_to_int(
-            os.getenv("AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL_TEMPERATURE", "0"),
-            0,
+            os.getenv("AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL_TEMPERATURE", "1"),
+            1,
         )
     )
 
@@ -157,7 +158,7 @@ def build_azure_general_small_query():
         azure_endpoint=endpoint,
         api_version=version,
         use_responses_api=use_responses_api,
-        reasoning_effort="medium"
+        reasoning_effort="medium",
     )
 
 
