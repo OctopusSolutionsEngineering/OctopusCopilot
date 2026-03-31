@@ -183,18 +183,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "",
-                    "copilot_references": None,
-                    "copilot_confirmations": [
-                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
-                    ],
-                }
-            ]
-        }
+        confirmation = build_confirmation_body(confirmation_id)
 
         run_response = copilot_handler_internal(
             build_confirmation_request(confirmation)
@@ -240,18 +229,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "",
-                    "copilot_references": None,
-                    "copilot_confirmations": [
-                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
-                    ],
-                }
-            ]
-        }
+        confirmation = build_confirmation_body(confirmation_id)
 
         run_response = copilot_handler_internal(
             build_confirmation_request(confirmation)
@@ -272,18 +250,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "",
-                    "copilot_references": None,
-                    "copilot_confirmations": [
-                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
-                    ],
-                }
-            ]
-        }
+        confirmation = build_confirmation_body(confirmation_id)
 
         run_response = copilot_handler_internal(
             build_confirmation_request(confirmation)
@@ -327,18 +294,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "",
-                    "copilot_references": None,
-                    "copilot_confirmations": [
-                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
-                    ],
-                }
-            ]
-        }
+        confirmation = build_confirmation_body(confirmation_id)
 
         run_response = copilot_handler_internal(
             build_confirmation_request(confirmation)
@@ -390,18 +346,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "",
-                    "copilot_references": None,
-                    "copilot_confirmations": [
-                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
-                    ],
-                }
-            ]
-        }
+        confirmation = build_confirmation_body(confirmation_id)
 
         run_response = copilot_handler_internal(
             build_confirmation_request(confirmation)
@@ -444,18 +389,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "",
-                    "copilot_references": None,
-                    "copilot_confirmations": [
-                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
-                    ],
-                }
-            ]
-        }
+        confirmation = build_confirmation_body(confirmation_id)
 
         run_response = copilot_handler_internal(
             build_confirmation_request(confirmation)
@@ -493,18 +427,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "",
-                    "copilot_references": None,
-                    "copilot_confirmations": [
-                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
-                    ],
-                }
-            ]
-        }
+        confirmation = build_confirmation_body(confirmation_id)
 
         run_response = copilot_handler_internal(
             build_confirmation_request(confirmation)
@@ -532,18 +455,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "",
-                    "copilot_references": None,
-                    "copilot_confirmations": [
-                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
-                    ],
-                }
-            ]
-        }
+        confirmation = build_confirmation_body(confirmation_id)
 
         run_response = copilot_handler_internal(
             build_confirmation_request(confirmation)
@@ -573,6 +485,52 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             f"The deployment process should have at least two steps. It has: {number_of_steps}",
         )
 
+    def test_create_custom_k8s_project(self):
+        """
+        This tests the prompt used by https://octopus.com/blog/platform-engineering-lunch-2
+        """
+
+        project_name = "Custom K8s Project"
+        prompt = f'''
+Create a Kubernetes project called "{project_name}", and then:
+* Use client side apply in the Kubernetes step (the mock Kubernetes cluster only supports client side apply).
+* Disable verification checks in the Kubernetes steps (the mock Kubernetes cluster doesn't support verification checks).
+* Enable retries on the K8s deployment step.
+'''
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = build_confirmation_body(confirmation_id)
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        print(response_text)
+        self.assertTrue(
+            f"The following Octopus resources were created successfully:" in response_text,
+        )
+
+        space_id, space_name = get_space_id_and_name_from_name(
+            "Simple", Octopus_Api_Key, Octopus_Url
+        )
+
+        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
+        self.assertEqual(project["Name"], project_name)
+
+        raw_deployment_process = get_raw_deployment_process(
+            space_name, project_name, Octopus_Api_Key, Octopus_Url
+        )
+        deployment_process = json.loads(raw_deployment_process)
+        number_of_steps = len(deployment_process["Steps"])
+        self.assertTrue(
+            number_of_steps >= 4,
+            f"The deployment process should have at least four steps. It has: {number_of_steps}",
+        )
+
     @unittest.skip("This test is known to be flaky")
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
     def test_create_argo_project(self):
@@ -582,18 +540,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "",
-                    "copilot_references": None,
-                    "copilot_confirmations": [
-                        {"state": "accepted", "confirmation": {"id": confirmation_id}}
-                    ],
-                }
-            ]
-        }
+        confirmation = build_confirmation_body(confirmation_id)
 
         run_response = copilot_handler_internal(
             build_confirmation_request(confirmation)
@@ -636,21 +583,7 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "",
-                    "copilot_references": None,
-                    "copilot_confirmations": [
-                        {
-                            "state": "accepted",
-                            "confirmation": {"id": confirmation_id},
-                        }
-                    ],
-                }
-            ]
-        }
+        confirmation = build_confirmation_body(confirmation_id)
 
         run_response = copilot_handler_internal(
             build_confirmation_request(confirmation)
@@ -700,21 +633,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "",
-                    "copilot_references": None,
-                    "copilot_confirmations": [
-                        {
-                            "state": "accepted",
-                            "confirmation": {"id": confirmation_id},
-                        }
-                    ],
-                }
-            ]
-        }
+        confirmation = build_confirmation_body(confirmation_id)
 
         run_response = copilot_handler_internal(
             build_confirmation_request(confirmation)
@@ -775,21 +694,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
         confirmation_id = get_confirmation_id(response_body)
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
-        confirmation = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "",
-                    "copilot_references": None,
-                    "copilot_confirmations": [
-                        {
-                            "state": "accepted",
-                            "confirmation": {"id": confirmation_id},
-                        }
-                    ],
-                }
-            ]
-        }
+        confirmation = build_confirmation_body(confirmation_id)
 
         run_response = copilot_handler_internal(
             build_confirmation_request(confirmation)
@@ -837,6 +742,26 @@ Create 5 tag sets that represent counties from England and assign them to the te
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def build_confirmation_body(confirmation_id):
+    """
+    Build the confirmation body accepted by copilot_handler_internal.
+    :param confirmation_id: the confirmation ID returned from the initial response
+    :return: dict representing the accepted confirmation message
+    """
+    return {
+        "messages": [
+            {
+                "role": "user",
+                "content": "",
+                "copilot_references": None,
+                "copilot_confirmations": [
+                    {"state": "accepted", "confirmation": {"id": confirmation_id}}
+                ],
+            }
+        ]
+    }
 
 
 def build_request(message):
