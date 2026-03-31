@@ -1651,6 +1651,8 @@ Create a project called "Deploy Workers (dev&prod) and Cronjobs (dev&prod)" in t
 * Add a "Deploy Kubernetes YAML" step to the deployment process and name the step "Deploy user-track worker -dev-". Set the YAML Source to "Inline YAML". Set the YAML content to `# TODO: replace with manifest downloaded from gs://example-bucket/storage-1627`. Set the target tag to Kubernetes. Set the step description to "Original Spinnaker stage name: Deploy user-track worker (dev). This step originally loaded its manifest from Google Cloud Storage at "gs://example-bucket/storage-1627". The manifest must be inlined or the step must be reconfigured to read from a supported source." Set the start trigger to "Run in parallel with the previous step".
 ```
 
+* You will be penalized for not maintaining the order of the steps as defined in the prompt in the "octopusdeploy_process_steps_order" resource.
+
 ## Octopus step template instructions
 
 * When the prompt includes instructions to create a community step template and includes a url to https://library.octopus.com/step-templates, you must create both a resource "octopusdeploy_community_step_template" and a data "octopusdeploy_community_step_template" to check for the existence of the community step template before creating it.
