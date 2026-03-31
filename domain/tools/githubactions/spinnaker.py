@@ -1,10 +1,11 @@
 import hashlib
 import os
 
+from domain.exceptions.none_on_exception import none_on_exception
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
 from infrastructure.llm import llm_message_query, AZURE_GENERAL_QUERY_SMALL_LLM
-from infrastructure.terraform_context import load_terraform_cache
+from infrastructure.terraform_context import load_terraform_cache, cache_terraform
 
 
 # This is a very simple tool, passing through the original prompt to the LLM.
@@ -32,11 +33,15 @@ def spinnaker_callback(github_user, connection_string, log_query):
             ("user", "Answer:"),
         ]
 
-        chat_response = [
-            llm_message_query(
-                messages, context, log_query, purpose=AZURE_GENERAL_QUERY_SMALL_LLM
-            )
-        ]
+        response = llm_message_query(
+            messages, context, log_query, purpose=AZURE_GENERAL_QUERY_SMALL_LLM
+        )
+
+        none_on_exception(
+            lambda: cache_terraform(query_sha, response, connection_string)
+        )
+
+        chat_response = [response]
 
         chat_response.extend(debug_text)
 
