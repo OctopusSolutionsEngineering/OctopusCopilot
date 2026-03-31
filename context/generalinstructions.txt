@@ -1641,7 +1641,8 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_manifest_update_upda
 * A step of type "Octopus.KubernetesDeployRawYaml" with must not set the "Octopus.Action.KubernetesContainers.Namespace" property to an empty string. If the prompt does not specify a namespace, do not define the "Octopus.Action.KubernetesContainers.Namespace" property.
 * All steps must have a unique name. If two steps have the same name, add a number at the end of the step name to make it unique, for example "Deploy a Kubernetes Web App via YAML 2".
 * Any "octopusdeploy_process_templated_step" resource based on the community step template with the URL "https://library.octopus.com/step-templates/99e6f203-3061-4018-9e34-4a3a9c3c3179" (which is the "Slack - Send Simple Notification" community step template) must set "Octopus.Action.RunOnServer" = "true" in the "execution_properties" block.
-* It is CRITICAL that the order of the steps in the prompt is maintained in the Terraform configurations. You MUST add each step, one by one, from top to bottom and left to right, as defined in the prompt.. For example, the following prompt must define the "Slack Notification - Start" step first, then the "Deploy user-profile worker -dev-" step, and then the "Deploy user-track worker -dev-" step, in that specific order, in the "octopusdeploy_process_steps_order" resource:
+* It is CRITICAL that the order of the steps in the prompt is maintained in the Terraform configurations. You MUST add each step, one by one, from top to bottom and left to right, as defined in the prompt.
+* The following prompt must define the "Slack Notification - Start" step first, then the "Deploy user-profile worker -dev-" step, and then the "Deploy user-track worker -dev-" step, in that specific order, in the "octopusdeploy_process_steps_order" resource:
 
 ```
 Create a project called "Deploy Workers (dev&prod) and Cronjobs (dev&prod)" in the "Default Project Group" project group with no steps.
