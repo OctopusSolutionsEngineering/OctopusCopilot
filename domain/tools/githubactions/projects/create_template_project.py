@@ -46,7 +46,7 @@ from domain.sanitizers.terraform import (
     fix_single_line_connectivity_policy,
     trim_descriptions,
     fix_single_line_lifecycle2,
-    set_mock_git_server,
+    set_mock_git_server, fix_empty_namespace,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -366,8 +366,12 @@ def create_template_project_callback(
                         "Initial plan failed, attempting to rectify with a second pass",
                     )
 
+                    base_messages = generate_base_messages(
+                        general_examples_values, general_system_message_values
+                    )
+
                     new_messages = generate_retry_messages(
-                        messages, configuration, str(e)
+                        base_messages, configuration, str(e)
                     )
 
                     configuration = llm_message_query(
@@ -388,6 +392,11 @@ def create_template_project_callback(
                         configuration,
                         redirections,
                         redirector_api_key,
+                    )
+
+                    log_query(
+                        create_template_project_callback.__name__,
+                        "Second pass recovered Terraform configuration",
                     )
 
             except SpaceBuilderRequestFailed as e:
@@ -581,6 +590,8 @@ def sanitize_configuration(configuration):
     configuration = remove_markdown_code_block(configuration)
     # Deal with the LLM adding asterisks as placeholders in K8s configuration
     configuration = sanitize_kuberenetes_yaml_step_config(configuration)
+    # Remove empty namespace properties
+    configuration = fix_empty_namespace(configuration)
     # Deal with the LLM using the wrong capitalisation for the account type
     configuration = sanitize_account_type(configuration)
     # Remove invalid slugs
@@ -618,7 +629,6 @@ def sanitize_configuration(configuration):
     # Remove lifecycle blocks
     configuration = fix_lifecycle(configuration)
     # Deal with the LLM returning duplicate blocks
-    configuration = remove_duplicate_definitions(configuration)
     configuration = remove_duplicate_definitions(configuration)
     # Deal with the LLM returning a properties blocks
     configuration = fix_properties_block(configuration)

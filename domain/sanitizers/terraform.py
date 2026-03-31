@@ -51,6 +51,20 @@ def sanitize_name_attributes(config):
     return fixed_config
 
 
+def fix_empty_namespace(config):
+    """
+    Fix this issue:
+
+    When applying changes to
+    octopusdeploy_process_step.process_step_deploy_job_to_dev_delete_job_manifest[0],
+    provider "provider[\"registry.opentofu.org/octopusdeploy/octopusdeploy\"]"
+    produced an unexpected new value: .execution_properties: element
+    "Octopus.Action.KubernetesContainers.Namespace" has vanished.
+    """
+
+    return re.sub(r'"Octopus.Action.KubernetesContainers.Namespace"\s*=\s*""', "", config)
+
+
 def sanitize_slugs(config):
     """
     Claude would often try to create slugs with asterisks, like:

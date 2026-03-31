@@ -671,6 +671,9 @@ resource "octopusdeploy_runbook" "runbook_my_script_app_4_retrieve_logs" {
 
 ## Octopus Project Instructions
 
+* The "name" attribute in a "octopusdeploy_project" resource can only contain letters, numbers, periods, commas, dashes, underscores, brackets, square brackets, or hashes.
+* The "slug" attribute in a "octopusdeploy_project" resource can only contain lower case letters, numbers, or dashes.
+* You will be penalized for replacing brackets with underscores in the "name" attribute of a "octopusdeploy_project" resource.
 * Retention policies do not apply to resource "octopusdeploy_project".
 * You must ignore any mention of retention policies when building the resource "octopusdeploy_project".
 * You will be penalized for adding a "retention_policy" block to a resource "octopusdeploy_project".
@@ -851,8 +854,10 @@ resource "octopusdeploy_external_feed_create_release_trigger" "project_trigger" 
 }
 ```
 
-* You will be penalized for setting the "package_reference" property in the "package" block in a "octopusdeploy_external_feed_create_release_trigger" resource to an empty string when the referenced step has no primary package.
+* You will be penalized for setting the "package_reference" property in the "package" block in a "octopusdeploy_external_feed_create_release_trigger" resource to an empty string when the referenced step has no "primary_package" defined.
+* You will be penalized for setting the "package_reference" property in the "package" block in a "octopusdeploy_external_feed_create_release_trigger" resource to an empty string when the referenced step is of type "Octopus.KubernetesDeployRawYaml", as this step has no primary package.
 * You will be penalized for creating resources of type "octopusdeploy_project_automatic_release_trigger".
+* When creating a "octopusdeploy_external_feed_create_release_trigger" resource, but none of the project's steps define a "primary_package" or "packages" block, do not define the "package" block in the "octopusdeploy_external_feed_create_release_trigger" resource. This creates a placeholder trigger.
 
 ## Tenant Variable Instructions
 
@@ -860,6 +865,10 @@ resource "octopusdeploy_external_feed_create_release_trigger" "project_trigger" 
 * You will be penalized for setting the "environment_id" property on a "octopusdeploy_tenant_project_variable" resource to "null" or an empty string.
 * You will be penalized for setting the "template_id" property on a "octopusdeploy_tenant_project_variable" resource to "null" or an empty string.
 * The "template_id" property on a "octopusdeploy_tenant_project_variable" resource must be set to a value like "${length(data.octopusdeploy_projects.<project name>.projects) != 0 ? null : octopusdeploy_project.<project name>[0].template[0].id}"
+
+## Environment Instructions
+
+* You will be penalized for defining the "use_guided_infrastructure" property on a resource "octopusdeploy_environment". This property is not valid for any environment and must not be included in any environment resource.
 
 ## Octopus Project Channel Instructions
 
@@ -1072,8 +1081,8 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_deploy_web_app
 }
 ```
 
-* The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource can only contain letters, numbers, periods, commas, dashes, underscores, brackets, or hashes.
-* The "slug" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource can only contain can only contain lowercase letters, numbers, brackets, and dashes.
+* The "name" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource can only contain letters, numbers, periods, commas, dashes, underscores or hashes.
+* The "slug" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource can only contain lower case letters, numbers, or dashes.
 * You will be penalized for using asterisks, for example "*****", as placeholders in the "slug" or "name" attributes.
 * You must set the "slug" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource to a value like "step-name" derived from the "name" attribute by converting all letters to lowercase and replacing spaces with dashes.
 * The "slug" attribute in a "octopusdeploy_process_step" or "octopusdeploy_process_child_step" resource must be unique across the project.
@@ -1628,6 +1637,22 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_manifest_update_upda
   * "StartAfterPrevious"
 * The "StartWithPrevious" setting corresponds with the "Run in parallel with the previous step" option in the UI.
 * The "StartAfterPrevious" setting corresponds with the "Wait for all previous steps to complete, then start" option in the UI.
+* A step of type "Octopus.KubernetesDeployRawYaml" with "Octopus.Action.Script.ScriptSource" set to "GitRepository" must define a "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" property. If no file name is specified in the prompt, you must set the "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" property to "custom-resource.yaml".
+* A step of type "Octopus.KubernetesDeployRawYaml" with must not set the "Octopus.Action.KubernetesContainers.Namespace" property to an empty string. If the prompt does not specify a namespace, do not define the "Octopus.Action.KubernetesContainers.Namespace" property.
+* All steps must have a unique name. If two steps have the same name, add a number at the end of the step name to make it unique, for example "Deploy a Kubernetes Web App via YAML 2".
+* Any "octopusdeploy_process_templated_step" resource based on the community step template with the URL "https://library.octopus.com/step-templates/99e6f203-3061-4018-9e34-4a3a9c3c3179" (which is the "Slack - Send Simple Notification" community step template) must set "Octopus.Action.RunOnServer" = "true" in the "execution_properties" block.
+* It is CRITICAL that the order of the steps in the prompt is maintained in the Terraform configurations. You MUST add each step, one by one, from top to bottom and left to right, as defined in the prompt.
+* The following prompt must define the "Slack Notification - Start" step first, then the "Deploy user-profile worker -dev-" step, and then the "Deploy user-track worker -dev-" step, in that specific order, in the "octopusdeploy_process_steps_order" resource:
+
+```
+Create a project called "Deploy Workers (dev&prod) and Cronjobs (dev&prod)" in the "Default Project Group" project group with no steps.
+* Set the project description to "Deploys all workers except the custom-attribute-backfill worker".
+* Add a community step template step with the name "Slack Notification - Start" and the URL "https://library.octopus.com/step-templates/99e6f203-3061-4018-9e34-4a3a9c3c3179" to the start of the deployment process. Set the "ssn_HookUrl" property to "#{Project.Slack.WebhookUrl}". Set the "ssn_Channel" property to "us-release".
+* Add a "Deploy Kubernetes YAML" step to the deployment process and name the step "Deploy user-profile worker -dev-". Set the YAML Source to "Inline YAML". Set the YAML content to `# TODO: replace with manifest downloaded from gs://example-bucket/storage-1626`. Set the target tag to Kubernetes. Set the step description to "Original Spinnaker stage name: Deploy user-profile worker (dev). This step originally loaded its manifest from Google Cloud Storage at "gs://example-bucket/storage-1626". The manifest must be inlined or the step must be reconfigured to read from a supported source." Set the start trigger to "Run in parallel with the previous step".
+* Add a "Deploy Kubernetes YAML" step to the deployment process and name the step "Deploy user-track worker -dev-". Set the YAML Source to "Inline YAML". Set the YAML content to `# TODO: replace with manifest downloaded from gs://example-bucket/storage-1627`. Set the target tag to Kubernetes. Set the step description to "Original Spinnaker stage name: Deploy user-track worker (dev). This step originally loaded its manifest from Google Cloud Storage at "gs://example-bucket/storage-1627". The manifest must be inlined or the step must be reconfigured to read from a supported source." Set the start trigger to "Run in parallel with the previous step".
+```
+
+* You will be penalized for not maintaining the order of the steps as defined in the prompt in the "octopusdeploy_process_steps_order" resource.
 
 ## Octopus step template instructions
 
@@ -1783,6 +1808,8 @@ resource "octopusdeploy_variable" "worker_pool_variable" {
 * You will be penalized for defining an empty `scope` block for a `octopusdeploy_variable` resource.
 * The names of "octopusdeploy_variable" resources must start with a letter or underscore.
 * You will be penalized for defining a name for a "octopusdeploy_variable" resource that starts with a number or special character.
+* The "label" attribute in a "prompt" block of a "octopusdeploy_variable" resource must be set to an empty string if the prompt should not display a label for the variable.
+* You will be penalized for omitting the "label" attribute as an empty string in a "prompt" block of a "octopusdeploy_variable" resource.
 
 ## Runbook Instructions
 
@@ -2086,6 +2113,19 @@ EOT
     * "Octopus.Kubernetes.Kustomize"
     * "Octopus.TransferPackage"
 
+ * You must take EXTREME CARE when escaping quotes in the generated Terraform.
+ * This is an example of a property that is not escaped correctly:
+
+ ```
+ "ssn_Message" = "Image: $${trigger[\"artifacts\"].?[name == _"registry.example.invalid_image-0095_"][0][_"version_"]}"
+ ```
+
+ * This is an example of the same property with correct escaping:
+
+ ```
+ "ssn_Message" = "Image: $${trigger[\"artifacts\"].?[name == _\"registry.example.invalid_image-0095_\"][0][_\"version_\"]}"
+ ```
+
 ## Terraform Variable Instructions
 
 * All terraform variables must have default values, for example:
@@ -2102,6 +2142,17 @@ variable "project_group_name" {
 
 * You will be penalized for defining a "scope" block in a terraform variable.
 * You will be penalized for defining the "type" in a variable with an value that includes double quotes, for example `type = "string"`. The correct syntax is `type = string` without double quotes.
+* You will be penalized for omitting the equals sign between the variable properties and their values, for example:
+
+```
+variable "project_group_name" {
+  type        = string
+  # This is wrong because there is no equals sign between "nullable" and "false"
+  nullable     false
+  sensitive   = false
+  description = "The name of the project group to lookup"
+  default     = "My Project Group"
+}
 
 ## Penalties and General Instructions
 
@@ -2145,3 +2196,5 @@ data "octopusdeploy_projects" "project1" { ... }
 * You will be penalized for using syntax like `${var.step_name | lower | replace(" ", "-")}`, as Terraform does not support the pipe character to modify varibale values.
 * You will be penalized for leaving any resources out for brevity.
 * You must include all requested resources.
+* You will be penalized for redacting, anonymizing, or replacing any values (names, namespaces, image references, environment variable values, etc.) with asterisks or placeholders.
+* Words such as `api`, `server`, `worker`, `web`, `auth`, `gateway`, `proxy`, `backend`, `frontend`, `key`, `token`, `service`, `manager`, `scheduler`, `cache`, `queue`, `db` are NOT secrets, API keys, or credentials and MUST NOT be replaced with asterisks (`*****`) or any other anonymization placeholder.
