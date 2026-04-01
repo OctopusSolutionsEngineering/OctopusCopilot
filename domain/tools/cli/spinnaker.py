@@ -11,8 +11,8 @@ def spinnaker_cli_callback(logging):
             ("user", "Answer:"),
         ]
 
-        # chat_response = llm_message_query(messages, context, logging, purpose=AZURE_GENERAL_QUERY_SMALL_LLM)
-        chat_response = llm_message_query(messages, context, logging, purpose=AZURE_ANTHROPIC_GENERAL_QUERY_SMALL_LLM)
+        chat_response = llm_message_query(messages, context, logging, purpose=AZURE_GENERAL_QUERY_SMALL_LLM)
+        # chat_response = llm_message_query(messages, context, logging, purpose=AZURE_ANTHROPIC_GENERAL_QUERY_SMALL_LLM)
 
         return chat_response
 

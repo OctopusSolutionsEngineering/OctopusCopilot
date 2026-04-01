@@ -67,6 +67,22 @@ def fix_empty_namespace(config):
     )
 
 
+def fix_unescaped_variables(config):
+    """
+    Fix issues when strings contain unescaped variables, like ${not a terraform variable}.
+    Ignore strings that start with "${", as these are intentional in the generated terraform.
+    :param config:
+    :return:
+    """
+
+    if re.match(r'".*?"\s*=\s*"[^$].*?"', config) is None:
+        return config
+
+    return re.sub(
+        r'(.*?)\${', lambda x: f"{x.group(1)}$${{", config
+    )
+
+
 def sanitize_slugs(config):
     """
     Claude would often try to create slugs with asterisks, like:
