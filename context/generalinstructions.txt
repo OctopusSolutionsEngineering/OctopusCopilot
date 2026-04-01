@@ -1654,6 +1654,18 @@ Create a project called "Deploy Workers (dev&prod) and Cronjobs (dev&prod)" in t
 ```
 
 * You will be penalized for not maintaining the order of the steps as defined in the prompt in the "octopusdeploy_process_steps_order" resource.
+* You must correctly escape dollar signs and curly braces.
+* This is an example of an incorrectly escaped value:
+
+```
+"ssn_Message" = "*Triggered by:* ${ trigger.user }\n*Container image:* ${ #triggerResolvedArtifactByType(\"docker/image\")[\"reference\"] } (NOTE: Contains Spinnaker SpEL expressions — convert to Octopus variable syntax, e.g. #{Octopus.Deployment.Trigger.Name}, before use)"
+```
+
+* This is an example of a correctly escaped value:
+
+```
+"ssn_Message" = "*Triggered by:* $${ trigger.user }\n*Container image:* $${ #triggerResolvedArtifactByType(\"docker/image\")[\"reference\"] } (NOTE: Contains Spinnaker SpEL expressions — convert to Octopus variable syntax, e.g. #{Octopus.Deployment.Trigger.Name}, before use)"
+```
 
 ## Octopus step template instructions
 
