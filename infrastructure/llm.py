@@ -38,6 +38,7 @@ AZURE_PROJECT_ANTHROPIC_SERVICE = "azure_project_anthropic"
 AZURE_GENERAL_SERVICE = "azure_general"
 BEDROCK_PROJECT_SERVICE = "bedrock_project"
 AZURE_GENERAL_QUERY_SMALL_LLM = "azure_general_query_small"
+AZURE_ANTHROPIC_GENERAL_QUERY_SMALL_LLM = "azure_anthropic_general_query_small"
 
 
 def build_llm(purpose):
@@ -49,6 +50,9 @@ def build_llm(purpose):
 
     if purpose == AZURE_GENERAL_QUERY_SMALL_LLM:
         return build_azure_general_small_query()
+
+    if purpose == AZURE_ANTHROPIC_GENERAL_QUERY_SMALL_LLM:
+        return build_azure_anthropic_general_small_query()
 
     if purpose == BEDROCK_PROJECT_SERVICE:
         return build_bedrock_llm()
@@ -73,6 +77,36 @@ def build_azure_anthropic_project_llm():
         if os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TOKENS", "") == "None"
         else string_to_int(
             os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_TOKENS", "128000"),
+            128000,
+        )
+    )
+
+    return ChatAnthropic(
+        temperature=temperature,
+        model=deployment,
+        base_url=endpoint,
+        api_key=api_key,
+        max_tokens=max_tokens,
+    )
+
+
+def build_azure_anthropic_general_small_query():
+    deployment = os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL")
+    api_key = os.environ["AISERVICES_KEY"]
+    endpoint = os.environ["AISERVICES_ANTHROPIC_ENDPOINT"]
+    temperature = (
+        None
+        if os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TEMPERATURE", "") == "None"
+        else string_to_int(
+            os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TEMPERATURE", "0"),
+            0,
+        )
+    )
+    max_tokens = (
+        None
+        if os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TOKENS", "") == "None"
+        else string_to_int(
+            os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TOKENS", "128000"),
             128000,
         )
     )
