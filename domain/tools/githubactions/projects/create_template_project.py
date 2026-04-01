@@ -316,8 +316,10 @@ def create_template_project_callback(
                     purpose=os.getenv("PROJECT_GEN_SERVICE") or AZURE_PROJECT_SERVICE,
                 )
 
-                configuration = sanitize_configuration(configuration)
+            # Apply all fixes to fresh and cached configurations
+            configuration = sanitize_configuration(configuration)
 
+            # Get a fresh password for the mock git server
             configuration = configure_mock_git_server(configuration)
 
             try:
