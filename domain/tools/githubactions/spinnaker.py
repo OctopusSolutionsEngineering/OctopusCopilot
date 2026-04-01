@@ -21,7 +21,11 @@ def spinnaker_callback(github_user, connection_string, log_query):
 
         context = {"input": original_query}
 
-        query_sha = hashlib.sha256(original_query.encode("utf-8")).hexdigest()
+        # The LLM used to convert Spinnaker pipelines
+        purpose=AZURE_ANTHROPIC_GENERAL_QUERY_SMALL_LLM
+
+        # Cache based on prompt and LLM
+        query_sha = hashlib.sha256((original_query + "\n" + purpose).encode("utf-8")).hexdigest()
 
         cached_result = load_cached_configuration(query_sha, connection_string)
 
@@ -34,7 +38,7 @@ def spinnaker_callback(github_user, connection_string, log_query):
         ]
 
         response = llm_message_query(
-            messages, context, log_query, purpose=AZURE_ANTHROPIC_GENERAL_QUERY_SMALL_LLM
+            messages, context, log_query, purpose=purpose
         )
 
         none_on_exception(
