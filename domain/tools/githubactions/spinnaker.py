@@ -4,7 +4,7 @@ import os
 from domain.exceptions.none_on_exception import none_on_exception
 from domain.response.copilot_response import CopilotResponse
 from domain.tools.debug import get_params_message
-from infrastructure.llm import llm_message_query, AZURE_ANTHROPIC_GENERAL_QUERY_SMALL_LLM
+from infrastructure.llm import llm_message_query, AZURE_GENERAL_QUERY_SMALL_LLM
 from infrastructure.terraform_context import load_terraform_cache, cache_terraform
 
 
@@ -22,7 +22,7 @@ def spinnaker_callback(github_user, connection_string, log_query):
         context = {"input": original_query}
 
         # The LLM used to convert Spinnaker pipelines
-        purpose = AZURE_ANTHROPIC_GENERAL_QUERY_SMALL_LLM
+        purpose = AZURE_GENERAL_QUERY_SMALL_LLM
 
         # Cache based on prompt and LLM
         query_sha = hashlib.sha256((original_query + "\n" + purpose).encode("utf-8")).hexdigest()
