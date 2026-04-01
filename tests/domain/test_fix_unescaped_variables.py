@@ -55,6 +55,11 @@ class FixUnescapedVariablesTests(unittest.TestCase):
         result = fix_unescaped_variables(config)
         self.assertEqual('"key1" = "${test}"\n"key2" = "a$${test}"', result)
 
+    def test_replaces_one_matches_start_2(self):
+        config = 'whatever\n"key1" = "${test}"\n"key2" = "a${test}"'
+        result = fix_unescaped_variables(config)
+        self.assertEqual('whatever\n"key1" = "${test}"\n"key2" = "a$${test}"', result)
+
     def test_empty_string_unchanged(self):
         self.assertEqual("", fix_unescaped_variables(""))
 
