@@ -106,7 +106,7 @@ def build_azure_anthropic_general_small_query():
         None
         if os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TOKENS", "") == "None"
         else string_to_int(
-            os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TOKENS", "128000"),
+            os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TOKENS", "64000"),
             128000,
         )
     )
