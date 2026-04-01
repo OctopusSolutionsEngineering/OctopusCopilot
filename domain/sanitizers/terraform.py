@@ -62,7 +62,9 @@ def fix_empty_namespace(config):
     "Octopus.Action.KubernetesContainers.Namespace" has vanished.
     """
 
-    return re.sub(r'"Octopus.Action.KubernetesContainers.Namespace"\s*=\s*""', "", config)
+    return re.sub(
+        r'"Octopus.Action.KubernetesContainers.Namespace"\s*=\s*""', "", config
+    )
 
 
 def sanitize_slugs(config):
@@ -228,6 +230,18 @@ def fix_empty_teams(config):
 
     return re.sub(
         r'"Octopus.Action.Manual.ResponsibleTeamIds"\s*=\s*""',
+        "",
+        config,
+    )
+
+
+def fix_use_guided_infrastructure(config):
+    """
+    The LLM kept insisting on using adding use_guided_infrastructure = false
+    """
+
+    return re.sub(
+        r"use_guided_infrastructure\s*=\s*(true|false)",
         "",
         config,
     )

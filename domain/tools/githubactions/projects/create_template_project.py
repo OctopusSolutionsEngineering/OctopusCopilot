@@ -46,7 +46,9 @@ from domain.sanitizers.terraform import (
     fix_single_line_connectivity_policy,
     trim_descriptions,
     fix_single_line_lifecycle2,
-    set_mock_git_server, fix_empty_namespace,
+    set_mock_git_server,
+    fix_empty_namespace,
+    fix_use_guided_infrastructure,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -614,6 +616,8 @@ def sanitize_configuration(configuration):
     configuration = fix_single_line_variable(configuration)
     # Deal with the LLM returning empty teams in a manual intervention block
     configuration = fix_empty_teams(configuration)
+    # Deal with the LLM returning an invalid use_guided_infrastructure setting
+    configuration = fix_use_guided_infrastructure(configuration)
     # Deal with the LLM returning a single line for a tentacle_retention_policy block
     configuration = fix_single_line_tentacle_retention_policy(configuration)
     # Deal with the LLM returning a single line for a connectivity_policy block
