@@ -1,3 +1,7 @@
+# Special instructions for the Script Execution System Prompt
+
+* You must only create one project in your response.
+
 # Script Execution Instructions
 
 * The supplied "Example Octopus Script Execution Terraform Configuration" is the primary source of truth for the configuration.
