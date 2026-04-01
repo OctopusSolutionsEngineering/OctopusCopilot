@@ -1,5 +1,7 @@
 import re
 
+from lxml.html.diff import fixup_ins_del_tags
+
 
 def sanitize_kuberenetes_yaml_step_config(config):
     """
@@ -75,12 +77,15 @@ def fix_unescaped_variables(config):
     :return:
     """
 
-    if re.match(r'".*?"\s*=\s*"[^$].*?"', config) is None:
+    def replace_unescaped_variables(line):
+        if re.match(r'".*?"\s*=\s*"[^$].*?\$\{.*?"', line) is not None:
+            return re.sub(r'\${', r'$${', line)
+        return line
+
+    if not config:
         return config
 
-    return re.sub(
-        r'(.*?)\${', lambda x: f"{x.group(1)}$${{", config
-    )
+    return "\n".join([replace_unescaped_variables(line) for line in config.splitlines() if line])
 
 
 def sanitize_slugs(config):
