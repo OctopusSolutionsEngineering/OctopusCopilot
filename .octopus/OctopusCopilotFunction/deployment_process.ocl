@@ -268,6 +268,11 @@ step "deploy-with-cli" {
                      "slotSetting": false
                    },
                    {
+                     "name": "AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL",
+                     "value": "#{Azure.US.AIServices.Anthropic.Deployment.SmallQuery}",
+                     "slotSetting": false
+                   },
+                   {
                      "name": "AISERVICES_ANTHROPIC_ENDPOINT",
                      "value": "#{Azure.US.AIServices.Anthropic.Endpoint}",
                      "slotSetting": false
@@ -275,6 +280,11 @@ step "deploy-with-cli" {
                    {
                      "name": "AISERVICES_DEPLOYMENT_PROJECT_GEN_TOKENS",
                      "value": "#{Azure.US.AIServices.Tokens.ProjectGen}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TOKENS",
+                     "value": "#{Azure.US.AIServices.Tokens.SmallQuery}",
                      "slotSetting": false
                    },
                    {
