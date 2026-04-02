@@ -349,9 +349,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_app
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -427,16 +427,16 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_upd
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
         "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
         "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
-        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
-        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
+        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.ArgoCD.CommitMessageDescription" = "Project: #{Octopus.Project.Slug}\nEnvironment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }\nTenant: #{Octopus.Deployment.Tenant.Slug}#{/if}"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
+        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
+        "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
       }
 }
 
