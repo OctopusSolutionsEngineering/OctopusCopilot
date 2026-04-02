@@ -16,6 +16,7 @@ def create_project_wrapper(query, callback, logging):
         * Create a project catted "My Web App" with no steps.
         * Create an empty project called "My Empty Project"
         * Create an blank project called "My Blank Project"
+        * Create a project called "01. My Test Project" and then create a lifecycle called "My Lifecycle" with environments "Dev", "QA", and "Prod".
 
         You will be penalized for selecting this function when the prompt specifically asks for creating specialized project types like "Script", "Tomcat", "Kubernetes", or others.
 
