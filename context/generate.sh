@@ -260,6 +260,26 @@ docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
+    -projectName "Empty Project" \
+    -stepTemplate \
+    -stepTemplateName "Space Context" \
+    -stepTemplateKey "SpaceContext" \
+    -dummySecretVariableValues \
+    -includeProviderServerDetails=false \
+    -ignoreCacManagedValues=false \
+    -excludeCaCProjectSettings=true \
+    -includeOctopusOutputVars=false \
+    -inlineVariableValues \
+    -excludeAllRunbooks=true \
+    -dest /tmp/octoexport
+cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > emptyproject.tf
+
+./generate_instructions.py emptyproject.tf "Empty" > instructions_emptyproject.md
+
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
+    -url https://mattc.octopus.app \
+    -space Spaces-3368 \
+    -apiKey $OCTOPUS_CLI_API_KEY \
     -projectName "Script" \
     -stepTemplate \
     -stepTemplateName "Space Context" \

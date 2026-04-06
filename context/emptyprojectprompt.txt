@@ -1,0 +1,33 @@
+# Empty Instructions
+
+* The supplied "Example Octopus Empty Terraform Configuration" is the primary source of truth for the configuration.
+* You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus Empty Terraform Configuration".
+* You must include all the steps defined in the "Example Octopus Empty Terraform Configuration" unless the prompt explicitly states that steps should be removed or modified.
+* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus Empty Terraform Configuration".
+
+## Empty Environment Instructions
+
+You must include all the following environment resources from the "Example Octopus Empty Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
+
+## Empty Feed Instructions
+
+You must include all the following feed resources from the "Example Octopus Empty Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
+* data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+
+## Empty Project Instructions
+
+You must include all the following project resources from the "Example Octopus Empty Terraform Configuration" once:
+* data "octopusdeploy_projects" "project_empty_project"
+* resource "octopusdeploy_project" "project_empty_project"
+
+## Empty Project Deployment Process Instructions
+
+You must include all the following project deployment process resources from the "Example Octopus Empty Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_empty_project"
+
+## Empty Lifecycle Instructions
+
+You must include all the following lifecycle resources from the "Example Octopus Empty Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
+* data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle"
+* data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+
