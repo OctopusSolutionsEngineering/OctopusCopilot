@@ -1,6 +1,7 @@
 # Special instructions for the Script Execution System Prompt
 
 * You must only create one project in your response.
+* If the prompt includes instructions to create a project with no steps, and supplies a name for the new project, you will be penalized for defining a second project with the name "Script".
 
 # Script Execution Instructions
 
