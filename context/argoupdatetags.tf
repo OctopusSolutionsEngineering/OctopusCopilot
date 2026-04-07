@@ -341,12 +341,13 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_approve_prod
   slug                  = "manual-intervention-required"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
+  depends_on            = []
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -366,6 +367,7 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_oc
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.WorkerPool"
+  depends_on            = [octopusdeploy_process_step.process_step_argo_cd_octopub_approve_production_deployment]
   properties            = {
       }
   execution_properties  = {
@@ -392,6 +394,7 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_oc
   start_trigger         = "StartWithPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.WorkerPool"
+  depends_on            = [octopusdeploy_process_step.process_step_argo_cd_octopub_approve_production_deployment,octopusdeploy_process_templated_step.process_step_argo_cd_octopub_octopus___check_for_argo_cd_instances]
   properties            = {
       }
   execution_properties  = {
@@ -426,15 +429,16 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_update_argo_
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.WorkerPool"
+  depends_on            = [octopusdeploy_process_step.process_step_argo_cd_octopub_approve_production_deployment,octopusdeploy_process_templated_step.process_step_argo_cd_octopub_octopus___check_for_argo_cd_instances,octopusdeploy_process_templated_step.process_step_argo_cd_octopub_octopus___check_smtp_server_configured]
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
+        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
         "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
         "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.ArgoCD.CommitMessageSummary" = "Octopus Deploy updated image versions"
-        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
-        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
       }
 }
 
@@ -454,6 +458,7 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_sc
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.WorkerPool"
+  depends_on            = [octopusdeploy_process_step.process_step_argo_cd_octopub_approve_production_deployment,octopusdeploy_process_templated_step.process_step_argo_cd_octopub_octopus___check_for_argo_cd_instances,octopusdeploy_process_templated_step.process_step_argo_cd_octopub_octopus___check_smtp_server_configured,octopusdeploy_process_step.process_step_argo_cd_octopub_update_argo_cd_application_image_tags]
   properties            = {
       }
   execution_properties  = {
@@ -462,8 +467,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_sc
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
-        "PackageId" = "com.octopus:octopub-frontend-sbom"
         "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
+        "PackageId" = "com.octopus:octopub-frontend-sbom"
                 })
       }
 }
@@ -482,13 +487,14 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_send_an_emai
   slug                  = "send-an-email-upon-failure"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
+  depends_on            = [octopusdeploy_process_step.process_step_argo_cd_octopub_approve_production_deployment,octopusdeploy_process_templated_step.process_step_argo_cd_octopub_octopus___check_for_argo_cd_instances,octopusdeploy_process_templated_step.process_step_argo_cd_octopub_octopus___check_smtp_server_configured,octopusdeploy_process_step.process_step_argo_cd_octopub_update_argo_cd_application_image_tags,octopusdeploy_process_templated_step.process_step_argo_cd_octopub_scan_for_vulnerabilities]
   properties            = {
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.Subject" = "Deployment #{Octopus.Deployment.Id} to #{Octopus.Environment.Name} failed"
         "Octopus.Action.Email.To" = "admin@example.ord"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Email.Subject" = "Deployment #{Octopus.Deployment.Id} to #{Octopus.Environment.Name} failed"
       }
 }
 
