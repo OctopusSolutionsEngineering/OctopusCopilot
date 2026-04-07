@@ -56,7 +56,9 @@ class SanitizeYamlResourcesTest(unittest.TestCase):
 }"""
         fixed = fix_yaml_source(config)
 
-        self.assertIn("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", fixed)
+        self.assertIn(
+            "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", fixed
+        )
         self.assertIn("resource.yaml", fixed)
         # The original ScriptSource line must still be present
         self.assertIn('"Octopus.Action.Script.ScriptSource" = "GitRepository"', fixed)
@@ -120,10 +122,11 @@ resource "octopusdeploy_process_step" "process_step_deploy_yaml" {
         fixed = fix_yaml_source(config)
 
         self.assertIn('resource "octopusdeploy_project" "project"', fixed)
-        self.assertIn("Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", fixed)
+        self.assertIn(
+            "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName", fixed
+        )
         self.assertIn("resource.yaml", fixed)
 
 
 if __name__ == "__main__":
     unittest.main()
-
