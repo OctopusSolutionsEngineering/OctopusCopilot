@@ -79,13 +79,15 @@ def fix_unescaped_variables(config):
 
     def replace_unescaped_variables(line):
         if re.match(r'".*?"\s*=\s*"[^$].*?\$\{.*?"', line) is not None:
-            return re.sub(r'\${', r'$${', line)
+            return re.sub(r"\${", r"$${", line)
         return line
 
     if not config:
         return config
 
-    return "\n".join([replace_unescaped_variables(line) for line in config.splitlines() if line])
+    return "\n".join(
+        [replace_unescaped_variables(line) for line in config.splitlines() if line]
+    )
 
 
 def sanitize_slugs(config):
@@ -609,11 +611,14 @@ def fix_script_source(config):
 
                 if is_script:
                     script_type = next(
-                        resource_line.split("=").pop().strip()
-                        for resource_line in resource_lines
-                        if resource_line.strip().startswith(
-                            '"Octopus.Action.Script.ScriptSource"'
-                        )
+                        (
+                            resource_line.split("=").pop().strip()
+                            for resource_line in resource_lines
+                            if resource_line.strip().startswith(
+                                '"Octopus.Action.Script.ScriptSource"'
+                            )
+                        ),
+                        None,
                     )
 
                     if script_type == '"Inline"':
@@ -634,6 +639,103 @@ def fix_script_source(config):
         return config
 
     return "\n".join(output)
+
+
+def fix_yaml_source(config):
+    """
+    LLMs would often try to define a YML step from a git source with no filename.
+    """
+
+    if not config:
+        return ""
+
+    # A quick out if there were no k8s yaml
+    if "Octopus.KubernetesDeployRawYaml" not in config:
+        return config
+
+    splits = config.splitlines()
+
+    output = []
+
+    in_resource = False
+    resource_lines = []
+
+    for line in splits:
+        if not in_resource and line.startswith("resource "):
+            # We entered a resource block
+            in_resource = True
+            resource_lines = [line]
+        elif in_resource:
+            resource_lines.append(line)
+
+            if line == "}":
+                in_resource = False
+
+                # Detect if this is a script resource
+                is_script = any(
+                    resource_line
+                    for resource_line in resource_lines
+                    if resource_line.strip().startswith(
+                        '"Octopus.Action.Script.ScriptSource"'
+                    )
+                )
+
+                if is_script:
+                    script_type = next(
+                        (
+                            resource_line.split("=").pop().strip()
+                            for resource_line in resource_lines
+                            if resource_line.strip().startswith(
+                                '"Octopus.Action.Script.ScriptSource"'
+                            )
+                        ),
+                        None,
+                    )
+
+                    if script_type == '"GitRepository"':
+                        output.append(sanitize_git_script(resource_lines))
+                    else:
+                        # Unknown script type, just output the resource as-is
+                        output.extend(resource_lines)
+                else:
+                    output.extend(resource_lines)
+        else:
+            output.append(line)
+
+    # Our assumptions about the indents of brackets failed, so do no processing
+    if in_resource:
+        return config
+
+    return "\n".join(output)
+
+
+def sanitize_git_script(lines):
+    filename_exists = any(
+        resource_line
+        for resource_line in lines
+        if resource_line.strip().startswith(
+            '"Octopus.Action.KubernetesContainers.CustomResourceYamlFileName"'
+        )
+    )
+
+    # Add a default file name if one does not exist
+    if not filename_exists:
+        source_index = next(
+            (
+                i
+                for i, v in enumerate(lines)
+                if v.strip().startswith('"Octopus.Action.Script.ScriptSource"')
+            ),
+            -1,
+        )
+        if source_index != -1:
+            lines.insert(
+                source_index + 1,
+                '        "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" = "resource.yaml"',
+            )
+
+    resource_combined = "\n".join(lines)
+    return resource_combined
 
 
 def set_mock_git_server(config, username, password):

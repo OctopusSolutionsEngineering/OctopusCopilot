@@ -48,7 +48,7 @@ from domain.sanitizers.terraform import (
     fix_single_line_lifecycle2,
     set_mock_git_server,
     fix_empty_namespace,
-    fix_use_guided_infrastructure, fix_unescaped_variables,
+    fix_use_guided_infrastructure, fix_unescaped_variables, fix_yaml_source,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -654,6 +654,8 @@ def sanitize_configuration(configuration):
     configuration = fix_empty_strings(configuration)
     # Escape unescaped variables
     configuration = fix_unescaped_variables(configuration)
+    # Add a placeholder filename for YAML steps referencing files from git repos
+    configuration = fix_yaml_source(configuration)
     return configuration
 
 
