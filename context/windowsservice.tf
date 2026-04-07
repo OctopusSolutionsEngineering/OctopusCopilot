@@ -301,18 +301,18 @@ resource "octopusdeploy_process_step" "process_step_windows_service_deploy_a_win
         "Octopus.Action.TargetRoles" = "Windows-Service"
       }
   execution_properties  = {
-        "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
-        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.WindowsService,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
-        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
-        "Octopus.Action.WindowsService.ServiceName" = "JokeService"
         "Octopus.Action.WindowsService.DesiredStatus" = "Default"
+        "Octopus.Action.WindowsService.ServiceName" = "JokeService"
         "Octopus.Action.WindowsService.ExecutablePath" = "WindowsServiceDotNETCore.exe"
+        "Octopus.Action.WindowsService.Description" = "A sample windows service"
+        "Octopus.Action.WindowsService.StartMode" = "auto"
+        "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
+        "Octopus.Action.WindowsService.DisplayName" = "Joke Service"
+        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.WindowsService,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
+        "Octopus.Action.RunOnServer" = "false"
+        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
         "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
         "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.WindowsService.StartMode" = "auto"
-        "Octopus.Action.WindowsService.Description" = "A sample windows service"
-        "Octopus.Action.WindowsService.DisplayName" = "Joke Service"
-        "Octopus.Action.RunOnServer" = "false"
       }
 }
 
@@ -371,11 +371,11 @@ resource "octopusdeploy_process_step" "process_step_windows_service_scan_for_vul
   properties            = {
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "OctopusUseBundledTooling" = "False"
       }
 }
 
