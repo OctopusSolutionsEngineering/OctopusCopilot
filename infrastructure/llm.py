@@ -2,6 +2,7 @@ import os
 
 import boto3
 import openai
+from anthropic.types import OverloadedError
 from botocore.config import Config as BotoConfig, Config
 from langchain_anthropic import ChatAnthropic
 from langchain_aws import ChatBedrockConverse
@@ -96,17 +97,25 @@ def build_azure_anthropic_general_small_query():
     endpoint = os.environ["AISERVICES_ANTHROPIC_ENDPOINT"]
     temperature = (
         None
-        if os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TEMPERATURE", "") == "None"
+        if os.getenv(
+            "AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TEMPERATURE", ""
+        )
+        == "None"
         else string_to_int(
-            os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TEMPERATURE", "0"),
+            os.getenv(
+                "AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TEMPERATURE", "0"
+            ),
             0,
         )
     )
     max_tokens = (
         None
-        if os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TOKENS", "") == "None"
+        if os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TOKENS", "")
+        == "None"
         else string_to_int(
-            os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TOKENS", "64000"),
+            os.getenv(
+                "AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TOKENS", "64000"
+            ),
             128000,
         )
     )
@@ -251,6 +260,8 @@ def llm_message_query(
         return handle_openai_exception(e)
     except openai.APITimeoutError as e:
         return handle_openai_exception(e)
+    except OverloadedError:
+        return "The system reported it is currently overloaded. Please try again later."
 
     # The response might be text or an array depending on the model and settings. GPT 5 codex for example returns an array of items.
     if isinstance(response, list):
