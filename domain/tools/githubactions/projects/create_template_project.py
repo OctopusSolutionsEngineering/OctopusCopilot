@@ -48,7 +48,9 @@ from domain.sanitizers.terraform import (
     fix_single_line_lifecycle2,
     set_mock_git_server,
     fix_empty_namespace,
-    fix_use_guided_infrastructure, fix_unescaped_variables, fix_yaml_source,
+    fix_use_guided_infrastructure,
+    fix_unescaped_variables,
+    fix_yaml_source,
 )
 from domain.tools.debug import get_params_message
 from infrastructure.callbacks import save_callback
@@ -380,7 +382,7 @@ def create_template_project_callback(
 
                     configuration = llm_message_query(
                         new_messages,
-                        context,
+                        {},
                         log_query,
                         purpose=os.getenv("PROJECT_GEN_SERVICE")
                         or AZURE_PROJECT_SERVICE,
@@ -528,15 +530,15 @@ def generate_retry_messages(base_messages, configuration, errors):
         + escape_message(configuration)
         + "\n```\n"
         + "# Terraform errors:\n"
-        + escape_message(errors)
-        + "\n# Instructions to fix the Terraform Configuration:\n"
-        + "Based on the errors above, fix the Previous Terraform Configuration and return a new Terraform configuration that will not produce the same errors. Only return the Terraform configuration without any additional explanation or text.",
+        + escape_message(errors),
     )
 
-    return [
-        *base_messages,
-        retry_message,
-    ]
+    user_message = (
+        "user",
+        "Based on the errors above, fix the Previous Terraform Configuration and return a new Terraform configuration that will not produce the same errors. Only return the Terraform configuration without any additional explanation or text",
+    )
+
+    return [*base_messages, retry_message, user_message]
 
 
 def final_messages(base_messages):
