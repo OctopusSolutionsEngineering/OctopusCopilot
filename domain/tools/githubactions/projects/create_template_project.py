@@ -380,13 +380,13 @@ def create_template_project_callback(
                         base_messages, configuration, str(e)
                     )
 
-                    configuration = llm_message_query(
+                    configuration = remove_markdown_code_block(llm_message_query(
                         new_messages,
                         {},
                         log_query,
                         purpose=os.getenv("PROJECT_GEN_SERVICE")
                         or AZURE_PROJECT_SERVICE,
-                    )
+                    ))
 
                     response = await create_terraform_plan(
                         api_key,
