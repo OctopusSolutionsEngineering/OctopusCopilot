@@ -236,11 +236,11 @@ resource "octopusdeploy_process_step" "process_step_script_hello_world" {
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "echo \"#{Project.Message}\""
-        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
