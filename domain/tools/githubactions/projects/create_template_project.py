@@ -295,27 +295,14 @@ def create_template_project_callback(
             configuration = load_cached_configuration(cache_sha, connection_string)
 
             if not configuration:
-                # These are the general examples of projects, feeds, accounts etc
-                base_messages = generate_base_messages(
-                    general_examples_values, general_system_message_values
-                )
-
-                # These are examples of specific project types, like Kubernetes, Azure Web Apps etc
-                project_messages = generate_project_messages(
-                    base_messages,
+                configuration = generate_terraform_configuration(
+                    general_examples_values,
+                    general_system_message_values,
                     project_example_values,
                     project_example_context_name,
                     project_system_message_values,
-                )
-
-                # These are the common messages used to generate the final configuration
-                messages = final_messages(project_messages)
-
-                configuration = llm_message_query(
-                    messages,
                     context,
                     log_query,
-                    purpose=os.getenv("PROJECT_GEN_SERVICE") or AZURE_PROJECT_SERVICE,
                 )
 
             # Apply all fixes to fresh and cached configurations
@@ -348,8 +335,6 @@ def create_template_project_callback(
                     response_text.extend(debug_text)
                     return CopilotResponse("\n\n".join(response_text))
 
-                response = None
-
                 try:
                     response = await create_terraform_plan(
                         api_key,
@@ -366,31 +351,7 @@ def create_template_project_callback(
                     # This is our agentic loop where we get the LLM to try and fix its own problems based
                     # on the error messages from the Terraform plan creation.
                     # We'll do this once to try and produce valid Terraform
-
-                    log_query(
-                        create_template_project_callback.__name__,
-                        "Initial plan failed, attempting to rectify with a second pass",
-                    )
-
-                    base_messages = generate_base_messages(
-                        general_examples_values, general_system_message_values
-                    )
-
-                    new_messages = generate_retry_messages(
-                        base_messages, configuration, str(e)
-                    )
-
-                    configuration = remove_markdown_code_block(
-                        llm_message_query(
-                            new_messages,
-                            {},
-                            log_query,
-                            purpose=os.getenv("PROJECT_GEN_SERVICE")
-                            or AZURE_PROJECT_SERVICE,
-                        )
-                    )
-
-                    response = await create_terraform_plan(
+                    configuration, response = await retry_terraform_plan(
                         api_key,
                         access_token,
                         url,
@@ -400,11 +361,10 @@ def create_template_project_callback(
                         configuration,
                         redirections,
                         redirector_api_key,
-                    )
-
-                    log_query(
-                        create_template_project_callback.__name__,
-                        "Second pass recovered Terraform configuration",
+                        general_examples_values,
+                        general_system_message_values,
+                        log_query,
+                        str(e),
                     )
 
             except SpaceBuilderRequestFailed as e:
@@ -462,6 +422,51 @@ def create_template_project_callback(
         return asyncio.run(inner_function())
 
     return create_template_project
+
+
+def generate_terraform_configuration(
+    general_examples_values,
+    general_system_message_values,
+    project_example_values,
+    project_example_context_name,
+    project_system_message_values,
+    context,
+    log_query,
+):
+    """
+    Build the LLM message chain and query it to produce a raw Terraform configuration string.
+
+    :param general_examples_values: General Terraform example strings
+    :param general_system_message_values: The general system message for the LLM
+    :param project_example_values: An example Terraform configuration for the specific project type
+    :param project_example_context_name: The display name of the project example
+    :param project_system_message_values: The project-type-specific system message
+    :param context: The LLM context dict (must contain the "input" key)
+    :param log_query: A logging function
+    :return: The raw Terraform configuration string returned by the LLM
+    """
+    # These are the general examples of projects, feeds, accounts etc
+    base_messages = generate_base_messages(
+        general_examples_values, general_system_message_values
+    )
+
+    # These are examples of specific project types, like Kubernetes, Azure Web Apps etc
+    project_messages = generate_project_messages(
+        base_messages,
+        project_example_values,
+        project_example_context_name,
+        project_system_message_values,
+    )
+
+    # These are the common messages used to generate the final configuration
+    messages = final_messages(project_messages)
+
+    return llm_message_query(
+        messages,
+        context,
+        log_query,
+        purpose=os.getenv("PROJECT_GEN_SERVICE") or AZURE_PROJECT_SERVICE,
+    )
 
 
 def generate_base_messages(general_examples, general_system_message_values):
@@ -541,6 +546,68 @@ def generate_retry_messages(base_messages, configuration, errors):
     )
 
     return [*base_messages, retry_message, user_message]
+
+
+async def retry_terraform_plan(
+    api_key,
+    access_token,
+    url,
+    space_id,
+    project_name,
+    original_query,
+    configuration,
+    redirections,
+    redirector_api_key,
+    general_examples_values,
+    general_system_message_values,
+    log_query,
+    error,
+):
+    """
+    Attempt a second-pass LLM fix when the initial Terraform plan fails. The LLM is given
+    the previous configuration and the error messages so it can produce a corrected version.
+
+    :return: A tuple of (configuration, response) where configuration is the fixed Terraform
+             and response is the result of the second create_terraform_plan call.
+    """
+    log_query(
+        create_template_project_callback.__name__,
+        "Initial plan failed, attempting to rectify with a second pass",
+    )
+
+    base_messages = generate_base_messages(
+        general_examples_values, general_system_message_values
+    )
+
+    new_messages = generate_retry_messages(base_messages, configuration, error)
+
+    configuration = remove_markdown_code_block(
+        llm_message_query(
+            new_messages,
+            {},
+            log_query,
+            purpose=os.getenv("PROJECT_GEN_SERVICE") or AZURE_PROJECT_SERVICE,
+        )
+    )
+
+    response = await create_terraform_plan(
+        api_key,
+        access_token,
+        url,
+        space_id,
+        project_name,
+        original_query,
+        configuration,
+        redirections,
+        redirector_api_key,
+    )
+
+    log_query(
+        create_template_project_callback.__name__,
+        "Second pass recovered Terraform configuration",
+    )
+
+    return configuration, response
 
 
 def final_messages(base_messages):
