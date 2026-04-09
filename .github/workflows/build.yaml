@@ -214,7 +214,7 @@ jobs:
           # This is the deployment used to handle prompts
           AISERVICES_DEPLOYMENT: gpt-5.4
           # This is the deployment used to generate project Terraform configuration
-          AISERVICES_DEPLOYMENT_PROJECT_GEN: gpt-5.4
+          AISERVICES_DEPLOYMENT_PROJECT_GEN: gpt-5.4-mini
           # GPT 5 codex uses the responses API
           AISERVICES_DEPLOYMENT_PROJECT_GEN_RESPONSES: true
           # GPT 5 codex does not support the temperature parameter
@@ -227,8 +227,8 @@ jobs:
           BEDROCK_MODEL_REGION: us-east-2
           AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
           AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          PROJECT_GEN_SERVICE: azure_project_anthropic
-          #PROJECT_GEN_SERVICE: azure_project
+          #PROJECT_GEN_SERVICE: azure_project_anthropic
+          PROJECT_GEN_SERVICE: azure_project
           AISERVICES_DEPLOYMENT_ANTHROPIC_PROJECT_GEN: claude-sonnet-4-6
           AISERVICES_ANTHROPIC_ENDPOINT: https://matth-m9ho8uqc-eastus2.services.ai.azure.com/anthropic/
           AISERVICES_DEPLOYMENT_PROJECT_GEN_TOKENS: 128000
