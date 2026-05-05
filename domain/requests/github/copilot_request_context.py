@@ -18,6 +18,7 @@ from domain.exceptions.user_not_configured import UserNotConfigured
 from domain.exceptions.user_not_loggedin import UserNotLoggedIn, OctopusApiKeyInvalid
 from domain.logging.app_logging import configure_logging
 from domain.logging.query_logging import log_query
+from domain.sanitizers.sanitize_strings import empty_if_none
 from domain.security.security import is_admin_user
 from domain.tools.githubactions.default_values import default_value_callbacks
 from domain.tools.githubactions.deployment_logs import logs_callback
@@ -408,7 +409,10 @@ def build_form_tools(query, req: func.HttpRequest):
     :return: The OpenAI tools
     """
 
-    slack_token = get_slack_token(req)
+    general_project_creation_instructions = (
+        empty_if_none(req.headers.get("X_GENERAL_INSTRUCTIONS_FILE")).strip()
+        or "generalinstructions.txt"
+    )
 
     # A bunch of functions that do the same thing
     help_functions = [
@@ -760,7 +764,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         get_redirections(req),
                         get_redirections_api_key(req),
                     ),
@@ -786,7 +790,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "k8s.tf",
                         "Kubernetes",
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         "k8ssystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
@@ -813,7 +817,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "azurewebapp.tf",
                         "Azure Web App",
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         "azurewebappsystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
@@ -840,7 +844,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "azurefunction.tf",
                         "Azure Function",
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         "azurefunctionsystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
@@ -867,7 +871,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "awslambda.tf",
                         "AWS Lambda",
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         "awslambdaystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
@@ -894,7 +898,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "windowsiis.tf",
                         "Windows IIS",
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         "windowsiissystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
@@ -921,7 +925,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "windowsservice.tf",
                         "Windows Service",
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         "windowsservicesystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
@@ -948,7 +952,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "deploymentorchestration.tf",
                         "Deployment Orchestration",
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         "deploymentorchestrationsystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
@@ -975,7 +979,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "terraform.tf",
                         "Terraform Deploy",
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         "terraformsystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
@@ -1002,7 +1006,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "script.tf",
                         "Script Execution",
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         "scriptsystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
@@ -1029,8 +1033,8 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "emptyproject.tf",
                         "Empty",
+                        general_project_creation_instructions,
                         "emptyprojectprompt.txt",
-                        "scriptsystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
                     ),
@@ -1056,7 +1060,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "llm.tf",
                         "LLM Kubernetes",
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         "llmsystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
@@ -1083,7 +1087,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "vmbluegreen.tf",
                         "VM Blue/Green",
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         "vmbluegreensystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
@@ -1110,7 +1114,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "apachetomcat.tf",
                         "Apache Tomcat",
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         "tomcatsystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
@@ -1137,7 +1141,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "argoupdatetags.tf",
                         "Argo CD Update Image Tags",
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         "argoupdatetagssystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
@@ -1164,7 +1168,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         general_project_examples,
                         "argoupdatemanifest.tf",
                         "Argo CD Update Manifest",
-                        "generalinstructions.txt",
+                        general_project_creation_instructions,
                         "argoupdatemanifestsystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
