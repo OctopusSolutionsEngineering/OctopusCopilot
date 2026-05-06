@@ -301,6 +301,11 @@ step "deploy-with-cli" {
                      "name": "REDIRECTION_FORCE",
                      "value": "True",
                      "slotSetting": false
+                   },
+                   {
+                     "name": "ENHANCED_LOGGING_INSTANCES",
+                     "value": "[\"mattc.octopus.app\"]",
+                     "slotSetting": false
                    }
                 ] 
                 EOL
