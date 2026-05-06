@@ -72,6 +72,16 @@ from infrastructure.terraform_context import (
 project_prompt_error_message = "The Octopus resources could not be generated from the prompt. This is usually because the prompt is too complex or the LLM is not able to generate a valid Terraform configuration. Please try again with a simpler prompt."
 
 
+def is_enhanced_logging_enabled(url):
+    """
+    Return True if the Octopus server at the given URL has enhanced logging enabled.
+
+    :param url: The Octopus server URL
+    :return: True if enhanced logging is enabled, False otherwise
+    """
+    return get_hostname_from_url(url) in get_enhanced_logging_instances()
+
+
 def build_error_response(url, e):
     """
     Build a CopilotResponse for a SpaceBuilderRequestFailed error. Instances with enhanced
@@ -81,7 +91,7 @@ def build_error_response(url, e):
     :param e: The exception that was raised
     :return: A CopilotResponse with or without error details
     """
-    if get_hostname_from_url(url) in get_enhanced_logging_instances():
+    if is_enhanced_logging_enabled(url):
         return CopilotResponse(
             f"{project_prompt_error_message}\nError details: {str(e)}"
         )
@@ -419,12 +429,20 @@ def create_template_project_callback(
                 connection_string,
             )
 
+            prompt_message = []
+
+            if is_enhanced_logging_enabled(url):
+                prompt_message.extend(["Generated Terraform", configuration])
+
             prompt_title = "Do you want to continue to create the resources?"
-            prompt_message = [
-                "Please confirm the details below are correct before proceeding."
-                f"\n\nSpace: **{actual_space_name}**"
-                f"\n\nPlan:\n\n```{response['data']['attributes']['plan_text']}```"
-            ]
+            prompt_message.extend(
+                [
+                    "Please confirm the details below are correct before proceeding.",
+                    f"\nSpace: **{actual_space_name}**",
+                    f"\nPlan:",
+                    f"\n```{response['data']['attributes']['plan_text']}```",
+                ]
+            )
 
             response = ["Create a project"]
             response.extend(warnings)
