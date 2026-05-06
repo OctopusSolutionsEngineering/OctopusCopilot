@@ -304,7 +304,7 @@ step "deploy-with-cli" {
                    },
                    {
                      "name": "ENHANCED_LOGGING_INSTANCES",
-                     "value": "[\"mattc.octopus.app\"]",
+                     "value": "#{Application.Configuration.EnhancedLogging}",
                      "slotSetting": false
                    }
                 ] 
