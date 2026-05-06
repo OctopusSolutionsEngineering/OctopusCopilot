@@ -4,4 +4,8 @@ def escape_message(message):
     :param message:
     :return:
     """
+
+    if not message:
+        return ""
+
     return message.replace("{", "{{").replace("}", "}}")
