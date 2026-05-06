@@ -11,6 +11,46 @@
 * If the prompt contains an instruction to add a new step, you must use the example lifecycle, include the example runbooks, include the example steps, include the example variables, and then add the new step to the deployment process.
 * Instructions to create projects "with no steps" overrides instructions to add steps to the project. When a project is created with no steps, there must not be any "octopusdeploy_process_step" resources defined for that project.
 
+## Step Execution Order and Parallel Steps
+
+* When a step prompt says `Set the start trigger to "Run in parallel with the previous step"`, the corresponding `octopusdeploy_process_step` or `octopusdeploy_process_templated_step` resource MUST have `start_trigger = "StartWithPrevious"`.
+* When a step prompt says `Set the start trigger to "Wait for all previous steps to complete, then start"`, the resource MUST have `start_trigger = "StartAfterPrevious"`.
+* Steps with no start trigger annotation default to `start_trigger = "StartAfterPrevious"`.
+* If the prompt says `The step must be disabled.`, you must still keep that step in the `octopusdeploy_process_steps_order` resource and preserve any explicit `start_trigger` annotation from the prompt. Disabled steps still participate in process ordering.
+* You will be penalized for using `start_trigger = "StartAfterPrevious"` when the prompt explicitly says `"Run in parallel with the previous step"`.
+* You will be penalized for using `start_trigger = "StartWithPrevious"` when the prompt explicitly says `"Wait for all previous steps to complete, then start"` or when no start trigger annotation is given.
+
+## Inline Kubernetes YAML Indentation
+
+* When setting `Octopus.Action.KubernetesContainers.CustomResourceYaml` in `execution_properties`, the YAML value MUST use proper 2-space indentation at every level. Flat YAML (where all keys appear at column 0) is invalid and will cause deployment failures.
+* For example, a Deployment manifest must nest `metadata.name` at 2 spaces, `spec.template` at 4 spaces, and container entries at 8 spaces.
+* ConfigMap-style maps must also remain nested. Keys under `data:` or `stringData:` must be indented two spaces beneath those parent keys; they must never be emitted at column 0.
+* YAML lists must also preserve indentation. Under keys like `containers`, `env`, `envFrom`, `volumeMounts`, `ports`, `args`, and `imagePullSecrets`, the `-` list marker must be indented beneath its parent key and the child fields beneath the list item must be indented two spaces deeper than the dash.
+* Multi-document YAML must preserve both separators and indentation. A document separator line containing exactly `---` must be followed by a new top-level document starting again at column 0, while nested keys in that document remain indented.
+* If you cannot serialize cached manifest YAML with both correct indentation and verbatim values, you must fall back to a TODO placeholder instead of emitting malformed or partially redacted YAML.
+* You will be penalized for producing flat YAML in `Octopus.Action.KubernetesContainers.CustomResourceYaml`.
+
+## Step Name Character Rules
+
+* Octopus Deploy step names may only contain letters, numbers, periods, commas, dashes, underscores, and hashes. Parentheses `()` and square brackets `[]` are NOT valid in step names.
+* If the prompt contains a step name with parentheses or square brackets that were replaced by dashes (e.g., `Deploy -Manifest-`), use the dash-replaced form exactly as written in the prompt. Do NOT re-introduce parentheses or other special characters.
+* Do NOT normalize prompt-provided dash replacements into underscores. For example, `Manual Judgment -Canary-` must stay `Manual Judgment -Canary-`, never `Manual Judgment _Canary_`.
+* You will be penalized for creating steps with parentheses or square brackets in their names.
+
+## Step Description Property
+
+* When the prompt says `Set the step description to "..."`, the description must be set in the `execution_properties` map of the `octopusdeploy_process_step` resource using the property `notes`.
+* When the prompt says `Set the step description to include: "..."` or otherwise instructs you to append text to an existing step description, you must build a SINGLE final description string in prompt order and store that combined value in `notes`. Do not emit multiple competing description properties.
+* If a step receives more than one description fragment in the prompt, concatenate them with a single space between fragments unless the prompt explicitly specifies different punctuation.
+* The description value must be the exact verbatim string from the prompt, including any quoted sub-strings.
+* You will be penalized for omitting a step description when the prompt explicitly instructs it to be set.
+
+## Wait Steps (Script Steps with Start-Sleep)
+
+* A `wait` stage converted to `Start-Sleep -Seconds <N>` must be implemented as an `octopusdeploy_process_step` of type `"Octopus.Script"` with `execution_properties` containing `"Octopus.Action.Script.ScriptBody" = "Start-Sleep -Seconds <N>"`, `"Octopus.Action.Script.Syntax" = "PowerShell"`, and `"Octopus.Action.Script.ScriptSource" = "Inline"`.
+* The step name must match the dash-replaced form from the prompt (e.g., `"Wait -15min-"`) — parentheses in the original Spinnaker stage name have been replaced with dashes.
+* You will be penalized for using a type other than `"Octopus.Script"` for wait steps.
+
 ## Default Lifecycle Instructions
 
 * Use "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id" when referencing the Default Lifecycle, for example `lifecycle_id = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}"`.
@@ -810,6 +850,10 @@ resource "octopusdeploy_external_feed_create_release_trigger" "projecttrigger_ev
 ```
 
 * If the prompt specifies that a external feed trigger is to be created, and does not specify that a channel is to be created, you must create a channel called "Application" and link that channel to the external feed trigger.
+* If the prompt specifies `Add a channel called "Application" to the project and configure a version rule that matches the regex "<regex>" for every step that deploys a Docker image.`, create an `octopusdeploy_channel` resource named "Application" with a `rule` block whose `tag` property is set to the exact regex from the prompt.
+* When that regex-based channel rule applies to steps that expose package metadata, add one `action_package` block per matching deployment action. If the matching steps are `Octopus.KubernetesDeployRawYaml` steps without `primary_package` or `packages` blocks, still create the channel and still set the `rule.tag` property. Do not drop the channel just because `action_package` blocks cannot be emitted for placeholder Docker-image triggers.
+* If the prompt specifies both a regex-based `Application` channel and an external feed trigger, the `octopusdeploy_external_feed_create_release_trigger` resource must reference that regex-based channel instead of creating or linking to a second bare `Application` channel.
+* If the prompt specifies an external feed trigger for a project whose deployment steps are `Octopus.KubernetesDeployRawYaml` steps without a `primary_package` or `packages` block, create the `octopusdeploy_external_feed_create_release_trigger` resource without a `package` block. Do not drop the trigger merely because the referenced deployment step has no package metadata.
 * You will be penalized for setting the "channel_id" attribute to a fixed value like "Channels-1".
 * The "package" block in a "octopusdeploy_external_feed_create_release_trigger" resource must have a "deployment_action_slug" property that references a deployment action in the associated project.
 * You will be penalized for setting the "deployment_action_slug" property in the "package" block of a "octopusdeploy_external_feed_create_release_trigger" resource to an empty string or null when the step it references has no primary package.
@@ -973,6 +1017,53 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
 }
 ```
 
+* Channel version rules must supply a package, for example:
+
+```
+resource "octopusdeploy_channel" "channel_every_step_project_hotfix" {
+  count       = "${length(data.octopusdeploy_projects.channel_every_step_project_hotfix.projects) != 0 ? 0 : 1}"
+  name        = "Hotfix"
+  description = "This is an example channel with package version rules"
+  project_id  = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? data.octopusdeploy_projects.project_every_step_project.projects[0].id : octopusdeploy_project.project_every_step_project[0].id}"
+  is_default  = false
+
+  rule {
+
+    action_package {
+      deployment_action = "Deploy a Helm Chart"
+    }
+
+    tag           = "^featurebranch$"
+    version_range = "[1.0,)"
+  }
+
+  tenant_tags = []
+  depends_on  = [octopusdeploy_process_steps_order.process_step_order_every_step_project,octopusdeploy_process_steps_order.process_step_order_every_step_project_example_runbook,octopusdeploy_process_steps_order.process_step_order_every_step_project_runbook_scoped_to_projects_lifecycle_environment,octopusdeploy_process_steps_order.process_step_order_every_step_project_runbook_with_no_environments]
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
+* You will be penalized for defining a "octopusdeploy_channel" resource with a "rule" block with an empty version, for example: 
+
+```
+resource "octopusdeploy_channel" "channel_dev_deployment_application" {
+  count      = "${length(data.octopusdeploy_projects.project_dev_deployment.projects) != 0 ? 0 : 1}"
+  name       = "Application"
+  project_id = "${length(data.octopusdeploy_projects.project_dev_deployment.projects) != 0 ? data.octopusdeploy_projects.project_dev_deployment.projects[0].id : octopusdeploy_project.project_dev_deployment[0].id}"
+  is_default = false
+  space_id   = "${trimspace(var.octopus_space_id)}"
+  rule {
+    tag           = "^master.*"
+    version_range = ""
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
 ## Octopus Global Deployment Freeze Instructions
 
 * You will be penalized for adding the "description" property to the "octopusdeploy_deployment_freeze" resource.
@@ -989,6 +1080,8 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
 * Steps are defined in the "octopusdeploy_process_step" and "octopusdeploy_process_child_step" resources.
 * The order of the steps are defined in the "octopusdeploy_process_steps_order" resource.
 * The order of child steps are defined in the "octopusdeploy_process_child_steps_order" resource.
+* If the prompt indicates that a Spinnaker stage was skipped because it was hard-disabled, do not create any placeholder step resource for it and do not include it in the "octopusdeploy_process_steps_order" resource.
+* When a skipped or ignored stage is removed from the dependency graph, the Terraform step order must reflect the rewritten dependency chain from the prompt. Do not preserve an order that still assumes the skipped stage exists.
 * You will be penalized for using asterisks, for example "*****", as placeholders in step properties.
 * The "Octopus.Step.ConditionVariableExpression" property can only be defined in the "properties" block.
 * You will be penalized for defining the "Octopus.Step.ConditionVariableExpression" property in the "execution_properties" block.
@@ -1555,7 +1648,10 @@ packages = {
 * Using client side apply means the same as disabling server side apply for Kubernetes steps.
 * If the prompt includes instructions to enable client side apply for a Kubernetes step, you must set the "Octopus.Action.Kubernetes.ServerSideApply.Enabled" property in the "execution_properties" block to "False".
 * Steps of type "Octopus.Manual" must have a "Octopus.Action.Manual.Instructions" property in the "execution_properties" block.
+* Steps of type "Octopus.Manual" must set `"Octopus.Action.RunOnServer" = "true"` in the `execution_properties` block.
 * You will be penalized for defining the "Octopus.Step.Manual.Instructions" property in the "execution_properties" block.
+* When the prompt defines manual-intervention instructions, the value of "Octopus.Action.Manual.Instructions" must preserve the prompt text exactly. Do not rewrite `${ ... }` Spinnaker expressions into Octopus `#{...}` syntax, do not normalize punctuation, and do not strip or replace Unicode characters.
+* If the prompt appends a NOTE explaining that the instructions contain Spinnaker expressions, include that NOTE verbatim at the end of the same "Octopus.Action.Manual.Instructions" string. Do not "fix" the embedded expression text.
 * You will be penalized for defining a value in the "execution_properties" block with `jsonencode({})` and then ending with a double quote, for example:
 `"Octopus.Action.Azure.ResourceGroupTemplateParameters" = jsonencode({})"`
 * You must define a value in the "execution_properties" block with `jsonencode({})` without ending with a double quote or new line, for example:
@@ -1639,8 +1735,36 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_manifest_update_upda
 * The "StartAfterPrevious" setting corresponds with the "Wait for all previous steps to complete, then start" option in the UI.
 * A step of type "Octopus.KubernetesDeployRawYaml" with "Octopus.Action.Script.ScriptSource" set to "GitRepository" must define a "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" property. If no file name is specified in the prompt, you must set the "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" property to "custom-resource.yaml".
 * You wll be penalized for defining a step of type "Octopus.KubernetesDeployRawYaml" with "Octopus.Action.Script.ScriptSource" set to "GitRepository" and not defining the "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" property.
+* **CRITICAL — `file_path_filters` must be set from the "Set the File Paths to" instruction**: When the prompt includes `Set the File Paths to "<path>"` for a "Deploy Kubernetes YAML" step that uses "Files from a Git repository" as its YAML source, you MUST set `file_path_filters = ["<path>"]` in the `git_dependencies` block. Additionally, set `Octopus.Action.KubernetesContainers.CustomResourceYamlFileName = "<path>"` in the `execution_properties` block using the SAME value. Both `file_path_filters` and `CustomResourceYamlFileName` must reflect the exact file path string from the prompt instruction.
+* You will be penalized for setting `file_path_filters = null` when the prompt specifies "Set the File Paths to '<path>'" for a GitRepository-sourced Deploy Kubernetes YAML step.
+
+**Example — Deploy Kubernetes YAML step with File Paths instruction**:
+
+Given a prompt instruction: `Set the File Paths to "resource-0172".`
+
+The **CORRECT** Terraform sets both `file_path_filters` and `CustomResourceYamlFileName` to the same value:
+```
+git_dependencies = { "" = { default_branch = "master", file_path_filters = ["resource-0172"], git_credential_type = "Anonymous", repository_uri = "https://example.invalid/url-0234" } }
+execution_properties = {
+  "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" = "resource-0172"
+  "Octopus.Action.Script.ScriptSource" = "GitRepository"
+  ...
+}
+```
+
+The **WRONG** Terraform leaves `file_path_filters` as null — FORBIDDEN when a File Paths instruction is present:
+```
+git_dependencies = { "" = { default_branch = "master", file_path_filters = null, ... } }
+```
+* If the prompt says `Set the step namespace to "<namespace>".` for a step of type "Octopus.KubernetesDeployRawYaml", you must define `"Octopus.Action.KubernetesContainers.Namespace" = "<namespace>"` in the `execution_properties` block using that exact value.
 * A step of type "Octopus.KubernetesDeployRawYaml" with must not set the "Octopus.Action.KubernetesContainers.Namespace" property to an empty string. If the prompt does not specify a namespace, do not define the "Octopus.Action.KubernetesContainers.Namespace" property.
 * A step of type "Octopus.KubernetesDeployRawYaml" must have property indented YAML content in the "Octopus.Action.KubernetesContainers.CustomResourceYaml" property if the YAML source is set to "Inline YAML".
+* When the prompt provides an inline YAML block for `Octopus.Action.KubernetesContainers.CustomResourceYaml`, copy that YAML content verbatim into the Terraform string while preserving its structure, list items, and indentation. Do not flatten nested keys, regenerate the YAML from a lossy intermediate representation, or remove `image`, `namespace`, `initContainers`, or other fields present in the prompt.
+* If the prompt's inline YAML block contains multiple YAML documents separated by standalone `---` lines, keep the ENTIRE multi-document payload in the single `Octopus.Action.KubernetesContainers.CustomResourceYaml` value. Do not split the YAML into multiple Terraform resources, multiple step resources, or separate prompt sections.
+* For multi-document inline YAML, preserve the original document order exactly, keep each `---` separator on its own line, and ensure each document restarts its top-level keys at column 0 while maintaining 2-space indentation inside that document.
+* For inline YAML copied from the prompt, treat the prompt's indentation as authoritative. Never left-shift nested keys such as `labels`, `annotations`, `containers`, `env`, `ports`, `metrics`, or `scaleTargetRef` to the same column as their parent key.
+* If the prompt includes a Deployment document followed by a HorizontalPodAutoscaler document in one inline YAML block, both documents must remain in the same `Octopus.Action.KubernetesContainers.CustomResourceYaml` value and both documents must preserve their own nested indentation after the `---` separator.
+* When the prompt explicitly says `The step must be disabled.`, set `is_disabled = true` on the corresponding `octopusdeploy_process_step` or `octopusdeploy_process_templated_step` resource. Do not omit the resource and do not change the step order to compensate.
 * You will be penalized for defining the properties "Octopus.Action.GitRepository.ExternalRepositoryUrl" or "Octopus.Action.GitRepository.FilePathFilters" on a step of type "Octopus.KubernetesDeployRawYaml".
 * All steps must have a unique name. If two steps have the same name, add a number at the end of the step name to make it unique, for example "Deploy a Kubernetes Web App via YAML 2".
 * Any "octopusdeploy_process_templated_step" resource based on the community step template with the URL "https://library.octopus.com/step-templates/99e6f203-3061-4018-9e34-4a3a9c3c3179" (which is the "Slack - Send Simple Notification" community step template) must set "Octopus.Action.RunOnServer" = "true" in the "execution_properties" block.
@@ -1705,6 +1829,7 @@ parameters      = [{ default_sensitive_value = null,, display_settings = { "Octo
 * You will be penalized for setting the resource "octopusdeploy_variable" "type" attribute to "Token".
 * When the "is_sensitive" property on a resource "octopusdeploy_variable" is set to "true", the "type" attribute must be set to "Sensitive".
 * When defining the value for a resource "octopusdeploy_variable" with a "type" of "Sensitive", the "sensitive_value" attribute must be set to "CHANGEME", and the "value" attribute must not be defined.
+* When the prompt says `Add a sensitive project variable called "<name>" with the description "<description>".`, create a project-scoped `octopusdeploy_variable` resource with `name = "<name>"`, `description = "<description>"`, `type = "Sensitive"`, `is_sensitive = true`, and `sensitive_value = "CHANGEME"`. Do not define a `value` attribute for that variable.
 
 For example, this is a sensitive variable:
 
@@ -2212,4 +2337,90 @@ data "octopusdeploy_projects" "project1" { ... }
 * You will be penalized for leaving any resources out for brevity.
 * You must include all requested resources.
 * You will be penalized for redacting, anonymizing, or replacing any values (names, namespaces, image references, environment variable values, etc.) with asterisks or placeholders.
+
+## Git Repository Branch Instructions
+
+* When the prompt says `Set the Repository Branch to "<branch>"` for a "Deploy Kubernetes YAML" step, the `git_dependencies` block of the corresponding `octopusdeploy_process_step` resource MUST set `default_branch = "<branch>"` using the exact branch name from the prompt.
+* If the prompt does NOT include a `Set the Repository Branch to` instruction for a step, use `default_branch = "main"` as the default value.
+* You will be penalized for setting `default_branch = "main"` when the prompt explicitly specifies a different branch.
+
+**Example — step prompt with explicit branch**:
+
+Given a step prompt:
+```
+* Add a "Deploy Kubernetes YAML" step ... Set the Repository URL to "https://example.invalid/url-0001". Set the File Paths to "deploy/app.yaml". Set the Repository Branch to "master". Set the target tag to Kubernetes.
+```
+
+The **CORRECT** Terraform includes `default_branch = "master"`:
+```
+git_dependencies {
+  default_branch         = "master"
+  git_credential_type    = "Anonymous"
+  repository_uri         = "https://example.invalid/url-0001"
+  file_path_filters      = ["deploy/app.yaml"]
+}
+```
+
+The **WRONG** Terraform defaults to "main" and ignores the prompt:
+```
+git_dependencies {
+  default_branch         = "main"
+  git_credential_type    = "Anonymous"
+  repository_uri         = "https://example.invalid/url-0001"
+  file_path_filters      = ["deploy/app.yaml"]
+}
+```
+
+## Prompted Variable Select Options Instructions
+
+* When the prompt includes `The variable must have the following selectable options: <option1>, <option2>, ...` for a project variable, the corresponding `octopusdeploy_variable` resource MUST use `control_type = "Select"` in its `display_settings` block and MUST include one `select_option` block for each option.
+* Each `select_option` block must set both `display_name` and `value` to the option string from the prompt.
+* Preserve the option order from the prompt exactly and ignore any empty option strings.
+* If the prompt does NOT include a selectable options instruction, use `control_type = "SingleLineText"` in the `display_settings` block (the default).
+* You will be penalized for using `control_type = "SingleLineText"` when the prompt specifies selectable options.
+* You will be penalized for omitting any `select_option` block when selectable options are specified.
+
+**Example — prompted variable with selectable options**:
+
+Given a prompt:
+```
+* Add a project variable called "account-purpose", with a default value of "", the description "account purpose name", and the label "account-purpose". The variable must be prompted for when creating a release. The variable must not be required. The variable must have the following selectable options: wakai, mercoin, escrow, partner_invoice.
+```
+
+The **CORRECT** Terraform uses `control_type = "Select"` and includes `select_option` blocks:
+```
+resource "octopusdeploy_variable" "variable_account_purpose" {
+  ...
+  prompt {
+    description = "account purpose name"
+    label       = "account-purpose"
+    is_required = false
+    display_settings {
+      control_type = "Select"
+      select_option {
+        display_name = "wakai"
+        value        = "wakai"
+      }
+      select_option {
+        display_name = "mercoin"
+        value        = "mercoin"
+      }
+      select_option {
+        display_name = "escrow"
+        value        = "escrow"
+      }
+      select_option {
+        display_name = "partner_invoice"
+        value        = "partner_invoice"
+      }
+    }
+  }
+}
+```
+
+## Step Description Notes from Runtime Artifact Binding
+
+* When the prompt says `Set the step description to "NOTE: This step originally required the following Docker images to be bound at runtime by Spinnaker: ..."`, the description note MUST be set in the `notes` property of the `octopusdeploy_process_step` resource with the exact verbatim text from the prompt.
+* If the step already has an `notes` entry for another reason (e.g., the stage name contained special characters), the two description texts must be concatenated, separated by a space, in the same `notes` property.
+* Preserve the comma-separated Docker image list exactly as it appears in the prompt. Do not reorder the images, do not deduplicate them, and do not redact registry names, repositories, tags, or quotes.
 * Words such as `api`, `server`, `worker`, `web`, `auth`, `gateway`, `proxy`, `backend`, `frontend`, `key`, `token`, `service`, `manager`, `scheduler`, `cache`, `queue`, `db` are NOT secrets, API keys, or credentials and MUST NOT be replaced with asterisks (`*****`) or any other anonymization placeholder.
