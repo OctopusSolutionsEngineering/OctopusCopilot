@@ -4,6 +4,7 @@ import json
 import os
 import uuid
 
+from domain.config.logging import get_enhanced_logging_instances
 from domain.exceptions.none_on_exception import none_on_exception
 from domain.exceptions.spacebuilder import SpaceBuilderRequestFailed
 from domain.lookup.octopus_lookups import (
@@ -53,6 +54,7 @@ from domain.sanitizers.terraform import (
     fix_yaml_source,
 )
 from domain.tools.debug import get_params_message
+from domain.url.hostname import get_hostname_from_url
 from infrastructure.callbacks import save_callback
 from infrastructure.llm import llm_message_query, AZURE_PROJECT_SERVICE
 from infrastructure.mockgit import save_mockgit_user
@@ -68,6 +70,22 @@ from infrastructure.terraform_context import (
 )
 
 project_prompt_error_message = "The Octopus resources could not be generated from the prompt. This is usually because the prompt is too complex or the LLM is not able to generate a valid Terraform configuration. Please try again with a simpler prompt."
+
+
+def build_error_response(url, e):
+    """
+    Build a CopilotResponse for a SpaceBuilderRequestFailed error. Instances with enhanced
+    logging enabled will include the raw error details in the response.
+
+    :param url: The Octopus server URL (used to determine whether enhanced logging is active)
+    :param e: The exception that was raised
+    :return: A CopilotResponse with or without error details
+    """
+    if get_hostname_from_url(url) in get_enhanced_logging_instances():
+        return CopilotResponse(
+            f"{project_prompt_error_message}\nError details: {str(e)}"
+        )
+    return CopilotResponse(project_prompt_error_message)
 
 
 def create_template_project_confirm_callback_wrapper(
@@ -119,7 +137,7 @@ def create_template_project_confirm_callback_wrapper(
                 log_query(
                     create_template_project_confirm_callback_wrapper.__name__, str(e)
                 )
-                return CopilotResponse(project_prompt_error_message)
+                return build_error_response(url, e)
 
             response_text = []
             response_text.append(
@@ -369,7 +387,7 @@ def create_template_project_callback(
 
             except SpaceBuilderRequestFailed as e:
                 log_query(create_template_project_callback.__name__, str(e))
-                return CopilotResponse(project_prompt_error_message)
+                return build_error_response(url, e)
             finally:
                 # Cache the template if it resulted in a valid plan.
                 # If the plan is particularly big (over the limit of 32K characters), the save operation might fail.
