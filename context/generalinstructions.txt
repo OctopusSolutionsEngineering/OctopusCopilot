@@ -19,6 +19,16 @@
 * If the prompt says `The step must be disabled.`, you must still keep that step in the `octopusdeploy_process_steps_order` resource and preserve any explicit `start_trigger` annotation from the prompt. Disabled steps still participate in process ordering.
 * You will be penalized for using `start_trigger = "StartAfterPrevious"` when the prompt explicitly says `"Run in parallel with the previous step"`.
 * You will be penalized for using `start_trigger = "StartWithPrevious"` when the prompt explicitly says `"Wait for all previous steps to complete, then start"` or when no start trigger annotation is given.
+* **CRITICAL — every `octopusdeploy_process_step` or `octopusdeploy_process_templated_step` with `start_trigger = "StartWithPrevious"` MUST include `depends_on` referencing the immediately preceding step resource (the step it runs in parallel with).** Without this explicit Terraform dependency, Terraform may create the parallel step BEFORE its preceding step. When the Octopus API receives a `StartWithPrevious` step before its intended parallel partner exists in the process, it silently changes `StartWithPrevious` to `StartAfterPrevious`, breaking the parallel execution. The `depends_on` forces Terraform to create the preceding step first, ensuring the Octopus API can correctly honor `StartWithPrevious`. Example: if step B runs in parallel with step A (step B has `start_trigger = "StartWithPrevious"`), the Terraform for step B MUST be:
+  ```
+  resource "octopusdeploy_process_step" "process_step_myproject_step_b" {
+    name          = "Step B"
+    start_trigger = "StartWithPrevious"
+    depends_on    = [octopusdeploy_process_step.process_step_myproject_step_a]
+    ...
+  }
+  ```
+* You will be penalized for setting `start_trigger = "StartWithPrevious"` on a step without also adding `depends_on` referencing the immediately preceding step resource.
 
 ## Inline Kubernetes YAML Indentation
 
@@ -1078,10 +1088,15 @@ resource "octopusdeploy_channel" "channel_dev_deployment_application" {
 * Every "octopusdeploy_process_steps_order" resource must have an associated "octopusdeploy_process_step" resource.
 * You will be penalized for not defining steps for a project or runbook.
 * Steps are defined in the "octopusdeploy_process_step" and "octopusdeploy_process_child_step" resources.
-* The order of the steps are defined in the "octopusdeploy_process_steps_order" resource.
+* The order of the steps are defined in the "octopusdeploy_process_steps_order" resource. The `steps` array in `octopusdeploy_process_steps_order` MUST list ALL step IDs in the exact process execution order — from first step to last — with NO omissions.
 * The order of child steps are defined in the "octopusdeploy_process_child_steps_order" resource.
 * If the prompt indicates that a Spinnaker stage was skipped because it was hard-disabled, do not create any placeholder step resource for it and do not include it in the "octopusdeploy_process_steps_order" resource.
 * When a skipped or ignored stage is removed from the dependency graph, the Terraform step order must reflect the rewritten dependency chain from the prompt. Do not preserve an order that still assumes the skipped stage exists.
+* **CRITICAL — when a parallel step group follows a sequential step, the `depends_on` chain for the steps in that group MUST be**:
+  * Step A (sequential, runs first): `depends_on = []`
+  * Step B (first in the parallel group, `start_trigger = "StartAfterPrevious"`): `depends_on = [step_A]`
+  * Step C (second in the parallel group, `start_trigger = "StartWithPrevious"`): `depends_on = [step_B]` ← references the step it runs IN PARALLEL WITH, not step A
+  Without `depends_on = [step_B]` on step C, Terraform may create step C before step B. When Octopus receives step C before step B exists, it cannot honor `StartWithPrevious` and silently changes it to `StartAfterPrevious`.
 * You will be penalized for using asterisks, for example "*****", as placeholders in step properties.
 * The "Octopus.Step.ConditionVariableExpression" property can only be defined in the "properties" block.
 * You will be penalized for defining the "Octopus.Step.ConditionVariableExpression" property in the "execution_properties" block.
@@ -1759,12 +1774,15 @@ git_dependencies = { "" = { default_branch = "master", file_path_filters = null,
 * If the prompt says `Set the step namespace to "<namespace>".` for a step of type "Octopus.KubernetesDeployRawYaml", you must define `"Octopus.Action.KubernetesContainers.Namespace" = "<namespace>"` in the `execution_properties` block using that exact value.
 * A step of type "Octopus.KubernetesDeployRawYaml" with must not set the "Octopus.Action.KubernetesContainers.Namespace" property to an empty string. If the prompt does not specify a namespace, do not define the "Octopus.Action.KubernetesContainers.Namespace" property.
 * A step of type "Octopus.KubernetesDeployRawYaml" must have property indented YAML content in the "Octopus.Action.KubernetesContainers.CustomResourceYaml" property if the YAML source is set to "Inline YAML".
+* **CRITICAL — when setting `Octopus.Action.Script.ScriptSource = "Inline"` (for a Deploy Kubernetes YAML step), you MUST also set `Octopus.Action.KubernetesContainers.CustomResourceYaml` to the YAML content from the prompt. NEVER leave `CustomResourceYaml` absent or empty when `ScriptSource` is `"Inline"`.** An inline YAML step without YAML content will fail at plan time with a Terraform validation error.
 * When the prompt provides an inline YAML block for `Octopus.Action.KubernetesContainers.CustomResourceYaml`, copy that YAML content verbatim into the Terraform string while preserving its structure, list items, and indentation. Do not flatten nested keys, regenerate the YAML from a lossy intermediate representation, or remove `image`, `namespace`, `initContainers`, or other fields present in the prompt.
+* **CRITICAL — when the prompt's inline YAML block for `Octopus.Action.KubernetesContainers.CustomResourceYaml` is a TODO placeholder comment (e.g., `# TODO: replace with manifest downloaded from gs://...` or `# TODO: replace with correctly indented manifest serialized from the cached Spinnaker manifests array`), copy that exact TODO comment string verbatim as the property value.** Do NOT attempt to regenerate or reconstruct the YAML from memory. Do NOT replace the TODO comment with an empty string or null. The TODO comment is intentional — it signals that the manifest content must be provided by the migration engineer before the step can run. The corresponding step MUST also have `is_disabled = true` because a YAML comment is not valid Kubernetes YAML and will fail at deployment time.
 * If the prompt's inline YAML block contains multiple YAML documents separated by standalone `---` lines, keep the ENTIRE multi-document payload in the single `Octopus.Action.KubernetesContainers.CustomResourceYaml` value. Do not split the YAML into multiple Terraform resources, multiple step resources, or separate prompt sections.
 * For multi-document inline YAML, preserve the original document order exactly, keep each `---` separator on its own line, and ensure each document restarts its top-level keys at column 0 while maintaining 2-space indentation inside that document.
 * For inline YAML copied from the prompt, treat the prompt's indentation as authoritative. Never left-shift nested keys such as `labels`, `annotations`, `containers`, `env`, `ports`, `metrics`, or `scaleTargetRef` to the same column as their parent key.
 * If the prompt includes a Deployment document followed by a HorizontalPodAutoscaler document in one inline YAML block, both documents must remain in the same `Octopus.Action.KubernetesContainers.CustomResourceYaml` value and both documents must preserve their own nested indentation after the `---` separator.
 * When the prompt explicitly says `The step must be disabled.`, set `is_disabled = true` on the corresponding `octopusdeploy_process_step` or `octopusdeploy_process_templated_step` resource. Do not omit the resource and do not change the step order to compensate.
+* **You will be penalized for failing to set `is_disabled = true` when the prompt says `The step must be disabled.`**
 * You will be penalized for defining the properties "Octopus.Action.GitRepository.ExternalRepositoryUrl" or "Octopus.Action.GitRepository.FilePathFilters" on a step of type "Octopus.KubernetesDeployRawYaml".
 * All steps must have a unique name. If two steps have the same name, add a number at the end of the step name to make it unique, for example "Deploy a Kubernetes Web App via YAML 2".
 * Any "octopusdeploy_process_templated_step" resource based on the community step template with the URL "https://library.octopus.com/step-templates/99e6f203-3061-4018-9e34-4a3a9c3c3179" (which is the "Slack - Send Simple Notification" community step template) must set "Octopus.Action.RunOnServer" = "true" in the "execution_properties" block.
