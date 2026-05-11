@@ -432,7 +432,9 @@ def create_template_project_callback(
             prompt_message = []
 
             if is_enhanced_logging_enabled(url):
-                prompt_message.extend(["Generated Terraform", configuration])
+                prompt_message.extend(
+                    ["Generated Terraform", f"```\n{configuration}\n```"]
+                )
 
             prompt_title = "Do you want to continue to create the resources?"
             prompt_message.extend(
