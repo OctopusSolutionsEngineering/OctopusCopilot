@@ -1,26 +1,10 @@
 # Instructions
 
-## ⚠️ CRITICAL: Step Name Special Characters — Read Before Generating ANY Terraform
-
-**Step names in Octopus Deploy support ALL printable characters: parentheses `()`, brackets `[]`, slashes `/`, colons `:`, and all other punctuation. NEVER replace these with underscores or dashes.**
-
-The HCL resource LABEL (identifier) must use underscores/alphanumeric only. The `name = "..."` attribute must be the VERBATIM step name from the prompt.
-
-**MANDATORY EXAMPLE — when the prompt says `name the step "Manual Judgment (Canary)"`**:
-```hcl
-# Resource label: parentheses become _ (valid HCL identifier)
-resource "octopusdeploy_process_step" "process_step_my_project_manual_judgment__canary_" {
-  name = "Manual Judgment (Canary)"   # ← VERBATIM — parentheses preserved in name attribute
-```
-```hcl
-# WRONG — do NOT apply underscore sanitization to the name attribute:
-resource "octopusdeploy_process_step" "process_step_my_project_manual_judgment__canary_" {
-  name = "Manual Judgment _Canary_"   # ← WRONG: underscores are for HCL labels only, NOT for name values
-```
-
-The pattern `_X_` in a `name` attribute is ALWAYS wrong when the prompt contains `(X)`. You will be penalized for each step with `_`, `-`, or any other character substituted in the `name` attribute for `(`, `)`, `/`, `:`, `[`, or `]`.
-
 ## General Instructions
+
+**⚠️ CRITICAL — `feed_github_container_registry` MUST use count + data source pattern**: When any `Octopus.KubernetesDeployRawYaml` step is present, the `feed_github_container_registry` resource MUST be created with `count = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? 0 : 1}"` AND a matching `data "octopusdeploy_feeds" "feed_github_container_registry"` data source. Creating this resource WITHOUT count (i.e., `resource "octopusdeploy_docker_container_registry" "feed_github_container_registry" { name = "GitHub Container Registry" ... }` without a count attribute) is FORBIDDEN — it will fail on re-apply when the feed already exists. The `container` block MUST use the ternary pattern `feed_id = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id : octopusdeploy_docker_container_registry.feed_github_container_registry[0].id}"` with `[0]` indexing — NOT `.id` directly.
+
+**⚠️ CRITICAL — `depends_on` for sequential steps MUST reference ONLY the immediately preceding step**: Each `octopusdeploy_process_step` resource (steps 2, 3, 4, etc.) must have `depends_on` pointing to EXACTLY ONE step — the step that immediately precedes it in the deployment process. NEVER list all previous steps in `depends_on`. For step N, `depends_on = [octopusdeploy_process_step.step_N_minus_1]`. For step N to depend on ALL previous steps violates the rule and creates unnecessary complexity. WRONG: `depends_on = [step_1, step_2, step_3, step_4, step_5, step_6]` for step 7. CORRECT: `depends_on = [octopusdeploy_process_step.step_6]` for step 7.
 
 * You must carefully consider the prompt and create all the required resources.
 * You must ignore any mention of the current project.
@@ -30,52 +14,9 @@ The pattern `_X_` in a `name` attribute is ALWAYS wrong when the prompt contains
 * You must create valid Terraform.
 * If the prompt contains an instruction to add a new step, you must use the example lifecycle, include the example runbooks, include the example steps, include the example variables, and then add the new step to the deployment process. **EXCEPTION — this instruction applies ONLY to Spinnaker migration prompts.** When the prompt starts with "Create a [type] project" (e.g., "Create a Kubernetes project", "Create an Azure Web App project") and lists explicit "Add a step to..." instructions that name specific step types and configurations, this is a **new project creation prompt**, NOT a migration prompt. For new project creation prompts, ONLY create the steps explicitly named in the "Add a step" instructions. Do NOT add additional template steps (e.g., "Approve Production Deployment", "Check Targets Available", "Scan for Vulnerabilities", or any other steps from the project type template). Do NOT add template runbooks, template scheduled triggers, or any other template resources that are not explicitly requested. You will be penalized for adding template steps that were not explicitly requested in a new project creation prompt.
 
-**CRITICAL — for new project creation prompts (prompts starting with "Create a [type] project"), NONE of the following template resources may be added unless explicitly requested in the prompt**:
-- Template steps such as "Approve Production Deployment", "Check Targets Available", "Scan for Vulnerabilities", or any security scanning step
-- Scheduled triggers such as "Daily Security Scan" or any other trigger
-- Template channels such as "Hotfix" or "Application" (only the default channel is created by Octopus automatically)
-- Template variables such as "OctopusPrintEvaluatedVariables", "OctopusPrintVariables", "Octopus.Project.ApiKey", "Octopus.Project.WorkerPool", "Project.WorkerPool", "Application.Image", "Project.Message", "Project.Azure.Account", "Project.Azure.WebApp.ServicePlan.Name", "Project.Azure.WebApp.ServicePlan.SKU", "Project.Azure.ResourceGroup.Name", "Project.AWS.Account", "Project.AWS.Region", "Project.AWS.Lambda.FunctionName", or any variable not explicitly named in the prompt
-- The "Security" environment unless the prompt explicitly requests it or the lifecycle includes it
-- Community step templates unless explicitly requested in the prompt
-
-**You will be penalized for each template resource added to a new project creation prompt that was not explicitly requested.**
-
-**MANDATORY SELF-CHECK — new project creation resource count**: Before finalizing a new project creation prompt response, count:
-1. The number of "Add a step" instructions in the prompt → this MUST equal the number of `octopusdeploy_process_step` + `octopusdeploy_process_templated_step` resources for the project. If you have more steps than "Add a step" instructions, remove the extra steps.
-2. The number of variables explicitly named in the prompt → the Terraform MUST include variables for only those named variables plus system variables. Do NOT add "OctopusPrintEvaluatedVariables", "OctopusPrintVariables", or other debug/monitoring variables unless the prompt explicitly requests them.
-3. There MUST be zero `octopusdeploy_project_scheduled_trigger` or `octopusdeploy_runbook_trigger` resources unless the prompt explicitly asks for a trigger.
-4. There MUST be zero `octopusdeploy_channel` resources (beyond the default channel which is managed automatically) unless the prompt explicitly asks for a channel.
-
-**Example — prompt "Enable variable debugging" maps to an OctopusPrintEvaluatedVariables variable**: When the prompt explicitly says "Enable variable debugging", add a variable named "OctopusPrintEvaluatedVariables" with value "True". When the prompt does NOT say this, do NOT add this variable.
 * The phrase "with no steps" in a project creation prompt is a **template placeholder** that is always present in migration prompts. When the prompt lists explicit "Add a step" instructions after the project creation line, those explicit step instructions take **absolute precedence** and ALL listed steps MUST be created — even if the project creation line says "with no steps". The phrase "with no steps" should only be interpreted literally when there are **zero** subsequent "Add a step" instructions in the entire prompt. **CRITICAL: Do NOT use the presence of "with no steps" to suppress step creation when explicit "Add a step" instructions follow it.** You will be penalized for creating a project with no `octopusdeploy_process_step` resources when the prompt contains one or more "Add a step" instructions.
 
 **CRITICAL — project names and step names from the prompt are resource identifiers and MUST be reproduced verbatim in Terraform.** A project name like `"[PROD] api-syncer canary"` and step names like `"Deploy api-syncer"` or `"Scale Down Canary"` are deployment resource identifiers. The presence of words such as `api`, `key`, `token`, `service`, `auth`, or `credential` in these names does NOT make them sensitive. NEVER omit, shorten, or replace any portion of a project name or step name from the prompt with `*` or any other placeholder when generating Terraform.
-
-**CRITICAL — special characters in step names (slashes `/`, parentheses `()`, colons `:`, brackets `[]`) MUST be preserved verbatim in the `name` attribute.** The Terraform resource LABEL (e.g., `process_step_my_project_deploy_pub_sub_handlers`) may sanitize special characters to underscores or omit them (since resource labels must be valid identifiers), but the `name` attribute MUST contain the exact original text from the prompt including all special characters. If the prompt says `name the step "Deploy Pub/Sub handlers"`, the Terraform must have `name = "Deploy Pub/Sub handlers"` (with the slash), NOT `name = "Deploy Pub_Sub handlers"` (with an underscore). If the prompt says `name the step "Deploy gRPC (canary)"`, the Terraform must have `name = "Deploy gRPC (canary)"` (with parentheses), NOT `name = "Deploy gRPC -canary-"` (with dashes) and NOT `name = "Deploy gRPC _canary_"` (with underscores).
-
-**MANDATORY SELF-CHECK — step name special characters**: Before finalizing Terraform output, scan EVERY `name` attribute of all `octopusdeploy_process_step` and `octopusdeploy_process_templated_step` resources. For each step name, compare it character-by-character against the corresponding step name in the prompt. If ANY of the following substitutions appear in the `name` attribute, they are WRONG and MUST be corrected:
-- `(` replaced with `_` or `-` — WRONG (e.g., `"Deploy Prod _Canary_"` must be `"Deploy Prod (Canary)"`, `"Manual Judgment _Canary_"` must be `"Manual Judgment (Canary)"`)
-- `)` replaced with `_` or `-` — WRONG
-- `/` replaced with `_` or `-` — WRONG (e.g., `"Deploy Pub_Sub"` must be `"Deploy Pub/Sub"`)
-- `:` replaced with `-` — WRONG (e.g., `"Judgement- canary stage 1"` must be `"Judgement: canary stage 1"`)
-- `[` or `]` replaced with `_` or `-` — WRONG
-The resource LABEL may use these substitutions (underscores are valid in labels), but the `name` attribute must be verbatim. You will be penalized for each step with a sanitized `name` attribute.
-
-**Negative example — slash and parentheses in step name incorrectly sanitized (FORBIDDEN)**:
-```hcl
-name = "Deploy Pub_Sub handlers"         ← WRONG: "/" replaced with "_" (only valid in resource label, not in name attribute)
-name = "Deploy gRPC -canary-"            ← WRONG: "(canary)" replaced with "-canary-"
-name = "Deploy gRPC _canary_"            ← WRONG: "(canary)" replaced with "_canary_" (underscores also forbidden)
-name = "Manual Judgment _Canary_"        ← WRONG: "(Canary)" replaced with "_Canary_" (underscores also forbidden)
-name = "Manual Judgment _Regular_"       ← WRONG: "(Regular)" replaced with "_Regular_"
-```
-**Correct output**:
-```hcl
-name = "Deploy Pub/Sub handlers"         ← CORRECT: verbatim including slash
-name = "Deploy gRPC (canary)"            ← CORRECT: verbatim including parentheses
-name = "Manual Judgment (Canary)"        ← CORRECT: verbatim including parentheses
-name = "Manual Judgment (Regular)"       ← CORRECT: verbatim including parentheses
-```
 
 **Negative example — project name incorrectly redacted (FORBIDDEN)**:
 ```hcl
@@ -112,7 +53,7 @@ notes = "Original stage type: undoRolloutManifest. This step rolls back deployme
 * **MANDATORY — every `octopusdeploy_process_step` and `octopusdeploy_process_templated_step` resource defined for a project MUST appear in that project's `octopusdeploy_process_steps_order` resource's `steps` list.** A step that exists in Terraform but is absent from the `steps` list is silently ignored by Octopus and will not execute. Before finalizing, count the `octopusdeploy_process_step` and `octopusdeploy_process_templated_step` resources for a project and verify the same count of step IDs appears in the `octopusdeploy_process_steps_order` `steps` list. If any are missing, add them in the correct topological order. You will be penalized for omitting any step from the `steps` list.
 * **MANDATORY — each step ID must appear in the `octopusdeploy_process_steps_order` `steps` list EXACTLY ONCE.** Duplicate step IDs in the `steps` list cause Octopus to execute a step more than once, which is always wrong. Before finalizing, scan the `steps` list for duplicate references and remove any duplicates. The `steps` list length must equal the count of `octopusdeploy_process_step` + `octopusdeploy_process_templated_step` resources for the project. If the list length is greater than this count, there are duplicate IDs — find and remove them.
 
-**CRITICAL — when two steps in the prompt have identical names, use distinct Terraform resource labels but preserve the exact prompt name as the `name` attribute**: If two "Add a step" instructions both specify the same step name (e.g., two steps both named "Deploy Service-A"), they are two separate resources and must have distinct Terraform resource labels (e.g., `process_step_..._deploy_service_a` and `process_step_..._deploy_service_a_2`). However, the `name` attribute on BOTH resources MUST match the prompt's step name verbatim — do NOT append "2" or any suffix to the `name` attribute itself. The `name` attribute uniqueness is enforced at the Octopus API level by suffixing the display name as needed, but the Terraform `name` attribute must always reflect what the prompt specifies.
+**CRITICAL — when two steps in the prompt have identical names, use distinct Terraform resource labels but preserve the exact prompt name as the `name` attribute**: If two "Add a step" instructions both specify the same step name (e.g., two steps both named "Deploy Service-A"), they are two separate resources and must have distinct Terraform resource labels (e.g., `process_step_..._deploy_service_a` and `process_step_..._deploy_service_a_2`). Also, the `name` attribute on the step resources must be unique — append the same suffix to the `name` attribute.
 
 **Negative example — `name` attribute incorrectly modified to avoid collision (FORBIDDEN)**:
 ```hcl
@@ -120,7 +61,7 @@ resource "octopusdeploy_process_step" "process_step_...deploy_service_a" {
   name = "Deploy Service-A"  ← CORRECT
 }
 resource "octopusdeploy_process_step" "process_step_...deploy_service_a_2" {
-  name = "Deploy Service-A 2"  ← WRONG: "2" appended to the name attribute
+  name = "Deploy Service-A"  ← WRONG: name attribute is duplicated
 }
 ```
 **CORRECT output** (resource label differs, name attribute is verbatim from prompt):
@@ -129,8 +70,7 @@ resource "octopusdeploy_process_step" "process_step_...deploy_service_a" {
   name = "Deploy Service-A"  ← CORRECT: matches first prompt instruction verbatim
 }
 resource "octopusdeploy_process_step" "process_step_...deploy_service_a_2" {
-  name = "Deploy Service-A"  ← CORRECT: also matches second prompt instruction verbatim; label is unique
-}
+  name = "Deploy Service-A 2"  ← CORRECT: both name and label are unique
 ```
 * **MANDATORY SELF-CHECK — parallel group completeness**: Before finalizing generated Terraform, scan every step prompt for the phrase `"Run in parallel with the previous step"`. For EACH such step, verify that the corresponding `octopusdeploy_process_step` or `octopusdeploy_process_templated_step` uses `start_trigger = "StartWithPrevious"`. If any step with that phrase uses `start_trigger = "StartAfterPrevious"`, correct it before outputting. **This check applies to ALL steps in the parallel group including the LAST one** — the last member of a parallel group is NOT a convergence point and MUST use `start_trigger = "StartWithPrevious"`, not `"StartAfterPrevious"`. Only the step AFTER the entire parallel group (annotated with "Wait for all previous steps") is a convergence point.
 
@@ -819,20 +759,10 @@ The **CORRECT** Terraform value re-indents each document based on schema depth:
 
 ## Step Name Character Rules
 
-* **Octopus Deploy step names support ALL printable characters including parentheses `()`, square brackets `[]`, slashes `/`, colons `:`, and any other punctuation.** There is NO restriction that requires replacing special characters. Parentheses and brackets are fully valid in step names.
-* The step name `name` attribute MUST reproduce the step name from the prompt CHARACTER-FOR-CHARACTER, including all parentheses, brackets, colons, slashes, and other punctuation.
-* The Terraform resource LABEL (the identifier after the resource type, e.g., `process_step_my_project_manual_judgment__canary_`) must be a valid HCL identifier — so it may use underscores in place of parentheses. But the `name = "..."` attribute MUST be verbatim.
-* You will be penalized for replacing `(` or `)` with `_` or `-` in the `name` attribute of any step resource.
-* **Negative example — parentheses incorrectly replaced in `name` (FORBIDDEN)**:
-  ```hcl
-  resource "octopusdeploy_process_step" "process_step_my_project_manual_judgment__canary_" {
-    name = "Manual Judgment _Canary_"   ← WRONG: resource label uses _, but name MUST use verbatim parentheses
-  ```
-* **Correct output**:
-  ```hcl
-  resource "octopusdeploy_process_step" "process_step_my_project_manual_judgment__canary_" {
-    name = "Manual Judgment (Canary)"   ← CORRECT: label uses _, name is verbatim with parentheses
-  ```
+* Octopus Deploy step names may only contain letters, numbers, periods, commas, dashes, underscores, and hashes. Parentheses `()` and square brackets `[]` are NOT valid in step names.
+* If the prompt contains a step name with parentheses or square brackets that were replaced by dashes (e.g., `Deploy -Manifest-`), use the dash-replaced form exactly as written in the prompt. Do NOT re-introduce parentheses or other special characters.
+* Do NOT normalize prompt-provided dash replacements into underscores. For example, `Manual Judgment -Canary-` must stay `Manual Judgment -Canary-`, never `Manual Judgment _Canary_`.
+* You will be penalized for creating steps with parentheses or square brackets in their names.
 
 ## Step Description Property
 
@@ -1069,6 +999,57 @@ resource "octopusdeploy_process_step" "process_step_delete_manifest" {
 * You will be penalized for setting the "quantity_to_keep" attribute in a "release_retention_policy" or "tentacle_retention_policy" block in a "phase" block to 0.
 * You will be penalized for defining the "phase" block on a single line.
 * Each proprt of the "phase" block must be on a new line.
+
+## Retention Policy for New Project Creation Prompts
+
+**CRITICAL — when a new project creation prompt specifies a retention policy (e.g., "with a retention policy of 30 days for releases")**:
+
+1. If the project uses the **Default Lifecycle** (looked up via data source only, NOT a resource), the retention policy from the prompt CANNOT be applied — the Default Lifecycle cannot be modified by Terraform. In this case, **ignore the retention policy instruction entirely** and do NOT add any `release_retention_policy` or `tentacle_retention_policy` blocks.
+
+2. If the project uses a **custom lifecycle being created** as a new `octopusdeploy_lifecycle` resource, apply the retention policy to the lifecycle resource's `release_retention_policy` block:
+```hcl
+resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
+  name = "My Lifecycle"
+  release_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+  tentacle_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+  phase { ... }
+}
+```
+
+3. **NEVER add a `retention_policy` block to an `octopusdeploy_project` resource** — this is always forbidden regardless of prompt content.
+
+**Lifecycle Selection for New Project Creation Prompts**:
+
+* When the prompt says "Use the Default Lifecycle" — use ONLY `data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id`. Do NOT create an `octopusdeploy_lifecycle` resource.
+* When the prompt says "Use the [Name] lifecycle" for any non-Default lifecycle — create BOTH a `data "octopusdeploy_lifecycles"` data source AND an `octopusdeploy_lifecycle` resource for that lifecycle name.
+* When the lifecycle name in the prompt does not match "Default Lifecycle", create the lifecycle with phases corresponding to the environments mentioned in the prompt (e.g., "Development", "Test", "Production").
+
+**Example — prompt says "Use the Security lifecycle"**:
+```hcl
+data "octopusdeploy_lifecycles" "lifecycle_security" {
+  ids          = null
+  partial_name = "Security"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_lifecycle" "lifecycle_security" {
+  count = "${length(data.octopusdeploy_lifecycles.lifecycle_security.lifecycles) != 0 ? 0 : 1}"
+  name  = "Security"
+  phase {
+    name                         = "Development"
+    optional_deployment_targets  = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+    automatic_deployment_targets = []
+    minimum_environments_before_promotion = 0
+    is_optional_phase = false
+  }
+}
+```
 
 ## Data Resources Instructions
 
@@ -1432,6 +1413,80 @@ data "octopusdeploy_tenants" "tenant_australian_office" {
 * When the prompt includes instructions to define the value of project tenant variables, you must define the value for all environment unless explicitly instructed otherwise.
 * When the prompt includes instructions to link a tenant to a project, you must include a "octopusdeploy_tenant_project" resource.
 * You will be penalized for defining a "octopusdeploy_tags" data source as this data source does not exist.
+
+## Tenanted Deployment Participation for New Project Creation Prompts
+
+**CRITICAL — when a new project creation prompt specifies a tenanted deployment mode**, set the `tenanted_deployment_participation` attribute on the `octopusdeploy_project` resource to the appropriate value:
+
+- `"TenantedOrUntenanted"` — set when the prompt says "TenantedOrUntenanted deployments" or "both tenanted and untenanted"
+- `"Tenanted"` — set when the prompt says "tenanted deployments only" or "Tenanted"
+- `"Untenanted"` — set when the prompt says "untenanted deployments" or does not mention tenants at all (default)
+
+**When the prompt names a specific tenant** (e.g., "Acme Corp tenant"), you MUST create ALL of the following resources:
+
+1. `octopusdeploy_tenant` resource for the tenant
+2. `data "octopusdeploy_tenants"` data source paired with the resource
+3. `octopusdeploy_tenant_project` resource linking the tenant to the project (with all lifecycle environments)
+
+**When the prompt specifies tenant tags** (e.g., "Regions/US-East tag"), you MUST create:
+
+1. `octopusdeploy_tag_set` resource for the tag set (e.g., "Regions")
+2. `data "octopusdeploy_tag_sets"` data source paired with the resource
+3. `octopusdeploy_tag` resource for each tag (e.g., "US-East") referencing the tag set
+4. Connect tenant tags to the tenant's `tenant_tags` attribute in the format `"TagSetName/TagName"` (e.g., `"Regions/US-East"`)
+
+**Example — prompt specifies "Acme Corp tenant with the Regions/US-East tenant tag"**:
+```hcl
+data "octopusdeploy_tag_sets" "tagset_regions" {
+  ids          = null
+  partial_name = "Regions"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_tag_set" "tagset_regions" {
+  count = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
+  name  = "Regions"
+  lifecycle { prevent_destroy = true }
+}
+resource "octopusdeploy_tag" "tagset_regions_tag_us_east" {
+  count      = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? 0 : 1}"
+  name       = "US-East"
+  tag_set_id = "${length(data.octopusdeploy_tag_sets.tagset_regions.tag_sets) != 0 ? data.octopusdeploy_tag_sets.tagset_regions.tag_sets[0].id : octopusdeploy_tag_set.tagset_regions[0].id}"
+  color      = "#333333"
+  lifecycle { prevent_destroy = true }
+}
+data "octopusdeploy_tenants" "tenant_acme_corp" {
+  ids          = null
+  partial_name = "Acme Corp"
+  skip         = 0
+  take         = 1
+  project_id   = ""
+  tags         = null
+}
+resource "octopusdeploy_tenant" "tenant_acme_corp" {
+  count       = "${length(data.octopusdeploy_tenants.tenant_acme_corp.tenants) != 0 ? 0 : 1}"
+  name        = "Acme Corp"
+  tenant_tags = ["Regions/US-East"]
+  depends_on  = [octopusdeploy_tag.tagset_regions_tag_us_east]
+  lifecycle { prevent_destroy = true }
+}
+resource "octopusdeploy_tenant_project" "tenant_project_acme_corp_my_project" {
+  count          = "${length(data.octopusdeploy_tenants.tenant_acme_corp.tenants) != 0 ? 0 : 1}"
+  tenant_id      = "${length(data.octopusdeploy_tenants.tenant_acme_corp.tenants) != 0 ? data.octopusdeploy_tenants.tenant_acme_corp.tenants[0].id : octopusdeploy_tenant.tenant_acme_corp[0].id}"
+  project_id     = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? data.octopusdeploy_projects.project_my_project.projects[0].id : octopusdeploy_project.project_my_project[0].id}"
+  environment_ids = [
+    "${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}",
+    "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"
+  ]
+  lifecycle { prevent_destroy = true }
+}
+```
+
+**You will be penalized for**:
+- Creating a tenant without an `octopusdeploy_tenant_project` resource linking it to the project
+- Setting `tenanted_deployment_participation = "Untenanted"` when the prompt requests TenantedOrUntenanted or Tenanted
+- Omitting the `tenant_tags` attribute when the prompt specifies tags for the tenant
+- Omitting tag set and tag resources when the prompt specifies tenant tags
 
 ## Tenant Project Variable Instructions
 
@@ -1830,7 +1885,32 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
 * You will be penalized for defining the "is_enhanced_mode" property on a "octopusdeploy_maven_feed" resource.
 * You will be penalized for creating a resource of type "octopusdeploy_builtin_feed"
 
-**CRITICAL — Google Container Registry feed URI format**: When the prompt says `Create a feed called "Google Container Registry" with a feed URL of "https://gcr.io/v2/"`, the correct Terraform representation uses `feed_uri = "https://gcr.io"` and `api_version = "v2"` as **separate attributes**. Do NOT embed the API version path in `feed_uri`.
+**CRITICAL — step environment scoping using `environments` vs `excluded_environments`**: When the prompt says "Set the step to scope to [Environment A] and [Environment B] environments only", use the `environments` attribute (allowlist) to explicitly list the allowed environments. Do NOT use `excluded_environments` as a workaround.
+
+- `environments` — specifies the ONLY environments in which this step runs (allowlist). Use this when the prompt says "scope to X and Y environments only".
+- `excluded_environments` — specifies environments where this step is SKIPPED (denylist). Use this only when the prompt says "exclude from X environment" or when using the DevSecOps lifecycle to exclude the Security environment.
+
+**Negative example — using excluded_environments when environments should be used (FORBIDDEN)**:
+```hcl
+# Prompt says: "Set the step to scope to Development and Production environments only"
+# WRONG: Uses excluded_environments instead of environments
+resource "octopusdeploy_process_step" "..." {
+  environments          = null                   ← WRONG: should list Development and Production
+  excluded_environments = ["${...security...}"]  ← WRONG: not a substitute for environments
+}
+```
+
+**Correct output — uses environments allowlist**:
+```hcl
+# CORRECT: Uses environments allowlist to scope to specific environments
+resource "octopusdeploy_process_step" "..." {
+  environments = [
+    "${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}",
+    "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"
+  ]
+  excluded_environments = null
+}
+```
 
 **Negative example — GCR API version embedded in feed_uri (FORBIDDEN)**:
 ```hcl
@@ -1980,6 +2060,10 @@ resource "octopusdeploy_runbook" "runbook_my_script_app_4_retrieve_logs" {
 
 * You will be penalized for setting both the "should_keep_forever" attribute and defining the "quantity_to_keep" attribute in a "octopusdeploy_runbook" resource.
 * If the "quantity_to_keep" attribute is defined in a "retention_policy" block in a "octopusdeploy_runbook" resource, the "should_keep_forever" attribute must be omitted.
+* When creating a runbook for an existing project:
+  * The "count" attribute on the "octopusdeploy_runbook" resource must be omitted.
+  * The "octopusdeploy_project" resource must be omitted.
+  * The "project_id" attribute on the "octopusdeploy_runbook" resource must be set to the ID of the existing project.
 
 ## Octopus Project Instructions
 
@@ -2144,8 +2228,6 @@ resource "octopusdeploy_project" "project_my_project" {
 }
 
 ## Octopus Project Trigger Instructions
-
-* **CRITICAL — only create `octopusdeploy_project_scheduled_trigger` resources when the prompt EXPLICITLY requests a scheduled trigger.** Do NOT automatically add a daily security scan trigger, a deployment trigger, or any other scheduled trigger just because the project type (e.g., Kubernetes, AWS Lambda, DevSecOps lifecycle) templates include one. A scheduled trigger is only created when the prompt contains language such as "Add a scheduled trigger", "Add a daily trigger", "Create a trigger that runs every day", or similar. You will be penalized for creating a scheduled trigger that was not explicitly requested in the prompt.
 
 * When defining the "once_daily_schedule" block in the resource "octopusdeploy_project_scheduled_trigger" adhere to the following rules:
   * The "start_time" attribute value should be set to an ISO 8601 formatted string
@@ -2450,7 +2532,6 @@ resource "octopusdeploy_channel" "channel_my_blue_green_app_hotfixing_hotfix" {
 
 * You will be penalized for referencing a data source "octopusdeploy_projects" that does not exist in the output.
 * You will be penalized for creating a "octopusdeploy_project_channel" resource to represent a channel.
-* **CRITICAL — do NOT automatically add a "Hotfix" channel to a new project unless the prompt explicitly requests one.** A Hotfix channel is ONLY created when the prompt contains language such as "Add a Hotfix channel", "Create a Hotfix channel", or explicitly references a hotfix lifecycle. Template project types (Kubernetes, AWS Lambda, etc.) include Hotfix channels in their templates, but for new project creation prompts that do not mention a Hotfix channel, do NOT add one. You will be penalized for adding a Hotfix channel that was not explicitly requested.
 * Here is an example of a channel resource without a "rule" block:
 
 ```
@@ -4754,14 +4835,14 @@ resource "octopusdeploy_variable" "variable_isretry" {
 ## Step Description Notes from Runtime Artifact Binding
 
 * When the prompt says `Set the step description to "NOTE: This step originally required the following Docker images to be bound at runtime: ..."`, the description note MUST be set in the `notes` property of the `octopusdeploy_process_step` resource with the exact verbatim text from the prompt.
-* If the step already has an `notes` entry for another reason (e.g., the stage name contained special characters), the two description texts must be concatenated, separated by a space, in the same `notes` property.
+* If the step already has an `notes` entry for another reason, the two description texts must be concatenated, separated by a space, in the same `notes` property.
 * Preserve the comma-separated Docker image list exactly as it appears in the prompt. Do not reorder the images, do not deduplicate them, and do not redact registry names, repositories, tags, or quotes.
 
 ## Step Count Validation
 
 **ABSOLUTE RULE — the number of `octopusdeploy_process_step` resources MUST equal the number of non-notification steps described in the prompt**: Before finalizing your Terraform output, count the step prompts in the prompt (lines beginning with `* Add a "..."` or `* Add a community step template step`) and verify that you have created exactly the same number of `octopusdeploy_process_step` (or `octopusdeploy_process_templated_step`) resources. If the count differs, you have either missed a step or created a duplicate — both are bugs that MUST be corrected.
 
-**MANDATORY STEP UNIQUENESS CHECK**: Scan all `octopusdeploy_process_step` resource names in your Terraform output. If two resources have names ending in `_2`, `_3`, etc., verify that these correspond to steps in the prompt whose step NAMES are actually duplicated (e.g., two steps both named "Deploy -Manifest-"). If a `_2` suffix was added to a step whose prompt name is unique (different from all other step names), the suffix is wrong — use the step's actual unique name without the suffix.
+**MANDATORY STEP UNIQUENESS CHECK**: Scan all `octopusdeploy_process_step` resource names in your Terraform output. If two resources have names ending in `_2`, `_3`, etc., verify that these correspond to steps in the prompt whose step NAMES are actually duplicated (e.g., two steps both named `"Deploy (Manifest)"`). If a `_2` suffix was added to a step whose prompt name is unique (different from all other step names), the suffix is wrong — use the step's actual unique name without the suffix.
 
 ## Ordering of Parallel Steps in `octopusdeploy_process_steps_order`
 
@@ -5139,3 +5220,74 @@ resource "octopusdeploy_process_step" "process_step_my_project_deploy_app" {
 
 You will be penalized for setting `excluded_environments = null` on Kubernetes deployment steps when the project uses the DevSecOps lifecycle.
 * Words such as `api`, `server`, `worker`, `web`, `auth`, `gateway`, `proxy`, `backend`, `frontend`, `key`, `token`, `service`, `manager`, `scheduler`, `cache`, `queue`, `db` are NOT secrets, API keys, or credentials and MUST NOT be replaced with asterisks (`*****`) or any other anonymization placeholder.
+## Variable Scoping for New Project Creation Prompts
+
+**CRITICAL — when a new project creation prompt specifies that variables should be scoped to specific environments**, the `scope` block of the corresponding `octopusdeploy_variable` resource MUST include those environment IDs. The environment IDs must be looked up using the appropriate data source and resource ternary pattern.
+
+**Example — a variable scoped to the Production environment**:
+```hcl
+resource "octopusdeploy_variable" "my_project_connection_string_production" {
+  count        = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_my_project.projects) == 0 ? octopusdeploy_project.project_my_project[0].id : data.octopusdeploy_projects.project_my_project.projects[0].id}"
+  name         = "Project.ConnectionString"
+  type         = "String"
+  value        = "Server=prod-db;Database=myapp"
+  is_sensitive = false
+  scope {
+    environments = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+  }
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+```
+
+**When a variable has NO scope restriction**, do NOT include a `scope` block at all — omit it entirely rather than including an empty `scope {}` block.
+
+**You will be penalized for**:
+- Defining a `scope {}` block with no attributes inside it (empty scope)
+- Omitting the `scope` block when the prompt specifies that a variable should be scoped to specific environments
+- Including incorrect or non-existent environment names in the `scope` block
+
+## Kubernetes Step Worker Pool for New Project Creation Prompts
+
+**CRITICAL — for `Octopus.KubernetesDeployRawYaml` steps in new project creation prompts, `worker_pool_id` MUST be set using the Hosted Ubuntu data source**:
+
+When the prompt does NOT specify a worker pool or worker pool variable for a Kubernetes deploy step:
+- Set `worker_pool_id` to the Hosted Ubuntu worker pool (with Default Worker Pool as fallback)
+- Set `worker_pool_variable = null`
+- Do NOT create an `Octopus.Project.WorkerPool` variable
+
+**Required Hosted Ubuntu data source** (MUST always be included when any Kubernetes step is present):
+```hcl
+data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
+  ids          = null
+  partial_name = "Hosted Ubuntu"
+  skip         = 0
+  take         = 1
+}
+```
+
+**Correct pattern for Kubernetes deploy step worker pool**:
+```hcl
+resource "octopusdeploy_process_step" "process_step_my_project_deploy_app" {
+  name                 = "Deploy App"
+  type                 = "Octopus.KubernetesDeployRawYaml"
+  worker_pool_id       = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  worker_pool_variable = null
+  ...
+}
+```
+
+**FORBIDDEN pattern — K8s step using worker_pool_variable (unless explicitly requested)**:
+```hcl
+resource "octopusdeploy_process_step" "process_step_my_project_deploy_app" {
+  worker_pool_variable = "Octopus.Project.WorkerPool"   ← FORBIDDEN unless prompt explicitly requests worker pool variable
+  worker_pool_id       = null
+  ...
+}
+```
+
+You will be penalized for setting `worker_pool_variable` to any value on a Kubernetes step when the prompt does not explicitly request a worker pool variable.
