@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.10.2" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.12.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -232,15 +232,14 @@ resource "octopusdeploy_process_step" "process_step_script_hello_world" {
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.WorkerPool"
-  depends_on            = []
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptBody" = "echo \"#{Project.Message}\""
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptBody" = "echo \"#{Project.Message}\""
       }
 }
 

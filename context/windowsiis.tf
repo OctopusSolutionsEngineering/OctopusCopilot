@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.10.2" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.12.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -296,40 +296,39 @@ resource "octopusdeploy_process_step" "process_step_iis_deploy_to_iis" {
   slug                  = "deploy-to-iis"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = []
   properties            = {
         "Octopus.Action.TargetRoles" = "OctoPub-Windows-IIS"
       }
   execution_properties  = {
-        "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
-        "Octopus.Action.IISWebSite.WebSiteName" = "MyWebApp"
         "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
+        "Octopus.Action.IISWebSite.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
         "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.IISWebSite.ApplicationPoolName" = "WebApps"
+        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
         "Octopus.Action.EnabledFeatures" = ",Octopus.Features.IISWebSite,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
-        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
+        "Octopus.Action.IISWebSite.ApplicationPoolName" = "WebApps"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
         "Octopus.Action.RunOnServer" = "false"
+        "Octopus.Action.IISWebSite.WebSiteName" = "MyWebApp"
+        "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
+        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
+        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "False"
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
+        "Octopus.Action.IISWebSite.EnableAnonymousAuthentication" = "True"
         "Octopus.Action.IISWebSite.Bindings" = jsonencode([
         {
-        "certificateVariable" = null
-        "requireSni" = "False"
         "enabled" = "True"
         "protocol" = "http"
         "port" = "8080"
         "host" = ""
         "thumbprint" = null
+        "certificateVariable" = null
+        "requireSni" = "False"
                 },
         ])
-        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
-        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
-        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
-        "Octopus.Action.IISWebSite.EnableAnonymousAuthentication" = "True"
-        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "False"
         "Octopus.Action.IISWebSite.StartWebSite" = "True"
-        "Octopus.Action.IISWebSite.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
       }
 }
 
@@ -352,11 +351,11 @@ resource "octopusdeploy_process_step" "process_step_iis_print_message_when_no_ta
   properties            = {
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy to IIS].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Windows target with the tag 'OctoPub-Windows-IIS'.\"\n  Write-Highlight \"We recommend the [Polling Tentacle](https://octopus.com/docs/infrastructure/deployment-targets/tentacle/tentacle-communication).\"\n}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -384,15 +383,15 @@ resource "octopusdeploy_process_step" "process_step_iis_scan_for_vulnerabilities
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.WorkerPool"
-  depends_on            = [octopusdeploy_process_step.process_step_iis_deploy_to_iis,octopusdeploy_process_step.process_step_iis_print_message_when_no_targets]
+  depends_on            = [octopusdeploy_process_step.process_step_iis_print_message_when_no_targets]
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 

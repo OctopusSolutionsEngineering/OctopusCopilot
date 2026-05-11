@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.10.2" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.12.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -267,15 +267,14 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = []
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "echo \"Hello world\""
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -377,7 +376,6 @@ resource "octopusdeploy_process_step" "process_step_deployment_orchestration_dep
   slug                  = "deploy-a-release"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = []
   properties            = {
       }
   execution_properties  = {

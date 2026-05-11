@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.10.2" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.12.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -406,9 +406,36 @@ resource "octopusdeploy_tenant_project_variable" "tenantprojectvariable_2_austra
 resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable1_australian_office" {
   count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
   library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[5].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[5].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[2].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[2].id}"
   tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "Option1"
+  value                   = "Accounts-3002"
+  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
+}
+
+resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable2_australian_office" {
+  count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
+  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[3].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[3].id}"
+  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
+  value                   = "Certificates-461"
+  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
+}
+
+resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable3_australian_office" {
+  count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
+  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[6].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[6].id}"
+  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
+  value                   = "Accounts-21"
+  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
+}
+
+resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable4_australian_office" {
+  count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
+  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[7].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[7].id}"
+  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
+  value                   = "Accounts-3003"
   depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
 }
 
@@ -419,7 +446,7 @@ variable "variable_e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b
   description = "The secret variable value associated with the variable Australian Office"
   default     = "Change Me!"
 }
-resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable2_australian_office" {
+resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable5_australian_office" {
   count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
   library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
   template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[8].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[8].id}"
@@ -428,61 +455,7 @@ resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable2_australia
   depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
 }
 
-resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable3_australian_office" {
-  count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
-  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[0].id}"
-  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "The value for the Australian Office tenant"
-  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
-}
-
-resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable4_australian_office" {
-  count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
-  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[1].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[1].id}"
-  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "Accounts-3001"
-  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
-}
-
-resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable5_australian_office" {
-  count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
-  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[6].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[6].id}"
-  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "Accounts-21"
-  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
-}
-
 resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable6_australian_office" {
-  count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
-  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[7].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[7].id}"
-  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "Accounts-3003"
-  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
-}
-
-resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable7_australian_office" {
-  count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
-  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[9].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[9].id}"
-  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "single line of text"
-  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
-}
-
-resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable8_australian_office" {
-  count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
-  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[10].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[10].id}"
-  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "Accounts-3005"
-  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
-}
-
-resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable9_australian_office" {
   count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
   library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
   template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[11].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[11].id}"
@@ -491,30 +464,57 @@ resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable9_australia
   depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
 }
 
+resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable7_australian_office" {
+  count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
+  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[1].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[1].id}"
+  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
+  value                   = "Accounts-3001"
+  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
+}
+
+resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable8_australian_office" {
+  count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
+  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[4].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[4].id}"
+  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
+  value                   = "True"
+  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
+}
+
+resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable9_australian_office" {
+  count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
+  library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[5].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[5].id}"
+  tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
+  value                   = "Option1"
+  depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
+}
+
 resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable10_australian_office" {
   count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
   library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[2].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[2].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[9].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[9].id}"
   tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "Accounts-3002"
+  value                   = "single line of text"
   depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
 }
 
 resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable11_australian_office" {
   count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
   library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[3].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[3].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[10].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[10].id}"
   tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "Certificates-461"
+  value                   = "Accounts-3005"
   depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
 }
 
 resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable12_australian_office" {
   count                   = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? 0 : 1}"
   library_variable_set_id = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].id}"
-  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[4].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[4].id}"
+  template_id             = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets) != 0 ? data.octopusdeploy_library_variable_sets.library_variable_set_variables_example_variable_set.library_variable_sets[0].template[0].id : octopusdeploy_library_variable_set.library_variable_set_variables_example_variable_set[0].template[0].id}"
   tenant_id               = "${length(data.octopusdeploy_tenants.tenant_australian_office.tenants) != 0 ? data.octopusdeploy_tenants.tenant_australian_office.tenants[0].id : octopusdeploy_tenant.tenant_australian_office[0].id}"
-  value                   = "True"
+  value                   = "The value for the Australian Office tenant"
   depends_on              = [octopusdeploy_tenant_project.tenant_project_australian_office_every_step_project]
 }
 
@@ -972,15 +972,14 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = []
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "echo \"Hello world\""
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
       }
 }
 
@@ -1115,15 +1114,14 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_a_scr
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = ["Cities/London"]
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = []
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.Syntax" = "Bash"
         "Octopus.Action.Script.ScriptBody" = "echo \"Hello World!\"\n\nVARIABLE=\"test\"\n\n# Pay attention to how the $ character is escaped when defined in Terraform\necho \"$${VARIABLE}\"\n\n# Pay attention to how the percent character is escaped when defined in Terraform\ncurl -w \"%%{http_code}\" http://example.org"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "Bash"
       }
 }
 
@@ -1154,10 +1152,10 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_a_scr
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Package"
-        "Octopus.Action.Script.ScriptFileName" = "MyScript.ps1"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Package"
+        "Octopus.Action.Script.ScriptFileName" = "MyScript.ps1"
       }
 }
 
@@ -1177,16 +1175,16 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_an_az
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = ["Business Units/Billing", "Business Units/Engineering", "Business Units/HR", "Business Units/Insurance", "Cities/London", "Cities/Madrid", "Cities/Sydney", "Cities/Washington", "Cities/Wellington", "Regions/ANZ", "Regions/Asia", "Regions/Europe", "Regions/US"]
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.Syntax" = "Bash"
-        "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? data.octopusdeploy_accounts.account_azure.accounts[0].id : octopusdeploy_azure_openid_connect.account_azure[0].id}"
         "Octopus.Action.Script.ScriptBody" = "# Note how dollar signs are escaped with another dollar sign\n$myvariable = \"hi\"\necho \"$myvariable\""
         "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "Bash"
+        "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? data.octopusdeploy_accounts.account_azure.accounts[0].id : octopusdeploy_azure_openid_connect.account_azure[0].id}"
       }
 }
 
@@ -1214,15 +1212,15 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_an_az
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = ["Business Units/Billing", "Business Units/Engineering", "Business Units/HR", "Business Units/Insurance", "Cities/London", "Cities/Madrid", "Cities/Sydney", "Cities/Washington", "Cities/Wellington", "Regions/ANZ", "Regions/Asia", "Regions/Europe", "Regions/US"]
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? data.octopusdeploy_accounts.account_azure.accounts[0].id : octopusdeploy_azure_openid_connect.account_azure[0].id}"
+        "Octopus.Action.Script.ScriptFileName" = "CreaeResourceGroup.ps1"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Package"
+        "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? data.octopusdeploy_accounts.account_azure.accounts[0].id : octopusdeploy_azure_openid_connect.account_azure[0].id}"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptFileName" = "CreaeResourceGroup.ps1"
       }
 }
 
@@ -1241,19 +1239,19 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_an_aw
   slug                  = "run-an-aws-cli-script"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.Region" = "us-east-1"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Script.ScriptBody" = "echo \"Hi\""
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptBody" = "echo \"Hi\""
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.Aws.Region" = "us-east-1"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -1280,19 +1278,19 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_an_aw
   slug                  = "run-an-aws-cli-script-from-package"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script]
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptParameters" = "-ResourceName whatever"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.Region" = "us-east-1"
         "Octopus.Action.Script.ScriptSource" = "Package"
-        "Octopus.Action.Script.ScriptParameters" = "-ResourceName whatever"
         "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
         "Octopus.Action.Script.ScriptFileName" = "script.ps1"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.AssumeRole" = "False"
       }
 }
 
@@ -1311,20 +1309,20 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_gclou
   slug                  = "run-gcloud-in-a-script"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.GoogleCloud.Zone" = "australia-southeast1-a"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.GoogleCloud.Project" = "ProjectID"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "Bash"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.ScriptBody" = "echo \"Hi\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.Script.ScriptBody" = "echo \"Hi\""
+        "Octopus.Action.GoogleCloud.Zone" = "australia-southeast1-a"
+        "Octopus.Action.GoogleCloud.Project" = "ProjectID"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GoogleCloud.Region" = "australia-southeast1"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
       }
 }
 
@@ -1343,21 +1341,21 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_gclou
   slug                  = "run-gcloud-in-a-script-with-an-account"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptBody" = "echo \"Hi\""
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.GoogleCloud.Zone" = "australia-southeast1-a"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptBody" = "echo \"Hi\""
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.GoogleCloud.Project" = "ProjectID"
         "Octopus.Action.GoogleCloud.Region" = "australia-southeast1"
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.Syntax" = "Bash"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.GoogleCloudAccount.Variable" = "Example.GCP.Variable"
-        "Octopus.Action.GoogleCloud.Zone" = "australia-southeast1-a"
       }
 }
 
@@ -1375,22 +1373,22 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
   slug                  = "deploy-an-azure-resource-manager-template"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account]
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.ResourceGroupDeploymentMode" = "Incremental"
-        "Octopus.Action.Azure.ResourceGroupTemplateParameters" = jsonencode({        })
+        "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? data.octopusdeploy_accounts.account_azure.accounts[0].id : octopusdeploy_azure_openid_connect.account_azure[0].id}"
         "Octopus.Action.Azure.ResourceGroupName" = "my-resource-group"
         "Octopus.Action.Azure.ResourceGroupTemplate" = jsonencode({
         "$schema" = "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#"
         "contentVersion" = "1.0.0.0"
         "resources" = []
                 })
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Azure.TemplateSource" = "Inline"
-        "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? data.octopusdeploy_accounts.account_azure.accounts[0].id : octopusdeploy_azure_openid_connect.account_azure[0].id}"
+        "Octopus.Action.Azure.ResourceGroupTemplateParameters" = jsonencode({        })
       }
 }
 
@@ -1409,17 +1407,17 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_a_kub
   slug                  = "run-a-kubectl-script"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template]
   properties            = {
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "Write-Host \"Hello World\""
         "Octopus.Action.KubernetesContainers.Namespace" = "mynamespace"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -1445,39 +1443,39 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_to
   slug                  = "deploy-to-iis"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script]
   properties            = {
         "Octopus.Action.TargetRoles" = "windows-server"
       }
   execution_properties  = {
         "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
-        "Octopus.Action.IISWebSite.ApplicationPoolName" = "apppool"
-        "Octopus.Action.IISWebSite.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
-        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
-        "Octopus.Action.IISWebSite.WebSiteName" = "webapp"
-        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.IISWebSite,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
-        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "True"
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
-        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion" = "v4.0"
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
-        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
-        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
-        "Octopus.Action.IISWebSite.EnableAnonymousAuthentication" = "False"
         "Octopus.Action.IISWebSite.Bindings" = jsonencode([
         {
-        "protocol" = "http"
-        "port" = "80"
         "host" = ""
         "thumbprint" = null
         "certificateVariable" = null
         "requireSni" = "False"
         "enabled" = "True"
+        "protocol" = "http"
+        "port" = "80"
                 },
         ])
+        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "True"
         "Octopus.Action.IISWebSite.StartWebSite" = "True"
+        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
+        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
+        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
+        "Octopus.Action.IISWebSite.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
+        "Octopus.Action.IISWebSite.EnableAnonymousAuthentication" = "False"
+        "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
+        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.IISWebSite,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
+        "Octopus.Action.IISWebSite.ApplicationPoolName" = "apppool"
+        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
+        "Octopus.Action.IISWebSite.WebSiteName" = "webapp"
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
       }
 }
 
@@ -1503,14 +1501,14 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
   slug                  = "deploy-a-package"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis]
   properties            = {
         "Octopus.Action.TargetRoles" = "windows-server"
       }
   execution_properties  = {
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
         "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
         "Octopus.Action.EnabledFeatures" = ",Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
       }
 }
 
@@ -1536,22 +1534,22 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
   slug                  = "deploy-a-windows-service"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_a_package]
   properties            = {
         "Octopus.Action.TargetRoles" = "windows-server"
       }
   execution_properties  = {
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.WindowsService.ServiceName" = "My Service"
-        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
-        "Octopus.Action.WindowsService.StartMode" = "auto"
-        "Octopus.Action.WindowsService.Description" = "This is a sample deployment of a Windows service"
-        "Octopus.Action.WindowsService.ExecutablePath" = "myapp.exe"
-        "Octopus.Action.WindowsService.DisplayName" = "My sample Windows service"
-        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
         "Octopus.Action.WindowsService.DesiredStatus" = "Default"
         "Octopus.Action.EnabledFeatures" = ",Octopus.Features.WindowsService,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
+        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
+        "Octopus.Action.WindowsService.ServiceName" = "My Service"
+        "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
+        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
+        "Octopus.Action.WindowsService.Description" = "This is a sample deployment of a Windows service"
+        "Octopus.Action.WindowsService.ExecutablePath" = "myapp.exe"
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
+        "Octopus.Action.WindowsService.DisplayName" = "My sample Windows service"
+        "Octopus.Action.WindowsService.StartMode" = "auto"
       }
 }
 
@@ -1578,14 +1576,14 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
   slug                  = "deploy-an-azure-web-app-web-deploy"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service]
   properties            = {
         "Octopus.Action.TargetRoles" = "AzureWebApp"
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Azure.UseChecksum" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -1611,28 +1609,29 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_upload_a_
   slug                  = "upload-a-package-to-an-aws-s3-bucket"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Aws.S3.BucketName" = "my-s3-bucket"
-        "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
+        "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.S3.PackageOptions" = jsonencode({
-        "structuredVariableSubstitutionPatterns" = ""
-        "metadata" = []
         "bucketKey" = "mybucket"
         "bucketKeyBehaviour" = "Custom"
+        "storageClass" = "STANDARD"
         "cannedAcl" = "private"
         "variableSubstitutionPatterns" = ""
+        "structuredVariableSubstitutionPatterns" = ""
         "tags" = []
         "bucketKeyPrefix" = ""
-        "storageClass" = "STANDARD"
+        "metadata" = []
                 })
+        "Octopus.Action.RunOnServer" = "false"
+        "Octopus.Action.Aws.S3.BucketName" = "my-s3-bucket"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.S3.S3OutputVariablesStrategy" = "AllFiles"
         "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
         "Octopus.Action.Aws.Region" = "ap-southeast-2"
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.RunOnServer" = "false"
+        "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
       }
 }
 
@@ -1658,15 +1657,15 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_ja
   slug                  = "deploy-java-archive"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket]
   properties            = {
         "Octopus.Action.TargetRoles" = "JavaAppServer"
       }
   execution_properties  = {
-        "Octopus.Action.Package.JavaArchiveCompression" = "True"
         "Octopus.Action.Package.UseCustomInstallationDirectory" = "False"
-        "Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment" = "False"
         "Octopus.Action.JavaArchive.DeployExploded" = "False"
+        "Octopus.Action.Package.JavaArchiveCompression" = "True"
+        "Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment" = "False"
         "Octopus.Action.EnabledFeatures" = ",Octopus.Features.SubstituteInFiles"
       }
 }
@@ -1693,17 +1692,17 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
   slug                  = "deploy-a-helm-chart"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive]
   properties            = {
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Helm.ResetValues" = "True"
-        "Octopus.Action.Helm.Namespace" = "mycustomnamespace"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Helm.Namespace" = "mycustomnamespace"
         "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
         "Octopus.Action.Script.ScriptSource" = "Package"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -1730,19 +1729,19 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_ku
   slug                  = "deploy-kubernetes-yaml"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart]
   properties            = {
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
         "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
         "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\n  labels:\n    app: nginx\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: nginx\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80"
         "Octopus.Action.RunOnServer" = "true"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
       }
 }
 
@@ -1761,19 +1760,19 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_ku
   slug                  = "deploy-kubernetes-yaml-with-client-side-apply"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml]
   properties            = {
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
-        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
+        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\n  labels:\n    app: nginx\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: nginx\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80"
       }
 }
@@ -1801,20 +1800,20 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_ku
   slug                  = "deploy-kubernetes-yaml-from-a-package"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply]
   properties            = {
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
-        "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" = "deployment.yaml"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\n  labels:\n    app: nginx\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: nginx\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80"
         "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\n  labels:\n    app: nginx\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: nginx\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80"
         "Octopus.Action.Script.ScriptSource" = "Package"
+        "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" = "deployment.yaml"
       }
 }
 
@@ -1833,21 +1832,21 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_wi
   slug                  = "deploy-with-kustomize"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package]
   properties            = {
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.SubstituteInFiles.TargetFiles" = " **/*.env"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Kubernetes.Kustomize.OverlayPath" = "overlays/#{Octopus.Environment.Name}"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
         "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
         "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.Kubernetes.Kustomize.OverlayPath" = "overlays/#{Octopus.Environment.Name}"
       }
 }
 
@@ -1867,27 +1866,27 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_apply_a_t
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
         "test2" = "{\n  val1 = [\n    \"hi\"\n  ]\n}"
         "test3" = "{\n  val1 = {\n    val2 = \"hi\"\n  }\n}"
         "test4" = "{\n  val1 = {\n    val2 = [\n      \"hi\"\n    ]\n  }\n}"
                 })
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
         "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
       }
 }
 
@@ -1906,26 +1905,26 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_destroy_t
   slug                  = "destroy-terraform-resources"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
         "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
         "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
         "test2" = "{\n  val1 = [\n    \"hi\"\n  ]\n}"
         "test3" = "{\n  val1 = {\n    val2 = \"hi\"\n  }\n}"
         "test4" = "{\n  val1 = {\n    val2 = [\n      \"hi\"\n    ]\n  }\n}"
                 })
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
         "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
       }
 }
@@ -1945,28 +1944,28 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_plan_to_a
   slug                  = "plan-to-apply-a-terraform-template"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.ExecutionTimeout.Minutes" = "5"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
         "test2" = "{\n  val1 = [\n    \"hi\"\n  ]\n}"
         "test3" = "{\n  val1 = {\n    val2 = \"hi\"\n  }\n}"
         "test4" = "{\n  val1 = {\n    val2 = [\n      \"hi\"\n    ]\n  }\n}"
                 })
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.ExecutionTimeout.Minutes" = "5"
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -1985,29 +1984,29 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_plan_a_te
   slug                  = "plan-a-terraform-destroy"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template]
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
         "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
-        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
         "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Terraform.Template" = "ariable \"images\" {\n  type = \"map\"\n\n  default = {\n    us-east-1 = \"image-1234\"\n    us-west-2 = \"image-4567\"\n  }\n}\n\nvariable \"test2\" {\n  type    = \"map\"\n  default = {\n    val1 = [\"hi\"]\n  }\n}\n\nvariable \"test3\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = \"hi\"\n    }\n  }\n}\n\nvariable \"test4\" {\n  type    = \"map\"\n  default = {\n    val1 = {\n      val2 = [\"hi\"]\n    }\n  }\n}\n\n# Example of getting an element from a list in a map\noutput \"nestedlist\" {\n  value = \"$${element(var.test2[\"val1\"], 0)}\"\n}\n\n# Example of getting an element from a nested map\noutput \"nestedmap\" {\n  value = \"$${lookup(var.test3[\"val1\"], \"val2\")}\"\n}"
         "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
-        "test4" = "{\n  val1 = {\n    val2 = [\n      \"hi\"\n    ]\n  }\n}"
         "test2" = "{\n  val1 = [\n    \"hi\"\n  ]\n}"
         "test3" = "{\n  val1 = {\n    val2 = \"hi\"\n  }\n}"
+        "test4" = "{\n  val1 = {\n    val2 = [\n      \"hi\"\n    ]\n  }\n}"
                 })
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
         "Octopus.Action.AutoRetry.MaximumCount" = "3"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -2026,17 +2025,17 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_create_an
   slug                  = "create-an-amazon-s3-bucket"
   start_trigger         = "StartWithPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy]
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Aws.Region" = "us-east-2"
+        "Octopus.Action.Aws.S3.PublicAccess" = "False"
         "Octopus.Action.Aws.S3.ObjectWriterOwnership" = "False"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([])
         "Octopus.Action.AwsAccount.Variable" = "${length(data.octopusdeploy_accounts.account_aws_oidc.accounts) != 0 ? data.octopusdeploy_accounts.account_aws_oidc.accounts[0].id : octopusdeploy_aws_openid_connect_account.account_aws_oidc[0].id}"
         "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.S3.BucketName" = "mybucket"
-        "Octopus.Action.Aws.Region" = "us-east-2"
-        "Octopus.Action.Aws.S3.PublicAccess" = "False"
       }
 }
 
@@ -2055,22 +2054,22 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
   slug                  = "deploy-an-aws-cloudformation-template"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket]
   properties            = {
         "Octopus.Step.ConditionVariableExpression" = "#{Step.Run}"
       }
   execution_properties  = {
+        "Octopus.Action.Aws.TemplateSource" = "Inline"
+        "Octopus.Action.Aws.WaitForCompletion" = "True"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])
         "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Aws.Region" = "us-east-2"
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "Octopus.Action.Aws.CloudFormationTemplate" = "AWSTemplateFormatVersion: '2010-09-09'\nDescription: 'CloudFormation exports'\n \nConditions:\n  HasNot: !Equals [ 'true', 'false' ]\n \n# dummy (null) resource, never created\nResources:\n  NullResource:\n    Type: 'Custom::NullResource'\n    Condition: HasNot\n \nOutputs:\n  ExportsStackName:\n    Value: !Ref 'AWS::StackName'\n    Export:\n      Name: !Sub 'ExportsStackName-$${AWS::StackName}'"
-        "Octopus.Action.Aws.TemplateSource" = "Inline"
-        "Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([])
-        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.CloudFormationStackName" = "mystackname"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.Aws.CloudFormationTemplate" = "AWSTemplateFormatVersion: '2010-09-09'\nDescription: 'CloudFormation exports'\n \nConditions:\n  HasNot: !Equals [ 'true', 'false' ]\n \n# dummy (null) resource, never created\nResources:\n  NullResource:\n    Type: 'Custom::NullResource'\n    Condition: HasNot\n \nOutputs:\n  ExportsStackName:\n    Value: !Ref 'AWS::StackName'\n    Export:\n      Name: !Sub 'ExportsStackName-$${AWS::StackName}'"
+        "Octopus.Action.Aws.Region" = "us-east-2"
       }
 }
 
@@ -2097,22 +2096,22 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
   slug                  = "deploy-an-aws-cloudformation-template-from-package"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template]
   properties            = {
         "Octopus.Step.ConditionVariableExpression" = "#{Step.Run}"
       }
   execution_properties  = {
+        "Octopus.Action.Aws.Region" = "us-east-2"
+        "Octopus.Action.Aws.CloudFormationStackName" = "mystackname"
         "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Aws.CloudFormationTemplate" = "cloudformation.yaml"
         "Octopus.Action.Aws.WaitForCompletion" = "True"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.CloudFormationTemplate" = "cloudformation.yaml"
+        "Octopus.Action.Aws.TemplateSource" = "Package"
         "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
         "Octopus.Action.Package.JsonConfigurationVariablesTargets" = "cloudformation.yaml"
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.Aws.CloudFormationStackName" = "mystackname"
-        "Octopus.Action.Aws.Region" = "us-east-2"
-        "Octopus.Action.Aws.TemplateSource" = "Package"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
       }
 }
 
@@ -2131,19 +2130,19 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_apply_an_
   slug                  = "apply-an-aws-cloudformation-change-set"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Aws.CloudFormationStackName" = "mystack"
+        "Octopus.Action.Aws.WaitForCompletion" = "True"
+        "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
-        "Octopus.Action.Aws.CloudFormation.ChangeSet.Arn" = "mychangeset"
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Aws.CloudFormationStackName" = "mystack"
         "Octopus.Action.Aws.Region" = "ap-southeast-1"
-        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Aws.CloudFormation.ChangeSet.Arn" = "mychangeset"
+        "OctopusUseBundledTooling" = "False"
       }
 }
 
@@ -2162,18 +2161,18 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_delete_an
   slug                  = "delete-an-aws-cloudformation-stack"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set]
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Aws.CloudFormationStackName" = "my-stack-name"
         "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
-        "Octopus.Action.Aws.Region" = "us-east-2"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Aws.CloudFormationStackName" = "my-stack-name"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Aws.WaitForCompletion" = "True"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Aws.Region" = "us-east-2"
       }
 }
 
@@ -2192,15 +2191,15 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_a_scr
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set,octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack]
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"hi\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -2219,16 +2218,16 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_a_step_wi
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set,octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack,octopusdeploy_process_step.process_step_every_step_project_run_a_script_on_failure]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script_on_failure]
   properties            = {
         "Octopus.Step.ConditionVariableExpression" = "#{RunStep}"
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"hi\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
       }
 }
 
@@ -2247,13 +2246,13 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
   slug                  = "deploy-a-release"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set,octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack,octopusdeploy_process_step.process_step_every_step_project_run_a_script_on_failure,octopusdeploy_process_step.process_step_every_step_project_a_step_with_a_conditionvariableexpression]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_a_step_with_a_conditionvariableexpression]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.DeployRelease.DeploymentCondition" = "IfNewer"
         "Octopus.Action.DeployRelease.ProjectId" = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.DeployRelease.DeploymentCondition" = "IfNewer"
       }
 }
 
@@ -2272,13 +2271,13 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
   slug                  = "deploy-a-release-clone-1"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set,octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack,octopusdeploy_process_step.process_step_every_step_project_run_a_script_on_failure,octopusdeploy_process_step.process_step_every_step_project_a_step_with_a_conditionvariableexpression,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___deploy_release_if_new_deployment_is_higher]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___deploy_release_if_new_deployment_is_higher]
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.DeployRelease.DeploymentCondition" = "Always"
         "Octopus.Action.DeployRelease.ProjectId" = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -2297,7 +2296,7 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
   slug                  = "deploy-a-release-always-deploy-clone-1"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set,octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack,octopusdeploy_process_step.process_step_every_step_project_run_a_script_on_failure,octopusdeploy_process_step.process_step_every_step_project_a_step_with_a_conditionvariableexpression,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___deploy_release_if_new_deployment_is_higher,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy]
   properties            = {
       }
   execution_properties  = {
@@ -2329,21 +2328,21 @@ resource "octopusdeploy_process_templated_step" "process_step_every_step_project
   slug                  = "readyroll-deploy-database-package"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set,octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack,octopusdeploy_process_step.process_step_every_step_project_run_a_script_on_failure,octopusdeploy_process_step.process_step_every_step_project_a_step_with_a_conditionvariableexpression,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___deploy_release_if_new_deployment_is_higher,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy_]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy_]
   properties            = {
         "Octopus.Action.TargetRoles" = "TestMe"
       }
   execution_properties  = {
       }
   parameters            = {
-        "DatabaseName" = "Database"
+        "DatabasePassword" = "${var.action_42a747be20485d6b5e8a0a491bcf6c5690a9188c88f6ca0c4c1dff9abe22d051_sensitive_value}"
+        "DatabaseServer" = "SQL Server"
         "PackageName" = jsonencode({
         "PackageId" = "MyPackage"
         "FeedId" = "${data.octopusdeploy_feeds.feed_octopus_server__built_in_.feeds[0].id}"
                 })
-        "DatabaseServer" = "SQL Server"
+        "DatabaseName" = "Database"
         "DatabaseUsername" = "Username"
-        "DatabasePassword" = "${var.action_42a747be20485d6b5e8a0a491bcf6c5690a9188c88f6ca0c4c1dff9abe22d051_sensitive_value}"
         "UseWindowsAuth" = "True"
       }
 }
@@ -2362,7 +2361,7 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_a_scr
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = ["Tag Set/tag"]
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set,octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack,octopusdeploy_process_step.process_step_every_step_project_run_a_script_on_failure,octopusdeploy_process_step.process_step_every_step_project_a_step_with_a_conditionvariableexpression,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___deploy_release_if_new_deployment_is_higher,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy_,octopusdeploy_process_templated_step.process_step_every_step_project_readyroll___deploy_database_package]
+  depends_on            = [octopusdeploy_process_templated_step.process_step_every_step_project_readyroll___deploy_database_package]
   properties            = {
       }
   execution_properties  = {
@@ -2388,21 +2387,21 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_an_aw
   slug                  = "run-an-aws-cli-script-with-retries-enabled"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set,octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack,octopusdeploy_process_step.process_step_every_step_project_run_a_script_on_failure,octopusdeploy_process_step.process_step_every_step_project_a_step_with_a_conditionvariableexpression,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___deploy_release_if_new_deployment_is_higher,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy_,octopusdeploy_process_templated_step.process_step_every_step_project_readyroll___deploy_database_package,octopusdeploy_process_step.process_step_every_step_project_run_a_script_for_a_tenant]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script_for_a_tenant]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
         "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
-        "Octopus.Action.Aws.Region" = "us-west-2"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.AutoRetry.MaximumCount" = "3"
+        "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.Region" = "us-west-2"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Script.ScriptBody" = "echo \"hi\""
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -2429,18 +2428,18 @@ resource "octopusdeploy_process_templated_step" "process_step_every_step_project
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set,octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack,octopusdeploy_process_step.process_step_every_step_project_run_a_script_on_failure,octopusdeploy_process_step.process_step_every_step_project_a_step_with_a_conditionvariableexpression,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___deploy_release_if_new_deployment_is_higher,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy_,octopusdeploy_process_templated_step.process_step_every_step_project_readyroll___deploy_database_package,octopusdeploy_process_step.process_step_every_step_project_run_a_script_for_a_tenant,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_with_retries_enabled]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_with_retries_enabled]
   properties            = {
       }
   execution_properties  = {
         "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "ssn_HookUrl" = "${var.action_20861d01adf2d1204101f5d20229b5529413085762188019f93459fe1baf827f_sensitive_value}"
-        "ssn_IconUrl" = "https://octopus.com/content/resources/favicon.png"
-        "ssn_Channel" = "Handle"
         "ssn_Username" = "Octopus Deploy"
+        "ssn_Channel" = "Handle"
+        "ssn_IconUrl" = "https://octopus.com/content/resources/favicon.png"
         "ssn_Color" = "good"
+        "ssn_HookUrl" = "${var.action_20861d01adf2d1204101f5d20229b5529413085762188019f93459fe1baf827f_sensitive_value}"
       }
 }
 
@@ -2458,20 +2457,20 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_ku
   slug                  = "deploy-kubernetes-yaml-from-git-repo"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set,octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack,octopusdeploy_process_step.process_step_every_step_project_run_a_script_on_failure,octopusdeploy_process_step.process_step_every_step_project_a_step_with_a_conditionvariableexpression,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___deploy_release_if_new_deployment_is_higher,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy_,octopusdeploy_process_templated_step.process_step_every_step_project_readyroll___deploy_database_package,octopusdeploy_process_step.process_step_every_step_project_run_a_script_for_a_tenant,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_with_retries_enabled,octopusdeploy_process_templated_step.process_step_every_step_project_slack___send_simple_notification]
+  depends_on            = [octopusdeploy_process_templated_step.process_step_every_step_project_slack___send_simple_notification]
   properties            = {
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
         "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" = "k8sresources/*"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
+        "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" = "k8sresources/*"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -2491,15 +2490,15 @@ resource "octopusdeploy_process_templated_step" "process_step_every_step_project
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set,octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack,octopusdeploy_process_step.process_step_every_step_project_run_a_script_on_failure,octopusdeploy_process_step.process_step_every_step_project_a_step_with_a_conditionvariableexpression,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___deploy_release_if_new_deployment_is_higher,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy_,octopusdeploy_process_templated_step.process_step_every_step_project_readyroll___deploy_database_package,octopusdeploy_process_step.process_step_every_step_project_run_a_script_for_a_tenant,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_with_retries_enabled,octopusdeploy_process_templated_step.process_step_every_step_project_slack___send_simple_notification,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_git_repo]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_git_repo]
   properties            = {
       }
   execution_properties  = {
         "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "OctopusAI.Octopus.APIKey" = "#{Project.Octopus.ApiKey}"
         "OctopusAI.AutoApprove" = "False"
+        "OctopusAI.Octopus.APIKey" = "#{Project.Octopus.ApiKey}"
         "OctopusAI.Prompt" = "Describe deployment \"#{Octopus.Release.Number}\" for project \"#{Octopus.Project.Name}\" to environment \"#{Octopus.Environment.Name}\" in space \"#{Octopus.Space.Name}\""
         "OctopusAI.Octopus.Url" = "#{Octopus.Web.ServerUri}"
       }
@@ -2518,28 +2517,28 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_apply_a_t
   slug                  = "apply-a-terraform-template-with-azure"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set,octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack,octopusdeploy_process_step.process_step_every_step_project_run_a_script_on_failure,octopusdeploy_process_step.process_step_every_step_project_a_step_with_a_conditionvariableexpression,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___deploy_release_if_new_deployment_is_higher,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy_,octopusdeploy_process_templated_step.process_step_every_step_project_readyroll___deploy_database_package,octopusdeploy_process_step.process_step_every_step_project_run_a_script_for_a_tenant,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_with_retries_enabled,octopusdeploy_process_templated_step.process_step_every_step_project_slack___send_simple_notification,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_git_repo,octopusdeploy_process_templated_step.process_step_every_step_project_octopus___prompt_ai]
+  depends_on            = [octopusdeploy_process_templated_step.process_step_every_step_project_octopus___prompt_ai]
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.AzureAccount.Variable" = "Project.Azure.Account"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Terraform.Template" = "variable \"message\" {\n  type    = string\n  default = \"Hello World!\"\n}\n\nvariable \"resource_group_name\" {\n  type    = string\n  default = \"my-resource-group\"\n}\n\nvariable \"location\" {\n  type    = string\n  default = \"australiaeast\"\n}\n\nvariable \"storage_account_name\" {\n  type    = string\n  default = \"mystorageaccount\"\n}\n\nresource \"azurerm_resource_group\" \"rg\" {\n  name     = var.resource_group_name\n  location = var.location\n}\n\nresource \"azurerm_storage_account\" \"storage\" {\n  name                     = var.storage_account_name\n  resource_group_name      = azurerm_resource_group.rg.name\n  location                 = azurerm_resource_group.rg.location\n  account_tier             = \"Standard\"\n  account_replication_type = \"LRS\"\n}\n\noutput \"storage_account_id\" {\n  value = azurerm_storage_account.storage.id\n}\n"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Terraform.AzureAccount" = "True"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
-        "message" = "Hello World!"
-        "resource_group_name" = "my-resource-group"
         "location" = "australiaeast"
         "storage_account_name" = "mystorageaccount"
+        "message" = "Hello World!"
+        "resource_group_name" = "my-resource-group"
                 })
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
         "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "Octopus.Action.AzureAccount.Variable" = "Project.Azure.Account"
-        "Octopus.Action.Terraform.AzureAccount" = "True"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
       }
 }
 
@@ -2556,28 +2555,28 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_apply_a_t
   slug                  = "apply-a-terraform-template-with-aws"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set,octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack,octopusdeploy_process_step.process_step_every_step_project_run_a_script_on_failure,octopusdeploy_process_step.process_step_every_step_project_a_step_with_a_conditionvariableexpression,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___deploy_release_if_new_deployment_is_higher,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy_,octopusdeploy_process_templated_step.process_step_every_step_project_readyroll___deploy_database_package,octopusdeploy_process_step.process_step_every_step_project_run_a_script_for_a_tenant,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_with_retries_enabled,octopusdeploy_process_templated_step.process_step_every_step_project_slack___send_simple_notification,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_git_repo,octopusdeploy_process_templated_step.process_step_every_step_project_octopus___prompt_ai,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template_with_azure]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template_with_azure]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
-        "message" = "Hello World!"
-        "bucket_name" = "my-terraform-bucket"
-                })
-        "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
         "Octopus.Action.Terraform.ManagedAccount" = "AWS"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
         "Octopus.Action.Aws.Region" = "us-east-1"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
         "Octopus.Action.Terraform.Template" = "variable \"bucket_name\" {\n  type    = string\n  default = \"my-terraform-bucket\"\n}\n\nresource \"aws_s3_bucket\" \"main\" {\n  bucket = var.bucket_name\n\n  tags = {\n    Name        = var.bucket_name\n    Environment = \"#{Octopus.Environment.Name}\"\n  }\n}\n\nvariable \"message\" {\n  type    = string\n  default = \"Hello World!\"\n}\n"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
         "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({
+        "bucket_name" = "my-terraform-bucket"
+        "message" = "Hello World!"
+                })
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.AwsAccount.Variable" = "Account.AWS"
       }
 }
 
@@ -2594,26 +2593,26 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_apply_a_t
   slug                  = "apply-a-terraform-template-with-google"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_run_a_script,octopusdeploy_process_step.process_step_every_step_project_run_a_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script,octopusdeploy_process_step.process_step_every_step_project_run_an_azure_script_from_a_package,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_from_package,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script,octopusdeploy_process_step.process_step_every_step_project_run_gcloud_in_a_script_with_an_account,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_resource_manager_template,octopusdeploy_process_step.process_step_every_step_project_run_a_kubectl_script,octopusdeploy_process_step.process_step_every_step_project_deploy_to_iis,octopusdeploy_process_step.process_step_every_step_project_deploy_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_a_windows_service,octopusdeploy_process_step.process_step_every_step_project_deploy_an_azure_web_app__web_deploy_,octopusdeploy_process_step.process_step_every_step_project_upload_a_package_to_an_aws_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_java_archive,octopusdeploy_process_step.process_step_every_step_project_deploy_a_helm_chart,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_with_client_side_apply,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_a_package,octopusdeploy_process_step.process_step_every_step_project_deploy_with_kustomize,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_destroy_terraform_resources,octopusdeploy_process_step.process_step_every_step_project_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_every_step_project_plan_a_terraform_destroy,octopusdeploy_process_step.process_step_every_step_project_create_an_amazon_s3_bucket,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template,octopusdeploy_process_step.process_step_every_step_project_deploy_an_aws_cloudformation_template_from_package,octopusdeploy_process_step.process_step_every_step_project_apply_an_aws_cloudformation_change_set,octopusdeploy_process_step.process_step_every_step_project_delete_an_aws_cloudformation_stack,octopusdeploy_process_step.process_step_every_step_project_run_a_script_on_failure,octopusdeploy_process_step.process_step_every_step_project_a_step_with_a_conditionvariableexpression,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___deploy_release_if_new_deployment_is_higher,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy,octopusdeploy_process_step.process_step_every_step_project_deploy_a_release___always_deploy_,octopusdeploy_process_templated_step.process_step_every_step_project_readyroll___deploy_database_package,octopusdeploy_process_step.process_step_every_step_project_run_a_script_for_a_tenant,octopusdeploy_process_step.process_step_every_step_project_run_an_aws_cli_script_with_retries_enabled,octopusdeploy_process_templated_step.process_step_every_step_project_slack___send_simple_notification,octopusdeploy_process_step.process_step_every_step_project_deploy_kubernetes_yaml_from_git_repo,octopusdeploy_process_templated_step.process_step_every_step_project_octopus___prompt_ai,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template_with_azure,octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template_with_aws]
+  depends_on            = [octopusdeploy_process_step.process_step_every_step_project_apply_a_terraform_template_with_aws]
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
         "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "Octopus.Action.GoogleCloud.Region" = "us-central1"
+        "Octopus.Action.GoogleCloud.Zone" = "us-central1-a"
+        "Octopus.Action.GoogleCloudAccount.Variable" = "Example.GCP.Variable"
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "False"
         "Octopus.Action.GoogleCloud.Project" = "google-project"
         "Octopus.Action.Terraform.Template" = "# Configure the Google Cloud provider\nprovider \"google\" {\n  project = \"YOUR_PROJECT_ID\" # Replace with your GCP Project ID\n  region  = \"us-central1\"\n}\n\n# Create a GCS Bucket\nresource \"google_storage_bucket\" \"my_bucket\" {\n  name          = \"my-unique-bucket-name-12345\" # Must be globally unique\n  location      = \"US\"                          # Multi-region or specific region\n  storage_class = \"STANDARD\"\n\n  # Optional: Prevents accidental deletion of the bucket\n  force_destroy = false\n\n  # Optional: Recommended for modern security (IAM-only access)\n  uniform_bucket_level_access = true\n\n  # Optional: Enable versioning to keep old versions of objects\n  versioning {\n    enabled = true\n  }\n}\n"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.GoogleCloud.Zone" = "us-central1-a"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.GoogleCloud.Region" = "us-central1"
         "Octopus.Action.Terraform.GoogleCloudAccount" = "True"
-        "Octopus.Action.GoogleCloudAccount.Variable" = "Example.GCP.Variable"
       }
 }
 
@@ -3370,15 +3369,14 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_example_r
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = []
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"This is an example script step\""
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -3439,15 +3437,14 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_runbook_s
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = []
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptBody" = "echo \"hi\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "echo \"hi\""
       }
 }
 
@@ -3508,15 +3505,14 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_runbook_w
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = []
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptBody" = "echo \"hi\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "echo \"hi\""
       }
 }
 

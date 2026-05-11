@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.10.2" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.12.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -360,17 +360,16 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.Workerpool.Default"
-  depends_on            = []
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
         "BlueGreen.Environment.Green.Name" = "Production - Green"
         "BlueGreen.Environment.Blue.Name" = "Production - Blue"
+        "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
       }
 }
 
@@ -392,9 +391,9 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_appro
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?\n\n#{if Octopus.Action[Octopus - Check Blue Green Deployment].Output.SequentialDeploy}WARNING! You appear to be deploying to the #{Octopus.Environment.Name} environment twice. It is expected that blue/green deployments alternate between environments.#{/if}"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -414,7 +413,7 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.Workerpool.Default"
-  depends_on            = [octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_blue_green_deployment,octopusdeploy_process_step.process_step_random_quotes__net_iis_approve_production_deployment]
+  depends_on            = [octopusdeploy_process_step.process_step_random_quotes__net_iis_approve_production_deployment]
   properties            = {
       }
   execution_properties  = {
@@ -444,12 +443,12 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.Workerpool.Default"
-  depends_on            = [octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_blue_green_deployment,octopusdeploy_process_step.process_step_random_quotes__net_iis_approve_production_deployment,octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_targets_available]
+  depends_on            = [octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_targets_available]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -478,7 +477,7 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_trans
   slug                  = "transfer-a-package"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_blue_green_deployment,octopusdeploy_process_step.process_step_random_quotes__net_iis_approve_production_deployment,octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_targets_available,octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_smtp_server_configured]
+  depends_on            = [octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_smtp_server_configured]
   properties            = {
         "Octopus.Action.TargetRoles" = "randomquotes-web-iis"
       }
@@ -501,7 +500,7 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_
   slug                  = "send-an-email-on-success"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_blue_green_deployment,octopusdeploy_process_step.process_step_random_quotes__net_iis_approve_production_deployment,octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_targets_available,octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_smtp_server_configured,octopusdeploy_process_step.process_step_random_quotes__net_iis_transfer_a_package]
+  depends_on            = [octopusdeploy_process_step.process_step_random_quotes__net_iis_transfer_a_package]
   properties            = {
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }

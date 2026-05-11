@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.10.2" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.12.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -296,23 +296,22 @@ resource "octopusdeploy_process_step" "process_step_windows_service_deploy_a_win
   slug                  = "deploy-a-windows-service"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = []
   properties            = {
         "Octopus.Action.TargetRoles" = "Windows-Service"
       }
   execution_properties  = {
+        "Octopus.Action.WindowsService.StartMode" = "auto"
+        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
+        "Octopus.Action.WindowsService.ExecutablePath" = "WindowsServiceDotNETCore.exe"
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
+        "Octopus.Action.WindowsService.DesiredStatus" = "Default"
+        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.WindowsService,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
+        "Octopus.Action.RunOnServer" = "false"
+        "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
         "Octopus.Action.WindowsService.ServiceName" = "JokeService"
         "Octopus.Action.WindowsService.Description" = "A sample windows service"
-        "Octopus.Action.WindowsService.ExecutablePath" = "WindowsServiceDotNETCore.exe"
-        "Octopus.Action.RunOnServer" = "false"
-        "Octopus.Action.WindowsService.StartMode" = "auto"
         "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.WindowsService,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
-        "Octopus.Action.WindowsService.DesiredStatus" = "Default"
         "Octopus.Action.WindowsService.DisplayName" = "Joke Service"
-        "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
       }
 }
 
@@ -335,11 +334,11 @@ resource "octopusdeploy_process_step" "process_step_windows_service_print_messag
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "# The variable to check must be in the format\n# #{Octopus.Step[\u003cname of the step that deploys the web app\u003e].Status.Code}\nif (\"#{Octopus.Step[Deploy to IIS].Status.Code}\" -eq \"Abandoned\") {\n  Write-Highlight \"To complete the deployment you must have a Windows target with the tag 'Windows-Service'.\"\n  Write-Highlight \"We recommend the [Polling Tentacle](https://octopus.com/docs/infrastructure/deployment-targets/tentacle/tentacle-communication).\"\n}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -367,15 +366,15 @@ resource "octopusdeploy_process_step" "process_step_windows_service_scan_for_vul
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.WorkerPool"
-  depends_on            = [octopusdeploy_process_step.process_step_windows_service_deploy_a_windows_service,octopusdeploy_process_step.process_step_windows_service_print_message_when_no_targets]
+  depends_on            = [octopusdeploy_process_step.process_step_windows_service_print_message_when_no_targets]
   properties            = {
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "OctopusUseBundledTooling" = "False"
       }
 }
 
