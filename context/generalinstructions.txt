@@ -2,7 +2,31 @@
 
 ## General Instructions
 
-**⚠️ CRITICAL — Template default accounts (`account_octopussamples_azure_account`, `account_aws_oidc`) MUST NOT be created when the prompt names a specific account**: When the prompt says "Add an Azure OIDC account named 'X'" or "Create an Azure account called 'X'", the `octopusdeploy_azure_service_principal` resource named `account_octopussamples_azure_account` MUST NOT appear anywhere in the Terraform output. When the prompt says "Add an AWS account named 'X'", the `octopusdeploy_aws_openid_connect_account` resource named `account_aws_oidc` MUST NOT appear anywhere in the output. These template defaults MUST be completely omitted and ALL step references must use the prompt-specified account. This rule has ABSOLUTE PRIORITY over any template that includes these default accounts.
+**⚠️ CRITICAL — Template default accounts (`account_octopussamples_azure_account`, `account_aws_oidc`) MUST NOT be created when the prompt names a specific account**: When the prompt says "Add an Azure OIDC account named 'X'" or "Create an Azure account called 'X'" or "Add an Azure Service Principal account called 'X'", the `octopusdeploy_azure_service_principal` resource named `account_octopussamples_azure_account` MUST NOT appear anywhere in the Terraform output. When the prompt says "Add an AWS account named 'X'", the `octopusdeploy_aws_openid_connect_account` resource named `account_aws_oidc` MUST NOT appear anywhere in the output. These template defaults MUST be completely omitted and ALL references (including step `execution_properties`, project variables such as `Project.Azure.Account`, and any variable referencing an account) must use the prompt-specified account. Specifically: the `Project.Azure.Account` variable value MUST reference the prompt-specified account resource, not the template default account. This rule has ABSOLUTE PRIORITY over any template that includes these default accounts.
+
+**MANDATORY SELF-CHECK — template default account exclusion**: Before finalizing Terraform output, scan for any resource named `account_octopussamples_azure_account` or `account_aws_oidc`. If the prompt named a specific account, REMOVE these resources entirely and replace ALL references to them with references to the prompt-specified account resource. You will be penalized for each occurrence of `account_octopussamples_azure_account` or `account_aws_oidc` in the output when the prompt names a specific account.
+
+**⚠️ CRITICAL — Prompt-specified deployment package feed MUST be used for packages, not the template default feed**: When the prompt says "Add a Docker container registry feed called 'X'" or "use the 'X' feed for deployment", you MUST create the prompt-specified feed resource AND use it for all `packages` references in steps. The template default `feed_github_container_registry` (GitHub Container Registry) is only permitted as the `container` block feed (worker tools container for step execution) — it MUST NOT be used as the deployment package `feed_id` when the prompt names a specific Docker feed. The prompt-specified feed MUST be created in addition to the `feed_github_container_registry` resource which may still be required for Kubernetes worker tool containers. Similarly, when a prompt names a specific Maven feed or Helm feed, the prompt-specified feed MUST be created and used for packages, even if the template default `octopusdeploy_maven_feed` resource named `feed_octopus_maven_feed` is also present.
+
+**MANDATORY SELF-CHECK — prompt-specified deployment feed**: Before finalizing Terraform output, scan the prompt for "Add a feed named 'X'" or "use the 'X' feed for..." instructions. For EACH such instruction, verify that: (1) a feed resource with `name = "X"` exists in the output, and (2) all `packages` blocks in steps that should use this feed have `feed_id` pointing to this prompt-specified feed, NOT to `feed_github_container_registry`. You will be penalized for each case where a deployment package uses `feed_github_container_registry` when the prompt specified a different feed.
+
+**⚠️ CRITICAL — Prompt-specified accounts MUST be created**: When the prompt says "Add an AWS OIDC account called 'X'" or "Add an Azure account called 'X'", you MUST create the corresponding account resource (`octopusdeploy_aws_openid_connect_account` or `octopusdeploy_azure_openid_connect`) with the exact name specified in the prompt. Failing to create a prompt-specified account is always wrong. You will be penalized for each prompt-specified account that is absent from the Terraform output. This rule applies regardless of the project template being used — even if the Kubernetes, Azure, or other template does not include an account, the prompt-specified account MUST STILL be created as a separate top-level resource. Example: if the prompt says "Add an AWS OIDC account called 'AWS Deploy Account' with the role ARN 'arn:aws:iam::123456789012:role/OctopusDeployRole'", the following resource MUST appear in the output:
+```
+resource "octopusdeploy_aws_openid_connect_account" "account_aws_deploy_account" {
+  name                              = "AWS Deploy Account"
+  role_arn                          = "arn:aws:iam::123456789012:role/OctopusDeployRole"
+  account_test_subject_keys         = ["space"]
+  execution_subject_keys            = ["space"]
+  health_subject_keys               = ["space"]
+  session_duration                  = 3600
+  environments                      = []
+  tenant_tags                       = []
+  tenants                           = []
+  tenanted_deployment_participation = "Untenanted"
+}
+```
+
+**MANDATORY SELF-CHECK — prompt-specified account creation**: Before finalizing Terraform output, scan the prompt for any "Add an ... account called 'X'" or "Create an ... account named 'X'" instructions. For EACH such instruction, verify that a corresponding account resource with `name = "X"` exists in the Terraform output. If any prompt-specified account is missing, add it immediately. This check MUST be performed even for Kubernetes projects where the template does not include accounts.
 
 **⚠️ CRITICAL — `depends_on` for sequential steps MUST reference ONLY the immediately preceding step**: Each `octopusdeploy_process_step` resource (steps 2, 3, 4, etc.) must have `depends_on` pointing to EXACTLY ONE step — the step that immediately precedes it in the deployment process. NEVER list all previous steps in `depends_on`. For step N, `depends_on = [octopusdeploy_process_step.step_N_minus_1]`. For step N to depend on ALL previous steps violates the rule and creates unnecessary complexity. WRONG: `depends_on = [step_1, step_2, step_3, step_4, step_5, step_6]` for step 7. CORRECT: `depends_on = [octopusdeploy_process_step.step_6]` for step 7.
 
@@ -227,7 +251,9 @@ If ANY of the above is NO, fix it BEFORE finalizing the Terraform output. You wi
   * When given the prompt `Create a project called 'Example Project' in the 'Example Space'. The current project is 'My Web App'. The current space is 'Default'.`, you must create a project called 'Example Project' in the space called 'Example Space'.
   * When given the prompt `Create a project called 'Example Project'. The current project is 'My Web App'. The current space is 'Default'.`, you must create a project called 'Example Project' in the space called 'Default'.
 * You must create valid Terraform.
-* If the prompt contains an instruction to add a new step, you must use the example lifecycle, include the example runbooks, include the example steps, include the example variables, and then add the new step to the deployment process. **EXCEPTION — this instruction applies ONLY to Spinnaker migration prompts.** When the prompt starts with "Create a [type] project" (e.g., "Create a Kubernetes project", "Create an Azure Web App project") and lists explicit "Add a step to..." instructions that name specific step types and configurations, this is a **new project creation prompt**, NOT a migration prompt. For new project creation prompts, ONLY create the steps explicitly named in the "Add a step" instructions. Do NOT add additional template steps (e.g., "Approve Production Deployment", "Check Targets Available", "Scan for Vulnerabilities", or any other steps from the project type template). Do NOT add template runbooks, template scheduled triggers, or any other template resources that are not explicitly requested. You will be penalized for adding template steps that were not explicitly requested in a new project creation prompt. **CRITICAL EXCEPTION: When tenant variables are requested, you MUST add `template` blocks inside the `octopusdeploy_project` resource. These are NOT the same as template steps — `template` blocks define variable variable templates (variable definitions), NOT deployment steps. This is the ONLY time you should add `template` blocks to a new project creation prompt.**
+* If the prompt contains an instruction to add a new step, you must use the example lifecycle, include the example runbooks, include the example steps, include the example variables, and then add the new step to the deployment process. **EXCEPTION — this instruction applies ONLY to Spinnaker migration prompts.** When the prompt starts with "Create a [type] project" (e.g., "Create a Kubernetes project", "Create an Azure Web App project") and lists explicit "Add a step to..." instructions that name specific step types and configurations, this is a **new project creation prompt**, NOT a migration prompt. For new project creation prompts, the template steps, variables, and triggers from the project type template are included as the baseline for the project. In addition to the template steps, ALL steps explicitly named in the "Add a step" instructions MUST also be created as separate `octopusdeploy_process_step` or `octopusdeploy_process_templated_step` resources with the **exact names and configurations** specified in the prompt. **CRITICAL: A template step is NOT a substitute for a custom step. Even if the template already includes a deployment step with a similar function (e.g., "Deploy Azure Web App Container"), if the prompt says "Add a step called 'Deploy to Azure Web App'" with a specific package and account, a separate step with exactly the name "Deploy to Azure Web App" and those specific configurations MUST be created.** You will be penalized for omitting any explicitly named step from the prompt. **CRITICAL EXCEPTION: When tenant variables are requested, you MUST add `template` blocks inside the `octopusdeploy_project` resource. These are NOT the same as template steps — `template` blocks define variable variable templates (variable definitions), NOT deployment steps. This is the ONLY time you should add `template` blocks to a new project creation prompt.**
+
+**⚠️ CRITICAL — explicitly named steps MUST match the prompt exactly**: For every "Add a step called 'X'" instruction in the prompt, a `octopusdeploy_process_step` resource with `name = "X"` MUST exist in the Terraform output. Before finalizing, scan each "Add a step" instruction in the prompt and verify a resource with that exact `name` value exists. If any explicitly named step is missing, add it immediately. You will be penalized for each explicitly named step that is absent from the Terraform output.
 
 * The phrase "with no steps" in a project creation prompt is a **template placeholder** that is always present in migration prompts. When the prompt lists explicit "Add a step" instructions after the project creation line, those explicit step instructions take **absolute precedence** and ALL listed steps MUST be created — even if the project creation line says "with no steps". The phrase "with no steps" should only be interpreted literally when there are **zero** subsequent "Add a step" instructions in the entire prompt. **CRITICAL: Do NOT use the presence of "with no steps" to suppress step creation when explicit "Add a step" instructions follow it.** You will be penalized for creating a project with no `octopusdeploy_process_step` resources when the prompt contains one or more "Add a step" instructions.
 
@@ -1256,7 +1282,7 @@ Note: The `"Octopus.Action.KubernetesContainers.Namespace"` property is omitted 
 
 * **CRITICAL — `container = { feed_id = "", image = "" }` is NEVER valid Terraform and MUST NEVER be generated.** An empty container block with blank `feed_id` and `image` values is a common mistake that produces invalid configuration. If a step does not use a container, the `container` attribute MUST be omitted entirely — do NOT include it with empty values.
 * **CRITICAL — `Octopus.Manual` steps (manual interventions) steps MUST NEVER include a `container` attribute.** These step types do not use Docker containers and the `container` attribute has no meaning for them. Omit the `container` attribute from ALL `Octopus.Manual` resources.
-* The `container` attribute is ONLY valid for step types that explicitly use containerized tooling: `Octopus.KubernetesDeployRawYaml`, `Octopus.TerraformPlan`, `Octopus.TerraformApply`, `Octopus.TerraformDestroy`, `Octopus.TerraformPlanDestroy`, `Octopus.AzurePowerShell`, `Octopus.AwsRunScript`, `Octopus.GoogleCloudScripting`, `Octopus.AzureWebApp`, and `Octopus.KubernetesRunScript` (only when a specific image is requested).
+* The `container` attribute is ONLY valid for step types that explicitly use containerized tooling: `Octopus.Script`, `Octopus.KubernetesDeployRawYaml`, `Octopus.TerraformPlan`, `Octopus.TerraformApply`, `Octopus.TerraformDestroy`, `Octopus.TerraformPlanDestroy`, `Octopus.AzurePowerShell`, `Octopus.AwsRunScript`, `Octopus.GoogleCloudScripting`, `Octopus.AzureWebApp`, and `Octopus.KubernetesRunScript` (only when a specific image is requested).
 * You will be penalized for including a `container` attribute on `Octopus.Manual` step resources.
 
 ## Webhook / HTTP Script Steps
@@ -1337,6 +1363,33 @@ resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
 * When the prompt says "Use the Default Lifecycle" — use ONLY `data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id`. Do NOT create an `octopusdeploy_lifecycle` resource.
 * When the prompt says "Use the [Name] lifecycle" for any non-Default lifecycle — create BOTH a `data "octopusdeploy_lifecycles"` data source AND an `octopusdeploy_lifecycle` resource for that lifecycle name.
 * When the lifecycle name in the prompt does not match "Default Lifecycle", create the lifecycle with phases corresponding to the environments mentioned in the prompt (e.g., "Development", "Test", "Production").
+
+**CRITICAL — when the prompt specifies the Default Lifecycle, the template's default lifecycle resource MUST NOT be created**: Each project type template includes a default lifecycle resource (e.g., `lifecycle_application` for Terraform templates, `lifecycle_devsecops` for Kubernetes templates). When the prompt says "Use the Default Lifecycle", these template-default lifecycle resources MUST NOT be created as `octopusdeploy_lifecycle` resources. Use ONLY the `data.octopusdeploy_lifecycles.lifecycle_default_lifecycle` data source for the project's `lifecycle_id`.
+
+**Negative example — creating a template-default lifecycle when prompt says "Use the Default Lifecycle" (FORBIDDEN)**:
+```hcl
+# Prompt says: Use the "Default Lifecycle" lifecycle
+# WRONG: template's default lifecycle resource is created even though Default Lifecycle was requested
+resource "octopusdeploy_lifecycle" "lifecycle_application" { ... }  ← WRONG: must not be created
+resource "octopusdeploy_project" "project_my_terraform_project" {
+  lifecycle_id = "${octopusdeploy_lifecycle.lifecycle_application[0].id}"  ← WRONG: must use Default Lifecycle
+}
+```
+
+**Correct output** — only the Default Lifecycle data source is used, no lifecycle resource is created:
+```hcl
+data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle" {
+  ids          = null
+  partial_name = "Default Lifecycle"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_project" "project_my_terraform_project" {
+  lifecycle_id = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}"
+}
+```
+
+You will be penalized for creating `octopusdeploy_lifecycle` resources (e.g., `lifecycle_application`, `lifecycle_devsecops`) when the prompt says to use the Default Lifecycle.
 
 **Example — prompt says "Use the Security lifecycle"**:
 ```hcl
@@ -3445,6 +3498,8 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_run_a_scr
 }
 ```
 
+**CRITICAL NOTE**: The `"Octopus.Action.Script.ScriptFileName"` property in the example above is ONLY valid for `Octopus.Script` steps (`type = "Octopus.Script"`). It MUST NOT be added to `Octopus.HelmChartUpgrade` steps. Even if a Helm step has `"Octopus.Action.Script.ScriptSource" = "Package"`, you MUST NOT include `"Octopus.Action.Script.ScriptFileName"` in its `execution_properties`. The two step types use `ScriptSource = "Package"` for different purposes and only `Octopus.Script` steps require `ScriptFileName`.
+
 * You will be penalized for using the "Octopus.Action.Script.Syntax" or "Octopus.Action.Script.ScriptBody" property when the "Octopus.Action.Script.ScriptSource" property is set to "Package".
 * When the "execution_properties" "Octopus.Action.Script.ScriptSource" property is set to "Inline", the "primary_package" property must not be defined in a "octopusdeploy_process_step" resource, for example:
 
@@ -3492,6 +3547,38 @@ resource "octopusdeploy_process_step" "my_step" {
    * "Octopus.HelmChartUpgrade"
    * "Octopus.AzureAppService"
 * The step of type "Octopus.HelmChartUpgrade" must define a property "Octopus.Action.Helm.ClientVersion" with the value of "V3".
+* **CRITICAL — `Octopus.Action.Script.ScriptFileName` MUST NOT be included in the `execution_properties` of a step of type `Octopus.HelmChartUpgrade` unless the prompt explicitly requests a specific script file**: The canonical `Octopus.HelmChartUpgrade` execution properties are limited to `"Octopus.Action.Helm.ClientVersion"`, `"Octopus.Action.Helm.ResetValues"`, `"Octopus.Action.Helm.Namespace"`, `"Octopus.Action.RunOnServer"`, `"OctopusUseBundledTooling"`, `"Octopus.Action.Kubernetes.ResourceStatusCheck"`, and `"Octopus.Action.Script.ScriptSource"`. Do NOT copy the `"Octopus.Action.Script.ScriptFileName"` property from script-from-package steps into Helm steps — these are different step types with different properties.
+
+**Negative example — Helm step with ScriptFileName (FORBIDDEN)**:
+```hcl
+resource "octopusdeploy_process_step" "process_step_deploy_helm_chart" {
+  type = "Octopus.HelmChartUpgrade"
+  execution_properties = {
+    "Octopus.Action.Helm.ClientVersion" = "V3"
+    "Octopus.Action.Script.ScriptSource" = "Package"
+    "Octopus.Action.Script.ScriptFileName" = "MyScript.ps1"  ← WRONG: ScriptFileName must NOT appear in Helm steps
+  }
+}
+```
+
+**Correct output — Helm step without ScriptFileName**:
+```hcl
+resource "octopusdeploy_process_step" "process_step_deploy_helm_chart" {
+  type = "Octopus.HelmChartUpgrade"
+  execution_properties = {
+    "Octopus.Action.Helm.ClientVersion"             = "V3"
+    "Octopus.Action.Helm.ResetValues"               = "True"
+    "Octopus.Action.Helm.Namespace"                 = "#{App.Namespace}"
+    "Octopus.Action.Helm.ReleaseName"               = "my-release"
+    "Octopus.Action.RunOnServer"                    = "true"
+    "OctopusUseBundledTooling"                      = "False"
+    "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+    "Octopus.Action.Script.ScriptSource"            = "Package"
+  }
+}
+```
+
+You will be penalized for including `"Octopus.Action.Script.ScriptFileName"` in the `execution_properties` of an `Octopus.HelmChartUpgrade` step when no script file was specified in the prompt.
 * You will be penalized for adding the property "Octopus.Action.Azure.AccountId" to steps of type "Octopus.AzureWebApp".
 * You will be penalized for defining a "version" attribute on the "primary_package" block.
 * The "start_trigger" attribute must only be defined once.
@@ -4427,6 +4514,108 @@ Create a project called "Deploy Workers (dev&prod) and Cronjobs (dev&prod)" in t
   * **WRONG**: `notes = "This step loaded its manifest from Google Cloud Storage at \"gs://my-bucket/path\". The manifest must be inlined."`
   * **CORRECT**: `notes = "This step loaded its manifest from Google Cloud Storage at gs://my-bucket/path. The manifest must be inlined."`
 
+## Email Step Instructions
+
+* Steps of type "Octopus.Email" must set `"Octopus.Action.RunOnServer" = "true"` in the `execution_properties` block.
+* Steps of type "Octopus.Email" must define the following execution properties:
+  * `"Octopus.Action.Email.To"` — the recipient email address or Octopus variable expression
+  * `"Octopus.Action.Email.Subject"` — the email subject line
+  * `"Octopus.Action.Email.Body"` — the email body content
+* Optionally, steps of type "Octopus.Email" may define `"Octopus.Action.Email.Priority"` as `"Normal"` or `"High"`.
+* When the prompt specifies email subject or body text that contains Octopus variable syntax (e.g. `#{Octopus.Project.Name}`, `#{Octopus.Release.Number}`, `#{Octopus.Environment.Name}`), you MUST preserve the Octopus variable syntax verbatim in the corresponding `execution_properties` value. Do NOT replace variable references with plain text.
+* Steps of type "Octopus.Email" do NOT require `"Octopus.Action.TargetRoles"` in the `properties` block. Use `properties = {}` for email steps.
+* You will be penalized for omitting the `"Octopus.Action.Email.To"`, `"Octopus.Action.Email.Subject"`, or `"Octopus.Action.Email.Body"` properties from a step of type "Octopus.Email".
+
+Example email step:
+```hcl
+resource "octopusdeploy_process_step" "process_step_my_project_notify_deployment_complete" {
+  name                  = "Notify Deployment Complete"
+  type                  = "Octopus.Email"
+  process_id            = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? null : octopusdeploy_process.process_my_project[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = null
+  notes                 = "Sends an email notification when deployment is complete."
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "notify-deployment-complete"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_id        = null
+  worker_pool_variable  = null
+  properties            = {}
+  execution_properties  = {
+    "Octopus.Action.RunOnServer"    = "true"
+    "Octopus.Action.Email.To"       = "team@example.com"
+    "Octopus.Action.Email.Subject"  = "Deployment #{Octopus.Project.Name} #{Octopus.Release.Number} complete"
+    "Octopus.Action.Email.Body"     = "The deployment to #{Octopus.Environment.Name} is complete."
+    "Octopus.Action.Email.Priority" = "Normal"
+  }
+}
+```
+
+## ArgoCD Step Instructions
+
+* Steps of type "Octopus.ArgoCDUpdateImageTags" update image tags in an ArgoCD application's values file.
+* Steps of type "Octopus.ArgoCDUpdateImageTags" must define the following execution properties:
+  * `"Octopus.Action.RunOnServer" = "true"`
+  * `"Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"`
+  * `"Octopus.Action.ArgoCD.CommitMessageSummary" = "Octopus Deploy updated image versions"`
+  * `"Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"`
+  * `"Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"`
+  * `"Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"`
+* When the prompt specifies a new image tag for "Octopus.ArgoCDUpdateImageTags", set `"Octopus.Action.ArgoCD.NewImageTag"` to the specified value (e.g., `"#{Docker.Image.Tag}"`).
+* When the prompt specifies an ArgoCD application name for "Octopus.ArgoCDUpdateImageTags", set `"Octopus.Action.ArgoCD.ApplicationName"` to the specified value (e.g., `"#{ArgoCD.AppName}"`).
+* When the prompt specifies an ArgoCD server URL for "Octopus.ArgoCDUpdateImageTags", set `"Octopus.Action.ArgoCD.ServerUrl"` to the specified value.
+* Steps of type "Octopus.ArgoCDUpdateImageTags" must include a `packages` block with a Docker image reference from the GHCR Anonymous feed.
+* Steps of type "Octopus.ArgoCDUpdateManifests" update manifest files in a Git repository for ArgoCD.
+* Steps of type "Octopus.ArgoCDUpdateManifests" must define the following execution properties:
+  * `"Octopus.Action.RunOnServer" = "true"`
+  * `"Octopus.Action.Script.ScriptSource" = "GitRepository"`
+  * `"Octopus.Action.GitRepository.Source" = "External"`
+  * `"Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"`
+  * `"Octopus.Action.ArgoCD.CommitMessageSummary"` — set to a descriptive summary like `"Updated Manifests with Release: #{Octopus.Release.Number}"`
+  * `"Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"`
+  * `"Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"`
+  * `"Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"`
+  * `"Octopus.Action.ArgoCD.InputPath"` — the path to the manifest file in the repository
+* Steps of type "Octopus.ArgoCDUpdateManifests" must include a `git_dependencies` block with the repository URL.
+* You will be penalized for omitting the required ArgoCD execution properties from steps of type "Octopus.ArgoCDUpdateImageTags" or "Octopus.ArgoCDUpdateManifests".
+
+## Tomcat Deploy Step Instructions
+
+* Steps of type "Octopus.TomcatDeploy" deploy a WAR or JAR archive to Apache Tomcat via the Tomcat Manager API.
+* Steps of type "Octopus.TomcatDeploy" must define a `primary_package` block referencing a Maven feed package.
+* Steps of type "Octopus.TomcatDeploy" must include the following execution properties:
+  * `"Octopus.Action.EnabledFeatures" = ",Octopus.Features.TomcatDeployManager"`
+  * `"Tomcat.Deploy.Enabled" = "True"`
+  * `"Tomcat.Deploy.Controller"` — the Tomcat manager URL (e.g., `"http://localhost:8080/manager"`)
+  * `"Tomcat.Deploy.Name"` — the deployment/application name in Tomcat
+  * `"Tomcat.Deploy.User"` — the Tomcat manager admin user
+  * `"Tomcat.Deploy.Password"` — the Tomcat manager password (use a sensitive variable reference)
+* Steps of type "Octopus.TomcatDeploy" must include `"Octopus.Action.TargetRoles"` in the `properties` block targeting the Tomcat server role.
+
+## Transfer Package Step Instructions
+
+* Steps of type "Octopus.TransferPackage" transfer a package to a target machine without deploying it.
+* Steps of type "Octopus.TransferPackage" must define a `primary_package` block referencing the package to transfer.
+* Steps of type "Octopus.TransferPackage" must include the following execution property:
+  * `"Octopus.Action.Package.TransferPath"` — the destination path on the target machine where the package will be placed.
+* Steps of type "Octopus.TransferPackage" must include `"Octopus.Action.TargetRoles"` in the `properties` block targeting the deployment target.
+
+## AWS Create S3 Step Instructions
+
+* Steps of type "Octopus.AwsCreateS3" create an Amazon S3 bucket.
+* Steps of type "Octopus.AwsCreateS3" must include a `container` block referencing the GitHub Container Registry feed and the `ghcr.io/octopusdeploylabs/aws-workertools` image.
+* Steps of type "Octopus.AwsCreateS3" must define the following execution properties:
+  * `"Octopus.Action.AwsAccount.Variable"` — referencing the AWS account variable
+  * `"Octopus.Action.Aws.AssumeRole" = "False"`
+  * `"Octopus.Action.Aws.Region"` — the AWS region (e.g., `"us-east-1"`)
+  * `"Octopus.Action.Aws.S3.BucketName"` — the S3 bucket name or variable reference
+  * `"Octopus.Action.Aws.S3.PublicAccess" = "False"`
+  * `"Octopus.Action.Aws.S3.ObjectWriterOwnership" = "False"`
+  * `"Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([])`
+
 ## Octopus step template instructions
 
 * When the prompt includes instructions to create a community step template and includes a url to https://library.octopus.com/step-templates, you must create both a resource "octopusdeploy_community_step_template" and a data "octopusdeploy_community_step_template" to check for the existence of the community step template before creating it.
@@ -4978,8 +5167,13 @@ You will be penalized for each occurrence of `account_octopussamples_azure_accou
   * "Octopus.AwsApplyCloudFormationChangeSet" - Apply an AWS CloudFormation Change Set step
   * "Octopus.AwsDeleteCloudFormation" - Delete an AWS CloudFormation stack step
   * "Octopus.ArgoCDUpdateImageTags" - Update ArgoCD Image Tags step
+  * "Octopus.ArgoCDUpdateManifests" - Update ArgoCD Application Manifests step
+  * "Octopus.TomcatDeploy" - Deploy to Apache Tomcat via Manager step
+  * "Octopus.TransferPackage" - Transfer a Package step
+  * "Octopus.AwsCreateS3" - Create an Amazon S3 Bucket step
   * "Octopus.DeployRelease" - Deploy a Release step
   * "Octopus.Manual" - Manual Intervention step
+  * "Octopus.Email" - Send an Email step
 * The "octopusdeploy" provider must set the "space_id" attribute to the value "trimspace(var.octopus_space_id)".
 * The Terraform variable "octopus_space_id" must be included, for example:
 ```
@@ -5863,7 +6057,81 @@ resource "octopusdeploy_project_group" "project_group_kubernetes_apps" { ... } �
 resource "octopusdeploy_project_group" "project_group_kubernetes_apps" { ... } ← CORRECT: only the group named in the prompt
 ```
 
+**Negative example — Terraform project creating extra template-default "Terraform" project group when prompt specifies "Infrastructure" (FORBIDDEN)**:
+```hcl
+# Prompt says: use project group "Infrastructure"
+resource "octopusdeploy_project_group" "project_group_terraform" { ... }      ← WRONG: "Terraform" was NOT in the prompt
+resource "octopusdeploy_project_group" "project_group_infrastructure" { ... } ← correct
+```
+
+**Correct output**:
+```hcl
+resource "octopusdeploy_project_group" "project_group_infrastructure" { ... } ← CORRECT: only the group named in the prompt
+```
+
 You will be penalized for creating project group resources not explicitly requested in the prompt.
+
+## Project Uniqueness Instructions
+
+**MANDATORY — only create the project(s) explicitly named in the prompt**: When a prompt asks to create a single project (e.g., "Create a Script project called 'My Script Project 6174'"), the generated Terraform MUST contain exactly ONE `octopusdeploy_project` resource — the one named in the prompt. Do NOT create additional template projects (e.g., a generic "Script" project or "Empty Project") alongside the requested project. Every `octopusdeploy_project` resource MUST correspond to a project explicitly named in the prompt.
+
+**Negative example — extra project not in prompt (FORBIDDEN)**:
+```hcl
+# Prompt says: create project "My Script Project 6174"
+resource "octopusdeploy_project" "project_my_script_project_6174" { ... }   ← correct
+resource "octopusdeploy_project" "project_script" { name = "Script" ... }   ← WRONG: "Script" was NOT in the prompt
+```
+
+**Correct output**:
+```hcl
+resource "octopusdeploy_project" "project_my_script_project_6174" { ... }   ← CORRECT: only the project named in the prompt
+```
+
+You will be penalized for creating `octopusdeploy_project` resources not explicitly requested in the prompt.
+
+## Environment Uniqueness and Naming Instructions
+
+**MANDATORY — environment names must match the prompt exactly**: When the prompt specifies environment names (e.g., "Create environments called 'Dev', 'Test', and 'Production'"), create environments with EXACTLY those names. Do NOT rename prompt-specified environments to template defaults. For example, if the prompt says "Dev", the environment name must be `"Dev"`, NOT `"Development"`. If the prompt says "Staging", the environment name must be `"Staging"`, NOT `"Test"`.
+
+**Negative example — renaming a prompt-specified environment (FORBIDDEN)**:
+```hcl
+# Prompt says: Create environments called "Dev", "Test", "Production"
+# WRONG: "Dev" was renamed to "Development"
+resource "octopusdeploy_environment" "environment_development" {
+  name = "Development"  ← WRONG: prompt specified "Dev", not "Development"
+}
+```
+
+**Correct output — environment name matches prompt exactly**:
+```hcl
+# CORRECT: uses the exact name from the prompt
+resource "octopusdeploy_environment" "environment_dev" {
+  name = "Dev"  ← CORRECT: exact name from prompt
+}
+```
+
+**MANDATORY — ALL environments explicitly named in the prompt must be created**: If the prompt says "Create environments called 'Dev', 'Test', and 'Production'", then THREE environment resources must be created — one for each named environment. Do NOT skip any environment named in the prompt.
+
+**Negative example — omitting a prompt-specified environment (FORBIDDEN)**:
+```hcl
+# Prompt says: Create environments called "Dev", "Test", "Production"
+# WRONG: "Test" was omitted
+resource "octopusdeploy_environment" "environment_dev" { name = "Dev" }
+resource "octopusdeploy_environment" "environment_production" { name = "Production" }
+# "Test" is missing — this is WRONG
+```
+
+**Correct output — all prompt-specified environments are created**:
+```hcl
+resource "octopusdeploy_environment" "environment_dev" { name = "Dev" }        ← CORRECT
+resource "octopusdeploy_environment" "environment_test" { name = "Test" }      ← CORRECT
+resource "octopusdeploy_environment" "environment_production" { name = "Production" }  ← CORRECT
+```
+
+You will be penalized for creating environments with names different from those specified in the prompt.
+You will be penalized for omitting environments that were explicitly named in the prompt.
+
+**NOTE**: Template environments (such as "Security") may still be created if they are required by a template lifecycle (e.g., DevSecOps). However, these must NOT replace or rename the explicitly requested environments.
 
 ## Security Environment Exclusion for Kubernetes Steps
 
@@ -5922,20 +6190,45 @@ resource "octopusdeploy_variable" "my_project_connection_string_production" {
 
 ## Kubernetes Step Worker Pool for New Project Creation Prompts
 
-**CRITICAL — for `Octopus.KubernetesDeployRawYaml` steps in new project creation prompts, `worker_pool_id` MUST be set using the Hosted Ubuntu data source**:
+**CRITICAL — for Kubernetes steps (`Octopus.KubernetesDeployRawYaml`, `Octopus.KubernetesRunScript`, `Octopus.HelmChartUpgrade`, `Octopus.Kubernetes.Kustomize`, etc.) in Kubernetes project creation prompts, the canonical pattern is to use `worker_pool_variable = "Octopus.Project.WorkerPool"` with an associated `Octopus.Project.WorkerPool` variable**:
 
-When the prompt does NOT specify a worker pool or worker pool variable for a Kubernetes deploy step:
-- Set `worker_pool_id` to the Hosted Ubuntu worker pool (with Default Worker Pool as fallback)
-- Set `worker_pool_variable = null`
-- Do NOT create an `Octopus.Project.WorkerPool` variable
+When the prompt does NOT specify a worker pool for a Kubernetes deploy step:
+- Set `worker_pool_variable = "Octopus.Project.WorkerPool"` on each step
+- Set `worker_pool_id = null` on each step
+- Create an `octopusdeploy_variable` resource named `Octopus.Project.WorkerPool` of `type = "WorkerPool"` with its value pointing to the Hosted Ubuntu worker pool (with Default Worker Pool as fallback)
 
-**Required Hosted Ubuntu data source** (MUST always be included when any Kubernetes step is present):
+**Required data sources** (MUST always be included when any Kubernetes step is present):
 ```hcl
 data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
   ids          = null
   partial_name = "Hosted Ubuntu"
   skip         = 0
   take         = 1
+}
+
+data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+  ids          = null
+  partial_name = "Default Worker Pool"
+  skip         = 0
+  take         = 1
+}
+```
+
+**Correct pattern for Kubernetes project worker pool variable** (MUST be created for every Kubernetes project):
+```hcl
+resource "octopusdeploy_variable" "my_project_octopus_project_workerpool_1" {
+  count        = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_my_project.projects) == 0 ? octopusdeploy_project.project_my_project[0].id : data.octopusdeploy_projects.project_my_project.projects[0].id}"
+  value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  name         = "Octopus.Project.WorkerPool"
+  type         = "WorkerPool"
+  description  = "Using a variable to define the worker pool used by steps allows the worker pool to be easily changed in a central location."
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
 }
 ```
 
@@ -5944,19 +6237,10 @@ data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
 resource "octopusdeploy_process_step" "process_step_my_project_deploy_app" {
   name                 = "Deploy App"
   type                 = "Octopus.KubernetesDeployRawYaml"
-  worker_pool_id       = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  worker_pool_variable = null
-  ...
-}
-```
-
-**FORBIDDEN pattern — K8s step using worker_pool_variable (unless explicitly requested)**:
-```hcl
-resource "octopusdeploy_process_step" "process_step_my_project_deploy_app" {
-  worker_pool_variable = "Octopus.Project.WorkerPool"   ← FORBIDDEN unless prompt explicitly requests worker pool variable
+  worker_pool_variable = "Octopus.Project.WorkerPool"
   worker_pool_id       = null
   ...
 }
 ```
 
-You will be penalized for setting `worker_pool_variable` to any value on a Kubernetes step when the prompt does not explicitly request a worker pool variable.
+You will be penalized for setting `worker_pool_id` directly on a Kubernetes step instead of using `worker_pool_variable = "Octopus.Project.WorkerPool"` with a corresponding `Octopus.Project.WorkerPool` project variable.
