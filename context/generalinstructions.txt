@@ -602,6 +602,10 @@ In the CORRECT version: A gets `start_trigger = "StartAfterPrevious"` (convergen
 
 **CRITICAL — a "convergence" step (start_trigger = "StartAfterPrevious") that follows a parallel group must appear in the `steps` list AFTER all parallel group members**: When a step annotated with "Wait for all previous steps to complete, then start" follows a parallel group {A, B, C}, this convergence step must appear at position N+1 in the `steps` list where N is the position of the LAST parallel group member. Verify this by checking that no parallel group member appears AFTER the convergence step in the `steps` list.
 
+**CRITICAL — sequential branch continuation ordering in the `steps` list**: When the prompt linearizes multiple branches sequentially (Branch A: A1→A2→A3, then Branch B: B1→B2→B3), the `steps` list must preserve the COMPLETE sequential ordering of each branch before the next branch begins. Specifically: ALL of Branch A's continuation steps (A1, A2, A3) must appear CONTIGUOUSLY and IN ORDER in the `steps` list before ANY of Branch B's continuation steps (B1, B2, B3). A step that appears LATER in the prompt's sequential chain for Branch A must have a HIGHER index in the `steps` list than all earlier Branch A steps. **The most common error is placing Branch B's root step (B1) between two sequential steps of Branch A (e.g., between A1 and A2), which causes A2 to run after B1 instead of after A1.** Before finalizing the `steps` list, for each pair of steps (X, Y) where X appears before Y in the prompt as sequential steps within the SAME branch chain, verify that X has a lower index than Y in the `steps` list. If X appears AFTER Y in the `steps` list, reorder them.
+
+**MANDATORY SELF-CHECK — sequential chain ordering validation**: Before finalizing the `octopusdeploy_process_steps_order` resource for each project, scan the prompt for each pair of steps where step B is described as "sequential after" step A (i.e., B appears right after A in the prompt with no "Run in parallel" annotation, only "Wait for all previous steps" or no annotation). Verify that in the `steps` list, A appears at a LOWER index than B. If B has a lower index than A in the `steps` list, the sequential order is inverted — swap them (and any steps between them that belong to the same branch chain). This check is MANDATORY when branches are linearized sequentially in the prompt, as each branch's internal sequence must be preserved verbatim in the `steps` list.
+
 **CRITICAL — the total count of `StartWithPrevious` steps in resources must match the count in the `steps` list**: When building the `octopusdeploy_process_steps_order` `steps` list, count how many `octopusdeploy_process_step` resources have `start_trigger = "StartWithPrevious"`. The `steps` list must contain ALL of these steps in the correct positions (each immediately after their parallel partner). If the count in resources does not match the adjacency structure of the `steps` list, there is an ordering error.
 
 **CRITICAL — large parallel group (7+ members) self-check using prompt count annotation**: When the prompt contains a parenthetical count annotation like `(This is the LAST of N parallel steps in this group...)`, use the value N as your verification target:
@@ -4975,6 +4979,7 @@ You will be penalized for each occurrence of `account_octopussamples_azure_accou
   * "Octopus.AwsDeleteCloudFormation" - Delete an AWS CloudFormation stack step
   * "Octopus.ArgoCDUpdateImageTags" - Update ArgoCD Image Tags step
   * "Octopus.DeployRelease" - Deploy a Release step
+  * "Octopus.Manual" - Manual Intervention step
 * The "octopusdeploy" provider must set the "space_id" attribute to the value "trimspace(var.octopus_space_id)".
 * The Terraform variable "octopus_space_id" must be included, for example:
 ```
@@ -5734,6 +5739,31 @@ resource "octopusdeploy_process_step" "process_step_my_project_wait_20_min" {
 **MANDATORY — every step in the prompt must appear as a resource**: When the prompt contains N "Add a ... step" instructions, the Terraform MUST contain exactly N `octopusdeploy_process_step` or `octopusdeploy_process_templated_step` resources. A step that appears in the prompt but is missing from Terraform will not execute. You will be penalized for each missing step resource.
 
 **MANDATORY — duplicate step resources are FORBIDDEN**: When the prompt lists "Deploy prod HTTP server primary" once, there must be EXACTLY ONE `process_step_..._deploy_prod_http_server_primary` resource in the Terraform. A step resource named `process_step_..._deploy_prod_http_server_primary_2` is only valid when the PROMPT explicitly lists a SECOND step with the same name (after deduplication rules). Do NOT create `_2` suffix resources based on your own interpretation — only create them when the prompt explicitly requests a second step with the same name.
+
+**MANDATORY — step `name` attribute values must be unique across ALL `octopusdeploy_process_step` and `octopusdeploy_process_templated_step` resources in a project**: Two steps cannot share the same `name` value. If a prompt-specified step has the same name as a template-included step, they must be merged into a single resource — do NOT generate two separate resources with the same `name` value. You will be penalized for creating two step resources with the same `name` attribute.
+
+**Negative example — two step resources with the same name (FORBIDDEN)**:
+```hcl
+resource "octopusdeploy_process_step" "process_step_my_project_approve_production_deployment" {
+  name = "Approve Production Deployment"   ← duplicate name — two resources share this name
+  type = "Octopus.Manual"
+  ...
+}
+resource "octopusdeploy_process_step" "process_step_my_project_approve_production_deployment_manual" {
+  name = "Approve Production Deployment"   ← WRONG: same name as above
+  type = "Octopus.Manual"
+  ...
+}
+```
+
+**Correct output** — one step resource per unique name:
+```hcl
+resource "octopusdeploy_process_step" "process_step_my_project_approve_production_deployment" {
+  name = "Approve Production Deployment"   ← CORRECT: appears exactly once
+  type = "Octopus.Manual"
+  ...
+}
+```
 
 **MANDATORY — "Run a Script" wait steps must appear in Terraform as `Octopus.Script` resources**: When the prompt includes a step like `Add a "Run a Script" step with the name "Wait -20 min-" ... Set the script to the following inline PowerShell code: Start-Sleep -Seconds 1200`, it MUST produce an `octopusdeploy_process_step` resource with `type = "Octopus.Script"` and `execution_properties["Octopus.Action.Script.ScriptBody"] = "Start-Sleep -Seconds 1200"`. Never omit wait-script steps. If the prompt has a wait step, the Terraform MUST have a matching `Octopus.Script` resource.
 
