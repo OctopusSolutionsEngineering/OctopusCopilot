@@ -1194,7 +1194,7 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
-                        "argoupdatemanifest.tf",
+                        "runbook.tf",
                         "Runbook",
                         general_project_creation_instructions,
                         "runbookprompt.txt",
