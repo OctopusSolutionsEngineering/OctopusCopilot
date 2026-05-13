@@ -1,7 +1,8 @@
 # Runbook Instructions
 
+* The name of the project to attach the runbook to is defined in the "project_every_step_project_name" variable.
 * The supplied "Example Octopus Runbook Terraform Configuration" is the primary source of truth for the configuration.
-* You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus Runbook Terraform Configuration".
+* You must respond with Terraform configuration to create an Octopus runbook, and any supporting resources, based on the "Example Octopus Runbook Terraform Configuration".
 * You must include all the steps defined in the "Example Octopus Runbook Terraform Configuration" unless the prompt explicitly states that steps should be removed or modified.
 * If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus Runbook Terraform Configuration".
 
