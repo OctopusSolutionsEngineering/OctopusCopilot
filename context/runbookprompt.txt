@@ -1,0 +1,51 @@
+# Runbook Instructions
+
+* The supplied "Example Octopus Runbook Terraform Configuration" is the primary source of truth for the configuration.
+* You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus Runbook Terraform Configuration".
+* You must include all the steps defined in the "Example Octopus Runbook Terraform Configuration" unless the prompt explicitly states that steps should be removed or modified.
+* If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus Runbook Terraform Configuration".
+
+## Runbook Environment Instructions
+
+You must include all the following environment resources from the "Example Octopus Runbook Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
+* data "octopusdeploy_environments" "environment_development"
+* resource "octopusdeploy_environment" "environment_development"
+
+## Runbook Feed Instructions
+
+You must include all the following feed resources from the "Example Octopus Runbook Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
+* data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+
+## Runbook Project Instructions
+
+You must include all the following project resources from the "Example Octopus Runbook Terraform Configuration" once:
+* data "octopusdeploy_projects" "project_every_step_project"
+
+## Runbook Project Runbook Instructions
+
+You must include all the following runbook resources once unless the prompt explicitly states that runbooks should be removed or modified:
+* resource "octopusdeploy_runbook" "runbook_every_step_project_example_runbook"
+
+
+## Runbook Project Deployment Process Instructions
+
+You must include all the following project deployment process resources from the "Example Octopus Runbook Terraform Configuration" once:
+* resource "octopusdeploy_process" "process_every_step_project_example_runbook"
+
+## Runbook Project Deployment Process Steps Instructions
+
+You must include all the following step resources from the "Example Octopus Runbook Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
+* resource "octopusdeploy_process_step" "process_step_every_step_project_example_runbook_run_a_script"
+
+You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
+
+## Runbook Project Runbook Deployment Process Steps Instructions
+
+You must include all the following runbook steps from the runbook_every_step_project_example_runbook runbook once unless the prompt explicitly states that runbook steps should be removed or modified:
+* resource "octopusdeploy_process_step" "process_step_every_step_project_example_runbook_run_a_script"
+
+
+## Runbook Project Deployment Process Step Order Instructions
+
+You must include all the following project deployment process step order resources from the "Example Octopus Runbook Terraform Configuration" once:
+* resource "octopusdeploy_process_steps_order" "process_step_order_every_step_project_example_runbook"
