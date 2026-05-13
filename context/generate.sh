@@ -1,5 +1,25 @@
-PULL=always
+PULL=never
 IMAGE=ghcr.io/octopussolutionsengineering/octoterra:latest
+
+docker run --pull never -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra:latest \
+    -url https://mattc.octopus.app \
+    -space Spaces-3368 \
+    -apiKey $OCTOPUS_CLI_API_KEY \
+    -projectName "Every Step Project" \
+    -runbookName "Example Runbook" \
+    -stepTemplate \
+    -stepTemplateName "Space Context" \
+    -stepTemplateKey "SpaceContext" \
+    -dummySecretVariableValues \
+    -includeProviderServerDetails=false \
+    -ignoreCacManagedValues=false \
+    -excludeCaCProjectSettings=true \
+    -includeOctopusOutputVars=false \
+    -inlineVariableValues \
+    -excludeAllRunbooks=true \
+    -dest /tmp/octoexport
+cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > runbook.tf
+./generate_instructions.py runbook.tf "Runbook" > instructions_runbook.md
 
 docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://samples.octopus.app \

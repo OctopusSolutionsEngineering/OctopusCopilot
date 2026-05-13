@@ -75,11 +75,10 @@ def find_octopus_variables(filename, label):
     value_pattern = r'\s*value\s*=\s*"([^"]+)"'
 
     try:
+        output = []
+
         # Open and read the file
-        print(f"## {label} Project Variable Instructions\n")
-        print(
-            f'You must include all the following variables from the "Example Octopus {label} Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:'
-        )
+
         with open(filename, "r") as file:
             for line_number, line in enumerate(file, 1):
                 # Check if the line matches our pattern
@@ -98,7 +97,15 @@ def find_octopus_variables(filename, label):
                             break
 
                 if match:
-                    print(f"* {match.group(0)}{additional_instructions}")
+                    output.append(f"* {match.group(0)}{additional_instructions}")
+
+        if output:
+            print(f"## {label} Project Variable Instructions\n")
+            print(
+                f'You must include all the following variables from the "Example Octopus {label} Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:'
+            )
+            for line in output:
+                print(line)
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
