@@ -267,7 +267,6 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  depends_on            = []
   properties            = {
       }
   execution_properties  = {
@@ -377,7 +376,6 @@ resource "octopusdeploy_process_step" "process_step_deployment_orchestration_dep
   slug                  = "deploy-a-release"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = []
   properties            = {
       }
   execution_properties  = {

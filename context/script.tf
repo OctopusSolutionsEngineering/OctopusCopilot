@@ -232,7 +232,6 @@ resource "octopusdeploy_process_step" "process_step_script_hello_world" {
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.WorkerPool"
-  depends_on            = []
   properties            = {
       }
   execution_properties  = {

@@ -253,24 +253,23 @@ resource "octopusdeploy_process_step" "process_step_terraform_plan_to_apply_a_te
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.WorkerPool"
-  depends_on            = []
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
-        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
-        "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
-        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
         "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
+        "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
+        "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
       }
 }
 
@@ -314,24 +313,24 @@ resource "octopusdeploy_process_step" "process_step_terraform_apply_a_terraform_
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.WorkerPool"
-  depends_on            = [octopusdeploy_process_step.process_step_terraform_plan_to_apply_a_terraform_template,octopusdeploy_process_step.process_step_terraform_approve_plan]
+  depends_on            = [octopusdeploy_process_step.process_step_terraform_approve_plan]
   properties            = {
       }
   execution_properties  = {
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.Terraform.AllowPluginDownloads" = "True"
-        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
-        "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
-        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
-        "Octopus.Action.Terraform.AzureAccount" = "False"
-        "Octopus.Action.Terraform.ManagedAccount" = "None"
-        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
-        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
         "Octopus.Action.Terraform.AdditionalActionParams" = "\"-var=message=#{Terraform.Variable.Message}\""
+        "Octopus.Action.Terraform.ManagedAccount" = "None"
+        "Octopus.Action.Terraform.RunAutomaticFileSubstitution" = "True"
+        "Octopus.Action.Terraform.TemplateParameters" = jsonencode({        })
+        "Octopus.Action.Terraform.GoogleCloudAccount" = "False"
+        "Octopus.Action.Terraform.PlanJsonOutput" = "False"
+        "Octopus.Action.Terraform.Template" = "#{Project.Terraform.Configuration}"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "True"
+        "Octopus.Action.Terraform.AzureAccount" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "False"
       }
 }
 

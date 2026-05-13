@@ -479,20 +479,19 @@ def find_step_names(filename, label):
                             brace_level = stripped_line.count("{")
 
             for process_tf_name, process_info in all_processes_data.items():
-                if not process_info["is_runbook"]:
-                    for (
-                        current_block_type,
-                        human_readable_name,
-                        current_block_tf_name,
-                        parent_tf_name_ref,
-                    ) in all_step_details:
-                        if (
-                            parent_tf_name_ref == process_tf_name
-                            and current_block_tf_name not in ignore_list
-                        ):
-                            print(
-                                f'* resource "{current_block_type}" "{current_block_tf_name}"'
-                            )
+                for (
+                    current_block_type,
+                    human_readable_name,
+                    current_block_tf_name,
+                    parent_tf_name_ref,
+                ) in all_step_details:
+                    if (
+                        parent_tf_name_ref == process_tf_name
+                        and current_block_tf_name not in ignore_list
+                    ):
+                        print(
+                            f'* resource "{current_block_type}" "{current_block_tf_name}"'
+                        )
 
         print(
             f"\nYou will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified."

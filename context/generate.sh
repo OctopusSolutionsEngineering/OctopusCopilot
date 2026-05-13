@@ -1,7 +1,7 @@
 PULL=never
 IMAGE=ghcr.io/octopussolutionsengineering/octoterra:latest
 
-docker run --pull never -v $PWD:/tmp/octoexport --rm ghcr.io/octopussolutionsengineering/octoterra:latest \
+docker run --pull $PULL -v $PWD:/tmp/octoexport --rm $IMAGE \
     -url https://mattc.octopus.app \
     -space Spaces-3368 \
     -apiKey $OCTOPUS_CLI_API_KEY \
