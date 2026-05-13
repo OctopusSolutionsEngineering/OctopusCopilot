@@ -248,7 +248,9 @@ def create_template_project_callback(
         :param callback_name: The name of the tool that is calling this function. This is used to ensure approvals are linked up correctly, as there are multiple tools calling the same callback
         :param original_query: The prompt that was used to call this function
         :param space_name: The name of the space
-        :return: An response for approval
+        :param project_name: The name of the project
+        :param auto_apply: Whether to automatically create the resources or request confirmation
+        :return: A response for approval
         """
 
         async def inner_function():
@@ -519,7 +521,7 @@ def generate_base_messages(general_examples, general_system_message_values):
     return [
         (
             "system",
-            "You are an expert in generating Terraform configurations for Octopus Deploy projects.",
+            "You are an expert in generating Terraform configurations for Octopus Deploy projects and supporting resources.",
         ),
         *general_examples_messages,
         (
@@ -558,7 +560,7 @@ def generate_project_messages(
         # We reinforce the need to keep any template resources by adding this message after the user prompt.
         (
             "user",
-            f'If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "{project_example_context_name}".',
+            f'If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, runbooks, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "{project_example_context_name}".',
         ),
         (
             "user",

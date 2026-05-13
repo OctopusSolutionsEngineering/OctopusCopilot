@@ -117,6 +117,7 @@ from domain.tools.wrapper.projects.create_orchestration_project import (
     create_orchestration_project_wrapper,
 )
 from domain.tools.wrapper.projects.create_project import create_project_wrapper
+from domain.tools.wrapper.projects.create_runbook_wrapper import create_runbook_wrapper
 from domain.tools.wrapper.projects.create_script_project import (
     create_script_project_wrapper,
 )
@@ -1170,6 +1171,33 @@ def build_form_tools(query, req: func.HttpRequest):
                         "Argo CD Update Manifest",
                         general_project_creation_instructions,
                         "argoupdatemanifestsystemprompt.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+            ),
+            FunctionDefinition(
+                create_runbook_wrapper(
+                    query,
+                    callback=create_template_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "argoupdatemanifest.tf",
+                        "Runbook",
+                        general_project_creation_instructions,
+                        "runbookprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
                     ),
