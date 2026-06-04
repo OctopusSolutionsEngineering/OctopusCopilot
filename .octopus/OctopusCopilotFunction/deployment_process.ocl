@@ -149,6 +149,16 @@ step "deploy-with-cli" {
                    },
                    {
                      "name": "AISERVICES_DEPLOYMENT_PROJECT_GEN",
+                     "value": "#{Azure.Global.AIServices.Deployment.ProjectGen}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_EUROPE_PROJECT_GEN",
+                     "value": "#{Azure.Europe.AIServices.Deployment.ProjectGen}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_US_PROJECT_GEN",
                      "value": "#{Azure.US.AIServices.Deployment.ProjectGen}",
                      "slotSetting": false
                    },
