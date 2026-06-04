@@ -39,6 +39,7 @@ from domain.requestparsing.extract_query import (
 from domain.requests.github.copilot_request_context import (
     get_github_user_from_form,
     build_form_tools,
+    get_region_from_headers,
 )
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitize_prompt import sanitize_prompt
@@ -743,4 +744,6 @@ def execute_function(req, build_form_tools):
         ("system", "You must select from one of the supplied tools."),
     ]
 
-    return llm_tool_query(query, functions, log_query, extra_messages).call_function()
+    return llm_tool_query(
+        query, functions, log_query, extra_messages, region=get_region_from_headers(req)
+    ).call_function()

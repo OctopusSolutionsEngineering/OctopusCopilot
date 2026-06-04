@@ -8,12 +8,13 @@ from domain.tools.wrapper.function_definition import (
 from infrastructure.llm import llm_tool_query
 
 
-def nlp_get_keywords(text, max_keywords=10):
+def nlp_get_keywords(text, max_keywords=10, region=None):
     """
     Extracts keywords with an LLM. This will probably need to be replaced with a call to more specific
     keyword extraction tool. But an LLM works for now.
     :param max_keywords: The number of keywords to return
     :param text: The text to extract keywords from
+    :param region: The region to use for the LLM query, if applicable.
     :return: The keywords from the text.
     """
     if not text:
@@ -22,5 +23,6 @@ def nlp_get_keywords(text, max_keywords=10):
     keywords = llm_tool_query(
         "Get the keywords from the following text: " + text,
         FunctionDefinitions([FunctionDefinition(get_keywords)]),
+        region=region,
     ).call_function()
     return sanitize_keywords(sanitize_list(keywords), max_keywords)

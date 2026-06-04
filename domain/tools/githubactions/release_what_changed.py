@@ -64,6 +64,7 @@ def release_what_changed_callback_wrapper(
     is_admin,
     github_user,
     github_token,
+    region,
     zendesk_user,
     zendesk_token,
     octopus_details,
@@ -173,7 +174,12 @@ def release_what_changed_callback_wrapper(
 
         # If the deployment failed, get the keywords and search for tickets and issues
         failure_context, keywords = await get_failure_context(
-            original_query, space_resources, failed_step, deployments, logs
+            original_query,
+            space_resources,
+            failed_step,
+            deployments,
+            logs,
+            region=region,
         )
 
         debug_text.extend(
@@ -554,13 +560,13 @@ def release_what_changed_callback_wrapper(
         return []
 
     async def get_failure_context(
-        original_query, space_resources, failed_step, deployments, logs
+        original_query, space_resources, failed_step, deployments, logs, region=None
     ):
         auth, url = octopus_details()
         api_key, access_token = get_auth(auth)
 
         if deployment_is_failure(deployments):
-            keywords = nlp_get_keywords(logs[:max_chars_128])
+            keywords = nlp_get_keywords(logs[:max_chars_128], region=region)
             initial_search = await asyncio.gather(
                 get_tickets(is_admin, keywords, None, zendesk_user, zendesk_token),
                 get_issues(keywords, github_token),

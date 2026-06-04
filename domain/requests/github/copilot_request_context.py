@@ -433,7 +433,10 @@ def build_form_tools(query, req: func.HttpRequest):
         for tool in how_to_wrapper(
             query,
             how_to_callback(
-                get_github_token(req), get_github_user_from_form(req), get_region_from_headers(req), log_query
+                get_github_token(req),
+                get_github_user_from_form(req),
+                get_region_from_headers(req),
+                log_query,
             ),
             log_query,
         )
@@ -447,6 +450,7 @@ def build_form_tools(query, req: func.HttpRequest):
                 is_admin_user(get_github_user_from_form(req), get_admin_users()),
                 get_github_user_from_form(req),
                 get_github_token(req),
+                get_region_from_headers(req),
                 get_zendesk_user(),
                 get_zendesk_token(),
                 lambda: get_api_key_and_url(req),
@@ -774,6 +778,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_general_resources_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -798,6 +803,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -825,6 +831,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -852,6 +859,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -879,6 +887,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -906,6 +915,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -933,6 +943,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -960,6 +971,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -987,6 +999,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -1014,6 +1027,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -1041,6 +1055,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -1068,6 +1083,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -1095,6 +1111,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -1122,6 +1139,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -1149,6 +1167,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -1176,6 +1195,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,
@@ -1203,6 +1223,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     callback=create_template_project_callback(
                         lambda: get_api_key_and_url(req),
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                         general_project_examples,

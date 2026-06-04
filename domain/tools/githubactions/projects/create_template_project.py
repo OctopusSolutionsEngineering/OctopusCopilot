@@ -56,7 +56,13 @@ from domain.sanitizers.terraform import (
 from domain.tools.debug import get_params_message
 from domain.url.hostname import get_hostname_from_url
 from infrastructure.callbacks import save_callback
-from infrastructure.llm import llm_message_query, AZURE_PROJECT_SERVICE
+from infrastructure.llm import (
+    llm_message_query,
+    AZURE_PROJECT_SERVICE,
+    US_REGION,
+    EUROPE_REGION,
+    validate_region,
+)
 from infrastructure.mockgit import save_mockgit_user
 from infrastructure.space_builder import (
     create_terraform_plan,
@@ -168,6 +174,7 @@ def create_template_project_confirm_callback_wrapper(
 def create_general_resources_callback(
     octopus_details,
     github_user,
+    region,
     connection_string,
     log_query,
     general_examples,
@@ -192,6 +199,7 @@ def create_general_resources_callback(
     return create_template_project_callback(
         octopus_details,
         github_user,
+        region,
         connection_string,
         log_query,
         general_examples,
@@ -207,6 +215,7 @@ def create_general_resources_callback(
 def create_template_project_callback(
     octopus_details,
     github_user,
+    region,
     connection_string,
     log_query,
     general_examples,
@@ -333,6 +342,7 @@ def create_template_project_callback(
                     project_system_message_values,
                     context,
                     log_query,
+                    region,
                 )
 
             # Apply all fixes to fresh and cached configurations
@@ -464,6 +474,27 @@ def create_template_project_callback(
     return create_template_project
 
 
+def get_project_gen_purpose(region=None):
+    """
+    Select the LLM purpose/service based on the region. Regional models may differ
+    from the global default.
+
+    :param region: The region name (US_REGION, EUROPE_REGION, or None/empty)
+    :return: The purpose string for the LLM
+    """
+    if region == US_REGION:
+        purpose = os.getenv("PROJECT_GEN_US_SERVICE")
+    elif region == EUROPE_REGION:
+        purpose = os.getenv("PROJECT_GEN_EUROPE_SERVICE")
+    else:
+        purpose = os.getenv("PROJECT_GEN_SERVICE")
+
+    if purpose is None:
+        purpose = AZURE_PROJECT_SERVICE
+
+    return purpose
+
+
 def generate_terraform_configuration(
     general_examples_values,
     general_system_message_values,
@@ -472,6 +503,7 @@ def generate_terraform_configuration(
     project_system_message_values,
     context,
     log_query,
+    region=None,
 ):
     """
     Build the LLM message chain and query it to produce a raw Terraform configuration string.
@@ -483,8 +515,11 @@ def generate_terraform_configuration(
     :param project_system_message_values: The project-type-specific system message
     :param context: The LLM context dict (must contain the "input" key)
     :param log_query: A logging function
+    :param region: The region name
     :return: The raw Terraform configuration string returned by the LLM
     """
+    validate_region(region)
+
     # These are the general examples of projects, feeds, accounts etc
     base_messages = generate_base_messages(
         general_examples_values, general_system_message_values
@@ -501,11 +536,14 @@ def generate_terraform_configuration(
     # These are the common messages used to generate the final configuration
     messages = final_messages(project_messages)
 
+    purpose = get_project_gen_purpose(region)
+
     return llm_message_query(
         messages,
         context,
         log_query,
-        purpose=os.getenv("PROJECT_GEN_SERVICE") or AZURE_PROJECT_SERVICE,
+        purpose=purpose,
+        region=region,
     )
 
 

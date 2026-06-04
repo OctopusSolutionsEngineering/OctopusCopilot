@@ -192,6 +192,7 @@ def build_tools(tool_query):
                 True,
                 get_github_user(),
                 get_github_token(),
+                None,
                 get_zendesk_user(),
                 get_zendesk_token(),
                 lambda: (get_api_key(), get_octopus_api()),

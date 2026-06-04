@@ -42,13 +42,57 @@ EUROPE_REGION = "Europe"
 US_REGION = "US"
 
 
-def get_endpoint_and_key(region=None):
-    if region is not None and (
-        region != "" or region != EUROPE_REGION or region != US_REGION
+def validate_region(region):
+    """Validate that region is None, empty string, EUROPE_REGION, or US_REGION."""
+    if (
+        region is not None
+        and region != ""
+        and region != EUROPE_REGION
+        and region != US_REGION
     ):
         raise ValueError(
             f"Invalid region specified: {region}. Must be either {EUROPE_REGION}, {US_REGION}, empty string, or None."
         )
+
+
+def get_project_gen_deployment(region=None):
+    """Get the project generation deployment name based on the region."""
+    validate_region(region)
+
+    if region == EUROPE_REGION:
+        return os.getenv("AISERVICES_DEPLOYMENT_EUROPE_PROJECT_GEN")
+    elif region == US_REGION:
+        return os.getenv("AISERVICES_DEPLOYMENT_US_PROJECT_GEN")
+    else:
+        return os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN")
+
+
+def get_functions_deployment(region=None):
+    """Get the function selection deployment name based on the region."""
+    validate_region(region)
+
+    if region == EUROPE_REGION:
+        return os.getenv("AISERVICES_DEPLOYMENT_EUROPE_FUNCTIONS")
+    elif region == US_REGION:
+        return os.getenv("AISERVICES_DEPLOYMENT_US_FUNCTIONS")
+    else:
+        return os.getenv("AISERVICES_DEPLOYMENT_FUNCTIONS")
+
+
+def get_deployment(region=None):
+    """Get the general query deployment name based on the region."""
+    validate_region(region)
+
+    if region == EUROPE_REGION:
+        return os.getenv("AISERVICES_EUROPE_DEPLOYMENT")
+    elif region == US_REGION:
+        return os.getenv("AISERVICES_US_DEPLOYMENT")
+    else:
+        return os.getenv("AISERVICES_DEPLOYMENT")
+
+
+def get_endpoint_and_key(region=None):
+    validate_region(region)
 
     if region == EUROPE_REGION:
         return (
@@ -105,48 +149,7 @@ def build_azure_anthropic_project_llm():
     )
 
 
-def build_azure_anthropic_general_small_query():
-    deployment = os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL")
-    api_key = os.environ["AISERVICES_KEY"]
-    endpoint = os.environ["AISERVICES_ANTHROPIC_ENDPOINT"]
-    temperature = (
-        None
-        if os.getenv(
-            "AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TEMPERATURE", ""
-        )
-        == "None"
-        else string_to_int(
-            os.getenv(
-                "AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TEMPERATURE", "0"
-            ),
-            0,
-        )
-    )
-    max_tokens = (
-        None
-        if os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TOKENS", "")
-        == "None"
-        else string_to_int(
-            os.getenv(
-                "AISERVICES_DEPLOYMENT_ANTHROPIC_GENERAL_QUERY_SMALL_TOKENS", "64000"
-            ),
-            128000,
-        )
-    )
-
-    return ChatAnthropic(
-        temperature=temperature,
-        model=deployment,
-        base_url=endpoint,
-        api_key=api_key,
-        max_tokens=max_tokens,
-    )
-
-
 def build_azure_project_llm(region=None):
-    deployment = os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN") or os.getenv(
-        "AISERVICES_DEPLOYMENT"
-    )
     version = (
         os.environ.get("AISERVICES_DEPLOYMENT_QUERY_VERSION")
         or "2025-04-01-preview"  # https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-preview-api-releases
@@ -165,6 +168,8 @@ def build_azure_project_llm(region=None):
         os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN_RESPONSES", "").casefold()
         == "true"
     )
+
+    deployment = get_project_gen_deployment(region)
 
     endpoint, api_key = get_endpoint_and_key(region)
 
@@ -216,7 +221,7 @@ def build_azure_general_small_query(region=None):
 
 
 def build_azure_general_llm(region=None):
-    deployment = os.environ["AISERVICES_DEPLOYMENT"]
+    deployment = get_deployment(region)
 
     version = "2025-04-01-preview"
 
@@ -285,6 +290,7 @@ def llm_tool_query(
     extra_prompt_messages=None,
     use_responses_api=False,
     temperature=0,
+    region=None,
 ):
     """
     This is the handler that responds to a chat request.
@@ -308,17 +314,15 @@ def llm_tool_query(
     # These models support function calling: https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling#function-calling-support
 
     # We can use a specific deployment to select a tool, or fallback to the default
-    deployment = (
-        os.environ.get("AISERVICES_DEPLOYMENT_FUNCTIONS")
-        or os.environ["AISERVICES_DEPLOYMENT"]
-    )
+    deployment = get_functions_deployment(region)
+    endpoint, api_key = get_endpoint_and_key(region)
     version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-10-21"
 
     llm = AzureChatOpenAI(
         temperature=temperature,
         azure_deployment=deployment,
-        openai_api_key=os.environ["AISERVICES_KEY"],
-        azure_endpoint=os.environ["AISERVICES_ENDPOINT"],
+        openai_api_key=api_key,
+        azure_endpoint=endpoint,
         api_version=version,
         use_responses_api=use_responses_api,
     )
