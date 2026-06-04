@@ -91,6 +91,18 @@ def get_deployment(region=None):
         return os.getenv("AISERVICES_DEPLOYMENT")
 
 
+def get_small_deployment(region=None):
+    """Get the small general query deployment name based on the region."""
+    validate_region(region)
+
+    if region == EUROPE_REGION:
+        return os.getenv("AISERVICES_DEPLOYMENT_EUROPE_GENERAL_QUERY_SMALL")
+    elif region == US_REGION:
+        return os.getenv("AISERVICES_DEPLOYMENT_US_GENERAL_QUERY_SMALL")
+    else:
+        return os.getenv("AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL")
+
+
 def get_endpoint_and_key(region=None):
     validate_region(region)
 
@@ -184,9 +196,6 @@ def build_azure_project_llm(region=None):
 
 
 def build_azure_general_small_query(region=None):
-    deployment = os.getenv("AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL") or os.getenv(
-        "AISERVICES_DEPLOYMENT"
-    )
     version = (
         os.environ.get("AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL_VERSION")
         or "2025-04-01-preview"  # https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-preview-api-releases
@@ -207,6 +216,7 @@ def build_azure_general_small_query(region=None):
         == "true"
     )
 
+    deployment = get_small_deployment(region)
     endpoint, api_key = get_endpoint_and_key(region)
 
     return AzureChatOpenAI(
