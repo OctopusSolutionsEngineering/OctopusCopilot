@@ -174,7 +174,17 @@ step "deploy-with-cli" {
                    },
                    {
                      "name": "AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL",
+                     "value": "#{Azure.Global.AIServices.Deployment.GeneralSmallQuery}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_US_GENERAL_QUERY_SMALL",
                      "value": "#{Azure.US.AIServices.Deployment.GeneralSmallQuery}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_EUROPE_GENERAL_QUERY_SMALL",
+                     "value": "#{Azure.Europe.AIServices.Deployment.GeneralSmallQuery}",
                      "slotSetting": false
                    },
                    {
