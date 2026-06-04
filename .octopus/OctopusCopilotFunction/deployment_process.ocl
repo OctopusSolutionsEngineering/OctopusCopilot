@@ -144,11 +144,31 @@ step "deploy-with-cli" {
                    },
                    {
                      "name": "AISERVICES_DEPLOYMENT",
+                     "value": "#{Azure.Global.AIServices.Deployment}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_US_DEPLOYMENT",
                      "value": "#{Azure.US.AIServices.Deployment}",
                      "slotSetting": false
                    },
                    {
+                     "name": "AISERVICES_EUROPE_DEPLOYMENT",
+                     "value": "#{Azure.Europe.AIServices.Deployment}",
+                     "slotSetting": false
+                   },
+                   {
                      "name": "AISERVICES_DEPLOYMENT_PROJECT_GEN",
+                     "value": "#{Azure.Global.AIServices.Deployment.ProjectGen}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_EUROPE_PROJECT_GEN",
+                     "value": "#{Azure.Europe.AIServices.Deployment.ProjectGen}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_US_PROJECT_GEN",
                      "value": "#{Azure.US.AIServices.Deployment.ProjectGen}",
                      "slotSetting": false
                    },
@@ -174,6 +194,16 @@ step "deploy-with-cli" {
                    },
                    {
                      "name": "AISERVICES_DEPLOYMENT_FUNCTIONS",
+                     "value": "#{Azure.Global.AIServices.Deployment.Functions}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_EUROPE_FUNCTIONS",
+                     "value": "#{Azure.Europe.AIServices.Deployment.Functions}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_US_FUNCTIONS",
                      "value": "#{Azure.US.AIServices.Deployment.Functions}",
                      "slotSetting": false
                    },
@@ -280,6 +310,16 @@ step "deploy-with-cli" {
                    {
                      "name": "PROJECT_GEN_SERVICE",
                      "value": "#{Application.ProjectGen}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "PROJECT_GEN_US_SERVICE",
+                     "value": "#{Application.US.ProjectGen}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "PROJECT_GEN_EUROPE_SERVICE",
+                     "value": "#{Application.Europe.ProjectGen}",
                      "slotSetting": false
                    },
                    {
