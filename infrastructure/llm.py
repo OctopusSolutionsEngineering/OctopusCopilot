@@ -37,28 +37,39 @@ NO_FUNCTION_RESPONSE = (
 AZURE_PROJECT_SERVICE = "azure_project"
 AZURE_PROJECT_ANTHROPIC_SERVICE = "azure_project_anthropic"
 AZURE_GENERAL_SERVICE = "azure_general"
-BEDROCK_PROJECT_SERVICE = "bedrock_project"
 AZURE_GENERAL_QUERY_SMALL_LLM = "azure_general_query_small"
 AZURE_ANTHROPIC_GENERAL_QUERY_SMALL_LLM = "azure_anthropic_general_query_small"
+EUROPE_REGION = "Europe"
+US_REGION = "US"
 
 
-def build_llm(purpose):
+def get_endpoint_and_key(region=None):
+    if region is not None or region != EUROPE_REGION or region != US_REGION:
+        raise ValueError(f"Invalid region specified: {region}. Must be either {EUROPE_REGION}, {US_REGION}, or None.")
+
+    if region == EUROPE_REGION:
+        return os.environ["AISERVICES_EUROPE_ENDPOINT"], os.environ["AISERVICES_EUROPE_KEY"]
+    elif region == US_REGION:
+        return os.environ["AISERVICES_US_ENDPOINT"], os.environ["AISERVICES_US_KEY"]
+    else:
+        return os.environ["AISERVICES_ENDPOINT"], os.environ["AISERVICES_KEY"]
+
+
+def build_llm(purpose, region=None):
     if purpose == AZURE_PROJECT_SERVICE:
-        return build_azure_project_llm()
-
-    if purpose == AZURE_PROJECT_ANTHROPIC_SERVICE:
-        return build_azure_anthropic_project_llm()
+        return build_azure_project_llm(region)
 
     if purpose == AZURE_GENERAL_QUERY_SMALL_LLM:
-        return build_azure_general_small_query()
+        return build_azure_general_small_query(region)
+
+    # Anthropic LLMs only offer global standard
+    if purpose == AZURE_PROJECT_ANTHROPIC_SERVICE:
+        return build_azure_anthropic_project_llm()
 
     if purpose == AZURE_ANTHROPIC_GENERAL_QUERY_SMALL_LLM:
         return build_azure_anthropic_general_small_query()
 
-    if purpose == BEDROCK_PROJECT_SERVICE:
-        return build_bedrock_llm()
-
-    return build_azure_general_llm()
+    return build_azure_general_llm(region)
 
 
 def build_azure_anthropic_project_llm():
@@ -129,7 +140,7 @@ def build_azure_anthropic_general_small_query():
     )
 
 
-def build_azure_project_llm():
+def build_azure_project_llm(region=None):
     deployment = os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN") or os.getenv(
         "AISERVICES_DEPLOYMENT"
     )
@@ -152,9 +163,7 @@ def build_azure_project_llm():
         == "true"
     )
 
-    api_key = os.environ["AISERVICES_KEY"]
-
-    endpoint = os.environ["AISERVICES_ENDPOINT"]
+    endpoint, api_key = get_endpoint_and_key(region)
 
     return AzureChatOpenAI(
         temperature=temperature,
@@ -166,7 +175,7 @@ def build_azure_project_llm():
     )
 
 
-def build_azure_general_small_query():
+def build_azure_general_small_query(region=None):
     deployment = os.getenv("AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL") or os.getenv(
         "AISERVICES_DEPLOYMENT"
     )
@@ -190,9 +199,7 @@ def build_azure_general_small_query():
         == "true"
     )
 
-    api_key = os.environ["AISERVICES_KEY"]
-
-    endpoint = os.environ["AISERVICES_ENDPOINT"]
+    endpoint, api_key = get_endpoint_and_key(region)
 
     return AzureChatOpenAI(
         temperature=temperature,
@@ -205,7 +212,7 @@ def build_azure_general_small_query():
     )
 
 
-def build_azure_general_llm():
+def build_azure_general_llm(region=None):
     deployment = os.environ["AISERVICES_DEPLOYMENT"]
 
     version = "2025-04-01-preview"
@@ -214,9 +221,7 @@ def build_azure_general_llm():
 
     use_responses_api = False
 
-    api_key = os.environ["AISERVICES_KEY"]
-
-    endpoint = os.environ["AISERVICES_ENDPOINT"]
+    endpoint, api_key = get_endpoint_and_key(region)
 
     return AzureChatOpenAI(
         temperature=temperature,
@@ -228,25 +233,12 @@ def build_azure_general_llm():
     )
 
 
-def build_bedrock_llm():
-    model = (
-        os.environ.get("BEDROCK_MODEL_ID")
-        or "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-    )
-    region = os.environ.get("BEDROCK_MODEL_REGION") or "us-east-2"
-
-    bedrock_config = Config(read_timeout=600)
-    client = boto3.client("bedrock-runtime", region_name=region, config=bedrock_config)
-
-    return ChatBedrockConverse(client=client, model_id=model, temperature=0)
-
-
 @retry(RateLimitError, tries=3, delay=5)
 def llm_message_query(
-    message_prompt, context, log_query=None, purpose=AZURE_GENERAL_SERVICE
+    message_prompt, context, log_query=None, purpose=AZURE_GENERAL_SERVICE, region=None
 ):
 
-    llm = build_llm(purpose)
+    llm = build_llm(purpose, region)
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)
 
