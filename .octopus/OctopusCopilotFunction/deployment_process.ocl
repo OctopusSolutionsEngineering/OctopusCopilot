@@ -114,12 +114,32 @@ step "deploy-with-cli" {
                    },
                    {
                      "name": "AISERVICES_ENDPOINT",
+                     "value": "#{Azure.Global.AIServices.Endpoint}",
+                     "slotSetting": false
+                   },
+                  {
+                     "name": "AISERVICES_EUROPE_ENDPOINT",
+                     "value": "#{Azure.Europe.AIServices.Endpoint}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_US_ENDPOINT",
                      "value": "#{Azure.US.AIServices.Endpoint}",
                      "slotSetting": false
                    },
                    {
                      "name": "AISERVICES_KEY",
+                     "value": "#{Azure.Global.AIServices.Key}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_US_KEY",
                      "value": "#{Azure.US.AIServices.Key}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_EUROPE_KEY",
+                     "value": "#{Azure.Europe.AIServices.Key}",
                      "slotSetting": false
                    },
                    {
@@ -307,7 +327,7 @@ step "deploy-with-cli" {
                      "value": "#{Application.Configuration.EnhancedLogging}",
                      "slotSetting": false
                    }
-                ] 
+                ]
                 EOL
                 
                 az functionapp config appsettings set -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --settings @appsettings.json 2>&1
