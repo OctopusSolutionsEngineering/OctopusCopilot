@@ -261,6 +261,10 @@ def get_server_from_form(req: func.HttpRequest):
     return get_server(req)
 
 
+def get_region_from_headers(req: func.HttpRequest):
+    return req.headers.get("X-Region")
+
+
 def get_github_user_from_form(req: func.HttpRequest):
     try:
         return get_github_user(get_github_token(req))
@@ -429,7 +433,7 @@ def build_form_tools(query, req: func.HttpRequest):
         for tool in how_to_wrapper(
             query,
             how_to_callback(
-                get_github_token(req), get_github_user_from_form(req), log_query
+                get_github_token(req), get_github_user_from_form(req), get_region_from_headers(req), log_query
             ),
             log_query,
         )
@@ -475,6 +479,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     query,
                     general_query_callback(
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         lambda: get_api_key_and_url(req),
                         log_query,
                     ),
@@ -486,6 +491,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     query,
                     general_query_callback(
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         lambda: get_api_key_and_url(req),
                         log_query,
                     ),
@@ -497,6 +503,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     query,
                     variable_query_callback(
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         lambda: get_api_key_and_url(req),
                         log_query,
                     ),
@@ -508,6 +515,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     query,
                     variable_query_callback(
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         lambda: get_api_key_and_url(req),
                         log_query,
                     ),
@@ -519,6 +527,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     query,
                     logs_callback(
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         lambda: get_api_key_and_url(req),
                         log_query,
                     ),
@@ -541,6 +550,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     query,
                     get_runbook_logs_wrapper(
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         lambda: get_api_key_and_url(req),
                         log_query,
                     ),
@@ -552,6 +562,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     query,
                     resource_specific_callback(
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         lambda: get_api_key_and_url(req),
                         log_query,
                     ),
@@ -563,6 +574,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     query,
                     resource_specific_callback(
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         lambda: get_api_key_and_url(req),
                         log_query,
                     ),
@@ -1217,6 +1229,7 @@ def build_form_tools(query, req: func.HttpRequest):
                     query,
                     spinnaker_callback(
                         get_github_user_from_form(req),
+                        get_region_from_headers(req),
                         get_functions_connection_string(),
                         log_query,
                     ),
@@ -1230,6 +1243,7 @@ def build_form_tools(query, req: func.HttpRequest):
                 query,
                 general_query_callback(
                     get_github_user_from_form(req),
+                    get_region_from_headers(req),
                     lambda: get_api_key_and_url(req),
                     log_query,
                 ),

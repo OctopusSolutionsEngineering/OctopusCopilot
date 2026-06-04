@@ -24,7 +24,7 @@ from infrastructure.octopus import (
 from infrastructure.llm import llm_message_query
 
 
-def get_runbook_logs_wrapper(github_user, octopus_details, log_query):
+def get_runbook_logs_wrapper(github_user, region, octopus_details, log_query):
     def runbook_logs_implementation(
         original_query,
         messages,
@@ -153,7 +153,7 @@ def get_runbook_logs_wrapper(github_user, octopus_details, log_query):
 
         context = {"input": processed_query, "context": logs}
 
-        response = [llm_message_query(messages, context, log_query)]
+        response = [llm_message_query(messages, context, log_query, region=region)]
 
         response.extend(warnings)
         response.extend(debug_text)

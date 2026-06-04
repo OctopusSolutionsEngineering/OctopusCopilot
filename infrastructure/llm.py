@@ -44,11 +44,21 @@ US_REGION = "US"
 
 
 def get_endpoint_and_key(region=None):
-    if region is not None or region != EUROPE_REGION or region != US_REGION:
-        raise ValueError(f"Invalid region specified: {region}. Must be either {EUROPE_REGION}, {US_REGION}, or None.")
+    if (
+        region is not None
+        and (region != ""
+        or region != EUROPE_REGION
+        or region != US_REGION)
+    ):
+        raise ValueError(
+            f"Invalid region specified: {region}. Must be either {EUROPE_REGION}, {US_REGION}, empty string, or None."
+        )
 
     if region == EUROPE_REGION:
-        return os.environ["AISERVICES_EUROPE_ENDPOINT"], os.environ["AISERVICES_EUROPE_KEY"]
+        return (
+            os.environ["AISERVICES_EUROPE_ENDPOINT"],
+            os.environ["AISERVICES_EUROPE_KEY"],
+        )
     elif region == US_REGION:
         return os.environ["AISERVICES_US_ENDPOINT"], os.environ["AISERVICES_US_KEY"]
     else:

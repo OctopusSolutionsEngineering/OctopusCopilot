@@ -10,7 +10,7 @@ from infrastructure.terraform_context import load_terraform_cache, cache_terrafo
 
 # This is a very simple tool, passing through the original prompt to the LLM.
 # We expose this tool to be able to control things like selecting the LLM.
-def spinnaker_callback(github_user, connection_string, log_query):
+def spinnaker_callback(github_user, region, connection_string, log_query):
     def spinnaker_callback_implementation(original_query):
         debug_text = get_params_message(
             github_user,
@@ -38,7 +38,7 @@ def spinnaker_callback(github_user, connection_string, log_query):
         ]
 
         response = llm_message_query(
-            messages, context, log_query, purpose=purpose
+            messages, context, log_query, purpose=purpose, region=region
         )
 
         none_on_exception(

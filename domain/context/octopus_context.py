@@ -46,6 +46,7 @@ def collect_llm_context(
     octopus_url,
     log_query,
     max_attribute_length=1000,
+    region=None,
 ):
     """
     We need to source context for the LLM from multiple locations. "Static" resources are defined using Terraform,
@@ -174,7 +175,7 @@ def collect_llm_context(
 
     context["cac_details"] = "\n".join(cac_details)
 
-    answer = llm_message_query(messages, context, log_query)
+    answer = llm_message_query(messages, context, log_query, region=region)
 
     if context["percent_trimmed"] != 0:
         answer += f"\n\nNOTE: The space context was trimmed by {context['percent_trimmed']}% to fit within the token limit. The answer may be based on incomplete information."

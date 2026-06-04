@@ -42,7 +42,7 @@ async def get_github_content(github_token, keywords, repo):
     )
 
 
-def how_to_callback(github_token, github_user, log_query):
+def how_to_callback(github_token, github_user, region, log_query):
     def how_to_callback_implementation(original_query, keywords):
         async def inner_function():
             debug_text = get_params_message(
@@ -67,7 +67,7 @@ def how_to_callback(github_token, github_user, log_query):
 
             context = {"input": original_query}
 
-            chat_response = [llm_message_query(messages, context, log_query)]
+            chat_response = [llm_message_query(messages, context, log_query, region=region)]
 
             chat_response.extend(debug_text)
 
