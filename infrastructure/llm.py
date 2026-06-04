@@ -44,11 +44,8 @@ US_REGION = "US"
 
 
 def get_endpoint_and_key(region=None):
-    if (
-        region is not None
-        and (region != ""
-        or region != EUROPE_REGION
-        or region != US_REGION)
+    if region is not None and (
+        region != "" or region != EUROPE_REGION or region != US_REGION
     ):
         raise ValueError(
             f"Invalid region specified: {region}. Must be either {EUROPE_REGION}, {US_REGION}, empty string, or None."
