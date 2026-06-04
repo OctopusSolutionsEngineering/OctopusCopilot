@@ -38,7 +38,6 @@ AZURE_PROJECT_SERVICE = "azure_project"
 AZURE_PROJECT_ANTHROPIC_SERVICE = "azure_project_anthropic"
 AZURE_GENERAL_SERVICE = "azure_general"
 AZURE_GENERAL_QUERY_SMALL_LLM = "azure_general_query_small"
-AZURE_ANTHROPIC_GENERAL_QUERY_SMALL_LLM = "azure_anthropic_general_query_small"
 EUROPE_REGION = "Europe"
 US_REGION = "US"
 
@@ -72,9 +71,6 @@ def build_llm(purpose, region=None):
     # Anthropic LLMs only offer global standard
     if purpose == AZURE_PROJECT_ANTHROPIC_SERVICE:
         return build_azure_anthropic_project_llm()
-
-    if purpose == AZURE_ANTHROPIC_GENERAL_QUERY_SMALL_LLM:
-        return build_azure_anthropic_general_small_query()
 
     return build_azure_general_llm(region)
 
