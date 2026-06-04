@@ -194,6 +194,16 @@ step "deploy-with-cli" {
                    },
                    {
                      "name": "AISERVICES_DEPLOYMENT_FUNCTIONS",
+                     "value": "#{Azure.Global.AIServices.Deployment.Functions}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_EUROPE_FUNCTIONS",
+                     "value": "#{Azure.Europe.AIServices.Deployment.Functions}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_US_FUNCTIONS",
                      "value": "#{Azure.US.AIServices.Deployment.Functions}",
                      "slotSetting": false
                    },
