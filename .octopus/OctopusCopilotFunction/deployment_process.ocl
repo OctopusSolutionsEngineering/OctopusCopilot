@@ -283,6 +283,16 @@ step "deploy-with-cli" {
                      "slotSetting": false
                    },
                    {
+                     "name": "PROJECT_GEN_US_SERVICE",
+                     "value": "#{Application.US.ProjectGen}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "PROJECT_GEN_EUROPE_SERVICE",
+                     "value": "#{Application.Europe.ProjectGen}",
+                     "slotSetting": false
+                   },
+                   {
                      "name": "AISERVICES_DEPLOYMENT_ANTHROPIC_PROJECT_GEN",
                      "value": "#{Azure.US.AIServices.Anthropic.Deployment.ProjectGen}",
                      "slotSetting": false
