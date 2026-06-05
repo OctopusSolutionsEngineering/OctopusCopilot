@@ -527,6 +527,8 @@ def get_octoterra_request_body(
         "includeDefaultChannel": True,
         # Ignore any errors with projects that have bad CaC settings
         "ignoreCacErrors": True,
+        # Exclude step templates
+        "excludeAllStepTemplates": True,
     }
 
     # The practical use of max_attribute_length is used to limit the length of a script step when converted to Terraform.
