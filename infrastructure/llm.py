@@ -47,8 +47,8 @@ def validate_region(region):
     if (
         region is not None
         and region != ""
-        and region != EUROPE_REGION
-        and region != US_REGION
+        and region.lower() != EUROPE_REGION.lower()
+        and region.lower() != US_REGION.lower()
     ):
         raise ValueError(
             f"Invalid region specified: {region}. Must be either {EUROPE_REGION}, {US_REGION}, empty string, or None."
@@ -59,9 +59,11 @@ def get_project_gen_deployment(region=None):
     """Get the project generation deployment name based on the region."""
     validate_region(region)
 
-    if region == EUROPE_REGION:
+    fixed_region = region.lower().strip()
+
+    if fixed_region == EUROPE_REGION.lower():
         return os.getenv("AISERVICES_DEPLOYMENT_EUROPE_PROJECT_GEN")
-    elif region == US_REGION:
+    elif fixed_region == US_REGION.lower():
         return os.getenv("AISERVICES_DEPLOYMENT_US_PROJECT_GEN")
     else:
         return os.getenv("AISERVICES_DEPLOYMENT_PROJECT_GEN")
@@ -71,9 +73,11 @@ def get_functions_deployment(region=None):
     """Get the function selection deployment name based on the region."""
     validate_region(region)
 
-    if region == EUROPE_REGION:
+    fixed_region = region.lower().strip()
+
+    if fixed_region == EUROPE_REGION.lower():
         return os.getenv("AISERVICES_DEPLOYMENT_EUROPE_FUNCTIONS")
-    elif region == US_REGION:
+    elif fixed_region == US_REGION.lower():
         return os.getenv("AISERVICES_DEPLOYMENT_US_FUNCTIONS")
     else:
         return os.getenv("AISERVICES_DEPLOYMENT_FUNCTIONS")
@@ -83,9 +87,11 @@ def get_deployment(region=None):
     """Get the general query deployment name based on the region."""
     validate_region(region)
 
-    if region == EUROPE_REGION:
+    fixed_region = region.lower().strip()
+
+    if fixed_region == EUROPE_REGION.lower():
         return os.getenv("AISERVICES_EUROPE_DEPLOYMENT")
-    elif region == US_REGION:
+    elif fixed_region == US_REGION.lower():
         return os.getenv("AISERVICES_US_DEPLOYMENT")
     else:
         return os.getenv("AISERVICES_DEPLOYMENT")
@@ -95,9 +101,11 @@ def get_small_deployment(region=None):
     """Get the small general query deployment name based on the region."""
     validate_region(region)
 
-    if region == EUROPE_REGION:
+    fixed_region = region.lower().strip()
+
+    if fixed_region == EUROPE_REGION.lower():
         return os.getenv("AISERVICES_DEPLOYMENT_EUROPE_GENERAL_QUERY_SMALL")
-    elif region == US_REGION:
+    elif fixed_region == US_REGION.lower():
         return os.getenv("AISERVICES_DEPLOYMENT_US_GENERAL_QUERY_SMALL")
     else:
         return os.getenv("AISERVICES_DEPLOYMENT_GENERAL_QUERY_SMALL")
@@ -106,12 +114,14 @@ def get_small_deployment(region=None):
 def get_endpoint_and_key(region=None):
     validate_region(region)
 
-    if region == EUROPE_REGION:
+    fixed_region = region.lower().strip()
+
+    if fixed_region == EUROPE_REGION.lower():
         return (
             os.environ["AISERVICES_EUROPE_ENDPOINT"],
             os.environ["AISERVICES_EUROPE_KEY"],
         )
-    elif region == US_REGION:
+    elif fixed_region == US_REGION.lower():
         return os.environ["AISERVICES_US_ENDPOINT"], os.environ["AISERVICES_US_KEY"]
     else:
         return os.environ["AISERVICES_ENDPOINT"], os.environ["AISERVICES_KEY"]
