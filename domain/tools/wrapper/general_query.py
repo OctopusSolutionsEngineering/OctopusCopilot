@@ -104,7 +104,7 @@ def answer_general_query_wrapper(query, callback, logging=None):
 
         Args:
         space: Space name
-        projects: project names
+        projects: project names. This is usually defined with a statement like `Current Project is "MyProject"`.
         runbooks: runbook names
         targets: target/machine names
         tenants: tenant names
