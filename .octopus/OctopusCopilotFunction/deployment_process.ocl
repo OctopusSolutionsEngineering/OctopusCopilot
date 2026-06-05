@@ -374,7 +374,7 @@ step "deploy-with-cli" {
                    },
                    {
                      "name": "ENHANCED_LOGGING_INSTANCES",
-                     "value": "#{Application.Configuration.EnhancedLogging}",
+                     "value": "#{Application.Configuration.EnhancedLogging | JsonEscape}",
                      "slotSetting": false
                    }
                 ]
