@@ -18,7 +18,14 @@ from infrastructure.octopus import (
 )
 
 
-def variable_query_callback(github_user, region, octopus_details, log_query):
+def variable_query_callback(
+    github_user,
+    region,
+    octopus_details,
+    log_query,
+    redirections,
+    redirections_apikey,
+):
     def variable_query_callback_implementation(
         original_query, messages, space, projects, variables
     ):
@@ -114,6 +121,8 @@ def variable_query_callback(github_user, region, octopus_details, log_query):
                 access_token,
                 url,
                 log_query,
+                redirections,
+                redirections_apikey,
                 # This value is the number of characters to include from the step. Additionally, any variables will be included in the response.
                 # This is a small number because we don't care about anything other than variable references.
                 100,

@@ -43,6 +43,8 @@ def variable_query_cli_callback(api_key, url, get_default_argument, logging):
             "",
             url,
             logging,
+            "",
+            "",
         )
 
         return chat_response

@@ -1,6 +1,10 @@
 import re
 
 
+def to_lower_case_strip_or_none(s):
+    return s.lower().strip() if s is not None else None
+
+
 def remove_empty_lines(s):
     return "\n".join([line for line in s.splitlines() if line.strip()])
 

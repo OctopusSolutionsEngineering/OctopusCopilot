@@ -56,6 +56,8 @@ def resource_specific_cli_callback(api_key, url, get_default_argument, logging):
             "",
             url,
             logging,
+            "",
+            "",
         )
 
     return resource_specific_callback_implementation

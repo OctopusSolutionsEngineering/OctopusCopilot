@@ -22,6 +22,7 @@ from domain.exceptions.openai_error import (
 from domain.performance.timing import timing_wrapper
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitize_logs import sanitize_message
+from domain.sanitizers.sanitize_strings import to_lower_case_strip_or_none
 from domain.tools.wrapper.function_call import FunctionCall
 from domain.validation.argument_validation import (
     ensure_string_not_empty,
@@ -59,7 +60,7 @@ def get_project_gen_deployment(region=None):
     """Get the project generation deployment name based on the region."""
     validate_region(region)
 
-    fixed_region = region.lower().strip()
+    fixed_region = to_lower_case_strip_or_none(region)
 
     if fixed_region == EUROPE_REGION.lower():
         return os.getenv("AISERVICES_DEPLOYMENT_EUROPE_PROJECT_GEN")
@@ -73,7 +74,7 @@ def get_functions_deployment(region=None):
     """Get the function selection deployment name based on the region."""
     validate_region(region)
 
-    fixed_region = region.lower().strip()
+    fixed_region = to_lower_case_strip_or_none(region)
 
     if fixed_region == EUROPE_REGION.lower():
         return os.getenv("AISERVICES_DEPLOYMENT_EUROPE_FUNCTIONS")
@@ -87,7 +88,7 @@ def get_deployment(region=None):
     """Get the general query deployment name based on the region."""
     validate_region(region)
 
-    fixed_region = region.lower().strip()
+    fixed_region = to_lower_case_strip_or_none(region)
 
     if fixed_region == EUROPE_REGION.lower():
         return os.getenv("AISERVICES_EUROPE_DEPLOYMENT")
@@ -101,7 +102,7 @@ def get_small_deployment(region=None):
     """Get the small general query deployment name based on the region."""
     validate_region(region)
 
-    fixed_region = region.lower().strip()
+    fixed_region = to_lower_case_strip_or_none(region)
 
     if fixed_region == EUROPE_REGION.lower():
         return os.getenv("AISERVICES_DEPLOYMENT_EUROPE_GENERAL_QUERY_SMALL")
@@ -114,7 +115,7 @@ def get_small_deployment(region=None):
 def get_endpoint_and_key(region=None):
     validate_region(region)
 
-    fixed_region = region.lower().strip()
+    fixed_region = to_lower_case_strip_or_none(region)
 
     if fixed_region == EUROPE_REGION.lower():
         return (

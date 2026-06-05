@@ -19,7 +19,7 @@ from infrastructure.octopus import (
 )
 
 
-def general_query_callback(github_user, region, octopus_details, log_query):
+def general_query_callback(github_user, region, octopus_details, log_query, redirections, redirections_apikey):
     def general_query_callback_implementation(original_query, body, messages):
         auth, url = octopus_details()
         api_key, access_token = get_auth(auth)
@@ -123,6 +123,8 @@ def general_query_callback(github_user, region, octopus_details, log_query):
                 access_token,
                 url,
                 log_query,
+                redirections,
+                redirections_apikey,
                 region=region,
             )
         ]

@@ -45,6 +45,8 @@ def collect_llm_context(
     access_token,
     octopus_url,
     log_query,
+    redirections,
+    redirections_apikey,
     max_attribute_length=1000,
     region=None,
 ):
@@ -124,6 +126,8 @@ def collect_llm_context(
         octopus_url,
         log_query,
         max_attribute_length,
+        redirections,
+        redirections_apikey,
     )
 
     minified_hcl = minify_strings(hcl)

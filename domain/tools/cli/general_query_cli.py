@@ -64,6 +64,8 @@ def general_query_cli_callback(api_key, url, get_default_argument, logging):
             "",
             url,
             logging,
+            "",
+            "",
         )
 
     return general_query_callback_implementation

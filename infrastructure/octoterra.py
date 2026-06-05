@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from urllib.parse import urlparse
 
 import aiohttp
 from retry import retry
@@ -50,12 +51,46 @@ from domain.sanitizers.sanitized_list import (
 )
 from domain.validation.argument_validation import ensure_string_not_empty
 from infrastructure.http_pool import http
+from infrastructure.octolint import redirections_enabled
 from infrastructure.octopus import handle_response, logging_wrapper
 
 logger = configure_logging(__name__)
 
 # Semaphore to limit the number of concurrent requests to octoterra
 sem = asyncio.Semaphore(10)
+
+
+def get_api(use_redirections):
+    if use_redirections:
+        return f"https://{os.environ.get('REDIRECTION_HOST')}/api/octoterra"
+    else:
+        return os.environ["APPLICATION_OCTOTERRA_URL"] + "/api/octoterra"
+
+
+def get_headers(
+    use_redirections,
+    api_key,
+    octopus_url,
+    access_token,
+    redirections,
+    redirections_apikey,
+):
+    headers = {
+        "X-Octopus-ApiKey": api_key,
+        "X-Octopus-Url": octopus_url,
+        "X-Octopus-AccessToken": access_token,
+    }
+
+    if use_redirections:
+        parsed_octoterra_url = urlparse(os.environ["APPLICATION_OCTOTERRA_URL"])
+        headers["X_REDIRECTION_REDIRECTIONS"] = redirections
+        headers["X_REDIRECTION_UPSTREAM_HOST"] = parsed_octoterra_url.hostname
+        headers["X_REDIRECTION_API_KEY"] = redirections_apikey
+        headers["X_REDIRECTION_SERVICE_API_KEY"] = os.environ.get(
+            "REDIRECTION_SERVICE_APIKEY", "Unknown"
+        )
+
+    return headers
 
 
 @retry(HTTPError, tries=3, delay=2)
@@ -67,6 +102,8 @@ async def get_octoterra_project_async(
     query,
     space_id,
     project_name,
+    redirections,
+    redirections_apikey,
 ):
     ensure_string_not_empty(
         space_id, "space_id must be a non-empty string (get_octoterra_project_async)."
@@ -93,12 +130,18 @@ async def get_octoterra_project_async(
         "lookupProjectDependencies": True,
     }
 
-    api = os.environ["APPLICATION_OCTOTERRA_URL"] + "/api/octoterra"
-    headers = {
-        "X-Octopus-ApiKey": api_key,
-        "X-Octopus-Url": octopus_url,
-        "X-Octopus-AccessToken": access_token,
-    }
+    redirections_are_enabled = redirections_enabled(redirections, redirections_apikey)
+
+    api = get_api(redirections_are_enabled)
+
+    headers = get_headers(
+        redirections_are_enabled,
+        api_key,
+        octopus_url,
+        access_token,
+        redirections,
+        redirections_apikey,
+    )
 
     async with sem:
         async with aiohttp.ClientSession(headers=headers) as session:
@@ -117,6 +160,8 @@ async def get_octoterra_space_async(
     api_key,
     access_token,
     octopus_url,
+    redirections,
+    redirections_apikey,
     query,
     space_id,
     project_names=None,
@@ -170,12 +215,18 @@ async def get_octoterra_space_async(
         max_attribute_length,
     )
 
-    api = os.environ["APPLICATION_OCTOTERRA_URL"] + "/api/octoterra"
-    headers = {
-        "X-Octopus-ApiKey": api_key,
-        "X-Octopus-Url": octopus_url,
-        "X-Octopus-AccessToken": access_token,
-    }
+    redirections_are_enabled = redirections_enabled(redirections, redirections_apikey)
+
+    api = get_api(redirections_are_enabled)
+
+    headers = get_headers(
+        redirections_are_enabled,
+        api_key,
+        octopus_url,
+        access_token,
+        redirections,
+        redirections_apikey,
+    )
 
     async with sem:
         async with aiohttp.ClientSession(headers=headers) as session:
@@ -214,6 +265,8 @@ def get_octoterra_space(
     octopus_url,
     log_query,
     max_attribute_length,
+    redirections,
+    redirections_apikey,
 ):
     """
     Returns the terraform representation of a space
@@ -256,17 +309,24 @@ def get_octoterra_space(
         max_attribute_length,
     )
 
-    headers = {
-        "X-Octopus-ApiKey": api_key,
-        "X-Octopus-Url": octopus_url,
-        "X-Octopus-AccessToken": access_token,
-    }
+    redirections_are_enabled = redirections_enabled(redirections, redirections_apikey)
+
+    api = get_api(redirections_are_enabled)
+
+    headers = get_headers(
+        redirections_are_enabled,
+        api_key,
+        octopus_url,
+        access_token,
+        redirections,
+        redirections_apikey,
+    )
 
     resp = timing_wrapper(
         lambda: handle_response(
             lambda: http.request(
                 "POST",
-                os.environ["APPLICATION_OCTOTERRA_URL"] + "/api/octoterra",
+                api,
                 body=json.dumps(body),
                 headers=headers,
             )

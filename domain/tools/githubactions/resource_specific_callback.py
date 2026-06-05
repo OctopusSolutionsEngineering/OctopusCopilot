@@ -20,7 +20,9 @@ from infrastructure.octopus import (
 )
 
 
-def resource_specific_callback(github_user, region, octopus_details, log_query):
+def resource_specific_callback(
+    github_user, region, octopus_details, log_query, redirections, redirections_apikey
+):
     def resource_specific_callback_implementation(
         original_query,
         messages,
@@ -163,6 +165,8 @@ def resource_specific_callback(github_user, region, octopus_details, log_query):
                 access_token,
                 url,
                 log_query,
+                redirections,
+                redirections_apikey,
                 region=region,
             )
         ]

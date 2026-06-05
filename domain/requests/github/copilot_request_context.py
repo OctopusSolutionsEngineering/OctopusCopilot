@@ -486,6 +486,8 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_region_from_headers(req),
                         lambda: get_api_key_and_url(req),
                         log_query,
+                        get_redirections(req),
+                        get_redirections_api_key(req),
                     ),
                     log_query,
                 )
@@ -498,6 +500,8 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_region_from_headers(req),
                         lambda: get_api_key_and_url(req),
                         log_query,
+                        get_redirections(req),
+                        get_redirections_api_key(req),
                     ),
                     log_query,
                 )
@@ -510,6 +514,8 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_region_from_headers(req),
                         lambda: get_api_key_and_url(req),
                         log_query,
+                        get_redirections(req),
+                        get_redirections_api_key(req),
                     ),
                     log_query,
                 )
@@ -522,6 +528,8 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_region_from_headers(req),
                         lambda: get_api_key_and_url(req),
                         log_query,
+                        get_redirections(req),
+                        get_redirections_api_key(req),
                     ),
                     log_query,
                 )
@@ -569,6 +577,8 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_region_from_headers(req),
                         lambda: get_api_key_and_url(req),
                         log_query,
+                        get_redirections(req),
+                        get_redirections_api_key(req),
                     ),
                     log_query,
                 )
@@ -581,6 +591,8 @@ def build_form_tools(query, req: func.HttpRequest):
                         get_region_from_headers(req),
                         lambda: get_api_key_and_url(req),
                         log_query,
+                        get_redirections(req),
+                        get_redirections_api_key(req),
                     ),
                     log_query,
                 )
@@ -1267,6 +1279,8 @@ def build_form_tools(query, req: func.HttpRequest):
                     get_region_from_headers(req),
                     lambda: get_api_key_and_url(req),
                     log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
                 ),
                 log_query,
             )
