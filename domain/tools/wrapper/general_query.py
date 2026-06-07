@@ -102,9 +102,13 @@ def answer_general_query_wrapper(query, callback, logging=None):
         * List the names of the variables defined in the project.
         * What does the step "migrate database" do in the project "MyProject"?
 
+        When the prompt includes a statement like `Current Project is "Azure logic App"`, YOU MUST pass the project name to the "projects" argument.
+        When the prompt includes a statement like `Current Space is "Documentation"`, YOU MUST pass the space name to the "space" argument.
+        When the prompt includes a statement like `Current Step is "Run a Script"`, YOU MUST pass the step name to the "steps" argument.
+
         Args:
         space: Space name
-        projects: project names. This is usually defined with a statement like `Current Project is "MyProject"`.
+        projects: project names
         runbooks: runbook names
         targets: target/machine names
         tenants: tenant names
