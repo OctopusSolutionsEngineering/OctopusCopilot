@@ -132,7 +132,14 @@ These are the variables used in the project "My Project":
 
 def answer_project_variables_wrapper(original_query, callback, logging=None):
     def answer_project_variables(space=None, projects=None, variables=None, **kwargs):
-        """Answers a question about the variables defined for a project. This does not provide details about tenants.
+        """Answers a question about the variables defined for a project.
+
+        You MUST NOT select this tool when the prompt asks about steps, tenants, channels, releases, runbooks, etc.
+        This tool is specifically for questions about variables in projects.
+        You will be penalized for selecting this function when the prompt asks about anything other than projects and variables.
+
+        When the prompt includes a statement like `Current Project is "Azure logic App"`, YOU MUST pass the project name to the "projects" argument.
+        When the prompt includes a statement like `Current Space is "Documentation"`, YOU MUST pass the space name to the "space" argument.
 
         Args:
         space: Space name
