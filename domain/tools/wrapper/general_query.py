@@ -106,6 +106,8 @@ def answer_general_query_wrapper(query, callback, logging=None):
         When the prompt includes a statement like `Current Space is "Documentation"`, YOU MUST pass the space name to the "space" argument.
         When the prompt includes a statement like `Current Step is "Run a Script"`, YOU MUST pass the step name to the "steps" argument.
 
+        Project names can have characters like square brackets `[]`; brackets `()`; plus, minus, and equals `+=-`; undercores `_`; and others.
+
         Args:
         space: Space name
         projects: project names
