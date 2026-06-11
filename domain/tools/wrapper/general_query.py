@@ -1,5 +1,3 @@
-from pydantic import BaseModel
-
 from domain.messages.general import build_hcl_prompt
 from domain.sanitizers.sanitized_list import (
     sanitize_projects,

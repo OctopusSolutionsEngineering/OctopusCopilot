@@ -145,7 +145,7 @@ def collect_llm_context(
         (len(minified_hcl) - len(context["hcl"])) / len(minified_hcl) * 100, 2
     )
 
-    # The HCL representation of the project is as if it was a database backed project. This allos us to include
+    # The HCL representation of the project is as if it was a database-backed project. This allows us to include
     # the details of all the steps. However, it is useful to know if the project was configured to use Config-as-Code.
     # We add these details manually.
     cac_details = []
@@ -171,6 +171,12 @@ def collect_llm_context(
         if uses_cac:
             cac_details.append(
                 f"Project '{project_name}' is configured to use Config-as-Code. This information takes precedence over the is_version_controlled property."
+            )
+            branch_details = project.get("PersistenceSettings", {}).get(
+                "DefaultBranch", "unknown"
+            )
+            cac_details.append(
+                f"The default Config-as-Code branch is {branch_details}."
             )
         else:
             cac_details.append(
