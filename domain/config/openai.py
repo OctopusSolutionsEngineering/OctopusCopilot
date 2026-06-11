@@ -1,8 +1,6 @@
 # This is the number of items you can place in the context of a question before the LLM starts to
 # generate incorrect responses.
-# Lists of simple resources usually started to fail around the 40 item mark.
-# Lists of complex resources, like deployments with release notes, started to fail around the 30 item mark.
-max_context = 20
+max_context = 50
 
 # Deployments contain a lot of information, and retrieving it all can be slow. We limit the deployment history to 10
 # to reduce the likelihood of a timeout.
