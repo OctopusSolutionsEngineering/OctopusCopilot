@@ -161,7 +161,9 @@ def collect_llm_context(
 
     # If all projects are considered, get them all
     if include_all_resources and "projects" in include_all_resources:
-        projects = get_projects(space_id, access_token if access_token else api_key, octopus_url)
+        projects = get_projects(
+            space_id, access_token if access_token else api_key, octopus_url
+        )
     else:
         for project_name in project_names:
             if not project_name or not project_name.strip():
