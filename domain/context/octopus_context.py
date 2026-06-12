@@ -1,7 +1,11 @@
 from domain.logging.app_logging import configure_logging
 from domain.transformers.minify_strings import minify_strings
 from domain.validation.argument_validation import ensure_string_starts_with
-from infrastructure.octopus import get_project
+from infrastructure.octopus import (
+    get_project,
+    get_octopus_project_names_base,
+    get_projects,
+)
 from infrastructure.octoterra import get_octoterra_space
 from infrastructure.llm import llm_message_query
 
@@ -153,24 +157,33 @@ def collect_llm_context(
     if isinstance(project_names, str):
         project_names = [project_names]
 
-    for project_name in project_names:
-        if not project_name or not project_name.strip():
-            continue
+    projects = []
 
-        project = get_project(
-            space_id,
-            project_name,
-            access_token if access_token else api_key,
-            octopus_url,
-        )
+    # If all projects are considered, get them all
+    if include_all_resources and "projects" in include_all_resources:
+        projects = get_projects(space_id, access_token if access_token else api_key, octopus_url)
+    else:
+        for project_name in project_names:
+            if not project_name or not project_name.strip():
+                continue
 
-        if not project:
-            continue
+            project = get_project(
+                space_id,
+                project_name,
+                access_token if access_token else api_key,
+                octopus_url,
+            )
 
+            if not project:
+                continue
+
+            projects.append(project)
+
+    for project in projects:
         uses_cac = project.get("IsVersionControlled", False)
         if uses_cac:
             cac_details.append(
-                f"Project '{project_name}' is configured to use Config-as-Code. This information takes precedence over the is_version_controlled property."
+                f"Project '{project.get('Name')}' is configured to use Config-as-Code. This information takes precedence over the is_version_controlled property."
             )
             branch_details = project.get("PersistenceSettings", {}).get(
                 "DefaultBranch", "unknown"
@@ -180,7 +193,7 @@ def collect_llm_context(
             )
         else:
             cac_details.append(
-                f"Project '{project_name}' is not configured to use Config-as-Code."
+                f"Project '{project.get('Name')}' is not configured to use Config-as-Code."
             )
 
     context["cac_details"] = "\n".join(cac_details)
