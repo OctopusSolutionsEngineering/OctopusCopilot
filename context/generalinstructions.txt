@@ -2932,6 +2932,11 @@ resource "octopusdeploy_external_feed_create_release_trigger" "projecttrigger_my
 
 * You will be penalized for defining the "use_guided_infrastructure" property on a resource "octopusdeploy_environment". This property is not valid for any environment and must not be included in any environment resource.
 
+## Ephemeral Environment Instructions
+
+* Ephemeral environments require a `octopusdeploy_channel` with `type` set to `EphemeralEnvironment` and `parent_environment_id` set to a parent environment.
+* A parent environment is created with a `octopusdeploy_parent_environment` resource.
+
 ## Octopus Project Channel Instructions
 
 * Channels defined as resource "octopusdeploy_channel" have the following required properties:
