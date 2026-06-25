@@ -126,6 +126,8 @@ async def get_octoterra_project_async(
         "excludeCaCProjectSettings": True,
         # Ignore any errors with projects that have bad CaC settings
         "ignoreCacErrors": True,
+        "ignoreServerError": True,
+        "ignoreUnauthorized": True,
         "projectName": project_name,
         "lookupProjectDependencies": True,
     }
@@ -527,6 +529,8 @@ def get_octoterra_request_body(
         "includeDefaultChannel": True,
         # Ignore any errors with projects that have bad CaC settings
         "ignoreCacErrors": True,
+        "ignoreServerError": True,
+        "ignoreUnauthorized": True,
         # Exclude step templates
         "excludeAllStepTemplates": True,
     }
