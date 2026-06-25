@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.12.0" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.14.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -274,14 +274,16 @@ data "octopusdeploy_projects" "channel_kubernetes_web_app_hotfix" {
   take         = 1
 }
 resource "octopusdeploy_channel" "channel_kubernetes_web_app_hotfix" {
-  count        = "${length(data.octopusdeploy_projects.channel_kubernetes_web_app_hotfix.projects) != 0 ? 0 : 1}"
-  lifecycle_id = "${length(data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_hotfix[0].id}"
-  name         = "Hotfix"
-  description  = ""
-  project_id   = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id : octopusdeploy_project.project_kubernetes_web_app[0].id}"
-  is_default   = false
-  tenant_tags  = []
-  depends_on   = [octopusdeploy_process_steps_order.process_step_order_kubernetes_web_app]
+  count                    = "${length(data.octopusdeploy_projects.channel_kubernetes_web_app_hotfix.projects) != 0 ? 0 : 1}"
+  lifecycle_id             = "${length(data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_hotfix[0].id}"
+  name                     = "Hotfix"
+  description              = ""
+  project_id               = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id : octopusdeploy_project.project_kubernetes_web_app[0].id}"
+  is_default               = false
+  custom_field_definitions = null
+  tenant_tags              = []
+  depends_on               = [octopusdeploy_process_steps_order.process_step_order_kubernetes_web_app]
+  type                     = "Lifecycle"
   lifecycle {
     prevent_destroy = true
   }
@@ -470,15 +472,15 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"1\"\n            memory: \"512Mi\"\n          requests:\n            cpu: \"0.5\"\n            memory: \"256Mi\"\n        livenessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
+        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
         "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
       }
 }
 

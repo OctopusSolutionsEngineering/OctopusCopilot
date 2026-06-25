@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.12.0" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.14.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -274,13 +274,15 @@ data "octopusdeploy_projects" "channel_llm_in_kubernetes_hotfix" {
   take         = 1
 }
 resource "octopusdeploy_channel" "channel_llm_in_kubernetes_hotfix" {
-  count        = "${length(data.octopusdeploy_projects.channel_llm_in_kubernetes_hotfix.projects) != 0 ? 0 : 1}"
-  lifecycle_id = "${length(data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_hotfix[0].id}"
-  name         = "Hotfix"
-  project_id   = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id : octopusdeploy_project.project_llm_in_kubernetes[0].id}"
-  is_default   = false
-  tenant_tags  = []
-  depends_on   = [octopusdeploy_process_steps_order.process_step_order_llm_in_kubernetes]
+  count                    = "${length(data.octopusdeploy_projects.channel_llm_in_kubernetes_hotfix.projects) != 0 ? 0 : 1}"
+  lifecycle_id             = "${length(data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_hotfix.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_hotfix[0].id}"
+  name                     = "Hotfix"
+  project_id               = "${length(data.octopusdeploy_projects.project_llm_in_kubernetes.projects) != 0 ? data.octopusdeploy_projects.project_llm_in_kubernetes.projects[0].id : octopusdeploy_project.project_llm_in_kubernetes[0].id}"
+  is_default               = false
+  custom_field_definitions = null
+  tenant_tags              = []
+  depends_on               = [octopusdeploy_process_steps_order.process_step_order_llm_in_kubernetes]
+  type                     = "Lifecycle"
   lifecycle {
     prevent_destroy = true
   }
@@ -363,9 +365,9 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_approve_pr
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -398,15 +400,15 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_deploy_a_k
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: v1\nkind: Service\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  selector:\n    app: \"#{Kubernetes.Deployment.Name}\"\n  ports:\n    - protocol: TCP\n      port: 8080\n      targetPort: 8080\n  type: ClusterIP\n---\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[ollamainference].PackageId}:#{Octopus.Action.Package[ollamainference].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"2\"\n            memory: \"2Gi\"\n          requests:\n            cpu: \"1\"\n            memory: \"1Gi\"\n        livenessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
         "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
         "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
       }
 }
 
@@ -430,12 +432,12 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_smoke_test
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptParameters" = "-URL \"http://#{Kubernetes.Deployment.Name}.#{Octopus.Environment.Name | ToLower}.svc.cluster.local:8080/v1/chat/completions\" -Body '{\"model\": \"gemma3:1b\", \"messages\": [{\"role\": \"user\",\"content\": \"What is the capital of France?\"}]}'"
         "Octopus.Action.Script.ScriptFileName" = "octopus/HttpTest.ps1"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "Octopus.Action.GitRepository.Source" = "External"
       }
 }
 
