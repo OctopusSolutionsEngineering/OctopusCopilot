@@ -202,7 +202,12 @@ def build_tools(tool_query):
         )
     ]
 
-    general_project_examples = ["context.tf", "everystep.tf", "projectsettings1.tf"]
+    general_project_examples = [
+        "context.tf",
+        "everystep.tf",
+        "projectsettings1.tf",
+        "ephemeral_environments.tf",
+    ]
 
     return FunctionDefinitions(
         [
