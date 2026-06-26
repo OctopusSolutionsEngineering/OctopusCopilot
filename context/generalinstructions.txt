@@ -2936,6 +2936,8 @@ resource "octopusdeploy_external_feed_create_release_trigger" "projecttrigger_my
 
 * Ephemeral environments require a `octopusdeploy_channel` with `type` set to `EphemeralEnvironment` and `parent_environment_id` set to a parent environment.
 * A parent environment is created with a `octopusdeploy_parent_environment` resource.
+* The `parent_environment_id` property on a `octopusdeploy_channel` resource of `type` `EphemeralEnvironment` must be set to the ID of a `octopusdeploy_parent_environment` resource.
+* You will be penalized for setting the `parent_environment_id` property on a `octopusdeploy_channel` resource of `type` `EphemeralEnvironment` to an empty string, null, or the ID of a `octopusdeploy_environment` resource.
 * The `custom_field_definitions` property on a `octopusdeploy_channel` resource of `type` `EphemeralEnvironment` can be accessed via variables of the format `Octopus.Release.CustomFields[<field_name>]`.
 
 ## Octopus Project Channel Instructions
