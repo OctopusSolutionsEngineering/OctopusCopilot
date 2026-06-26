@@ -2938,12 +2938,14 @@ resource "octopusdeploy_external_feed_create_release_trigger" "projecttrigger_my
 * A parent environment is created with a `octopusdeploy_parent_environment` resource.
 * The `parent_environment_id` property on a `octopusdeploy_channel` resource of `type` `EphemeralEnvironment` must be set to the ID of a `octopusdeploy_parent_environment` resource.
 * The `custom_field_definitions` property on a `octopusdeploy_channel` resource of `type` `EphemeralEnvironment` can be accessed via variables of the format `Octopus.Release.CustomFields[<field_name>]`.
+* If the variable `Octopus.Release.CustomFields` is used anywhere, you must have a matching `custom_field_definitions` property on the `octopusdeploy_channel` resource of `type` `EphemeralEnvironment`.
 * You must create at least one `octopusdeploy_parent_environment` resource when creating a `octopusdeploy_channel` resource of `type` `EphemeralEnvironment`.
 * You will be penalized for adding the `allow_dynamic_infrastructure` or `base_environment_id` properties to a `octopusdeploy_parent_environment` resource.
 * You must add the `space_id` property on a `octopusdeploy_parent_environment` resource.
 * You will be penalized for adding the `custom_field_definitions` property to a `octopusdeploy_channel` of `type` `Lifecycle`, or a channel with not `type` defined.
 * You must add the `ephemeral_environment_name_template` property on a `octopusdeploy_channel` resource of `type` `EphemeralEnvironment`.
 * You will be penalized for adding the `ephemeral_environment_name_template` property to a `octopusdeploy_channel` resource of `type` `Lifecycle`, or a channel with not `type` defined.
+* The objects defined in the `custom_field_definitions` property must only have `field_name` and `description` properties. You will be penalized for adding any other properties to the objects in the `custom_field_definitions` property.
 * You will be penalized for setting the `parent_environment_id` property on a `octopusdeploy_channel` resource of `type` `EphemeralEnvironment` to an empty string, null, or the ID of a `octopusdeploy_environment` resource.
 
 INCORRECT EXAMPLE — `parent_environment_id` set to a regular environment instead of a parent environment (WRONG), and `ephemeral_environment_name_template` missing (WRONG)`:
