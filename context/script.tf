@@ -168,12 +168,14 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
     minimum_environments_before_promotion = 0
   }
 
-  release_retention_policy {
+  release_retention_with_strategy {
+    strategy         = "Count"
     quantity_to_keep = 30
     unit             = "Days"
   }
 
-  tentacle_retention_policy {
+  tentacle_retention_with_strategy {
+    strategy         = "Count"
     quantity_to_keep = 30
     unit             = "Days"
   }
@@ -235,11 +237,11 @@ resource "octopusdeploy_process_step" "process_step_script_hello_world" {
   properties            = {
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "echo \"#{Project.Message}\""
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 

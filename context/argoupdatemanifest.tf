@@ -205,12 +205,14 @@ resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
     minimum_environments_before_promotion = 0
   }
 
-  release_retention_policy {
+  release_retention_with_strategy {
+    strategy         = "Count"
     quantity_to_keep = 30
     unit             = "Days"
   }
 
-  tentacle_retention_policy {
+  tentacle_retention_with_strategy {
+    strategy         = "Count"
     quantity_to_keep = 30
     unit             = "Days"
   }
@@ -349,9 +351,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_app
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
       }
 }
 
@@ -430,16 +432,16 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_upd
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.ArgoCD.CommitMessageDescription" = "Project: #{Octopus.Project.Slug}\nEnvironment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }\nTenant: #{Octopus.Deployment.Tenant.Slug}#{/if}"
         "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
-        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
-        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
-        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "Octopus.Action.ArgoCD.CommitMessageDescription" = "Project: #{Octopus.Project.Slug}\nEnvironment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }\nTenant: #{Octopus.Deployment.Tenant.Slug}#{/if}"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
+        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
+        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
+        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
       }
 }
 
@@ -468,8 +470,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_ma
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
-        "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
         "PackageId" = "com.octopus:octopub-frontend-sbom"
+        "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
                 })
       }
 }
@@ -493,9 +495,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_sen
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.Subject" = "Deployment failed!"
         "Octopus.Action.Email.To" = "admin@example.org"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 

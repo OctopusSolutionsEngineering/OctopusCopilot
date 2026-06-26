@@ -205,12 +205,14 @@ resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
     minimum_environments_before_promotion = 0
   }
 
-  release_retention_policy {
+  release_retention_with_strategy {
+    strategy         = "Count"
     quantity_to_keep = 30
     unit             = "Days"
   }
 
-  tentacle_retention_policy {
+  tentacle_retention_with_strategy {
+    strategy         = "Count"
     quantity_to_keep = 30
     unit             = "Days"
   }
@@ -344,9 +346,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_approve_prod
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -397,8 +399,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_oc
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -432,12 +434,12 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_update_argo_
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Octopus Deploy updated image versions"
         "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
         "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
         "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
         "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Octopus Deploy updated image versions"
       }
 }
 
