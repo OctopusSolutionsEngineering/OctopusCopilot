@@ -2937,8 +2937,27 @@ resource "octopusdeploy_external_feed_create_release_trigger" "projecttrigger_my
 * Ephemeral environments require a `octopusdeploy_channel` with `type` set to `EphemeralEnvironment` and `parent_environment_id` set to a parent environment.
 * A parent environment is created with a `octopusdeploy_parent_environment` resource.
 * The `parent_environment_id` property on a `octopusdeploy_channel` resource of `type` `EphemeralEnvironment` must be set to the ID of a `octopusdeploy_parent_environment` resource.
-* You will be penalized for setting the `parent_environment_id` property on a `octopusdeploy_channel` resource of `type` `EphemeralEnvironment` to an empty string, null, or the ID of a `octopusdeploy_environment` resource.
 * The `custom_field_definitions` property on a `octopusdeploy_channel` resource of `type` `EphemeralEnvironment` can be accessed via variables of the format `Octopus.Release.CustomFields[<field_name>]`.
+* You must create at least one `octopusdeploy_parent_environment` resource for every `octopusdeploy_channel` resource of `type` `EphemeralEnvironment`.
+* You will be penalized for setting the `parent_environment_id` property on a `octopusdeploy_channel` resource of `type` `EphemeralEnvironment` to an empty string, null, or the ID of a `octopusdeploy_environment` resource, for example:
+
+```
+data "octopusdeploy_environments" "environment_development" {
+  ids          = null
+  partial_name = "Development"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_environment" "environment_development" {
+  name                         = "Development"
+}
+resource "octopusdeploy_channel" "channel_k8s_web_app_with_ephemeral_environments_ephemeral_environment" {
+  name       = "Ephemeral Environment"
+  type       = "EphemeralEnvironment"
+  # This is incorrect because environment_development is not a parent environment, it is a regular environment. The parent_environment_id must reference a parent environment resource.
+  parent_environment_id = "${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"
+}
+```
 
 ## Octopus Project Channel Instructions
 
