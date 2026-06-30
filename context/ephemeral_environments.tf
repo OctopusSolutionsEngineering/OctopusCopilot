@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.14.0" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.17.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -59,14 +59,15 @@ data "octopusdeploy_channels" "channel_ephemeral_environments_default" {
   take         = 1
 }
 
-data "octopusdeploy_environments" "parent_environment_features" {
+data "octopusdeploy_parent_environments" "parent_environment_features" {
   ids          = null
-  partial_name = "Features"
+  partial_name = ""
+  name         = "Features"
   skip         = 0
   take         = 1
 }
 resource "octopusdeploy_parent_environment" "parent_environment_features" {
-  count                         = "${length(data.octopusdeploy_environments.parent_environment_features.environments) != 0 ? 0 : 1}"
+  count                         = "${length(data.octopusdeploy_parent_environments.parent_environment_features.parent_environments) != 0 ? 0 : 1}"
   space_id                      = "${trimspace(var.octopus_space_id)}"
   name                          = "Features"
   use_guided_failure            = false
@@ -86,7 +87,7 @@ data "octopusdeploy_projects" "channel_ephemeral_environments_features" {
 resource "octopusdeploy_channel" "channel_ephemeral_environments_features" {
   count                               = "${length(data.octopusdeploy_projects.channel_ephemeral_environments_features.projects) != 0 ? 0 : 1}"
   ephemeral_environment_name_template = "#{Octopus.Release.CustomFields[FeatureBranch]}"
-  parent_environment_id               = "${length(data.octopusdeploy_environments.parent_environment_features.environments) != 0 ? data.octopusdeploy_environments.parent_environment_features.environments[0].id : octopusdeploy_parent_environment.parent_environment_features[0].id}"
+  parent_environment_id               = "${length(data.octopusdeploy_parent_environments.parent_environment_features.parent_environments) != 0 ? data.octopusdeploy_parent_environments.parent_environment_features.parent_environments[0].id : octopusdeploy_parent_environment.parent_environment_features[0].id}"
   name                                = "Features"
   description                         = ""
   project_id                          = "${length(data.octopusdeploy_projects.project_ephemeral_environments.projects) != 0 ? data.octopusdeploy_projects.project_ephemeral_environments.projects[0].id : octopusdeploy_project.project_ephemeral_environments[0].id}"
@@ -151,11 +152,11 @@ resource "octopusdeploy_process_step" "process_step_ephemeral_environments_run_a
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptBody" = "echo \"A sample script\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "echo \"A sample script\""
       }
 }
 
