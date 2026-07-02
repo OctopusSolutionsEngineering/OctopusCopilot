@@ -2971,14 +2971,14 @@ resource "octopusdeploy_channel" "channel_k8s_web_app_with_ephemeral_environment
 CORRECT EXAMPLE — `parent_environment_id` set to a parent environment and `ephemeral_environment_name_template` defined (CORRECT)`:
 
 ```
-data "octopusdeploy_environments" "parent_environment_features" {
+data "octopusdeploy_parent_environments" "parent_environment_features" {
   ids          = null
   partial_name = "Features"
   skip         = 0
   take         = 1
 }
 resource "octopusdeploy_parent_environment" "parent_environment_features" {
-  count                         = "${length(data.octopusdeploy_environments.parent_environment_features.environments) != 0 ? 0 : 1}"
+  count                         = "${length(data.octopusdeploy_parent_environments.parent_environment_features.parent_environments) != 0 ? 0 : 1}"
   space_id                      = "${trimspace(var.octopus_space_id)}"
   name                          = "Features"
   use_guided_failure            = false
@@ -2991,7 +2991,7 @@ resource "octopusdeploy_parent_environment" "parent_environment_features" {
 resource "octopusdeploy_channel" "channel_k8s_web_app_with_ephemeral_environments_ephemeral_environment" {
   name       = "Ephemeral Environment"
   type       = "EphemeralEnvironment"
-  parent_environment_id = "${length(data.octopusdeploy_environments.parent_environment_features.environments) != 0 ? data.octopusdeploy_environments.parent_environment_features.environments[0].id : octopusdeploy_environment.parent_environment_features[0].id}"
+  parent_environment_id = "${length(data.octopusdeploy_parent_environments.parent_environment_features.parent_environments) != 0 ? data.octopusdeploy_parent_environments.parent_environment_features.parent_environments[0].id : octopusdeploy_parent_environment.parent_environment_features[0].id}"
   ephemeral_environment_name_template = "#{Octopus.Release.CustomFields[FeatureBranch]}"
   custom_field_definitions            = [{ description = "The name of the feature branch", field_name = "FeatureBranch" }]
 }
