@@ -50,3 +50,8 @@ You must include all the following runbook steps from the runbook_every_step_pro
 
 You must include all the following project deployment process step order resources from the "Example Octopus Runbook Terraform Configuration" once:
 * resource "octopusdeploy_process_steps_order" "process_step_order_every_step_project_example_runbook"
+
+
+## Additional Instructions
+
+* When the prompt defines the name of the runbook to be created, you must create that runbook INSTEAD OF the runbook called "Example Runbook".
