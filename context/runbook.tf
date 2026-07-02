@@ -87,11 +87,11 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_example_r
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "echo \"This is an example script step\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptBody" = "echo \"This is an example script step\""
       }
 }
 
@@ -138,6 +138,7 @@ variable "runbook_every_step_project_example_runbook_name" {
   default     = "Example Runbook"
 }
 resource "octopusdeploy_runbook" "runbook_every_step_project_example_runbook" {
+  count                       = "1"
   name                        = "${var.runbook_every_step_project_example_runbook_name}"
   project_id                  = "${data.octopusdeploy_projects.project_every_step_project.projects[0].id}"
   environment_scope           = "Specified"

@@ -389,8 +389,8 @@ resource "octopusdeploy_process_templated_step" "process_step_azure_function_oct
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -426,14 +426,14 @@ resource "octopusdeploy_process_step" "process_step_azure_function_deploy_the_fu
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Action[Validate setup].Output.AzureSetupValid == \"True\"}true#{/if}"
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.AutoRetry.MaximumCount" = "3"
+        "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = "az config set core.no_color=true\n\n$app = Get-AzFunctionApp -Name $OctopusParameters[\"Project.Azure.Function.Octopub.Products.Name\"] -ResourceGroupName $OctopusParameters[\"Project.Azure.ResourceGroup.Name\"] -ErrorAction SilentlyContinue\n\nif ($null -ne $app) {\n    az functionapp deployment source config-zip `\n  --resource-group $OctopusParameters[\"Project.Azure.ResourceGroup.Name\"] `\n  --name $OctopusParameters[\"Project.Azure.Function.Octopub.Products.Name\"]`\n  --src $OctopusParameters[\"Octopus.Action.Package[functionapp].PackageFilePath\"] 2\u003e\u00261\n} else {\n   Write-Host(\"The function app $($OctopusParameters[\"Project.Azure.Function.Octopub.Products.Name\"]) in the resource group $($OctopusParameters[\"Project.Azure.ResourceGroup.Name\"]) was not found. Please create the function app and try again.\")\n   exit 1\n}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.AutoRetry.MaximumCount" = "3"
-        "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
       }
 }
 
@@ -485,13 +485,13 @@ resource "octopusdeploy_process_templated_step" "process_step_azure_function_sca
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
-        "PackageId" = "com.octopus:products-microservice-sbom"
         "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
+        "PackageId" = "com.octopus:products-microservice-sbom"
                 })
       }
 }
