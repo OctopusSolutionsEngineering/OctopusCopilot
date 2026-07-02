@@ -539,7 +539,6 @@ Create a Kubernetes project called "{project_name}", and then:
             f"The deployment process should have at least four steps. It has: {number_of_steps}",
         )
 
-    # @unittest.skip("This test is known to be flaky")
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
     def test_create_argo_project(self):
         project_name = "My Argo Project"

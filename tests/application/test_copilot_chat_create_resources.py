@@ -169,7 +169,6 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         finally:
             cls.mssql = None
 
-    @unittest.skip("This test is known to be flaky")
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_feed(self):
         prompt = 'Create a Docker feed called "Docker Hub".'
@@ -256,7 +255,7 @@ class CopilotChatTestCreateResources(unittest.TestCase):
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
     @unittest.skip(
-        "This is known to fail occasionally because the LLM doesn't match the prompt to thecreate_general_resources_wrapper tool"
+        "This is known to fail occasionally because the LLM doesn't match the prompt to the create_general_resources_wrapper tool"
     )
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_worker(self):
