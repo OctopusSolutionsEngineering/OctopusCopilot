@@ -29,7 +29,6 @@ from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
-# @unittest.skip
 class CopilotChatTestCreateProjects(unittest.TestCase):
     """
     End-to-end tests that verify the complete query including:
@@ -540,7 +539,7 @@ Create a Kubernetes project called "{project_name}", and then:
             f"The deployment process should have at least four steps. It has: {number_of_steps}",
         )
 
-    @unittest.skip("This test is known to be flaky")
+    # @unittest.skip("This test is known to be flaky")
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
     def test_create_argo_project(self):
         project_name = "My Argo Project"
