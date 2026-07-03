@@ -222,6 +222,58 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_k8s_project_with_ephemeral_environments(self):
+        project_name = "My K8s Project with Ephemeral Environments"
+        prompt = f'''Create a Kubernetes project called "{project_name}", and then:
+* Use client side apply in the Kubernetes step (the mock Kubernetes cluster only supports client side apply).
+* Disable verification checks in the Kubernetes steps (the mock Kubernetes cluster doesn't support verification checks).
+* Enable retries on the K8s deployment step.
+* Add support for ephemeral environments, with the Parent Environment and Ephemeral Environment channel both called "Features"'''
+
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = build_confirmation_body(confirmation_id)
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        print(response_text)
+        self.assertTrue(
+            f"The following Octopus resources were created successfully:"
+            in response_text,
+        )
+
+        space_id, space_name = get_space_id_and_name_from_name(
+            "Simple", Octopus_Api_Key, Octopus_Url
+        )
+
+        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
+        self.assertTrue(
+            project["Name"] == project_name,
+        )
+
+        raw_deployment_process = get_raw_deployment_process(
+            space_name, project_name, Octopus_Api_Key, Octopus_Url
+        )
+        deployment_process = json.loads(raw_deployment_process)
+        number_of_steps = len(deployment_process["Steps"])
+        self.assertTrue(
+            number_of_steps > 2,
+            f"The deployment process should have at least two steps. It has: {number_of_steps}",
+        )
+
+        mandatory_step = "Approve Production Deployment"
+        self.assertTrue(
+            any(step["Name"] == mandatory_step for step in deployment_process["Steps"]),
+            f'The deployment process should have a step called "{mandatory_step}".',
+        )
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_vm_blue_green_project(self):
         project_name = "My VM Blue Green project"
         prompt = f'Create a VM Blue/Green project called "{project_name}".'
