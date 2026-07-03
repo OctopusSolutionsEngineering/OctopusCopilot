@@ -13,6 +13,7 @@ def create_script_project_wrapper(query, callback, logging):
         * Create Script project called "My Project" in the space "My Space"
         * Create Script project called "My Project"
         * Create Script project called "My Project". Create an AWS account called "AWS" with access key "AKIAIOSFODNN7EXAMPLE"
+        * Create Script project called "My Project with lifecycles" and then create a lifecycle called "My Lifecycle"
 
         Args:
         space_name: The optional name of the space
