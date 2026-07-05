@@ -247,7 +247,7 @@ def build_azure_general_llm(region=None):
 
     version = "2025-04-01-preview"
 
-    temperature = 0
+    temperature = os.environ.get("AISERVICES_DEPLOYMENT_TEMPERATURE") or 0
 
     use_responses_api = False
 
