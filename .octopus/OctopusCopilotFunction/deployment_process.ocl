@@ -390,7 +390,7 @@ step "deploy-with-cli" {
                 ]
                 EOL
                 
-                az functionapp config appsettings set -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --settings @appsettings.json 2>&1
+                az functionapp config appsettings set -g "#{Azure.ResourceGroup.Name}" -n "#{Azure.Function.Name}" --slot staging --settings @appsettings.json 2>&1
                 
                 cd OctopusCopilot
                 ../Azure.Functions.Cli.linux-x64/func azure functionapp publish "#{Azure.Function.Name}" --python --slot staging
