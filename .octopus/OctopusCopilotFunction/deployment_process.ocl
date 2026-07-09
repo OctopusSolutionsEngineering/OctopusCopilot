@@ -148,6 +148,11 @@ step "deploy-with-cli" {
                      "slotSetting": false
                    },
                    {
+                     "name": "AISERVICES_DEPLOYMENT_TEMPERATURE",
+                     "value": "#{Azure.Global.AIServices.Deployment.Temperature}",
+                     "slotSetting": false
+                   },
+                   {
                      "name": "AISERVICES_US_DEPLOYMENT",
                      "value": "#{Azure.US.AIServices.Deployment}",
                      "slotSetting": false
@@ -205,6 +210,11 @@ step "deploy-with-cli" {
                    {
                      "name": "AISERVICES_DEPLOYMENT_FUNCTIONS",
                      "value": "#{Azure.Global.AIServices.Deployment.Functions}",
+                     "slotSetting": false
+                   },
+                   {
+                     "name": "AISERVICES_DEPLOYMENT_FUNCTIONS_TEMPERATURE",
+                     "value": "#{Azure.Global.AIServices.Deployment.Functions.Temperature}",
                      "slotSetting": false
                    },
                    {

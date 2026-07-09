@@ -247,7 +247,7 @@ def build_azure_general_llm(region=None):
 
     version = "2025-04-01-preview"
 
-    temperature = 0
+    temperature = os.environ.get("AISERVICES_DEPLOYMENT_TEMPERATURE") or 0
 
     use_responses_api = False
 
@@ -311,7 +311,6 @@ def llm_tool_query(
     log_query=None,
     extra_prompt_messages=None,
     use_responses_api=False,
-    temperature=0,
     region=None,
 ):
     """
@@ -339,6 +338,7 @@ def llm_tool_query(
     deployment = get_functions_deployment(region)
     endpoint, api_key = get_endpoint_and_key(region)
     version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-10-21"
+    temperature = os.environ.get("AISERVICES_DEPLOYMENT_FUNCTIONS_TEMPERATURE") or 0
 
     llm = AzureChatOpenAI(
         temperature=temperature,
