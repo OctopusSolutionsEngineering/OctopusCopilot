@@ -13,7 +13,7 @@ def create_mock_argocd_gateway(
     url, access_token, space_id, environments, project_slug, app_details
 ):
     """
-    Creates a new Argo CD Gateway
+    Creates a new Argo CD Gateway. See https://github.com/OctopusDeploy/octopus-argocd-gateway/tree/mattc/mockedargo.
     :param url: The URL of the Argo CD server
     :param access_token: The Mock git access token
     :param space_id: The Argo CD space ID
