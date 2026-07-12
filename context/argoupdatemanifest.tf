@@ -281,7 +281,7 @@ resource "octopusdeploy_git_credential" "gitcredential_mock" {
   type                    = "UsernamePassword"
   username                = "blah"
   password                = "${var.gitcredential_mock_sensitive_value}"
-  repository_restrictions = { allowed_repositories = ["https://mockgit.octopus.com/*"], enabled = true }
+  repository_restrictions = { allowed_repositories = ["https://mockgit.octopusdemos.com/*"], enabled = true }
   lifecycle {
     ignore_changes  = [password]
     prevent_destroy = true
@@ -351,9 +351,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_app
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -432,16 +432,16 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_upd
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
-        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
-        "Octopus.Action.ArgoCD.CommitMessageDescription" = "Project: #{Octopus.Project.Slug}\nEnvironment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }\nTenant: #{Octopus.Deployment.Tenant.Slug}#{/if}"
-        "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
+        "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
+        "Octopus.Action.ArgoCD.CommitMessageDescription" = "Project: #{Octopus.Project.Slug}\nEnvironment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }\nTenant: #{Octopus.Deployment.Tenant.Slug}#{/if}"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
+        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
         "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
         "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
+        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
       }
 }
 
@@ -648,7 +648,7 @@ variable "project_argo_cd_octopub_manifest_description" {
   nullable    = false
   sensitive   = false
   description = "The description of the project exported from Argo CD Octopub Manifest"
-  default     = "Demonstrates the `Update Argo CD Application Manifests` step by updating the values tag for the deployment of a sample Helm chart.\n\nThis step assumes that the sample application from the Git repo https://mockgit.octopus.com/repo/argocd and directory `octopub-manifest` has been deployed to the Argo CD instance, for example:\n\nargocd repo add https://mockgit.octopus.com/repo/argocd --username \"anyusernameisaccepted\" --password \"anypasswordisaccepted\"\n\n argocd app create octopub-manifest \\\n        --repo https://mockgit.octopus.com/repo/argocd \\\n        --path octopub-manifest \\\n        --dest-server https://kubernetes.default.svc \\\n        --dest-namespace octopub"
+  default     = "Demonstrates the `Update Argo CD Application Manifests` step by updating the values tag for the deployment of a sample Helm chart.\n\nThis step assumes that the sample application from the Git repo https://mockgit.octopusdemos.com/repo/argocd and directory `octopub-manifest` has been deployed to the Argo CD instance, for example:\n\nargocd repo add https://mockgit.octopusdemos.com/repo/argocd --username \"anyusernameisaccepted\" --password \"anypasswordisaccepted\"\n\n argocd app create octopub-manifest \\\n        --repo https://mockgit.octopusdemos.com/repo/argocd \\\n        --path octopub-manifest \\\n        --dest-server https://kubernetes.default.svc \\\n        --dest-namespace octopub"
 }
 variable "project_argo_cd_octopub_manifest_tenanted" {
   type        = string
