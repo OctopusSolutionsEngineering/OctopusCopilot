@@ -65,6 +65,7 @@ from infrastructure.llm import (
 )
 from infrastructure.mockargo import create_mock_argocd_gateway
 from infrastructure.mockgit import save_mockgit_user
+from infrastructure.octopus import get_environments
 from infrastructure.space_builder import (
     create_terraform_plan,
     create_terraform_apply,
@@ -113,7 +114,7 @@ def create_template_project_confirm_callback_wrapper(
     redirections,
     redirector_api_key,
 ):
-    def create_template_project_confirm_callback(plan_id):
+    def create_template_project_confirm_callback(plan_id, configuration, space_id):
         async def inner_function():
             auth, url = octopus_details()
             api_key, access_token = get_auth(auth)
@@ -156,13 +157,14 @@ def create_template_project_confirm_callback_wrapper(
                 )
                 return build_error_response(url, e)
 
-            response_text = []
-            response_text.append(
-                "The following Octopus resources were created successfully:"
+            configure_argo_cd_manifest_project(
+                configuration, url, access_token, space_id
             )
-            response_text.append(
-                "```\n" + response["data"]["attributes"]["apply_text"] + "\n```"
-            )
+
+            response_text = [
+                "The following Octopus resources were created successfully:",
+                "```\n" + response["data"]["attributes"]["apply_text"] + "\n```",
+            ]
 
             response_text.extend(debug_text)
             return CopilotResponse("\n\n".join(response_text))
@@ -421,6 +423,8 @@ def create_template_project_callback(
 
             arguments = {
                 "plan_id": response["data"]["id"],
+                "configuration": configuration,
+                "space_id": space_id,
             }
 
             log_query(
@@ -428,17 +432,6 @@ def create_template_project_callback(
                 f"""
                 Plan ID: {arguments["plan_id"]}
                 Plan: {response["data"]["attributes"]["plan_text"]}""",
-            )
-
-            # Create the mock Argo CD instance
-            configure_mock_argocd_gateway(
-                configuration,
-                url,
-                access_token,
-                space_id,
-                environments,
-                project_slug,
-                applications,
             )
 
             # We can then save the Terraform plan as a callback
@@ -836,22 +829,51 @@ def configure_mock_git_server(configuration):
     return configuration
 
 
+def configure_argo_cd_manifest_project(configuration, url, access_token, space_id):
+    """
+    If the Terraform configuration contains the argo-cd-octopus-manifest slug,
+    configure the mock ArgoCD gateway with the appropriate applications.
+
+    :param configuration: The Terraform configuration string
+    :param url: The Octopus server URL
+    :param access_token: The access token for the Octopus server
+    :param space_id: The space ID
+    :param response: The response from the Terraform apply
+    """
+    if "argo-cd-octopus-manifest" in configuration:
+        # Link the argocd gateway to every environment
+        environments = get_environments(access_token, url, space_id)
+
+        # The paths, names, and namespaces are known values derived from the environment
+        applications = [
+            {
+                "name": f"octopub-manifest-parent-{env['Slug']}",
+                "destination_namespace": f"octopub-manifest-parent-{env['Slug']}",
+                "path": f"octopub-manifest/application/{env['Slug']}",
+                "octopus_environment": env["Slug"],
+            }
+            for env in environments
+        ]
+
+        # Create the mock Argo CD gateway
+        configure_mock_argocd_gateway(
+            configuration,
+            url,
+            access_token,
+            space_id,
+            environments,
+            "argo-cd-octopus-manifest",
+            applications,
+        )
+
+
 def configure_mock_argocd_gateway(
-    configuration, url, access_token, space_id, environments, project_slug
+    configuration, url, access_token, space_id, environments, project_slug, app_details
 ):
     if not access_token:
         return
 
     if "Octopus.ArgoCDUpdateManifests" in configuration:
-        app_details = [
-            {
-                "name": f"octopub-manifest-parent-{env}",
-                "destination_namespace": f"octopub-manifest-parent-{env}",
-                "path": f"octopub-manifest/application/{env}",
-                "octopus_environment": env,
-            }
-            for env in environments
-        ]
         create_mock_argocd_gateway(
             url,
             access_token,
