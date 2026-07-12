@@ -63,6 +63,7 @@ from infrastructure.llm import (
     EUROPE_REGION,
     validate_region,
 )
+from infrastructure.mockargo import create_mock_argocd_gateway
 from infrastructure.mockgit import save_mockgit_user
 from infrastructure.space_builder import (
     create_terraform_plan,
@@ -427,6 +428,17 @@ def create_template_project_callback(
                 f"""
                 Plan ID: {arguments["plan_id"]}
                 Plan: {response["data"]["attributes"]["plan_text"]}""",
+            )
+
+            # Create the mock Argo CD instance
+            configure_mock_argocd_gateway(
+                configuration,
+                url,
+                access_token,
+                space_id,
+                environments,
+                project_slug,
+                applications,
             )
 
             # We can then save the Terraform plan as a callback
@@ -822,3 +834,29 @@ def configure_mock_git_server(configuration):
         save_mockgit_user(mock_git_user, mock_git_pass)
         configuration = set_mock_git_server(configuration, mock_git_user, mock_git_pass)
     return configuration
+
+
+def configure_mock_argocd_gateway(
+    configuration, url, access_token, space_id, environments, project_slug
+):
+    if not access_token:
+        return
+
+    if "Octopus.ArgoCDUpdateManifests" in configuration:
+        app_details = [
+            {
+                "name": f"octopub-manifest-parent-{env}",
+                "destination_namespace": f"octopub-manifest-parent-{env}",
+                "path": f"octopub-manifest/application/{env}",
+                "octopus_environment": env,
+            }
+            for env in environments
+        ]
+        create_mock_argocd_gateway(
+            url,
+            access_token,
+            space_id,
+            environments,
+            project_slug,
+            app_details,
+        )
