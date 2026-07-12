@@ -432,16 +432,16 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_upd
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
+        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
         "Octopus.Action.ArgoCD.CommitMessageDescription" = "Project: #{Octopus.Project.Slug}\nEnvironment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }\nTenant: #{Octopus.Deployment.Tenant.Slug}#{/if}"
-        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
+        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
-        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
       }
 }
 
@@ -465,8 +465,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_ma
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({

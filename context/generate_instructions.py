@@ -391,6 +391,7 @@ def find_step_names(filename, label):
         print(
             f'You must include all the following step resources from the "Example Octopus {label} Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:'
         )
+        count = 0
         with open(filename, "r") as file:
             content = file.read()
 
@@ -448,6 +449,7 @@ def find_step_names(filename, label):
                                 parent_process_tf_name = process_id_match.group(1)
 
                             if parent_process_tf_name:
+                                count = count + 1
                                 all_step_details.append(
                                     (
                                         current_block_type,
@@ -492,6 +494,11 @@ def find_step_names(filename, label):
                         print(
                             f'* resource "{current_block_type}" "{current_block_tf_name}"'
                         )
+
+            if count != 0:
+                print(
+                    f"You MUST ensure that {count} steps are included unless the prompt explicitly states that steps should be removed or modified."
+                )
 
         print(
             f"\nYou will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified."
