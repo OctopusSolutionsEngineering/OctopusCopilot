@@ -377,8 +377,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_ma
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -422,7 +422,7 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_upd
   environments          = null
   excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
   git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "${length(data.octopusdeploy_git_credentials.gitcredential_mock.git_credentials) != 0 ? data.octopusdeploy_git_credentials.gitcredential_mock.git_credentials[0].id : octopusdeploy_git_credential.gitcredential_mock[0].id}", git_credential_type = "Library", github_connection_id = "", repository_uri = "https://mockgit.octopusdemos.com/repo/argocd" } }
-  notes                 = "The project is configured to use the sample application hosted at https://mockgit.octopusdemos.com/repo/argocd in the `octopub-manifest` directory.\n\nThe repo requires credentials, but accepts any username and password, for example:\n\ngit clone https://somerandomusername@mockgit.octopus.com/repo/argocd\n\nAdd this sample application with this command:\n\nargocd repo add https://mockgit.octopusdemos.com/repo/argocd --username \"somerandomusername\" --password \"whatever\"\n\nargocd app create octopub-manifest \\\n    --repo https://mockgit.octopusdemos.com/repo/argocd \\\n    --path octopub-manifest \\\n    --dest-server https://kubernetes.default.svc \\\n    --dest-namespace octopub"
+  notes                 = "The project is configured to use the sample application hosted at https://mockgit.octopusdemos.com/repo/argocd in the `octopub-manifest` directory.\n\nThe repo requires credentials, but accepts any username and password, for example:\n\ngit clone https://somerandomusername@mockgit.octopusdemos.com/repo/argocd\n\nAdd this sample application with this command:\n\nargocd repo add https://mockgit.octopusdemos.com/repo/argocd --username \"somerandomusername\" --password \"whatever\"\n\nargocd app create octopub-manifest \\\n    --repo https://mockgit.octopusdemos.com/repo/argocd \\\n    --path octopub-manifest \\\n    --dest-server https://kubernetes.default.svc \\\n    --dest-namespace octopub"
   package_requirement   = "LetOctopusDecide"
   slug                  = "update-argo-cd-application-manifests"
   start_trigger         = "StartAfterPrevious"
@@ -432,16 +432,16 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_upd
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
-        "Octopus.Action.ArgoCD.CommitMessageDescription" = "Project: #{Octopus.Project.Slug}\nEnvironment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }\nTenant: #{Octopus.Deployment.Tenant.Slug}#{/if}"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
-        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
-        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
         "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
+        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
         "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
+        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
+        "Octopus.Action.ArgoCD.CommitMessageDescription" = "Project: #{Octopus.Project.Slug}\nEnvironment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }\nTenant: #{Octopus.Deployment.Tenant.Slug}#{/if}"
       }
 }
 
@@ -495,9 +495,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_sen
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
+        "Octopus.Action.Email.Subject" = "Deployment failed!"
         "Octopus.Action.Email.To" = "admin@example.org"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Email.Subject" = "Deployment failed!"
       }
 }
 
