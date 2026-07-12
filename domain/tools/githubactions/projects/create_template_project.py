@@ -838,7 +838,6 @@ def configure_argo_cd_manifest_project(configuration, url, access_token, space_i
     :param url: The Octopus server URL
     :param access_token: The access token for the Octopus server
     :param space_id: The space ID
-    :param response: The response from the Terraform apply
     """
     if (
         access_token
