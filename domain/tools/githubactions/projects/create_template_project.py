@@ -841,7 +841,8 @@ def configure_argo_cd_manifest_project(configuration, url, access_token, space_i
     :param response: The response from the Terraform apply
     """
     if (
-        "argo-cd-octopus-manifest" in configuration
+        access_token
+        and "argo-cd-octopus-manifest" in configuration
         and "Octopus.ArgoCDUpdateManifests" in configuration
     ):
         # Link the argocd gateway to every environment
@@ -858,8 +859,7 @@ def configure_argo_cd_manifest_project(configuration, url, access_token, space_i
             for env in environments
         ]
 
-        # Create the mock Argo CD gateway
-        configure_mock_argocd_gateway(
+        create_mock_argocd_gateway(
             url,
             access_token,
             space_id,
@@ -867,19 +867,3 @@ def configure_argo_cd_manifest_project(configuration, url, access_token, space_i
             "argo-cd-octopus-manifest",
             applications,
         )
-
-
-def configure_mock_argocd_gateway(
-    url, access_token, space_id, environments, project_slug, app_details
-):
-    if not access_token:
-        return
-
-    create_mock_argocd_gateway(
-        url,
-        access_token,
-        space_id,
-        environments,
-        project_slug,
-        app_details,
-    )
