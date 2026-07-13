@@ -841,7 +841,7 @@ def configure_argo_cd_manifest_project(configuration, url, access_token, space_i
     """
     if (
         access_token
-        and "argo-cd-octopus-manifest" in configuration
+        and "argo-cd-octopub-manifest" in configuration
         and "Octopus.ArgoCDUpdateManifests" in configuration
     ):
         # Link the argocd gateway to every environment
