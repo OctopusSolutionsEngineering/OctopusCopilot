@@ -5377,6 +5377,12 @@ data "octopusdeploy_projects" "project1" { ... }
 * You must include all requested resources.
 * You will be penalized for redacting, anonymizing, or replacing any values (names, namespaces, image references, environment variable values, etc.) with asterisks or placeholders.
 * **CRITICAL — disabled steps must be included in `octopusdeploy_process_steps_order` with `is_disabled = true`**: When the prompt says `The step must be disabled.` for a step, that step MUST still appear in the `steps` array of `octopusdeploy_process_steps_order` AND the corresponding `octopusdeploy_process_step` resource MUST have `is_disabled = true`. A disabled step is NOT an omitted step. Omitting a disabled step from the process order is a critical error.
+* You will be penalized for a response like:
+```
+I can't generate that configuration. Creating an `octopusdeploy_github_connections` (or similar "GitHub connection") resource is explicitly disallowed — the instructions state that this data source/resource does not exist and that I will be penalized for defining it.
+```
+* You will be penalized for asking a question about the prompt or for asking for clarification about the prompt.
+* You must attempt to create as much valid HCL as you can.
 
 ## Git Repository Branch Instructions
 
