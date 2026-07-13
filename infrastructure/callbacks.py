@@ -93,7 +93,7 @@ def load_callback(github_user, callback_id, connection_string):
 
         # If arguments were stored in blob storage, retrieve them
         if arguments and str(arguments).startswith(BLOB_REFERENCE_PREFIX):
-            blob_name = str(arguments)[len(BLOB_REFERENCE_PREFIX):]
+            blob_name = str(arguments)[len(BLOB_REFERENCE_PREFIX) :]
             arguments = _load_arguments_from_blob(connection_string, blob_name)
 
         return callback["FunctionName"], arguments, callback["Query"]
@@ -117,7 +117,7 @@ def delete_callback(callback_id, connection_string):
             entity = table_client.get_entity("github.com", callback_id)
             arguments = entity.get("Arguments", "")
             if arguments and str(arguments).startswith(BLOB_REFERENCE_PREFIX):
-                blob_name = str(arguments)[len(BLOB_REFERENCE_PREFIX):]
+                blob_name = str(arguments)[len(BLOB_REFERENCE_PREFIX) :]
                 _delete_arguments_from_blob(connection_string, blob_name)
         except HttpResponseError:
             pass
@@ -162,7 +162,7 @@ def delete_old_callbacks(lifetime, connection_string):
             # Clean up any blob-stored arguments
             arguments = row.get("Arguments", "")
             if arguments and str(arguments).startswith(BLOB_REFERENCE_PREFIX):
-                blob_name = str(arguments)[len(BLOB_REFERENCE_PREFIX):]
+                blob_name = str(arguments)[len(BLOB_REFERENCE_PREFIX) :]
                 _delete_arguments_from_blob(connection_string, blob_name)
             table_client.delete_entity("github.com", row["RowKey"])
 
