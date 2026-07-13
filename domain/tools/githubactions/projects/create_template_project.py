@@ -839,21 +839,27 @@ def configure_argo_cd_manifest_project(configuration, url, access_token, space_i
     :param access_token: The access token for the Octopus server
     :param space_id: The space ID
     """
+
+    # The slug for the Octopub project
+    octopub_project_slug = "argo-cd-octopub-manifest"
+
     if (
         access_token
-        and "argo-cd-octopub-manifest" in configuration
+        and octopub_project_slug in configuration
         and "Octopus.ArgoCDUpdateManifests" in configuration
     ):
         # Link the argocd gateway to every environment
-        environments = get_environments(access_token, url, space_id)
+        environments = [
+            env["Slug"] for env in get_environments(access_token, url, space_id)
+        ]
 
         # The paths, names, and namespaces are known values derived from the environment
         applications = [
             {
-                "name": f"octopub-manifest-parent-{env['Slug']}",
-                "destination_namespace": f"octopub-manifest-parent-{env['Slug']}",
-                "path": f"octopub-manifest/application/{env['Slug']}",
-                "octopus_environment": env["Slug"],
+                "name": f"octopub-manifest-parent-{env}",
+                "destination_namespace": f"octopub-manifest-parent-{env}",
+                "path": f"octopub-manifest/application/{env}",
+                "octopus_environment": env,
             }
             for env in environments
         ]
@@ -863,6 +869,6 @@ def configure_argo_cd_manifest_project(configuration, url, access_token, space_i
             access_token,
             space_id,
             environments,
-            "argo-cd-octopus-manifest",
+            octopub_project_slug,
             applications,
         )

@@ -68,7 +68,7 @@ def create_mock_argocd_gateway(
 
         if resp.status != 200:
             # This is just a best effort and must not interfere with the main flow
-            logger.warn(f"Failed to create Argo CD gateway. Status: {resp.status}")
+            logger.warn(f"Failed to create Argo CD gateway. Status: {resp.status}. Response: {resp.data.decode('utf-8')}")
         else:
             logger.info(f"Successfully created Argo CD gateway for space {space_id}.")
 
