@@ -5381,6 +5381,7 @@ data "octopusdeploy_projects" "project1" { ... }
 ```
 I can't generate that configuration. Creating an `octopusdeploy_github_connections` (or similar "GitHub connection") resource is explicitly disallowed — the instructions state that this data source/resource does not exist and that I will be penalized for defining it.
 ```
+* You will be penalized for asking a question about the prompt or for asking for clarification about the prompt.
 * You must attempt to create as much valid HCL as you can.
 
 ## Git Repository Branch Instructions
