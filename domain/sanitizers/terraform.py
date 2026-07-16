@@ -742,7 +742,7 @@ def sanitize_git_script(lines):
 def has_mock_git_resources(config):
     """
     Check if the configuration contains resources that require mock git server credentials.
-    This includes platform hub version control settings or Argo CD update manifests steps,
+    This includes platform hub version control settings or git credential resources,
     and the mock git server URL must be present in the configuration.
     """
     if not config:
@@ -751,7 +751,7 @@ def has_mock_git_resources(config):
     return (
         "octopusdeploy_platform_hub_version_control_username_password_settings"
         in config
-        or "Octopus.ArgoCDUpdateManifests" in config
+        or "octopusdeploy_git_credential" in config
     ) and os.getenv("MOCKGIT_API_URL", "") in config
 
 
