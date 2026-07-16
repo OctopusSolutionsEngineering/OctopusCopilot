@@ -327,8 +327,8 @@ resource "octopusdeploy_process_step" "process_step_octopub_approve_production_d
       }
   execution_properties  = {
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -357,8 +357,8 @@ resource "octopusdeploy_process_templated_step" "process_step_octopub_octopus___
       }
   parameters            = {
         "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
-        "CheckTargets.Message" = "You must add a [Tentacle](https://octopus.com/docs/infrastructure/deployment-targets/tentacle) with the target tag `Tomcat.Web`."
         "CheckTargets.Octopus.Role" = "Tomcat.Web"
+        "CheckTargets.Message" = "You must add a [Tentacle](https://octopus.com/docs/infrastructure/deployment-targets/tentacle) with the target tag `Tomcat.Web`."
       }
 }
 
@@ -382,8 +382,8 @@ resource "octopusdeploy_process_templated_step" "process_step_octopub_octopus___
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -427,10 +427,10 @@ resource "octopusdeploy_process_step" "process_step_octopub_deploy_to_tomcat_via
   execution_properties  = {
         "Tomcat.Deploy.Password" = "${var.action_b5db3976a6058b846e2ef726ee139fcf26756a43d95da3aed7f951beadf6377a_sensitive_value}"
         "Tomcat.Deploy.User" = "admin"
+        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.TomcatDeployManager"
+        "Tomcat.Deploy.Controller" = "http://localhost:8080/manager"
         "Tomcat.Deploy.Enabled" = "True"
         "Tomcat.Deploy.Name" = "octopub"
-        "Tomcat.Deploy.Controller" = "http://localhost:8080/manager"
-        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.TomcatDeployManager"
       }
 }
 
@@ -454,13 +454,13 @@ resource "octopusdeploy_process_templated_step" "process_step_octopub_scan_for_v
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
-        "PackageId" = "com.octopus:octopub-frontend-sbom"
         "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
+        "PackageId" = "com.octopus:octopub-frontend-sbom"
                 })
       }
 }

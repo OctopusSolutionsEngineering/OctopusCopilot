@@ -270,6 +270,20 @@ resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
   }
 }
 
+data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+  ids          = null
+  partial_name = "Default Worker Pool"
+  skip         = 0
+  take         = 1
+}
+
+data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
+  ids          = null
+  partial_name = "Hosted Ubuntu"
+  skip         = 0
+  take         = 1
+}
+
 data "octopusdeploy_git_credentials" "gitcredential_mock" {
   name = "Mock"
   skip = 0
@@ -351,9 +365,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_app
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
       }
 }
 
@@ -432,16 +446,41 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_upd
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.ArgoCD.Sync.Mode" = "Disabled"
-        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
-        "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
-        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
-        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
         "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
         "Octopus.Action.ArgoCD.CommitMessageDescription" = "Project: #{Octopus.Project.Slug}\nEnvironment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }\nTenant: #{Octopus.Deployment.Tenant.Slug}#{/if}"
+        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
+        "Octopus.Action.ArgoCD.Sync.Mode" = "Disabled"
+        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
+        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+      }
+}
+
+resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_link_to_repo" {
+  count                 = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? 0 : 1}"
+  name                  = "Link to repo"
+  type                  = "Octopus.Script"
+  process_id            = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process.process_argo_cd_octopub_manifest[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = null
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "link-to-repo"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_id        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  depends_on            = [octopusdeploy_process_step.process_step_argo_cd_octopub_manifest_update_argo_cd_application_manifests]
+  properties            = {
+      }
+  execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptBody" = "Write-Highlight \"[Browse Git Repository](https://mockgit.octopusdemos.com/browse/$($OctopusParameters[\"Project.MockGit.Username\"])/argocd)\""
       }
 }
 
@@ -461,7 +500,7 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_ma
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   worker_pool_variable  = "Project.WorkerPool"
-  depends_on            = [octopusdeploy_process_step.process_step_argo_cd_octopub_manifest_update_argo_cd_application_manifests]
+  depends_on            = [octopusdeploy_process_step.process_step_argo_cd_octopub_manifest_link_to_repo]
   properties            = {
       }
   execution_properties  = {
@@ -476,9 +515,9 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_ma
       }
 }
 
-resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_send_an_email__deployment_failed_" {
+resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_send_an_email_on_deployment_failed" {
   count                 = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? 0 : 1}"
-  name                  = "Send an Email (Deployment Failed)"
+  name                  = "Send an Email on Deployment Failed"
   type                  = "Octopus.Email"
   process_id            = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process.process_argo_cd_octopub_manifest[0].id}"
   channels              = null
@@ -495,16 +534,16 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_sen
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
+        "Octopus.Action.Email.Subject" = "Deployment failed!"
         "Octopus.Action.Email.To" = "admin@example.org"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Email.Subject" = "Deployment failed!"
       }
 }
 
 resource "octopusdeploy_process_steps_order" "process_step_order_argo_cd_octopub_manifest" {
   count      = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? 0 : 1}"
   process_id = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process.process_argo_cd_octopub_manifest[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process_step.process_step_argo_cd_octopub_manifest_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_argo_cd_octopub_manifest_octopus___check_smtp_server_configured[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_argo_cd_octopub_manifest_octopus___check_for_argo_cd_instances[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process_step.process_step_argo_cd_octopub_manifest_update_argo_cd_application_manifests[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_argo_cd_octopub_manifest_scan_for_vulnerabilities[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process_step.process_step_argo_cd_octopub_manifest_send_an_email__deployment_failed_[0].id}"]
+  steps      = ["${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process_step.process_step_argo_cd_octopub_manifest_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_argo_cd_octopub_manifest_octopus___check_smtp_server_configured[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_argo_cd_octopub_manifest_octopus___check_for_argo_cd_instances[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process_step.process_step_argo_cd_octopub_manifest_update_argo_cd_application_manifests[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process_step.process_step_argo_cd_octopub_manifest_link_to_repo[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_argo_cd_octopub_manifest_scan_for_vulnerabilities[0].id}", "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? null : octopusdeploy_process_step.process_step_argo_cd_octopub_manifest_send_an_email_on_deployment_failed[0].id}"]
 }
 
 resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_octopus_api_key_1" {
@@ -594,26 +633,26 @@ resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_frontend_the
   depends_on = []
 }
 
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
-  ids          = null
-  partial_name = "Default Worker Pool"
-  skip         = 0
-  take         = 1
-}
-
-data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
-  ids          = null
-  partial_name = "Hosted Ubuntu"
-  skip         = 0
-  take         = 1
-}
-
 resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_workerpool_1" {
   count        = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) == 0 ?octopusdeploy_project.project_argo_cd_octopub_manifest[0].id : data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects[0].id}"
   value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
   name         = "Project.WorkerPool"
   type         = "WorkerPool"
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_mockgit_username_1" {
+  count        = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) == 0 ?octopusdeploy_project.project_argo_cd_octopub_manifest[0].id : data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects[0].id}"
+  value        = "Replace me"
+  name         = "Project.MockGit.Username"
+  type         = "String"
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
