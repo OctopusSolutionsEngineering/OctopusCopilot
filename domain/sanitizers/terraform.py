@@ -824,9 +824,7 @@ def set_mock_git_user_variable(config, username):
     resource_lines = []
 
     for line in splits:
-        if not in_resource and line.startswith(
-            'resource "octopusdeploy_variable"'
-        ):
+        if not in_resource and line.startswith('resource "octopusdeploy_variable"'):
             in_resource = True
             is_target_variable = False
             resource_lines = [line]
