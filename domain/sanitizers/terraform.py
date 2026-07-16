@@ -1,3 +1,4 @@
+import os
 import re
 
 from lxml.html.diff import fixup_ins_del_tags
@@ -738,6 +739,22 @@ def sanitize_git_script(lines):
     return resource_combined
 
 
+def has_mock_git_resources(config):
+    """
+    Check if the configuration contains resources that require mock git server credentials.
+    This includes platform hub version control settings or Argo CD update manifests steps,
+    and the mock git server URL must be present in the configuration.
+    """
+    if not config:
+        return False
+
+    return (
+        "octopusdeploy_platform_hub_version_control_username_password_settings"
+        in config
+        or "Octopus.ArgoCDUpdateManifests" in config
+    ) and os.getenv("MOCKGIT_API_URL", "") in config
+
+
 def set_mock_git_server(config, username, password):
     """
     We want to add credentials for the mock git server
@@ -747,10 +764,7 @@ def set_mock_git_server(config, username, password):
         return ""
 
     # A quick out if there were no platform hub version control settings
-    if (
-        "octopusdeploy_platform_hub_version_control_username_password_settings"
-        not in config
-    ):
+    if not has_mock_git_resources(config):
         return config
 
     def replace_username(line):

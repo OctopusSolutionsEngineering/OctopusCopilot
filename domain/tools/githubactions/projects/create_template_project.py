@@ -53,6 +53,7 @@ from domain.sanitizers.terraform import (
     fix_unescaped_variables,
     fix_yaml_source,
     set_mock_git_user_variable,
+    has_mock_git_resources,
 )
 from domain.tools.debug import get_params_message
 from domain.url.hostname import get_hostname_from_url
@@ -819,11 +820,7 @@ def configure_mock_git_server(configuration):
     If we are configuring a mock git server, we need to save a user to the mock git service
     and update the Terraform configuration with the random credentials.
     """
-    if (
-        "octopusdeploy_platform_hub_version_control_username_password_settings"
-        in configuration
-        or "Octopus.ArgoCDUpdateManifests" in configuration
-    ) and os.getenv("MOCKGIT_API_URL", "") in configuration:
+    if has_mock_git_resources(configuration):
         mock_git_user, mock_git_pass = generate_mock_git_user()
         save_mockgit_user(mock_git_user, mock_git_pass)
         configuration = set_mock_git_server(configuration, mock_git_user, mock_git_pass)
