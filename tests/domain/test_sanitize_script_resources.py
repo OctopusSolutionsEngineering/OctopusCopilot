@@ -1258,7 +1258,16 @@ resource "octopusdeploy_git_credential" "gitcredential_mock" {
   password = "old_password"
 }"""
 
-        self.assertEqual(set_mock_git_credential(config, "newuser", "newpass"), config)
+        fixed_config = """resource "octopusdeploy_git_credential" "gitcredential_mock" {
+  count    = 1
+  name     = "Mock"
+  username                = "newuser"
+  password                = "newpass"
+}"""
+
+        self.assertEqual(
+            set_mock_git_credential(config, "newuser", "newpass"), fixed_config
+        )
 
     def test_set_mock_git_credential_no_git_credential(self):
         config = """resource "octopusdeploy_process_step" "update_manifests" {
