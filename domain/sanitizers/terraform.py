@@ -829,9 +829,6 @@ def set_mock_git_credential(config, username, password):
     if not config:
         return ""
 
-    if "Octopus.ArgoCDUpdateManifests" not in config:
-        return config
-
     if 'resource "octopusdeploy_git_credential"' not in config:
         return config
 
