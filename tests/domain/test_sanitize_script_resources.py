@@ -1283,4 +1283,3 @@ resource "octopusdeploy_git_credential" "gitcredential_mock" {
    }"""
 
         self.assertEqual(set_mock_git_credential(config, "newuser", "newpass"), config)
-
