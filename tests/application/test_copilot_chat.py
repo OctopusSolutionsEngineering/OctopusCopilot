@@ -4,6 +4,7 @@ import unittest
 from datetime import datetime
 
 import azure.functions as func
+import pytest
 from openai import RateLimitError
 from requests.exceptions import HTTPError
 from retry import retry
@@ -13,7 +14,6 @@ from testcontainers.core.waiting_utils import wait_for_logs
 from domain.transformers.clean_response import strip_before_first_curly_bracket
 from domain.transformers.sse_transformers import (
     convert_from_sse_response,
-    get_confirmation_id,
 )
 from domain.url.session import create_session_blob
 from function_app import copilot_handler_internal
@@ -23,11 +23,10 @@ from tests.infrastructure.create_and_deploy_release import (
     wait_for_task,
 )
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
-from tests.infrastructure.publish_runbook import publish_runbook
-from tests.infrastructure.test_cancel import cancel_task
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
+@pytest.mark.split_group("group7")
 class CopilotChatTest(unittest.TestCase):
     """
     End-to-end tests that verify the complete query including:

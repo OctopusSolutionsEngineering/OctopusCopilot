@@ -1,10 +1,9 @@
-import glob
 import json
 import os
 import unittest
 
 import Levenshtein
-import azure.functions as func
+import pytest
 from openai import RateLimitError
 from retry import retry
 from testcontainers.core.container import DockerContainer
@@ -18,12 +17,9 @@ from function_app import copilot_handler_internal
 from infrastructure.octopus import (
     get_space_id_and_name_from_name,
     get_project,
-    get_runbook_fuzzy,
     get_raw_deployment_process,
-    get_tenants,
     sync_community_step_templates,
 )
-from infrastructure.terraform_context import save_terraform_context
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.application.test_copilot_chat_create_projects import (
     populate_blob_storage,
@@ -35,6 +31,7 @@ from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
+@pytest.mark.split_group("group1")
 class CopilotChatTestCreateProjects(unittest.TestCase):
     """
     End-to-end tests that verify the complete query including:

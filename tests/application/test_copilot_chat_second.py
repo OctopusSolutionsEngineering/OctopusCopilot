@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime
 
 import azure.functions as func
+import pytest
 from openai import RateLimitError
 from requests.exceptions import HTTPError
 from retry import retry
@@ -38,6 +39,7 @@ from tests.infrastructure.publish_runbook import publish_runbook
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
+@pytest.mark.split_group("group5")
 class CopilotChatTestTwo(unittest.TestCase):
     """
     End-to-end tests that verify the complete query including:

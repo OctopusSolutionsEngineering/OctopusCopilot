@@ -1,9 +1,9 @@
 import json
 import os
-import time
 import unittest
 from datetime import datetime
 
+import pytest
 from openai import RateLimitError
 from requests.exceptions import HTTPError
 from retry import retry
@@ -25,6 +25,7 @@ from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
 
+@pytest.mark.split_group("group4")
 class CopilotChatNoDefaultsTest(unittest.TestCase):
     """
     End-to-end tests that verify the complete query workflow, but without setting any default values.
