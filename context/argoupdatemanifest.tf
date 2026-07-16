@@ -365,9 +365,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_app
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
       }
 }
 
@@ -446,16 +446,16 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_upd
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
-        "Octopus.Action.ArgoCD.CommitMessageDescription" = "Project: #{Octopus.Project.Slug}\nEnvironment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }\nTenant: #{Octopus.Deployment.Tenant.Slug}#{/if}"
         "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
-        "Octopus.Action.ArgoCD.Sync.Mode" = "Disabled"
-        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
         "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
-        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.ArgoCD.CommitMessageDescription" = "Project: #{Octopus.Project.Slug}\nEnvironment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }\nTenant: #{Octopus.Deployment.Tenant.Slug}#{/if}"
+        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
+        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
+        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.ArgoCD.Sync.Mode" = "Disabled"
       }
 }
 
@@ -504,13 +504,13 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_ma
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
-        "PackageId" = "com.octopus:octopub-frontend-sbom"
         "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
+        "PackageId" = "com.octopus:octopub-frontend-sbom"
                 })
       }
 }
@@ -650,7 +650,7 @@ resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_workerpool_1
 resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_mockgit_username_1" {
   count        = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) != 0 ? 0 : 1}"
   owner_id     = "${length(data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects) == 0 ?octopusdeploy_project.project_argo_cd_octopub_manifest[0].id : data.octopusdeploy_projects.project_argo_cd_octopub_manifest.projects[0].id}"
-  value        = "Replace me"
+  value        = "ReplaceMe"
   name         = "Project.MockGit.Username"
   type         = "String"
   is_sensitive = false
