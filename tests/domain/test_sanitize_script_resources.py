@@ -1,6 +1,10 @@
 import unittest
 
-from domain.sanitizers.terraform import fix_script_source, set_mock_git_server, set_mock_git_user_variable
+from domain.sanitizers.terraform import (
+    fix_script_source,
+    set_mock_git_server,
+    set_mock_git_user_variable,
+)
 
 
 class SanitizeScriptResourcesTest(unittest.TestCase):
@@ -1198,9 +1202,7 @@ resource "octopusdeploy_variable" "my_project_other_var" {
   is_sensitive = false
 }"""
 
-        self.assertEqual(
-            set_mock_git_user_variable(config, "mockuser"), fixed_config
-        )
+        self.assertEqual(set_mock_git_user_variable(config, "mockuser"), fixed_config)
 
     def test_set_mock_git_user_variable_empty_config(self):
         self.assertEqual(set_mock_git_user_variable("", "testuser"), "")

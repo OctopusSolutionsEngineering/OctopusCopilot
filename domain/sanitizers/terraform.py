@@ -860,4 +860,3 @@ def set_mock_git_user_variable(config, username):
         return config
 
     return "\n".join(output)
-
