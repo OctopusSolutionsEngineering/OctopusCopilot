@@ -52,6 +52,7 @@ from domain.sanitizers.terraform import (
     fix_use_guided_infrastructure,
     fix_unescaped_variables,
     fix_yaml_source,
+    set_mock_git_user_variable,
 )
 from domain.tools.debug import get_params_message
 from domain.url.hostname import get_hostname_from_url
@@ -826,6 +827,7 @@ def configure_mock_git_server(configuration):
         mock_git_user, mock_git_pass = generate_mock_git_user()
         save_mockgit_user(mock_git_user, mock_git_pass)
         configuration = set_mock_git_server(configuration, mock_git_user, mock_git_pass)
+        configuration = set_mock_git_user_variable(configuration, mock_git_user)
     return configuration
 
 

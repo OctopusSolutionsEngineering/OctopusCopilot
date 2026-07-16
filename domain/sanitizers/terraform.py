@@ -801,3 +801,63 @@ def set_mock_git_server(config, username, password):
         return config
 
     return "\n".join(output)
+
+
+def set_mock_git_user_variable(config, username):
+    """
+    Finds a resource of type octopusdeploy_variable with the name
+    "Project.MockGit.Username" and sets the value to the mock git server username.
+    """
+
+    if not config:
+        return ""
+
+    if "Project.MockGit.Username" not in config:
+        return config
+
+    splits = config.splitlines()
+
+    output = []
+
+    in_resource = False
+    is_target_variable = False
+    resource_lines = []
+
+    for line in splits:
+        if not in_resource and line.startswith(
+            'resource "octopusdeploy_variable"'
+        ):
+            in_resource = True
+            is_target_variable = False
+            resource_lines = [line]
+        elif in_resource:
+            resource_lines.append(line)
+
+            if '"Project.MockGit.Username"' in line and "name" in line:
+                is_target_variable = True
+
+            if line == "}":
+                in_resource = False
+
+                if is_target_variable:
+                    resource_lines = list(
+                        map(
+                            lambda resource_line: (
+                                f'  value        = "{username}"'
+                                if resource_line.strip().startswith("value")
+                                else resource_line
+                            ),
+                            resource_lines,
+                        )
+                    )
+
+                output.extend(resource_lines)
+        else:
+            output.append(line)
+
+    # Our assumptions about the indents of brackets failed, so do no processing
+    if in_resource:
+        return config
+
+    return "\n".join(output)
+

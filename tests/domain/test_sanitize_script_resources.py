@@ -1,6 +1,6 @@
 import unittest
 
-from domain.sanitizers.terraform import fix_script_source, set_mock_git_server
+from domain.sanitizers.terraform import fix_script_source, set_mock_git_server, set_mock_git_user_variable
 
 
 class SanitizeScriptResourcesTest(unittest.TestCase):
@@ -1111,3 +1111,110 @@ resource "octopusdeploy_project_versioning_strategy" "project_my_argo_project" {
 }"""
 
         self.assertEqual(fix_script_source(config), config)
+
+    def test_set_mock_git_user_variable(self):
+        config = """resource "octopusdeploy_variable" "my_project_mockgit_username" {
+  count        = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
+  owner_id     = "${octopusdeploy_project.project_my_project[0].id}"
+  value        = "placeholder"
+  name         = "Project.MockGit.Username"
+  type         = "String"
+  is_sensitive = false
+}"""
+
+        fixed_config = """resource "octopusdeploy_variable" "my_project_mockgit_username" {
+  count        = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
+  owner_id     = "${octopusdeploy_project.project_my_project[0].id}"
+  value        = "testuser123"
+  name         = "Project.MockGit.Username"
+  type         = "String"
+  is_sensitive = false
+}"""
+
+        self.assertEqual(
+            set_mock_git_user_variable(config, "testuser123"), fixed_config
+        )
+
+    def test_set_mock_git_user_variable_no_match(self):
+        config = """resource "octopusdeploy_variable" "my_project_api_key" {
+  count        = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
+  owner_id     = "${octopusdeploy_project.project_my_project[0].id}"
+  value        = "placeholder"
+  name         = "Project.Api.Key"
+  type         = "String"
+  is_sensitive = false
+}"""
+
+        self.assertEqual(set_mock_git_user_variable(config, "testuser123"), config)
+
+    def test_set_mock_git_user_variable_multiple_variables(self):
+        config = """resource "octopusdeploy_variable" "my_project_api_key" {
+  count        = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
+  owner_id     = "${octopusdeploy_project.project_my_project[0].id}"
+  value        = "someapikey"
+  name         = "Project.Api.Key"
+  type         = "String"
+  is_sensitive = false
+}
+resource "octopusdeploy_variable" "my_project_mockgit_username" {
+  count        = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
+  owner_id     = "${octopusdeploy_project.project_my_project[0].id}"
+  value        = "placeholder"
+  name         = "Project.MockGit.Username"
+  type         = "String"
+  is_sensitive = false
+}
+resource "octopusdeploy_variable" "my_project_other_var" {
+  count        = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
+  owner_id     = "${octopusdeploy_project.project_my_project[0].id}"
+  value        = "othervalue"
+  name         = "Project.Other.Variable"
+  type         = "String"
+  is_sensitive = false
+}"""
+
+        fixed_config = """resource "octopusdeploy_variable" "my_project_api_key" {
+  count        = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
+  owner_id     = "${octopusdeploy_project.project_my_project[0].id}"
+  value        = "someapikey"
+  name         = "Project.Api.Key"
+  type         = "String"
+  is_sensitive = false
+}
+resource "octopusdeploy_variable" "my_project_mockgit_username" {
+  count        = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
+  owner_id     = "${octopusdeploy_project.project_my_project[0].id}"
+  value        = "mockuser"
+  name         = "Project.MockGit.Username"
+  type         = "String"
+  is_sensitive = false
+}
+resource "octopusdeploy_variable" "my_project_other_var" {
+  count        = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
+  owner_id     = "${octopusdeploy_project.project_my_project[0].id}"
+  value        = "othervalue"
+  name         = "Project.Other.Variable"
+  type         = "String"
+  is_sensitive = false
+}"""
+
+        self.assertEqual(
+            set_mock_git_user_variable(config, "mockuser"), fixed_config
+        )
+
+    def test_set_mock_git_user_variable_empty_config(self):
+        self.assertEqual(set_mock_git_user_variable("", "testuser"), "")
+
+    def test_set_mock_git_user_variable_none_config(self):
+        self.assertEqual(set_mock_git_user_variable(None, "testuser"), "")
+
+    def test_set_mock_git_user_variable_bad_indents(self):
+        # Note the space before the closing brace - bracket assumptions fail
+        config = """resource "octopusdeploy_variable" "my_project_mockgit_username" {
+  value        = "placeholder"
+  name         = "Project.MockGit.Username"
+  type         = "String"
+   }"""
+
+        self.assertEqual(set_mock_git_user_variable(config, "testuser"), config)
+
