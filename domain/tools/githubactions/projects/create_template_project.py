@@ -821,8 +821,8 @@ def configure_mock_git_server(configuration):
     if (
         "octopusdeploy_platform_hub_version_control_username_password_settings"
         in configuration
-        and os.getenv("MOCKGIT_API_URL", "") in configuration
-    ):
+        or "Octopus.ArgoCDUpdateManifests" in configuration
+    ) and os.getenv("MOCKGIT_API_URL", "") in configuration:
         mock_git_user, mock_git_pass = generate_mock_git_user()
         save_mockgit_user(mock_git_user, mock_git_pass)
         configuration = set_mock_git_server(configuration, mock_git_user, mock_git_pass)
