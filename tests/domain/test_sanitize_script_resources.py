@@ -1217,4 +1217,3 @@ resource "octopusdeploy_variable" "my_project_other_var" {
    }"""
 
         self.assertEqual(set_mock_git_user_variable(config, "testuser"), config)
-
