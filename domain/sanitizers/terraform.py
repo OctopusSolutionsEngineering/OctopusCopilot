@@ -764,7 +764,10 @@ def set_mock_git_server(config, username, password):
         return ""
 
     # A quick out if there were no platform hub version control settings
-    if not has_mock_git_resources(config):
+    if (
+        "octopusdeploy_platform_hub_version_control_username_password_settings"
+        not in config
+    ):
         return config
 
     def replace_username(line):
