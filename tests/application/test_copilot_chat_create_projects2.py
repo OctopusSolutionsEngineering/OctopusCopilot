@@ -25,6 +25,12 @@ from infrastructure.octopus import (
 )
 from infrastructure.terraform_context import save_terraform_context
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
+from tests.application.test_copilot_chat_create_projects import (
+    populate_blob_storage,
+    build_confirmation_body,
+    build_request,
+    build_confirmation_request,
+)
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
@@ -174,10 +180,10 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         finally:
             cls.mssql = None
 
-    @retry((AssertionError, RateLimitError), tries=2, delay=2)
-    def test_create_tomcat_project(self):
-        project_name = "My Tomcat Project"
-        prompt = f'Create a Tomcat project called "{project_name}".'
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_k8s_project(self):
+        project_name = "My K8s Project"
+        prompt = f'Create a Kubernetes project called "{project_name}".'
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
@@ -201,7 +207,9 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
 
         project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
-        self.assertEqual(project["Name"], project_name)
+        self.assertTrue(
+            project["Name"] == project_name,
+        )
 
         raw_deployment_process = get_raw_deployment_process(
             space_name, project_name, Octopus_Api_Key, Octopus_Url
@@ -213,169 +221,21 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             f"The deployment process should have at least two steps. It has: {number_of_steps}",
         )
 
-    @retry((AssertionError, RateLimitError), tries=2, delay=2)
-    def test_create_script_project(self):
-        project_name = "My Script Project"
-        prompt = f'Create a Script project called "{project_name}".'
-        response = copilot_handler_internal(build_request(prompt))
-        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
-        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
-
-        confirmation = build_confirmation_body(confirmation_id)
-
-        run_response = copilot_handler_internal(
-            build_confirmation_request(confirmation)
-        )
-        response_text = convert_from_sse_response(
-            run_response.get_body().decode("utf8")
-        )
-        print(response_text)
-        self.assertTrue(
-            f"The following Octopus resources were created successfully:"
-            in response_text,
-        )
-
-        space_id, space_name = get_space_id_and_name_from_name(
-            "Simple", Octopus_Api_Key, Octopus_Url
-        )
-
-        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
-        self.assertEqual(project["Name"], project_name)
-
-    @retry((AssertionError, RateLimitError), tries=2, delay=2)
-    def test_create_terraform_project(self):
-        project_name = "My Terraform Project"
-        prompt = f'Create a Terraform project called "{project_name}".'
-        response = copilot_handler_internal(build_request(prompt))
-        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
-        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
-
-        confirmation = build_confirmation_body(confirmation_id)
-
-        run_response = copilot_handler_internal(
-            build_confirmation_request(confirmation)
-        )
-        response_text = convert_from_sse_response(
-            run_response.get_body().decode("utf8")
-        )
-        print(response_text)
-        self.assertTrue(
-            f"The following Octopus resources were created successfully:"
-            in response_text,
-        )
-
-        space_id, space_name = get_space_id_and_name_from_name(
-            "Simple", Octopus_Api_Key, Octopus_Url
-        )
-
-        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
-        self.assertEqual(project["Name"], project_name)
-
-        raw_deployment_process = get_raw_deployment_process(
-            space_name, project_name, Octopus_Api_Key, Octopus_Url
-        )
-        deployment_process = json.loads(raw_deployment_process)
-        number_of_steps = len(deployment_process["Steps"])
-        self.assertTrue(
-            number_of_steps > 2,
-            f"The deployment process should have at least two steps. It has: {number_of_steps}",
-        )
-
-    def test_create_custom_k8s_project(self):
-        """
-        This tests the prompt used by https://octopus.com/blog/platform-engineering-lunch-2
-        """
-
-        project_name = "Custom K8s Project"
-        prompt = f"""
-Create a Kubernetes project called "{project_name}", and then:
-* Use client side apply in the Kubernetes step (the mock Kubernetes cluster only supports client side apply).
-* Disable verification checks in the Kubernetes steps (the mock Kubernetes cluster doesn't support verification checks).
-* Enable retries on the K8s deployment step.
-"""
-        response = copilot_handler_internal(build_request(prompt))
-        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
-        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
-
-        confirmation = build_confirmation_body(confirmation_id)
-
-        run_response = copilot_handler_internal(
-            build_confirmation_request(confirmation)
-        )
-        response_text = convert_from_sse_response(
-            run_response.get_body().decode("utf8")
-        )
-        print(response_text)
-        self.assertTrue(
-            f"The following Octopus resources were created successfully:"
-            in response_text,
-        )
-
-        space_id, space_name = get_space_id_and_name_from_name(
-            "Simple", Octopus_Api_Key, Octopus_Url
-        )
-
-        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
-        self.assertEqual(project["Name"], project_name)
-
-        raw_deployment_process = get_raw_deployment_process(
-            space_name, project_name, Octopus_Api_Key, Octopus_Url
-        )
-        deployment_process = json.loads(raw_deployment_process)
-        number_of_steps = len(deployment_process["Steps"])
-        self.assertTrue(
-            number_of_steps >= 4,
-            f"The deployment process should have at least four steps. It has: {number_of_steps}",
-        )
-
-    @retry((AssertionError, RateLimitError), tries=2, delay=2)
-    def test_create_argo_project(self):
-        project_name = "My Argo Project"
-        prompt = f'Create a Argo CD Tag Update project called "{project_name}".'
-        response = copilot_handler_internal(build_request(prompt))
-        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
-        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
-
-        confirmation = build_confirmation_body(confirmation_id)
-
-        run_response = copilot_handler_internal(
-            build_confirmation_request(confirmation)
-        )
-        response_text = convert_from_sse_response(
-            run_response.get_body().decode("utf8")
-        )
-        print(response_text)
-        self.assertTrue(
-            f"The following Octopus resources were created successfully:"
-            in response_text,
-        )
-
-        space_id, space_name = get_space_id_and_name_from_name(
-            "Simple", Octopus_Api_Key, Octopus_Url
-        )
-
-        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
-        self.assertEqual(project["Name"], project_name)
-
-        raw_deployment_process = get_raw_deployment_process(
-            space_name, project_name, Octopus_Api_Key, Octopus_Url
-        )
-        deployment_process = json.loads(raw_deployment_process)
-        number_of_steps = len(deployment_process["Steps"])
-        self.assertTrue(
-            number_of_steps > 2,
-            f"The deployment process should have at least two steps. It has: {number_of_steps}",
-        )
         mandatory_step = "Approve Production Deployment"
         self.assertTrue(
             any(step["Name"] == mandatory_step for step in deployment_process["Steps"]),
             f'The deployment process should have a step called "{mandatory_step}".',
         )
 
-    @retry((AssertionError, RateLimitError), tries=2, delay=2)
-    def test_create_lambda_project(self):
-        project_name = "My AWS Lambda"
-        prompt = f'Create an AWS Lambda project called "{project_name}". Use the project group "AWS".'
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_k8s_project_with_ephemeral_environments(self):
+        project_name = "My K8s Project with Ephemeral Environments"
+        prompt = f'''Create a Kubernetes project called "{project_name}", and then:
+* Use client side apply in the Kubernetes step (the mock Kubernetes cluster only supports client side apply).
+* Disable verification checks in the Kubernetes steps (the mock Kubernetes cluster doesn't support verification checks).
+* Enable retries on the K8s deployment step.
+* Add support for ephemeral environments, with the Parent Environment and Ephemeral Environment channel both called "Features"'''
+
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
@@ -399,8 +259,9 @@ Create a Kubernetes project called "{project_name}", and then:
         )
 
         project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
-
-        self.assertEqual(project["Name"], project_name)
+        self.assertTrue(
+            project["Name"] == project_name,
+        )
 
         raw_deployment_process = get_raw_deployment_process(
             space_name, project_name, Octopus_Api_Key, Octopus_Url
@@ -411,22 +272,39 @@ Create a Kubernetes project called "{project_name}", and then:
             number_of_steps > 2,
             f"The deployment process should have at least two steps. It has: {number_of_steps}",
         )
-        mandatory_step = "Attempt Login"
+
+        mandatory_step = "Approve Production Deployment"
         self.assertTrue(
             any(step["Name"] == mandatory_step for step in deployment_process["Steps"]),
             f'The deployment process should have a step called "{mandatory_step}".',
         )
 
-    @unittest.skip(
-        "This test is currently unreliable because of limitations in the TF provider around tag creation. We need to add a data source for individual tags to reliably support stateless module creation."
-    )
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_vm_blue_green_project(self):
+        project_name = "My VM Blue Green project"
+        prompt = f'Create a VM Blue/Green project called "{project_name}".'
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
+
+        confirmation = build_confirmation_body(confirmation_id)
+
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        print(response_text)
+        self.assertTrue(
+            f"The following Octopus resources were created successfully:"
+            in response_text,
+        )
+
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
-    def test_create_lambda_project_tenanted(self):
-        project_name = "My tenanted Lambda"
-        prompt = f"""Create an AWS Lambda project called "{project_name}".
-Configure the project to require tenants for deployment.
-Create 5 tenants named after cities located in England and assign them to the project.
-Create 5 tag sets that represent counties from England and assign them to the tenants."""
+    def test_create_azure_web_app_project(self):
+        project_name = "My Azure WebApp Project"
+        prompt = f'Create an Azure Web App project called "{project_name}".'
         response = copilot_handler_internal(build_request(prompt))
         confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
@@ -450,12 +328,8 @@ Create 5 tag sets that represent counties from England and assign them to the te
         )
 
         project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
-        self.assertEqual(project["Name"].casefold(), project_name.casefold())
-        project_tenant_mode = project["TenantedDeploymentMode"]
-        self.assertTrue(
-            project_tenant_mode == ("Tenanted" or "TenantedOrUntenanted"),
-            f"TenantedDeploymentMode was: {project_tenant_mode}",
-        )
+        self.assertEqual(project["Name"], project_name)
+
         raw_deployment_process = get_raw_deployment_process(
             space_name, project_name, Octopus_Api_Key, Octopus_Url
         )
@@ -465,32 +339,19 @@ Create 5 tag sets that represent counties from England and assign them to the te
             number_of_steps > 2,
             f"The deployment process should have at least two steps. It has: {number_of_steps}",
         )
-
-        mandatory_step = "Attempt Login"
+        mandatory_step = "Validate setup"
         self.assertTrue(
             any(step["Name"] == mandatory_step for step in deployment_process["Steps"]),
             f'The deployment process should have a step called "{mandatory_step}".',
         )
 
-        tenants = get_tenants(Octopus_Api_Key, Octopus_Url, space_id)
-        number_of_tenants = len(tenants)
-        self.assertTrue(
-            number_of_tenants >= 5,
-            f"The deployment process should have at least 5 tenants. It has: {number_of_tenants}",
-        )
-
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
-    def test_create_lambda_project_with_additional_runbook(self):
-        project_name = "Lambda with Runbook"
-        new_runbook_name = "Switch Load Balancer"
-        prompt = f"""Create an AWS Lambda project called "{project_name}", retaining the example steps, and include an additional runbook in the new project called "{new_runbook_name}".
-            The additional runbook should have a single step in the runbook process.
-            The step is called "Switch load balancer production group" and it is an AWS run a CLI script step.
-            The step should be a bash script that switches traffic from one target group to the other.
-            The runbook should only run in the "Test" and "Production" environments."""
+    def test_create_azure_web_app_project_with_new_step(self):
+        project_name = "My Azure WebApp with step"
+        additional_step_name = "Smoke test"
+        prompt = f'Create an Azure web app project called "{project_name}". Add a new "Run an Azure Script" step called "{additional_step_name}" at the end of the deployment process. It must test a HTTP endpoint returns a 200 status code.'
         response = copilot_handler_internal(build_request(prompt))
-        response_body = response.get_body().decode("utf8")
-        confirmation_id = get_confirmation_id(response_body)
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
         self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
         confirmation = build_confirmation_body(confirmation_id)
@@ -513,16 +374,6 @@ Create 5 tag sets that represent counties from England and assign them to the te
 
         project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
         self.assertEqual(project["Name"], project_name)
-        runbook = get_runbook_fuzzy(
-            space_id,
-            project["Id"],
-            new_runbook_name,
-            Octopus_Api_Key,
-            Octopus_Url,
-        )
-        self.assertTrue(
-            runbook["Name"] == new_runbook_name,
-        )
         raw_deployment_process = get_raw_deployment_process(
             space_name, project_name, Octopus_Api_Key, Octopus_Url
         )
@@ -533,85 +384,61 @@ Create 5 tag sets that represent counties from England and assign them to the te
             f"The deployment process should have at least two steps. It has: {number_of_steps}",
         )
 
-        mandatory_step = "Attempt Login"
+        mandatory_step = "Validate setup"
         self.assertTrue(
             any(step["Name"] == mandatory_step for step in deployment_process["Steps"]),
             f'The deployment process should have a step called "{mandatory_step}".',
         )
 
+        self.assertTrue(
+            any(
+                # The LLM might change the step name slightly, so we use Levenshtein distance to check for similarity
+                Levenshtein.distance(step["Name"], additional_step_name) <= 2
+                for step in deployment_process["Steps"]
+            ),
+            f'The deployment process should have an additional step called "{additional_step_name}".',
+        )
 
-if __name__ == "__main__":
-    unittest.main()
+    @retry((AssertionError, RateLimitError), tries=2, delay=2)
+    def test_create_azure_function_project(self):
+        project_name = "My Azure Function Project"
+        prompt = f'Create an Azure Function project called "{project_name}".'
+        response = copilot_handler_internal(build_request(prompt))
+        confirmation_id = get_confirmation_id(response.get_body().decode("utf8"))
+        self.assertTrue(confirmation_id != "", "Confirmation ID was " + confirmation_id)
 
+        confirmation = build_confirmation_body(confirmation_id)
 
-def build_confirmation_body(confirmation_id):
-    """
-    Build the confirmation body accepted by copilot_handler_internal.
-    :param confirmation_id: the confirmation ID returned from the initial response
-    :return: dict representing the accepted confirmation message
-    """
-    return {
-        "messages": [
-            {
-                "role": "user",
-                "content": "",
-                "copilot_references": None,
-                "copilot_confirmations": [
-                    {"state": "accepted", "confirmation": {"id": confirmation_id}}
-                ],
-            }
-        ]
-    }
+        run_response = copilot_handler_internal(
+            build_confirmation_request(confirmation)
+        )
+        response_text = convert_from_sse_response(
+            run_response.get_body().decode("utf8")
+        )
+        print(response_text)
+        self.assertTrue(
+            f"The following Octopus resources were created successfully:"
+            in response_text,
+        )
 
+        space_id, space_name = get_space_id_and_name_from_name(
+            "Simple", Octopus_Api_Key, Octopus_Url
+        )
 
-def build_request(message):
-    """
-    Build a request with the Slack and GitHub tokens passed through headers. Octopus details
-    are expected to be sourced from the database.
-    :param message:
-    :return:
-    """
-    return func.HttpRequest(
-        method="POST",
-        body=json.dumps({"messages": [{"content": message}]}).encode("utf8"),
-        url="/api/form_handler",
-        params=None,
-        headers={
-            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"],
-            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
-        },
-    )
+        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
+        self.assertEqual(project["Name"], project_name)
 
-
-def build_confirmation_request(body):
-    return func.HttpRequest(
-        method="POST",
-        body=json.dumps(body).encode("utf8"),
-        url="/api/form_handler",
-        params=None,
-        headers={
-            "X-GitHub-Token": os.environ["GH_TEST_TOKEN"],
-            "X-Slack-Token": os.environ.get("SLACK_TEST_TOKEN"),
-        },
-    )
-
-
-def populate_blob_storage():
-    # The path changes depending on where the tests are run from.
-    context_path = (
-        "../../context/" if os.path.exists("../../context/context.tf") else "context/"
-    )
-
-    pattern_tf = os.path.join(context_path, "*.tf")
-    pattern_txt = os.path.join(context_path, "*.txt")
-
-    all_files = glob.glob(pattern_tf) + glob.glob(pattern_txt)
-    all_files.sort()
-
-    for file_path in all_files:
-        with open(file_path, "r") as file:
-            file_content = file.read()
-            filename = os.path.basename(file_path)
-            save_terraform_context(
-                filename, file_content, os.environ["AzureWebJobsStorage"]
-            )
+        raw_deployment_process = get_raw_deployment_process(
+            space_name, project_name, Octopus_Api_Key, Octopus_Url
+        )
+        deployment_process = json.loads(raw_deployment_process)
+        number_of_steps = len(deployment_process["Steps"])
+        self.assertTrue(
+            number_of_steps > 2,
+            f"The deployment process should have at least two steps. It has: {number_of_steps}",
+        )
+        mandatory_step = "Validate setup"
+        self.assertTrue(
+            any(step["Name"] == mandatory_step for step in deployment_process["Steps"]),
+            f'The deployment process should have a step called "{mandatory_step}".',
+        )
