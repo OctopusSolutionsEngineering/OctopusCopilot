@@ -4,6 +4,7 @@ from domain.sanitizers.terraform import (
     fix_script_source,
     set_mock_git_server,
     set_mock_git_user_variable,
+    set_mock_git_credential,
 )
 
 
@@ -1219,3 +1220,67 @@ resource "octopusdeploy_variable" "my_project_other_var" {
    }"""
 
         self.assertEqual(set_mock_git_user_variable(config, "testuser"), config)
+
+    def test_set_mock_git_credential(self):
+        config = """resource "octopusdeploy_process_step" "update_manifests" {
+  type = "Octopus.ArgoCDUpdateManifests"
+}
+resource "octopusdeploy_git_credential" "gitcredential_mock" {
+  count                   = 1
+  name                    = "Mock"
+  type                    = "UsernamePassword"
+  username                = "blah"
+  password                = "old_password"
+  repository_restrictions = { allowed_repositories = ["https://mockgit.octopusdemos.com/*"], enabled = true }
+}"""
+
+        fixed_config = """resource "octopusdeploy_process_step" "update_manifests" {
+  type = "Octopus.ArgoCDUpdateManifests"
+}
+resource "octopusdeploy_git_credential" "gitcredential_mock" {
+  count                   = 1
+  name                    = "Mock"
+  type                    = "UsernamePassword"
+  username                = "newuser"
+  password                = "newpass"
+  repository_restrictions = { allowed_repositories = ["https://mockgit.octopusdemos.com/*"], enabled = true }
+}"""
+
+        self.assertEqual(
+            set_mock_git_credential(config, "newuser", "newpass"), fixed_config
+        )
+
+    def test_set_mock_git_credential_no_argocd(self):
+        config = """resource "octopusdeploy_git_credential" "gitcredential_mock" {
+  count    = 1
+  name     = "Mock"
+  username = "blah"
+  password = "old_password"
+}"""
+
+        self.assertEqual(set_mock_git_credential(config, "newuser", "newpass"), config)
+
+    def test_set_mock_git_credential_no_git_credential(self):
+        config = """resource "octopusdeploy_process_step" "update_manifests" {
+  type = "Octopus.ArgoCDUpdateManifests"
+}"""
+
+        self.assertEqual(set_mock_git_credential(config, "newuser", "newpass"), config)
+
+    def test_set_mock_git_credential_empty_config(self):
+        self.assertEqual(set_mock_git_credential("", "user", "pass"), "")
+
+    def test_set_mock_git_credential_none_config(self):
+        self.assertEqual(set_mock_git_credential(None, "user", "pass"), "")
+
+    def test_set_mock_git_credential_bad_indents(self):
+        config = """resource "octopusdeploy_process_step" "update_manifests" {
+  type = "Octopus.ArgoCDUpdateManifests"
+}
+resource "octopusdeploy_git_credential" "gitcredential_mock" {
+  username = "blah"
+  password = "old"
+   }"""
+
+        self.assertEqual(set_mock_git_credential(config, "newuser", "newpass"), config)
+
