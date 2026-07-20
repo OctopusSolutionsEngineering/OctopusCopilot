@@ -169,7 +169,7 @@ def build_azure_anthropic_project_llm():
         base_url=endpoint,
         api_key=api_key,
         max_tokens=max_tokens,
-        thinking={"type": "disabled"},
+        thinking={"type": "adaptive"},
     )
 
 
