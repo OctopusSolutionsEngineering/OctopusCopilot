@@ -38,7 +38,7 @@ container {
 
 ## Release versioning
 
-* If the project does not use a donor package for release versioning, the project release versioning must be set to a date-based format, such as `#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i`, where `i` is the release increment. This ensures that releases are versioned in a predictable and chronological manner:
+* If the project does not use a donor package with the `donor_package` block for release versioning, the project release versioning must be set to a date-based format, such as `#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i`, where `i` is the release increment. This ensures that releases are versioned in a predictable and chronological manner:
 
 ```
 resource "octopusdeploy_project_versioning_strategy" "project_windows_service" {
