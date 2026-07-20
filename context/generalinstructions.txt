@@ -6323,6 +6323,15 @@ You will be penalized for setting `worker_pool_id` directly on a Kubernetes step
 
 The following instructions provide default guidance on how to implement common deployment patterns, processes, or strategies.
 
+## Kubernetes target
+
+* When the prompt indicates that a Kubernetes target is required but does not provide a specific target configuration, use the following canonical pattern:
+    * Create a token account called "Mock Token"
+    * Create a feed called "Docker Hub" pointing to "https://index.docker.io" using anonymous authentication.
+    * Add a target called "Mock K8s", with the tag "Kubernetes", using the token account, pointing to "https://mockk8s.octopusdemos.com", using the health check image "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04" from the "Docker Hub" feed, using the worker pool "Hosted Ubuntu".
+    * Disable step verification in any Kubernetes steps, because the mock target does not support verification.
+    * Use client side apply for any Kubernetes YAML steps, because the mock target does not support server side apply.
+
 ## Blue/Green deployment pattern
 
 * When the prompt indicates that Blue/Green deployment pattern is required:
