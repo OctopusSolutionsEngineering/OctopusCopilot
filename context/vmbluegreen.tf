@@ -373,8 +373,8 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
       }
   parameters            = {
         "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
-        "BlueGreen.Environment.Green.Name" = "Production - Green"
         "BlueGreen.Environment.Blue.Name" = "Production - Blue"
+        "BlueGreen.Environment.Green.Name" = "Production - Green"
       }
 }
 
@@ -426,9 +426,9 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
         "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
+        "CheckTargets.Octopus.Role" = "randomquotes-iis-website"
         "CheckTargets.Message" = "See the [documentation](https://octopus.com/docs/infrastructure/deployment-targets) for details on creating targets."
         "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
-        "CheckTargets.Octopus.Role" = "randomquotes-iis-website"
       }
 }
 
@@ -510,9 +510,9 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }
   execution_properties  = {
+        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
         "Octopus.Action.Email.Body" = "The deployment succeeded."
         "Octopus.Action.Email.To" = "releases@example.org"
-        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
         "Octopus.Action.RunOnServer" = "true"
       }
 }
