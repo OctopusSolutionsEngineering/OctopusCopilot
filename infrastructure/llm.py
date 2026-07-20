@@ -41,6 +41,7 @@ AZURE_GENERAL_SERVICE = "azure_general"
 AZURE_GENERAL_QUERY_SMALL_LLM = "azure_general_query_small"
 EUROPE_REGION = "Europe"
 US_REGION = "US"
+DETAILED_PROJECT_PROMPT_LENGTH = 500
 
 
 def validate_region(region):
@@ -128,21 +129,20 @@ def get_endpoint_and_key(region=None):
         return os.environ["AISERVICES_ENDPOINT"], os.environ["AISERVICES_KEY"]
 
 
-def build_llm(purpose, region=None):
+def build_llm(purpose, region=None, prompt=None):
     if purpose == AZURE_PROJECT_SERVICE:
-        return build_azure_project_llm(region)
+        return build_azure_project_llm(region, prompt)
 
     if purpose == AZURE_GENERAL_QUERY_SMALL_LLM:
         return build_azure_general_small_query(region)
 
     # Anthropic LLMs only offer global standard
     if purpose == AZURE_PROJECT_ANTHROPIC_SERVICE:
-        return build_azure_anthropic_project_llm()
-
+        return build_azure_anthropic_project_llm(prompt)
     return build_azure_general_llm(region)
 
 
-def build_azure_anthropic_project_llm():
+def build_azure_anthropic_project_llm(prompt=None):
     deployment = os.getenv("AISERVICES_DEPLOYMENT_ANTHROPIC_PROJECT_GEN")
     api_key = os.environ["AISERVICES_KEY"]
     endpoint = os.environ["AISERVICES_ANTHROPIC_ENDPOINT"]
@@ -163,17 +163,22 @@ def build_azure_anthropic_project_llm():
         )
     )
 
+    # Enable thinking for large project prompts
+    thinking = (
+        "disabled" if len(prompt) < DETAILED_PROJECT_PROMPT_LENGTH else "adaptive"
+    )
+
     return ChatAnthropic(
         temperature=temperature,
         model=deployment,
         base_url=endpoint,
         api_key=api_key,
         max_tokens=max_tokens,
-        thinking={"type": "adaptive"},
+        thinking={"type": thinking},
     )
 
 
-def build_azure_project_llm(region=None):
+def build_azure_project_llm(region=None, prompt=None):
     version = (
         os.environ.get("AISERVICES_DEPLOYMENT_QUERY_VERSION")
         or "2025-04-01-preview"  # https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-preview-api-releases
@@ -197,6 +202,8 @@ def build_azure_project_llm(region=None):
 
     endpoint, api_key = get_endpoint_and_key(region)
 
+    thinking = "minimal" if len(prompt) < DETAILED_PROJECT_PROMPT_LENGTH else "medium"
+
     return AzureChatOpenAI(
         temperature=temperature,
         azure_deployment=deployment,
@@ -204,6 +211,15 @@ def build_azure_project_llm(region=None):
         azure_endpoint=endpoint,
         api_version=version,
         use_responses_api=use_responses_api,
+        reasoning_effort=thinking if not use_responses_api else None,
+        reasoning=(
+            {
+                "effort": thinking,
+                "summary": "concise",
+            }
+            if use_responses_api
+            else None
+        ),
     )
 
 
@@ -268,7 +284,7 @@ def llm_message_query(
     message_prompt, context, log_query=None, purpose=AZURE_GENERAL_SERVICE, region=None
 ):
 
-    llm = build_llm(purpose, region)
+    llm = build_llm(purpose, region, prompt=message_prompt)
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)
 
