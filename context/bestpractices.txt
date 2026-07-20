@@ -1,0 +1,47 @@
+# Best practices
+
+Modify the provided Terraform configuration for Octopus resources to follow the best practices outlined below.
+
+YOU MUST assume the generated Terraform configuration is syntactically correct and valid, and you should not attempt to validate or correct the syntax of the configuration.
+DO NOT apply generic Terraform best practices.
+
+## Projects
+
+* Projects must have a description that clearly explains the purpose of the project and any important details, such as the target environment, service name, or resource being deployed. The description should be concise and informative.
+
+## Deployment steps
+
+* All deployment steps must have a one-sentence summary as in the `notes` field. The summary should describe the purpose of the step and any important details, such as the target environment, service name, or resource being deployed. The summary should be concise and informative.
+
+## Variables
+
+* Project variables should use a consistent naming convention, such as `Project.<VariableName>`, to avoid collisions with system variables and to clearly indicate their purpose.
+* Rename project variables that have generic names (e.g., `ConnectionString`, `ApiKey`, `Url`) to more specific names that indicate their purpose and context (e.g., `Project.ConnectionString`, `Project.ApiKey`, `Project.Url`).
+* Variables that are used for structured variable replacement, e.g. `ConnectionStrings:Database`, must not be renamed, as their syntax is required for structured variable replacement to work correctly.
+* All variables should have a description.
+
+## Worker pool variables
+
+* When a project has multiple steps all using the same worker pool, create a project variable called `Project.WorkerPool` of type `WorkerPool` and set the value to the desired worker pool. Then, on each step, set `worker_pool_variable = "#{Project.WorkerPool}"` and `worker_pool_id = null`. This allows the worker pool to be changed in a single location.
+
+## Execution container image
+
+* When a project has multiple steps all using the same execution container image, create a project variable called `Project.ExecutionContainerImage` of type `String` and set the value to the desired image.
+* Each step defining a container image should use a `container` block with `image = "#{Project.ExecutionContainerImage}"` to reference the variable. This allows the execution container image to be changed in a single location, for example:
+
+```
+container {
+    feed_id = "${data.octopusdeploy_feeds.feed_docker_hub.feeds[0].id}"
+    image   = "#{Project.ExecutionContainerImage}"
+}
+```
+
+## Release versioning
+
+* If the project does not use a donor package for release versioning, the project release versioning must be set to a date-based format, such as `#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i`, where `i` is the release increment. This ensures that releases are versioned in a predictable and chronological manner:
+
+```
+resource "octopusdeploy_project_versioning_strategy" "project_windows_service" {
+  template   = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
+}
+```
