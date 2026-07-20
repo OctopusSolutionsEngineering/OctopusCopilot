@@ -56,7 +56,7 @@ resource "octopusdeploy_environment" "environment_development" {
   name                         = "Development"
   description                  = ""
   allow_dynamic_infrastructure = true
-  use_guided_failure           = false
+  use_guided_failure           = true
 
   jira_extension_settings {
     environment_type = "unmapped"
@@ -272,11 +272,11 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "echo \"Hello world\""
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
       }
 }
 
