@@ -6348,5 +6348,5 @@ The following instructions provide default guidance on how to implement common d
 
 If the prompt indicates that debugging is required but does not provide specific instructions, use the following canonical pattern:
     * Add two project variable called "OctopusPrintVariables", set the description to "Prints variable values to the verbose logs", and set the value to "True".
-    * Add the project variable "OctopusPrintEvaluatedVariables", set the description to "Prints evaluated variable values to the verbose logs", and set the value to "True".
+    * Add the project variable called "OctopusPrintEvaluatedVariables", set the description to "Prints evaluated variable values to the verbose logs", and set the value to "True".
     * Enable guided failure mode on the environments.
