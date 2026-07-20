@@ -1782,7 +1782,7 @@ data "octopusdeploy_tenants" "tenant_australian_office" {
 **CRITICAL — when a new project creation prompt specifies a tenanted deployment mode**, set the `tenanted_deployment_participation` attribute on the `octopusdeploy_project` resource to the appropriate value:
 
 - `"TenantedOrUntenanted"` — set when the prompt says "TenantedOrUntenanted deployments" or "both tenanted and untenanted"
-- `"Tenanted"` — set when the prompt says "tenanted deployments only" or "Tenanted"
+- `"Tenanted"` — set when the prompt says "tenanted deployments only", "require a tenant for deployment", or "Tenanted"
 - `"Untenanted"` — set when the prompt says "untenanted deployments" or does not mention tenants at all (default)
 
 **When the prompt names a specific tenant** (e.g., "Acme Corp tenant"), you MUST create ALL of the following resources:
