@@ -6321,7 +6321,7 @@ You will be penalized for setting `worker_pool_id` directly on a Kubernetes step
 
 # Best practices
 
-Use the following best practices when generating Terraform for Octopus Deploy projects:
+Use the following best practices when generating Terraform for Octopus Deploy projects. Apply these rules unless specifically overridden by the prompt.
 
 ## Variables
 
@@ -6341,6 +6341,16 @@ Use the following best practices when generating Terraform for Octopus Deploy pr
 container {
     feed_id = "${data.octopusdeploy_feeds.feed_docker_hub.feeds[0].id}"
     image   = "#{Octopus.Project.ExecutionContainerImage}"
+}
+```
+
+## Release versioning
+
+* The project release versioning must be set to a date-based format, such as `#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i`, where `i` is the release increment. This ensures that releases are versioned in a predictable and chronological manner:
+
+```
+resource "octopusdeploy_project_versioning_strategy" "project_windows_service" {
+  template   = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
 }
 ```
 
