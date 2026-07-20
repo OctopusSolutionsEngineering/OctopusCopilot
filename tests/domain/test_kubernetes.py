@@ -15,6 +15,7 @@ from domain.sanitizers.terraform import (
     fix_empty_strings,
     replace_certificate_data,
     replace_passwords,
+    replace_token,
     sanitize_slugs,
     sanitize_primary_package,
     replace_resource_names_with_digit,
@@ -920,6 +921,41 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = replace_passwords(input)
 
         self.assertNotIn("A leaked password", result)
+
+    def test_replace_token(self):
+        input = """resource "octopusdeploy_github_repository_feed" "feed_github_feed" {
+          name     = "GitHub Feed"
+          feed_uri = "https://api.github.com"
+          token    = "my-secret-token"
+        }"""
+
+        result = replace_token(input)
+
+        self.assertNotIn("my-secret-token", result)
+        self.assertIn('token = "CHANGEME"', result)
+
+    def test_replace_token_no_token(self):
+        input = """resource "octopusdeploy_project" "project" {
+          name = "Test Project"
+        }"""
+
+        result = replace_token(input)
+
+        self.assertEqual(result, input)
+
+    def test_replace_token_multiple(self):
+        input = """resource "octopusdeploy_github_repository_feed" "feed1" {
+          token = "secret1"
+        }
+        resource "octopusdeploy_github_repository_feed" "feed2" {
+          token = "secret2"
+        }"""
+
+        result = replace_token(input)
+
+        self.assertNotIn("secret1", result)
+        self.assertNotIn("secret2", result)
+        self.assertEqual(result.count('token = "CHANGEME"'), 2)
 
     def test_sanitize_slugs(self):
         cases = [

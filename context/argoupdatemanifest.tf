@@ -365,9 +365,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_app
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
       }
 }
 
@@ -446,15 +446,15 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_upd
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.ArgoCD.Sync.Mode" = "Disabled"
         "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
         "Octopus.Action.ArgoCD.CommitMessageDescription" = "Project: #{Octopus.Project.Slug}\nEnvironment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }\nTenant: #{Octopus.Deployment.Tenant.Slug}#{/if}"
         "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
-        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
-        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
         "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
+        "Octopus.Action.ArgoCD.Sync.Mode" = "Disabled"
+        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
       }
 }
@@ -477,10 +477,10 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_lin
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptBody" = "Write-Highlight \"[Browse Git Repository](https://mockgit.octopusdemos.com/browse/$($OctopusParameters[\"Project.MockGit.Username\"])/argocd)\""
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptBody" = "Write-Highlight \"[Browse Git Repository](https://mockgit.octopusdemos.com/browse/$($OctopusParameters[\"Project.MockGit.Username\"])/argocd)\""
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -504,8 +504,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_ma
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
@@ -534,9 +534,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_sen
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
+        "Octopus.Action.Email.To" = "admin@example.org"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.Subject" = "Deployment failed!"
-        "Octopus.Action.Email.To" = "admin@example.org"
       }
 }
 
