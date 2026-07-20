@@ -6327,8 +6327,10 @@ The following instructions provide default guidance on how to implement common d
 
 * When the prompt indicates that a Kubernetes target is required but does not provide a specific target configuration, use the following canonical pattern:
     * Create a token account called "Mock Token"
+    * Link the token account to any tenants.
     * Create a feed called "Docker Hub" pointing to "https://index.docker.io" using anonymous authentication.
     * Add a target called "Mock K8s", with the tag "Kubernetes", using the token account, pointing to "https://mockk8s.octopusdemos.com", using the health check image "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04" from the "Docker Hub" feed, using the worker pool "Hosted Ubuntu".
+    * Link the target to any tenants.
     * Disable step verification in any Kubernetes steps, because the mock target does not support verification.
     * Use client side apply for any Kubernetes YAML steps, because the mock target does not support server side apply.
 
@@ -6345,5 +6347,6 @@ The following instructions provide default guidance on how to implement common d
 ## Debugging
 
 If the prompt indicates that debugging is required but does not provide specific instructions, use the following canonical pattern:
-    * Add two project variable called "OctopusPrintVariables" and "OctopusPrintEvaluatedVariables" and set the values to "True".
+    * Add two project variable called "OctopusPrintVariables", set the description to "Prints variable values to the verbose logs", and set the value to "True".
+    * Add the project variable "OctopusPrintEvaluatedVariables", set the description to "Prints evaluated variable values to the verbose logs", and set the value to "True".
     * Enable guided failure mode on the environments.
