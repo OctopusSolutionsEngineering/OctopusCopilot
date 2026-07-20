@@ -6377,7 +6377,7 @@ The following instructions provide default guidance on how to implement common d
     * YOU MUST create a feed called "Docker Hub" pointing to "https://index.docker.io" using anonymous authentication.
     * YOU MUST add a target called "Mock K8s", with the tag "Kubernetes", using the token account, pointing to "https://mockk8s.octopusdemos.com", using the health check image "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04" from the "Docker Hub" feed, using the worker pool "Hosted Ubuntu".
     * YOU MUST link the target to any tenants.
-    * YOU MUST disable step verification in all Kubernetes steps by setting the "Octopus.Action.Kubernetes.ResourceStatusCheck" property in the "execution_properties" block to "False" - the "Mock K8s" target DOES NOT support verification.Mock K8s" target DOES NOT support verification.
+    * YOU MUST disable step verification in all Kubernetes steps by setting the "Octopus.Action.Kubernetes.ResourceStatusCheck" property in the "execution_properties" block to "False" - the "Mock K8s" target DOES NOT support verification.
     * YOU MUST use client side apply for all Kubernetes YAML steps by setting the "Octopus.Action.Kubernetes.ServerSideApply.Enabled" property in the "execution_properties" block to "False" - the "Mock K8s" target DOES NOT support server side apply.
 
 ## Blue/Green deployment pattern
