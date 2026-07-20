@@ -399,8 +399,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_oc
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -434,12 +434,12 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_update_argo_
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
-        "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.ArgoCD.CommitMessageSummary" = "Octopus Deploy updated image versions"
         "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
         "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
+        "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
+        "Octopus.Action.ArgoCD.Sync.Mode" = "AllEnvironments"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -463,8 +463,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_sc
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
