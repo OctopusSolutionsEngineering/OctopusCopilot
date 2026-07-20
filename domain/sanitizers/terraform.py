@@ -147,7 +147,7 @@ def replace_token(config):
 
     return re.sub(
         r'token\s*=\s*".*?"',
-        'token = "CHANGE ME"',
+        'token = "CHANGEME"',
         config,
     )
 
