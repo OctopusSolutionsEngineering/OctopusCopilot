@@ -130,12 +130,24 @@ def sanitize_account_type(config):
 
 def replace_passwords(config):
     """
-    Replace any passwords data with a placeholder value.
+    Replace any passwords with a placeholder value.
     """
 
     return re.sub(
         r'password\s*=\s*".*?"',
         'password = "CHANGE ME"',
+        config,
+    )
+
+
+def replace_token(config):
+    """
+    Replace any tokens with a placeholder value.
+    """
+
+    return re.sub(
+        r'token\s*=\s*".*?"',
+        'token = "CHANGE ME"',
         config,
     )
 
