@@ -6319,6 +6319,31 @@ resource "octopusdeploy_process_step" "process_step_my_project_deploy_app" {
 
 You will be penalized for setting `worker_pool_id` directly on a Kubernetes step instead of using `worker_pool_variable = "Octopus.Project.WorkerPool"` with a corresponding `Octopus.Project.WorkerPool` project variable.
 
+# Best practices
+
+Use the following best practices when generating Terraform for Octopus Deploy projects:
+
+## Variables
+
+* Project variables should use a consistent naming convention, such as `Project.<VariableName>`, to avoid collisions with system variables and to clearly indicate their purpose.
+* All variables should have a description.
+
+## Worker pool variables
+
+* When a project has multiple steps all using the same worker pool, create a project variable called `Octopus.Project.WorkerPool` of type `WorkerPool` and set the value to the desired worker pool. Then, on each step, set `worker_pool_variable = "Octopus.Project.WorkerPool"` and `worker_pool_id = null`. This allows the worker pool to be changed in a single location.
+
+## Execution container image
+
+* When a project has multiple steps all using the same execution container image, create a project variable called `Octopus.Project.ExecutionContainerImage` of type `String` and set the value to the desired image.
+* Each step defining a container image should use a `container` block with `image = "#{Octopus.Project.ExecutionContainerImage}"` to reference the variable. This allows the execution container image to be changed in a single location, for example:
+
+```
+container {
+    feed_id = "${data.octopusdeploy_feeds.feed_docker_hub.feeds[0].id}"
+    image   = "#{Octopus.Project.ExecutionContainerImage}"
+}
+```
+
 # Patterns
 
 The following instructions provide default guidance on how to implement common deployment patterns, processes, or strategies.
