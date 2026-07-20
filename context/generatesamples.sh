@@ -1,3 +1,6 @@
+# This is a work in progress to generate sample terrafrom from the samples Octopus instance and update them with the
+# best practices instructions.
+
 PULL=always
 IMAGE=ghcr.io/octopussolutionsengineering/octoterra:latest
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-docker}
