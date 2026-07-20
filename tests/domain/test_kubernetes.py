@@ -1,6 +1,6 @@
 import unittest
 from domain.sanitizers.terraform import (
-    sanitize_kuberenetes_yaml_step_config,
+    sanitize_kubernetes_yaml_step_config,
     sanitize_account_type,
     sanitize_name_attributes,
     fix_single_line_lifecycle,
@@ -50,7 +50,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
         """
 
         # Call the function
-        result = sanitize_kuberenetes_yaml_step_config(input_config)
+        result = sanitize_kubernetes_yaml_step_config(input_config)
 
         # Assert the result matches expected output
         self.assertEqual(result, expected_output)
@@ -72,7 +72,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
         """
 
         # Call the function
-        result = sanitize_kuberenetes_yaml_step_config(input_config)
+        result = sanitize_kubernetes_yaml_step_config(input_config)
 
         # Assert the result matches expected output
         self.assertEqual(result, expected_output)
@@ -89,7 +89,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
         """
 
         # Call the function
-        result = sanitize_kuberenetes_yaml_step_config(input_config)
+        result = sanitize_kubernetes_yaml_step_config(input_config)
 
         # Verify that both YAML configs are sanitized
         self.assertIn("name: placeholder", result)
@@ -104,7 +104,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
         """
 
         # Call the function
-        result = sanitize_kuberenetes_yaml_step_config(input_config)
+        result = sanitize_kubernetes_yaml_step_config(input_config)
 
         # The result should be unchanged
         self.assertEqual(result, input_config)

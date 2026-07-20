@@ -16,7 +16,7 @@ from domain.sanitizers.escape_messages import escape_message
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
 from domain.sanitizers.sanitize_strings import empty_if_none
 from domain.sanitizers.terraform import (
-    sanitize_kuberenetes_yaml_step_config,
+    sanitize_kubernetes_yaml_step_config,
     sanitize_account_type,
     sanitize_name_attributes,
     fix_single_line_lifecycle,
@@ -753,7 +753,7 @@ def sanitize_configuration(configuration):
     # Deal with the LLM returning code in markdown code blocks
     configuration = remove_markdown_code_block(configuration)
     # Deal with the LLM adding asterisks as placeholders in K8s configuration
-    configuration = sanitize_kuberenetes_yaml_step_config(configuration)
+    configuration = sanitize_kubernetes_yaml_step_config(configuration)
     # Remove empty namespace properties
     configuration = fix_empty_namespace(configuration)
     # Deal with the LLM using the wrong capitalisation for the account type

@@ -4,7 +4,7 @@ import re
 from lxml.html.diff import fixup_ins_del_tags
 
 
-def sanitize_kuberenetes_yaml_step_config(config):
+def sanitize_kubernetes_yaml_step_config(config):
     """
     Sanitize Kubernetes config by removing invalid masks information. This is because GTP4 kept introducing placeholders
     into K8s sample steps.
