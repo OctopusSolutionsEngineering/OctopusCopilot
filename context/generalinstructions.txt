@@ -6323,6 +6323,14 @@ You will be penalized for setting `worker_pool_id` directly on a Kubernetes step
 
 Use the following best practices when generating Terraform for Octopus Deploy projects. Apply these rules unless specifically overridden by the prompt.
 
+## Projects
+
+* Projects must have a description that clearly explains the purpose of the project and any important details, such as the target environment, service name, or resource being deployed. The description should be concise and informative.
+
+## Deployment steps
+
+* All deployment steps must have a one sentence summary as in the `notes` field. The summary should describe the purpose of the step and any important details, such as the target environment, service name, or resource being deployed. The summary should be concise and informative.
+
 ## Variables
 
 * Project variables should use a consistent naming convention, such as `Project.<VariableName>`, to avoid collisions with system variables and to clearly indicate their purpose.
