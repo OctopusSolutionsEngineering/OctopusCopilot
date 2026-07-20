@@ -4713,6 +4713,7 @@ parameters      = [{ default_sensitive_value = null,, display_settings = { "Octo
   * "Sensitive"
   * "String"
   * "WorkerPool"
+* All "octopusdeploy_variable" resources must have a unique combination of "name" and "scope" attributes.
 * You will be penalized for setting the resource "octopusdeploy_variable" "type" attribute to "Token".
 * When the "is_sensitive" property on a resource "octopusdeploy_variable" is set to "true", the "type" attribute must be set to "Sensitive".
 * **CRITICAL — `octopusdeploy_variable` resources MUST include `lifecycle { ignore_changes = [sensitive_value]; prevent_destroy = true }`**: Every project variable resource must include this lifecycle block to prevent Terraform from destroying variables when re-applying (which would lose any runtime values that have been set). The `ignore_changes = [sensitive_value]` prevents Terraform from detecting changes to sensitive variable values (since Octopus does not return them). Both `prevent_destroy` and `ignore_changes` are REQUIRED. Do NOT omit this lifecycle block. Every `octopusdeploy_variable` resource must look like:
