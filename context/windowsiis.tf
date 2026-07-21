@@ -302,22 +302,16 @@ resource "octopusdeploy_process_step" "process_step_iis_deploy_to_iis" {
         "Octopus.Action.TargetRoles" = "OctoPub-Windows-IIS"
       }
   execution_properties  = {
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
         "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
-        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "False"
-        "Octopus.Action.IISWebSite.ApplicationPoolName" = "WebApps"
-        "Octopus.Action.IISWebSite.EnableAnonymousAuthentication" = "True"
-        "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
-        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.IISWebSite,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
-        "Octopus.Action.IISWebSite.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
-        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
         "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
-        "Octopus.Action.RunOnServer" = "false"
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
-        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
+        "Octopus.Action.IISWebSite.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
+        "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
+        "Octopus.Action.IISWebSite.StartWebSite" = "True"
         "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
-        "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.IISWebSite,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
+        "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
+        "Octopus.Action.RunOnServer" = "false"
+        "Octopus.Action.IISWebSite.WebSiteName" = "MyWebApp"
         "Octopus.Action.IISWebSite.Bindings" = jsonencode([
         {
         "host" = ""
@@ -329,8 +323,14 @@ resource "octopusdeploy_process_step" "process_step_iis_deploy_to_iis" {
         "port" = "8080"
                 },
         ])
-        "Octopus.Action.IISWebSite.WebSiteName" = "MyWebApp"
-        "Octopus.Action.IISWebSite.StartWebSite" = "True"
+        "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.IISWebSite.ApplicationPoolName" = "WebApps"
+        "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
+        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "False"
+        "Octopus.Action.IISWebSite.EnableAnonymousAuthentication" = "True"
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
       }
 }
 

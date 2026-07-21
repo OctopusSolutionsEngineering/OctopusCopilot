@@ -335,9 +335,9 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_manual_interve
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
+        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
       }
 }
 
@@ -389,8 +389,8 @@ resource "octopusdeploy_process_templated_step" "process_step_azure_web_app_octo
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -426,14 +426,14 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_deploy_azure_w
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptBody" = "az config set core.no_color=true\n\n$webApp = az webapp show `\n    --name \"#{Project.Azure.WebApp.Octopub.Name}\" `\n    --resource-group \"#{Project.Azure.ResourceGroup.Name}\" 2\u003e\u00261\n\nif ($LASTEXITCODE -ne 0) {\n    Write-Highlight \"Web app '#{Project.Azure.WebApp.Octopub.Name}' does not exist in resource group '#{Project.Azure.ResourceGroup.Name}'.\"\n    exit 0\n}\n\naz webapp config set `\n    --name \"#{Project.Azure.WebApp.Octopub.Name}\" `\n    --resource-group \"#{Project.Azure.ResourceGroup.Name}\" `\n    --linux-fx-version \"DOCKER|ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\""
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.AutoRetry.MaximumCount" = "3"
         "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
+        "Octopus.Action.Script.ScriptBody" = "az config set core.no_color=true\n\n$webApp = az webapp show `\n    --name \"#{Project.Azure.WebApp.Octopub.Name}\" `\n    --resource-group \"#{Project.Azure.ResourceGroup.Name}\" 2\u003e\u00261\n\nif ($LASTEXITCODE -ne 0) {\n    Write-Highlight \"Web app '#{Project.Azure.WebApp.Octopub.Name}' does not exist in resource group '#{Project.Azure.ResourceGroup.Name}'.\"\n    exit 0\n}\n\naz webapp config set `\n    --name \"#{Project.Azure.WebApp.Octopub.Name}\" `\n    --resource-group \"#{Project.Azure.ResourceGroup.Name}\" `\n    --linux-fx-version \"DOCKER|ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\""
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
       }
 }
 
@@ -486,8 +486,8 @@ resource "octopusdeploy_process_templated_step" "process_step_azure_web_app_scan
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({

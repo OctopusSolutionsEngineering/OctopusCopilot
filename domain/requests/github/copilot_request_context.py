@@ -107,6 +107,9 @@ from domain.tools.wrapper.projects.create_azure_function_project import (
 from domain.tools.wrapper.projects.create_azure_web_app_project import (
     create_azure_web_app_project_wrapper,
 )
+from domain.tools.wrapper.projects.create_claude_project import (
+    create_claude_project_wrapper,
+)
 from domain.tools.wrapper.projects.create_iis_project import create_iis_project_wrapper
 from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_wrapper
 from domain.tools.wrapper.projects.create_lambda_project import (
@@ -1019,6 +1022,34 @@ def build_form_tools(query, req: func.HttpRequest):
                         "Terraform Deploy",
                         general_project_creation_instructions,
                         "terraformsystemprompt.txt",
+                        get_redirections(req),
+                        get_redirections_api_key(req),
+                    ),
+                    logging=log_query,
+                ),
+                callback=create_template_project_confirm_callback_wrapper(
+                    query,
+                    get_github_user_from_form(req),
+                    lambda: get_api_key_and_url(req),
+                    log_query,
+                    get_redirections(req),
+                    get_redirections_api_key(req),
+                ),
+            ),
+            FunctionDefinition(
+                create_claude_project_wrapper(
+                    query,
+                    callback=create_template_project_callback(
+                        lambda: get_api_key_and_url(req),
+                        get_github_user_from_form(req),
+                        get_region_from_headers(req),
+                        get_functions_connection_string(),
+                        log_query,
+                        general_project_examples,
+                        "claude.tf",
+                        "Claude",
+                        general_project_creation_instructions,
+                        "claudesystemprompt.txt",
                         get_redirections(req),
                         get_redirections_api_key(req),
                     ),
