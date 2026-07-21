@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.17.0" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.18.2" }
   }
   required_version = ">= 1.6.0"
 }
@@ -399,8 +399,8 @@ resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_oc
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -493,9 +493,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_send_an_emai
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.Subject" = "Deployment #{Octopus.Deployment.Id} to #{Octopus.Environment.Name} failed"
         "Octopus.Action.Email.To" = "admin@example.ord"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 

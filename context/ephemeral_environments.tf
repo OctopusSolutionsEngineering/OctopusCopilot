@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.17.0" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.18.2" }
   }
   required_version = ">= 1.6.0"
 }
@@ -152,11 +152,11 @@ resource "octopusdeploy_process_step" "process_step_ephemeral_environments_run_a
   properties            = {
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"A sample script\""
-        "OctopusUseBundledTooling" = "False"
       }
 }
 

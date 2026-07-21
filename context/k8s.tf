@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.17.0" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.18.2" }
   }
   required_version = ">= 1.6.0"
 }
@@ -437,8 +437,8 @@ resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -461,7 +461,7 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_
   process_id            = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process.process_kubernetes_web_app[0].id}"
   channels              = null
   condition             = "Success"
-  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id : octopusdeploy_docker_container_registry.feed_github_container_registry[0].id}", image = "ghcr.io/octopusdeploylabs/k8s-workertools" }
+  container             = { dockerfile = null, feed_id = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id : octopusdeploy_docker_container_registry.feed_github_container_registry[0].id}", git_url = null, image = "ghcr.io/octopusdeploylabs/k8s-workertools" }
   environments          = null
   excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
   notes                 = "This step deploys a Kubernetes Deployment resource defined as raw YAML."
@@ -476,16 +476,16 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
         "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
         "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{if Octopus.Deployment.Tenant.Name}#{Octopus.Deployment.Tenant.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{/if}"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Project.Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Project.Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Project.Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Project.Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"1\"\n            memory: \"512Mi\"\n          requests:\n            cpu: \"0.5\"\n            memory: \"256Mi\"\n        livenessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
       }
 }
 
@@ -508,8 +508,8 @@ resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({

@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Black">
-    <option name="enabledOnReformat" value="true" />
     <option name="enabledOnSave" value="true" />
-    <option name="executionMode" value="BINARY" />
-    <option name="pathToExecutable" value="/Library/Frameworks/Python.framework/Versions/3.13/bin/black" />
     <option name="sdkName" value="Python 3.13 (OctopusCopilot)" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.13 (OctopusCopilot)" project-jdk-type="Python SDK" />

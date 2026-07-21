@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.17.0" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.18.2" }
   }
   required_version = ">= 1.6.0"
 }
@@ -376,7 +376,7 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login" {
   process_id            = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process.process_aws_lambda[0].id}"
   channels              = null
   condition             = "Success"
-  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", image = "ghcr.io/octopusdeploylabs/aws-workertools" }
+  container             = { dockerfile = null, feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", git_url = null, image = "ghcr.io/octopusdeploylabs/aws-workertools" }
   environments          = null
   excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
   notes                 = "This step runs an AWS CLI command to get the current user. It will only succeed if the AWS account is correctly configured. We can use the success or failure of this step to determine if the AWS account is correctly configured."
@@ -389,15 +389,15 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
         "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptBody" = "aws sts get-caller-identity"
+        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
+        "Octopus.Action.Script.ScriptBody" = "aws sts get-caller-identity"
+        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
       }
 }
 
@@ -420,11 +420,11 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_validate_setup" {
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptBody" = "$errors = @()\n\nif (\"#{Octopus.Step[Attempt Login].Status.Code}\" -ne \"Succeeded\") {\n    $errors += \"The previous step failed, which indicates the AWS Account is not valid.\", \n               \"We recommend using an [AWS OIDC Account](https://octopus.com/docs/infrastructure/accounts/aws#configuring-aws-oidc-account) type to authenticate with AWS.\"\n}\n\nif ([string]::IsNullOrWhitespace(\"#{Project.AWS.Region}\")) {\n    $errors += \"The project variable Project.AWS.Region has not been configured.\",\n               \"See the [AWS documentation](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/lambda/create-function.html#options) for details on region.\"\n}\n\nif ([string]::IsNullOrWhitespace(\"#{Project.AWS.Lambda.FunctionName}\")) {\n    $errors += \"The project variable Project.AWS.Lambda.FunctionName has not been configured.\",\n               \"See the [AWS documentation](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/lambda/create-function.html#options) for details on function name.\"\n}\n\nif ([string]::IsNullOrWhitespace(\"#{Project.AWS.Lambda.S3.BucketName}\")) {\n    $errors += \"The project variable Project.AWS.Lambda.S3.BucketName has not been configured.\",\n               \"See the [AWS documentation](https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-zip.html#configuration-function-update) for details on storing your function code in an S3 bucket.\"\n}\n\nif ($errors.Count -gt 0) {\n    Write-Highlight ($errors -join \"`n\")\n    Set-OctopusVariable -name \"AwsLambdaConfigured\" -value \"False\"\n} else {\n    Write-Host \"All AWS checks succeeded!\"\n    Set-OctopusVariable -name \"AwsLambdaConfigured\" -value \"True\"\n}"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "$errors = @()\n\nif (\"#{Octopus.Step[Attempt Login].Status.Code}\" -ne \"Succeeded\") {\n    $errors += \"The previous step failed, which indicates the AWS Account is not valid.\", \n               \"We recommend using an [AWS OIDC Account](https://octopus.com/docs/infrastructure/accounts/aws#configuring-aws-oidc-account) type to authenticate with AWS.\"\n}\n\nif ([string]::IsNullOrWhitespace(\"#{Project.AWS.Region}\")) {\n    $errors += \"The project variable Project.AWS.Region has not been configured.\",\n               \"See the [AWS documentation](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/lambda/create-function.html#options) for details on region.\"\n}\n\nif ([string]::IsNullOrWhitespace(\"#{Project.AWS.Lambda.FunctionName}\")) {\n    $errors += \"The project variable Project.AWS.Lambda.FunctionName has not been configured.\",\n               \"See the [AWS documentation](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/lambda/create-function.html#options) for details on function name.\"\n}\n\nif ([string]::IsNullOrWhitespace(\"#{Project.AWS.Lambda.S3.BucketName}\")) {\n    $errors += \"The project variable Project.AWS.Lambda.S3.BucketName has not been configured.\",\n               \"See the [AWS documentation](https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-zip.html#configuration-function-update) for details on storing your function code in an S3 bucket.\"\n}\n\nif ($errors.Count -gt 0) {\n    Write-Highlight ($errors -join \"`n\")\n    Set-OctopusVariable -name \"AwsLambdaConfigured\" -value \"False\"\n} else {\n    Write-Host \"All AWS checks succeeded!\"\n    Set-OctopusVariable -name \"AwsLambdaConfigured\" -value \"True\"\n}"
       }
 }
 
@@ -442,7 +442,7 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_upload_lambda" {
   process_id            = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process.process_aws_lambda[0].id}"
   channels              = null
   condition             = "Success"
-  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", image = "ghcr.io/octopusdeploylabs/aws-workertools" }
+  container             = { dockerfile = null, feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", git_url = null, image = "ghcr.io/octopusdeploylabs/aws-workertools" }
   environments          = null
   excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
   notes                 = "Upload the Lambda application packages to the specified S3 bucket."
@@ -456,27 +456,27 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_upload_lambda" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
         "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
         "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
-        "Octopus.Action.Aws.S3.S3OutputVariablesStrategy" = "AllFiles"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Aws.S3.PackageOptions" = jsonencode({
-        "bucketKeyBehaviour" = "Custom"
-        "cannedAcl" = "private"
-        "metadata" = []
-        "storageClass" = "STANDARD"
-        "tags" = []
-        "autoFocus" = "true"
-        "bucketKeyPrefix" = ""
-        "structuredVariableSubstitutionPatterns" = ""
-        "variableSubstitutionPatterns" = ""
-        "bucketKey" = "#{Project.AWS.Lambda.S3.FileName}"
-                })
         "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
         "Octopus.Action.Aws.S3.BucketName" = "#{Project.AWS.Lambda.S3.BucketName}"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Aws.S3.S3OutputVariablesStrategy" = "AllFiles"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Aws.S3.PackageOptions" = jsonencode({
+        "autoFocus" = "true"
+        "bucketKeyPrefix" = ""
+        "cannedAcl" = "private"
+        "structuredVariableSubstitutionPatterns" = ""
+        "tags" = []
+        "bucketKey" = "#{Project.AWS.Lambda.S3.FileName}"
+        "bucketKeyBehaviour" = "Custom"
+        "metadata" = []
+        "storageClass" = "STANDARD"
+        "variableSubstitutionPatterns" = ""
+                })
         "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
       }
 }
 
@@ -494,7 +494,7 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
   process_id            = "${length(data.octopusdeploy_projects.project_aws_lambda.projects) != 0 ? null : octopusdeploy_process.process_aws_lambda[0].id}"
   channels              = null
   condition             = "Success"
-  container             = { feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", image = "ghcr.io/octopusdeploylabs/aws-workertools" }
+  container             = { dockerfile = null, feed_id = "${length(data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds) != 0 ? data.octopusdeploy_feeds.feed_ghcr_anonymous.feeds[0].id : octopusdeploy_docker_container_registry.feed_ghcr_anonymous[0].id}", git_url = null, image = "ghcr.io/octopusdeploylabs/aws-workertools" }
   environments          = null
   excluded_environments = ["${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
   notes                 = "Stacks deploying Lambda versions must have unique names to ensure a new version is created each time. This step deploys a uniquely named [AWS SAM tooling](https://aws.amazon.com/serverless/sam/) stack, creating a version of the Lambda uploaded in the last step."
@@ -508,22 +508,18 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Aws.CloudFormationTemplate" = "sam.jvm.yaml"
-        "Octopus.Action.Package.JsonConfigurationVariablesTargets" = "sam.jvm.yaml"
-        "Octopus.Action.Aws.CloudFormationStackName" = "#{Octopus.Space.Name | Replace \"[^A-Za-z0-9]\" \"-\"}-OctopubProductsSAMLambda-#{Octopus.Environment.Name}"
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
-        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables"
-        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
         "Octopus.Action.Aws.IamCapabilities" = jsonencode([
         "CAPABILITY_AUTO_EXPAND",
         "CAPABILITY_IAM",
         "CAPABILITY_NAMED_IAM",
         ])
-        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
-        "Octopus.Action.Aws.TemplateSource" = "Package"
+        "Octopus.Action.Package.JsonConfigurationVariablesTargets" = "sam.jvm.yaml"
+        "Octopus.Action.Aws.CloudFormationStackName" = "#{Octopus.Space.Name | Replace \"[^A-Za-z0-9]\" \"-\"}-OctopubProductsSAMLambda-#{Octopus.Environment.Name}"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.TemplateSource" = "Package"
+        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
+        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
         {
         "key" = "OctopusTenantId"
@@ -546,8 +542,8 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
         "key" = "OctopusProjectId"
                 },
         {
-        "value" = "#{Octopus.Environment.Id}"
         "key" = "OctopusEnvironmentId"
+        "value" = "#{Octopus.Environment.Id}"
                 },
         {
         "key" = "Environment"
@@ -558,7 +554,11 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
         "value" = "#{Octopus.Project.Name}"
                 },
         ])
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
         "Octopus.Action.Aws.AssumeRole" = "False"
+        "Octopus.Action.Aws.WaitForCompletion" = "True"
       }
 }
 
@@ -582,8 +582,8 @@ resource "octopusdeploy_process_templated_step" "process_step_aws_lambda_scan_fo
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
@@ -612,9 +612,9 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deployment_succes
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }
   execution_properties  = {
+        "Octopus.Action.Email.To" = "admin@example.org"
         "Octopus.Action.Email.Subject" = "Deployment for #{Octopus.Project.Name} completed successfully!"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Email.To" = "admin@example.org"
       }
 }
 
