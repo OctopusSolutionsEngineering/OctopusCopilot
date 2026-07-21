@@ -412,9 +412,9 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_approve_p
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
+        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
       }
 }
 
@@ -442,8 +442,8 @@ resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app
       }
   parameters            = {
         "CheckTargets.Message" = "We recommend the Kubernetes Agent - https://octopus.com/docs/kubernetes/targets/kubernetes-agent"
-        "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
         "CheckTargets.Octopus.Role" = "Kubernetes"
+        "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
       }
 }
 
@@ -476,16 +476,16 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{if Octopus.Deployment.Tenant.Name}#{Octopus.Deployment.Tenant.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{/if}"
         "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Project.Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Project.Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Project.Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Project.Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"1\"\n            memory: \"512Mi\"\n          requests:\n            cpu: \"0.5\"\n            memory: \"256Mi\"\n        livenessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
         "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{if Octopus.Deployment.Tenant.Name}#{Octopus.Deployment.Tenant.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{/if}"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
+        "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: \"#{Project.Kubernetes.Deployment.Name}\"\n  labels:\n    app: \"#{Project.Kubernetes.Deployment.Name}\"\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: \"#{Project.Kubernetes.Deployment.Name}\"\n  template:\n    metadata:\n      labels:\n        app: \"#{Project.Kubernetes.Deployment.Name}\"\n    spec:\n      containers:\n      - name: octopub\n        # The image is sourced from the package reference. This allows the package version to be selected\n        # at release creation time.\n        image: \"ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}\"\n        ports:\n        - containerPort: 8080\n        resources:\n          limits:\n            cpu: \"1\"\n            memory: \"512Mi\"\n          requests:\n            cpu: \"0.5\"\n            memory: \"256Mi\"\n        livenessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 30\n          periodSeconds: 10\n        readinessProbe:\n          httpGet:\n            path: /health/products\n            port: 8080\n          initialDelaySeconds: 5\n          periodSeconds: 5"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -508,8 +508,8 @@ resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
