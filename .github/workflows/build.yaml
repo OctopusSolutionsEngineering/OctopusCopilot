@@ -19,6 +19,7 @@ name: Python Build
       - '.octopus/**'
       - 'context/**'
       - '.github/agents/**'
+      - '.idea/**'
   schedule:
     - cron: '0 0 * * *'
 jobs:
