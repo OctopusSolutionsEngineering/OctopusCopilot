@@ -272,11 +272,11 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptBody" = "echo \"Hello world\""
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptBody" = "echo \"Hello world\""
       }
 }
 
@@ -374,7 +374,7 @@ resource "octopusdeploy_process_step" "process_step_deployment_orchestration_dep
   excluded_environments = null
   notes                 = "This step deploys a release of another project."
   package_requirement   = "LetOctopusDecide"
-  primary_package       = { acquisition_location = "NotAcquired", feed_id = "${data.octopusdeploy_feeds.feed_octopus_server_releases__built_in_.feeds[0].id}", id = null, package_id = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}", properties = null }
+  primary_package       = { acquisition_location = "NotAcquired", feed_id = "${data.octopusdeploy_feeds.feed_octopus_server_releases__built_in_.feeds[0].id}", id = null, package_id = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}", properties = null, version = null }
   slug                  = "deploy-a-release"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null

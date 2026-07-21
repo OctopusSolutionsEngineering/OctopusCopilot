@@ -257,7 +257,7 @@ resource "octopusdeploy_process_step" "process_step_claude_list_commits" {
   excluded_environments = null
   notes                 = "Lists the commits associated with the package being deployed"
   package_requirement   = "LetOctopusDecide"
-  packages              = { octopub-frontend = { acquisition_location = "Server", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_claude_step_list_commits_package_octopub_frontend_packageid}", properties = { Extract = "True", SelectionMode = "immediate" } } }
+  packages              = { octopub-frontend = { acquisition_location = "Server", feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}", id = null, package_id = "${var.project_claude_step_list_commits_package_octopub_frontend_packageid}", properties = { Extract = "True", SelectionMode = "immediate" }, version = "20260721.659.1" } }
   slug                  = "list-commits"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
@@ -265,10 +265,10 @@ resource "octopusdeploy_process_step" "process_step_claude_list_commits" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptBody" = "#{each change in Octopus.Deployment.Changes}\n#{each commit in change.Commits}\nWrite-Highlight \"[#{commit.LinkUrl}](#{commit.LinkUrl})\"\n#{/each}\n#{/each}"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptBody" = "#{each change in Octopus.Deployment.Changes}\n#{each commit in change.Commits}\nWrite-Highlight \"[#{commit.LinkUrl}](#{commit.LinkUrl})\"\n#{/each}\n#{/each}"
       }
 }
 
@@ -291,16 +291,15 @@ resource "octopusdeploy_process_step" "process_step_claude_run_claude_agent" {
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Claude.Prompt" = "Your task is to rate the impact of the Git commits that contribute to the new version of the application being deployed.\n\nThe following is the list of Git commits:\n\n#{each change in Octopus.Deployment.Changes}\n#{each commit in change.Commits}\n#{commit.LinkUrl}\n#{/each}\n#{/each}\n\nOutput a value between 1 and 10 based on the impact of the changes in the following categories:\n\n* Security\n* User Interface\n* Documentation\n* Business Logic\n* Performance\n* Code dependencies\n* Code refactoring\n\nThe result must be a plain JSON blob like this:\n\n```\n{\n  \"security\": 1,\n  \"userInterface\": 4,\n  \"documentation\": 7,\n  \"businessLogic\": 3,\n  \"performance\": 1,\n  \"dependencies\": 9,\n  \"refactoring\": 5\n}\n```"
+        "Octopus.Action.Claude.Model" = "claude-sonnet-5"
+        "Octopus.Action.Claude.OctopusMcpTools" = jsonencode([
+        "*",
+        ])
+        "Octopus.Action.Claude.Effort" = "medium"
         "Octopus.Action.Claude.InjectionCheckEnabled" = "False"
         "Octopus.Action.Claude.ApiKey" = "#{Project.Claude.ApiKey}"
-        "Octopus.Action.Claude.SandboxMode" = "None"
-        "Octopus.Action.Claude.Model" = "claude-sonnet-5"
-        "Octopus.Action.Claude.Permissions" = jsonencode({
-        "deny" = [
-        "WebFetch",
-        "Bash",
-        ]
-                })
         "Octopus.Action.Claude.McpServers" = jsonencode([
         {
         "headers" = {
@@ -315,12 +314,13 @@ resource "octopusdeploy_process_step" "process_step_claude_run_claude_agent" {
         "url" = "https://api.githubcopilot.com/mcp/"
                 },
         ])
-        "Octopus.Action.Claude.Prompt" = "Your task is to rate the impact of the Git commits that contribute to the new version of the application being deployed.\n\nThe following is the list of Git commits:\n\n#{each change in Octopus.Deployment.Changes}\n#{each commit in change.Commits}\n#{commit.LinkUrl}\n#{/each}\n#{/each}\n\nOutput a value between 1 and 10 based on the impact of the changes in the following categories:\n\n* Security\n* User Interface\n* Documentation\n* Business Logic\n* Performance\n* Code dependencies\n* Code refactoring\n\nThe result must be a plain JSON blob like this:\n\n```\n{\n  \"security\": 1,\n  \"userInterface\": 4,\n  \"documentation\": 7,\n  \"businessLogic\": 3,\n  \"performance\": 1,\n  \"dependencies\": 9,\n  \"refactoring\": 5\n}\n```"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Claude.OctopusMcpTools" = jsonencode([
-        "*",
-        ])
-        "Octopus.Action.Claude.Effort" = "medium"
+        "Octopus.Action.Claude.Permissions" = jsonencode({
+        "deny" = [
+        "WebFetch",
+        "Bash",
+        ]
+                })
+        "Octopus.Action.Claude.SandboxMode" = "None"
       }
 }
 
@@ -343,10 +343,10 @@ resource "octopusdeploy_process_step" "process_step_claude_extract_json" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "$response =  $OctopusParameters[\"Octopus.Action[Run Claude Agent].Output.Octopus.Action.Claude.Response\"]\n\nif ($response -match '```json\\s*([\\s\\S]*?)```') {\n    $jsonText = $Matches[1].Trim()\n\n    if (Test-Json -Json $jsonText) {\n        Write-Highlight \"JSON Response:`n$jsonText\"\n    \n        Set-OctopusVariable -name \"JsonResult\" -value $jsonText\n        \n        $objects = $jsonText | ConvertFrom-Json\n\n        $needApproval = $objects.security -ge 5 -or $objects.businessLogic -ge 5 -or $objects.performance -ge 5\n\n        Write-Highlight \"Needs approval: $needApproval\"\n\n        Set-OctopusVariable -name \"NeedApproval\" -value $needApproval\n\n        Write-Highlight \"Access `##{Octopus.Action[#{Octopus.Step.Name}].Output.JsonResult}` to get the JSON response\"\n        Write-Highlight \"Access `##{Octopus.Action[#{Octopus.Step.Name}].Output.NeedApproval}` to get the approval flag\"\n    } else {\n      Write-Warning \"The markdown block is not valid JSON.\"\n    }\n} else {\n    Write-Error \"No JSON markdown block found in the response.\"\n}\n\n"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -394,10 +394,10 @@ resource "octopusdeploy_process_step" "process_step_claude_perform_deployment" {
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "echo \"Performing deployment...\""
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -407,11 +407,12 @@ resource "octopusdeploy_process_steps_order" "process_step_order_claude" {
   steps      = ["${length(data.octopusdeploy_projects.project_claude.projects) != 0 ? null : octopusdeploy_process_step.process_step_claude_list_commits[0].id}", "${length(data.octopusdeploy_projects.project_claude.projects) != 0 ? null : octopusdeploy_process_step.process_step_claude_run_claude_agent[0].id}", "${length(data.octopusdeploy_projects.project_claude.projects) != 0 ? null : octopusdeploy_process_step.process_step_claude_extract_json[0].id}", "${length(data.octopusdeploy_projects.project_claude.projects) != 0 ? null : octopusdeploy_process_step.process_step_claude_manual_intervention_required[0].id}", "${length(data.octopusdeploy_projects.project_claude.projects) != 0 ? null : octopusdeploy_process_step.process_step_claude_perform_deployment[0].id}"]
 }
 
-resource "octopusdeploy_variable" "claude_project_claude_apikey_1" {
+resource "octopusdeploy_variable" "claude_project_github_pat_1" {
   count           = "${length(data.octopusdeploy_projects.project_claude.projects) != 0 ? 0 : 1}"
   owner_id        = "${length(data.octopusdeploy_projects.project_claude.projects) == 0 ?octopusdeploy_project.project_claude[0].id : data.octopusdeploy_projects.project_claude.projects[0].id}"
-  name            = "Project.Claude.ApiKey"
+  name            = "Project.GitHub.PAT"
   type            = "Sensitive"
+  description     = "The GitHub Personal Access Token that is used by the GitHub MCP server."
   is_sensitive    = true
   sensitive_value = "Change Me!"
   lifecycle {
@@ -421,11 +422,12 @@ resource "octopusdeploy_variable" "claude_project_claude_apikey_1" {
   depends_on = []
 }
 
-resource "octopusdeploy_variable" "claude_project_github_pat_1" {
+resource "octopusdeploy_variable" "claude_project_claude_apikey_1" {
   count           = "${length(data.octopusdeploy_projects.project_claude.projects) != 0 ? 0 : 1}"
   owner_id        = "${length(data.octopusdeploy_projects.project_claude.projects) == 0 ?octopusdeploy_project.project_claude[0].id : data.octopusdeploy_projects.project_claude.projects[0].id}"
-  name            = "Project.GitHub.PAT"
+  name            = "Project.Claude.ApiKey"
   type            = "Sensitive"
+  description     = "The Claude API key"
   is_sensitive    = true
   sensitive_value = "Change Me!"
   lifecycle {
