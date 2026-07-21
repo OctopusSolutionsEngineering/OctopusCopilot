@@ -105,7 +105,7 @@ def build_error_response(url, e):
     """
     if is_enhanced_logging_enabled(url):
         return CopilotResponse(
-            f"{project_prompt_error_message}\nError details: {str(e)}"
+            f"{project_prompt_error_message}\nError details: ```\n{str(e)}\n```"
         )
     return CopilotResponse(project_prompt_error_message)
 
