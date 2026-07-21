@@ -403,3 +403,23 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > llm.tf
 
 ./generate_instructions.py llm.tf "LLM Kubernetes" > instructions_llm.md
+
+"$CONTAINER_RUNTIME" run --pull "$PULL" -v "$PWD:/tmp/octoexport$VOLUME_SUFFIX" --rm "$IMAGE" \
+    -url https://mattc.octopus.app \
+    -space Spaces-3368 \
+    -apiKey $OCTOPUS_CLI_API_KEY \
+    -projectName "Claude" \
+    -stepTemplate \
+    -stepTemplateName "Space Context" \
+    -stepTemplateKey "SpaceContext" \
+    -dummySecretVariableValues \
+    -includeProviderServerDetails=false \
+    -ignoreCacManagedValues=false \
+    -excludeCaCProjectSettings=true \
+    -includeOctopusOutputVars=false \
+    -inlineVariableValues \
+    -excludeAllRunbooks=true \
+    -dest /tmp/octoexport
+cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > claude.tf
+
+./generate_instructions.py claude.tf "Claude" > instructions_claude.md
