@@ -265,10 +265,16 @@ resource "octopusdeploy_process_step" "process_step_claude_list_commits" {
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptBody" = <<EOT
+#{each change in Octopus.Deployment.Changes}
+#{each commit in change.Commits}
+Write-Highlight "[#{commit.LinkUrl}](#{commit.LinkUrl})"
+#{/each}
+#{/each}
+EOT
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptBody" = "#{each change in Octopus.Deployment.Changes}\n#{each commit in change.Commits}\nWrite-Highlight \"[#{commit.LinkUrl}](#{commit.LinkUrl})\"\n#{/each}\n#{/each}"
       }
 }
 
@@ -279,7 +285,7 @@ resource "octopusdeploy_process_step" "process_step_claude_run_claude_agent" {
   process_id            = "${length(data.octopusdeploy_projects.project_claude.projects) != 0 ? null : octopusdeploy_process.process_claude[0].id}"
   channels              = null
   condition             = "Success"
-  container             = { dockerfile = "FROM python:3.11-slim\n\n# 1. Install prerequisites (including libicu for .NET Calamari compatibility)\nRUN apt-get update && apt-get install -y --no-install-recommends \\\n    curl \\\n    git \\\n    libicu-dev \\\n    ca-certificates \\\n    && rm -rf /var/lib/apt/lists/*\n\n# 2. Install the native Claude Code CLI tool \nRUN curl -fsSL https://claude.ai/install.sh | bash\n\n# 3. Create a global symlink using the exact path from your install log\n# This bypasses the $PATH profile restriction for non-interactive runners\nRUN ln -sf /root/.local/bin/claude /usr/local/bin/claude\n\nWORKDIR /app\nCMD [\"/bin/bash\"]", feed_id = "", git_url = null, image = null }
+  container             = { dockerfile = "FROM python:3.11-slim\n\n# 1. Install prerequisites (including libicu for .NET Calamari compatibility)\nRUN apt-get update && apt-get install -y --no-install-recommends \\\n    curl \\\n    git \\\n    libicu-dev \\\n    ca-certificates \\\n    && rm -rf /var/lib/apt/lists/*\n\n# 2. Install the native Claude Code CLI tool \nRUN curl -fsSL https://claude.ai/install.sh | bash\n\n# 3. Create a global symlink using the exact path from your install log\n# This bypasses the $PATH profile restriction for non-interactive runners\nRUN ln -sf /root/.local/bin/claude /usr/local/bin/claude\n\nWORKDIR /app\nCMD [\"/bin/bash\"]", feed_id = "", git_url = null, image = "" }
   environments          = null
   excluded_environments = null
   notes                 = "Inspects the Git commits and rates the changes in a number of categories."
@@ -292,7 +298,8 @@ resource "octopusdeploy_process_step" "process_step_claude_run_claude_agent" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Claude.InjectionCheckEnabled" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Claude.ApiKey" = "#{Project.Claude.ApiKey}"
         "Octopus.Action.Claude.Permissions" = jsonencode({
         "deny" = [
         "WebFetch",
@@ -300,12 +307,48 @@ resource "octopusdeploy_process_step" "process_step_claude_run_claude_agent" {
         "Bash",
         ]
                 })
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Claude.Model" = "claude-sonnet-5"
+        "Octopus.Action.Claude.InjectionCheckEnabled" = "False"
+        "Octopus.Action.Claude.OctopusMcpTools" = jsonencode([
+        "*",
+        ])
+        "Octopus.Action.Claude.Prompt" = <<EOT
+Your task is to rate the impact of the Git commits that contribute to the new version of the application being deployed.
+
+The following is the list of Git commits:
+
+#{each change in Octopus.Deployment.Changes}
+#{each commit in change.Commits}
+#{commit.LinkUrl}
+#{/each}
+#{/each}
+
+Output a value between 1 and 10 based on the impact of the changes in the following categories:
+
+* Security
+* User Interface
+* Documentation
+* Business Logic
+* Performance
+* Code dependencies
+* Code refactoring
+
+The result must be a plain JSON blob like this:
+
+```
+{
+  "security": 1,
+  "userInterface": 4,
+  "documentation": 7,
+  "businessLogic": 3,
+  "performance": 1,
+  "dependencies": 9,
+  "refactoring": 5
+}
+```
+EOT
         "Octopus.Action.Claude.McpServers" = jsonencode([
         {
-        "type" = "http"
-        "name" = "GitHub"
         "url" = "https://api.githubcopilot.com/mcp/"
         "headers" = {
         "Authorization" = "#{Project.GitHub.PAT}"
@@ -314,15 +357,12 @@ resource "octopusdeploy_process_step" "process_step_claude_run_claude_agent" {
         "allowedTools" = [
         "*",
         ]
+        "type" = "http"
+        "name" = "GitHub"
                 },
         ])
-        "Octopus.Action.Claude.Effort" = "medium"
-        "Octopus.Action.Claude.OctopusMcpTools" = jsonencode([
-        "*",
-        ])
-        "Octopus.Action.Claude.Prompt" = "Your task is to rate the impact of the Git commits that contribute to the new version of the application being deployed.\n\nThe following is the list of Git commits:\n\n#{each change in Octopus.Deployment.Changes}\n#{each commit in change.Commits}\n#{commit.LinkUrl}\n#{/each}\n#{/each}\n\nOutput a value between 1 and 10 based on the impact of the changes in the following categories:\n\n* Security\n* User Interface\n* Documentation\n* Business Logic\n* Performance\n* Code dependencies\n* Code refactoring\n\nThe result must be a plain JSON blob like this:\n\n```\n{\n  \"security\": 1,\n  \"userInterface\": 4,\n  \"documentation\": 7,\n  \"businessLogic\": 3,\n  \"performance\": 1,\n  \"dependencies\": 9,\n  \"refactoring\": 5\n}\n```"
-        "Octopus.Action.Claude.ApiKey" = "#{Project.Claude.ApiKey}"
         "Octopus.Action.Claude.SandboxMode" = "None"
+        "Octopus.Action.Claude.Effort" = "medium"
       }
 }
 
@@ -345,10 +385,39 @@ resource "octopusdeploy_process_step" "process_step_claude_extract_json" {
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptBody" = <<EOT
+$response =  $OctopusParameters["Octopus.Action[Run Claude Agent].Output.Octopus.Action.Claude.Response"]
+
+if ($response -match "(?s)\{.*\}") {
+    $jsonText = $Matches[0].Trim()
+
+    if (Test-Json -Json $jsonText) {
+        Write-Highlight "JSON Response:`n$jsonText"
+
+        Set-OctopusVariable -name "JsonResult" -value $jsonText
+
+        $objects = $jsonText | ConvertFrom-Json
+
+        $needApproval = $objects.security -ge 5 -or $objects.businessLogic -ge 5 -or $objects.performance -ge 5
+
+        Write-Highlight "Needs approval: $needApproval"
+
+        Set-OctopusVariable -name "NeedApproval" -value $needApproval
+
+        Write-Highlight "Access `##{Octopus.Action[#{Octopus.Step.Name}].Output.JsonResult}` to get the JSON response"
+        Write-Highlight "Access `##{Octopus.Action[#{Octopus.Step.Name}].Output.NeedApproval}` to get the approval flag"
+    } else {
+        Write-Warning "The markdown block is not valid JSON."
+    }
+} else {
+    Write-Error "No JSON markdown block found in the response."
+}
+
+
+EOT
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptBody" = "$response =  $OctopusParameters[\"Octopus.Action[Run Claude Agent].Output.Octopus.Action.Claude.Response\"]\n\nif ($response -match \"(?s)\\{.*\\}\") {\n    $jsonText = $Matches[0].Trim()\n\n    if (Test-Json -Json $jsonText) {\n        Write-Highlight \"JSON Response:`n$jsonText\"\n\n        Set-OctopusVariable -name \"JsonResult\" -value $jsonText\n\n        $objects = $jsonText | ConvertFrom-Json\n\n        $needApproval = $objects.security -ge 5 -or $objects.businessLogic -ge 5 -or $objects.performance -ge 5\n\n        Write-Highlight \"Needs approval: $needApproval\"\n\n        Set-OctopusVariable -name \"NeedApproval\" -value $needApproval\n\n        Write-Highlight \"Access `##{Octopus.Action[#{Octopus.Step.Name}].Output.JsonResult}` to get the JSON response\"\n        Write-Highlight \"Access `##{Octopus.Action[#{Octopus.Step.Name}].Output.NeedApproval}` to get the approval flag\"\n    } else {\n        Write-Warning \"The markdown block is not valid JSON.\"\n    }\n} else {\n    Write-Error \"No JSON markdown block found in the response.\"\n}\n\n"
       }
 }
 
@@ -396,10 +465,10 @@ resource "octopusdeploy_process_step" "process_step_claude_perform_deployment" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptBody" = "echo \"Performing deployment...\""
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptBody" = "echo \"Performing deployment...\""
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
