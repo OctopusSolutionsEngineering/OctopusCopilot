@@ -3201,6 +3201,17 @@ resource "octopusdeploy_channel" "channel_dev_deployment_application" {
 
 ## Octopus Deployment Process Instructions
 
+* The `dockerfile` property in a `container` block of a `octopusdeploy_process_step` resource must be a inline string, not a heredoc. You will be penalized for using a heredoc for the `dockerfile` property.
+* You will be penalized for creating a `container` block like this, as it is invalid HCL:
+
+```
+container = { dockerfile = <<-EOT
+    FROM python:3.11-slim
+    CMD ["/bin/bash"]
+  EOT
+  , feed_id = "", git_url = null, image = "" }
+```
+
 * **CRITICAL — source system parameter references in script bodies must be converted to Octopus variable syntax**: Inline script bodies (in `Octopus.Action.Script.ScriptBody` or kubectl commands) generated from `deleteManifest`, `scaleManifest`, or `runJob` stage types may contain Spring Expression Language (SpEL) expressions that reference pipeline parameters, such as `${ parameters.model_version }`. These expressions use the `${ }` syntax which does NOT evaluate in Octopus Deploy. You MUST convert them to Octopus variable syntax: replace `${ parameters.<name> }` with `#{<name>}`. For example:
   * `${ parameters.model_version }` → `#{model_version}`
   * `${ parameters.namespace }` → `#{namespace}`
