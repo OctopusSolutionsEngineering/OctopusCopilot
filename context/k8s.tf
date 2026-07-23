@@ -412,9 +412,9 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_approve_p
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -437,13 +437,13 @@ resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
-        "CheckTargets.Octopus.Role" = "Kubernetes"
         "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
         "CheckTargets.Message" = "We recommend the Kubernetes Agent - https://octopus.com/docs/kubernetes/targets/kubernetes-agent"
+        "CheckTargets.Octopus.Role" = "Kubernetes"
       }
 }
 
@@ -477,6 +477,12 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_
       }
   execution_properties  = {
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{if Octopus.Deployment.Tenant.Name}#{Octopus.Deployment.Tenant.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{/if}"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
         "Octopus.Action.KubernetesContainers.CustomResourceYaml" = <<EOT
 apiVersion: apps/v1
 kind: Deployment
@@ -521,14 +527,8 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
 EOT
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{if Octopus.Deployment.Tenant.Name}#{Octopus.Deployment.Tenant.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{/if}"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
+        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
       }
 }
 
@@ -556,8 +556,8 @@ resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
-        "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
         "PackageId" = "com.octopus:octopub-sbom"
+        "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
                 })
       }
 }

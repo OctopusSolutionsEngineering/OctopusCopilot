@@ -302,35 +302,35 @@ resource "octopusdeploy_process_step" "process_step_iis_deploy_to_iis" {
         "Octopus.Action.TargetRoles" = "OctoPub-Windows-IIS"
       }
   execution_properties  = {
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.IISWebSite,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
         "Octopus.Action.IISWebSite.CreateOrUpdateWebSite" = "True"
-        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
-        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
-        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
-        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "False"
-        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
         "Octopus.Action.IISWebSite.StartWebSite" = "True"
         "Octopus.Action.IISWebSite.EnableAnonymousAuthentication" = "True"
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.IISWebSite.ApplicationPoolName" = "WebApps"
-        "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
         "Octopus.Action.IISWebSite.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
+        "Octopus.Action.IISWebSite.WebRootType" = "packageRoot"
         "Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion" = "v4.0"
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
+        "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolIdentityType" = "ApplicationPoolIdentity"
         "Octopus.Action.IISWebSite.DeploymentType" = "webSite"
-        "Octopus.Action.IISWebSite.WebSiteName" = "MyWebApp"
         "Octopus.Action.IISWebSite.Bindings" = jsonencode([
         {
-        "enabled" = "True"
         "protocol" = "http"
         "port" = "8080"
         "host" = ""
         "thumbprint" = null
         "certificateVariable" = null
         "requireSni" = "False"
+        "enabled" = "True"
                 },
         ])
-        "Octopus.Action.EnabledFeatures" = ",Octopus.Features.IISWebSite,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
         "Octopus.Action.RunOnServer" = "false"
+        "Octopus.Action.IISWebSite.ApplicationPoolName" = "WebApps"
+        "Octopus.Action.IISWebSite.WebSiteName" = "MyWebApp"
+        "Octopus.Action.IISWebSite.StartApplicationPool" = "True"
+        "Octopus.Action.IISWebSite.EnableBasicAuthentication" = "False"
+        "Octopus.Action.IISWebSite.EnableWindowsAuthentication" = "False"
+        "Octopus.Action.IISWebSite.WebApplication.ApplicationPoolFrameworkVersion" = "v4.0"
       }
 }
 
@@ -353,7 +353,6 @@ resource "octopusdeploy_process_step" "process_step_iis_print_message_when_no_ta
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = <<EOT
 # The variable to check must be in the format
 # #{Octopus.Step[<name of the step that deploys the web app>].Status.Code}
@@ -365,6 +364,7 @@ EOT
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -396,11 +396,11 @@ resource "octopusdeploy_process_step" "process_step_iis_scan_for_vulnerabilities
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DirectorySbomScan.ps1"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "OctopusUseBundledTooling" = "False"
       }
 }
 

@@ -6334,6 +6334,15 @@ You will be penalized for setting `worker_pool_id` directly on a Kubernetes step
 
 The following instructions provide default guidance on how to implement common deployment patterns, processes, or strategies.
 
+## Run a runbook
+
+* Use the "Run Octopus Deploy Runbook" community step template from "https://library.octopus.com/step-templates/0444b0b3-088e-4689-b755-112d1360ffe3" to run a runbook from a deployment process.
+
+## Blocking release progression
+
+* Use the "Block Release Progression" community step template from "https://library.octopus.com/step-templates/78a182b3-5369-4e13-9292-b7f991295ad1" to block a release from progressing through environments.
+
+
 ## Kubernetes target
 
 * When the prompt indicates that a Kubernetes target is required but does not provide a specific target configuration, use the following canonical pattern:
