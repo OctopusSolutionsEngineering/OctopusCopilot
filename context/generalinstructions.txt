@@ -6337,11 +6337,12 @@ The following instructions provide default guidance on how to implement common d
 ## Run a runbook
 
 * Use the "Run Octopus Deploy Runbook" community step template from "https://library.octopus.com/step-templates/0444b0b3-088e-4689-b755-112d1360ffe3" to run a runbook from a deployment process.
+* You must use the "Run Octopus Deploy Runbook" step template to run a runbook from a deployment process unless otherwise specified in the prompt.
 
 ## Blocking release progression
 
 * Use the "Block Release Progression" community step template from "https://library.octopus.com/step-templates/78a182b3-5369-4e13-9292-b7f991295ad1" to block a release from progressing through environments.
-
+* You must use the "Block Release Progression" step template to block a release from progressing through environments unless otherwise specified in the prompt.
 
 ## Kubernetes target
 
