@@ -15,7 +15,7 @@ def create_progressive_deployment_project_wrapper(query, callback, logging):
         * Create a project with the progressive rollouts step in the space "My Space" called "My Project"
         * Create Progressive delivery project called "My Project" in the space "My Space"
         * Create Progressive deployment project called "My Project"
-        * Create Progressive deployment project called "My Project". Create a Token account called "K8s" with value "blah"
+        * Create Canary deployment project called "My Project". Create a Token account called "K8s" with value "blah"
 
         Args:
         space_name: The optional name of the space
