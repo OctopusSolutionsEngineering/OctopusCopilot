@@ -476,15 +476,7 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{if Octopus.Deployment.Tenant.Name}#{Octopus.Deployment.Tenant.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{/if}"
-        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
         "Octopus.Action.KubernetesContainers.CustomResourceYaml" = <<EOT
 apiVersion: apps/v1
 kind: Deployment
@@ -529,6 +521,14 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
 EOT
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{if Octopus.Deployment.Tenant.Name}#{Octopus.Deployment.Tenant.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{/if}"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
+        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"
       }
 }
 
@@ -551,8 +551,8 @@ resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
@@ -568,10 +568,10 @@ resource "octopusdeploy_process_steps_order" "process_step_order_kubernetes_web_
   steps      = ["${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_kubernetes_web_app_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_kubernetes_web_app_octopus___check_targets_available[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_kubernetes_web_app_deploy_a_kubernetes_web_app_via_yaml[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_kubernetes_web_app_scan_for_vulnerabilities[0].id}"]
 }
 
-resource "octopusdeploy_variable" "kubernetes_web_app_octopus_project_apikey_1" {
+resource "octopusdeploy_variable" "kubernetes_web_app_octopus_project_api_key_1" {
   count           = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
   owner_id        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
-  name            = "Octopus.Project.ApiKey"
+  name            = "Octopus.Project.Api.Key"
   type            = "Sensitive"
   is_sensitive    = true
   sensitive_value = "Change Me!"
