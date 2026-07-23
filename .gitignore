@@ -11,3 +11,4 @@ htmlcov
 dependencyUpdates.txt
 context/step_template.json
 .DS_Store
+tmp
