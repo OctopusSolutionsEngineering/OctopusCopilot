@@ -7,7 +7,7 @@ def create_progressive_deployment_project_wrapper(query, callback, logging):
     ):
         """
         Creates a Progressive deployment (also known as canary deployments or progressive delivery) project in Octopus Deploy, in addition to any supporting resources.
-        
+
         Select this tool when the prompt mentions progressive deployments, canary deployments, or progressive rollouts.
 
         Example prompts include:
