@@ -120,7 +120,6 @@ from domain.tools.wrapper.projects.create_orchestration_project import (
     create_orchestration_project_wrapper,
 )
 from domain.tools.wrapper.projects.create_progressive_deployment_project import (
-    create_progressive_delivery_project_wrapper,
     create_progressive_deployment_project_wrapper,
 )
 from domain.tools.wrapper.projects.create_project import create_project_wrapper
