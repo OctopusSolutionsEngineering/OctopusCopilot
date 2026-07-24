@@ -335,9 +335,9 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_approve_productio
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate setup].Output.AwsLambdaConfigured == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
       }
 }
 
@@ -361,8 +361,8 @@ resource "octopusdeploy_process_templated_step" "process_step_aws_lambda_octopus
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -389,15 +389,15 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_attempt_login" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
-        "Octopus.Action.Script.ScriptBody" = "aws sts get-caller-identity"
-        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
-        "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.ScriptBody" = "aws sts get-caller-identity"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
       }
 }
 
@@ -420,6 +420,7 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_validate_setup" {
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = <<EOT
@@ -454,7 +455,6 @@ if ($errors.Count -gt 0) {
 }
 EOT
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -486,27 +486,27 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_upload_lambda" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Aws.S3.S3OutputVariablesStrategy" = "AllFiles"
-        "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
+        "Octopus.Action.Aws.AssumeRole" = "False"
         "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
+        "Octopus.Action.Aws.S3.S3OutputVariablesStrategy" = "AllFiles"
         "Octopus.Action.Aws.S3.PackageOptions" = jsonencode({
-        "variableSubstitutionPatterns" = ""
-        "bucketKey" = "#{Project.AWS.Lambda.S3.FileName}"
-        "cannedAcl" = "private"
-        "storageClass" = "STANDARD"
-        "structuredVariableSubstitutionPatterns" = ""
         "autoFocus" = "true"
+        "bucketKey" = "#{Project.AWS.Lambda.S3.FileName}"
         "bucketKeyBehaviour" = "Custom"
         "bucketKeyPrefix" = ""
+        "cannedAcl" = "private"
         "metadata" = []
+        "structuredVariableSubstitutionPatterns" = ""
         "tags" = []
+        "storageClass" = "STANDARD"
+        "variableSubstitutionPatterns" = ""
                 })
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.AssumeRole" = "False"
         "Octopus.Action.Aws.S3.BucketName" = "#{Project.AWS.Lambda.S3.BucketName}"
+        "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
       }
 }
 
@@ -538,15 +538,8 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables"
-        "Octopus.Action.Aws.CloudFormationStackName" = "#{Octopus.Space.Name | Replace \"[^A-Za-z0-9]\" \"-\"}-OctopubProductsSAMLambda-#{Octopus.Environment.Name}"
-        "Octopus.Action.Aws.IamCapabilities" = jsonencode([
-        "CAPABILITY_AUTO_EXPAND",
-        "CAPABILITY_IAM",
-        "CAPABILITY_NAMED_IAM",
-        ])
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
+        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+        "Octopus.Action.Aws.WaitForCompletion" = "True"
         "Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([
         {
         "key" = "OctopusTenantId"
@@ -561,16 +554,16 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
         "value" = "#{if Octopus.RunBookRun.Id}#{Octopus.RunBookRun.Id}#{/if}#{unless Octopus.RunBookRun.Id}none#{/unless}"
                 },
         {
-        "key" = "OctopusDeploymentId"
         "value" = "#{if Octopus.Deployment.Id}#{Octopus.Deployment.Id}#{/if}#{unless Octopus.Deployment.Id}none#{/unless}"
+        "key" = "OctopusDeploymentId"
                 },
         {
         "key" = "OctopusProjectId"
         "value" = "#{Octopus.Project.Id}"
                 },
         {
-        "value" = "#{Octopus.Environment.Id}"
         "key" = "OctopusEnvironmentId"
+        "value" = "#{Octopus.Environment.Id}"
                 },
         {
         "key" = "Environment"
@@ -581,14 +574,21 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deploy_lambda_sam
         "value" = "#{Octopus.Project.Name}"
                 },
         ])
-        "Octopus.Action.Aws.CloudFormationTemplate" = "sam.jvm.yaml"
-        "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
-        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
-        "Octopus.Action.Aws.AssumeRole" = "False"
-        "Octopus.Action.Package.JsonConfigurationVariablesTargets" = "sam.jvm.yaml"
-        "Octopus.Action.Aws.TemplateSource" = "Package"
-        "Octopus.Action.Aws.WaitForCompletion" = "True"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Aws.CloudFormationStackName" = "#{Octopus.Space.Name | Replace \"[^A-Za-z0-9]\" \"-\"}-OctopubProductsSAMLambda-#{Octopus.Environment.Name}"
+        "Octopus.Action.Aws.AssumeRole" = "False"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Aws.IamCapabilities" = jsonencode([
+        "CAPABILITY_AUTO_EXPAND",
+        "CAPABILITY_IAM",
+        "CAPABILITY_NAMED_IAM",
+        ])
+        "Octopus.Action.Aws.Region" = "#{Project.AWS.Region}"
+        "Octopus.Action.Aws.TemplateSource" = "Package"
+        "Octopus.Action.Package.JsonConfigurationVariablesTargets" = "sam.jvm.yaml"
+        "Octopus.Action.Aws.CloudFormationTemplate" = "sam.jvm.yaml"
+        "Octopus.Action.AwsAccount.Variable" = "Project.AWS.Account"
+        "Octopus.Action.EnabledFeatures" = "Octopus.Features.JsonConfigurationVariables"
       }
 }
 
@@ -617,8 +617,8 @@ resource "octopusdeploy_process_templated_step" "process_step_aws_lambda_scan_fo
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
-        "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
         "PackageId" = "com.octopus:products-microservice-lambda-jvm"
+        "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
                 })
       }
 }
@@ -642,9 +642,9 @@ resource "octopusdeploy_process_step" "process_step_aws_lambda_deployment_succes
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.Subject" = "Deployment for #{Octopus.Project.Name} completed successfully!"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "admin@example.org"
+        "Octopus.Action.Email.Subject" = "Deployment for #{Octopus.Project.Name} completed successfully!"
       }
 }
 
