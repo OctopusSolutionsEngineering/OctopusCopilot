@@ -281,10 +281,10 @@ resource "octopusdeploy_process_step" "process_step_progressive_deployment_deplo
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"Deploying app\""
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -342,21 +342,21 @@ resource "octopusdeploy_process_templated_step" "process_step_progressive_deploy
         "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "Run.Runbook.Waitforfinish" = "False"
-        "Run.Runbook.DateTime" = "N/A"
         "Run.Runbook.Space.Name" = "#{Octopus.Space.Name}"
+        "Run.Runbook.UsePublishedSnapShot" = "False"
+        "Run.Runbook.PromptedVariables" = "Project.Release.Id::#{Octopus.Release.Id}"
+        "Run.Runbook.CancelInSeconds" = "1800"
+        "Run.Runbook.DateTime" = "N/A"
         "Run.Runbook.Machines" = "N/A"
-        "Run.Runbook.CustomNotes.Toggle" = "False"
+        "Run.Runbook.ManualIntervention.EnvironmentToUse" = "#{Octopus.Environment.Name}"
         "Run.Runbook.Project.Name" = "#{Octopus.Project.Name}"
         "Run.Runbook.AutoApproveManualInterventions" = "No"
-        "Run.Runbook.PromptedVariables" = "Project.Release.Id::#{Octopus.Release.Id}"
         "Run.Runbook.Name" = "Deploy Release"
-        "Run.Runbook.Environment.Name" = "#{if Octopus.Environment.Name == \"Prod 10\"}Prod 50#{/if}#{if Octopus.Environment.Name == \"Prod 50\"}Prod 100#{/if}"
-        "Run.Runbook.CancelInSeconds" = "1800"
-        "Run.Runbook.ManualIntervention.EnvironmentToUse" = "#{Octopus.Environment.Name}"
-        "Run.Runbook.UsePublishedSnapShot" = "False"
-        "Run.Runbook.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "Run.Runbook.CustomNotes.Toggle" = "False"
         "Run.Runbook.Base.Url" = "#{Octopus.Web.ServerUri}"
+        "Run.Runbook.Environment.Name" = "#{if Octopus.Environment.Name == \"Prod 10\"}Prod 50#{/if}#{if Octopus.Environment.Name == \"Prod 50\"}Prod 100#{/if}"
+        "Run.Runbook.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "Run.Runbook.Waitforfinish" = "False"
       }
 }
 

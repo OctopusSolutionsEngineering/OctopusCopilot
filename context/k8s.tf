@@ -412,9 +412,9 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_approve_p
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
         "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -432,17 +432,17 @@ resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app
   slug                  = "octopus-check-targets-available"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_variable  = "Octopus.Project.WorkerPool"
+  worker_pool_variable  = "Project.Octopus.WorkerPool"
   depends_on            = [octopusdeploy_process_step.process_step_kubernetes_web_app_approve_production_deployment]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "CheckTargets.Message" = "We recommend the Kubernetes Agent - https://octopus.com/docs/kubernetes/targets/kubernetes-agent"
         "CheckTargets.Octopus.Role" = "Kubernetes"
+        "CheckTargets.Message" = "We recommend the Kubernetes Agent - https://octopus.com/docs/kubernetes/targets/kubernetes-agent"
         "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
       }
 }
@@ -470,13 +470,18 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_
   slug                  = "deploy-a-kubernetes-web-app-via-yaml"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_variable  = "Octopus.Project.WorkerPool"
+  worker_pool_variable  = "Project.Octopus.WorkerPool"
   depends_on            = [octopusdeploy_process_templated_step.process_step_kubernetes_web_app_octopus___check_targets_available]
   properties            = {
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{if Octopus.Deployment.Tenant.Name}#{Octopus.Deployment.Tenant.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{/if}"
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
+        "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.KubernetesContainers.CustomResourceYaml" = <<EOT
 apiVersion: apps/v1
 kind: Deployment
@@ -521,13 +526,8 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
 EOT
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{if Octopus.Deployment.Tenant.Name}#{Octopus.Deployment.Tenant.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{/if}"
         "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
       }
 }
@@ -546,13 +546,13 @@ resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app
   slug                  = "scan-for-vulnerabilities-1"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  worker_pool_variable  = "Octopus.Project.WorkerPool"
+  worker_pool_variable  = "Project.Octopus.WorkerPool"
   depends_on            = [octopusdeploy_process_step.process_step_kubernetes_web_app_deploy_a_kubernetes_web_app_via_yaml]
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
@@ -568,42 +568,13 @@ resource "octopusdeploy_process_steps_order" "process_step_order_kubernetes_web_
   steps      = ["${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_kubernetes_web_app_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_kubernetes_web_app_octopus___check_targets_available[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_step.process_step_kubernetes_web_app_deploy_a_kubernetes_web_app_via_yaml[0].id}", "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_kubernetes_web_app_scan_for_vulnerabilities[0].id}"]
 }
 
-resource "octopusdeploy_variable" "kubernetes_web_app_octopus_project_api_key_1" {
+resource "octopusdeploy_variable" "kubernetes_web_app_project_octopus_api_key_1" {
   count           = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
   owner_id        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
-  name            = "Octopus.Project.Api.Key"
+  name            = "Project.Octopus.Api.Key"
   type            = "Sensitive"
   is_sensitive    = true
   sensitive_value = "Change Me!"
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
-}
-
-data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
-  ids          = null
-  partial_name = "Default Worker Pool"
-  skip         = 0
-  take         = 1
-}
-
-data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
-  ids          = null
-  partial_name = "Hosted Ubuntu"
-  skip         = 0
-  take         = 1
-}
-
-resource "octopusdeploy_variable" "kubernetes_web_app_octopus_project_workerpool_1" {
-  count        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
-  value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
-  name         = "Octopus.Project.WorkerPool"
-  type         = "WorkerPool"
-  description  = "Using a variable to define the worker pool used by steps allows the worker pool to be easily changed in a central location."
-  is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true
@@ -648,6 +619,35 @@ resource "octopusdeploy_variable" "kubernetes_web_app_project_kubernetes_deploym
   name         = "Project.Kubernetes.Deployment.Name"
   type         = "String"
   description  = "This is the name of the Kubernetes deployment. It is exposed as a variable to allow the name to be shared between the deployment process and the runbooks."
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
+  ids          = null
+  partial_name = "Default Worker Pool"
+  skip         = 0
+  take         = 1
+}
+
+data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
+  ids          = null
+  partial_name = "Hosted Ubuntu"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_variable" "kubernetes_web_app_project_octopus_workerpool_1" {
+  count        = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_kubernetes_web_app.projects) == 0 ?octopusdeploy_project.project_kubernetes_web_app[0].id : data.octopusdeploy_projects.project_kubernetes_web_app.projects[0].id}"
+  value        = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  name         = "Project.Octopus.WorkerPool"
+  type         = "WorkerPool"
+  description  = "Using a variable to define the worker pool used by steps allows the worker pool to be easily changed in a central location."
   is_sensitive = false
   lifecycle {
     ignore_changes  = [sensitive_value]
