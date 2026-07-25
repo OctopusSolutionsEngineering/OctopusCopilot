@@ -45,7 +45,9 @@ You must include all the following step resources from the "Example Octopus VM B
 * resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net_iis_octopus___check_targets_available"
 * resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net_iis_octopus___check_smtp_server_configured"
 * resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_transfer_a_package"
+* resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net_iis_block_release_progression"
 * resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_an_email_on_success"
+You MUST ensure that 7 steps are included unless the prompt explicitly states that steps should be removed or modified.
 
 You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
 

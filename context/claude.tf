@@ -298,6 +298,17 @@ resource "octopusdeploy_process_step" "process_step_claude_run_claude_agent" {
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Claude.Permissions" = jsonencode({
+        "deny" = [
+        "WebFetch",
+        "WebSearch",
+        "Bash",
+        ]
+                })
+        "Octopus.Action.Claude.InjectionCheckEnabled" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Claude.ApiKey" = "#{Project.Claude.ApiKey}"
+        "Octopus.Action.Claude.Effort" = "medium"
         "Octopus.Action.Claude.Prompt" = <<EOT
 Your task is to rate the impact of the Git commits that contribute to the new version of the application being deployed.
 
@@ -333,8 +344,6 @@ The result must be a plain JSON blob like this:
 }
 ```
 EOT
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Claude.InjectionCheckEnabled" = "False"
         "Octopus.Action.Claude.McpServers" = jsonencode([
         {
         "type" = "http"
@@ -349,20 +358,11 @@ EOT
         ]
                 },
         ])
-        "Octopus.Action.Claude.SandboxMode" = "None"
-        "Octopus.Action.Claude.Effort" = "medium"
-        "Octopus.Action.Claude.Permissions" = jsonencode({
-        "deny" = [
-        "WebFetch",
-        "WebSearch",
-        "Bash",
-        ]
-                })
-        "Octopus.Action.Claude.Model" = "claude-sonnet-5"
-        "Octopus.Action.Claude.ApiKey" = "#{Project.Claude.ApiKey}"
         "Octopus.Action.Claude.OctopusMcpTools" = jsonencode([
         "*",
         ])
+        "Octopus.Action.Claude.Model" = "claude-sonnet-5"
+        "Octopus.Action.Claude.SandboxMode" = "None"
       }
 }
 
@@ -385,8 +385,6 @@ resource "octopusdeploy_process_step" "process_step_claude_extract_json" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = <<EOT
 $response =  $OctopusParameters["Octopus.Action[Run Claude Agent].Output.Octopus.Action.Claude.Response"]
@@ -418,6 +416,8 @@ if ($response -match "(?s)\{.*\}") {
 
 
 EOT
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
       }
 }
 
@@ -440,9 +440,9 @@ resource "octopusdeploy_process_step" "process_step_claude_manual_intervention_r
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Extract JSON].Output.NeedApproval}"
       }
   execution_properties  = {
-        "Octopus.Action.Manual.Instructions" = "Do you approve these changes for deployment?"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
+        "Octopus.Action.Manual.Instructions" = "Do you approve these changes for deployment?"
       }
 }
 
@@ -465,10 +465,10 @@ resource "octopusdeploy_process_step" "process_step_claude_perform_deployment" {
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "echo \"Performing deployment...\""
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 

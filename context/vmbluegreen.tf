@@ -204,9 +204,9 @@ resource "octopusdeploy_lifecycle" "lifecycle_blue_green" {
   }
   phase {
     automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}", "${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
-    name                                  = "Production"
-    is_optional_phase                     = false
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}"]
+    name                                  = "Production Blue"
+    is_optional_phase                     = true
     minimum_environments_before_promotion = 0
 
     release_retention_with_strategy {
@@ -214,6 +214,13 @@ resource "octopusdeploy_lifecycle" "lifecycle_blue_green" {
       quantity_to_keep = 5
       unit             = "Days"
     }
+  }
+  phase {
+    automatic_deployment_targets          = []
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
+    name                                  = "Production Green"
+    is_optional_phase                     = true
+    minimum_environments_before_promotion = 0
   }
 
   release_retention_with_strategy {
@@ -344,6 +351,17 @@ resource "octopusdeploy_community_step_template" "communitysteptemplate_octopus_
   count                        = "${data.octopusdeploy_step_template.steptemplate_octopus___check_smtp_server_configured.step_template != null ? 0 : 1}"
 }
 
+data "octopusdeploy_community_step_template" "communitysteptemplate_block_release_progression" {
+  website = "https://library.octopus.com/step-templates/78a182b3-5369-4e13-9292-b7f991295ad1"
+}
+data "octopusdeploy_step_template" "steptemplate_block_release_progression" {
+  name = "Block Release Progression"
+}
+resource "octopusdeploy_community_step_template" "communitysteptemplate_block_release_progression" {
+  community_action_template_id = "${length(data.octopusdeploy_community_step_template.communitysteptemplate_block_release_progression.steps) != 0 ? data.octopusdeploy_community_step_template.communitysteptemplate_block_release_progression.steps[0].id : null}"
+  count                        = "${data.octopusdeploy_step_template.steptemplate_block_release_progression.step_template != null ? 0 : 1}"
+}
+
 resource "octopusdeploy_process" "process_random_quotes__net_iis" {
   count      = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
   project_id = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? data.octopusdeploy_projects.project_random_quotes__net_iis.projects[0].id : octopusdeploy_project.project_random_quotes__net_iis[0].id}"
@@ -368,13 +386,13 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
-        "BlueGreen.Environment.Blue.Name" = "Production - Blue"
         "BlueGreen.Environment.Green.Name" = "Production - Green"
+        "BlueGreen.Environment.Blue.Name" = "Production - Blue"
       }
 }
 
@@ -430,9 +448,9 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
         "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
-        "CheckTargets.Message" = "See the [documentation](https://octopus.com/docs/infrastructure/deployment-targets) for details on creating targets."
-        "CheckTargets.Octopus.Role" = "randomquotes-iis-website"
         "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "CheckTargets.Octopus.Role" = "randomquotes-iis-website"
+        "CheckTargets.Message" = "See the [documentation](https://octopus.com/docs/infrastructure/deployment-targets) for details on creating targets."
       }
 }
 
@@ -495,6 +513,35 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_trans
       }
 }
 
+resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net_iis_block_release_progression" {
+  count                 = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
+  name                  = "Block Release Progression"
+  process_id            = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process.process_random_quotes__net_iis[0].id}"
+  template_id           = "${data.octopusdeploy_step_template.steptemplate_block_release_progression.step_template != null ? data.octopusdeploy_step_template.steptemplate_block_release_progression.step_template.id : octopusdeploy_community_step_template.communitysteptemplate_block_release_progression[0].id}"
+  template_version      = "${data.octopusdeploy_step_template.steptemplate_block_release_progression.step_template != null ? data.octopusdeploy_step_template.steptemplate_block_release_progression.step_template.version : octopusdeploy_community_step_template.communitysteptemplate_block_release_progression[0].version}"
+  channels              = null
+  condition             = "Success"
+  environments          = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}", "${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
+  excluded_environments = null
+  package_requirement   = "LetOctopusDecide"
+  slug                  = "block-release-progression"
+  start_trigger         = "StartAfterPrevious"
+  tenant_tags           = null
+  worker_pool_variable  = "Project.Workerpool.Default"
+  depends_on            = [octopusdeploy_process_step.process_step_random_quotes__net_iis_transfer_a_package]
+  properties            = {
+      }
+  execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+      }
+  parameters            = {
+        "Block.Octopus.Previous.Release.Id" = "#{Octopus.Release.Id}"
+        "Block.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "Block.Octopus.Reason" = "Deployment to #{Octopus.Environment.Name} was a success - no other production environment can recieve this release."
+        "Block.Octopus.Url" = "#{Octopus.Web.ServerUri}"
+      }
+}
+
 resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_an_email_on_success" {
   count                 = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
   name                  = "Send an Email on Success"
@@ -509,22 +556,22 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_
   slug                  = "send-an-email-on-success"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
-  depends_on            = [octopusdeploy_process_step.process_step_random_quotes__net_iis_transfer_a_package]
+  depends_on            = [octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_block_release_progression]
   properties            = {
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.Body" = "The deployment succeeded."
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "releases@example.org"
         "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
+        "Octopus.Action.Email.Body" = "The deployment succeeded."
       }
 }
 
 resource "octopusdeploy_process_steps_order" "process_step_order_random_quotes__net_iis" {
   count      = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? 0 : 1}"
   process_id = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process.process_random_quotes__net_iis[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_blue_green_deployment[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_random_quotes__net_iis_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_targets_available[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_smtp_server_configured[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_random_quotes__net_iis_transfer_a_package[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_random_quotes__net_iis_send_an_email_on_success[0].id}"]
+  steps      = ["${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_blue_green_deployment[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_random_quotes__net_iis_approve_production_deployment[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_targets_available[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_octopus___check_smtp_server_configured[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_random_quotes__net_iis_transfer_a_package[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_random_quotes__net_iis_block_release_progression[0].id}", "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process_step.process_step_random_quotes__net_iis_send_an_email_on_success[0].id}"]
 }
 
 resource "octopusdeploy_variable" "random_quotes__net_iis_prject_iis_application_pool_1" {
