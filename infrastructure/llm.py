@@ -42,6 +42,7 @@ AZURE_GENERAL_QUERY_SMALL_LLM = "azure_general_query_small"
 EUROPE_REGION = "Europe"
 US_REGION = "US"
 DETAILED_PROJECT_PROMPT_LENGTH = 2000
+VERY_DETAILED_PROJECT_PROMPT_LENGTH = 5000
 
 
 def validate_region(region):
@@ -163,10 +164,14 @@ def build_azure_anthropic_project_llm(prompt=None):
         )
     )
 
-    # Enable thinking for large project prompts
-    effort = (
-        "high" if len(prompt) < DETAILED_PROJECT_PROMPT_LENGTH else "xhigh"
-    )
+    # Enable effort for large project prompts
+    def get_effort(prompt):
+        length = len(prompt)
+        if length < DETAILED_PROJECT_PROMPT_LENGTH:
+            return "high"
+        if length < VERY_DETAILED_PROJECT_PROMPT_LENGTH:
+            return "xhigh"
+        return "max"
 
     return ChatAnthropic(
         temperature=temperature,
@@ -178,7 +183,7 @@ def build_azure_anthropic_project_llm(prompt=None):
             "type": "adaptive"
         },
         output_config={
-            "effort": effort
+            "effort": get_effort(prompt)
         }
     )
 
