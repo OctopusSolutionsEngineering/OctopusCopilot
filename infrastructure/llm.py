@@ -41,7 +41,7 @@ AZURE_GENERAL_SERVICE = "azure_general"
 AZURE_GENERAL_QUERY_SMALL_LLM = "azure_general_query_small"
 EUROPE_REGION = "Europe"
 US_REGION = "US"
-DETAILED_PROJECT_PROMPT_LENGTH = 500
+DETAILED_PROJECT_PROMPT_LENGTH = 2000
 
 
 def validate_region(region):
@@ -164,8 +164,8 @@ def build_azure_anthropic_project_llm(prompt=None):
     )
 
     # Enable thinking for large project prompts
-    thinking = (
-        "disabled" if len(prompt) < DETAILED_PROJECT_PROMPT_LENGTH else "adaptive"
+    effort = (
+        "high" if len(prompt) < DETAILED_PROJECT_PROMPT_LENGTH else "xhigh"
     )
 
     return ChatAnthropic(
@@ -174,7 +174,12 @@ def build_azure_anthropic_project_llm(prompt=None):
         base_url=endpoint,
         api_key=api_key,
         max_tokens=max_tokens,
-        thinking={"type": thinking},
+        thinking={
+            "type": "adaptive"
+        },
+        output_config={
+            "effort": effort
+        }
     )
 
 
