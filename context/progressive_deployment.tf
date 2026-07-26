@@ -204,14 +204,6 @@ resource "octopusdeploy_lifecycle" "lifecycle_progressive" {
     is_optional_phase                     = false
     minimum_environments_before_promotion = 0
   }
-
-  release_retention_with_strategy {
-    strategy = "Default"
-  }
-
-  tentacle_retention_with_strategy {
-    strategy = "Default"
-  }
   lifecycle {
     prevent_destroy = true
   }
@@ -342,21 +334,21 @@ resource "octopusdeploy_process_templated_step" "process_step_progressive_deploy
         "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "Run.Runbook.AutoApproveManualInterventions" = "No"
-        "Run.Runbook.Environment.Name" = "#{if Octopus.Environment.Name == \"Prod 10\"}Prod 50#{/if}#{if Octopus.Environment.Name == \"Prod 50\"}Prod 100#{/if}"
-        "Run.Runbook.Machines" = "N/A"
-        "Run.Runbook.Waitforfinish" = "False"
-        "Run.Runbook.Space.Name" = "#{Octopus.Space.Name}"
-        "Run.Runbook.Base.Url" = "#{Octopus.Web.ServerUri}"
-        "Run.Runbook.DateTime" = "N/A"
         "Run.Runbook.Name" = "Deploy Release"
-        "Run.Runbook.Project.Name" = "#{Octopus.Project.Name}"
-        "Run.Runbook.CustomNotes.Toggle" = "False"
+        "Run.Runbook.UsePublishedSnapShot" = "False"
         "Run.Runbook.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "Run.Runbook.Project.Name" = "#{Octopus.Project.Name}"
+        "Run.Runbook.Waitforfinish" = "False"
         "Run.Runbook.PromptedVariables" = "Project.Release.Id::#{Octopus.Release.Id}"
+        "Run.Runbook.Environment.Name" = "#{if Octopus.Environment.Name == \"Prod 10\"}Prod 50#{/if}#{if Octopus.Environment.Name == \"Prod 50\"}Prod 100#{/if}"
+        "Run.Runbook.AutoApproveManualInterventions" = "No"
+        "Run.Runbook.Machines" = "N/A"
+        "Run.Runbook.CustomNotes.Toggle" = "False"
         "Run.Runbook.CancelInSeconds" = "1800"
         "Run.Runbook.ManualIntervention.EnvironmentToUse" = "#{Octopus.Environment.Name}"
-        "Run.Runbook.UsePublishedSnapShot" = "False"
+        "Run.Runbook.Space.Name" = "#{Octopus.Space.Name}"
+        "Run.Runbook.DateTime" = "N/A"
+        "Run.Runbook.Base.Url" = "#{Octopus.Web.ServerUri}"
       }
 }
 

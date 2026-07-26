@@ -182,12 +182,6 @@ resource "octopusdeploy_lifecycle" "lifecycle_blue_green" {
     name                                  = "Development"
     is_optional_phase                     = false
     minimum_environments_before_promotion = 0
-
-    release_retention_with_strategy {
-      strategy         = "Count"
-      quantity_to_keep = 5
-      unit             = "Days"
-    }
   }
   phase {
     automatic_deployment_targets          = []
@@ -195,12 +189,6 @@ resource "octopusdeploy_lifecycle" "lifecycle_blue_green" {
     name                                  = "Test"
     is_optional_phase                     = false
     minimum_environments_before_promotion = 0
-
-    release_retention_with_strategy {
-      strategy         = "Count"
-      quantity_to_keep = 5
-      unit             = "Days"
-    }
   }
   phase {
     automatic_deployment_targets          = []
@@ -208,12 +196,6 @@ resource "octopusdeploy_lifecycle" "lifecycle_blue_green" {
     name                                  = "Production Blue"
     is_optional_phase                     = true
     minimum_environments_before_promotion = 0
-
-    release_retention_with_strategy {
-      strategy         = "Count"
-      quantity_to_keep = 5
-      unit             = "Days"
-    }
   }
   phase {
     automatic_deployment_targets          = []
@@ -221,18 +203,6 @@ resource "octopusdeploy_lifecycle" "lifecycle_blue_green" {
     name                                  = "Production Green"
     is_optional_phase                     = true
     minimum_environments_before_promotion = 0
-  }
-
-  release_retention_with_strategy {
-    strategy         = "Count"
-    quantity_to_keep = 5
-    unit             = "Days"
-  }
-
-  tentacle_retention_with_strategy {
-    strategy         = "Count"
-    quantity_to_keep = 1
-    unit             = "Days"
   }
   lifecycle {
     prevent_destroy = true
@@ -386,13 +356,13 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
-        "BlueGreen.Environment.Green.Name" = "Production - Green"
         "BlueGreen.Environment.Blue.Name" = "Production - Blue"
+        "BlueGreen.Environment.Green.Name" = "Production - Green"
+        "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
       }
 }
 
@@ -474,8 +444,8 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -536,9 +506,9 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
       }
   parameters            = {
         "Block.Octopus.Url" = "#{Octopus.Web.ServerUri}"
+        "Block.Octopus.Previous.Release.Id" = "#{Octopus.Release.Id}"
         "Block.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
         "Block.Octopus.Reason" = "Deployment to #{Octopus.Environment.Name} was a success - no other production environment can recieve this release."
-        "Block.Octopus.Previous.Release.Id" = "#{Octopus.Release.Id}"
       }
 }
 
@@ -561,10 +531,10 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }
   execution_properties  = {
-        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.Body" = "The deployment succeeded."
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "releases@example.org"
+        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
       }
 }
 
