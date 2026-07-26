@@ -431,6 +431,28 @@ class MockRequests(unittest.TestCase):
         self.assertEqual(function.name, "create_k8s_project")
 
     @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_progressive_deployment_project(self):
+        """
+        Tests that the llm can correctly identify the function to call when the prompt is
+        """
+
+        query = 'Create a progressive deployment project in the space "Documentation" called "My Progressive Deployment Project 1"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_progressive_deployment_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_blue_green_project(self):
+        """
+        Tests that the llm can correctly identify the function to call when the prompt is
+        """
+
+        query = 'Create a Blue/green deployment project in the space "Documentation" called "My blue green Deployment Project 1"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_vm_blue_green_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
     def test_create_lambda_project(self):
         """
         Tests that the llm can correctly identify the function to call when the prompt is
