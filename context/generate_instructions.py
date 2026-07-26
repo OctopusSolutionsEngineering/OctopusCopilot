@@ -633,13 +633,17 @@ def find_runbook_step_names(filename, label):
                         if current_block_type == "octopusdeploy_process":
                             if runbook_id_regex.search(block_content):
                                 runbook_process_tf_names.append(current_block_tf_name)
-                        elif current_block_type == "octopusdeploy_process_step":
+                        elif current_block_type in (
+                            "octopusdeploy_process_step",
+                            "octopusdeploy_process_templated_step",
+                        ):
                             name_match = name_attribute_regex.search(block_content)
                             if name_match:
                                 human_readable_name = name_match.group(1)
                                 all_process_steps_data.append(
                                     (
                                         current_block_tf_name,
+                                        current_block_type,
                                         current_block_tf_name,
                                         human_readable_name,
                                     )
@@ -675,13 +679,14 @@ def find_runbook_step_names(filename, label):
 
                 for (
                     step_tf_name,
+                    block_type,
                     current_block_tf_name,
                     human_readable_name,
                 ) in all_process_steps_data:
                     # Check if the step's Terraform resource name starts with the expected prefix.
                     if step_tf_name.startswith(step_name_prefix):
                         found = True
-                        message += f'* resource "octopusdeploy_process_step" "{current_block_tf_name}"\n'
+                        message += f'* resource "{block_type}" "{current_block_tf_name}"\n'
 
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
