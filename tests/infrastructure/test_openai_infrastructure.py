@@ -509,6 +509,138 @@ class MockRequests(unittest.TestCase):
 
         self.assertEqual(function.name, "create_k8s_project")
 
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_argo_cd_modify_manifest_project(self):
+        """
+        Tests that the llm can correctly identify the function to call for Argo CD modify manifest projects
+        """
+
+        query = 'Create an Argo CD Modify Manifest project in the space "Documentation" called "My ArgoCD Manifest Project"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_argocdmodifymanifest_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_argo_cd_update_image_tags_project(self):
+        """
+        Tests that the llm can correctly identify the function to call for Argo CD update image tags projects
+        """
+
+        query = 'Create an Argo CD Tag Update project in the space "Documentation" called "My ArgoCD Tag Project"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_argocdimagetag_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_azure_function_project(self):
+        """
+        Tests that the llm can correctly identify the function to call for Azure Function projects
+        """
+
+        query = 'Create an Azure Function project in the space "Documentation" called "My Azure Function"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_azure_function_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_azure_web_app_project(self):
+        """
+        Tests that the llm can correctly identify the function to call for Azure Web App projects
+        """
+
+        query = 'Create an Azure Web App project in the space "Documentation" called "My Azure Web App"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_azure_web_app_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_claude_project(self):
+        """
+        Tests that the llm can correctly identify the function to call for Claude projects
+        """
+
+        query = 'Create a Claude project in the space "Documentation" called "My Claude Project" that uses AI to rate code changes'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_claude_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_iis_project(self):
+        """
+        Tests that the llm can correctly identify the function to call for IIS projects
+        """
+
+        query = 'Create a Windows IIS project in the space "Documentation" called "My IIS Project"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_iis_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_llm_project(self):
+        """
+        Tests that the llm can correctly identify the function to call for LLM projects
+        """
+
+        query = 'Create a Kubernetes LLM project in the space "Documentation" called "My LLM Project"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_llm_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_orchestration_project(self):
+        """
+        Tests that the llm can correctly identify the function to call for orchestration projects
+        """
+
+        query = 'Create an orchestration project in the space "Documentation" called "My Orchestration Project"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_orchestration_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_runbook(self):
+        """
+        Tests that the llm can correctly identify the function to call for creating runbooks
+        """
+
+        query = 'Create a runbook called "My Runbook" in the project "My Project" in the space "Documentation"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_runbook")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_terraform_project(self):
+        """
+        Tests that the llm can correctly identify the function to call for Terraform projects
+        """
+
+        query = 'Create a Terraform project in the space "Documentation" called "My Terraform Project"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_terraform_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_tomcat_project(self):
+        """
+        Tests that the llm can correctly identify the function to call for Apache Tomcat projects
+        """
+
+        query = 'Create an Apache Tomcat project in the space "Documentation" called "My Tomcat WAR Project"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_tomcat_project")
+
+    @retry((AssertionError, RateLimitError), tries=3, delay=2)
+    def test_create_winservice_project(self):
+        """
+        Tests that the llm can correctly identify the function to call for Windows service projects
+        """
+
+        query = 'Create a Windows service project in the space "Documentation" called "My Windows Service"'
+        function = llm_tool_query(query, build_mock_test_tools(query))
+
+        self.assertEqual(function.name, "create_winservice_project")
+
 
 if __name__ == "__main__":
     unittest.main()

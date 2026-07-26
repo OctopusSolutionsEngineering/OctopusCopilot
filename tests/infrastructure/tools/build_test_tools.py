@@ -24,17 +24,56 @@ from domain.tools.wrapper.function_definition import (
 from domain.tools.wrapper.general_query import answer_general_query_wrapper
 from domain.tools.wrapper.generate_terraform import generate_terraform_wrapper
 from domain.tools.wrapper.how_to import how_to_wrapper
+from domain.tools.wrapper.projects.create_argo_cd_modify_manifest_project_wrapper import (
+    create_argocdmodifymanifest_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_argo_cd_update_image_tags_project_wrapper import (
+    create_argocdimagetag_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_azure_function_project import (
+    create_azure_function_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_azure_web_app_project import (
+    create_azure_web_app_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_claude_project import (
+    create_claude_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_iis_project import (
+    create_iis_project_wrapper,
+)
 from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_wrapper
 from domain.tools.wrapper.projects.create_lambda_project import (
     create_lambda_project_wrapper,
 )
-from domain.tools.wrapper.projects.create_progressive_deployment_project import \
-    create_progressive_deployment_project_wrapper
+from domain.tools.wrapper.projects.create_llm_project import (
+    create_llm_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_orchestration_project import (
+    create_orchestration_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_progressive_deployment_project import (
+    create_progressive_deployment_project_wrapper,
+)
 from domain.tools.wrapper.projects.create_project import create_project_wrapper
+from domain.tools.wrapper.projects.create_runbook_wrapper import (
+    create_runbook_wrapper,
+)
 from domain.tools.wrapper.projects.create_script_project import (
     create_script_project_wrapper,
 )
-from domain.tools.wrapper.projects.create_vm_bluegreen_project import create_vm_blue_green_project_wrapper
+from domain.tools.wrapper.projects.create_terraform_project import (
+    create_terraform_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_tomcat_project_wrapper import (
+    create_tomcat_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_vm_bluegreen_project import (
+    create_vm_blue_green_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_winservice_project import (
+    create_winservice_project_wrapper,
+)
 from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
 from domain.tools.wrapper.suggest_solution import suggest_solution_wrapper
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
@@ -220,6 +259,174 @@ def build_mock_test_tools(tool_query):
             ),
             FunctionDefinition(
                 create_general_resources_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                create_argocdmodifymanifest_project_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                create_argocdimagetag_project_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                create_azure_function_project_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                create_azure_web_app_project_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                create_claude_project_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                create_iis_project_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                create_llm_project_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                create_orchestration_project_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                create_runbook_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                create_terraform_project_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                create_tomcat_project_wrapper(
+                    tool_query,
+                    create_template_project_confirm_callback_wrapper(
+                        tool_query,
+                        os.environ["TEST_GH_USER"],
+                        octopus_details,
+                        log_query,
+                        None,
+                        None,
+                    ),
+                    log_query,
+                )
+            ),
+            FunctionDefinition(
+                create_winservice_project_wrapper(
                     tool_query,
                     create_template_project_confirm_callback_wrapper(
                         tool_query,
