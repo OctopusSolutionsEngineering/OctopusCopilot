@@ -28,10 +28,17 @@ You must include all the following project resources from the "Example Octopus P
 * data "octopusdeploy_projects" "project_progressive_deployment"
 * resource "octopusdeploy_project" "project_progressive_deployment"
 
+## Progressive Deployment Project Runbook Instructions
+
+You must include all the following runbook resources once unless the prompt explicitly states that runbooks should be removed or modified:
+* resource "octopusdeploy_runbook" "runbook_progressive_deployment_deploy_release"
+
+
 ## Progressive Deployment Project Deployment Process Instructions
 
 You must include all the following project deployment process resources from the "Example Octopus Progressive Deployment Terraform Configuration" once:
 * resource "octopusdeploy_process" "process_progressive_deployment"
+* resource "octopusdeploy_process" "process_progressive_deployment_deploy_release"
 
 ## Progressive Deployment Project Deployment Process Steps Instructions
 
@@ -39,14 +46,22 @@ You must include all the following step resources from the "Example Octopus Prog
 * resource "octopusdeploy_process_step" "process_step_progressive_deployment_deploy_app"
 * resource "octopusdeploy_process_step" "process_step_progressive_deployment_simulate_failure"
 * resource "octopusdeploy_process_templated_step" "process_step_progressive_deployment_run_octopus_deploy_runbook"
-You MUST ensure that 3 steps are included unless the prompt explicitly states that steps should be removed or modified.
+* resource "octopusdeploy_process_step" "process_step_progressive_deployment_deploy_release_sleep"
+You MUST ensure that 4 steps are included unless the prompt explicitly states that steps should be removed or modified.
 
 You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
+
+## Progressive Deployment Project Runbook Deployment Process Steps Instructions
+
+You must include all the following runbook steps from the runbook_progressive_deployment_deploy_release runbook once unless the prompt explicitly states that runbook steps should be removed or modified:
+* resource "octopusdeploy_process_step" "process_step_progressive_deployment_deploy_release_sleep"
+
 
 ## Progressive Deployment Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus Progressive Deployment Terraform Configuration" once:
 * resource "octopusdeploy_process_steps_order" "process_step_order_progressive_deployment"
+* resource "octopusdeploy_process_steps_order" "process_step_order_progressive_deployment_deploy_release"
 ## Progressive Deployment Project Variable Instructions
 
 You must include all the following variables from the "Example Octopus Progressive Deployment Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
