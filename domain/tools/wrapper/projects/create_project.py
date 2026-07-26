@@ -19,6 +19,7 @@ def create_project_wrapper(query, callback, logging):
         * Create a project called "01. My Test Project" and then create a lifecycle called "My Lifecycle" with environments "Dev", "QA", and "Prod".
 
         You will be penalized for selecting this function when the prompt specifically asks for creating specialized project types like "Script", "Tomcat", "Kubernetes", or others.
+        You will be penalized for selecting this function when the project asks for progressive, incremental, or wave deployments.
 
         You must select this tool when the prompt specifies a project with no steps.
 
