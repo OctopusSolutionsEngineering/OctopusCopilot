@@ -6,7 +6,7 @@ def create_progressive_deployment_project_wrapper(query, callback, logging):
         **kwargs,
     ):
         """
-        Creates a Progressive deployment (also known as canary deployments or progressive delivery) project in Octopus Deploy, in addition to any supporting resources.
+        Creates a progressive deployment (also known as canary deployments or progressive delivery) project in Octopus Deploy, in addition to any supporting resources.
 
         The keywords that indicate this tool must be selected are:
         * Progressive
@@ -16,11 +16,11 @@ def create_progressive_deployment_project_wrapper(query, callback, logging):
         * Wave
 
         Example prompts include:
-        * Create a Progressive deployment project in the space "My Space" called "My Project"
+        * Create a progressive deployment project in the space "My Space" called "My Project"
         * Create a project with the progressive rollouts step in the space "My Space" called "My Project"
-        * Create Progressive delivery project called "My Project" in the space "My Space"
-        * Create Progressive rollout project called "My Project"
-        * Create Canary deployment project called "My Project". Create a Token account called "K8s" with value "blah"
+        * Create progressive delivery project called "My Project" in the space "My Space"
+        * Create progressive rollout project called "My Project"
+        * Create canary deployment project called "My Project". Create a Token account called "K8s" with value "blah"
         * Create wave deployment project called "My Project". Create a Token account called "K8s" with value "blah"
 
         Args:
