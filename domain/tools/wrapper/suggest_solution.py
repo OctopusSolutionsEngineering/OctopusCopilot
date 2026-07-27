@@ -79,7 +79,7 @@ def suggest_solution_wrapper(
 
             for key, value in kwargs.items():
                 if logging:
-                    logging(f"Unexpected Key: {key}", "Value: {value}")
+                    logging(f"Unexpected Key: {key}", f"Value: f{value}")
 
             slack_token = slack_token_func()
 

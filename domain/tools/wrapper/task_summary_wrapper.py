@@ -16,7 +16,7 @@ def show_task_summary_wrapper(original_query, callback, log_query):
 
         for key, value in kwargs.items():
             if log_query:
-                log_query(f"Unexpected Key: {key}", "Value: {value}")
+                log_query(f"Unexpected Key: {key}", f"Value: f{value}")
 
         return callback(original_query, space_name, project_name, environment_name, tenant_name,
                         release_version)

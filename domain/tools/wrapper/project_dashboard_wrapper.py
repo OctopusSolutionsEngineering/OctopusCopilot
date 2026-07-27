@@ -16,7 +16,7 @@ def show_project_dashboard_wrapper(
 
         for key, value in kwargs.items():
             if log_query:
-                log_query(f"Unexpected Key: {key}", "Value: {value}")
+                log_query(f"Unexpected Key: {key}", f"Value: f{value}")
 
         api_key, url = octopus_details()
 

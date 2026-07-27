@@ -27,7 +27,7 @@ def answer_runbook_run_logs_wrapper(query, callback, logging):
 
         for key, value in kwargs.items():
             if logging:
-                logging(f"Unexpected Key: {key}", "Value: {value}")
+                logging(f"Unexpected Key: {key}", f"Value: f{value}")
 
         messages = build_plain_text_prompt()
 

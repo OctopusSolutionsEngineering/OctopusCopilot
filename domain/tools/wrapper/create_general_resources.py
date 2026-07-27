@@ -64,7 +64,7 @@ def create_general_resources_wrapper(query, callback, logging):
 
         for key, value in kwargs.items():
             if logging:
-                logging(f"Unexpected Key: {key}", "Value: {value}")
+                logging(f"Unexpected Key: {key}", f"Value: f{value}")
 
         # This is just a passthrough to the original callback
         return callback(general_resources.__name__, query, space_name)

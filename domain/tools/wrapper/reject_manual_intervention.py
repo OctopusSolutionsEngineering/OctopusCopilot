@@ -40,7 +40,7 @@ def reject_manual_intervention_wrapper(query, callback, logging):
 
         for key, value in kwargs.items():
             if logging:
-                logging(f"Unexpected Key: {key}", "Value: {value}")
+                logging(f"Unexpected Key: {key}", f"Value: f{value}")
 
         # Fallback incase this is the function chosen by the LLM.
         if confirm_callback_function_name is None:

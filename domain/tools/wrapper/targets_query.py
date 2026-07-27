@@ -213,7 +213,7 @@ The targets that belong to the "Demo" space are:
 
         for key, value in kwargs.items():
             if logging:
-                logging(f"Unexpected Key: {key}", "Value: {value}")
+                logging(f"Unexpected Key: {key}", f"Value: f{value}")
 
         messages = build_hcl_prompt([("user", few_shot)])
 

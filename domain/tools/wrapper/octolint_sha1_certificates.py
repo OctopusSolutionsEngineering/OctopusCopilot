@@ -26,7 +26,7 @@ def octolint_sha1_certificates_wrapper(callback, logging):
 
         for key, value in kwargs.items():
             if logging:
-                logging(f"Unexpected Key: {key}", "Value: {value}")
+                logging(f"Unexpected Key: {key}", f"Value: f{value}")
 
         return callback(space, project)
 
