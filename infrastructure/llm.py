@@ -212,7 +212,9 @@ def build_azure_project_llm(region=None, prompt=None):
 
     endpoint, api_key = get_endpoint_and_key(region)
 
-    thinking = "minimal" if len(prompt) < DETAILED_PROJECT_PROMPT_LENGTH else "medium"
+    # "minimal" is not accepted by every model, which rejects the request with a 400. "low" is the
+    # lowest effort supported by all the models used for project generation.
+    thinking = "low" if len(prompt) < DETAILED_PROJECT_PROMPT_LENGTH else "medium"
 
     return AzureChatOpenAI(
         temperature=temperature,
