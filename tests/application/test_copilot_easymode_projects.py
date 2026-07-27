@@ -3,6 +3,7 @@ import json
 import os
 import time
 import unittest
+import uuid
 
 import azure.functions as func
 import pytest
@@ -36,9 +37,16 @@ from infrastructure.users import save_users_octopus_url_from_login, save_default
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
 
-# The space the prompts are run against. The blog series uses a scratchpad space, but the
-# test instance only has the spaces created by the test terraform, so the prompts name the
-# "Simple" space instead.
+# When OCTOPUS_TEST_REMOTE is "Y" or "TRUE", tests run against a remote Octopus instance
+# identified by OCTOPUS_CLI_SERVER and OCTOPUS_CLI_API_KEY. A temporary space with a random
+# name is created and deleted around the test run.
+Remote_Test = os.environ.get("OCTOPUS_TEST_REMOTE", "").upper() in ("Y", "TRUE")
+Remote_Octopus_Url = os.environ.get("OCTOPUS_CLI_SERVER", "")
+Remote_Octopus_Api_Key = os.environ.get("OCTOPUS_CLI_API_KEY", "")
+Space_Manager_Team = os.environ.get("OCTOPUS_SPACE_MANAGER_TEAM", "")
+
+# The space the prompts are run against. When running remotely, a random space name is
+# generated to avoid collisions. When running locally, the space created by terraform is used.
 Space_Name = "Simple"
 
 # The Octopus Server and SQL Server images are only published for linux/amd64, so the platform
@@ -64,6 +72,8 @@ class EasyModeTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        global Space_Name
+
         populate_blob_storage()
 
         # Simulate the result of a user login and saving their Octopus details
@@ -81,63 +91,79 @@ class EasyModeTest(unittest.TestCase):
             print(e)
             return
 
-        try:
-            terraform_dir = "../terraform/"
+        if Remote_Test:
+            # Running against a remote Octopus instance. Create a temporary space.
+            cls.mssql = None
+            cls.octopus = None
+            space_name = f"EasyMode-{uuid.uuid4().hex[:8]}"
+            cls._remote_space_id = create_remote_space(space_name)
+            Space_Name = space_name
+            cls._remote_space_name = space_name
 
-            cls.mssql = (
-                DockerContainer("mcr.microsoft.com/mssql/server:2022-latest")
-                .with_kwargs(platform=Container_Platform)
-                .with_env("ACCEPT_EULA", "True")
-                .with_env("SA_PASSWORD", "Password01!")
+            sync_community_step_templates(
+                Remote_Octopus_Api_Key, Remote_Octopus_Url
             )
-            cls.mssql.start()
-            wait_for_logs(cls.mssql, "SQL Server is now ready for client connections")
+        else:
+            cls._remote_space_id = None
+            cls._remote_space_name = None
 
-            mssql_ip = get_container_ip(cls.mssql)
+            try:
+                terraform_dir = "../terraform/"
 
-            cls.octopus = (
-                DockerContainer("octopusdeploy/octopusdeploy")
-                .with_kwargs(platform=Container_Platform)
-                .with_bind_ports(8080, 8080)
-                .with_env("ACCEPT_EULA", "Y")
-                .with_env(
-                    "DB_CONNECTION_STRING",
-                    "Server="
-                    + mssql_ip
-                    + ",1433;Database=OctopusDeploy;User=sa;Password=Password01!",
+                cls.mssql = (
+                    DockerContainer("mcr.microsoft.com/mssql/server:2022-latest")
+                    .with_kwargs(platform=Container_Platform)
+                    .with_env("ACCEPT_EULA", "True")
+                    .with_env("SA_PASSWORD", "Password01!")
                 )
-                .with_env("ADMIN_API_KEY", Octopus_Api_Key)
-                .with_env("DISABLE_DIND", "Y")
-                .with_env("ADMIN_USERNAME", "admin")
-                .with_env("ADMIN_PASSWORD", "Password01!")
-                .with_env("OCTOPUS_SERVER_BASE64_LICENSE", os.environ["LICENSE"])
-                .with_env("ENABLE_USAGE", "N")
-            )
-            cls.octopus.start()
-            wait_for_octopus()
+                cls.mssql.start()
+                wait_for_logs(cls.mssql, "SQL Server is now ready for client connections")
 
-            sync_community_step_templates(Octopus_Api_Key, Octopus_Url)
+                mssql_ip = get_container_ip(cls.mssql)
 
-            output = run_terraform(
-                terraform_dir + "simple/space_creation", Octopus_Url, Octopus_Api_Key
-            )
-            run_terraform(
-                terraform_dir + "simple/space_population",
-                Octopus_Url,
-                Octopus_Api_Key,
-                json.loads(output)["octopus_space_id"]["value"],
-            )
-            run_terraform(
-                terraform_dir + "empty/space_creation", Octopus_Url, Octopus_Api_Key
-            )
-        except Exception as e:
-            print(
-                "Failed to start containers. Consider running ryuk in privileged mode by setting "
-                + "TESTCONTAINERS_RYUK_PRIVILEGED=true or disabling ryuk by setting "
-                + "TESTCONTAINERS_RYUK_DISABLED=true."
-            )
-            print(e)
-            cls.tearDownClass()
+                cls.octopus = (
+                    DockerContainer("octopusdeploy/octopusdeploy")
+                    .with_kwargs(platform=Container_Platform)
+                    .with_bind_ports(8080, 8080)
+                    .with_env("ACCEPT_EULA", "Y")
+                    .with_env(
+                        "DB_CONNECTION_STRING",
+                        "Server="
+                        + mssql_ip
+                        + ",1433;Database=OctopusDeploy;User=sa;Password=Password01!",
+                    )
+                    .with_env("ADMIN_API_KEY", Octopus_Api_Key)
+                    .with_env("DISABLE_DIND", "Y")
+                    .with_env("ADMIN_USERNAME", "admin")
+                    .with_env("ADMIN_PASSWORD", "Password01!")
+                    .with_env("OCTOPUS_SERVER_BASE64_LICENSE", os.environ["LICENSE"])
+                    .with_env("ENABLE_USAGE", "N")
+                )
+                cls.octopus.start()
+                wait_for_octopus()
+
+                sync_community_step_templates(Octopus_Api_Key, Octopus_Url)
+
+                output = run_terraform(
+                    terraform_dir + "simple/space_creation", Octopus_Url, Octopus_Api_Key
+                )
+                run_terraform(
+                    terraform_dir + "simple/space_population",
+                    Octopus_Url,
+                    Octopus_Api_Key,
+                    json.loads(output)["octopus_space_id"]["value"],
+                )
+                run_terraform(
+                    terraform_dir + "empty/space_creation", Octopus_Url, Octopus_Api_Key
+                )
+            except Exception as e:
+                print(
+                    "Failed to start containers. Consider running ryuk in privileged mode by setting "
+                    + "TESTCONTAINERS_RYUK_PRIVILEGED=true or disabling ryuk by setting "
+                    + "TESTCONTAINERS_RYUK_DISABLED=true."
+                )
+                print(e)
+                cls.tearDownClass()
 
     def setUp(self):
         # The user details are saved again before each test, because a long running test class can
@@ -147,6 +173,15 @@ class EasyModeTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        if Remote_Test:
+            # Delete the temporary space created for remote testing
+            if getattr(cls, "_remote_space_id", None):
+                try:
+                    delete_remote_space(cls._remote_space_id)
+                except Exception as e:
+                    print(f"Failed to delete remote space {cls._remote_space_id}: {e}")
+            return
+
         try:
             cls.octopus.stop()
         except Exception as e:
@@ -171,7 +206,7 @@ class EasyModeTest(unittest.TestCase):
         run_prompt(self, f'Create a Script project called "{project_name}".')
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
@@ -230,7 +265,7 @@ class EasyModeTest(unittest.TestCase):
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
@@ -286,7 +321,7 @@ class EasyModeTest(unittest.TestCase):
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
@@ -335,7 +370,7 @@ class EasyModeTest(unittest.TestCase):
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
@@ -388,7 +423,7 @@ class EasyModeTest(unittest.TestCase):
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
@@ -444,7 +479,7 @@ class EasyModeTest(unittest.TestCase):
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
@@ -463,7 +498,7 @@ class EasyModeTest(unittest.TestCase):
 
         # Five tenants are linked to the project. The tenants are named by the LLM, so only the
         # number of tenants and the tags assigned to them are verified.
-        tenants = get_tenants(Octopus_Api_Key, Octopus_Url, space_id)
+        tenants = get_tenants(get_active_api_key(), get_active_octopus_url(), space_id)
         linked_tenants = [
             tenant
             for tenant in tenants
@@ -506,14 +541,14 @@ class EasyModeTest(unittest.TestCase):
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
 
         for runbook_name in runbook_names:
             runbook = get_runbook_fuzzy(
-                space_id, project["Id"], runbook_name, Octopus_Api_Key, Octopus_Url
+                space_id, project["Id"], runbook_name, get_active_api_key(), get_active_octopus_url()
             )
             self.assertEqual(runbook_name, runbook["Name"])
 
@@ -563,7 +598,7 @@ class EasyModeTest(unittest.TestCase):
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
@@ -624,7 +659,7 @@ class EasyModeTest(unittest.TestCase):
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
@@ -650,7 +685,7 @@ class EasyModeTest(unittest.TestCase):
         )
 
         # Each tenant is linked to the project and supplies its own value for the template.
-        tenants = get_tenants(Octopus_Api_Key, Octopus_Url, space_id)
+        tenants = get_tenants(get_active_api_key(), get_active_octopus_url(), space_id)
         for tenant_name, expected_value in tenant_values.items():
             tenant = find_by_name(tenants, tenant_name)
             self.assertIsNotNone(
@@ -702,7 +737,7 @@ class EasyModeTest(unittest.TestCase):
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
@@ -719,7 +754,7 @@ class EasyModeTest(unittest.TestCase):
         )
 
         # Each tenant is linked to the project and supplies its own value.
-        tenants = get_tenants(Octopus_Api_Key, Octopus_Url, space_id)
+        tenants = get_tenants(get_active_api_key(), get_active_octopus_url(), space_id)
         for tenant_name, expected_value in tenant_values.items():
             tenant = find_by_name(tenants, tenant_name)
             self.assertIsNotNone(
@@ -770,7 +805,7 @@ Modify the deployment process to include the community step template with the we
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
@@ -819,7 +854,7 @@ Modify the deployment process to include the community step template with the we
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
@@ -844,7 +879,7 @@ Modify the deployment process to include the community step template with the we
         # A channel using the new lifecycle. The automatically created default channel is left
         # in place as the default.
         channels = get_project_channel(
-            Octopus_Api_Key, Octopus_Url, space_id, project["Id"]
+            get_active_api_key(), get_active_octopus_url(), space_id, project["Id"]
         )
         channel = find_by_name(channels, hot_fix)
         self.assertIsNotNone(
@@ -873,7 +908,7 @@ Modify the deployment process to include the community step template with the we
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
@@ -905,7 +940,7 @@ Modify the deployment process to include the community step template with the we
 
         # The new channel uses the new lifecycle and is the default channel.
         channels = get_project_channel(
-            Octopus_Api_Key, Octopus_Url, space_id, project["Id"]
+            get_active_api_key(), get_active_octopus_url(), space_id, project["Id"]
         )
         channel = find_by_name(channels, channel_name)
         self.assertIsNotNone(
@@ -951,13 +986,13 @@ Create a Kubernetes target with the tag "{target_tag}", the URL {target_url}, us
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
 
         # A token account and an anonymous Docker feed back the Kubernetes target.
-        accounts = get_accounts(Octopus_Api_Key, Octopus_Url, space_id)
+        accounts = get_accounts(get_active_api_key(), get_active_octopus_url(), space_id)
         account = find_by_name(accounts, account_name)
         self.assertIsNotNone(
             account,
@@ -965,7 +1000,7 @@ Create a Kubernetes target with the tag "{target_tag}", the URL {target_url}, us
         )
         self.assertEqual("Token", account["AccountType"])
 
-        feeds = get_feeds(Octopus_Api_Key, Octopus_Url, space_id)
+        feeds = get_feeds(get_active_api_key(), get_active_octopus_url(), space_id)
         feed = find_by_name(feeds, feed_name)
         self.assertIsNotNone(
             feed,
@@ -974,7 +1009,7 @@ Create a Kubernetes target with the tag "{target_tag}", the URL {target_url}, us
 
         # A Kubernetes target pointing at the mock cluster. The target name is chosen by the LLM,
         # so it is matched on its URL and tag instead.
-        machines = get_machines(Octopus_Api_Key, Octopus_Url, space_id)
+        machines = get_machines(get_active_api_key(), get_active_octopus_url(), space_id)
         targets = [
             machine
             for machine in machines
@@ -1029,7 +1064,7 @@ Create a Kubernetes target with the tag "{target_tag}", the URL {target_url}, us
         )
 
         # A dedicated environment and a trigger rerun the security scan daily.
-        environments = get_environments(Octopus_Api_Key, Octopus_Url, space_id)
+        environments = get_environments(get_active_api_key(), get_active_octopus_url(), space_id)
         self.assertIsNotNone(
             find_by_name(environments, "Security"),
             f'There should be a "Security" environment. The environments are: {names(environments)}',
@@ -1073,14 +1108,14 @@ Create a Kubernetes target with the tag "Kubernetes", the URL https://mockk8s.oc
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
 
         # A channel that deploys to an ephemeral environment named after a custom field.
         channels = get_project_channel(
-            Octopus_Api_Key, Octopus_Url, space_id, project["Id"]
+            get_active_api_key(), get_active_octopus_url(), space_id, project["Id"]
         )
         channel = find_by_name(channels, features)
         self.assertIsNotNone(
@@ -1140,7 +1175,7 @@ Run the step from the "Hosted Ubuntu" worker pool.""",
         # One runbook to provision the ephemeral environment, and one to deprovision it.
         for runbook_name in runbook_names:
             runbook = get_runbook_fuzzy(
-                space_id, project["Id"], runbook_name, Octopus_Api_Key, Octopus_Url
+                space_id, project["Id"], runbook_name, get_active_api_key(), get_active_octopus_url()
             )
             self.assertEqual(runbook_name, runbook["Name"])
 
@@ -1176,7 +1211,7 @@ Run the step from the "Hosted Ubuntu" worker pool.""",
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
@@ -1238,7 +1273,7 @@ Run the step from the "Hosted Ubuntu" worker pool.""",
         run_prompt(self, f'Create a Claude project called "{project_name}"')
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
@@ -1303,13 +1338,13 @@ Run the step from the "Hosted Ubuntu" worker pool.""",
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
 
         # An environment for each slice of production traffic.
-        environments = get_environments(Octopus_Api_Key, Octopus_Url, space_id)
+        environments = get_environments(get_active_api_key(), get_active_octopus_url(), space_id)
         for environment_name in rollout_environments:
             self.assertIsNotNone(
                 find_by_name(environments, environment_name),
@@ -1367,7 +1402,7 @@ Run the step from the "Hosted Ubuntu" worker pool.""",
 
         # The runbook that promotes the release to the next production environment.
         runbook = get_runbook_fuzzy(
-            space_id, project["Id"], runbook_name, Octopus_Api_Key, Octopus_Url
+            space_id, project["Id"], runbook_name, get_active_api_key(), get_active_octopus_url()
         )
         self.assertEqual(runbook_name, runbook["Name"])
         runbook_steps = get_runbook_process_steps(space_id, runbook)
@@ -1391,13 +1426,13 @@ Run the step from the "Hosted Ubuntu" worker pool.""",
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         project = get_project_by_name(self, space_id, project_name)
 
         # An environment for each production stack.
-        environments = get_environments(Octopus_Api_Key, Octopus_Url, space_id)
+        environments = get_environments(get_active_api_key(), get_active_octopus_url(), space_id)
         for environment_name in production_environments:
             self.assertIsNotNone(
                 find_by_name(environments, environment_name),
@@ -1482,11 +1517,11 @@ Create an Orchestration project called "{orchestration_project_name}" managing t
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            Space_Name, Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
         # The shared Kubernetes target the microservices deploy to.
-        machines = get_machines(Octopus_Api_Key, Octopus_Url, space_id)
+        machines = get_machines(get_active_api_key(), get_active_octopus_url(), space_id)
         self.assertTrue(
             any(
                 machine["Endpoint"].get("ClusterUrl") == target_url
@@ -1553,10 +1588,12 @@ def save_user_details():
     prompts rely on.
     """
     github_user = os.environ["TEST_GH_USER"]
+    octopus_url = Remote_Octopus_Url if Remote_Test else Octopus_Url
+    octopus_api_key = Remote_Octopus_Api_Key if Remote_Test else Octopus_Api_Key
     save_users_octopus_url_from_login(
         github_user,
-        Octopus_Url,
-        Octopus_Api_Key,
+        octopus_url,
+        octopus_api_key,
         os.environ["ENCRYPTION_PASSWORD"],
         os.environ["ENCRYPTION_SALT"],
         os.environ["AzureWebJobsStorage"],
@@ -1574,6 +1611,78 @@ def save_user_details():
         save_default_values(
             github_user, name, value, os.environ["AzureWebJobsStorage"]
         )
+
+
+def get_active_octopus_url():
+    """Return the Octopus URL for the current test mode."""
+    return Remote_Octopus_Url if Remote_Test else Octopus_Url
+
+
+def get_active_api_key():
+    """Return the Octopus API key for the current test mode."""
+    return Remote_Octopus_Api_Key if Remote_Test else Octopus_Api_Key
+
+
+def create_remote_space(space_name):
+    """
+    Create a new space on the remote Octopus server and return its ID.
+    :param space_name: the name for the new space
+    :return: the ID of the created space e.g. "Spaces-123"
+    """
+    api, headers = build_url(Remote_Octopus_Url, Remote_Octopus_Api_Key, "/api/spaces")
+    headers["Content-Type"] = "application/json"
+    teams = ["teams-administrators"]
+    if Space_Manager_Team:
+        teams.append(Space_Manager_Team)
+    body = json.dumps({
+        "Name": space_name,
+        "IsDefault": False,
+        "TaskQueueStopped": False,
+        "SpaceManagersTeamMembers": None,
+        "SpaceManagersTeams": teams,
+    }).encode("utf8")
+    resp = handle_response(
+        lambda: http.request("POST", api, headers=headers, body=body)
+    )
+    space = resp.json()
+    print(f"Created remote space '{space_name}' with ID {space['Id']}")
+    return space["Id"]
+
+
+def delete_remote_space(space_id):
+    """
+    Mark a space on the remote Octopus server for deletion by stopping its task queue, then
+    delete it.
+    :param space_id: the ID of the space to delete
+    """
+    # First, stop the task queue so the space can be deleted
+    get_api, get_headers = build_url(
+        Remote_Octopus_Url, Remote_Octopus_Api_Key, f"/api/spaces/{space_id}"
+    )
+    resp = handle_response(
+        lambda: http.request("GET", get_api, headers=get_headers)
+    )
+    space = resp.json()
+    space["TaskQueueStopped"] = True
+
+    put_api, put_headers = build_url(
+        Remote_Octopus_Url, Remote_Octopus_Api_Key, f"/api/spaces/{space_id}"
+    )
+    put_headers["Content-Type"] = "application/json"
+    handle_response(
+        lambda: http.request(
+            "PUT", put_api, headers=put_headers, body=json.dumps(space).encode("utf8")
+        )
+    )
+
+    # Now delete the space
+    del_api, del_headers = build_url(
+        Remote_Octopus_Url, Remote_Octopus_Api_Key, f"/api/spaces/{space_id}"
+    )
+    handle_response(
+        lambda: http.request("DELETE", del_api, headers=del_headers)
+    )
+    print(f"Deleted remote space {space_id}")
 
 
 def wait_for_octopus(timeout=1800):
@@ -1701,8 +1810,8 @@ def get_space_collection(space_id, collection):
     :return: the list of resources
     """
     api, headers = build_url(
-        Octopus_Url,
-        Octopus_Api_Key,
+        get_active_octopus_url(),
+        get_active_api_key(),
         f"/api/{space_id}/{collection}",
         query=dict(take=TAKE_ALL),
     )
@@ -1716,7 +1825,7 @@ def get_resource(path):
     :param path: the path of the resource
     :return: the resource
     """
-    api, headers = build_url(Octopus_Url, Octopus_Api_Key, path)
+    api, headers = build_url(get_active_octopus_url(), get_active_api_key(), path)
     resp = handle_response(lambda: http.request("GET", api, headers=headers))
     return resp.json()
 
@@ -1742,7 +1851,7 @@ def get_deployment_process_steps(space_name, project_name):
     :return: the list of steps
     """
     raw_deployment_process = get_raw_deployment_process(
-        space_name, project_name, Octopus_Api_Key, Octopus_Url
+        space_name, project_name, get_active_api_key(), get_active_octopus_url()
     )
     return json.loads(raw_deployment_process)["Steps"]
 
