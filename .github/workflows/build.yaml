@@ -233,6 +233,10 @@ jobs:
           AISERVICES_DEPLOYMENT_ANTHROPIC_PROJECT_GEN: claude-sonnet-5
           AISERVICES_ANTHROPIC_ENDPOINT: https://matth-m9ho8uqc-eastus2.services.ai.azure.com/anthropic/
           AISERVICES_DEPLOYMENT_PROJECT_GEN_TOKENS: 128000
+          OCTOPUS_SPACE_MANAGER_TEAM: Teams-41
+          OCTOPUS_CLI_SERVER: ${{secrets.OCTOPUS_CLI_SERVER}}
+          OCTOPUS_CLI_API_KEY: ${{secrets.OCTOPUS_CLI_API_KEY}}
+          OCTOPUS_TEST_REMOTE: FALSE
 #          REDIRECTION_DISABLE: !!str "true"
 #          REDIRECTION_FORCE: !!str "false"
         shell: /usr/bin/bash --noprofile --norc {0}
