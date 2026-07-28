@@ -1305,6 +1305,47 @@ Note: The `"Octopus.Action.KubernetesContainers.Namespace"` property is omitted 
 * You will be penalized for defining the "phase" block on a single line.
 * Each proprt of the "phase" block must be on a new line.
 
+## Optional Lifecycle Phase Instructions
+
+**CRITICAL — preserve `is_optional_phase` exactly as defined in the example configuration**: The `is_optional_phase` attribute controls whether a release must be deployed to a phase before it can be promoted to the next phase. When a `phase` block in the example configuration sets `is_optional_phase = true`, the corresponding `phase` block in your response MUST also set `is_optional_phase = true`. Omitting the attribute is NOT equivalent, because a missing `is_optional_phase` defaults to `false` and makes the phase mandatory, which changes the deployment behaviour of the lifecycle.
+
+* You will be penalized for omitting the "is_optional_phase" attribute from a "phase" block that defines it in the example configuration.
+* You will be penalized for setting "is_optional_phase" to false when the example configuration sets it to true.
+
+**CRITICAL — lifecycles with parallel production stacks**: A lifecycle that models parallel production stacks, for example a blue/green lifecycle with "Production - Blue" and "Production - Green" environments, MUST mark the phase for each stack with `is_optional_phase = true`. Each stack is deployed to independently, so a release must be able to be promoted to one stack without being deployed to the other. Marking either stack's phase as mandatory forces every release to be deployed to both stacks, which defeats the purpose of a blue/green lifecycle.
+
+**Example — blue/green lifecycle production phases (CORRECT)**:
+```hcl
+phase {
+  automatic_deployment_targets          = []
+  optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}"]
+  name                                  = "Production Blue"
+  is_optional_phase                     = true
+  minimum_environments_before_promotion = 0
+}
+phase {
+  automatic_deployment_targets          = []
+  optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
+  name                                  = "Production Green"
+  is_optional_phase                     = true
+  minimum_environments_before_promotion = 0
+}
+```
+
+**Negative example — blue/green production phases without `is_optional_phase` (FORBIDDEN)**:
+```hcl
+phase {
+  automatic_deployment_targets          = []
+  optional_deployment_targets           = ["${...environment_production___blue...}"]
+  name                                  = "Production Blue"
+  minimum_environments_before_promotion = 0
+}  ← WRONG: "is_optional_phase" is missing, so the phase defaults to mandatory
+```
+
+**MANDATORY SELF-CHECK — optional phase verification**: Before finalizing any `octopusdeploy_lifecycle` resource, check:
+1. Does the example configuration set `is_optional_phase = true` on any phase? If YES → does every one of those phases set `is_optional_phase = true` in your response?
+2. Does the lifecycle model parallel production stacks such as blue/green? If YES → is the phase for each stack marked `is_optional_phase = true`?
+
 ## Retention Policy for New Project Creation Prompts
 
 **CRITICAL — when a new project creation prompt specifies a retention policy (e.g., "with a retention policy of 30 days for releases" or "Set the retention policy to 5 items")**:
