@@ -3001,6 +3001,109 @@ resource "octopusdeploy_channel" "channel_k8s_web_app_with_ephemeral_environment
 * You will be penalized for creating a `octopusdeploy_environments` data source associated with a parent environment.
 * When the prompt indicates that a target is scoped to a parent environment, both the `octopusdeploy_parent_environment` resource and the `octopusdeploy_parent_environments` data source must be created for that parent environment.
 
+```
+data "octopusdeploy_environments" "environment_development" {
+  ids          = null
+  partial_name = "Development"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_environment" "environment_development" {
+  count                        = "${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? 0 : 1}"
+  name                         = "Development"
+  description                  = ""
+  allow_dynamic_infrastructure = true
+  use_guided_failure           = true
+
+  jira_extension_settings {
+    environment_type = "unmapped"
+  }
+
+  jira_service_management_extension_settings {
+    is_enabled = false
+  }
+
+  servicenow_extension_settings {
+    is_enabled = false
+  }
+  depends_on = []
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_parent_environments" "parent_environment_features" {
+  ids          = null
+  partial_name = ""
+  name         = "Features"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_parent_environment" "parent_environment_features" {
+  count                         = "${length(data.octopusdeploy_parent_environments.parent_environment_features.parent_environments) != 0 ? 0 : 1}"
+  space_id                      = "${trimspace(var.octopus_space_id)}"
+  name                          = "Features"
+  use_guided_failure            = false
+  automatic_deprovisioning_rule = { days = 7, hours = 0 }
+  depends_on                    = []
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+data "octopusdeploy_deployment_targets" "target_kubernetes_with_token_auth" {
+  ids                  = null
+  partial_name         = "Kubernetes with Token Auth"
+  skip                 = 0
+  take                 = 1
+  health_statuses      = null
+  communication_styles = null
+  environments         = null
+  roles                = null
+  shell_names          = null
+  tenant_tags          = null
+  tenants              = null
+}
+
+resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes_with_token_auth" {
+  count                             = "${length(data.octopusdeploy_deployment_targets.target_kubernetes_with_token_auth.deployment_targets) != 0 ? 0 : 1}"
+  cluster_url                       = "http://clusterurl"
+
+  # This is how the target references a parent environment (Features) and a regular environment (Development)
+  environments                      = [
+    "${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}",
+    "${length(data.octopusdeploy_parent_environments.parent_environment_features.parent_environments) != 0 ? data.octopusdeploy_parent_environments.parent_environment_features.parent_environments[0].id : octopusdeploy_parent_environment.parent_environment_features[0].id}"]
+  name                              = "Kubernetes with Token Auth"
+  roles                             = ["Kubernetes"]
+  cluster_certificate               = "${length(data.octopusdeploy_certificates.certificate_development_certificate.certificates) != 0 ? data.octopusdeploy_certificates.certificate_development_certificate.certificates[0].id : octopusdeploy_certificate.certificate_development_certificate[0].id}"
+  default_worker_pool_id            = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+  machine_policy_id                 = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}"
+  skip_tls_verification             = false
+  tenant_tags                       = []
+  tenanted_deployment_participation = "Untenanted"
+  tenants                           = []
+
+  endpoint {
+    communication_style = "Kubernetes"
+  }
+
+  container {
+    feed_id = ""
+    image   = ""
+  }
+
+  authentication {
+    account_id = "${length(data.octopusdeploy_accounts.account_token.accounts) != 0 ? data.octopusdeploy_accounts.account_token.accounts[0].id : octopusdeploy_token_account.account_token[0].id}"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+```
+
 ## Octopus Project Channel Instructions
 
 * Channels defined as resource "octopusdeploy_channel" have the following required properties:
