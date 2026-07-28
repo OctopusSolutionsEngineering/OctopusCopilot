@@ -2997,6 +2997,9 @@ resource "octopusdeploy_channel" "channel_k8s_web_app_with_ephemeral_environment
 }
 ```
 
+* Parent envirronments must create a `octopusdeploy_parent_environments` data source for their lookup.
+* You will be penalized for creating a `octopusdeploy_environments` data source associated with a parent environment.
+
 ## Octopus Project Channel Instructions
 
 * Channels defined as resource "octopusdeploy_channel" have the following required properties:
