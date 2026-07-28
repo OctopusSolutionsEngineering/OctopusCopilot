@@ -801,7 +801,7 @@ class EasyModeTest(unittest.TestCase):
         run_prompt(
             self,
             f"""Create a Script project called "{project_name}".
-Modify the deployment process to include the community step template with the website "{template_website}" as the first step with the name "{step_name}".""",
+Modify the deployment process to add the community step template with the website "{template_website}" as the first step with the name "{step_name}".""",
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
