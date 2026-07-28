@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.18.2" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.19.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -203,6 +203,18 @@ resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
     name                                  = "Security"
     is_optional_phase                     = false
     minimum_environments_before_promotion = 0
+  }
+
+  release_retention_with_strategy {
+    strategy         = "Count"
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_with_strategy {
+    strategy         = "Count"
+    quantity_to_keep = 30
+    unit             = "Days"
   }
   lifecycle {
     prevent_destroy = true
@@ -434,20 +446,20 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_upd
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
-        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.ArgoCD.Sync.Mode" = "Disabled"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
         "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
         "Octopus.Action.ArgoCD.CommitMessageDescription" = <<EOT
 Project: #{Octopus.Project.Slug}
 Environment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }
 Tenant: #{Octopus.Deployment.Tenant.Slug}#{/if}
 EOT
-        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
         "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
+        "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
+        "Octopus.Action.ArgoCD.Sync.Mode" = "Disabled"
+        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
       }
 }
 
@@ -469,10 +481,10 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_lin
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptBody" = "Write-Highlight \"[Browse Git Repository](https://mockgit.octopusdemos.com/browse/$($OctopusParameters[\"Project.MockGit.Username\"])/argocd)\""
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptBody" = "Write-Highlight \"[Browse Git Repository](https://mockgit.octopusdemos.com/browse/$($OctopusParameters[\"Project.MockGit.Username\"])/argocd)\""
       }
 }
 
@@ -526,9 +538,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_sen
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"
       }
   execution_properties  = {
+        "Octopus.Action.Email.To" = "admin@example.org"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.Subject" = "Deployment failed!"
-        "Octopus.Action.Email.To" = "admin@example.org"
       }
 }
 

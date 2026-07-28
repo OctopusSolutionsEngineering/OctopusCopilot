@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.18.2" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.19.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -166,6 +166,18 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
     name                                  = "Production"
     is_optional_phase                     = false
     minimum_environments_before_promotion = 0
+  }
+
+  release_retention_with_strategy {
+    strategy         = "Count"
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_with_strategy {
+    strategy         = "Count"
+    quantity_to_keep = 30
+    unit             = "Days"
   }
   lifecycle {
     prevent_destroy = true
@@ -369,9 +381,9 @@ resource "octopusdeploy_process_step" "process_step_deployment_orchestration_dep
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.DeployRelease.DeploymentCondition" = "IfNotCurrentVersion"
         "Octopus.Action.DeployRelease.ProjectId" = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.DeployRelease.DeploymentCondition" = "IfNotCurrentVersion"
       }
 }
 

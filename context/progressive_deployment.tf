@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.18.2" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.19.0" }
   }
   required_version = ">= 1.6.0"
 }
@@ -204,6 +204,14 @@ resource "octopusdeploy_lifecycle" "lifecycle_progressive" {
     is_optional_phase                     = false
     minimum_environments_before_promotion = 0
   }
+
+  release_retention_with_strategy {
+    strategy = "Default"
+  }
+
+  tentacle_retention_with_strategy {
+    strategy = "Default"
+  }
   lifecycle {
     prevent_destroy = true
   }
@@ -273,10 +281,10 @@ resource "octopusdeploy_process_step" "process_step_progressive_deployment_deplo
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptBody" = "echo \"Deploying app\""
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptBody" = "echo \"Deploying app\""
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -299,8 +307,6 @@ resource "octopusdeploy_process_step" "process_step_progressive_deployment_simul
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = <<EOT
 if ($OctopusParameters["Project.SimulateFail"] -eq "True") {
@@ -308,6 +314,8 @@ if ($OctopusParameters["Project.SimulateFail"] -eq "True") {
   exit 1
 }
 EOT
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -336,19 +344,19 @@ resource "octopusdeploy_process_templated_step" "process_step_progressive_deploy
   parameters            = {
         "Run.Runbook.Machines" = "N/A"
         "Run.Runbook.Project.Name" = "#{Octopus.Project.Name}"
-        "Run.Runbook.ManualIntervention.EnvironmentToUse" = "#{Octopus.Environment.Name}"
-        "Run.Runbook.Name" = "Deploy Release"
-        "Run.Runbook.UsePublishedSnapShot" = "False"
-        "Run.Runbook.AutoApproveManualInterventions" = "No"
-        "Run.Runbook.Api.Key" = "#{Project.Octopus.Api.Key}"
-        "Run.Runbook.Waitforfinish" = "False"
-        "Run.Runbook.Base.Url" = "#{Octopus.Web.ServerUri}"
-        "Run.Runbook.Environment.Name" = "#{if Octopus.Environment.Name == \"Prod 10\"}Prod 50#{/if}#{if Octopus.Environment.Name == \"Prod 50\"}Prod 100#{/if}"
-        "Run.Runbook.CustomNotes.Toggle" = "False"
         "Run.Runbook.DateTime" = "N/A"
+        "Run.Runbook.UsePublishedSnapShot" = "False"
+        "Run.Runbook.Waitforfinish" = "False"
+        "Run.Runbook.ManualIntervention.EnvironmentToUse" = "#{Octopus.Environment.Name}"
         "Run.Runbook.Space.Name" = "#{Octopus.Space.Name}"
-        "Run.Runbook.PromptedVariables" = "Project.Release.Id::#{Octopus.Release.Id}"
+        "Run.Runbook.CustomNotes.Toggle" = "False"
+        "Run.Runbook.Name" = "Deploy Release"
         "Run.Runbook.CancelInSeconds" = "1800"
+        "Run.Runbook.AutoApproveManualInterventions" = "No"
+        "Run.Runbook.Base.Url" = "#{Octopus.Web.ServerUri}"
+        "Run.Runbook.PromptedVariables" = "Project.Release.Id::#{Octopus.Release.Id}"
+        "Run.Runbook.Environment.Name" = "#{if Octopus.Environment.Name == \"Prod 10\"}Prod 50#{/if}#{if Octopus.Environment.Name == \"Prod 50\"}Prod 100#{/if}"
+        "Run.Runbook.Api.Key" = "#{Project.Octopus.Api.Key}"
       }
 }
 
