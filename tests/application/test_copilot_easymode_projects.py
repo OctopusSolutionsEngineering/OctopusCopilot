@@ -676,7 +676,7 @@ class EasyModeTest(unittest.TestCase):
         self.assertIn(variable_set["Id"], project["IncludedLibraryVariableSetIds"])
 
         templates = get_resource(
-            f"/api/{space_id}/Variables/{variable_set['VariableSetId']}"
+            f"/api/{space_id}/LibraryVariableSets/{variable_set['Id']}"
         )["Templates"]
         self.assertTrue(
             any(template["Name"] == template_name for template in templates),
