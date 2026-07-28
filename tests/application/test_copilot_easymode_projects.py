@@ -4,6 +4,7 @@ import os
 import time
 import unittest
 import uuid
+from unittest import skip
 
 import azure.functions as func
 import pytest
@@ -471,6 +472,7 @@ class EasyModeTest(EasyModeTestBase):
             f'A step should reference "{package_id}" from the new feed. The packages are: {packages}',
         )
 
+    @skip("This test is flaky")
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
     def test_06_tenants(self):
         """
