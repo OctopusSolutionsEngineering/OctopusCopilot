@@ -55,19 +55,12 @@ Space_Name = "Simple"
 Container_Platform = "linux/amd64"
 
 
-@pytest.mark.split_group("group8")
-class EasyModeTest(unittest.TestCase):
+class EasyModeTestBase(unittest.TestCase):
     """
-    End-to-end tests that verify the projects documented in the Octopus Easy Mode blog series
-    (https://octopus.com/blog/easymode) are created as expected by the AI Assistant.
+    Base class that manages the Octopus Deploy test infrastructure.
 
-    Each test runs one of the copy-and-paste prompts published in the series and verifies that
-    the resources described by that post are created.
-
-    The prompts are reproduced verbatim from the blog posts, with the space appended so the
-    assistant does not have to guess which space to build in. The assertions deliberately focus
-    on the resources the prompt explicitly asks for, because names and scripts invented by the
-    LLM (step names, generated scripts, tenant names) vary between runs.
+    Handles starting and stopping Docker containers (or creating a remote space) around the
+    test run, populating blob storage with Terraform context files, and saving user details.
     """
 
     @classmethod
@@ -195,6 +188,24 @@ class EasyModeTest(unittest.TestCase):
             pass
         finally:
             cls.mssql = None
+
+
+@pytest.mark.split_group("group8")
+class EasyModeTest(EasyModeTestBase):
+    """
+    End-to-end tests that verify the projects documented in the Octopus Easy Mode blog series
+    (https://octopus.com/blog/easymode) are created as expected by the AI Assistant.
+
+    This class contains tests 01–10.
+
+    Each test runs one of the copy-and-paste prompts published in the series and verifies that
+    the resources described by that post are created.
+
+    The prompts are reproduced verbatim from the blog posts, with the space appended so the
+    assistant does not have to guess which space to build in. The assertions deliberately focus
+    on the resources the prompt explicitly asks for, because names and scripts invented by the
+    LLM (step names, generated scripts, tenant names) vary between runs.
+    """
 
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
     def test_01_basic_script_app(self):
@@ -365,8 +376,9 @@ class EasyModeTest(unittest.TestCase):
         run_prompt(
             self,
             f"""Create a Script project called "{project_name}", and then:
-* Enable retries on the script step
-* Replace the script with one that randomly fails by returning a non-zero exit code 50% of the time""",
+* Enable retries on the script step.
+* Replace the script with one that randomly fails by returning a non-zero exit code 50% of the time.
+* Do not create a placeholder script.""",
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
@@ -788,6 +800,16 @@ class EasyModeTest(unittest.TestCase):
             any(f"#{{{template_name}}}" in script for script in scripts),
             f'A script step should reference "#{{{template_name}}}". The scripts are: {scripts}',
         )
+
+
+@pytest.mark.split_group("group9")
+class EasyModeTest2(EasyModeTestBase):
+    """
+    End-to-end tests that verify the projects documented in the Octopus Easy Mode blog series
+    (https://octopus.com/blog/easymode) are created as expected by the AI Assistant.
+
+    This class contains tests 11–20.
+    """
 
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
     def test_11_community_step_template(self):
