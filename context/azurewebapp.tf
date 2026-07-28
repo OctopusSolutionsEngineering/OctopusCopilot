@@ -205,6 +205,18 @@ resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
     is_optional_phase                     = false
     minimum_environments_before_promotion = 0
   }
+
+  release_retention_with_strategy {
+    strategy         = "Count"
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_with_strategy {
+    strategy         = "Count"
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
   lifecycle {
     prevent_destroy = true
   }
@@ -323,9 +335,9 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_manual_interve
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
+        "Octopus.Action.Manual.Instructions" = "Do you approve the production deployment?"
       }
 }
 
@@ -377,8 +389,8 @@ resource "octopusdeploy_process_templated_step" "process_step_azure_web_app_octo
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -414,6 +426,10 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_deploy_azure_w
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.AutoRetry.MaximumCount" = "3"
         "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
@@ -434,10 +450,6 @@ az webapp config set `
     --resource-group "#{Project.Azure.ResourceGroup.Name}" `
     --linux-fx-version "DOCKER|ghcr.io/#{Octopus.Action.Package[octopub-selfcontained].PackageId}:#{Octopus.Action.Package[octopub-selfcontained].PackageVersion}"
 EOT
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -462,9 +474,6 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_smoke_test" {
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.SetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = <<EOT
 $azureWebApp = Get-AzWebApp -ResourceGroupName "#{Project.Azure.ResourceGroup.Name}" -Name "#{Project.Azure.WebApp.Octopub.Name}"
@@ -493,6 +502,9 @@ catch
 }
 EOT
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -515,8 +527,8 @@ resource "octopusdeploy_process_templated_step" "process_step_azure_web_app_scan
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
