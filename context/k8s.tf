@@ -204,18 +204,6 @@ resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
     is_optional_phase                     = false
     minimum_environments_before_promotion = 0
   }
-
-  release_retention_with_strategy {
-    strategy         = "Count"
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-
-  tentacle_retention_with_strategy {
-    strategy         = "Count"
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
   lifecycle {
     prevent_destroy = true
   }
@@ -253,18 +241,6 @@ resource "octopusdeploy_lifecycle" "lifecycle_hotfix" {
     name                                  = "Production"
     is_optional_phase                     = false
     minimum_environments_before_promotion = 0
-  }
-
-  release_retention_with_strategy {
-    strategy         = "Count"
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-
-  tentacle_retention_with_strategy {
-    strategy         = "Count"
-    quantity_to_keep = 30
-    unit             = "Days"
   }
   lifecycle {
     prevent_destroy = true
@@ -437,8 +413,8 @@ resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "CheckTargets.Message" = "We recommend the Kubernetes Agent - https://octopus.com/docs/kubernetes/targets/kubernetes-agent"
@@ -476,7 +452,11 @@ resource "octopusdeploy_process_step" "process_step_kubernetes_web_app_deploy_a_
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"
         "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
         "Octopus.Action.KubernetesContainers.CustomResourceYaml" = <<EOT
 apiVersion: apps/v1
 kind: Deployment
@@ -521,14 +501,10 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
 EOT
-        "Octopus.Action.RunOnServer" = "true"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{if Octopus.Deployment.Tenant.Name}#{Octopus.Deployment.Tenant.Name | ToLower | Replace \"[^A-Za-z0-9]\" -}#{/if}"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
       }
 }
 
@@ -551,13 +527,13 @@ resource "octopusdeploy_process_templated_step" "process_step_kubernetes_web_app
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({
-        "PackageId" = "com.octopus:octopub-sbom"
         "FeedId" = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
+        "PackageId" = "com.octopus:octopub-sbom"
                 })
       }
 }

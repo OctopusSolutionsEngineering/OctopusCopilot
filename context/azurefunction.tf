@@ -205,18 +205,6 @@ resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
     is_optional_phase                     = false
     minimum_environments_before_promotion = 0
   }
-
-  release_retention_with_strategy {
-    strategy         = "Count"
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-
-  tentacle_retention_with_strategy {
-    strategy         = "Count"
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
   lifecycle {
     prevent_destroy = true
   }
@@ -361,12 +349,12 @@ resource "octopusdeploy_process_step" "process_step_azure_function_validate_setu
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.Script.ScriptFileName" = "octopus/Azure/ValidateSetup.ps1"
         "Octopus.Action.Script.ScriptParameters" = "-Role \"Octopub-Products-Function\" -CheckForTargets $true"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
       }
 }
 
@@ -426,9 +414,6 @@ resource "octopusdeploy_process_step" "process_step_azure_function_deploy_the_fu
         "Octopus.Step.ConditionVariableExpression" = "#{if Octopus.Action[Validate setup].Output.AzureSetupValid == \"True\"}true#{/if}"
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.AutoRetry.MaximumCount" = "3"
-        "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
         "Octopus.Action.Script.ScriptBody" = <<EOT
 az config set core.no_color=true 2>&1
@@ -450,6 +435,9 @@ EOT
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.AutoRetry.MaximumCount" = "3"
+        "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
       }
 }
 
@@ -473,6 +461,8 @@ resource "octopusdeploy_process_step" "process_step_azure_function_smoke_test" {
         "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}#{if Octopus.Action[Validate Setup].Output.AzureSetupValid == \"True\"}true#{/if}#{/unless}"
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"
@@ -512,8 +502,6 @@ catch
   Write-Warning "An error occurred: $($_.Exception.Message)"
 }
 EOT
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
       }
 }
 
@@ -536,8 +524,8 @@ resource "octopusdeploy_process_templated_step" "process_step_azure_function_sca
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "Sbom.Package" = jsonencode({

@@ -167,18 +167,6 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
     is_optional_phase                     = false
     minimum_environments_before_promotion = 0
   }
-
-  release_retention_with_strategy {
-    strategy         = "Count"
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-
-  tentacle_retention_with_strategy {
-    strategy         = "Count"
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
   lifecycle {
     prevent_destroy = true
   }
@@ -272,11 +260,11 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "echo \"Hello world\""
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -381,9 +369,9 @@ resource "octopusdeploy_process_step" "process_step_deployment_orchestration_dep
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.DeployRelease.DeploymentCondition" = "IfNotCurrentVersion"
         "Octopus.Action.DeployRelease.ProjectId" = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
