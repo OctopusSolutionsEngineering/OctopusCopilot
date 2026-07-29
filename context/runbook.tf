@@ -76,7 +76,7 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_example_r
   count                 = "1"
   name                  = "Run a Script"
   type                  = "Octopus.Script"
-  process_id            = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? null : octopusdeploy_process.process_every_step_project_example_runbook[0].id}"
+  process_id            = "${octopusdeploy_process.process_every_step_project_example_runbook[0].id}"
   channels              = null
   condition             = "Success"
   environments          = null
@@ -89,18 +89,18 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_example_r
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"This is an example script step\""
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
 resource "octopusdeploy_process_steps_order" "process_step_order_every_step_project_example_runbook" {
   count      = "1"
-  process_id = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? null : octopusdeploy_process.process_every_step_project_example_runbook[0].id}"
-  steps      = ["${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? null : octopusdeploy_process_step.process_step_every_step_project_example_runbook_run_a_script[0].id}"]
+  process_id = "${octopusdeploy_process.process_every_step_project_example_runbook[0].id}"
+  steps      = ["${octopusdeploy_process_step.process_step_every_step_project_example_runbook_run_a_script[0].id}"]
 }
 
 data "octopusdeploy_environments" "environment_development" {
