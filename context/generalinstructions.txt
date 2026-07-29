@@ -4866,6 +4866,26 @@ parameters      = [{ default_sensitive_value = null,, display_settings = { "Octo
 
 ## Octopus Variable Instructions
 
+* When a variable is scoped to a runbook, the `processes` scope must be set to the runbook ID, for example:
+
+```
+resource "octopusdeploy_runbook" "runbook_create_new_terraform_project" {
+
+}
+
+resource "octopusdeploy_variable" "easy_mode_mcp_projectname_1" {
+  owner_id     = "${data.octopusdeploy_projects.project_easy_mode_mcp.projects[0].id}"
+  name         = "ProjectName"
+  type         = "String"
+  description = "The new project name"
+  is_sensitive = false
+  scope {
+      # The process references the runbook ID to scope the variable to the runbook
+      processes = ["${octopusdeploy_runbook.runbook_create_new_terraform_project.id}"]
+  }
+}
+```
+
 * Variables defined as resource "octopusdeploy_variable" must have a "type" attribute set to one of the following:
   * "AmazonWebServicesAccount"
   * "AzureAccount"
