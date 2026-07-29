@@ -300,19 +300,25 @@ resource "octopusdeploy_process_step" "process_step_claude_run_claude_agent" {
   execution_properties  = {
         "Octopus.Action.Claude.McpServers" = jsonencode([
         {
-        "headers" = {
-        "Authorization" = "#{Project.GitHub.PAT}"
-                }
-        "env" = {        }
         "allowedTools" = [
         "*",
         ]
         "type" = "http"
         "name" = "GitHub"
         "url" = "https://api.githubcopilot.com/mcp/"
+        "headers" = {
+        "Authorization" = "#{Project.GitHub.PAT}"
+                }
+        "env" = {        }
                 },
         ])
         "Octopus.Action.Claude.Model" = "claude-sonnet-5"
+        "Octopus.Action.Claude.Effort" = "medium"
+        "Octopus.Action.Claude.ApiKey" = "#{Project.Claude.ApiKey}"
+        "Octopus.Action.Claude.SandboxMode" = "None"
+        "Octopus.Action.Claude.OctopusMcpTools" = jsonencode([
+        "*",
+        ])
         "Octopus.Action.Claude.Permissions" = jsonencode({
         "deny" = [
         "WebFetch",
@@ -320,7 +326,6 @@ resource "octopusdeploy_process_step" "process_step_claude_run_claude_agent" {
         "Bash",
         ]
                 })
-        "Octopus.Action.Claude.InjectionCheckEnabled" = "False"
         "Octopus.Action.Claude.Prompt" = <<EOT
 Your task is to rate the impact of the Git commits that contribute to the new version of the application being deployed.
 
@@ -356,13 +361,8 @@ The result must be a plain JSON blob like this:
 }
 ```
 EOT
-        "Octopus.Action.Claude.SandboxMode" = "None"
-        "Octopus.Action.Claude.Effort" = "medium"
-        "Octopus.Action.Claude.OctopusMcpTools" = jsonencode([
-        "*",
-        ])
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Claude.ApiKey" = "#{Project.Claude.ApiKey}"
+        "Octopus.Action.Claude.InjectionCheckEnabled" = "False"
       }
 }
 
