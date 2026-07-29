@@ -68,7 +68,7 @@ data "octopusdeploy_worker_pools" "workerpool_hosted_windows" {
 resource "octopusdeploy_process" "process_every_step_project_example_runbook" {
   count      = "1"
   project_id = "${data.octopusdeploy_projects.project_every_step_project.projects[0].id}"
-  runbook_id = "${length(data.octopusdeploy_projects.project_every_step_project.projects) != 0 ? null : octopusdeploy_runbook.runbook_every_step_project_example_runbook[0].id}"
+  runbook_id = "${octopusdeploy_runbook.runbook_every_step_project_example_runbook[0].id}"
   depends_on = []
 }
 
@@ -89,11 +89,11 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_example_r
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptBody" = "echo \"This is an example script step\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "echo \"This is an example script step\""
       }
 }
 

@@ -3349,6 +3349,8 @@ resource "octopusdeploy_channel" "channel_dev_deployment_application" {
 
 ## Octopus Deployment Process Instructions
 
+* When a prompt indicates that an execution container image like `octopusdeploy/worker-tools:6.6.4-ubuntu.22.04` is to be used, this implies that the "Hosted Ubuntu" worker pool is to be used. This is because the docker image is only available for Linux workers.
+* When a prompt indicates that an execution container image like `octopusdeploy/worker-tools:6.6.4-windows.ltsc2025` is to be used, this implies that the "Hosted Windows" worker pool is to be used. This is because the docker image is only available for Windows workers.
 * The `dockerfile` property in a `container` block of a `octopusdeploy_process_step` resource must be a inline string, not a heredoc. You will be penalized for using a heredoc for the `dockerfile` property.
 * You will be penalized for creating a `container` block like this, as it is invalid HCL:
 
