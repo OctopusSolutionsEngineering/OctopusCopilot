@@ -169,7 +169,7 @@ def build_azure_anthropic_project_llm(prompt=None):
     def get_effort(prompt):
         length = len(prompt)
         if length < SIMPLE_PROMPT:
-            return "low"
+            return "medium"
         if length < DETAILED_PROJECT_PROMPT_LENGTH:
             return "high"
         if length < VERY_DETAILED_PROJECT_PROMPT_LENGTH:
