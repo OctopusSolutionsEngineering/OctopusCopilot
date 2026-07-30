@@ -5047,6 +5047,7 @@ resource "octopusdeploy_variable" "worker_pool_variable" {
 
 ## Runbook Instructions
 
+* When creating a runbook without an associated project, the "octopusdeploy_runbook" resource must have a "count" property of "1".
 * The "runbook_id" attribute of resource "octopusdeploy_runbook_process" is in the format "${length(data.octopusdeploy_projects.<project>.projects) != 0 ? null : octopusdeploy_runbook.<runbook>[0].id}"
 * You will be penalized for creating a "octopusdeploy_runbook" or "octopusdeploy_runbooks" data source as these data sources do not exist.
 * The "count" property for a "octopusdeploy_runbook" resource is based on the parent project, for example:

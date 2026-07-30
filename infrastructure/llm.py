@@ -41,6 +41,7 @@ AZURE_GENERAL_SERVICE = "azure_general"
 AZURE_GENERAL_QUERY_SMALL_LLM = "azure_general_query_small"
 EUROPE_REGION = "Europe"
 US_REGION = "US"
+SIMPLE_PROMPT = 100
 DETAILED_PROJECT_PROMPT_LENGTH = 2000
 VERY_DETAILED_PROJECT_PROMPT_LENGTH = 5000
 
@@ -167,6 +168,8 @@ def build_azure_anthropic_project_llm(prompt=None):
     # Enable effort for large project prompts
     def get_effort(prompt):
         length = len(prompt)
+        if length < SIMPLE_PROMPT:
+            return "low"
         if length < DETAILED_PROJECT_PROMPT_LENGTH:
             return "high"
         if length < VERY_DETAILED_PROJECT_PROMPT_LENGTH:
