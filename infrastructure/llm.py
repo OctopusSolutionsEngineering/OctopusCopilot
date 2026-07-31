@@ -169,12 +169,12 @@ def build_azure_anthropic_project_llm(prompt=None):
     def get_effort(prompt):
         length = len(prompt)
         if length < SIMPLE_PROMPT:
-            return "medium"
+            return "low"
         if length < DETAILED_PROJECT_PROMPT_LENGTH:
-            return "high"
+            return "medium"
         if length < VERY_DETAILED_PROJECT_PROMPT_LENGTH:
-            return "xhigh"
-        return "max"
+            return "high"
+        return "xhigh"
 
     return ChatAnthropic(
         temperature=temperature,
