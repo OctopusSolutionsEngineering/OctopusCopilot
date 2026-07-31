@@ -10,6 +10,7 @@ def create_runbook_wrapper(query, callback, logging):
 
         Example prompts include:
         * Create a runbook called "Restart Server" in the project "Web App" in the space "My Space
+        * Add a runbook called "Get logs" to the project "Web App" in the space "My Space"
 
         Args:
         space_name: The name of the space
