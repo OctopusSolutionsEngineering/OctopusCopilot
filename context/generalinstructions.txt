@@ -2191,6 +2191,7 @@ resource "octopusdeploy_tag" "tagset_cities_tag_brisbane" {
 * The "count" attribute on the resource "octopusdeploy_tag" must be set to `length(try([for item in data.octopusdeploy_tag_sets.<tagset data name>.tag_sets[0].tags : item if item.name == "<tag name>"], [])) != 0 ? 0 : 1`
 * You will be penalized for using a "count" attribute on the resource "octopusdeploy_tag" using underscores in the place of brackets, question marks, and exclamation points like this: `length(try([for item in data.octopusdeploy_tag_sets.<tagset data name>.tag_sets[0].tags : item if item.name == "<tag name>"], []_ _= 0 _ 0 : 1`
 "
+* **CRITICAL — Any resource that references a tenant tag by its canonical `<tag set>/<tag>` string MUST declare an explicit `depends_on` for BOTH the `octopusdeploy_tag_set` resource AND the specific `octopusdeploy_tag` resource(s) it references.** This applies to a tenant's `tenant_tags` attribute, a variable `scope { tenant_tags = [...] }`, and a step's `tenant_tags`. If the `depends_on` is missing, the tag may not exist at the moment the referencing resource is applied, and the Octopus API fails the apply with `"There was a problem with your request. [Unable to find matching tag from canonical tag name or id '<tag set>/<tag>']"`. For example, a tenant tagged `"region/emea"` must include `depends_on = [octopusdeploy_tag_set.tagset_region, octopusdeploy_tag.tagset_region_tag_emea]`, and a project variable scoped to `tenant_tags = ["region/emea"]` must include the same `depends_on`.
 
 ## Lifecycle Instructions
 
@@ -3908,6 +3909,29 @@ resource "octopusdeploy_process_step" "terraform_apply_step" {
   }
 }
 ```
+
+* **CRITICAL — A step of type "Octopus.Claude" MUST define the `Octopus.Action.Claude.ApiKey` execution property, backed by a project variable.** If the Claude step is created without an API key, the Octopus API rejects it with the fatal error `"There was a problem with your request. [An API Key is required.]"` / `"Unable to create process step"`, and no project is created. Create a sensitive project variable named `Project.Claude.ApiKey` (default value `"Change Me!"`) and set the step property `"Octopus.Action.Claude.ApiKey" = "#{Project.Claude.ApiKey}"`. This applies to every "Claude" / LLM project that uses the `Octopus.Claude` step, regardless of what other accounts (e.g. an AWS/Bedrock account) the prompt requests.
+
+```hcl
+resource "octopusdeploy_variable" "claude_project_claude_apikey_1" {
+  name            = "Project.Claude.ApiKey"
+  type            = "Sensitive"
+  description     = "The Claude API key"
+  is_sensitive    = true
+  sensitive_value = "Change Me!"
+}
+resource "octopusdeploy_process_step" "run_claude_agent" {
+  type                 = "Octopus.Claude"
+  execution_properties = {
+    # The API key MUST be supplied or the step fails to create
+    "Octopus.Action.Claude.ApiKey" = "#{Project.Claude.ApiKey}"
+    "Octopus.Action.Claude.Model"  = "claude-sonnet-5"
+    "Octopus.Action.RunOnServer"   = "true"
+  }
+}
+```
+
+* **Server-orchestrated "swap"/"cutover" script steps (e.g. blue/green application-pool swaps or traffic-cutover steps) MUST set `"Octopus.Action.RunOnServer" = "true"`.** These orchestration steps do no per-target package work, and Octopus forces them to run on the server. If such a step is emitted with `"Octopus.Action.RunOnServer" = "false"`, the Terraform apply fails with the provider error `Provider produced inconsistent result after apply ... .execution_properties["Octopus.Action.RunOnServer"]: was cty.StringVal("false"), but now cty.StringVal("true")`. Setting the property to `"true"` up front avoids the mismatch.
 
 * **CRITICAL — Steps of type "Octopus.AwsRunScript" with `"Octopus.Action.Script.ScriptSource" = "Inline"` MUST NOT define a `primary_package` block.** The Octopus API will reject the step with the error "Providing a package is not valid for inline scripts." if both an inline script and a package are specified. This error is fatal and prevents the Terraform apply from succeeding.
 
