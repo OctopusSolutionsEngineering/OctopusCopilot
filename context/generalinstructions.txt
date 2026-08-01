@@ -1500,6 +1500,10 @@ data "octopusdeploy_accounts" "account_azure" {
 
 * You will be penalized for setting the "account_type" to an empty value.
 
+## Certificate Creation for New Project Creation Prompts
+
+When creating a `octopusdeploy_certificate` resource, use the `certificate_data` and `password` fields from the example resources. Ignore any details in the prompt to set these values.
+
 ## Data and Resource pairing instructions
 
 When a “data” resource is referenced in a resource’s attributes, the data resource must be included in the output.
