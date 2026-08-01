@@ -2571,7 +2571,11 @@ resource "octopusdeploy_runbook" "runbook_my_script_app_4_retrieve_logs" {
 * The "skip_machine_behavior" property can be set to "None" or "SkipUnavailableMachines"
 * If a project name was specified in the prompt, you must use that name for the "name" attribute in the resource "octopusdeploy_project".
 * You must include the "lifecycle_id" attribute for every "octopusdeploy_project" resource.
-* The "is_version_controlled" attribute must always be "false".
+* **⚠️ CRITICAL — The "is_version_controlled" attribute must ALWAYS be "false", even when the prompt explicitly asks for a version-controlled, Config-as-Code, GitOps, or Git-stored project.** New project creation must NEVER produce a Config-as-Code (VCS) project. When a project is converted to VCS, the Octopus API immediately attempts to authenticate against and write to the real Git repository named in the prompt. Because the LLM cannot supply valid Git credentials or a reachable repository, this conversion fails at `terraform apply` with an error such as `Error converting project to VCS: The username or token used to authenticate with the Git Repository is invalid`, which aborts the ENTIRE apply so NO project is created. This violates the rule that every prompt must create a project.
+  * Set `is_version_controlled = false` and do NOT emit any `git_library_persistence_settings` block, `git_anonymous_persistence_settings` block, `git_username_password_persistence_settings` block, or any other VCS/Git persistence configuration on the `octopusdeploy_project` resource.
+  * Do NOT create an `octopusdeploy_git_credential` resource for the project, and do NOT reference one. The only exception is a Platform Hub prompt that explicitly requests it (see the platform hub instructions); a standard project creation prompt must never create a git credential.
+  * Create the project as a normal, database-backed project. The rest of the prompt (steps, variables, lifecycle, accounts, feeds, etc.) is created exactly as it would be for a non-VCS project.
+  * **MANDATORY SELF-CHECK — VCS exclusion**: Before finalizing Terraform output, verify `is_version_controlled = false`, that no Git persistence settings blocks exist on the project, and that no `octopusdeploy_git_credential` resource is present. You will be penalized for each occurrence of `is_version_controlled = true`, a Git persistence settings block, or a project `octopusdeploy_git_credential`, because they abort the apply and prevent the project from being created.
 * You will be penalized for setting the "auto_create_release" attribute to "true".
 * The name of the data source much also match the name used when referencing a "project_id" attribute. For example, this data source:
 
@@ -3699,6 +3703,8 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
       }
 }
 ```
+
+**⚠️ CRITICAL — `Octopus.AzureWebApp` steps MUST set `Octopus.Action.Azure.WebAppName` and `Octopus.Action.Azure.AccountId`**: When creating an Azure Web App deployment step (`type = "Octopus.AzureWebApp"`), the `execution_properties` MUST include a non-empty `"Octopus.Action.Azure.WebAppName"` value (either a literal web app name from the prompt, or an octostache variable expression such as `"#{Project.Azure.WebApp.Name}"`) AND a non-empty `"Octopus.Action.Azure.AccountId"` (referencing the prompt-specified account, e.g. `"#{Project.Azure.Account}"` or `"${octopusdeploy_azure_openid_connect.<name>.id}"`). If `Octopus.Action.Azure.WebAppName` is missing or empty, step creation fails at apply time with `Octopus API error: [Please select a WebApp or provide a variable expression for the WebApp Name to target.]`, which aborts the ENTIRE apply so NO project is created. If the prompt does not name a web app, define a project variable (e.g. `Project.Azure.WebApp.Name`) and reference it via `"#{Project.Azure.WebApp.Name}"` rather than leaving the property blank. The example above omits these keys for brevity — for new project creation you MUST include them.
 
 * You will be penalized for using target tags with the format "name=value" in the "target_roles" attribute.
 * You will be penalized for adding the "target_roles" attribute on an "action".
