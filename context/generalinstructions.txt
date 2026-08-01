@@ -3892,6 +3892,23 @@ resource "octopusdeploy_process_step" "aws_script_step" {
 }
 ```
 
+* **CRITICAL — Terraform steps that use an AWS account MUST define "Octopus.Action.Aws.Region".** Steps of type "Octopus.TerraformApply", "Octopus.TerraformPlan", "Octopus.TerraformPlanAndApply", and "Octopus.TerraformDestroy" that authenticate with an AWS account (i.e., they set `"Octopus.Action.Terraform.ManagedAccount" = "AWS"` and reference an AWS account via `"Octopus.Action.AwsAccount.Variable"`) MUST also define the `"Octopus.Action.Aws.Region"` execution_property. If the region is omitted, the Octopus API rejects the step with the fatal error `"There was a problem with your request. [Please specify the AWS region.]"` and the Terraform apply fails, so no project is created. When a prompt asks for a Terraform project to use an AWS account but does not name a region, default the region to `"us-east-1"`. This requirement applies to Terraform steps in both deployment processes and runbooks (for example a "terraform destroy" runbook step).
+
+**Correct pattern for a Terraform step that uses an AWS account**:
+```hcl
+resource "octopusdeploy_process_step" "terraform_apply_step" {
+  type                 = "Octopus.TerraformApply"
+  execution_properties = {
+    "Octopus.Action.Terraform.ManagedAccount"   = "AWS"
+    "Octopus.Action.AwsAccount.Variable"        = "Project.AWS.Account"
+    "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+    # The "Octopus.Action.Aws.Region" MUST be defined when ManagedAccount is "AWS"
+    "Octopus.Action.Aws.Region"                 = "us-east-1"
+    "Octopus.Action.RunOnServer"                = "true"
+  }
+}
+```
+
 * **CRITICAL — Steps of type "Octopus.AwsRunScript" with `"Octopus.Action.Script.ScriptSource" = "Inline"` MUST NOT define a `primary_package` block.** The Octopus API will reject the step with the error "Providing a package is not valid for inline scripts." if both an inline script and a package are specified. This error is fatal and prevents the Terraform apply from succeeding.
 
 **Forbidden pattern (CAUSES APPLY FAILURE)**:
