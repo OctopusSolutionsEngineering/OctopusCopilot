@@ -1504,6 +1504,8 @@ data "octopusdeploy_accounts" "account_azure" {
 
 When creating a `octopusdeploy_certificate` resource, use the `certificate_data` and `password` fields from the example resources. Ignore any details in the prompt to set these values.
 
+**CRITICAL — NEVER invent, shorten, truncate, or fabricate a value for `certificate_data`.** You MUST copy the exact base64 `certificate_data` string (and its matching `password`) verbatim from the provided certificate example resources. A made-up or partial certificate blob is rejected at apply time with the fatal error `"There was a problem with your request. [Unable to parse certificate. Please check the certificate data and try again.]"`, which aborts the whole apply and prevents the project from being created. If you do not have the exact example certificate value available, prefer emitting the `certificate_data` as a Terraform variable reference (e.g. `certificate_data = "${var.certificate_example_certificate_data}"`) rather than an inline literal you are unsure about.
+
 ## Data and Resource pairing instructions
 
 When a “data” resource is referenced in a resource’s attributes, the data resource must be included in the output.
@@ -3931,7 +3933,11 @@ resource "octopusdeploy_process_step" "run_claude_agent" {
 }
 ```
 
-* **Server-orchestrated "swap"/"cutover" script steps (e.g. blue/green application-pool swaps or traffic-cutover steps) MUST set `"Octopus.Action.RunOnServer" = "true"`.** These orchestration steps do no per-target package work, and Octopus forces them to run on the server. If such a step is emitted with `"Octopus.Action.RunOnServer" = "false"`, the Terraform apply fails with the provider error `Provider produced inconsistent result after apply ... .execution_properties["Octopus.Action.RunOnServer"]: was cty.StringVal("false"), but now cty.StringVal("true")`. Setting the property to `"true"` up front avoids the mismatch.
+* **Server-orchestrated blue/green / progressive orchestration script steps — such as application-pool "swap" steps, traffic-"cutover" steps, and "health check gate" steps — MUST set `"Octopus.Action.RunOnServer" = "true"`.** These orchestration steps do no per-target package work, and Octopus forces them to run on the server. If such a step is emitted with `"Octopus.Action.RunOnServer" = "false"`, the Terraform apply fails with the provider error `Provider produced inconsistent result after apply ... .execution_properties["Octopus.Action.RunOnServer"]: was cty.StringVal("false"), but now cty.StringVal("true")`. Setting the property to `"true"` up front avoids the mismatch.
+
+* **CRITICAL — A "Scan for Vulnerabilities" community step template step MUST populate its `Sbom.Package` parameter.** When a prompt explicitly asks for a community step template that scans for vulnerabilities, the step MUST include a `parameters` entry `"Sbom.Package" = jsonencode({ "FeedId" = "<feed id>", "PackageId" = "<package id>" })`. If the package parameter is omitted, the Octopus API rejects the step with the fatal error `"There was a problem with your request. [Package parameter 'Sbom.Package' is missing]"` / `"Unable to create process step"`, aborting the whole apply. If the prompt does not name a package for the scan, reuse the deployment package the project already consumes (or the template default, e.g. the Maven feed with `com.octopus:octopub-sbom`).
+
+* **CRITICAL — An Argo CD "Wait for Argo CD Applications" step MUST specify an expected application count greater than 0.** When an Argo CD project is asked to "wait for Argo CD to report Healthy" (or similar), the generated wait step MUST set its expected-number-of-apps property to a value `>= 1` (default to `1` when the prompt does not give a number). An expected count of `0` is rejected by the Octopus API with the fatal error `"There was a problem with your request. [Please provide an expected number of apps greater than 0.]"` / `"Unable to create process step"`, aborting the apply.
 
 * **CRITICAL — Steps of type "Octopus.AwsRunScript" with `"Octopus.Action.Script.ScriptSource" = "Inline"` MUST NOT define a `primary_package` block.** The Octopus API will reject the step with the error "Providing a package is not valid for inline scripts." if both an inline script and a package are specified. This error is fatal and prevents the Terraform apply from succeeding.
 
