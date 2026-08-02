@@ -1053,6 +1053,49 @@ The **CORRECT** Terraform value re-indents each document based on schema depth:
   EOT
 ```
 
+## Octopus Variable Substitution in Kubernetes YAML Numeric and Boolean Fields
+
+**CRITICAL — an Octopus variable substituted into a numeric or boolean Kubernetes YAML field MUST NOT be quoted**: Octopus performs variable substitution as plain text before the manifest is sent to Kubernetes, so `replicas: "#{Frontend.Replicas}"` becomes `replicas: "2"`. Kubernetes types `spec.replicas` as an integer and rejects the string form at apply time with an error like:
+
+```
+error: error validating data: ValidationError(Deployment.spec.replicas): invalid type
+for io.k8s.api.apps.v1.DeploymentSpec.replicas: got "string", expected "integer"
+```
+
+The manifest is syntactically valid YAML, so the mistake is not caught by the Terraform apply — it only fails when a deployment runs. You will be penalized for wrapping a variable substitution in quotes in any numeric or boolean YAML field.
+
+* Numeric fields that MUST NOT be quoted include `spec.replicas`, `spec.minReplicas`, `spec.maxReplicas`, `containerPort`, `port`, `targetPort`, `nodePort`, `replicas` inside a `HorizontalPodAutoscaler`, `revisionHistoryLimit`, `terminationGracePeriodSeconds`, `initialDelaySeconds`, `periodSeconds`, `timeoutSeconds`, `failureThreshold`, `successThreshold`, `backoffLimit`, `completions`, `parallelism`, and `runAsUser`.
+* Boolean fields that MUST NOT be quoted include `readOnlyRootFilesystem`, `privileged`, `allowPrivilegeEscalation`, `runAsNonRoot`, `hostNetwork`, and `automountServiceAccountToken`.
+* String fields such as `image`, `name`, and label or annotation values MAY be quoted, and SHOULD be quoted when the value contains a `#{...}` substitution followed by a colon (for example `image: "myrepo/myapp:#{Octopus.Action.Package[app].PackageVersion}"`), because the colon would otherwise be parsed as a YAML mapping separator.
+* A literal numeric value written directly in the manifest, such as `replicas: 2`, is also unquoted. Quoting is only ever correct for string-typed fields.
+
+**Negative example — variable substitution quoted in a numeric field (FORBIDDEN)**:
+```yaml
+spec:
+  replicas: "#{Frontend.Replicas}"   ← WRONG: renders as replicas: "2", which Kubernetes rejects
+  template:
+    spec:
+      containers:
+        - name: octopub-frontend
+          ports:
+            - containerPort: "#{Frontend.Port}"   ← WRONG: same problem
+```
+
+**Correct example — variable substitution unquoted in numeric fields, quoted in the image string**:
+```yaml
+spec:
+  replicas: #{Frontend.Replicas}
+  template:
+    spec:
+      containers:
+        - name: octopub-frontend
+          image: "octopussamples/octopub-frontend:#{Octopus.Action.Package[octopub-frontend].PackageVersion}"
+          ports:
+            - containerPort: #{Frontend.Port}
+```
+
+**MANDATORY SELF-CHECK — YAML numeric substitution quoting**: Before finalizing any inline Kubernetes manifest in `Octopus.Action.KubernetesContainers.CustomResourceYaml` or a `Octopus.Action.Script.ScriptBody` containing YAML, search the manifest for `: "#{`. For each hit, decide whether the YAML key is numeric or boolean. If it is, remove the surrounding quotes. You will be penalized for each numeric or boolean field left quoted.
+
 ## Step Name Character Rules
 
 * Octopus Deploy step names may only contain letters, numbers, periods, commas, dashes, underscores, and hashes. Parentheses `()` and square brackets `[]` are NOT valid in step names.
@@ -1346,6 +1389,46 @@ phase {
 1. Does the example configuration set `is_optional_phase = true` on any phase? If YES → does every one of those phases set `is_optional_phase = true` in your response?
 2. Does the lifecycle model parallel production stacks such as blue/green? If YES → is the phase for each stack marked `is_optional_phase = true`?
 
+## Lifecycle Phase `minimum_environments_before_promotion` Instructions
+
+**CRITICAL — `minimum_environments_before_promotion` MUST NOT exceed the number of environments in the same `phase` block**: The `minimum_environments_before_promotion` attribute counts environments *within its own phase* that must be deployed to before a release can be promoted to the next phase. It does NOT refer to environments in earlier phases, to a number of deployments, or to a number of successful releases. Octopus rejects a lifecycle where the value is greater than the number of entries in that phase's `automatic_deployment_targets` plus `optional_deployment_targets` arrays, and the apply fails with:
+
+```
+Octopus API error: There was a problem with your request. [The phase "Staging"
+requires a minimum of 3 environments for promotion, but only 1 environments have
+been added. Please add more environments or reduce the minimum required.]
+```
+
+* You MUST set `minimum_environments_before_promotion = 0` on every phase unless the prompt explicitly states how many environments *inside that phase* must be deployed to before promotion. `0` means "all environments in the phase" and is always valid.
+* When a phase contains exactly one environment — which is the case for almost every phase — the ONLY valid values are `0` and `1`. You will be penalized for any other value.
+* When a prompt asks to promote "after N successful deployments", "after N successful releases", "once N deployments have completed", or similar, this is NOT `minimum_environments_before_promotion`. Octopus has no such feature. Set `minimum_environments_before_promotion = 0` and ignore the N entirely. You will be penalized for copying N from the prompt into `minimum_environments_before_promotion`.
+* A prompt phrase that names a *different* phase, such as "promote to Staging after 3 successful deployments to Test", never sets a value on the phase being promoted to, and never sets a value greater than the environment count of the phase it names.
+
+**Negative example — `minimum_environments_before_promotion` greater than the phase environment count (FORBIDDEN)**:
+```hcl
+# Prompt says: The "Staging" phase must automatically promote releases after 3 successful deployments to "Test"
+phase {
+  automatic_deployment_targets          = []
+  optional_deployment_targets           = ["${...environment_staging...}"]
+  name                                  = "Staging"
+  is_optional_phase                     = true
+  minimum_environments_before_promotion = 3
+}  ← WRONG: the phase has 1 environment, so the apply fails
+```
+
+**Correct example — same prompt, valid phase**:
+```hcl
+phase {
+  automatic_deployment_targets          = []
+  optional_deployment_targets           = ["${...environment_staging...}"]
+  name                                  = "Staging"
+  is_optional_phase                     = true
+  minimum_environments_before_promotion = 0
+}
+```
+
+**MANDATORY SELF-CHECK — `minimum_environments_before_promotion` bounds**: Before finalizing any `octopusdeploy_lifecycle` resource, for EACH `phase` block count the total number of environment entries across `automatic_deployment_targets` and `optional_deployment_targets`. If `minimum_environments_before_promotion` is greater than that count, change it to `0`. You will be penalized for each phase where the value exceeds the phase's environment count.
+
 ## Retention Policy for New Project Creation Prompts
 
 **CRITICAL — when a new project creation prompt specifies a retention policy (e.g., "with a retention policy of 30 days for releases" or "Set the retention policy to 5 items")**:
@@ -1358,12 +1441,20 @@ phase {
 
 **⚠️ CRITICAL — do NOT default to 30 Days when the prompt specifies items**: If the prompt says "Set the retention policy to 5 items", the lifecycle MUST use `quantity_to_keep = 5` and `unit = "Items"`. Setting `quantity_to_keep = 30` and `unit = "Days"` is WRONG — it ignores the prompt instruction.
 
+**⚠️ CRITICAL — a two-part retention prompt sets the two policies INDEPENDENTLY**: A prompt of the form "retain N releases and M days of files", "keep N releases and M days of packages", or "retention of N releases and M days" describes TWO separate policies with TWO different units, and each must be resolved on its own:
+
+* "N releases" (or "N items") is the **release** retention: `release_retention_policy` (or `release_retention_with_strategy`) with `quantity_to_keep = N` and `unit = "Items"`.
+* "M days of files" (or "of packages", "of artifacts") is the **tentacle/file** retention: `tentacle_retention_policy` (or `tentacle_retention_with_strategy`) with `quantity_to_keep = M` and `unit = "Days"`.
+
+Do NOT apply one unit to both policies. The mistake is easiest to make when N and M happen to be the same number — for example "keep 7 releases and 7 days of files" MUST produce release retention `7 Items` and tentacle retention `7 Days`, never `7 Days` for both. The word "releases" always means `Items`; only an explicit "days" means `Days`.
+
 **MANDATORY SELF-CHECK — retention policy verification**: Before finalizing any `octopusdeploy_lifecycle` resource, check:
 1. Did the prompt specify a retention policy? If YES → did you apply the correct `quantity_to_keep` and `unit` values?
 2. Did the prompt say "items"? If YES → is `unit = "Items"` (NOT `"Days"`)?
 3. Did the prompt say "days"? If YES → is `unit = "Days"` (NOT `"Items"`)?
+4. Did the prompt give TWO figures (one for releases, one for files/days)? If YES → does the release policy use `Items` with the releases figure, and the tentacle policy use `Days` with the days figure? Confirm the two policies do not share a unit that only one of them was given.
 
-You will be penalized for using `unit = "Days"` when the prompt says "items", or using `unit = "Items"` when the prompt says "days".
+You will be penalized for using `unit = "Days"` when the prompt says "items", for using `unit = "Items"` when the prompt says "days", and for copying one policy's unit onto the other in a two-part retention prompt.
 
 **Example — prompt says "Set the retention policy to 30 days"**:
 ```hcl
@@ -1905,6 +1996,20 @@ template {
  }
 ```
 Then create the `octopusdeploy_tenant_project_variable` referencing this template by index (0 for the first template).
+
+**⚠️ CRITICAL — `octopusdeploy_tenant_project_variable` MUST set `environment_id`**: The provider validates this at PLAN time, so omitting it fails before anything at all is created and no project is produced:
+
+```
+Error: Invalid Configuration
+Must specify either 'environment_id' or 'scope' block.
+```
+
+* Every `octopusdeploy_tenant_project_variable` resource MUST include an `environment_id` attribute resolved with the usual data-source/resource ternary. There is no valid form of this resource without it.
+* A tenant project variable holds one value **per tenant per environment**. When the prompt gives a single value for a tenant without naming an environment — for example "set Wayne Enterprises to us-east-1" — you MUST create one `octopusdeploy_tenant_project_variable` resource for EACH environment that tenant is linked to in `octopusdeploy_tenant_project.environment_ids`, all with the same value. Give each resource a distinct Terraform name by appending the environment, for example `tenantprojectvariable_wayne_enterprises_region_dev`, `..._qa`, `..._prod`.
+* Do NOT invent a `scope` block as an alternative unless you are certain of its schema; `environment_id` is the supported form shown in the example below.
+* Each of these resources MUST also carry `depends_on = [octopusdeploy_tenant_project.<the tenant/project link>]`, because the value cannot be set before the tenant is connected to the project in that environment.
+
+**MANDATORY SELF-CHECK — tenant project variable environment**: Before finalizing Terraform output, find every `octopusdeploy_tenant_project_variable`. For EACH one, confirm an `environment_id` attribute is present and non-null. Then confirm that for every (tenant, template) pair the prompt asked you to set, there is one resource per environment that tenant is linked to. You will be penalized for any `octopusdeploy_tenant_project_variable` without `environment_id`.
 
 **How tenant project variables work**:
 1. The `octopusdeploy_project` resource defines one or more `template` blocks (0-indexed).
@@ -3696,6 +3801,23 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_an
 }
 ```
 
+**⚠️ CRITICAL — an `Octopus.AzureWebApp` step MUST set `Octopus.Action.Azure.WebAppName`**: The Octopus API refuses to create the step otherwise, and the Terraform apply fails with:
+
+```
+Octopus API error: There was a problem with your request. [Please select a WebApp
+or provide a variable expression for the WebApp Name to target.]
+```
+
+Note that the example above does NOT include this property, because it was exported from a project that resolves the web app through an Azure Web App deployment target. Do not treat that example as complete: unless your output also creates such a target, the step MUST name the web app itself.
+
+* Set `"Octopus.Action.Azure.WebAppName"` in `execution_properties`. A variable expression is accepted and is preferred. When the prompt creates a variable holding the app service or web app name — for example `Portal.AppServiceName` — the value MUST be `"#{Portal.AppServiceName}"`. Creating such a variable and then not referencing it from the step is a defect.
+* When the prompt names no web app variable, create a `String` project variable named `Azure.WebAppName` and reference it, or use the project name slug as a literal.
+* Also set `"Octopus.Action.Azure.ResourceGroupName"`, using a variable reference such as `"#{Azure.ResourceGroupName}"` and creating that variable when the prompt does not supply one.
+* Do NOT add `"Octopus.Action.Azure.AccountId"` to an `Octopus.AzureWebApp` step — that property is forbidden on this step type, and naming an Azure account in the prompt does not change this. Create the prompt's Azure account as a top-level resource and reference it from a project variable such as `Project.Azure.Account`.
+* The same requirement applies to `Octopus.AzureAppService` steps.
+
+**MANDATORY SELF-CHECK — Azure Web App target naming**: Before finalizing Terraform output, find every step with `type = "Octopus.AzureWebApp"` or `type = "Octopus.AzureAppService"`. For EACH one, confirm `execution_properties` contains a non-empty `Octopus.Action.Azure.WebAppName`. If it is missing, add it now — the apply WILL fail otherwise.
+
 * You will be penalized for using target tags with the format "name=value" in the "target_roles" attribute.
 * You will be penalized for adding the "target_roles" attribute on an "action".
 * You will be penalized for adding the "excluded_environments" attribute on a "step".
@@ -3881,6 +4003,30 @@ resource "octopusdeploy_process_step" "aws_script_step" {
   }
 }
 ```
+
+**⚠️ CRITICAL — a Terraform step that uses an AWS account MUST also set `Octopus.Action.Aws.Region`**: This applies to `Octopus.TerraformPlan`, `Octopus.TerraformApply`, `Octopus.TerraformDestroy`, and `Octopus.TerraformPlanDestroy`. As soon as the AWS account feature is enabled on the step — which is what happens whenever you set `Octopus.Action.AwsAccount.Variable` — the Octopus API requires a region and rejects the step without one:
+
+```
+Octopus API error: There was a problem with your request. [Please specify the AWS region.]
+```
+
+The Terraform example configuration contains no AWS properties at all, so there is no template to copy from. When a prompt says "create an AWS account … and reference it from the Terraform steps", or names an AWS region anywhere, you MUST set ALL THREE of these on EVERY Terraform step:
+
+```hcl
+execution_properties = {
+  "Octopus.Action.AwsAccount.Variable"        = "AWS.Terraform.Account"
+  "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+  "Octopus.Action.Aws.Region"                 = "us-east-1"
+  ...
+}
+```
+
+* Use the region named in the prompt. If the prompt names no region but does name an AWS account, default to `"us-east-1"` — a missing region is a hard failure, an assumed region is not.
+* `Octopus.Action.AwsAccount.Variable` takes the NAME of the project variable holding the account, not the account ID and not a `#{...}` reference. Create that variable with type `AmazonWebServicesAccount`.
+* This applies to Terraform steps inside runbooks as well as deployment processes. A runbook Terraform step missing the region fails the apply exactly the same way.
+* The equivalent rule applies to Azure: a Terraform step using an Azure account sets `Octopus.Action.AzureAccount.Variable`, and to Google Cloud with `Octopus.Action.GoogleCloudAccount.Variable`.
+
+**MANDATORY SELF-CHECK — Terraform AWS region**: Before finalizing Terraform output, find every step whose type starts with `Octopus.Terraform`. For EACH one, if `Octopus.Action.AwsAccount.Variable` is present, confirm `Octopus.Action.Aws.Region` is also present and non-empty. Remember to check runbook steps too. You will be penalized for each Terraform step that references an AWS account without a region.
 
 * **CRITICAL — Steps of type "Octopus.AwsRunScript" with `"Octopus.Action.Script.ScriptSource" = "Inline"` MUST NOT define a `primary_package` block.** The Octopus API will reject the step with the error "Providing a package is not valid for inline scripts." if both an inline script and a package are specified. This error is fatal and prevents the Terraform apply from succeeding.
 
@@ -4316,6 +4462,33 @@ packages = {
 * Steps of type "Octopus.Manual" must set `"Octopus.Action.RunOnServer" = "true"` in the `execution_properties` block.
 * Steps of type "Octopus.Manual" must always include `"Octopus.Action.Manual.BlockConcurrentDeployments" = "True"` in the `execution_properties` block. Omitting this property is a common mistake that causes concurrent deployments to proceed past the manual intervention gate without pausing.
 * You will be penalized for defining the "Octopus.Step.Manual.Instructions" property in the "execution_properties" block.
+
+**⚠️ CRITICAL — NEVER invent an `Octopus.Action.Manual.ResponsibleTeamIds` value by slugifying a team name from the prompt**: Only three teams have a slug-style ID, and they are the only slug-style IDs that may ever be written: `teams-everyone`, `teams-administrators`, and `teams-managers`. Every other team in an Octopus space has a numeric ID of the form `Teams-123` that cannot be known ahead of time. Writing `teams-release-managers` for a prompt that says "assigned to the 'Release Managers' team" produces a dangling reference: the Octopus API accepts the value without validating it, the Terraform apply succeeds, and the manual intervention is then left with no team that can actually approve it. The failure is silent and only surfaces when a deployment reaches the step.
+
+* When a prompt names a team that is not one of the three built-in teams, you MUST omit `Octopus.Action.Manual.ResponsibleTeamIds` entirely and instead name the responsible team in the `Octopus.Action.Manual.Instructions` text, for example `"Approval required from the Release Managers team. Do you approve the release to production?"`. Omitting the property means any user with the approval permission can respond, which is the correct fallback.
+* You MAY set `"Octopus.Action.Manual.ResponsibleTeamIds" = "teams-managers"` when the prompt names the Octopus Managers team, `"teams-administrators"` for Octopus Administrators, and `"teams-everyone"` for Everyone. No other literal value is permitted.
+* Do NOT invent an `octopusdeploy_team` resource to satisfy a team named in the prompt unless the prompt explicitly asks for a team to be created.
+* You will be penalized for every `Octopus.Action.Manual.ResponsibleTeamIds` value that is not one of `teams-everyone`, `teams-administrators`, or `teams-managers`.
+
+**Negative example — fabricated team ID (FORBIDDEN)**:
+```hcl
+# Prompt says: assigned to the "Release Managers" team
+execution_properties = {
+  "Octopus.Action.Manual.Instructions"              = "Do you approve the release to production?"
+  "Octopus.Action.Manual.ResponsibleTeamIds"        = "teams-release-managers"  ← WRONG: this team does not exist
+  "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
+  "Octopus.Action.RunOnServer"                      = "true"
+}
+```
+
+**Correct example — team named in the instructions, property omitted**:
+```hcl
+execution_properties = {
+  "Octopus.Action.Manual.Instructions"              = "Approval required from the Release Managers team. Do you approve the release to production?"
+  "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
+  "Octopus.Action.RunOnServer"                      = "true"
+}
+```
 * When the prompt defines manual-intervention instructions, the value of "Octopus.Action.Manual.Instructions" must preserve the prompt text exactly. Do not rewrite `${ ... }` SpEL expressions into Octopus `#{...}` syntax, do not normalize punctuation, and do not strip or replace Unicode characters.
 * **CRITICAL — SpEL expressions preserved verbatim in `Octopus.Action.Manual.Instructions` MUST use `$$` escaping in Terraform HCL strings**: When the instructions text contains `${...}` patterns (e.g., Spinnaker SpEL expressions that were intentionally kept verbatim), the `$` character MUST be escaped as `$$` in the Terraform string value to prevent Terraform from treating the expression as a string interpolation sequence. For example, if the prompt instruction text is `release: *${trigger['tag']}* (NOTE: ...)`, the Terraform attribute MUST be written as `"Octopus.Action.Manual.Instructions" = "release: *$${trigger['tag']}* (NOTE: ...)"`. Without this escaping, Terraform will attempt to evaluate `${trigger['tag']}` and produce an error. Only `${...}` patterns need this escaping — Octostache `#{...}` patterns do NOT need escaping.
 * If the prompt appends a NOTE explaining that the instructions contain SpEL expressions, include that NOTE verbatim at the end of the same "Octopus.Action.Manual.Instructions" string. Do not "fix" the embedded expression text.
@@ -4821,6 +4994,51 @@ resource "octopusdeploy_process_step" "process_step_my_project_notify_deployment
   * `"Tomcat.Deploy.User"` — the Tomcat manager admin user
   * `"Tomcat.Deploy.Password"` — the Tomcat manager password (use a sensitive variable reference)
 * Steps of type "Octopus.TomcatDeploy" must include `"Octopus.Action.TargetRoles"` in the `properties` block targeting the Tomcat server role.
+
+**⚠️ CRITICAL — `Tomcat.Deploy.User` and `Tomcat.Deploy.Password` are enforced by the Octopus API and MUST always be present**: The Octopus server rejects the creation of an `Octopus.TomcatDeploy` step that omits either property, and the Terraform apply fails with:
+
+```
+Octopus API error: There was a problem with your request. [Please provide the
+Tomcat Manager username. Please provide the Tomcat Manager password.]
+```
+
+* Both properties MUST be set to a non-empty value even when the prompt says nothing about Tomcat manager credentials. When the prompt gives no credentials, default to `"Tomcat.Deploy.User" = "#{Tomcat.User}"` and `"Tomcat.Deploy.Password" = "#{Tomcat.Password}"` and create the matching project variables — a `String` variable named `Tomcat.User` with the value `"tomcat"` and a `Sensitive` variable named `Tomcat.Password`.
+* You will be penalized for creating an `Octopus.TomcatDeploy` step without both `Tomcat.Deploy.User` and `Tomcat.Deploy.Password` in `execution_properties`.
+
+**⚠️ CRITICAL — an `Octopus.TomcatDeploy` step CANNOT use a username/password account**: The step has no account field, and `octopusdeploy_username_password_account` resources cannot be attached to it. When a prompt says "create a username/password account called 'X' with the username 'U' and use it in the deploy step", you MUST:
+
+1. Still create the `octopusdeploy_username_password_account` resource named `X`, because prompt-specified accounts are always created.
+2. Still set `Tomcat.Deploy.User` and `Tomcat.Deploy.Password` on the step — the account does NOT satisfy them.
+3. Set `Tomcat.Deploy.User` to the username named in the prompt (here `"U"`), or to a variable reference holding it.
+
+Failing to set the two properties because an account was created is the single most common cause of the API error above. You will be penalized for treating a username/password account as a substitute for `Tomcat.Deploy.User` and `Tomcat.Deploy.Password`.
+
+**Correct example — Tomcat deploy step where the prompt named a username/password account**:
+```hcl
+# Prompt says: Create a username/password account called "Tomcat Manager" with the username "octopus" and use it in the deploy step
+resource "octopusdeploy_username_password_account" "account_tomcat_manager" {
+  count    = "${length(data.octopusdeploy_accounts.account_tomcat_manager.accounts) != 0 ? 0 : 1}"
+  name     = "Tomcat Manager"
+  username = "octopus"
+  password = "#{Tomcat.Password}"
+}
+
+resource "octopusdeploy_process_step" "process_step_deploy_products_war" {
+  name = "Deploy Products War"
+  type = "Octopus.TomcatDeploy"
+  ...
+  execution_properties = {
+    "Octopus.Action.EnabledFeatures" = ",Octopus.Features.TomcatDeployManager"
+    "Tomcat.Deploy.Enabled"          = "True"
+    "Tomcat.Deploy.Controller"       = "http://#{Tomcat.Host}:8080/manager"
+    "Tomcat.Deploy.Name"             = "/products"
+    "Tomcat.Deploy.User"             = "octopus"
+    "Tomcat.Deploy.Password"         = "#{Tomcat.Password}"
+  }
+}
+```
+
+**MANDATORY SELF-CHECK — Tomcat credential properties**: Before finalizing Terraform output, find every `octopusdeploy_process_step` with `type = "Octopus.TomcatDeploy"`. For EACH one, verify that `execution_properties` contains both `Tomcat.Deploy.User` and `Tomcat.Deploy.Password` with non-empty values. If either is missing, add it now — the apply WILL fail otherwise. A placeholder value such as `Change Me!` satisfies this check, because sensitive values are deliberately replaced with placeholders.
 
 ## Transfer Package Step Instructions
 
@@ -5936,7 +6154,23 @@ resource "octopusdeploy_variable" "variable_isretry" {
 
 ## Step Count Validation
 
-**ABSOLUTE RULE — the number of `octopusdeploy_process_step` resources MUST equal the number of non-notification steps described in the prompt**: Before finalizing your Terraform output, count the step prompts in the prompt (lines beginning with `* Add a "..."` or `* Add a community step template step`) and verify that you have created exactly the same number of `octopusdeploy_process_step` (or `octopusdeploy_process_templated_step`) resources. If the count differs, you have either missed a step or created a duplicate — both are bugs that MUST be corrected.
+**ABSOLUTE RULE — the number of `octopusdeploy_process_step` resources MUST equal the number of non-notification steps described in the prompt**: Before finalizing your Terraform output, count the step prompts in the prompt and verify that you have created exactly the same number of `octopusdeploy_process_step` (or `octopusdeploy_process_templated_step`) resources. If the count differs, you have either missed a step or created a duplicate — both are bugs that MUST be corrected.
+
+**This count rule applies no matter how the prompt enumerates its steps.** Step requests are frequently written as a numbered list (`4. Add a manual intervention step called "..."`), as prose (`then add a step that deploys the war file`), or as bullets (`* Add a "..." step`). All of these forms count. Do NOT restrict the count to lines that literally begin with `* Add a "`, and do NOT treat a numbered or prose prompt as if it specified no steps.
+
+**⚠️ CRITICAL — steps that exist ONLY in the example configuration MUST be dropped when the prompt enumerates its own steps**: When a prompt lists the steps it wants, that list is exhaustive. Every step in the example configuration that is not in the prompt's list MUST be omitted, even when the step looks like generally good practice. The steps most often leaked from the example configurations are:
+
+* `Octopus - Check Targets Available` and `Octopus - Check SMTP Server Configured` (community step templates used as preflight checks)
+* `Scan for Vulnerabilities`
+* `Deployment Success Notification` and any other `Octopus.Email` step
+* `Calculate Deployment Mode`
+* Any security-scanning step, together with its supporting `Security` environment, `DevSecOps` lifecycle, and `Daily Security Scan` scheduled trigger
+
+Carrying these over produces a project whose deployment process does not match what was asked for, and drags in environments, lifecycles, and triggers the prompt never mentioned. You will be penalized for each step, environment, lifecycle, or trigger present in the output that exists only because the example configuration contained it.
+
+The one exception is a step the general instructions explicitly require for a requested pattern — for example the `Octopus - Check Blue Green Deployment` step mandated by the Blue/Green deployment pattern, which is added *in addition* to the prompt's steps. A step is only exempt when a `# Patterns` section names it as mandatory.
+
+**MANDATORY SELF-CHECK — no unrequested steps**: Before finalizing Terraform output, list every step resource name you generated alongside the prompt text that requested it. Any step for which you cannot quote a specific phrase from the prompt, or a `# Patterns` rule that mandates it, MUST be deleted. Then re-count and confirm the totals match.
 
 **MANDATORY STEP UNIQUENESS CHECK**: Scan all `octopusdeploy_process_step` resource names in your Terraform output. If two resources have names ending in `_2`, `_3`, etc., verify that these correspond to steps in the prompt whose step NAMES are actually duplicated (e.g., two steps both named `"Deploy (Manifest)"`). If a `_2` suffix was added to a step whose prompt name is unique (different from all other step names), the suffix is wrong — use the step's actual unique name without the suffix.
 
@@ -6519,10 +6753,26 @@ The following instructions provide default guidance on how to implement common d
 
 ## Kubernetes target
 
+**When this pattern applies — read this carefully, it is under-triggered.** Apply the canonical pattern below whenever the project contains ANY Kubernetes step (`Octopus.KubernetesDeployRawYaml`, `Octopus.KubernetesRunScript`, `Octopus.HelmChartUpgrade`, or any step with `Octopus.Action.TargetRoles` intended for a cluster) AND the prompt does not supply a real cluster endpoint together with real credentials. In particular, ALL of the following still require the canonical pattern — none of them counts as "a specific target configuration":
+
+* The prompt only names a target tag or role, for example "deploy to targets tagged `Kubernetes`" or "using targets tagged `octopub/frontend`". A tag names *which* target to use; it does not configure one.
+* The prompt says "deploy to a Kubernetes cluster", "deploy to EKS/AKS/GKE", or names a cluster without giving its URL.
+* The prompt asks for an account — a Token, AWS, Azure, or username/password account — but gives no cluster URL. Creating the account does NOT remove the need for a target. When the prompt names its own account (for example a Token account called "K8s"), use THAT account on the "Mock K8s" target instead of creating "Mock Token", and skip creating "Mock Token" entirely.
+* The prompt is a canary, blue/green, progressive, wave, or rollout prompt that implies a cluster.
+
+A "specific target configuration" means the prompt gives an actual cluster URL (or explicitly says to use an existing named target). Only then may you skip the pattern.
+
+You will be penalized for generating a project containing Kubernetes steps with no Kubernetes target, and for leaving `Octopus.Action.Kubernetes.ResourceStatusCheck`, `Octopus.Action.KubernetesContainers.DeploymentWait`, and `Octopus.Action.Kubernetes.ServerSideApply.Enabled` at their template defaults when the "Mock K8s" target is in use. The three defaults that MUST be overridden are `ResourceStatusCheck = "False"`, `DeploymentWait = "NoWait"`, and `ServerSideApply.Enabled = "False"`; a step left with `ResourceStatusCheck = "True"` or `ServerSideApply.Enabled = "True"` will fail against "Mock K8s".
+
+**MANDATORY SELF-CHECK — Kubernetes target and step properties**: Before finalizing Terraform output, ask: does this project contain any Kubernetes step? If YES, verify that (1) an `octopusdeploy_kubernetes_cluster_deployment_target` resource exists, and (2) EVERY Kubernetes step sets `Octopus.Action.Kubernetes.ResourceStatusCheck = "False"`, `Octopus.Action.KubernetesContainers.DeploymentWait = "NoWait"`, and `Octopus.Action.Kubernetes.ServerSideApply.Enabled = "False"` in `execution_properties`. Add whatever is missing.
+
 * When the prompt indicates that a Kubernetes target is required but does not provide a specific target configuration, use the following canonical pattern:
-    * YOU MUST create a token account called "Mock Token"
+    * YOU MUST create a token account called "Mock Token".
+    * The target MUST use the "Mock Token" account for authentication.
+    * You will be penalized for using any other account type (e.g., AWS, Azure, username/password) for the "Mock K8s" target.
     * YOU MUST link the token account to any tenants.
     * YOU MUST create a feed called "Docker Hub" pointing to "https://index.docker.io" using anonymous authentication.
+    * You will be penalized for defining any authentication credentials for the "Docker Hub" feed. It must be anonymous.
     * YOU MUST add a target called "Mock K8s", with the tag "Kubernetes", using the token account, pointing to "https://mockk8s.octopusdemos.com", using the health check image "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04" from the "Docker Hub" feed, using the worker pool "Hosted Ubuntu".
     * YOU MUST link the target to any tenants.
     * YOU MUST disable step verification in all Kubernetes steps by setting the "Octopus.Action.Kubernetes.ResourceStatusCheck" property in the "execution_properties" block to "False" - the "Mock K8s" target DOES NOT support verification.
