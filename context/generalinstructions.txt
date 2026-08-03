@@ -2,6 +2,8 @@
 
 ## General Instructions
 
+**⚠️ CRITICAL — the Kubernetes rules in this file are triggered by the STEP TYPES in your output, not by the project type in the prompt**: A project the prompt calls a "wave deployment", "canary", "progressive", "LLM", "orchestration", or "Argo CD" project is still subject to every Kubernetes rule below the moment its output contains `Octopus.KubernetesDeployRawYaml`, `Octopus.KubernetesRunScript`, or `Octopus.HelmChartUpgrade`. Never skip the Kubernetes target pattern or the Kubernetes step properties on the grounds that "this is not a Kubernetes project".
+
 **⚠️ CRITICAL — Template default accounts (`account_octopussamples_azure_account`, `account_aws_oidc`) MUST NOT be created when the prompt names a specific account**: When the prompt says "Add an Azure OIDC account named 'X'" or "Create an Azure account called 'X'" or "Add an Azure Service Principal account called 'X'", the `octopusdeploy_azure_service_principal` resource named `account_octopussamples_azure_account` MUST NOT appear anywhere in the Terraform output. When the prompt says "Add an AWS account named 'X'", the `octopusdeploy_aws_openid_connect_account` resource named `account_aws_oidc` MUST NOT appear anywhere in the output. These template defaults MUST be completely omitted and ALL references (including step `execution_properties`, project variables such as `Project.Azure.Account`, and any variable referencing an account) must use the prompt-specified account. Specifically: the `Project.Azure.Account` variable value MUST reference the prompt-specified account resource, not the template default account. This rule has ABSOLUTE PRIORITY over any template that includes these default accounts.
 
 **MANDATORY SELF-CHECK — template default account exclusion**: Before finalizing Terraform output, scan for any resource named `account_octopussamples_azure_account` or `account_aws_oidc`. If the prompt named a specific account, REMOVE these resources entirely and replace ALL references to them with references to the prompt-specified account resource. You will be penalized for each occurrence of `account_octopussamples_azure_account` or `account_aws_oidc` in the output when the prompt names a specific account.
@@ -27,6 +29,104 @@ resource "octopusdeploy_aws_openid_connect_account" "account_aws_deploy_account"
 ```
 
 **MANDATORY SELF-CHECK — prompt-specified account creation**: Before finalizing Terraform output, scan the prompt for any "Add an ... account called 'X'" or "Create an ... account named 'X'" instructions. For EACH such instruction, verify that a corresponding account resource with `name = "X"` exists in the Terraform output. If any prompt-specified account is missing, add it immediately. This check MUST be performed even for Kubernetes projects where the template does not include accounts.
+
+**⚠️ CRITICAL — every `#{VariableName}` referenced anywhere in the output MUST have a matching variable resource**: A step property, script body, or manifest that references `#{Foo}` when no `Foo` variable exists produces a dangling reference. Octopus accepts it silently — the apply succeeds and the substitution resolves to the literal text `#{Foo}` at deployment time, which is very hard to diagnose. Whenever you invent a variable reference to satisfy a required property, you MUST also create the variable in the same output. Octopus system variables in the `Octopus.` namespace are provided by the server and MUST NOT be created. Variables supplied by a linked library variable set, or by a tenant variable template declared on the project, also satisfy the reference.
+
+**MANDATORY SELF-CHECK — no dangling variable references**: Before finalizing Terraform output, list every `#{...}` token that appears in any `execution_properties` value, script body, or inline YAML. For each token that is not in the `Octopus.` namespace, confirm that an `octopusdeploy_variable` resource, a linked library variable set, or a tenant variable template supplies it. Create any that are missing. This includes `#{...}` tokens you copied out of a community step template's parameter defaults — for example `BlueGreen.Octopus.Api.Key = "#{Project.Octopus.Api.Key}"` requires a `Project.Octopus.Api.Key` variable to exist.
+
+**⚠️ CRITICAL — ANY project containing a Kubernetes step MUST create a "Mock K8s" deployment target and MUST override three step properties. This rule has ABSOLUTE PRIORITY over any template, and over the fact that the prompt never mentioned a target.** A prompt that only names a target tag ("on targets tagged `insight-cluster`"), or names a cluster, or asks for a Kubernetes/canary/progressive/wave/blue-green deployment, is a prompt that needs this pattern. A tag says *which* target to use; it does not create one. A project with `Octopus.KubernetesDeployRawYaml`, `Octopus.KubernetesRunScript`, or `Octopus.HelmChartUpgrade` steps and no Kubernetes target cannot deploy at all. You MUST therefore emit ALL FOUR of the following:
+
+1. An `octopusdeploy_token_account` called "Mock Token" (plus its `data "octopusdeploy_accounts"` lookup and `count`). Do not substitute an AWS, Azure, or username/password account. If the prompt names its own Token account, use that one instead and do not create "Mock Token".
+2. An `octopusdeploy_docker_container_registry` feed called "Docker Hub" pointing at `https://index.docker.io` with NO credentials.
+3. An `octopusdeploy_kubernetes_cluster_deployment_target` called "Mock K8s" with `cluster_url = "https://mockk8s.octopusdemos.com"`, `roles` containing EVERY target tag used by the project's Kubernetes steps plus `"Kubernetes"`, `environments` listing every environment in the project's lifecycle, an `endpoint { communication_style = "Kubernetes" }` block, an `authentication { account_id = … }` block referencing the token account, and the "Hosted Ubuntu" worker pool as `default_worker_pool_id`.
+
+**MANDATORY SELF-CHECK — Kubernetes target:** before finalizing output, search your Terraform for `Octopus.Kubernetes` and `Octopus.HelmChartUpgrade`. If there is even one match, confirm all three items above are present, then confirm `octopusdeploy_kubernetes_cluster_deployment_target` appears exactly once. If it does not appear, STOP and add it before responding. The full pattern, including the canonical HCL, is under `## Kubernetes target` in the `# Patterns` section.
+
+**⚠️ CRITICAL — EVERY Kubernetes step MUST set all three "Mock K8s" compatibility properties. This is a SEPARATE requirement from creating the target, and it is the one most often forgotten.** Whenever the project uses the "Mock K8s" target, add ALL THREE of these entries to the `execution_properties` of EVERY step whose type is `Octopus.KubernetesDeployRawYaml`, `Octopus.KubernetesRunScript`, or `Octopus.HelmChartUpgrade`:
+
+```
+"Octopus.Action.Kubernetes.ResourceStatusCheck"      = "False"
+"Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
+"Octopus.Action.Kubernetes.ServerSideApply.Enabled"  = "False"
+```
+
+* "Mock K8s" supports none of these three features. `ResourceStatusCheck = "True"`, `ServerSideApply.Enabled = "True"`, or a missing `DeploymentWait` each guarantee the deployment fails at runtime.
+* This applies to `Octopus.KubernetesRunScript` (kubectl script) steps and `Octopus.HelmChartUpgrade` steps just as much as to raw-YAML steps. There is NO Kubernetes step type that is exempt.
+* Copying these values from the example configuration is not enough — the templates ship with `ResourceStatusCheck = "True"` and `ServerSideApply.Enabled = "True"`, so you MUST overwrite them.
+
+**MANDATORY SELF-CHECK — Kubernetes step properties:** list every step in your output whose type contains `Kubernetes` or `Helm`. For each one, read its `execution_properties` and confirm all three keys above are present with exactly the values `"False"`, `"NoWait"`, and `"False"`. Count the steps and count the property triples — the numbers MUST match. Add whatever is missing before responding.
+
+**⚠️ CRITICAL — the "Mock K8s" target's `container` block MUST use a Docker registry feed, never the built-in feed**: the health check container `octopusdeploy/worker-tools:6.5.0-ubuntu.22.04` cannot be pulled from `Octopus Server (built-in)`. Create an `octopusdeploy_docker_container_registry` feed called "Docker Hub" pointing at `https://index.docker.io` with NO credentials, and set the target's `container { feed_id = … image = "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04" }` to that feed. Never leave `feed_id` empty, never point it at `data.octopusdeploy_feeds.feed_octopus_server_built_in`, and do not substitute a package feed the prompt asked for.
+
+**⚠️ CRITICAL — when the project is tenanted, the "Mock K8s" target MUST be linked to the project's tenants**: a target with `tenanted_deployment_participation = "Untenanted"` is invisible to a tenanted deployment, so the project has no target at all for its tenants. When the project's `tenanted_deployment_participation` is `Tenanted` or `TenantedOrUntenanted`, the target MUST use the same value, and its `tenants` list (or `tenant_tags` list) MUST include every tenant the prompt linked to the project. Any Token account created for the target must be linked to those tenants too.
+
+**⚠️ CRITICAL — an `octopusdeploy_runbook` `retention_policy` block MUST be `quantity_to_keep = 0` with `should_keep_forever = true`**: Octopus normalises any other combination and the provider then aborts the apply:
+
+```
+Error: Provider produced inconsistent result after apply
+
+When applying changes to octopusdeploy_runbook.runbook_14__claims_intake_site_recycle_claims_app_pool[0],
+provider "registry.opentofu.org/octopusdeploy/octopusdeploy" produced an unexpected new value:
+.retention_policy[0].quantity_to_keep: was cty.NumberIntVal(100), but now cty.NumberIntVal(0).
+```
+
+* The ONLY safe form is:
+
+```hcl
+  retention_policy {
+    quantity_to_keep    = 0
+    should_keep_forever = true
+  }
+```
+
+* NEVER invent a runbook retention count such as `quantity_to_keep = 100` with `should_keep_forever = false`. A retention instruction in the prompt applies to the LIFECYCLE (`octopusdeploy_lifecycle`), not to runbooks — do not copy the lifecycle's `quantity_to_keep` onto a runbook.
+* `should_keep_forever = true` requires `quantity_to_keep = 0`; the two attributes must always be set together as shown.
+
+**⚠️ CRITICAL — `"Octopus.Action.RunOnServer" = "false"` aborts the apply on any step Octopus decides runs on the server or a worker**: Octopus recomputes this property when it stores the action. When it comes back as `"true"` and you declared `"false"`, the provider treats it as drift and kills the apply:
+
+```
+Error: Provider produced inconsistent result after apply
+
+When applying changes to octopusdeploy_process_step.process_step_14__claims_intake_site_stop_claims_app_pool[0],
+provider "registry.opentofu.org/octopusdeploy/octopusdeploy" produced an unexpected new value:
+.execution_properties["Octopus.Action.RunOnServer"]: was cty.StringVal("false"), but now cty.StringVal("true").
+```
+
+This is one of the most damaging failures in this file, because process steps are created early: the first step that trips it aborts everything after it, and the project is left with one step and none of its remaining steps, feeds, or tenant resources.
+
+* For an `Octopus.Script` step, set `"Octopus.Action.RunOnServer" = "true"`. This is what the example configurations use in almost every case, and it is always safe.
+* NEVER set `"Octopus.Action.RunOnServer" = "false"` on a runbook script step, a manual intervention step, a webhook/curl step, or any step that does not carry `Octopus.Action.TargetRoles`. Those all run on the server, so `"false"` is guaranteed to be rewritten to `"true"` and guaranteed to abort the apply.
+* Use `"false"` ONLY on a package-deployment step type — `Octopus.TentaclePackage`, `Octopus.WindowsService`, `Octopus.IIS`, `Octopus.TomcatDeploy` — that also has target roles. When in doubt, prefer `"true"`, or omit the property entirely and let Octopus choose; omitting it never causes this error.
+
+**MANDATORY SELF-CHECK — RunOnServer**: search your output for `"Octopus.Action.RunOnServer" = "false"`. For every hit, confirm the step is a package-deployment step type WITH `Octopus.Action.TargetRoles`. If it is a script, manual, or runbook step, change the value to `"true"`.
+
+**⚠️ CRITICAL — an `octopusdeploy_process_templated_step` MUST NOT declare a `parameters` entry whose value is an empty string**: Octopus discards empty parameter values when it stores the action, so the provider compares what it sent against what came back, finds the key gone, and aborts the whole apply:
+
+```
+Error: Provider produced inconsistent result after apply
+
+When applying changes to octopusdeploy_process_templated_step.process_step_loyalty_rewards_promote_next_wave[0],
+provider "registry.opentofu.org/octopusdeploy/octopusdeploy" produced an
+unexpected new value: .parameters: element "Run.Runbook.PromptedVariables" has vanished.
+```
+
+A community step template usually declares a dozen or more optional parameters. Set ONLY the ones you have a real value for, and OMIT every other key entirely — do not add `"Run.Runbook.PromptedVariables" = ""`, `"Run.Runbook.Tenant.Name" = ""`, `"Run.Runbook.CustomNotes" = ""`, or any other `"…" = ""` entry "for completeness". An omitted optional parameter is correct; an empty-string parameter destroys the project. This applies to every community step template, not just "Run Octopus Deploy Runbook".
+
+**MANDATORY SELF-CHECK — no empty templated-step parameters**: before finalizing output, read every `parameters` block on every `octopusdeploy_process_templated_step` and delete any entry whose value is `""`.
+
+**⚠️ CRITICAL — an unscoped `octopusdeploy_variable` MUST OMIT the `scope` block completely**: A `scope {}` block, or a `scope` block whose every attribute is `null`, aborts the whole apply with `Error: Provider produced inconsistent result after apply … .scope: block count changed from 1 to 0`, so the project is left half-built. Never emit a placeholder `scope` block "for consistency" — a variable with no scope has no `scope` block. This rule has ABSOLUTE PRIORITY over any template.
+
+**⚠️ CRITICAL — `actions` in a variable `scope` block MUST ALWAYS be `null`, no matter what the prompt asks for**: When the prompt says a variable is `scoped to the "<Step Name>" step`, you MUST NOT try to express that. `octopusdeploy_process_step.<name>.id` is the STEP id; Octopus's `Scope.Actions` needs the ACTION id, which Terraform never exposes. Writing `actions = [octopusdeploy_process_step.process_step_deploy_fraud_lambda.id]` produces a variable scoped to a GUID that matches nothing: the apply succeeds silently, and the variable is then either discarded outright or kept with a dangling scope that can never match a deployment. Both outcomes mean the value never applies.
+
+* Emit the variable with NO `actions` scope. Use the environments, channels, target tags, or tenant tags the prompt also gave; if it gave none, emit the variable with no `scope` block at all.
+* Do NOT drop the variable, and do NOT substitute a `roles` scope you invented.
+* This rule has ABSOLUTE PRIORITY over the prompt's scoping instruction. Losing the step scope is expected and correct; losing the variable is not.
+
+**MANDATORY SELF-CHECK — no action scopes**: search your output for `actions` inside every `scope` block. Every occurrence MUST be `null` or absent. If any `scope` block references a step resource's `id`, delete that `actions` line.
+
+**⚠️ CRITICAL — a tenant variable TEMPLATE is not a tenant variable VALUE; do not emit `octopusdeploy_tenant_project_variable` without a value from the prompt**: An `octopusdeploy_tenant_project_variable` whose `value` is empty aborts the apply at create time with `Error: Failed to get variable ID … Variable was created but ID not returned in response`, and every resource ordered after it is abandoned. When the prompt says only "add a project tenant variable template called 'X'" it is asking for a `template` block on the `octopusdeploy_project` resource and NOTHING ELSE. Create `octopusdeploy_tenant_project_variable` only when the prompt states an actual value for a named tenant. This rule has ABSOLUTE PRIORITY over any template.
+
+**⚠️ CRITICAL — a Blue/Green project MUST have TWO DISTINCT production environments, even when the prompt names only one**: The `Octopus - Check Blue Green Deployment` step compares the last two production deployments across two separate environments, so `BlueGreen.Environment.Blue.Name` and `BlueGreen.Environment.Green.Name` MUST hold two DIFFERENT environment names. Setting both to `Production` (or to any single environment the prompt happened to name) makes the check meaningless and is always wrong. A prompt that asks for a blue/green strategy but lists only a `Production` environment is still a blue/green prompt: replace that single environment with `Production Blue` and `Production Green`, put BOTH of them in the lifecycle phase named `Production` with `is_optional_phase = true`, and reference them from the two step parameters. This rule has ABSOLUTE PRIORITY over the environment list in the prompt and over any template.
 
 **⚠️ CRITICAL — `depends_on` for sequential steps MUST reference ONLY the immediately preceding step**: Each `octopusdeploy_process_step` resource (steps 2, 3, 4, etc.) must have `depends_on` pointing to EXACTLY ONE step — the step that immediately precedes it in the deployment process. NEVER list all previous steps in `depends_on`. For step N, `depends_on = [octopusdeploy_process_step.step_N_minus_1]`. For step N to depend on ALL previous steps violates the rule and creates unnecessary complexity. WRONG: `depends_on = [step_1, step_2, step_3, step_4, step_5, step_6]` for step 7. CORRECT: `depends_on = [octopusdeploy_process_step.step_6]` for step 7.
 
@@ -1595,7 +1695,43 @@ data "octopusdeploy_accounts" "account_azure" {
 
 When creating a `octopusdeploy_certificate` resource, use the `certificate_data` and `password` fields from the example resources. Ignore any details in the prompt to set these values.
 
-**CRITICAL — NEVER invent, shorten, truncate, or fabricate a value for `certificate_data`.** You MUST copy the exact base64 `certificate_data` string (and its matching `password`) verbatim from the provided certificate example resources. A made-up or partial certificate blob is rejected at apply time with the fatal error `"There was a problem with your request. [Unable to parse certificate. Please check the certificate data and try again.]"`, which aborts the whole apply and prevents the project from being created. If you do not have the exact example certificate value available, prefer emitting the `certificate_data` as a Terraform variable reference (e.g. `certificate_data = "${var.certificate_example_certificate_data}"`) rather than an inline literal you are unsure about.
+**CRITICAL — NEVER invent, shorten, truncate, or fabricate a value for `certificate_data`.** You MUST copy the exact base64 `certificate_data` string (and its matching `password`) verbatim from the provided certificate example resources. A made-up or partial certificate blob is rejected at apply time with the fatal error `"There was a problem with your request. [Unable to parse certificate. Please check the certificate data and try again.]"`, which aborts the whole apply and prevents the project from being created.
+
+**⚠️ CRITICAL — `certificate_data` and `password` MUST each be present as a plain attribute line holding a plain string, and MUST NOT be a `${var....}` reference.** The certificate values are substituted with known-good fixture values after generation, but that substitution only works on a literal attribute line inside a top-level `octopusdeploy_certificate` resource. So:
+
+* The resource MUST be written at the top level, with `resource "octopusdeploy_certificate" "..." {` starting at the beginning of the line and the resource's closing `}` on its own line with no indentation.
+* Both `certificate_data = "..."` and `password = "..."` MUST appear as their own attribute lines inside that resource. NEVER omit either attribute — an `octopusdeploy_certificate` with no `certificate_data` line cannot be fixed up and always fails to parse.
+* NEVER write `certificate_data = "${var.something}"` or `password = "${var.something}"`, and never move the value into a `variable` block, a `local`, or a nested block. A variable reference resolves to an empty string when the variable has no value, and an empty certificate blob produces exactly the "Unable to parse certificate" failure above. When you have no example blob to copy, write a short placeholder string such as `certificate_data = "MIIQChangeMe"` and `password = "Change Me!"` on their own lines — the placeholder will be replaced with a valid certificate, whereas a variable reference will not be.
+* A certificate that fails to apply does not fail alone: every resource ordered after it — the certificate-typed variable that references it, tenants, tag sets — is abandoned, and the retry that follows usually drops them from the project entirely. Getting this shape right is what keeps the rest of the prompt's resources.
+
+**This is the ONLY shape an `octopusdeploy_certificate` resource may take.** Copy it exactly, changing only the resource label, the `name`, and the data source names:
+
+```hcl
+data "octopusdeploy_certificates" "certificate_my_cert" {
+  partial_name = "My Cert"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_certificate" "certificate_my_cert" {
+  count            = "${length(data.octopusdeploy_certificates.certificate_my_cert.certificates) != 0 ? 0 : 1}"
+  name             = "My Cert"
+  certificate_data = "MIIQChangeMe"
+  password         = "Change Me!"
+  environments     = []
+  tenant_tags      = []
+  tenants          = []
+  lifecycle {
+    ignore_changes  = [certificate_data, password]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+```
+
+Note that `certificate_data` and `password` are single-line string attributes at the top level of the resource. Do not wrap them in a nested block, do not use a heredoc, do not spread the value across lines, and do not move them into a `variable`. Any deviation from this shape prevents the fixture substitution and the apply fails with "Unable to parse certificate".
+
+**MANDATORY SELF-CHECK — certificates**: for every `octopusdeploy_certificate` resource in your output, confirm the resource line is unindented, confirm a `certificate_data` line and a `password` line are both present as single-line string attributes, and confirm neither contains `${var.`. This check applies to EVERY project type, including IIS, Tomcat, and Windows Service projects whose example configuration contains no certificate at all — having no example to copy is exactly when you must fall back to the shape above.
 
 ## Data and Resource pairing instructions
 
@@ -2015,7 +2151,21 @@ Must specify either 'environment_id' or 'scope' block.
 * Do NOT invent a `scope` block as an alternative unless you are certain of its schema; `environment_id` is the supported form shown in the example below.
 * Each of these resources MUST also carry `depends_on = [octopusdeploy_tenant_project.<the tenant/project link>]`, because the value cannot be set before the tenant is connected to the project in that environment.
 
-**MANDATORY SELF-CHECK — tenant project variable environment**: Before finalizing Terraform output, find every `octopusdeploy_tenant_project_variable`. For EACH one, confirm an `environment_id` attribute is present and non-null. Then confirm that for every (tenant, template) pair the prompt asked you to set, there is one resource per environment that tenant is linked to. You will be penalized for any `octopusdeploy_tenant_project_variable` without `environment_id`.
+**⚠️ CRITICAL — `octopusdeploy_tenant_project_variable` MUST have a non-empty `value`, and MUST NOT be created at all when the prompt supplies no value**: Octopus does not persist a tenant variable whose value is blank, so the provider writes the variable, finds nothing in the response, and fails the apply at CREATE time:
+
+```
+Error: Failed to get variable ID
+  with octopusdeploy_tenant_project_variable.tenantprojectvariable_bank_sort_code_contoso_bank[0],
+Variable was created but ID not returned in response
+```
+
+Because this happens during apply rather than plan, resources ordered before it are created and everything after it is abandoned, so one valueless tenant variable truncates the whole project.
+
+* A prompt that asks only for a tenant variable **template** — "Add a project tenant variable template called 'Bank.Sort.Code' of type single line text", "Add a tenant variable called 'X' of type single line text" — is fully satisfied by the `template` block on the `octopusdeploy_project` resource. Do NOT also emit an `octopusdeploy_tenant_project_variable`, because there is no value to put in it.
+* Only create `octopusdeploy_tenant_project_variable` when the prompt actually states a value for a named tenant — "set 'Bank.Sort.Code' to '20-00-00' for the tenant 'Contoso Bank'". The `value` attribute must then be that literal, never `""`, never a bare placeholder you invented to fill the attribute.
+* This applies equally to `octopusdeploy_tenant_common_variable`.
+
+**MANDATORY SELF-CHECK — tenant project variable environment and value**: Before finalizing Terraform output, find every `octopusdeploy_tenant_project_variable`. For EACH one, confirm an `environment_id` attribute is present and non-null, and confirm `value` is a non-empty literal taken from the prompt — if the prompt never gave a value for that tenant and template, DELETE the resource and keep only the project `template` block. Then confirm that for every (tenant, template) pair the prompt asked you to set, there is one resource per environment that tenant is linked to. You will be penalized for any `octopusdeploy_tenant_project_variable` without `environment_id`.
 
 **How tenant project variables work**:
 1. The `octopusdeploy_project` resource defines one or more `template` blocks (0-indexed).
@@ -4168,6 +4318,8 @@ resource "octopusdeploy_process_step" "process_step_child_project_run_a_script" 
 ```
 
 * Orchestration or orcestrator projects contain steps of type "Octopus.DeployRelease" that deploy a child project.
+* **⚠️ CRITICAL — every child project you create for an orchestration project MUST be given a deployment process with at least one step.** When the prompt names child projects that do not already exist (for example "Add a step that deploys a release of the child project 'Retail Storefront'"), you MUST create each child project *and* a deployment process for it. A child project with an empty deployment process can never produce a release worth deploying, so the parent's `Octopus.DeployRelease` step has nothing to do and the orchestration project is not functional. When the prompt does not say what the child project should do, give it a single `Octopus.Script` step named "Run a Script" with a short inline script, exactly as the example orchestration configuration does for its child project. You will be penalized for each child project left with zero steps.
+* Each child project must also be assigned a `lifecycle_id` and a `project_group_id`, and each must have its own `octopusdeploy_process` and `octopusdeploy_process_steps_order` resources — the parent project's process resources cannot be shared.
 * Each "Octopus.DeployRelease" step must have a "Octopus.Action.DeployRelease.ProjectId" execution property and a "primary_package" with the "package_id" set to the child project ID.
 * The ID of the child project can be obtained from a data "octopusdeploy_projects" data source.
 * The following is an example of a "Octopus.DeployRelease" step that references a data "octopusdeploy_projects" data source for the child project ID and a data "octopusdeploy_feeds" data source for the feed ID:
@@ -5217,7 +5369,7 @@ resource "octopusdeploy_variable" "azure_function_project_azure_location_1" {
 * You will be penalized for setting the "value" and "sensitive_value" attributes in the same resource "octopusdeploy_variable".
 * You will be penalized for setting the "sensitive_value" attribute to anything other than "CHANGEME".
 * You will be penalized for assigning an empty scope like "scope {}" to a resource "octopusdeploy_variable".
-* You will be penalized for assigning a "scope" block in a resource "octopusdeploy_variable" with all null values, for example:
+* You will be penalized for assigning a "scope" block in a resource "octopusdeploy_variable" with all null values. This is not a style preference: Octopus returns no scope for such a variable, so the provider detects a mismatch and ABORTS THE ENTIRE APPLY with `Error: Provider produced inconsistent result after apply … .scope: block count changed from 1 to 0`, leaving the project half-built. An unscoped variable MUST have no `scope` block at all. For example:
 ```
 resource "octopusdeploy_variable" "variables_common_settings_apiendpoint_1" {
 count        = "${length(data.octopusdeploy_library_variable_sets.library_variable_set_variables_common_settings.library_variable_sets) != 0 ? 0 : 1}"
@@ -6706,6 +6858,23 @@ You will be penalized for setting `excluded_environments = null` on Kubernetes d
 * Words such as `api`, `server`, `worker`, `web`, `auth`, `gateway`, `proxy`, `backend`, `frontend`, `key`, `token`, `service`, `manager`, `scheduler`, `cache`, `queue`, `db` are NOT secrets, API keys, or credentials and MUST NOT be replaced with asterisks (`*****`) or any other anonymization placeholder.
 ## Variable Scoping for New Project Creation Prompts
 
+**⚠️ CRITICAL — `actions` in an `octopusdeploy_variable` `scope` block MUST always be `null`; a variable scoped to a step is silently DISCARDED**: Octopus requires `Scope.Actions` to contain deployment *action* IDs, but the only ID available in Terraform is `octopusdeploy_process_step.<name>.id`, which is the *step* ID — a different GUID. When you write `actions = [octopusdeploy_process_step.process_step_drain_connections.id]`, the apply reports `Creation complete` and `Apply complete!` with no error, yet the variable never appears in the project's variable set at all. The value is lost with no diagnostic of any kind, which is far worse than a variable with a wider scope than requested.
+
+* When the prompt says a variable is `scoped to the "<Step Name>" step`, create the variable with NO `actions` scope. If the prompt also names environments, channels, tenant tags, or target tags for that variable, scope it to those instead.
+* If the step is the ONLY scope the prompt gave, **the `octopusdeploy_variable` resource MUST OMIT the `scope` block entirely** — do not write `scope {}`, and do not write a `scope` block whose attributes are all `null`. An all-null or empty `scope` block makes Octopus return no scope, and the provider then aborts the whole apply:
+
+```
+Error: Provider produced inconsistent result after apply
+
+When applying changes to octopusdeploy_variable.octopub_manifests_octopub_sync_gate_1[0],
+provider "registry.opentofu.org/octopusdeploy/octopusdeploy" produced an
+unexpected new value: .scope: block count changed from 1 to 0.
+```
+
+  A variable with no scope is written as the resource attributes followed by the `lifecycle` and `depends_on` blocks and nothing else. Still create the variable — an unscoped variable is correct output here; dropping it is not.
+* NEVER invent or interpolate a value for `actions`. NEVER reference a step resource's `id` from a variable `scope` block.
+* You will be penalized for any `octopusdeploy_variable` whose `scope` block sets `actions` to anything other than `null`, for any `scope` block whose attributes are all `null`, and equally for dropping a prompt-requested variable because its requested scope could not be expressed.
+
 **CRITICAL — when a new project creation prompt specifies that variables should be scoped to specific environments**, the `scope` block of the corresponding `octopusdeploy_variable` resource MUST include those environment IDs. The environment IDs must be looked up using the appropriate data source and resource ternary pattern.
 
 **Example — a variable scoped to the Production environment**:
@@ -6810,6 +6979,8 @@ for i in $(seq 1 30); do
 done
 ```
 
+* Avoid using the dollar sign `$` in simple bash scripts. Dollar signs are hard to escape in Terraform configuration files. For example, avoid bash variables.
+
 # Patterns
 
 The following instructions provide default guidance on how to implement common deployment patterns, processes, or strategies.
@@ -6858,8 +7029,12 @@ You will be penalized for generating a project containing Kubernetes steps with 
     *You MUST add the step template from "https://library.octopus.com/step-templates/72db001f-ae7f-4a0f-b952-5f80e2fc4cd2" as the first step. It is called "Octopus - Check Blue Green Deployment" by default. This step determines if the deployment to two environments, the blue and the green environment, have been correctly performed in an alternating pattern or not.
     * The output variable of the "Octopus - Check Blue Green Deployment" step is a boolean value called `SequentialDeploy`. If `SequentialDeploy` is `True`, the deployment was performed incorrectly to the same blue or green environment twice in a row. If the value is `False`, the deployment was performed correctly to the blue and green environments in an alternating pattern.
     * You MUST add a manual intervention step as the second step with a run condition based on the `SequentialDeploy` output variable of the first step.
+    * **⚠️ CRITICAL — the run condition is a STEP-LEVEL `Octopus.Step.ConditionVariableExpression` property, NOT text inside the manual intervention instructions.** The manual step resource MUST set `condition = "Variable"` together with `"Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check Blue Green Deployment].Output.SequentialDeploy}"`. Embedding an `#{if Octopus.Action[...].Output.SequentialDeploy}…#{/if}` block in `Octopus.Action.Manual.Instructions` does NOT gate the step — the step then runs on every deployment and only its wording changes, which defeats the entire purpose of the check. Setting `condition = "Success"` on this step is always wrong.
+    * When the project type template already contains its own manual intervention step (for example `Approve Production Deployment` in the VM Blue/Green template), that step is NOT a substitute for the pattern's gate. Either add the `SequentialDeploy` variable condition to it, or add a separate manual step that carries the condition. A Blue/Green project whose process contains no step with `condition = "Variable"` is incomplete.
     * You MUST replace the "Production" environment from the template project with the "Production Blue" and "Production Green" environments.
     * You MUST ensure the "Production Blue" and "Production Green" environments are in a Lifecycle phase called "Production".
+    * The step template's `BlueGreen.Environment.Blue.Name` and `BlueGreen.Environment.Green.Name` parameters MUST be set to "Production Blue" and "Production Green" respectively. They MUST NOT be equal to each other, and neither may be left as "Production".
+    * The step template's `BlueGreen.Octopus.Api.Key` parameter references a project variable, conventionally `#{Project.Octopus.Api.Key}`. Whatever variable name you reference here, you MUST also create a matching sensitive `octopusdeploy_variable` on the project (with a placeholder value), otherwise the step is left with an unresolvable reference.
 * These steps are IN ADDITION to the steps from the template project.
 
 ## Debugging
