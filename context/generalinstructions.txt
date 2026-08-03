@@ -72,6 +72,31 @@ Blocks of type "release_retention_policy" are not expected here.
 ```
 
 * A `phase` block accepts ONLY `name`, `automatic_deployment_targets`, `optional_deployment_targets`, `is_optional_phase` and `minimum_environments_before_promotion`. Putting a retention policy inside a phase — for example to give a "Production" phase its own retention — is invalid. A retention policy is a property of the LIFECYCLE, not of a phase, however many phases the prompt describes.
+* **⚠️ BEWARE THE NAME COLLISION: `lifecycle { }` inside a resource is TERRAFORM'S META-BLOCK, not the Octopus lifecycle.** The Terraform `lifecycle { }` meta-block accepts ONLY `prevent_destroy`, `ignore_changes` and `create_before_destroy`. `release_retention_policy` and `tentacle_retention_policy` MUST NEVER be written inside it. Because the Octopus resource is *also* called `octopusdeploy_lifecycle`, it is easy to put the retention blocks inside the `lifecycle { prevent_destroy = true }` meta-block by mistake — which fails the plan with `Blocks of type "release_retention_policy" are not expected here`, reported against the enclosing resource so the real location is not obvious. The two retention blocks are siblings of `name`, `count` and `phase`, and the `lifecycle { }` meta-block is separate and contains only its own three arguments:
+
+```hcl
+resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
+  count = "..."
+  name  = "My Lifecycle"
+
+  # sibling of name — CORRECT. Always write these MULTI-LINE, never on one line.
+  release_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  phase { ... }
+
+  lifecycle {
+    prevent_destroy = true      # ONLY prevent_destroy / ignore_changes / create_before_destroy belong here
+  }
+}
+```
 * Set each of the two blocks once, as direct children of the `octopusdeploy_lifecycle` resource, before or after the `phase` blocks.
 * The `octopusdeploy_lifecycle` resource MUST have `count` and a matching `data "octopusdeploy_lifecycles"` lookup, like every other resource in a new project. A lifecycle emitted without `count` is a reliable sign you have hand-written it instead of following the canonical shape, and it is in that hand-written form that this error appears. The canonical shape is under `## Lifecycle Phase` / `## Retention Policy for New Project Creation Prompts` — follow it literally.
 * This rule has ABSOLUTE PRIORITY over any template and over any per-phase retention wording in the prompt.
@@ -1530,6 +1555,16 @@ phase {
 
 ## Lifecycle Phase `minimum_environments_before_promotion` Instructions
 
+**⚠️ CRITICAL — when the prompt gives a promotion threshold that IS valid, you MUST set `minimum_environments_before_promotion` to it; do not silently drop it.** Clamping (below) applies only when the requested number is larger than the phase's environment count. When the number is less than or equal to that count it is legal and MUST appear on the `phase` block. All of these set it explicitly:
+
+* "where a release may be promoted after 2 environments in the phase have been deployed to" on a phase with 2 environments → `minimum_environments_before_promotion = 2`
+* "releases must be promoted only after 1 environment has been deployed to" → `= 1`
+* "automatically promote after N successful deployments to this phase" → `= N`, clamped to the phase's environment count
+
+Leaving it at `0` (or omitting it, which defaults to `0`) when the prompt asked for a threshold silently changes the lifecycle's behaviour: every release becomes promotable immediately. You will be penalized for each phase whose prompt stated a threshold and whose `minimum_environments_before_promotion` is `0`.
+
+**MANDATORY SELF-CHECK — promotion thresholds**: before finalizing output, re-read each phase description in the prompt. For every phase that mentions a number of environments, deployments or promotions, confirm the corresponding `phase` block sets `minimum_environments_before_promotion` to that number (clamped to the count of environments in that same phase). Note that the "omit it if unsure" guidance elsewhere in this file applies ONLY to `release_retention_policy` / `tentacle_retention_policy` and to certificates — it does NOT license dropping `minimum_environments_before_promotion`, `is_optional_phase`, or any other phase attribute.
+
 **CRITICAL — `minimum_environments_before_promotion` MUST NOT exceed the number of environments in the same `phase` block**: The `minimum_environments_before_promotion` attribute counts environments *within its own phase* that must be deployed to before a release can be promoted to the next phase. It does NOT refer to environments in earlier phases, to a number of deployments, or to a number of successful releases. Octopus rejects a lifecycle where the value is greater than the number of entries in that phase's `automatic_deployment_targets` plus `optional_deployment_targets` arrays, and the apply fails with:
 
 ```
@@ -1821,7 +1856,7 @@ Note that `certificate_data` and `password` are single-line string attributes at
 
 **MANDATORY SELF-CHECK — certificates**: for every `octopusdeploy_certificate` resource in your output, confirm the resource line is unindented, confirm a `certificate_data` line and a `password` line are both present as single-line string attributes, and confirm neither contains `${var.`. This check applies to EVERY project type, including IIS, Tomcat, Azure Function, and Windows Service projects whose example configuration contains no certificate at all — having no example to copy is exactly when you must fall back to the shape above.
 
-**⚠️ CRITICAL — a certificate MUST NEVER be the reason a project fails to be created. If you cannot emit it in exactly the shape above, OMIT IT.** If you are not confident you can produce the `octopusdeploy_certificate` resource in precisely that form, then:
+**⚠️ CRITICAL — a certificate MUST NEVER be the reason a project fails to be created. If you cannot emit it in exactly the shape above, OMIT IT.** Certificate creation fails intermittently with `Octopus API error: … [Unable to parse certificate. Please check the certificate data and try again.]`, and because certificates are created early in the apply, the failure truncates the project: the steps, variables and runbooks ordered after it are all abandoned. So if you are not confident you can produce the `octopusdeploy_certificate` resource in precisely the form shown above, then:
 
 * Do NOT emit the `octopusdeploy_certificate` resource at all.
 * Also drop anything that depends on it — the `Certificate`-typed project variable that referenced it, and any step property that pointed at it. Leaving a reference to a certificate you did not create produces an unresolvable ID.
@@ -2890,6 +2925,12 @@ You will be penalized for using `octopusdeploy_azure_openid_connect` when the pr
 
 * The "retention_policy" block can only be defined for a resource "octopusdeploy_runbook".
 * You will be penalized for defining a "octopusdeploy_project_runbook" resource.
+* **⚠️ CRITICAL — a runbook's `multi_tenancy_mode` MUST be compatible with its project's `tenanted_deployment_participation`.** A runbook left at `multi_tenancy_mode = "Untenanted"` inside a project whose `tenanted_deployment_participation` is `"Tenanted"` can never be run at all: the project permits only tenanted runs, and the runbook permits only untenanted ones. This applies equally when adding a runbook to an EXISTING project — look up how that project is configured before choosing the mode. Use this mapping:
+  * project `tenanted_deployment_participation = "Untenanted"` → runbook `multi_tenancy_mode = "Untenanted"`
+  * project `tenanted_deployment_participation = "Tenanted"` → runbook `multi_tenancy_mode = "Tenanted"` (or `"TenantedOrUntenanted"`)
+  * project `tenanted_deployment_participation = "TenantedOrUntenanted"` → runbook `multi_tenancy_mode = "TenantedOrUntenanted"`
+  * When in doubt, `"TenantedOrUntenanted"` is the safe choice because it is runnable under every project mode. Never emit `"Untenanted"` for a tenanted project.
+  * The same consistency requirement applies across sibling runbooks: do not give one runbook in a project `"Untenanted"` while the others are `"TenantedOrUntenanted"` unless the prompt explicitly asks for that.
 * You will be penalized for defining the "unit" property in a "retention_policy" block in a "octopusdeploy_runbook" resource, for example, this resource "octopusdeploy_runbook" is invalid because it includes the "unit" property in the "retention_policy" block:
 
 ```
@@ -3522,6 +3563,26 @@ resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes
 ```
 
 ## Octopus Project Channel Instructions
+
+**⚠️ CRITICAL — scoping a step to a channel MUST NOT create a dependency cycle.** When a step is scoped to a channel (the prompt says "this step only runs on the 'Hotfix' channel"), the step resource references the channel. That is the correct direction, and it means the channel MUST NOT depend on anything downstream of the step. Specifically:
+
+* An `octopusdeploy_channel` resource's `depends_on` may reference the project and the lifecycle ONLY. It MUST NOT reference `octopusdeploy_process_steps_order`, `octopusdeploy_process`, or any `octopusdeploy_process_step`.
+* Adding such a reference creates the cycle `process_step → channel → process_steps_order → process_step`, which OpenTofu refuses to plan.
+* If you cannot express the channel scoping without a cycle, drop the `channels` attribute from the step and keep everything else. Losing a channel scope is a small gap; a cycle produces no project at all.
+
+**⚠️ CRITICAL — the output MUST be valid HCL and NOTHING ELSE. Never write prose, explanations, apologies, or diagnostic commentary into the Terraform.** Any sentence emitted outside a `#` comment makes the whole file unparseable and the run produces no project whatsoever. This has been observed: the model detected a dependency cycle and wrote its explanation as line 1 of the file, producing:
+
+```
+Error: Unsupported block type
+
+  on terraformInput.tf line 1:
+   1: The cycle is caused by the "Confirm Settlement Cutover" step referencing the "Hotfix" channel via `channels`, while the channel depends on `process_step_order_...`, which depends on that same step. Remove the `channels` reference from that step to break the cycle.
+
+Blocks of type "The" are not expected here.
+```
+
+* If you notice a problem you cannot resolve, FIX IT SILENTLY by simplifying the configuration — drop the offending attribute or resource — and emit only valid HCL.
+* Never explain a limitation in the output. Never use backticks in the Terraform. The first character of the output must begin a valid HCL construct (`data`, `resource`, `variable`, `#`, or `terraform`).
 
 * Channels defined as resource "octopusdeploy_channel" have the following required properties:
     * "name"
@@ -7164,7 +7225,15 @@ You will be penalized for generating a project containing Kubernetes steps with 
     * **⚠️ CRITICAL — the run condition is a STEP-LEVEL `Octopus.Step.ConditionVariableExpression` property, NOT text inside the manual intervention instructions.** The manual step resource MUST set `condition = "Variable"` together with `"Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check Blue Green Deployment].Output.SequentialDeploy}"`. Embedding an `#{if Octopus.Action[...].Output.SequentialDeploy}…#{/if}` block in `Octopus.Action.Manual.Instructions` does NOT gate the step — the step then runs on every deployment and only its wording changes, which defeats the entire purpose of the check. Setting `condition = "Success"` on this step is always wrong.
     * When the project type template already contains its own manual intervention step (for example `Approve Production Deployment` in the VM Blue/Green template), that step is NOT a substitute for the pattern's gate. Either add the `SequentialDeploy` variable condition to it, or add a separate manual step that carries the condition. A Blue/Green project whose process contains no step with `condition = "Variable"` is incomplete.
     * You MUST replace the "Production" environment from the template project with the "Production Blue" and "Production Green" environments.
+    * **⚠️ CRITICAL — "replace" means the plain `Production` environment MUST NOT remain.** Do not create a `Production` environment resource, and do not leave `Production` in any lifecycle phase alongside the blue and green environments. The `Production` phase's environment list MUST contain EXACTLY the two blue/green environments and nothing else. A phase holding `["Production", "Production - Blue", "Production - Green"]` is wrong: releases can then be deployed straight to `Production`, bypassing the alternation the pattern exists to enforce. When the prompt says "containing the production environments", that means the blue and green pair.
     * You MUST ensure the "Production Blue" and "Production Green" environments are in a Lifecycle phase called "Production".
+
+**MANDATORY SELF-CHECK — Blue/Green completeness**: before finalizing a Blue/Green project, verify ALL of the following, because each has been observed missing in otherwise-successful output:
+  1. Exactly two production environments exist, named `Production - Blue` and `Production - Green`, and no plain `Production` environment is created or referenced by the lifecycle.
+  2. The `Production` phase lists exactly those two environments.
+  3. `BlueGreen.Environment.Blue.Name` and `BlueGreen.Environment.Green.Name` hold those two DIFFERENT names.
+  4. A project variable backs whatever `BlueGreen.Octopus.Api.Key` references.
+  5. **At least one step has `condition = "Variable"` with `Octopus.Step.ConditionVariableExpression` referencing `…Output.SequentialDeploy`.** If no step in your output has `condition = "Variable"`, the pattern's gate is missing — add the manual intervention step now. This is required even when the prompt supplies its own numbered list of steps and says "and no others"; the gate is one of the pattern steps the prompt's list does not override.
     * The step template's `BlueGreen.Environment.Blue.Name` and `BlueGreen.Environment.Green.Name` parameters MUST be set to "Production Blue" and "Production Green" respectively. They MUST NOT be equal to each other, and neither may be left as "Production".
     * The step template's `BlueGreen.Octopus.Api.Key` parameter references a project variable, conventionally `#{Project.Octopus.Api.Key}`. Whatever variable name you reference here, you MUST also create a matching sensitive `octopusdeploy_variable` on the project (with a placeholder value), otherwise the step is left with an unresolvable reference.
 * These steps are IN ADDITION to the steps from the template project.
