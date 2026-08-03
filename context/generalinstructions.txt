@@ -1591,6 +1591,12 @@ data "octopusdeploy_accounts" "account_azure" {
 
 * You will be penalized for setting the "account_type" to an empty value.
 
+## Certificate Creation for New Project Creation Prompts
+
+When creating a `octopusdeploy_certificate` resource, use the `certificate_data` and `password` fields from the example resources. Ignore any details in the prompt to set these values.
+
+**CRITICAL — NEVER invent, shorten, truncate, or fabricate a value for `certificate_data`.** You MUST copy the exact base64 `certificate_data` string (and its matching `password`) verbatim from the provided certificate example resources. A made-up or partial certificate blob is rejected at apply time with the fatal error `"There was a problem with your request. [Unable to parse certificate. Please check the certificate data and try again.]"`, which aborts the whole apply and prevents the project from being created. If you do not have the exact example certificate value available, prefer emitting the `certificate_data` as a Terraform variable reference (e.g. `certificate_data = "${var.certificate_example_certificate_data}"`) rather than an inline literal you are unsure about.
+
 ## Data and Resource pairing instructions
 
 When a “data” resource is referenced in a resource’s attributes, the data resource must be included in the output.
@@ -2292,6 +2298,7 @@ resource "octopusdeploy_tag" "tagset_cities_tag_brisbane" {
 * The "count" attribute on the resource "octopusdeploy_tag" must be set to `length(try([for item in data.octopusdeploy_tag_sets.<tagset data name>.tag_sets[0].tags : item if item.name == "<tag name>"], [])) != 0 ? 0 : 1`
 * You will be penalized for using a "count" attribute on the resource "octopusdeploy_tag" using underscores in the place of brackets, question marks, and exclamation points like this: `length(try([for item in data.octopusdeploy_tag_sets.<tagset data name>.tag_sets[0].tags : item if item.name == "<tag name>"], []_ _= 0 _ 0 : 1`
 "
+* **CRITICAL — Any resource that references a tenant tag by its canonical `<tag set>/<tag>` string MUST declare an explicit `depends_on` for BOTH the `octopusdeploy_tag_set` resource AND the specific `octopusdeploy_tag` resource(s) it references.** This applies to a tenant's `tenant_tags` attribute, a variable `scope { tenant_tags = [...] }`, and a step's `tenant_tags`. If the `depends_on` is missing, the tag may not exist at the moment the referencing resource is applied, and the Octopus API fails the apply with `"There was a problem with your request. [Unable to find matching tag from canonical tag name or id '<tag set>/<tag>']"`. For example, a tenant tagged `"region/emea"` must include `depends_on = [octopusdeploy_tag_set.tagset_region, octopusdeploy_tag.tagset_region_tag_emea]`, and a project variable scoped to `tenant_tags = ["region/emea"]` must include the same `depends_on`.
 
 ## Lifecycle Instructions
 
@@ -2672,7 +2679,11 @@ resource "octopusdeploy_runbook" "runbook_my_script_app_4_retrieve_logs" {
 * The "skip_machine_behavior" property can be set to "None" or "SkipUnavailableMachines"
 * If a project name was specified in the prompt, you must use that name for the "name" attribute in the resource "octopusdeploy_project".
 * You must include the "lifecycle_id" attribute for every "octopusdeploy_project" resource.
-* The "is_version_controlled" attribute must always be "false".
+* **⚠️ CRITICAL — The "is_version_controlled" attribute must ALWAYS be "false", even when the prompt explicitly asks for a version-controlled, Config-as-Code, GitOps, or Git-stored project.** New project creation must NEVER produce a Config-as-Code (VCS) project. When a project is converted to VCS, the Octopus API immediately attempts to authenticate against and write to the real Git repository named in the prompt. Because the LLM cannot supply valid Git credentials or a reachable repository, this conversion fails at `terraform apply` with an error such as `Error converting project to VCS: The username or token used to authenticate with the Git Repository is invalid`, which aborts the ENTIRE apply so NO project is created. This violates the rule that every prompt must create a project.
+  * Set `is_version_controlled = false` and do NOT emit any `git_library_persistence_settings` block, `git_anonymous_persistence_settings` block, `git_username_password_persistence_settings` block, or any other VCS/Git persistence configuration on the `octopusdeploy_project` resource.
+  * Do NOT create an `octopusdeploy_git_credential` resource for the project, and do NOT reference one. The only exception is a Platform Hub prompt that explicitly requests it (see the platform hub instructions); a standard project creation prompt must never create a git credential.
+  * Create the project as a normal, database-backed project. The rest of the prompt (steps, variables, lifecycle, accounts, feeds, etc.) is created exactly as it would be for a non-VCS project.
+  * **MANDATORY SELF-CHECK — VCS exclusion**: Before finalizing Terraform output, verify `is_version_controlled = false`, that no Git persistence settings blocks exist on the project, and that no `octopusdeploy_git_credential` resource is present. You will be penalized for each occurrence of `is_version_controlled = true`, a Git persistence settings block, or a project `octopusdeploy_git_credential`, because they abort the apply and prevent the project from being created.
 * You will be penalized for setting the "auto_create_release" attribute to "true".
 * The name of the data source much also match the name used when referencing a "project_id" attribute. For example, this data source:
 
@@ -4003,6 +4014,50 @@ resource "octopusdeploy_process_step" "aws_script_step" {
   }
 }
 ```
+
+* **CRITICAL — Terraform steps that use an AWS account MUST define "Octopus.Action.Aws.Region".** Steps of type "Octopus.TerraformApply", "Octopus.TerraformPlan", "Octopus.TerraformPlanAndApply", and "Octopus.TerraformDestroy" that authenticate with an AWS account (i.e., they set `"Octopus.Action.Terraform.ManagedAccount" = "AWS"` and reference an AWS account via `"Octopus.Action.AwsAccount.Variable"`) MUST also define the `"Octopus.Action.Aws.Region"` execution_property. If the region is omitted, the Octopus API rejects the step with the fatal error `"There was a problem with your request. [Please specify the AWS region.]"` and the Terraform apply fails, so no project is created. When a prompt asks for a Terraform project to use an AWS account but does not name a region, default the region to `"us-east-1"`. This requirement applies to Terraform steps in both deployment processes and runbooks (for example a "terraform destroy" runbook step).
+
+**Correct pattern for a Terraform step that uses an AWS account**:
+```hcl
+resource "octopusdeploy_process_step" "terraform_apply_step" {
+  type                 = "Octopus.TerraformApply"
+  execution_properties = {
+    "Octopus.Action.Terraform.ManagedAccount"   = "AWS"
+    "Octopus.Action.AwsAccount.Variable"        = "Project.AWS.Account"
+    "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
+    # The "Octopus.Action.Aws.Region" MUST be defined when ManagedAccount is "AWS"
+    "Octopus.Action.Aws.Region"                 = "us-east-1"
+    "Octopus.Action.RunOnServer"                = "true"
+  }
+}
+```
+
+* **CRITICAL — A step of type "Octopus.Claude" MUST define the `Octopus.Action.Claude.ApiKey` execution property, backed by a project variable.** If the Claude step is created without an API key, the Octopus API rejects it with the fatal error `"There was a problem with your request. [An API Key is required.]"` / `"Unable to create process step"`, and no project is created. Create a sensitive project variable named `Project.Claude.ApiKey` (default value `"Change Me!"`) and set the step property `"Octopus.Action.Claude.ApiKey" = "#{Project.Claude.ApiKey}"`. This applies to every "Claude" / LLM project that uses the `Octopus.Claude` step, regardless of what other accounts (e.g. an AWS/Bedrock account) the prompt requests.
+
+```hcl
+resource "octopusdeploy_variable" "claude_project_claude_apikey_1" {
+  name            = "Project.Claude.ApiKey"
+  type            = "Sensitive"
+  description     = "The Claude API key"
+  is_sensitive    = true
+  sensitive_value = "Change Me!"
+}
+resource "octopusdeploy_process_step" "run_claude_agent" {
+  type                 = "Octopus.Claude"
+  execution_properties = {
+    # The API key MUST be supplied or the step fails to create
+    "Octopus.Action.Claude.ApiKey" = "#{Project.Claude.ApiKey}"
+    "Octopus.Action.Claude.Model"  = "claude-sonnet-5"
+    "Octopus.Action.RunOnServer"   = "true"
+  }
+}
+```
+
+* **Server-orchestrated blue/green / progressive orchestration script steps — such as application-pool "swap" steps, traffic-"cutover" steps, and "health check gate" steps — MUST set `"Octopus.Action.RunOnServer" = "true"`.** These orchestration steps do no per-target package work, and Octopus forces them to run on the server. If such a step is emitted with `"Octopus.Action.RunOnServer" = "false"`, the Terraform apply fails with the provider error `Provider produced inconsistent result after apply ... .execution_properties["Octopus.Action.RunOnServer"]: was cty.StringVal("false"), but now cty.StringVal("true")`. Setting the property to `"true"` up front avoids the mismatch.
+
+* **CRITICAL — A "Scan for Vulnerabilities" community step template step MUST populate its `Sbom.Package` parameter.** When a prompt explicitly asks for a community step template that scans for vulnerabilities, the step MUST include a `parameters` entry `"Sbom.Package" = jsonencode({ "FeedId" = "<feed id>", "PackageId" = "<package id>" })`. If the package parameter is omitted, the Octopus API rejects the step with the fatal error `"There was a problem with your request. [Package parameter 'Sbom.Package' is missing]"` / `"Unable to create process step"`, aborting the whole apply. If the prompt does not name a package for the scan, reuse the deployment package the project already consumes (or the template default, e.g. the Maven feed with `com.octopus:octopub-sbom`).
+
+* **CRITICAL — An Argo CD "Wait for Argo CD Applications" step MUST specify an expected application count greater than 0.** When an Argo CD project is asked to "wait for Argo CD to report Healthy" (or similar), the generated wait step MUST set its expected-number-of-apps property to a value `>= 1` (default to `1` when the prompt does not give a number). An expected count of `0` is rejected by the Octopus API with the fatal error `"There was a problem with your request. [Please provide an expected number of apps greater than 0.]"` / `"Unable to create process step"`, aborting the apply.
 
 **⚠️ CRITICAL — a Terraform step that uses an AWS account MUST also set `Octopus.Action.Aws.Region`**: This applies to `Octopus.TerraformPlan`, `Octopus.TerraformApply`, `Octopus.TerraformDestroy`, and `Octopus.TerraformPlanDestroy`. As soon as the AWS account feature is enabled on the step — which is what happens whenever you set `Octopus.Action.AwsAccount.Variable` — the Octopus API requires a region and rejects the step without one:
 

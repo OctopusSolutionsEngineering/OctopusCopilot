@@ -1,7 +1,10 @@
 import unittest
 
 from domain.sanitizers.terraform import (
+    MOCK_CERTIFICATE_DATA,
+    MOCK_CERTIFICATE_PASSWORD,
     fix_script_source,
+    set_mock_certificate,
     set_mock_git_server,
     set_mock_git_user_variable,
     set_mock_git_credential,
@@ -16,7 +19,7 @@ class SanitizeScriptResourcesTest(unittest.TestCase):
   default_branch = "main"
   base_path      = ".octopus"
   username       = "git-user"
-  password       = "blah"
+  password       = "blah"SanitizeScriptResourcesTest
 }"""
 
         fixed_config = """resource "octopusdeploy_platform_hub_version_control_username_password_settings" "example" {
@@ -41,6 +44,43 @@ class SanitizeScriptResourcesTest(unittest.TestCase):
     }"""
 
         self.assertEqual(set_mock_git_server(config, "whatever", "mypassword"), config)
+
+    def test_set_mock_certificate(self):
+        config = """resource "octopusdeploy_certificate" "example" {
+  name             = "Example"
+  certificate_data = "old_data"
+  password         = "old_password"
+}"""
+
+        fixed_config = f"""resource "octopusdeploy_certificate" "example" {{
+  name             = "Example"
+  certificate_data = "{MOCK_CERTIFICATE_DATA}"
+  password = "{MOCK_CERTIFICATE_PASSWORD}"
+}}"""
+
+        self.assertEqual(set_mock_certificate(config), fixed_config)
+
+    def test_no_set_mock_certificate(self):
+        config = """resource "this_is_not_the_resource_you_are_looking_for" "example" {
+  certificate_data = "old_data"
+  password         = "old_password"
+}"""
+
+        self.assertEqual(set_mock_certificate(config), config)
+
+    def test_set_mock_certificate_empty_config(self):
+        self.assertEqual(set_mock_certificate(""), "")
+
+    def test_set_mock_certificate_none_config(self):
+        self.assertEqual(set_mock_certificate(None), "")
+
+    def test_set_mock_certificate_bad_indents(self):
+        config = """resource "octopusdeploy_certificate" "example" {
+  certificate_data = "old_data"
+  password         = "old_password"
+   }"""
+
+        self.assertEqual(set_mock_certificate(config), config)
 
     def test_no_script(self):
         config = 'resource "octopusdeploy_project" "project" {}'

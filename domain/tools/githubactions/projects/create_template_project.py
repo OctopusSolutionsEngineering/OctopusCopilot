@@ -55,7 +55,7 @@ from domain.sanitizers.terraform import (
     set_mock_git_user_variable,
     has_mock_git_resources,
     set_mock_git_credential,
-    replace_token,
+    replace_token, set_mock_certificate,
 )
 from domain.tools.debug import get_params_message
 from domain.url.hostname import get_hostname_from_url
@@ -816,6 +816,8 @@ def sanitize_configuration(configuration):
     configuration = fix_unescaped_variables(configuration)
     # Add a placeholder filename for YAML steps referencing files from git repos
     configuration = fix_yaml_source(configuration)
+    # Set fixed values for certificates
+    configuration = set_mock_certificate(configuration)
     return configuration
 
 
