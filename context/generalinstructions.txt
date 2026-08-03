@@ -60,7 +60,43 @@ resource "octopusdeploy_aws_openid_connect_account" "account_aws_deploy_account"
 
 **⚠️ CRITICAL — when the project is tenanted, the "Mock K8s" target MUST be linked to the project's tenants**: a target with `tenanted_deployment_participation = "Untenanted"` is invisible to a tenanted deployment, so the project has no target at all for its tenants. When the project's `tenanted_deployment_participation` is `Tenanted` or `TenantedOrUntenanted`, the target MUST use the same value, and its `tenants` list (or `tenant_tags` list) MUST include every tenant the prompt linked to the project. Any Token account created for the target must be linked to those tenants too.
 
-**⚠️ CRITICAL — an `octopusdeploy_runbook` `retention_policy` block MUST be `quantity_to_keep = 0` with `should_keep_forever = true`**: Octopus normalises any other combination and the provider then aborts the apply:
+**⚠️ CRITICAL — `release_retention_policy` and `tentacle_retention_policy` go at the TOP LEVEL of the `octopusdeploy_lifecycle` resource, exactly ONCE each, and NEVER inside a `phase` block. The lifecycle resource MUST also carry `count`.** Getting this wrong fails at PLAN time, so nothing whatsoever is created and the prompt yields no project:
+
+```
+Error: Unsupported block type
+
+  on terraformInput.tf line 170, in resource "octopusdeploy_lifecycle" "lifecycle_search_lifecycle":
+ 170:   release_retention_policy {
+
+Blocks of type "release_retention_policy" are not expected here.
+```
+
+* A `phase` block accepts ONLY `name`, `automatic_deployment_targets`, `optional_deployment_targets`, `is_optional_phase` and `minimum_environments_before_promotion`. Putting a retention policy inside a phase — for example to give a "Production" phase its own retention — is invalid. A retention policy is a property of the LIFECYCLE, not of a phase, however many phases the prompt describes.
+* Set each of the two blocks once, as direct children of the `octopusdeploy_lifecycle` resource, before or after the `phase` blocks.
+* The `octopusdeploy_lifecycle` resource MUST have `count` and a matching `data "octopusdeploy_lifecycles"` lookup, like every other resource in a new project. A lifecycle emitted without `count` is a reliable sign you have hand-written it instead of following the canonical shape, and it is in that hand-written form that this error appears. The canonical shape is under `## Lifecycle Phase` / `## Retention Policy for New Project Creation Prompts` — follow it literally.
+* This rule has ABSOLUTE PRIORITY over any template and over any per-phase retention wording in the prompt.
+
+**MANDATORY SELF-CHECK — lifecycle retention placement**: before finalizing output, find every `release_retention_policy` and `tentacle_retention_policy` in your Terraform. Each MUST be a direct child of an `octopusdeploy_lifecycle` resource, and that resource MUST have `count`. If either block appears inside a `phase { ... }`, move it out to the lifecycle's top level and delete the duplicate.
+
+**⚠️ CRITICAL — a retention policy MUST NEVER be the reason a project fails to be created. If you cannot express it, OMIT IT.** Creating the project is the objective; the retention policy is a refinement of it. If you are at all unsure how to write `release_retention_policy` or `tentacle_retention_policy` for a lifecycle — the exact block or attribute syntax, where it nests, or which unit applies — then leave BOTH of them out of the `octopusdeploy_lifecycle` resource entirely and generate everything else. Octopus applies a sensible default retention when the attributes are absent, so a lifecycle with no retention policy is a small, cosmetic shortfall in an otherwise complete project.
+
+By contrast, a malformed retention policy fails at PLAN time, which means no project, no steps, no variables, no tenants — nothing at all is created and the whole prompt is wasted. That outcome is far worse than a missing retention setting. The same applies to `retention_policy` on `octopusdeploy_runbook`: if in doubt, omit the block rather than risk the apply.
+
+**Order of preference, highest to lowest:** (1) a complete project with a correct retention policy; (2) a complete project with NO retention policy; (3) nothing at all because the plan failed. Never choose (3) by attempting (1) when you are unsure. If a previous attempt at this prompt failed with `Unsupported block type` naming `release_retention_policy` or `tentacle_retention_policy`, omit both blocks on the next attempt.
+
+**⚠️ CRITICAL — OMIT the `retention_policy` block from `octopusdeploy_runbook` entirely**: the block is deprecated (`Runbook Retention Policies will soon require strategy`) and every way of filling it in breaks the run, so the only reliable choice is to leave it out and let Octopus apply its default.
+
+The two ways it fails, both fatal:
+
+```
+Error: Invalid Attribute Combination
+
+  on terraformInput.tf line 708, in resource "octopusdeploy_runbook" "runbook_registry_search_rebuild_search_index":
+ 708:     should_keep_forever = true
+
+Attribute "retention_policy[0].quantity_to_keep" cannot be specified when
+"retention_policy[0].should_keep_forever" is specified
+```
 
 ```
 Error: Provider produced inconsistent result after apply
@@ -70,17 +106,10 @@ provider "registry.opentofu.org/octopusdeploy/octopusdeploy" produced an unexpec
 .retention_policy[0].quantity_to_keep: was cty.NumberIntVal(100), but now cty.NumberIntVal(0).
 ```
 
-* The ONLY safe form is:
-
-```hcl
-  retention_policy {
-    quantity_to_keep    = 0
-    should_keep_forever = true
-  }
-```
-
-* NEVER invent a runbook retention count such as `quantity_to_keep = 100` with `should_keep_forever = false`. A retention instruction in the prompt applies to the LIFECYCLE (`octopusdeploy_lifecycle`), not to runbooks — do not copy the lifecycle's `quantity_to_keep` onto a runbook.
-* `should_keep_forever = true` requires `quantity_to_keep = 0`; the two attributes must always be set together as shown.
+* `quantity_to_keep` and `should_keep_forever` are MUTUALLY EXCLUSIVE — specifying both fails at plan time. Never write them together.
+* Specifying `quantity_to_keep = N` with `should_keep_forever = false` gets normalised by Octopus to `0` and aborts the apply.
+* Therefore: do not emit a `retention_policy` block on a runbook at all. If you judge one to be unavoidable, use `should_keep_forever = true` ALONE, with no `quantity_to_keep` line.
+* A retention instruction in the prompt applies to the LIFECYCLE (`octopusdeploy_lifecycle`), never to runbooks — do not copy the lifecycle's `quantity_to_keep` onto a runbook.
 
 **⚠️ CRITICAL — `"Octopus.Action.RunOnServer" = "false"` aborts the apply on any step Octopus decides runs on the server or a worker**: Octopus recomputes this property when it stores the action. When it comes back as `"true"` and you declared `"false"`, the provider treats it as drift and kills the apply:
 
@@ -386,6 +415,16 @@ notes = "Original stage type: undoRolloutManifest. This step rolls back deployme
 ## Step Execution Order and Parallel Steps
 
 * When a step prompt says `Set the start trigger to "Run in parallel with the previous step"`, the corresponding `octopusdeploy_process_step` or `octopusdeploy_process_templated_step` resource MUST have `start_trigger = "StartWithPrevious"`.
+* **⚠️ CRITICAL — the parallel instruction counts in ANY wording, not just the literal annotation.** Prompts written as ordinary prose express the same requirement, and all of the following MUST produce `start_trigger = "StartWithPrevious"`:
+  * "and must run in parallel with the previous step"
+  * "this step runs in parallel with the previous step"
+  * "run this at the same time as the previous step"
+  * "run concurrently with <the previous step's name>"
+  * "this step and <previous step name> run together / simultaneously / side by side"
+  Do NOT require the exact phrase `Set the start trigger to ...` before setting `StartWithPrevious`. A numbered step list whose item says "…, and must run in parallel with the previous step" is exactly as binding as the annotated form. Leaving such a step at `StartAfterPrevious` makes the process sequential and is always wrong.
+* **The converse wordings mean `StartAfterPrevious`**: "must wait for all previous steps to complete before it starts", "wait for all previous steps to complete, then start", "only after the previous steps finish". These describe a convergence step.
+
+**MANDATORY SELF-CHECK — prose parallel instructions**: before finalizing output, re-read every step description in the prompt and search for the words "parallel", "concurrently", "at the same time", "simultaneously" and "together". For EACH step whose description contains one of them in reference to the preceding step, confirm that step's resource has `start_trigger = "StartWithPrevious"`. Then confirm those steps are consecutive in `octopusdeploy_process_steps_order`.
 * When a step prompt says `Set the start trigger to "Wait for all previous steps to complete, then start"`, the resource MUST have `start_trigger = "StartAfterPrevious"`.
 * Steps with no start trigger annotation default to `start_trigger = "StartAfterPrevious"`.
 * If the prompt says `The step must be disabled.`, you must still keep that step in the `octopusdeploy_process_steps_order` resource and preserve any explicit `start_trigger` annotation from the prompt. Disabled steps still participate in process ordering.
@@ -1443,8 +1482,8 @@ Note: The `"Octopus.Action.KubernetesContainers.Namespace"` property is omitted 
 
 * Use "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id" when referencing the Default Lifecycle, for example `lifecycle_id = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}"`.
 * You will be penalized for referencing the resource "octopusdeploy_lifecycle" "lifecycle_default_lifecycle" because it does not exist.
-* The "quantity_to_keep" attribute in a "release_retention_policy" or "tentacle_retention_policy" block in a "phase" block must be larger than 0.
-* You will be penalized for setting the "quantity_to_keep" attribute in a "release_retention_policy" or "tentacle_retention_policy" block in a "phase" block to 0.
+* The "quantity_to_keep" attribute in a "release_retention_policy" or "tentacle_retention_policy" block of an "octopusdeploy_lifecycle" resource must be larger than 0.
+* You will be penalized for setting the "quantity_to_keep" attribute in a "release_retention_policy" or "tentacle_retention_policy" block of an "octopusdeploy_lifecycle" resource to 0.
 * You will be penalized for defining the "phase" block on a single line.
 * Each proprt of the "phase" block must be on a new line.
 
@@ -1556,10 +1595,61 @@ Do NOT apply one unit to both policies. The mistake is easiest to make when N an
 
 You will be penalized for using `unit = "Days"` when the prompt says "items", for using `unit = "Items"` when the prompt says "days", and for copying one policy's unit onto the other in a two-part retention prompt.
 
-**Example — prompt says "Set the retention policy to 30 days"**:
+**⚠️ CRITICAL — the two retention blocks belong at the TOP LEVEL of the `octopusdeploy_lifecycle` resource, never nested inside a `phase` block, and the lifecycle resource MUST carry `count`**: nesting them inside a `phase`, or otherwise deviating from the canonical shape below, fails at PLAN time — before a single resource is created, so the prompt produces no project at all:
+
+```
+Error: Unsupported block type
+
+  on terraformInput.tf line 192, in resource "octopusdeploy_lifecycle" "lifecycle_search_lifecycle":
+ 192:   release_retention_policy {
+
+Blocks of type "release_retention_policy" are not expected here.
+```
+
+A useful tell that the lifecycle was not written in the canonical shape is the absence of `count`: the vertex in the error above is `octopusdeploy_lifecycle.lifecycle_search_lifecycle` with no `[0]` index, whereas a correctly generated lifecycle always appears as `...[0]`. Set a retention policy ONCE per lifecycle, at the top level.
+
+**This is the canonical `octopusdeploy_lifecycle` shape. Follow it exactly.**
+
 ```hcl
+data "octopusdeploy_lifecycles" "lifecycle_my_lifecycle" {
+  partial_name = "My Lifecycle"
+  skip         = 0
+  take         = 1
+}
+
 resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
-  name = "My Lifecycle"
+  count = "${length(data.octopusdeploy_lifecycles.lifecycle_my_lifecycle.lifecycles) != 0 ? 0 : 1}"
+  name  = "My Lifecycle"
+
+  release_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  tentacle_retention_policy {
+    quantity_to_keep = 30
+    unit             = "Days"
+  }
+
+  phase {
+    name                                  = "Dev"
+    optional_deployment_targets            = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+    automatic_deployment_targets           = []
+    is_optional_phase                      = false
+    minimum_environments_before_promotion  = 0
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+```
+
+Note that the `phase` block contains ONLY `name`, `automatic_deployment_targets`, `optional_deployment_targets`, `is_optional_phase` and `minimum_environments_before_promotion`. Do not put `release_retention_policy` or `tentacle_retention_policy` inside a `phase`.
+
+**Example — prompt says "Set the retention policy to 30 days"** (retention blocks only; the surrounding resource must still match the canonical shape above):
+```hcl
   release_retention_policy {
     quantity_to_keep = 30
     unit             = "Days"
@@ -1568,8 +1658,6 @@ resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
     quantity_to_keep = 30
     unit             = "Days"
   }
-  phase { ... }
-}
 ```
 
 **Example — prompt says "Set the retention policy to 10 items"**:
@@ -1731,7 +1819,24 @@ resource "octopusdeploy_certificate" "certificate_my_cert" {
 
 Note that `certificate_data` and `password` are single-line string attributes at the top level of the resource. Do not wrap them in a nested block, do not use a heredoc, do not spread the value across lines, and do not move them into a `variable`. Any deviation from this shape prevents the fixture substitution and the apply fails with "Unable to parse certificate".
 
-**MANDATORY SELF-CHECK — certificates**: for every `octopusdeploy_certificate` resource in your output, confirm the resource line is unindented, confirm a `certificate_data` line and a `password` line are both present as single-line string attributes, and confirm neither contains `${var.`. This check applies to EVERY project type, including IIS, Tomcat, and Windows Service projects whose example configuration contains no certificate at all — having no example to copy is exactly when you must fall back to the shape above.
+**MANDATORY SELF-CHECK — certificates**: for every `octopusdeploy_certificate` resource in your output, confirm the resource line is unindented, confirm a `certificate_data` line and a `password` line are both present as single-line string attributes, and confirm neither contains `${var.`. This check applies to EVERY project type, including IIS, Tomcat, Azure Function, and Windows Service projects whose example configuration contains no certificate at all — having no example to copy is exactly when you must fall back to the shape above.
+
+**⚠️ CRITICAL — a certificate MUST NEVER be the reason a project fails to be created. If you cannot emit it in exactly the shape above, OMIT IT.** If you are not confident you can produce the `octopusdeploy_certificate` resource in precisely that form, then:
+
+* Do NOT emit the `octopusdeploy_certificate` resource at all.
+* Also drop anything that depends on it — the `Certificate`-typed project variable that referenced it, and any step property that pointed at it. Leaving a reference to a certificate you did not create produces an unresolvable ID.
+* Generate every other resource the prompt asked for, in full.
+
+A missing certificate is a small, visible gap in an otherwise complete project. A malformed one aborts the apply the moment Octopus tries to parse it, and because certificates are created early, everything ordered after it is abandoned — steps, tenants, tag sets, variables. The observed failure produces:
+
+```
+Error: Error creating certificate
+
+  with octopusdeploy_certificate.certificate_dispatcher_signing_cert[0],
+Octopus API error: There was a problem with your request. [Unable to parse certificate. Please check the certificate data and try again.]
+```
+
+**Order of preference, highest to lowest:** (1) a complete project with a valid certificate; (2) a complete project with NO certificate and no references to one; (3) nothing at all because the apply died on the certificate. Never choose (3) by attempting (1) when you are unsure. This has been observed to fail repeatedly on IIS and Azure Function prompts specifically — for those project types, prefer omitting the certificate.
 
 ## Data and Resource pairing instructions
 
@@ -2480,7 +2585,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 * You will be penalized for defining a lifecycle phase with no environments.
 * **CRITICAL — when the prompt explicitly names which lifecycle phases to include (e.g., "with phases for Development, Test, and Production environments"), ONLY those named phases should be created in the `octopusdeploy_lifecycle` resource.** Do NOT add extra phases from the template lifecycle. For example, if the prompt says "with phases for Development, Test, and Production", do NOT add a "Security" phase even if the named lifecycle (e.g., DevSecOps) template normally includes one. Similarly, do NOT create environments that are only needed for template phases not mentioned in the prompt. The lifecycle description may still reference the broader lifecycle purpose, but the `phase` blocks must only include the explicitly named phases. You will be penalized for adding lifecycle phases or environments that were not explicitly requested in the prompt.
 
-* The `unit` property in a `release_retention_policy` or `tentacle_retention_policy` block in a `phase` block must be set to `Days` or `Items`, for example:
+* The `unit` property in a `release_retention_policy` or `tentacle_retention_policy` block of an `octopusdeploy_lifecycle` resource must be set to `Days` or `Items`. Note that these blocks sit at the TOP LEVEL of the lifecycle resource, NOT inside a `phase` block, exactly as in this example:
 
 ```
 resource "octopusdeploy_lifecycle" "simple_lifecycle" {
@@ -2501,20 +2606,25 @@ resource "octopusdeploy_lifecycle" "simple_lifecycle" {
     automatic_deployment_targets = []
     optional_deployment_targets  = [octopusdeploy_environment.development_environment.id]
     name                         = octopusdeploy_environment.development_environment.name
+  }
+}
+```
 
-    release_retention_policy {
-      quantity_to_keep    = 1
-      unit                = "Days"
-    }
+**⚠️ Note carefully that the `phase` block above contains NO retention policy.** The two retention blocks appear ONCE each, as direct children of the `octopusdeploy_lifecycle` resource, above the `phase` blocks. Writing them inside a `phase` is invalid and fails the plan with `Blocks of type "release_retention_policy" are not expected here`, which produces no project at all. The following is FORBIDDEN:
 
-    tentacle_retention_policy {
-      quantity_to_keep    = 30
-      unit                = "Items"
+```hcl
+# FORBIDDEN — retention policy nested inside a phase
+  phase {
+    name = "Development"
+
+    release_retention_policy {   ← WRONG: not permitted inside a phase
+      quantity_to_keep = 1
+      unit             = "Days"
     }
   }
 ```
 
-* You will be penalized for setting the `unit` property in a `release_retention_policy` or `tentacle_retention_policy` block in a `phase` block to `Releases`.
+* You will be penalized for setting the `unit` property in a `release_retention_policy` or `tentacle_retention_policy` block of an `octopusdeploy_lifecycle` resource to `Releases`.
 
 * **CRITICAL — properties inside `release_retention_policy` and `tentacle_retention_policy` blocks MUST use consistent 2-space indentation relative to the block opening brace.** The closing `}` must be at the same indentation level as the block keyword. Single-space indentation is FORBIDDEN. The closing `}` at column 0 (unindented) is FORBIDDEN. You will be penalized for using 1-space indentation inside retention policy blocks.
 
@@ -4196,12 +4306,29 @@ resource "octopusdeploy_process_step" "run_claude_agent" {
   type                 = "Octopus.Claude"
   execution_properties = {
     # The API key MUST be supplied or the step fails to create
-    "Octopus.Action.Claude.ApiKey" = "#{Project.Claude.ApiKey}"
-    "Octopus.Action.Claude.Model"  = "claude-sonnet-5"
-    "Octopus.Action.RunOnServer"   = "true"
+    "Octopus.Action.Claude.ApiKey"      = "#{Project.Claude.ApiKey}"
+    "Octopus.Action.Claude.Model"       = "claude-sonnet-5"
+    # A sandbox mode MUST be supplied or the step fails to create
+    "Octopus.Action.Claude.SandboxMode" = "None"
+    "Octopus.Action.RunOnServer"        = "true"
   }
 }
 ```
+
+* **⚠️ CRITICAL — a step of type `Octopus.Claude` MUST ALSO define `Octopus.Action.Claude.SandboxMode`.** This is a second API-enforced required property, separate from the API key, and omitting it aborts the apply at step-creation time:
+
+```
+Error: Unable to create process step
+
+  with octopusdeploy_process_step.process_step_25__change_impact_advisor_assess_change_impact[0],
+Octopus API error: There was a problem with your request. [A sandboxing option must be selected.]
+```
+
+  * The only valid values are `"None"` and `"SandboxRuntime"`. Use `"None"` unless the prompt explicitly asks for a sandboxed agent.
+  * `"SandboxRuntime"` additionally expects `Octopus.Action.Claude.SandboxSettings` (a `jsonencode({...})` object describing `network` and `filesystem` rules). If you cannot construct that confidently, use `"None"` — a working step with no sandbox is far better than no project at all.
+  * Because this error occurs during apply, every resource ordered after the step is abandoned. In the observed failure the project, lifecycle, tenants and variables were created but the deployment process was left with a single step.
+
+**MANDATORY SELF-CHECK — Claude steps**: for every `octopusdeploy_process_step` with `type = "Octopus.Claude"`, confirm its `execution_properties` contains BOTH `Octopus.Action.Claude.ApiKey` and `Octopus.Action.Claude.SandboxMode`. This applies to any step the prompt describes as "uses AI to …", "assess … with AI", or "run the Claude agent", however the step is named.
 
 * **Server-orchestrated blue/green / progressive orchestration script steps — such as application-pool "swap" steps, traffic-"cutover" steps, and "health check gate" steps — MUST set `"Octopus.Action.RunOnServer" = "true"`.** These orchestration steps do no per-target package work, and Octopus forces them to run on the server. If such a step is emitted with `"Octopus.Action.RunOnServer" = "false"`, the Terraform apply fails with the provider error `Provider produced inconsistent result after apply ... .execution_properties["Octopus.Action.RunOnServer"]: was cty.StringVal("false"), but now cty.StringVal("true")`. Setting the property to `"true"` up front avoids the mismatch.
 
@@ -7012,7 +7139,12 @@ You will be penalized for generating a project containing Kubernetes steps with 
 
 * When the prompt indicates that a Kubernetes target is required but does not provide a specific target configuration, use the following canonical pattern:
     * YOU MUST create a token account called "Mock Token".
-    * The target MUST use the "Mock Token" account for authentication.
+    * The target MUST use the "Mock Token" account for authentication, for example:
+    ```
+     authentication {
+        account_id = "${length(data.octopusdeploy_accounts.account_token.accounts) != 0 ? data.octopusdeploy_accounts.account_token.accounts[0].id : octopusdeploy_token_account.account_token[0].id}"
+      }
+    ```
     * You will be penalized for using any other account type (e.g., AWS, Azure, username/password) for the "Mock K8s" target.
     * YOU MUST link the token account to any tenants.
     * YOU MUST create a feed called "Docker Hub" pointing to "https://index.docker.io" using anonymous authentication.
