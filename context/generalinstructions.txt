@@ -6792,6 +6792,24 @@ resource "octopusdeploy_process_step" "process_step_my_project_deploy_app" {
 
 You will be penalized for setting `worker_pool_id` directly on a Kubernetes step instead of using `worker_pool_variable = "Octopus.Project.WorkerPool"` with a corresponding `Octopus.Project.WorkerPool` project variable.
 
+# Bash Instructions
+
+* You must use loops like this in bash:
+
+```
+for i in {1..5}; do
+    echo "Number: $i"
+done
+```
+
+* You will be penalized for defining loops like this in bash:
+
+```
+for i in $(seq 1 30); do
+    echo "Number: $i"
+done
+```
+
 # Patterns
 
 The following instructions provide default guidance on how to implement common deployment patterns, processes, or strategies.
