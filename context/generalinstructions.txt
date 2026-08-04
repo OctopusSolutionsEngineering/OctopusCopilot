@@ -62,14 +62,14 @@ resource "octopusdeploy_aws_openid_connect_account" "account_aws_deploy_account"
 
 **⚠️ CRITICAL — EVERY `octopusdeploy_lifecycle` resource MUST have a `count` attribute and a matching `data "octopusdeploy_lifecycles"` lookup**, exactly like every other resource in a new project. This applies to every lifecycle, including a second "hotfix" lifecycle used only by a channel.
 
-* **⚠️ BEWARE THE NAME COLLISION: `lifecycle { }` inside a resource is TERRAFORM'S META-BLOCK, not the Octopus lifecycle.** The Terraform `lifecycle { }` meta-block accepts ONLY `prevent_destroy`, `ignore_changes` and `create_before_destroy`. `release_retention_with_strategy` and `tentacle_retention_with_strategy` MUST NEVER be written inside it. Because the Octopus resource is *also* called `octopusdeploy_lifecycle`, it is easy to put the retention blocks inside the `lifecycle { prevent_destroy = true }` meta-block by mistake — which fails the plan with `Blocks of type "release_retention_with_strategy" are not expected here`, reported against the enclosing resource so the real location is not obvious. The two retention blocks are siblings of `name`, `count` and `phase`, and the `lifecycle { }` meta-block is separate and contains only its own three arguments:
+* **⚠️ BEWARE THE NAME COLLISION: `lifecycle { }` inside a resource is TERRAFORM'S META-BLOCK, not the Octopus lifecycle.** The Terraform `lifecycle { }` meta-block accepts ONLY `prevent_destroy`, `ignore_changes` and `create_before_destroy`. `release_retention_with_strategy` and `tentacle_retention_with_strategy` MUST NEVER be written inside it. Because the Octopus resource is *also* called `octopusdeploy_lifecycle`, it is easy to put the retention blocks inside the `lifecycle { prevent_destroy = true }` meta-block by mistake — which fails the plan with `Blocks of type "release_retention_with_strategy" are not expected here`, reported against the enclosing resource so the real location is not obvious. The `lifecycle { }` meta-block is separate and contains only its own three arguments:
 
 ```hcl
 resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
   count = "..."
   name  = "My Lifecycle"
 
-  # sibling of name — CORRECT. Always write these MULTI-LINE, never on one line.
+  # CORRECT — NOT inside the Terraform lifecycle {} meta-block. Always write these MULTI-LINE, never on one line.
   release_retention_with_strategy {
     quantity_to_keep = 30
     unit             = "Days"
@@ -87,9 +87,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
   }
 }
 ```
-* Set each of the two blocks once, as direct children of the `octopusdeploy_lifecycle` resource, before or after the `phase` blocks.
 * The `octopusdeploy_lifecycle` resource MUST have `count` and a matching `data "octopusdeploy_lifecycles"` lookup, like every other resource in a new project. A lifecycle emitted without `count` is a reliable sign you have hand-written it instead of following the canonical shape, and it is in that hand-written form that this error appears. The canonical shape is under `## Lifecycle Phase` / `## Retention Policy for New Project Creation Prompts` — follow it literally.
-* This rule has ABSOLUTE PRIORITY over any template and over any per-phase retention wording in the prompt.
 
 **⚠️ CRITICAL — a retention policy MUST NEVER be the reason a project fails to be created. If you cannot express it, OMIT IT.** Creating the project is the objective; the retention policy is a refinement of it. If you are at all unsure how to write `release_retention_with_strategy` or `tentacle_retention_with_strategy` for a lifecycle — the exact block or attribute syntax, where it nests, or which unit applies — then leave BOTH of them out of the `octopusdeploy_lifecycle` resource entirely and generate everything else. Octopus applies a sensible default retention when the attributes are absent, so a lifecycle with no retention policy is a small, cosmetic shortfall in an otherwise complete project.
 
@@ -1618,7 +1616,7 @@ Do NOT apply one unit to both policies. The mistake is easiest to make when N an
 
 You will be penalized for using `unit = "Days"` when the prompt says "items", for using `unit = "Items"` when the prompt says "days", and for copying one policy's unit onto the other in a two-part retention prompt.
 
-A useful tell that the lifecycle was not written in the canonical shape is the absence of `count`: the vertex in the error above is `octopusdeploy_lifecycle.lifecycle_search_lifecycle` with no `[0]` index, whereas a correctly generated lifecycle always appears as `...[0]`. Set a retention policy ONCE per lifecycle, at the top level.
+A useful tell that the lifecycle was not written in the canonical shape is the absence of `count`: the vertex in the error above is `octopusdeploy_lifecycle.lifecycle_search_lifecycle` with no `[0]` index, whereas a correctly generated lifecycle always appears as `...[0]`.
 
 **This is the canonical `octopusdeploy_lifecycle` shape. Follow it exactly.**
 
