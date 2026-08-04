@@ -71,11 +71,13 @@ resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
 
   # CORRECT — NOT inside the Terraform lifecycle {} meta-block. Always write these MULTI-LINE, never on one line.
   release_retention_with_strategy {
+    strategy         = "Count"
     quantity_to_keep = 30
     unit             = "Days"
   }
 
   tentacle_retention_with_strategy {
+    strategy         = "Count"
     quantity_to_keep = 30
     unit             = "Days"
   }
@@ -1495,6 +1497,7 @@ Note: The `"Octopus.Action.KubernetesContainers.Namespace"` property is omitted 
 * You will be penalized for referencing the resource "octopusdeploy_lifecycle" "lifecycle_default_lifecycle" because it does not exist.
 * The "quantity_to_keep" attribute in a "release_retention_with_strategy" or "tentacle_retention_with_strategy" block of an "octopusdeploy_lifecycle" resource must be larger than 0.
 * You will be penalized for setting the "quantity_to_keep" attribute in a "release_retention_with_strategy" or "tentacle_retention_with_strategy" block of an "octopusdeploy_lifecycle" resource to 0.
+* **CRITICAL — the `strategy` attribute is REQUIRED in both `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks.** Always include `strategy = "Count"`. Omitting the `strategy` attribute causes a validation error. You will be penalized for omitting `strategy` from a retention policy block.
 * You will be penalized for defining the "phase" block on a single line.
 * Each proprt of the "phase" block must be on a new line.
 
@@ -1603,8 +1606,8 @@ phase {
 
 **⚠️ CRITICAL — a two-part retention prompt sets the two policies INDEPENDENTLY**: A prompt of the form "retain N releases and M days of files", "keep N releases and M days of packages", or "retention of N releases and M days" describes TWO separate policies with TWO different units, and each must be resolved on its own:
 
-* "N releases" (or "N items") is the **release** retention: `release_retention_with_strategy` with `quantity_to_keep = N` and `unit = "Items"`.
-* "M days of files" (or "of packages", "of artifacts") is the **tentacle/file** retention: `tentacle_retention_with_strategy` with `quantity_to_keep = M` and `unit = "Days"`.
+* "N releases" (or "N items") is the **release** retention: `release_retention_with_strategy` with `strategy = "Count"`, `quantity_to_keep = N` and `unit = "Items"`.
+* "M days of files" (or "of packages", "of artifacts") is the **tentacle/file** retention: `tentacle_retention_with_strategy` with `strategy = "Count"`, `quantity_to_keep = M` and `unit = "Days"`.
 
 Do NOT apply one unit to both policies. The mistake is easiest to make when N and M happen to be the same number — for example "keep 7 releases and 7 days of files" MUST produce release retention `7 Items` and tentacle retention `7 Days`, never `7 Days` for both. The word "releases" always means `Items`; only an explicit "days" means `Days`.
 
@@ -1613,6 +1616,7 @@ Do NOT apply one unit to both policies. The mistake is easiest to make when N an
 2. Did the prompt say "items"? If YES → is `unit = "Items"` (NOT `"Days"`)?
 3. Did the prompt say "days"? If YES → is `unit = "Days"` (NOT `"Items"`)?
 4. Did the prompt give TWO figures (one for releases, one for files/days)? If YES → does the release policy use `Items` with the releases figure, and the tentacle policy use `Days` with the days figure? Confirm the two policies do not share a unit that only one of them was given.
+5. Does every `release_retention_with_strategy` and `tentacle_retention_with_strategy` block include `strategy = "Count"`? This attribute is required.
 
 You will be penalized for using `unit = "Days"` when the prompt says "items", for using `unit = "Items"` when the prompt says "days", and for copying one policy's unit onto the other in a two-part retention prompt.
 
@@ -1632,11 +1636,13 @@ resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
   name  = "My Lifecycle"
 
   release_retention_with_strategy {
+    strategy         = "Count"
     quantity_to_keep = 30
     unit             = "Days"
   }
 
   tentacle_retention_with_strategy {
+    strategy         = "Count"
     quantity_to_keep = 30
     unit             = "Days"
   }
@@ -2555,6 +2561,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 **Negative example — `release_retention_with_strategy` with 1-space indentation (FORBIDDEN)**:
 ```hcl
   release_retention_with_strategy {
+ strategy = "Count"
  quantity_to_keep = 30
  unit = "Items"
 }
@@ -2563,6 +2570,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 **Correct example — `release_retention_with_strategy` with proper 2-space indentation**:
 ```hcl
   release_retention_with_strategy {
+    strategy         = "Count"
     quantity_to_keep = 30
     unit             = "Items"
   }
@@ -2802,6 +2810,7 @@ resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
 
 You will be penalized for using `octopusdeploy_azure_service_principal` when the prompt explicitly says "OIDC" or "OpenID Connect" for an Azure account.
 You will be penalized for using `octopusdeploy_azure_openid_connect` when the prompt explicitly says "Service Principal" for an Azure account.
+You will be penalized for creating a data source of type "octopusdeploy_token_account".
 
 **Required attributes for `octopusdeploy_azure_openid_connect`**: When creating an `octopusdeploy_azure_openid_connect` resource, the following attributes MUST be set:
 - `name`: The verbatim account name from the prompt
@@ -6821,6 +6830,7 @@ variable "octopus_space_id" {
 ```hcl
 resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
   release_retention_with_strategy {
+ strategy = "Count"            ← WRONG: 1-space indentation inside nested block
  quantity_to_keep = 30   ← WRONG: 1-space indentation inside nested block
  unit = "Days"           ← WRONG: 1-space indentation inside nested block
 }
@@ -6835,6 +6845,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
 ```hcl
 resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
   release_retention_with_strategy {
+    strategy         = "Count"    ← CORRECT: 4-space indentation inside nested block
     quantity_to_keep = 30   ← CORRECT: 4-space indentation inside nested block
     unit             = "Days"
   }
