@@ -62,19 +62,7 @@ resource "octopusdeploy_aws_openid_connect_account" "account_aws_deploy_account"
 
 **⚠️ CRITICAL — EVERY `octopusdeploy_lifecycle` resource MUST have a `count` attribute and a matching `data "octopusdeploy_lifecycles"` lookup**, exactly like every other resource in a new project. This applies to every lifecycle, including a second "hotfix" lifecycle used only by a channel.
 
-**⚠️ CRITICAL — `release_retention_policy` and `tentacle_retention_policy` go at the TOP LEVEL of the `octopusdeploy_lifecycle` resource, exactly ONCE each, and NEVER inside a `phase` block.** Getting this wrong fails at PLAN time, so nothing whatsoever is created and the prompt yields no project:
-
-```
-Error: Unsupported block type
-
-  on terraformInput.tf line 170, in resource "octopusdeploy_lifecycle" "lifecycle_search_lifecycle":
- 170:   release_retention_policy {
-
-Blocks of type "release_retention_policy" are not expected here.
-```
-
-* A `phase` block accepts ONLY `name`, `automatic_deployment_targets`, `optional_deployment_targets`, `is_optional_phase` and `minimum_environments_before_promotion`. Putting a retention policy inside a phase — for example to give a "Production" phase its own retention — is invalid. A retention policy is a property of the LIFECYCLE, not of a phase, however many phases the prompt describes.
-* **⚠️ BEWARE THE NAME COLLISION: `lifecycle { }` inside a resource is TERRAFORM'S META-BLOCK, not the Octopus lifecycle.** The Terraform `lifecycle { }` meta-block accepts ONLY `prevent_destroy`, `ignore_changes` and `create_before_destroy`. `release_retention_policy` and `tentacle_retention_policy` MUST NEVER be written inside it. Because the Octopus resource is *also* called `octopusdeploy_lifecycle`, it is easy to put the retention blocks inside the `lifecycle { prevent_destroy = true }` meta-block by mistake — which fails the plan with `Blocks of type "release_retention_policy" are not expected here`, reported against the enclosing resource so the real location is not obvious. The two retention blocks are siblings of `name`, `count` and `phase`, and the `lifecycle { }` meta-block is separate and contains only its own three arguments:
+* **⚠️ BEWARE THE NAME COLLISION: `lifecycle { }` inside a resource is TERRAFORM'S META-BLOCK, not the Octopus lifecycle.** The Terraform `lifecycle { }` meta-block accepts ONLY `prevent_destroy`, `ignore_changes` and `create_before_destroy`. `release_retention_with_strategy` and `tentacle_retention_with_strategy` MUST NEVER be written inside it. Because the Octopus resource is *also* called `octopusdeploy_lifecycle`, it is easy to put the retention blocks inside the `lifecycle { prevent_destroy = true }` meta-block by mistake — which fails the plan with `Blocks of type "release_retention_with_strategy" are not expected here`, reported against the enclosing resource so the real location is not obvious. The two retention blocks are siblings of `name`, `count` and `phase`, and the `lifecycle { }` meta-block is separate and contains only its own three arguments:
 
 ```hcl
 resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
@@ -82,12 +70,12 @@ resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
   name  = "My Lifecycle"
 
   # sibling of name — CORRECT. Always write these MULTI-LINE, never on one line.
-  release_retention_policy {
+  release_retention_with_strategy {
     quantity_to_keep = 30
     unit             = "Days"
   }
 
-  tentacle_retention_policy {
+  tentacle_retention_with_strategy {
     quantity_to_keep = 30
     unit             = "Days"
   }
@@ -103,13 +91,11 @@ resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
 * The `octopusdeploy_lifecycle` resource MUST have `count` and a matching `data "octopusdeploy_lifecycles"` lookup, like every other resource in a new project. A lifecycle emitted without `count` is a reliable sign you have hand-written it instead of following the canonical shape, and it is in that hand-written form that this error appears. The canonical shape is under `## Lifecycle Phase` / `## Retention Policy for New Project Creation Prompts` — follow it literally.
 * This rule has ABSOLUTE PRIORITY over any template and over any per-phase retention wording in the prompt.
 
-**MANDATORY SELF-CHECK — lifecycle retention placement**: before finalizing output, find every `release_retention_policy` and `tentacle_retention_policy` in your Terraform. Each MUST be a direct child of an `octopusdeploy_lifecycle` resource, and that resource MUST have `count`. If either block appears inside a `phase { ... }`, move it out to the lifecycle's top level and delete the duplicate.
-
-**⚠️ CRITICAL — a retention policy MUST NEVER be the reason a project fails to be created. If you cannot express it, OMIT IT.** Creating the project is the objective; the retention policy is a refinement of it. If you are at all unsure how to write `release_retention_policy` or `tentacle_retention_policy` for a lifecycle — the exact block or attribute syntax, where it nests, or which unit applies — then leave BOTH of them out of the `octopusdeploy_lifecycle` resource entirely and generate everything else. Octopus applies a sensible default retention when the attributes are absent, so a lifecycle with no retention policy is a small, cosmetic shortfall in an otherwise complete project.
+**⚠️ CRITICAL — a retention policy MUST NEVER be the reason a project fails to be created. If you cannot express it, OMIT IT.** Creating the project is the objective; the retention policy is a refinement of it. If you are at all unsure how to write `release_retention_with_strategy` or `tentacle_retention_with_strategy` for a lifecycle — the exact block or attribute syntax, where it nests, or which unit applies — then leave BOTH of them out of the `octopusdeploy_lifecycle` resource entirely and generate everything else. Octopus applies a sensible default retention when the attributes are absent, so a lifecycle with no retention policy is a small, cosmetic shortfall in an otherwise complete project.
 
 By contrast, a malformed retention policy fails at PLAN time, which means no project, no steps, no variables, no tenants — nothing at all is created and the whole prompt is wasted. That outcome is far worse than a missing retention setting. The same applies to `retention_policy` on `octopusdeploy_runbook`: if in doubt, omit the block rather than risk the apply.
 
-**Order of preference, highest to lowest:** (1) a complete project with a correct retention policy; (2) a complete project with NO retention policy; (3) nothing at all because the plan failed. Never choose (3) by attempting (1) when you are unsure. If a previous attempt at this prompt failed with `Unsupported block type` naming `release_retention_policy` or `tentacle_retention_policy`, omit both blocks on the next attempt.
+**Order of preference, highest to lowest:** (1) a complete project with a correct retention policy; (2) a complete project with NO retention policy; (3) nothing at all because the plan failed. Never choose (3) by attempting (1) when you are unsure. If a previous attempt at this prompt failed with `Unsupported block type` naming `release_retention_with_strategy` or `tentacle_retention_with_strategy`, omit both blocks on the next attempt.
 
 **⚠️ CRITICAL — OMIT the `retention_policy` block from `octopusdeploy_runbook` entirely**: the block is deprecated (`Runbook Retention Policies will soon require strategy`) and every way of filling it in breaks the run, so the only reliable choice is to leave it out and let Octopus apply its default.
 
@@ -1509,8 +1495,8 @@ Note: The `"Octopus.Action.KubernetesContainers.Namespace"` property is omitted 
 
 * Use "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id" when referencing the Default Lifecycle, for example `lifecycle_id = "${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}"`.
 * You will be penalized for referencing the resource "octopusdeploy_lifecycle" "lifecycle_default_lifecycle" because it does not exist.
-* The "quantity_to_keep" attribute in a "release_retention_policy" or "tentacle_retention_policy" block of an "octopusdeploy_lifecycle" resource must be larger than 0.
-* You will be penalized for setting the "quantity_to_keep" attribute in a "release_retention_policy" or "tentacle_retention_policy" block of an "octopusdeploy_lifecycle" resource to 0.
+* The "quantity_to_keep" attribute in a "release_retention_with_strategy" or "tentacle_retention_with_strategy" block of an "octopusdeploy_lifecycle" resource must be larger than 0.
+* You will be penalized for setting the "quantity_to_keep" attribute in a "release_retention_with_strategy" or "tentacle_retention_with_strategy" block of an "octopusdeploy_lifecycle" resource to 0.
 * You will be penalized for defining the "phase" block on a single line.
 * Each proprt of the "phase" block must be on a new line.
 
@@ -1565,7 +1551,7 @@ phase {
 
 Leaving it at `0` (or omitting it, which defaults to `0`) when the prompt asked for a threshold silently changes the lifecycle's behaviour: every release becomes promotable immediately. You will be penalized for each phase whose prompt stated a threshold and whose `minimum_environments_before_promotion` is `0`.
 
-**MANDATORY SELF-CHECK — promotion thresholds**: before finalizing output, re-read each phase description in the prompt. For every phase that mentions a number of environments, deployments or promotions, confirm the corresponding `phase` block sets `minimum_environments_before_promotion` to that number (clamped to the count of environments in that same phase). Note that the "omit it if unsure" guidance elsewhere in this file applies ONLY to `release_retention_policy` / `tentacle_retention_policy` and to certificates — it does NOT license dropping `minimum_environments_before_promotion`, `is_optional_phase`, or any other phase attribute.
+**MANDATORY SELF-CHECK — promotion thresholds**: before finalizing output, re-read each phase description in the prompt. For every phase that mentions a number of environments, deployments or promotions, confirm the corresponding `phase` block sets `minimum_environments_before_promotion` to that number (clamped to the count of environments in that same phase). Note that the "omit it if unsure" guidance elsewhere in this file applies ONLY to `release_retention_with_strategy` / `tentacle_retention_with_strategy` and to certificates — it does NOT license dropping `minimum_environments_before_promotion`, `is_optional_phase`, or any other phase attribute.
 
 **CRITICAL — `minimum_environments_before_promotion` MUST NOT exceed the number of environments in the same `phase` block**: The `minimum_environments_before_promotion` attribute counts environments *within its own phase* that must be deployed to before a release can be promoted to the next phase. It does NOT refer to environments in earlier phases, to a number of deployments, or to a number of successful releases. Octopus rejects a lifecycle where the value is greater than the number of entries in that phase's `automatic_deployment_targets` plus `optional_deployment_targets` arrays, and the apply fails with:
 
@@ -1609,9 +1595,9 @@ phase {
 
 **CRITICAL — when a new project creation prompt specifies a retention policy (e.g., "with a retention policy of 30 days for releases" or "Set the retention policy to 5 items")**:
 
-1. If the project uses the **Default Lifecycle** (looked up via data source only, NOT a resource), the retention policy from the prompt CANNOT be applied — the Default Lifecycle cannot be modified by Terraform. In this case, **ignore the retention policy instruction entirely** and do NOT add any `release_retention_policy` or `tentacle_retention_policy` blocks.
+1. If the project uses the **Default Lifecycle** (looked up via data source only, NOT a resource), the retention policy from the prompt CANNOT be applied — the Default Lifecycle cannot be modified by Terraform. In this case, **ignore the retention policy instruction entirely** and do NOT add any `release_retention_with_strategy` or `tentacle_retention_with_strategy` blocks.
 
-2. If the project uses a **custom lifecycle being created** as a new `octopusdeploy_lifecycle` resource, apply the retention policy to the lifecycle resource's `release_retention_policy` block. The `unit` attribute MUST match what the prompt specifies:
+2. If the project uses a **custom lifecycle being created** as a new `octopusdeploy_lifecycle` resource, apply the retention policy to the lifecycle resource's `release_retention_with_strategy` block. The `unit` attribute MUST match what the prompt specifies:
    - When the prompt says "N days" → use `unit = "Days"` and `quantity_to_keep = N`
    - When the prompt says "N items" or "keep N releases" → use `unit = "Items"` and `quantity_to_keep = N`
 
@@ -1619,8 +1605,8 @@ phase {
 
 **⚠️ CRITICAL — a two-part retention prompt sets the two policies INDEPENDENTLY**: A prompt of the form "retain N releases and M days of files", "keep N releases and M days of packages", or "retention of N releases and M days" describes TWO separate policies with TWO different units, and each must be resolved on its own:
 
-* "N releases" (or "N items") is the **release** retention: `release_retention_policy` (or `release_retention_with_strategy`) with `quantity_to_keep = N` and `unit = "Items"`.
-* "M days of files" (or "of packages", "of artifacts") is the **tentacle/file** retention: `tentacle_retention_policy` (or `tentacle_retention_with_strategy`) with `quantity_to_keep = M` and `unit = "Days"`.
+* "N releases" (or "N items") is the **release** retention: `release_retention_with_strategy` with `quantity_to_keep = N` and `unit = "Items"`.
+* "M days of files" (or "of packages", "of artifacts") is the **tentacle/file** retention: `tentacle_retention_with_strategy` with `quantity_to_keep = M` and `unit = "Days"`.
 
 Do NOT apply one unit to both policies. The mistake is easiest to make when N and M happen to be the same number — for example "keep 7 releases and 7 days of files" MUST produce release retention `7 Items` and tentacle retention `7 Days`, never `7 Days` for both. The word "releases" always means `Items`; only an explicit "days" means `Days`.
 
@@ -1631,17 +1617,6 @@ Do NOT apply one unit to both policies. The mistake is easiest to make when N an
 4. Did the prompt give TWO figures (one for releases, one for files/days)? If YES → does the release policy use `Items` with the releases figure, and the tentacle policy use `Days` with the days figure? Confirm the two policies do not share a unit that only one of them was given.
 
 You will be penalized for using `unit = "Days"` when the prompt says "items", for using `unit = "Items"` when the prompt says "days", and for copying one policy's unit onto the other in a two-part retention prompt.
-
-**⚠️ CRITICAL — the two retention blocks belong at the TOP LEVEL of the `octopusdeploy_lifecycle` resource, never nested inside a `phase` block, and the lifecycle resource MUST carry `count`**: nesting them inside a `phase`, or otherwise deviating from the canonical shape below, fails at PLAN time — before a single resource is created, so the prompt produces no project at all:
-
-```
-Error: Unsupported block type
-
-  on terraformInput.tf line 192, in resource "octopusdeploy_lifecycle" "lifecycle_search_lifecycle":
- 192:   release_retention_policy {
-
-Blocks of type "release_retention_policy" are not expected here.
-```
 
 A useful tell that the lifecycle was not written in the canonical shape is the absence of `count`: the vertex in the error above is `octopusdeploy_lifecycle.lifecycle_search_lifecycle` with no `[0]` index, whereas a correctly generated lifecycle always appears as `...[0]`. Set a retention policy ONCE per lifecycle, at the top level.
 
@@ -1658,12 +1633,12 @@ resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
   count = "${length(data.octopusdeploy_lifecycles.lifecycle_my_lifecycle.lifecycles) != 0 ? 0 : 1}"
   name  = "My Lifecycle"
 
-  release_retention_policy {
+  release_retention_with_strategy {
     quantity_to_keep = 30
     unit             = "Days"
   }
 
-  tentacle_retention_policy {
+  tentacle_retention_with_strategy {
     quantity_to_keep = 30
     unit             = "Days"
   }
@@ -1680,36 +1655,6 @@ resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
     prevent_destroy = true
   }
   depends_on = []
-}
-```
-
-Note that the `phase` block contains ONLY `name`, `automatic_deployment_targets`, `optional_deployment_targets`, `is_optional_phase` and `minimum_environments_before_promotion`. Do not put `release_retention_policy` or `tentacle_retention_policy` inside a `phase`.
-
-**Example — prompt says "Set the retention policy to 30 days"** (retention blocks only; the surrounding resource must still match the canonical shape above):
-```hcl
-  release_retention_policy {
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-  tentacle_retention_policy {
-    quantity_to_keep = 30
-    unit             = "Days"
-  }
-```
-
-**Example — prompt says "Set the retention policy to 10 items"**:
-```hcl
-resource "octopusdeploy_lifecycle" "lifecycle_my_lifecycle" {
-  name = "My Lifecycle"
-  release_retention_policy {
-    quantity_to_keep = 10
-    unit             = "Items"
-  }
-  tentacle_retention_policy {
-    quantity_to_keep = 10
-    unit             = "Items"
-  }
-  phase { ... }
 }
 ```
 
@@ -2629,60 +2574,21 @@ resource "octopusdeploy_lifecycle" "lifecycle_application" {
 * You will be penalized for defining a lifecycle phase with no environments.
 * **CRITICAL — when the prompt explicitly names which lifecycle phases to include (e.g., "with phases for Development, Test, and Production environments"), ONLY those named phases should be created in the `octopusdeploy_lifecycle` resource.** Do NOT add extra phases from the template lifecycle. For example, if the prompt says "with phases for Development, Test, and Production", do NOT add a "Security" phase even if the named lifecycle (e.g., DevSecOps) template normally includes one. Similarly, do NOT create environments that are only needed for template phases not mentioned in the prompt. The lifecycle description may still reference the broader lifecycle purpose, but the `phase` blocks must only include the explicitly named phases. You will be penalized for adding lifecycle phases or environments that were not explicitly requested in the prompt.
 
-* The `unit` property in a `release_retention_policy` or `tentacle_retention_policy` block of an `octopusdeploy_lifecycle` resource must be set to `Days` or `Items`. Note that these blocks sit at the TOP LEVEL of the lifecycle resource, NOT inside a `phase` block, exactly as in this example:
+* You will be penalized for setting the `unit` property in a `release_retention_with_strategy` or `tentacle_retention_with_strategy` block of an `octopusdeploy_lifecycle` resource to `Releases`.
 
-```
-resource "octopusdeploy_lifecycle" "simple_lifecycle" {
-  description = "A test lifecycle"
-  name        = "Simple"
+* **CRITICAL — properties inside `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks MUST use consistent 2-space indentation relative to the block opening brace.** The closing `}` must be at the same indentation level as the block keyword. Single-space indentation is FORBIDDEN. The closing `}` at column 0 (unindented) is FORBIDDEN. You will be penalized for using 1-space indentation inside retention policy blocks.
 
-  release_retention_policy {
-    quantity_to_keep    = 1
-    unit                = "Days"
-  }
-
-  tentacle_retention_policy {
-    quantity_to_keep    = 30
-    unit                = "Items"
-  }
-
-  phase {
-    automatic_deployment_targets = []
-    optional_deployment_targets  = [octopusdeploy_environment.development_environment.id]
-    name                         = octopusdeploy_environment.development_environment.name
-  }
-}
-```
-
-**⚠️ Note carefully that the `phase` block above contains NO retention policy.** The two retention blocks appear ONCE each, as direct children of the `octopusdeploy_lifecycle` resource, above the `phase` blocks. Writing them inside a `phase` is invalid and fails the plan with `Blocks of type "release_retention_policy" are not expected here`, which produces no project at all. The following is FORBIDDEN:
-
+**Negative example — `release_retention_with_strategy` with 1-space indentation (FORBIDDEN)**:
 ```hcl
-# FORBIDDEN — retention policy nested inside a phase
-  phase {
-    name = "Development"
-
-    release_retention_policy {   ← WRONG: not permitted inside a phase
-      quantity_to_keep = 1
-      unit             = "Days"
-    }
-  }
-```
-
-* You will be penalized for setting the `unit` property in a `release_retention_policy` or `tentacle_retention_policy` block of an `octopusdeploy_lifecycle` resource to `Releases`.
-
-* **CRITICAL — properties inside `release_retention_policy` and `tentacle_retention_policy` blocks MUST use consistent 2-space indentation relative to the block opening brace.** The closing `}` must be at the same indentation level as the block keyword. Single-space indentation is FORBIDDEN. The closing `}` at column 0 (unindented) is FORBIDDEN. You will be penalized for using 1-space indentation inside retention policy blocks.
-
-**Negative example — `release_retention_policy` with 1-space indentation (FORBIDDEN)**:
-```hcl
-  release_retention_policy {
+  release_retention_with_strategy {
  quantity_to_keep = 30
  unit = "Items"
 }
 ```
 
-**Correct example — `release_retention_policy` with proper 2-space indentation**:
+**Correct example — `release_retention_with_strategy` with proper 2-space indentation**:
 ```hcl
-  release_retention_policy {
+  release_retention_with_strategy {
     quantity_to_keep = 30
     unit             = "Items"
   }
@@ -6914,7 +6820,7 @@ You will be penalized for adding `default = "Spaces-1"` or any specific space ID
 
 ## Terraform HCL Indentation Instructions
 
-**MANDATORY — all Terraform HCL blocks must use consistent 2-space indentation**: Properties inside `variable`, `resource`, and `data` blocks MUST be indented with exactly 2 spaces. Properties inside nested blocks (such as `release_retention_policy`, `tentacle_retention_policy`, `connectivity_policy`, `phase`, `scope`, `lifecycle`, etc.) MUST be indented with 4 spaces total (2 spaces for the containing block + 2 more spaces for the nested block). You will be penalized for using 0-space, 1-space, or any non-standard indentation inside HCL blocks.
+**MANDATORY — all Terraform HCL blocks must use consistent 2-space indentation**: Properties inside `variable`, `resource`, and `data` blocks MUST be indented with exactly 2 spaces. Properties inside nested blocks (such as `release_retention_with_strategy`, `tentacle_retention_with_strategy`, `connectivity_policy`, `phase`, `scope`, `lifecycle`, etc.) MUST be indented with 4 spaces total (2 spaces for the containing block + 2 more spaces for the nested block). You will be penalized for using 0-space, 1-space, or any non-standard indentation inside HCL blocks.
 
 **Negative example — variable block with 0-space indentation (FORBIDDEN)**:
 ```hcl
@@ -6939,7 +6845,7 @@ variable "octopus_space_id" {
 **Negative example — nested block with 1-space indentation (FORBIDDEN)**:
 ```hcl
 resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
-  release_retention_policy {
+  release_retention_with_strategy {
  quantity_to_keep = 30   ← WRONG: 1-space indentation inside nested block
  unit = "Days"           ← WRONG: 1-space indentation inside nested block
 }
@@ -6953,7 +6859,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
 **Correct output — nested block with proper 4-space indentation**:
 ```hcl
 resource "octopusdeploy_lifecycle" "lifecycle_devsecops" {
-  release_retention_policy {
+  release_retention_with_strategy {
     quantity_to_keep = 30   ← CORRECT: 4-space indentation inside nested block
     unit             = "Days"
   }
