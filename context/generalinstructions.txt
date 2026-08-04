@@ -1761,9 +1761,9 @@ data "octopusdeploy_accounts" "account_azure" {
 
 ## Certificate Creation for New Project Creation Prompts
 
-When creating a `octopusdeploy_certificate` resource, use the `certificate_data` and `password` fields from the example resources. Ignore any details in the prompt to set these values.
+When creating a `octopusdeploy_certificate` resource, use placeholder values for the `certificate_data` and `password` fields. Ignore any details in the prompt to set these values to real certificate data.
 
-**CRITICAL — NEVER invent, shorten, truncate, or fabricate a value for `certificate_data`.** You MUST copy the exact base64 `certificate_data` string (and its matching `password`) verbatim from the provided certificate example resources. The `certificate_data` and `password` fields are replaced in a post =processing step, so the fields simply need to exist, but the values will not be used.
+**CRITICAL — NEVER use real certificate data for `certificate_data`, and NEVER use a real password for `password`.** Always use placeholder values: `certificate_data = "placeholder"` and `password = "Change Me!"`. The `certificate_data` and `password` fields are replaced in a post-processing step, so the fields simply need to exist with placeholder values, but the values will not be used.
 
 **⚠️ CRITICAL — `certificate_data` and `password` MUST each be present as a plain attribute line holding a plain string, and MUST NOT be a `${var....}` reference.** The certificate values are substituted with known-good fixture values after generation, but that substitution only works on a literal attribute line inside a top-level `octopusdeploy_certificate` resource. So:
 
