@@ -60,7 +60,9 @@ resource "octopusdeploy_aws_openid_connect_account" "account_aws_deploy_account"
 
 **⚠️ CRITICAL — when the project is tenanted, the "Mock K8s" target MUST be linked to the project's tenants**: a target with `tenanted_deployment_participation = "Untenanted"` is invisible to a tenanted deployment, so the project has no target at all for its tenants. When the project's `tenanted_deployment_participation` is `Tenanted` or `TenantedOrUntenanted`, the target MUST use the same value, and its `tenants` list (or `tenant_tags` list) MUST include every tenant the prompt linked to the project. Any Token account created for the target must be linked to those tenants too.
 
-**⚠️ CRITICAL — `release_retention_policy` and `tentacle_retention_policy` go at the TOP LEVEL of the `octopusdeploy_lifecycle` resource, exactly ONCE each, and NEVER inside a `phase` block. The lifecycle resource MUST also carry `count`.** Getting this wrong fails at PLAN time, so nothing whatsoever is created and the prompt yields no project:
+**⚠️ CRITICAL — EVERY `octopusdeploy_lifecycle` resource MUST have a `count` attribute and a matching `data "octopusdeploy_lifecycles"` lookup**, exactly like every other resource in a new project. This applies to every lifecycle, including a second "hotfix" lifecycle used only by a channel.
+
+**⚠️ CRITICAL — `release_retention_policy` and `tentacle_retention_policy` go at the TOP LEVEL of the `octopusdeploy_lifecycle` resource, exactly ONCE each, and NEVER inside a `phase` block.** Getting this wrong fails at PLAN time, so nothing whatsoever is created and the prompt yields no project:
 
 ```
 Error: Unsupported block type
@@ -1856,7 +1858,14 @@ Note that `certificate_data` and `password` are single-line string attributes at
 
 **MANDATORY SELF-CHECK — certificates**: for every `octopusdeploy_certificate` resource in your output, confirm the resource line is unindented, confirm a `certificate_data` line and a `password` line are both present as single-line string attributes, and confirm neither contains `${var.`. This check applies to EVERY project type, including IIS, Tomcat, Azure Function, and Windows Service projects whose example configuration contains no certificate at all — having no example to copy is exactly when you must fall back to the shape above.
 
-**⚠️ CRITICAL — a certificate MUST NEVER be the reason a project fails to be created. If you cannot emit it in exactly the shape above, OMIT IT.** Certificate creation fails intermittently with `Octopus API error: … [Unable to parse certificate. Please check the certificate data and try again.]`, and because certificates are created early in the apply, the failure truncates the project: the steps, variables and runbooks ordered after it are all abandoned. So if you are not confident you can produce the `octopusdeploy_certificate` resource in precisely the form shown above, then:
+**⚠️ CRITICAL — DO NOT create an `octopusdeploy_certificate` resource unless the PROMPT ITSELF supplies the certificate data.** A prompt that merely names a certificate ("create a certificate called 'Gateway Git Cert'") does NOT supply data, so there is nothing valid to put in `certificate_data` — and an invalid blob fails with `Octopus API error: … [Unable to parse certificate. Please check the certificate data and try again.]`. Because certificates are created early in the apply, that failure truncates the project: in an observed run only 1 of 4 steps survived, and the feeds, remaining steps and step order were all abandoned.
+
+* If the prompt does not include an actual base64 certificate blob, OMIT the certificate entirely. This has been observed to fail across IIS, Azure Function and Argo CD prompts, so do not assume any project type is safe.
+* Omitting it means: no `octopusdeploy_certificate` resource, no `Certificate`-typed project variable referencing it, and no step property pointing at it. Configure whatever the certificate was for (an HTTPS binding, a Git authentication step) without the certificate reference, and generate everything else the prompt asked for in full.
+* A named-but-absent certificate is a small, visible gap an operator fills in once. A failed apply loses most of the project.
+* **Order of preference:** (1) complete project with a valid certificate, only possible when the prompt supplies real data; (2) complete project with NO certificate; (3) nothing much, because the apply died on the certificate. Choose (2) over (3) every time.
+
+If the prompt DOES supply real certificate data and you are still not confident you can produce the resource in precisely the form shown above, then:
 
 * Do NOT emit the `octopusdeploy_certificate` resource at all.
 * Also drop anything that depends on it — the `Certificate`-typed project variable that referenced it, and any step property that pointed at it. Leaving a reference to a certificate you did not create produces an unresolvable ID.
@@ -5350,6 +5359,35 @@ resource "octopusdeploy_process_step" "process_step_my_project_notify_deployment
 ```
 
 ## ArgoCD Step Instructions
+
+**⚠️ CRITICAL — `"Octopus.Action.ArgoCD.CommitMethod" = "PullRequest"` REQUIRES `"Octopus.Action.ArgoCD.PullRequest.Environments"`.** Omitting it aborts the apply at step-creation time, so every resource ordered after the step is abandoned:
+
+```
+Error: Unable to create process step
+
+  with octopusdeploy_process_step.process_step_loyalty_gateway_update_gateway_manifests[0],
+Octopus API error: There was a problem with your request. [Please specify environments to create pull requests in.]
+```
+
+* When the prompt says the step should commit "via a pull request", "by raising a PR", or "with a pull request for review", set BOTH properties:
+  * `"Octopus.Action.ArgoCD.CommitMethod" = "PullRequest"`
+  * `"Octopus.Action.ArgoCD.PullRequest.Environments"` = a comma-separated list of environment IDs, resolved with the usual data-source/resource ternary, for example `"Environments-4661,Environments-4662"`. Use every environment in the project's lifecycle unless the prompt names a subset.
+* **The simplest safe choice is `"DirectCommit"`.** It needs no environment list. If the prompt does not explicitly ask for a pull request, use `"DirectCommit"`; and if you cannot confidently build the environment ID list, use `"DirectCommit"` rather than risk the apply.
+
+**MANDATORY SELF-CHECK — Argo CD commit method**: search your output for `Octopus.Action.ArgoCD.CommitMethod`. Wherever the value is `"PullRequest"`, confirm `Octopus.Action.ArgoCD.PullRequest.Environments` is also present and non-empty in the same `execution_properties`. If it is missing, either add it or change the commit method to `"DirectCommit"`.
+
+**⚠️ CRITICAL — an `Octopus.ArgoCDUpdateManifests` step MUST NOT have a `packages`, `package`, or `primary_package` block.** This step type reads the manifests from a Git repository via its `git_dependencies` attribute; it does not consume a package from a feed. Attaching a container image to it as a package aborts the apply at step-creation time:
+
+```
+Error: Unable to create process step
+
+Octopus API error: There was a problem with your request. [Package name 'loyalty/gateway' contains invalid characters.
+Names can only contain letters, numbers, periods, …]
+```
+
+* When the prompt says a **manifest-update** step handles "the container image `org/name`", that image belongs in the manifest content and in the step's Argo configuration — NOT in a package block. Create the step with `git_dependencies` and no packages, exactly as the example `Octopus.ArgoCDUpdateManifests` step does.
+* This is the opposite of `Octopus.ArgoCDUpdateImageTags`, which DOES take the container image as its package and accepts a Docker-style ID containing a `/` when the package's `feed_id` points at an `octopusdeploy_docker_container_registry`.
+* More generally: a package ID containing a `/` is only valid when its `feed_id` is a Docker container registry feed. Never attach a slash-containing package ID to the built-in feed, a NuGet feed, or a step type that takes no package.
 
 * Steps of type "Octopus.ArgoCDUpdateImageTags" update image tags in an ArgoCD application's values file.
 * Steps of type "Octopus.ArgoCDUpdateImageTags" must define the following execution properties:

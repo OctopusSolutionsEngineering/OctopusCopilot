@@ -105,15 +105,15 @@ resource "octopusdeploy_environment" "environment_test" {
   }
 }
 
-data "octopusdeploy_environments" "environment_production___blue" {
+data "octopusdeploy_environments" "environment_blue_production" {
   ids          = null
-  partial_name = "Production - Blue"
+  partial_name = "Blue Production"
   skip         = 0
   take         = 1
 }
-resource "octopusdeploy_environment" "environment_production___blue" {
-  count                        = "${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? 0 : 1}"
-  name                         = "Production - Blue"
+resource "octopusdeploy_environment" "environment_blue_production" {
+  count                        = "${length(data.octopusdeploy_environments.environment_blue_production.environments) != 0 ? 0 : 1}"
+  name                         = "Blue Production"
   description                  = ""
   allow_dynamic_infrastructure = false
   use_guided_failure           = false
@@ -135,15 +135,15 @@ resource "octopusdeploy_environment" "environment_production___blue" {
   }
 }
 
-data "octopusdeploy_environments" "environment_production___green" {
+data "octopusdeploy_environments" "environment_green_production" {
   ids          = null
-  partial_name = "Production - Green"
+  partial_name = "Green Production"
   skip         = 0
   take         = 1
 }
-resource "octopusdeploy_environment" "environment_production___green" {
-  count                        = "${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? 0 : 1}"
-  name                         = "Production - Green"
+resource "octopusdeploy_environment" "environment_green_production" {
+  count                        = "${length(data.octopusdeploy_environments.environment_green_production.environments) != 0 ? 0 : 1}"
+  name                         = "Green Production"
   description                  = ""
   allow_dynamic_infrastructure = false
   use_guided_failure           = false
@@ -159,7 +159,7 @@ resource "octopusdeploy_environment" "environment_production___green" {
   servicenow_extension_settings {
     is_enabled = false
   }
-  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test,octopusdeploy_environment.environment_production___blue]
+  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test,octopusdeploy_environment.environment_blue_production]
   lifecycle {
     prevent_destroy = true
   }
@@ -204,7 +204,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_blue_green" {
   }
   phase {
     automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}"]
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_blue_production.environments) != 0 ? data.octopusdeploy_environments.environment_blue_production.environments[0].id : octopusdeploy_environment.environment_blue_production[0].id}"]
     name                                  = "Production Blue"
     is_optional_phase                     = true
     minimum_environments_before_promotion = 0
@@ -217,7 +217,7 @@ resource "octopusdeploy_lifecycle" "lifecycle_blue_green" {
   }
   phase {
     automatic_deployment_targets          = []
-    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
+    optional_deployment_targets           = ["${length(data.octopusdeploy_environments.environment_green_production.environments) != 0 ? data.octopusdeploy_environments.environment_green_production.environments[0].id : octopusdeploy_environment.environment_green_production[0].id}"]
     name                                  = "Production Green"
     is_optional_phase                     = true
     minimum_environments_before_promotion = 0
@@ -312,7 +312,7 @@ resource "octopusdeploy_environment" "environment_production" {
   servicenow_extension_settings {
     is_enabled = false
   }
-  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test,octopusdeploy_environment.environment_production___blue,octopusdeploy_environment.environment_production___green]
+  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_test,octopusdeploy_environment.environment_blue_production,octopusdeploy_environment.environment_green_production]
   lifecycle {
     prevent_destroy = true
   }
@@ -386,12 +386,12 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
         "BlueGreen.Environment.Blue.Name" = "Production - Blue"
+        "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
         "BlueGreen.Environment.Green.Name" = "Production - Green"
       }
 }
@@ -403,7 +403,7 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_appro
   process_id            = "${length(data.octopusdeploy_projects.project_random_quotes__net_iis.projects) != 0 ? null : octopusdeploy_process.process_random_quotes__net_iis[0].id}"
   channels              = null
   condition             = "Success"
-  environments          = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}", "${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}", "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+  environments          = ["${length(data.octopusdeploy_environments.environment_blue_production.environments) != 0 ? data.octopusdeploy_environments.environment_blue_production.environments[0].id : octopusdeploy_environment.environment_blue_production[0].id}", "${length(data.octopusdeploy_environments.environment_green_production.environments) != 0 ? data.octopusdeploy_environments.environment_green_production.environments[0].id : octopusdeploy_environment.environment_green_production[0].id}", "${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
   excluded_environments = null
   notes                 = "This step pauses the deployment and waits for approval before continuing."
   package_requirement   = "LetOctopusDecide"
@@ -444,13 +444,13 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
         "CheckTargets.Octopus.Role" = "randomquotes-iis-website"
-        "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
         "CheckTargets.Message" = "See the [documentation](https://octopus.com/docs/infrastructure/deployment-targets) for details on creating targets."
+        "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
       }
 }
 
@@ -474,8 +474,8 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
+        "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
         "SmtpCheck.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
@@ -521,7 +521,7 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
   template_version      = "${data.octopusdeploy_step_template.steptemplate_block_release_progression.step_template != null ? data.octopusdeploy_step_template.steptemplate_block_release_progression.step_template.version : octopusdeploy_community_step_template.communitysteptemplate_block_release_progression[0].version}"
   channels              = null
   condition             = "Success"
-  environments          = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}", "${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
+  environments          = ["${length(data.octopusdeploy_environments.environment_blue_production.environments) != 0 ? data.octopusdeploy_environments.environment_blue_production.environments[0].id : octopusdeploy_environment.environment_blue_production[0].id}", "${length(data.octopusdeploy_environments.environment_green_production.environments) != 0 ? data.octopusdeploy_environments.environment_green_production.environments[0].id : octopusdeploy_environment.environment_green_production[0].id}"]
   excluded_environments = null
   package_requirement   = "LetOctopusDecide"
   slug                  = "block-release-progression"
@@ -535,10 +535,10 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
         "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "Block.Octopus.Previous.Release.Id" = "#{Octopus.Release.Id}"
-        "Block.Octopus.Url" = "#{Octopus.Web.ServerUri}"
         "Block.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "Block.Octopus.Previous.Release.Id" = "#{Octopus.Release.Id}"
         "Block.Octopus.Reason" = "Deployment to #{Octopus.Environment.Name} was a success - no other production environment can recieve this release."
+        "Block.Octopus.Url" = "#{Octopus.Web.ServerUri}"
       }
 }
 
@@ -561,10 +561,10 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_
         "Octopus.Step.ConditionVariableExpression" = "#{Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured}"
       }
   execution_properties  = {
+        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
         "Octopus.Action.Email.Body" = "The deployment succeeded."
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "releases@example.org"
-        "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
       }
 }
 
@@ -585,7 +585,7 @@ resource "octopusdeploy_variable" "random_quotes__net_iis_prject_iis_application
   scope {
     actions      = null
     channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}"]
+    environments = ["${length(data.octopusdeploy_environments.environment_blue_production.environments) != 0 ? data.octopusdeploy_environments.environment_blue_production.environments[0].id : octopusdeploy_environment.environment_blue_production[0].id}"]
     machines     = null
     roles        = null
     tenant_tags  = null
@@ -610,7 +610,7 @@ resource "octopusdeploy_variable" "random_quotes__net_iis_prject_iis_application
   scope {
     actions      = null
     channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
+    environments = ["${length(data.octopusdeploy_environments.environment_green_production.environments) != 0 ? data.octopusdeploy_environments.environment_green_production.environments[0].id : octopusdeploy_environment.environment_green_production[0].id}"]
     machines     = null
     roles        = null
     tenant_tags  = null
@@ -634,7 +634,7 @@ resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_binding_po
   scope {
     actions      = null
     channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}"]
+    environments = ["${length(data.octopusdeploy_environments.environment_blue_production.environments) != 0 ? data.octopusdeploy_environments.environment_blue_production.environments[0].id : octopusdeploy_environment.environment_blue_production[0].id}"]
     machines     = null
     roles        = null
     tenant_tags  = null
@@ -659,7 +659,7 @@ resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_binding_po
   scope {
     actions      = null
     channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
+    environments = ["${length(data.octopusdeploy_environments.environment_green_production.environments) != 0 ? data.octopusdeploy_environments.environment_green_production.environments[0].id : octopusdeploy_environment.environment_green_production[0].id}"]
     machines     = null
     roles        = null
     tenant_tags  = null
@@ -684,7 +684,7 @@ resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_website_na
   scope {
     actions      = null
     channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}"]
+    environments = ["${length(data.octopusdeploy_environments.environment_blue_production.environments) != 0 ? data.octopusdeploy_environments.environment_blue_production.environments[0].id : octopusdeploy_environment.environment_blue_production[0].id}"]
     machines     = null
     roles        = null
     tenant_tags  = null
@@ -709,7 +709,7 @@ resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_website_na
   scope {
     actions      = null
     channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
+    environments = ["${length(data.octopusdeploy_environments.environment_green_production.environments) != 0 ? data.octopusdeploy_environments.environment_green_production.environments[0].id : octopusdeploy_environment.environment_green_production[0].id}"]
     machines     = null
     roles        = null
     tenant_tags  = null
@@ -733,7 +733,7 @@ resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_path_1" {
   scope {
     actions      = null
     channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___blue.environments) != 0 ? data.octopusdeploy_environments.environment_production___blue.environments[0].id : octopusdeploy_environment.environment_production___blue[0].id}"]
+    environments = ["${length(data.octopusdeploy_environments.environment_blue_production.environments) != 0 ? data.octopusdeploy_environments.environment_blue_production.environments[0].id : octopusdeploy_environment.environment_blue_production[0].id}"]
     machines     = null
     roles        = null
     tenant_tags  = null
@@ -758,7 +758,7 @@ resource "octopusdeploy_variable" "random_quotes__net_iis_project_iis_path_2" {
   scope {
     actions      = null
     channels     = null
-    environments = ["${length(data.octopusdeploy_environments.environment_production___green.environments) != 0 ? data.octopusdeploy_environments.environment_production___green.environments[0].id : octopusdeploy_environment.environment_production___green[0].id}"]
+    environments = ["${length(data.octopusdeploy_environments.environment_green_production.environments) != 0 ? data.octopusdeploy_environments.environment_green_production.environments[0].id : octopusdeploy_environment.environment_green_production[0].id}"]
     machines     = null
     roles        = null
     tenant_tags  = null
