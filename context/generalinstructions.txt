@@ -36,7 +36,7 @@ resource "octopusdeploy_aws_openid_connect_account" "account_aws_deploy_account"
 
 **⚠️ CRITICAL — ANY project containing a Kubernetes step MUST create a "Mock K8s" deployment target and MUST override three step properties. This rule has ABSOLUTE PRIORITY over any template, and over the fact that the prompt never mentioned a target.** A prompt that only names a target tag ("on targets tagged `insight-cluster`"), or names a cluster, or asks for a Kubernetes/canary/progressive/wave/blue-green deployment, is a prompt that needs this pattern. A tag says *which* target to use; it does not create one. A project with `Octopus.KubernetesDeployRawYaml`, `Octopus.KubernetesRunScript`, or `Octopus.HelmChartUpgrade` steps and no Kubernetes target cannot deploy at all. You MUST therefore emit ALL FOUR of the following:
 
-1. An `octopusdeploy_token_account` called "Mock Token" (plus its `data "octopusdeploy_accounts"` lookup and `count`). Do not substitute an AWS, Azure, or username/password account. If the prompt names its own Token account, use that one instead and do not create "Mock Token".
+1. An `octopusdeploy_token_account` called "Mock Token" (plus its `data "octopusdeploy_accounts"` lookup and `count`). Do not substitute an AWS, Azure, or username/password account. If the prompt names its own Token account, use that one instead and do not create "Mock Token". **Most prompts never mention an account at all, and that is the single most common reason this whole pattern gets skipped — do not let it stop you.** The target needs a Token account to authenticate, so when the prompt is silent about accounts you MUST invent "Mock Token" yourself and carry on to items 2 and 3. "The prompt did not ask for an account" is NEVER a valid reason to omit the account, and omitting the account is NEVER a valid reason to omit the target.
 2. An `octopusdeploy_docker_container_registry` feed called "Docker Hub" pointing at `https://index.docker.io` with NO credentials.
 3. An `octopusdeploy_kubernetes_cluster_deployment_target` called "Mock K8s" with `cluster_url = "https://mockk8s.octopusdemos.com"`, `roles` containing EVERY target tag used by the project's Kubernetes steps plus `"Kubernetes"`, `environments` listing every environment in the project's lifecycle, an `endpoint { communication_style = "Kubernetes" }` block, an `authentication { account_id = … }` block referencing the token account, and the "Hosted Ubuntu" worker pool as `default_worker_pool_id`.
 
@@ -1784,7 +1784,7 @@ data "octopusdeploy_certificates" "certificate_my_cert" {
 resource "octopusdeploy_certificate" "certificate_my_cert" {
   count            = "${length(data.octopusdeploy_certificates.certificate_my_cert.certificates) != 0 ? 0 : 1}"
   name             = "My Cert"
-  certificate_data = "MIIQChangeMe"
+  certificate_data = "placeholder"
   password         = "Change Me!"
   environments     = []
   tenant_tags      = []
@@ -1800,30 +1800,6 @@ resource "octopusdeploy_certificate" "certificate_my_cert" {
 Note that `certificate_data` and `password` are single-line string attributes at the top level of the resource. Do not wrap them in a nested block, do not use a heredoc, do not spread the value across lines, and do not move them into a `variable`. Any deviation from this shape prevents the fixture substitution and the apply fails with "Unable to parse certificate".
 
 **MANDATORY SELF-CHECK — certificates**: for every `octopusdeploy_certificate` resource in your output, confirm the resource line is unindented, confirm a `certificate_data` line and a `password` line are both present as single-line string attributes, and confirm neither contains `${var.`. This check applies to EVERY project type, including IIS, Tomcat, Azure Function, and Windows Service projects whose example configuration contains no certificate at all — having no example to copy is exactly when you must fall back to the shape above.
-
-**⚠️ CRITICAL — DO NOT create an `octopusdeploy_certificate` resource unless the PROMPT ITSELF supplies the certificate data.** A prompt that merely names a certificate ("create a certificate called 'Gateway Git Cert'") does NOT supply data, so there is nothing valid to put in `certificate_data` — and an invalid blob fails with `Octopus API error: … [Unable to parse certificate. Please check the certificate data and try again.]`. Because certificates are created early in the apply, that failure truncates the project: in an observed run only 1 of 4 steps survived, and the feeds, remaining steps and step order were all abandoned.
-
-* If the prompt does not include an actual base64 certificate blob, OMIT the certificate entirely. This has been observed to fail across IIS, Azure Function and Argo CD prompts, so do not assume any project type is safe.
-* Omitting it means: no `octopusdeploy_certificate` resource, no `Certificate`-typed project variable referencing it, and no step property pointing at it. Configure whatever the certificate was for (an HTTPS binding, a Git authentication step) without the certificate reference, and generate everything else the prompt asked for in full.
-* A named-but-absent certificate is a small, visible gap an operator fills in once. A failed apply loses most of the project.
-* **Order of preference:** (1) complete project with a valid certificate, only possible when the prompt supplies real data; (2) complete project with NO certificate; (3) nothing much, because the apply died on the certificate. Choose (2) over (3) every time.
-
-If the prompt DOES supply real certificate data and you are still not confident you can produce the resource in precisely the form shown above, then:
-
-* Do NOT emit the `octopusdeploy_certificate` resource at all.
-* Also drop anything that depends on it — the `Certificate`-typed project variable that referenced it, and any step property that pointed at it. Leaving a reference to a certificate you did not create produces an unresolvable ID.
-* Generate every other resource the prompt asked for, in full.
-
-A missing certificate is a small, visible gap in an otherwise complete project. A malformed one aborts the apply the moment Octopus tries to parse it, and because certificates are created early, everything ordered after it is abandoned — steps, tenants, tag sets, variables. The observed failure produces:
-
-```
-Error: Error creating certificate
-
-  with octopusdeploy_certificate.certificate_dispatcher_signing_cert[0],
-Octopus API error: There was a problem with your request. [Unable to parse certificate. Please check the certificate data and try again.]
-```
-
-**Order of preference, highest to lowest:** (1) a complete project with a valid certificate; (2) a complete project with NO certificate and no references to one; (3) nothing at all because the apply died on the certificate. Never choose (3) by attempting (1) when you are unsure. This has been observed to fail repeatedly on IIS and Azure Function prompts specifically — for those project types, prefer omitting the certificate.
 
 ## Data and Resource pairing instructions
 
@@ -4067,6 +4043,7 @@ Note that the example above does NOT include this property, because it was expor
 * You will be penalized for adding the "target_roles" attribute on an "action".
 * You will be penalized for adding the "excluded_environments" attribute on a "step".
 * You will be penalized for adding target tags to the "tenant_tags" attribute.
+* **A target tag is NOT a tenant tag, and it MUST NOT be given an `octopusdeploy_tag_set` or `octopusdeploy_tag` resource.** Target tags (also called roles) are free-form strings that exist only as entries in a step's `"Octopus.Action.TargetRoles"` property and in the `roles` list of a deployment target — nothing declares them. `octopusdeploy_tag_set` and `octopusdeploy_tag` are TENANT tag sets, and they may be created ONLY to support a `tenant_tags` value such as `"Regions/US-East"`. Creating a tag set such as `Target Tag Set` containing a tag named after a target tag (for example `gpu-pool`, `insight-cluster`, or `tomcat-server`) is always wrong, and is doubly wrong in an untenanted project, which must contain no tag sets at all. If a target tag is the only "tag" the prompt mentions, the correct output contains ZERO `octopusdeploy_tag_set` resources.
 * When the "Octopus.Action.Script.ScriptSource" property is set to "Package", the "Octopus.Action.Script.Syntax" and "Octopus.Action.Script.ScriptBody" property must not be defined, for example:
 
 ```
