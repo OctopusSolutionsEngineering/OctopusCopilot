@@ -1,6 +1,8 @@
 # Progressive Deployment Custom Instructions
 
 * The variable `Project.Release.Id` must be a prompted variable scoped to the `Deploy Release` runbook.
+* You will be penalized for creating the `Project.Release.Id` variable as a regular variable instead of a prompted variable.
+* You will be penalized for not scoping the `Project.Release.Id` variable as a prompted variable to the `Deploy Release` runbook.
 
 # Progressive Deployment Instructions
 
