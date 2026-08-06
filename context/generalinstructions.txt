@@ -138,9 +138,12 @@ This is one of the most damaging failures in this file, because process steps ar
 
 * For an `Octopus.Script` step, set `"Octopus.Action.RunOnServer" = "true"`. This is what the example configurations use in almost every case, and it is always safe.
 * NEVER set `"Octopus.Action.RunOnServer" = "false"` on a runbook script step, a manual intervention step, a webhook/curl step, or any step that does not carry `Octopus.Action.TargetRoles`. Those all run on the server, so `"false"` is guaranteed to be rewritten to `"true"` and guaranteed to abort the apply.
+* **`"false"` is FORBIDDEN on EVERY step of EVERY runbook, without exception and regardless of step type or wording.** Any `octopusdeploy_process_step` whose `process_id` points at a runbook's `octopusdeploy_process` MUST use `"Octopus.Action.RunOnServer" = "true"`. This holds even when the runbook plainly acts on a machine — "restart the service", "drain connections from the target", "recycle the app pool" all describe work aimed at a target, but the runbook step itself is still orchestrated server-side. A runbook whose only step trips this error is created EMPTY, which is a broken runbook.
+* **"runs on a worker" means `"true"`, NOT `"false"`.** When a prompt says a step should run "on a worker", "on a worker rather than the target", "off the target", or "on the Octopus Server", set `"Octopus.Action.RunOnServer" = "true"` and select the worker via `worker_pool_id`/`worker_pool_variable`. Worker execution IS server-orchestrated execution. Reading "worker" as "not the server" and writing `"false"` is the single most common way this error is introduced.
+* **A step may only use `"false"` if that same step also declares `Octopus.Action.TargetRoles`.** If you are about to write `"false"` on a step with no target roles, the value is wrong — change it to `"true"`. Do not copy a `"false"` from one step onto another step; each step's value depends on that step's own roles.
 * Use `"false"` ONLY on a package-deployment step type — `Octopus.TentaclePackage`, `Octopus.WindowsService`, `Octopus.IIS`, `Octopus.TomcatDeploy` — that also has target roles. When in doubt, prefer `"true"`, or omit the property entirely and let Octopus choose; omitting it never causes this error.
 
-**MANDATORY SELF-CHECK — RunOnServer**: search your output for `"Octopus.Action.RunOnServer" = "false"`. For every hit, confirm the step is a package-deployment step type WITH `Octopus.Action.TargetRoles`. If it is a script, manual, or runbook step, change the value to `"true"`.
+**MANDATORY SELF-CHECK — RunOnServer**: search your output for `"Octopus.Action.RunOnServer" = "false"`. For every hit, confirm ALL THREE of: (1) the step is a package-deployment step type, (2) the SAME step declares `Octopus.Action.TargetRoles`, and (3) the step belongs to the project's deployment process, not to a runbook process. If any one of those fails, change the value to `"true"`. If it is a script, manual, or runbook step, change the value to `"true"`.
 
 **⚠️ CRITICAL — an `octopusdeploy_process_templated_step` MUST NOT declare a `parameters` entry whose value is an empty string**: Octopus discards empty parameter values when it stores the action, so the provider compares what it sent against what came back, finds the key gone, and aborts the whole apply:
 
@@ -1552,7 +1555,7 @@ phase {
 
 Leaving it at `0` (or omitting it, which defaults to `0`) when the prompt asked for a threshold silently changes the lifecycle's behaviour: every release becomes promotable immediately. You will be penalized for each phase whose prompt stated a threshold and whose `minimum_environments_before_promotion` is `0`.
 
-**MANDATORY SELF-CHECK — promotion thresholds**: before finalizing output, re-read each phase description in the prompt. For every phase that mentions a number of environments, deployments or promotions, confirm the corresponding `phase` block sets `minimum_environments_before_promotion` to that number (clamped to the count of environments in that same phase). Note that the "omit it if unsure" guidance elsewhere in this file applies ONLY to `release_retention_with_strategy` / `tentacle_retention_with_strategy` and to certificates — it does NOT license dropping `minimum_environments_before_promotion`, `is_optional_phase`, or any other phase attribute.
+**MANDATORY SELF-CHECK — promotion thresholds**: before finalizing output, re-read each phase description in the prompt. For every phase that mentions a number of environments, deployments or promotions, confirm the corresponding `phase` block sets `minimum_environments_before_promotion` to that number (clamped to the count of environments in that same phase). Note that the "omit it if unsure" guidance elsewhere in this file applies ONLY to `release_retention_with_strategy` / `tentacle_retention_with_strategy` — it does NOT license dropping `minimum_environments_before_promotion`, `is_optional_phase`, or any other phase attribute, and it does NOT license dropping a certificate the prompt asked for.
 
 **CRITICAL — `minimum_environments_before_promotion` MUST NOT exceed the number of environments in the same `phase` block**: The `minimum_environments_before_promotion` attribute counts environments *within its own phase* that must be deployed to before a release can be promoted to the next phase. It does NOT refer to environments in earlier phases, to a number of deployments, or to a number of successful releases. Octopus rejects a lifecycle where the value is greater than the number of entries in that phase's `automatic_deployment_targets` plus `optional_deployment_targets` arrays, and the apply fails with:
 
@@ -1768,6 +1771,19 @@ data "octopusdeploy_accounts" "account_azure" {
 ## Certificate Creation for New Project Creation Prompts
 
 When creating a `octopusdeploy_certificate` resource, use placeholder values for the `certificate_data` and `password` fields. Ignore any details in the prompt to set these values to real certificate data.
+
+**⚠️ CRITICAL — if the prompt asks for a certificate, you MUST create the `octopusdeploy_certificate` resource. Omitting it is NEVER acceptable.** A prompt that merely names a certificate ("create a certificate called 'Ledger Signing Cert'") supplies everything you need, because the data and password are placeholders that are substituted after generation — you do NOT need real certificate data from the prompt, and "the prompt did not supply certificate data" is NEVER a valid reason to skip the resource. Certificates are safe to create; there is no failure mode to avoid by leaving one out.
+
+**A `Certificate`-typed variable MUST point at a certificate you actually created.** The `value` of a `Certificate`-typed `octopusdeploy_variable` must resolve to a certificate ID, written in exactly this form:
+
+```hcl
+value = "${length(data.octopusdeploy_certificates.certificate_my_cert.certificates) != 0 ? data.octopusdeploy_certificates.certificate_my_cert.certificates[0].id : octopusdeploy_certificate.certificate_my_cert[0].id}"
+```
+
+* NEVER emit a `Certificate`-typed variable with `value = ""` or with no `value` at all. An empty value creates a variable that silently references nothing, which is worse than either creating the certificate properly or omitting both — the project looks correct in the export but the certificate slot is blank at deployment time.
+* If for any reason you do not create the certificate, you MUST also drop the `Certificate`-typed variable that referenced it, and any step property pointing at it. A dangling reference is never acceptable.
+
+**MANDATORY SELF-CHECK — certificate requested**: if the prompt names a certificate, confirm your output contains BOTH an `octopusdeploy_certificate` resource for it AND (when the prompt asked for a certificate variable) a `Certificate`-typed variable whose `value` uses the ternary form above. You will be penalized for a certificate named in the prompt that is missing from the output, and penalized for a `Certificate`-typed variable with an empty value.
 
 **CRITICAL — NEVER use real certificate data for `certificate_data`, and NEVER use a real password for `password`.** Always use placeholder values: `certificate_data = "placeholder"` and `password = "Change Me!"`. The `certificate_data` and `password` fields are replaced in a post-processing step, so the fields simply need to exist with placeholder values, but the values will not be used.
 
@@ -6477,7 +6493,7 @@ resource "octopusdeploy_variable" "variable_isretry" {
 
 ## Step Count Validation
 
-**ABSOLUTE RULE — the number of `octopusdeploy_process_step` resources MUST equal the number of non-notification steps described in the prompt**: Before finalizing your Terraform output, count the step prompts in the prompt and verify that you have created exactly the same number of `octopusdeploy_process_step` (or `octopusdeploy_process_templated_step`) resources. If the count differs, you have either missed a step or created a duplicate — both are bugs that MUST be corrected.
+**ABSOLUTE RULE — the number of `octopusdeploy_process_step` resources MUST equal the number of steps described in the prompt**: (Count every step the prompt asks for, including any notification step it explicitly requests. "Non-notification" is NOT a licence to add an unrequested `Octopus.Email` step — a notification step the prompt never asked for must be dropped like any other leaked step.): Before finalizing your Terraform output, count the step prompts in the prompt and verify that you have created exactly the same number of `octopusdeploy_process_step` (or `octopusdeploy_process_templated_step`) resources. If the count differs, you have either missed a step or created a duplicate — both are bugs that MUST be corrected.
 
 **This count rule applies no matter how the prompt enumerates its steps.** Step requests are frequently written as a numbered list (`4. Add a manual intervention step called "..."`), as prose (`then add a step that deploys the war file`), or as bullets (`* Add a "..." step`). All of these forms count. Do NOT restrict the count to lines that literally begin with `* Add a "`, and do NOT treat a numbered or prose prompt as if it specified no steps.
 
