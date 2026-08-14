@@ -280,7 +280,7 @@ variable "project_windows_service_step_deploy_a_windows_service_packageid" {
   type        = string
   nullable    = false
   sensitive   = false
-  description = "The package ID for the package named  from step Deploy a Windows Service in project Windows Service"
+  description = "The package ID for the default package from step Deploy a Windows Service in project Windows Service"
   default     = "com.octopus:windowsservice"
 }
 resource "octopusdeploy_process_step" "process_step_windows_service_deploy_a_windows_service" {
@@ -302,16 +302,16 @@ resource "octopusdeploy_process_step" "process_step_windows_service_deploy_a_win
         "Octopus.Action.TargetRoles" = "Windows-Service"
       }
   execution_properties  = {
-        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
-        "Octopus.Action.WindowsService.DisplayName" = "Joke Service"
-        "Octopus.Action.WindowsService.StartMode" = "auto"
-        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
-        "Octopus.Action.WindowsService.ExecutablePath" = "WindowsServiceDotNETCore.exe"
-        "Octopus.Action.WindowsService.Description" = "A sample windows service"
-        "Octopus.Action.WindowsService.DesiredStatus" = "Default"
         "Octopus.Action.RunOnServer" = "false"
-        "Octopus.Action.WindowsService.ServiceName" = "JokeService"
+        "Octopus.Action.WindowsService.DisplayName" = "Joke Service"
+        "Octopus.Action.WindowsService.DesiredStatus" = "Default"
         "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"
+        "Octopus.Action.WindowsService.StartMode" = "auto"
+        "Octopus.Action.WindowsService.Description" = "A sample windows service"
+        "Octopus.Action.WindowsService.ExecutablePath" = "WindowsServiceDotNETCore.exe"
+        "Octopus.Action.WindowsService.ServiceAccount" = "LocalSystem"
+        "Octopus.Action.WindowsService.ServiceName" = "JokeService"
+        "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
         "Octopus.Action.WindowsService.CreateOrUpdateService" = "True"
         "Octopus.Action.EnabledFeatures" = ",Octopus.Features.WindowsService,Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
       }
