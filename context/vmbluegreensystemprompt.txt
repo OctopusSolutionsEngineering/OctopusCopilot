@@ -12,10 +12,10 @@ You must include all the following environment resources from the "Example Octop
 * resource "octopusdeploy_environment" "environment_development"
 * data "octopusdeploy_environments" "environment_test"
 * resource "octopusdeploy_environment" "environment_test"
-* data "octopusdeploy_environments" "environment_production___blue"
-* resource "octopusdeploy_environment" "environment_production___blue"
-* data "octopusdeploy_environments" "environment_production___green"
-* resource "octopusdeploy_environment" "environment_production___green"
+* data "octopusdeploy_environments" "environment_blue_production"
+* resource "octopusdeploy_environment" "environment_blue_production"
+* data "octopusdeploy_environments" "environment_green_production"
+* resource "octopusdeploy_environment" "environment_green_production"
 * data "octopusdeploy_environments" "environment_production"
 * resource "octopusdeploy_environment" "environment_production"
 
@@ -50,12 +50,6 @@ You must include all the following step resources from the "Example Octopus VM B
 You MUST ensure that 7 steps are included unless the prompt explicitly states that steps should be removed or modified.
 
 You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
-
-## VM Blue/Green Package Instructions
-
-You must use the following packages from the "Example Octopus VM Blue/Green Terraform Configuration" once unless the prompt explicitly states that different packages are to be used:
-* com.octopus:randomquotes-dotnet
-
 
 ## VM Blue/Green Project Deployment Process Step Order Instructions
 
