@@ -1444,7 +1444,7 @@ Run the step from the "Hosted Ubuntu" worker pool.""",
 
         project_name = "19. Blue-Green deployments"
         lifecycle_name = "Blue Green"
-        production_environments = ["Production - Blue", "Production - Green"]
+        production_environments = ["Blue Production", "Green Production"]
         run_prompt(
             self,
             f'Create a new blue/green deployment project called "{project_name}".',

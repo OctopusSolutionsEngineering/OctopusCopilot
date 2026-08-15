@@ -342,21 +342,21 @@ resource "octopusdeploy_process_templated_step" "process_step_progressive_deploy
         "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "Run.Runbook.Project.Name" = "#{Octopus.Project.Name}"
-        "Run.Runbook.Base.Url" = "#{Octopus.Web.ServerUri}"
-        "Run.Runbook.PromptedVariables" = "Project.Release.Id::#{Octopus.Release.Id}"
-        "Run.Runbook.CustomNotes.Toggle" = "False"
-        "Run.Runbook.Name" = "Deploy Release"
-        "Run.Runbook.ManualIntervention.EnvironmentToUse" = "#{Octopus.Environment.Name}"
-        "Run.Runbook.Environment.Name" = "#{if Octopus.Environment.Name == \"Prod 10\"}Prod 50#{/if}#{if Octopus.Environment.Name == \"Prod 50\"}Prod 100#{/if}"
-        "Run.Runbook.Space.Name" = "#{Octopus.Space.Name}"
-        "Run.Runbook.Waitforfinish" = "False"
-        "Run.Runbook.UsePublishedSnapShot" = "False"
-        "Run.Runbook.DateTime" = "N/A"
-        "Run.Runbook.Machines" = "N/A"
         "Run.Runbook.CancelInSeconds" = "1800"
         "Run.Runbook.AutoApproveManualInterventions" = "No"
+        "Run.Runbook.CustomNotes.Toggle" = "False"
+        "Run.Runbook.UsePublishedSnapShot" = "False"
+        "Run.Runbook.Name" = "Deploy Release"
+        "Run.Runbook.ManualIntervention.EnvironmentToUse" = "#{Octopus.Environment.Name}"
+        "Run.Runbook.Waitforfinish" = "False"
+        "Run.Runbook.Environment.Name" = "#{if Octopus.Environment.Name == \"Prod 10\"}Prod 50#{/if}#{if Octopus.Environment.Name == \"Prod 50\"}Prod 100#{/if}"
+        "Run.Runbook.DateTime" = "N/A"
         "Run.Runbook.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "Run.Runbook.Project.Name" = "#{Octopus.Project.Name}"
+        "Run.Runbook.Base.Url" = "#{Octopus.Web.ServerUri}"
+        "Run.Runbook.Machines" = "N/A"
+        "Run.Runbook.Space.Name" = "#{Octopus.Space.Name}"
+        "Run.Runbook.PromptedVariables" = "Project.Release.Id::#{Octopus.Release.Id}"
       }
 }
 
