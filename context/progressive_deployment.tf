@@ -281,10 +281,10 @@ resource "octopusdeploy_process_step" "process_step_progressive_deployment_deplo
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"Deploying app\""
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -307,6 +307,7 @@ resource "octopusdeploy_process_step" "process_step_progressive_deployment_simul
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = <<EOT
@@ -315,7 +316,6 @@ if ($OctopusParameters["Project.SimulateFail"] -eq "True") {
   exit 1
 }
 EOT
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -342,21 +342,21 @@ resource "octopusdeploy_process_templated_step" "process_step_progressive_deploy
         "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "Run.Runbook.ManualIntervention.EnvironmentToUse" = "#{Octopus.Environment.Name}"
-        "Run.Runbook.Waitforfinish" = "False"
-        "Run.Runbook.Base.Url" = "#{Octopus.Web.ServerUri}"
-        "Run.Runbook.UsePublishedSnapShot" = "False"
         "Run.Runbook.Environment.Name" = "#{if Octopus.Environment.Name == \"Prod 10\"}Prod 50#{/if}#{if Octopus.Environment.Name == \"Prod 50\"}Prod 100#{/if}"
-        "Run.Runbook.Space.Name" = "#{Octopus.Space.Name}"
+        "Run.Runbook.Waitforfinish" = "False"
         "Run.Runbook.Project.Name" = "#{Octopus.Project.Name}"
-        "Run.Runbook.CancelInSeconds" = "1800"
-        "Run.Runbook.DateTime" = "N/A"
-        "Run.Runbook.CustomNotes.Toggle" = "False"
+        "Run.Runbook.Base.Url" = "#{Octopus.Web.ServerUri}"
         "Run.Runbook.Machines" = "N/A"
-        "Run.Runbook.PromptedVariables" = "Project.Release.Id::#{Octopus.Release.Id}"
-        "Run.Runbook.AutoApproveManualInterventions" = "No"
-        "Run.Runbook.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "Run.Runbook.CustomNotes.Toggle" = "False"
+        "Run.Runbook.DateTime" = "N/A"
         "Run.Runbook.Name" = "Deploy Release"
+        "Run.Runbook.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "Run.Runbook.ManualIntervention.EnvironmentToUse" = "#{Octopus.Environment.Name}"
+        "Run.Runbook.CancelInSeconds" = "1800"
+        "Run.Runbook.Space.Name" = "#{Octopus.Space.Name}"
+        "Run.Runbook.UsePublishedSnapShot" = "False"
+        "Run.Runbook.AutoApproveManualInterventions" = "No"
+        "Run.Runbook.PromptedVariables" = "Project.Release.Id::#{Octopus.Release.Id}"
       }
 }
 
@@ -372,6 +372,12 @@ resource "octopusdeploy_variable" "progressive_deployment_project_release_id_1" 
   name         = "Project.Release.Id"
   type         = "String"
   is_sensitive = false
+
+  prompt {
+    description = ""
+    label       = ""
+    is_required = true
+  }
   lifecycle {
     ignore_changes  = [sensitive_value]
     prevent_destroy = true
@@ -471,6 +477,8 @@ resource "octopusdeploy_process_step" "process_step_progressive_deployment_deplo
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = <<EOT
 Start-Sleep 60
@@ -512,8 +520,6 @@ Write-Host "Deployment task successfully created!"
 Write-Host "New Task Link: $OctopusUrl/app#/$SpaceId/tasks/$($DeploymentResult.TaskId)"
 
 EOT
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 

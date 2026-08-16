@@ -391,8 +391,8 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
       }
   parameters            = {
         "BlueGreen.Environment.Blue.Name" = "Blue Production"
-        "BlueGreen.Environment.Green.Name" = "Green Production"
         "BlueGreen.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "BlueGreen.Environment.Green.Name" = "Green Production"
       }
 }
 
@@ -414,13 +414,13 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_appro
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
         "Octopus.Action.Manual.Instructions" = <<EOT
 Do you approve the production deployment?
 
 #{if Octopus.Action[Octopus - Check Blue Green Deployment].Output.SequentialDeploy}WARNING! You appear to be deploying to the #{Octopus.Environment.Name} environment twice. It is expected that blue/green deployments alternate between environments.#{/if}
 EOT
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Manual.BlockConcurrentDeployments" = "False"
       }
 }
 
@@ -448,9 +448,9 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
         "OctopusUseBundledTooling" = "False"
       }
   parameters            = {
+        "CheckTargets.Octopus.Role" = "randomquotes-iis-website"
         "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
         "CheckTargets.Message" = "See the [documentation](https://octopus.com/docs/infrastructure/deployment-targets) for details on creating targets."
-        "CheckTargets.Octopus.Role" = "randomquotes-iis-website"
       }
 }
 
@@ -535,8 +535,8 @@ resource "octopusdeploy_process_templated_step" "process_step_random_quotes__net
         "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "Block.Octopus.Url" = "#{Octopus.Web.ServerUri}"
         "Block.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "Block.Octopus.Url" = "#{Octopus.Web.ServerUri}"
         "Block.Octopus.Reason" = "Deployment to #{Octopus.Environment.Name} was a success - no other production environment can recieve this release."
         "Block.Octopus.Previous.Release.Id" = "#{Octopus.Release.Id}"
       }
@@ -562,8 +562,8 @@ resource "octopusdeploy_process_step" "process_step_random_quotes__net_iis_send_
       }
   execution_properties  = {
         "Octopus.Action.Email.Body" = "The deployment succeeded."
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.To" = "releases@example.org"
+        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Email.Subject" = "#{Octopus.Project.Name} succeeded!"
       }
 }
