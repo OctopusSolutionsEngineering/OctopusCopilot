@@ -416,6 +416,7 @@ def create_template_project_callback(
                         general_system_message_values,
                         log_query,
                         str(e),
+                        region,
                     )
 
             except SpaceBuilderRequestFailed as e:
@@ -655,14 +656,18 @@ async def retry_terraform_plan(
     general_system_message_values,
     log_query,
     error,
+    region=None,
 ):
     """
     Attempt a second-pass LLM fix when the initial Terraform plan fails. The LLM is given
     the previous configuration and the error messages so it can produce a corrected version.
 
+    :param region: The region name
     :return: A tuple of (configuration, response) where configuration is the fixed Terraform
              and response is the result of the second create_terraform_plan call.
     """
+    validate_region(region)
+
     log_query(
         create_template_project_callback.__name__,
         "Initial plan failed, attempting to rectify with a second pass",
@@ -679,7 +684,8 @@ async def retry_terraform_plan(
             new_messages,
             {},
             log_query,
-            purpose=os.getenv("PROJECT_GEN_SERVICE") or AZURE_PROJECT_SERVICE,
+            purpose=get_project_gen_purpose(region),
+            region=region,
         )
     )
 
