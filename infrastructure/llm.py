@@ -1,13 +1,11 @@
 import os
 
-import boto3
 import openai
-from anthropic.types import OverloadedError
-from botocore.config import Config as BotoConfig, Config
+# Note this is the exception raised on a 529 response, not the identically named
+# anthropic.types.OverloadedError, which is the Pydantic model of the response body.
+from anthropic import OverloadedError
 from langchain_anthropic import ChatAnthropic
-from langchain_aws import ChatBedrockConverse
 from langchain_classic.agents import create_openai_tools_agent
-from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import AzureChatOpenAI
 from openai import RateLimitError
