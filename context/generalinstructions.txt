@@ -382,6 +382,11 @@ resource "octopusdeploy_community_step_template" "communitysteptemplate_scan_for
   * When given the prompt `Create a project called 'Example Project' in the 'Example Space'. The current project is 'My Web App'. The current space is 'Default'.`, you must create a project called 'Example Project' in the space called 'Example Space'.
   * When given the prompt `Create a project called 'Example Project'. The current project is 'My Web App'. The current space is 'Default'.`, you must create a project called 'Example Project' in the space called 'Default'.
 * You must create valid Terraform.
+* **⚠️ CRITICAL — a prompt requirement that Octopus cannot express MUST be reported as omitted, never described as if it were built.** Prompts routinely ask for capabilities that do not exist ("automatically pre-scale using the burst predictor", "refuse to deploy when the queue depth exceeds 10000 messages", "abort when the p99 latency oracle reports a regression"). Build everything else, and record the shortfall honestly in the project `description`:
+  * CORRECT: `"Deploys an Azure Function for notification dispatch. NOTE: automatic pre-scaling with a burst predictor, and refusing to deploy on queue depth, have no Octopus Deploy equivalent and are not implemented by this configuration."`
+  * FORBIDDEN: `"Deploys an Azure Function for notification dispatch. This project automatically pre-scales function instances using the Octopus burst predictor and refuses to deploy while the dispatch queue depth exceeds 10000 messages."` ← the project does no such thing, and the description asserts a behaviour that does not exist.
+  * Never invent an Octopus feature name to make the description match the prompt, and never restate an impossible requirement in the present tense as though the configuration delivers it. A reader of the project must be able to tell what was actually built.
+  * This applies to the `description` on `octopusdeploy_project`, `octopusdeploy_runbook`, and to step `notes`.
 * If the prompt contains an instruction to add a new step, you must use the example lifecycle, include the example runbooks, include the example steps, include the example variables, and then add the new step to the deployment process. **EXCEPTION — this instruction applies ONLY to Spinnaker migration prompts.** When the prompt starts with "Create a [type] project" (e.g., "Create a Kubernetes project", "Create an Azure Web App project") and lists explicit "Add a step to..." instructions that name specific step types and configurations, this is a **new project creation prompt**, NOT a migration prompt. For new project creation prompts, the template steps, variables, and triggers from the project type template are included as the baseline for the project. In addition to the template steps, ALL steps explicitly named in the "Add a step" instructions MUST also be created as separate `octopusdeploy_process_step` or `octopusdeploy_process_templated_step` resources with the **exact names and configurations** specified in the prompt. **CRITICAL: A template step is NOT a substitute for a custom step. Even if the template already includes a deployment step with a similar function (e.g., "Deploy Azure Web App Container"), if the prompt says "Add a step called 'Deploy to Azure Web App'" with a specific package and account, a separate step with exactly the name "Deploy to Azure Web App" and those specific configurations MUST be created.** You will be penalized for omitting any explicitly named step from the prompt. **CRITICAL EXCEPTION: When tenant variables are requested, you MUST add `template` blocks inside the `octopusdeploy_project` resource. These are NOT the same as template steps — `template` blocks define variable variable templates (variable definitions), NOT deployment steps. This is the ONLY time you should add `template` blocks to a new project creation prompt.**
 
 **⚠️ CRITICAL — explicitly named steps MUST match the prompt exactly**: For every "Add a step called 'X'" instruction in the prompt, a `octopusdeploy_process_step` resource with `name = "X"` MUST exist in the Terraform output. Before finalizing, scan each "Add a step" instruction in the prompt and verify a resource with that exact `name` value exists. If any explicitly named step is missing, add it immediately. You will be penalized for each explicitly named step that is absent from the Terraform output.
@@ -2099,7 +2104,7 @@ data "octopusdeploy_tenants" "tenant_australian_office" {
 **CRITICAL — when a new project creation prompt specifies a tenanted deployment mode**, set the `tenanted_deployment_participation` attribute on the `octopusdeploy_project` resource to the appropriate value:
 
 - `"TenantedOrUntenanted"` — set when the prompt says "TenantedOrUntenanted deployments" or "both tenanted and untenanted"
-- `"Tenanted"` — set when the prompt says "tenanted deployments only", "require a tenant for deployment", "force tenants to be used" or "Tenanted"
+- `"Tenanted"` — set when the prompt says "tenanted deployments only", "require a tenant for deployment", "force tenants to be used" or "Tenanted". **The bare wordings "make the project tenanted", "the project is tenanted", "this is a tenanted project" and "tenanted deployments" also mean `"Tenanted"`, NOT `"TenantedOrUntenanted"`.** Only choose `"TenantedOrUntenanted"` when the prompt actually mentions untenanted deployments as well ("both tenanted and untenanted", "tenanted and untenanted", "TenantedOrUntenanted"). Creating a tenant and linking it to the project is NOT on its own a reason to widen the mode to `"TenantedOrUntenanted"` — a prompt that says "make the project tenanted, create a tenant called 'X' and link it to the project" gets `"Tenanted"`.
 - `"Untenanted"` — set when the prompt says "untenanted deployments" or does not mention tenants at all (default)
 
 **When the prompt names a specific tenant** (e.g., "Acme Corp tenant"), you MUST create ALL of the following resources:
@@ -2426,6 +2431,54 @@ resource "octopusdeploy_tenant_common_variable" "tenantcommonvariable5_australia
 * You will be penalized for setting the "library_variable_set_id" property for a "octopusdeploy_tenant_common_variable" resource to an empty string or null.
 
 ## Tenant Tag Instructions
+
+**⚠️ CRITICAL — a tag set name that is a SUBSTRING of an existing tag set kills the whole apply.** `data "octopusdeploy_tag_sets"` matches on `partial_name`, so a lookup for a tag set called "Geo" also returns an existing tag set called "Geography". `count` then evaluates to 0, the "Geo" tag set is never created, its `octopusdeploy_tag` resources are attached to "Geography" instead, and every tenant that references `Geo/EU` fails:
+
+```
+Error: unable to create tenant
+
+  with octopusdeploy_tenant.tenant_checkout_eu[0],
+
+Octopus API error: There was a problem with your request. [Unable to find matching tag from
+canonical tag name or id `Geo/EU`]
+```
+
+This is fatal — the tenants, their project links and everything ordered after them are abandoned. Unlike the equivalent environment collision, which fails silently, this one takes the project's tenanting with it.
+
+**Use the exact-name-match `locals` form for EVERY tag set, exactly as described under `## Environment Uniqueness and Naming Instructions`:**
+
+```hcl
+data "octopusdeploy_tag_sets" "tagset_geo" {
+  ids          = null
+  partial_name = "Geo"
+  skip         = 0
+  take         = 100
+}
+
+locals {
+  # partial_name = "Geo" also returns "Geography", "Geo Region", etc.
+  tagset_geo_matches = [for ts in data.octopusdeploy_tag_sets.tagset_geo.tag_sets : ts if ts.name == "Geo"]
+}
+
+resource "octopusdeploy_tag_set" "tagset_geo" {
+  count = "${length(local.tagset_geo_matches) != 0 ? 0 : 1}"
+  name  = "Geo"
+  lifecycle { prevent_destroy = true }
+}
+
+resource "octopusdeploy_tag" "tagset_geo_tag_eu" {
+  count      = "${length(local.tagset_geo_matches) != 0 ? 0 : 1}"
+  name       = "EU"
+  tag_set_id = "${length(local.tagset_geo_matches) != 0 ? local.tagset_geo_matches[0].id : octopusdeploy_tag_set.tagset_geo[0].id}"
+  color      = "#333333"
+  lifecycle { prevent_destroy = true }
+}
+```
+
+* **Every `octopusdeploy_tenant` that sets `tenant_tags` MUST also set `depends_on` listing every `octopusdeploy_tag` resource whose canonical name it references.** Without it the tenant can be created before the tag exists, producing the same "Unable to find matching tag" failure even when the tag set name does not collide.
+* The same substring hazard applies to every `partial_name` lookup for a resource the prompt names — tag sets, project groups, feeds, accounts, lifecycles and tenants. When the requested name could be contained in another name, use the exact-match `locals` form.
+
+**MANDATORY SELF-CHECK — tenant tags**: for every string in every `tenant_tags` list, confirm the output contains an `octopusdeploy_tag_set` whose `name` is exactly the part before the `/`, an `octopusdeploy_tag` whose `name` is exactly the part after it, that both use the exact-match `locals` count, and that the tenant `depends_on` the tag.
 
 * The "tenant_tags" attribute must be an array with strings that looks like "<tag set name>/<tag name>", for example "Cities/Sydney" or "BU/Sales".
 * You will be penalized for defining an item in the "tenant_tags" array as a single string like "Sydney".
@@ -2972,6 +3025,22 @@ resource "octopusdeploy_project" "project_my_project" {
 
 ## Octopus Project Trigger Instructions
 
+**⚠️ CRITICAL — `once_daily_schedule` is the ONLY schedule block you may write on an `octopusdeploy_project_scheduled_trigger`. Inventing a block name fails at PLAN time, so NOTHING is created — no project, no steps, no variables.** A prompt asking for a monthly, weekly or cron cadence tempts you to invent `monthly_schedule`, `weekly_schedule`, `cron_schedule` or `days_per_month_schedule`. None of them are accepted:
+
+```
+Error: Unsupported block type
+
+  on terraformInput.tf line 577, in resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_compliance_evidence_collector_monthly_evidence_sweep":
+ 577:   monthly_schedule {
+
+Blocks of type "monthly_schedule" are not expected here.
+```
+
+* **Daily** ("every day at 2am", "nightly") → `once_daily_schedule` with `start_time` and all seven `days_of_week`.
+* **Weekly** ("every Monday at 6am", "every Friday at 5pm") → `once_daily_schedule` with `start_time` and ONLY the named day(s) in `days_of_week`. This is the correct way to express a weekly trigger; there is no weekly block.
+* **Monthly, quarterly, cron, "the first day of each month", "every 15 minutes"** → these cadences cannot be expressed. Emit the trigger as a `once_daily_schedule` that runs on the closest workable cadence (typically daily), and say so in the trigger's `description` (for example `"Approximates the requested monthly schedule; Octopus scheduled triggers created here support a daily schedule only."`). A trigger with an approximate schedule is a small shortfall; an invented block name costs the entire project.
+* NEVER write a block name you have not seen in this file or in the example configurations. The trigger is the least important resource in any prompt — it must never be the reason a project fails to be created.
+
 * When defining the "once_daily_schedule" block in the resource "octopusdeploy_project_scheduled_trigger" adhere to the following rules:
   * The "start_time" attribute value should be set to an ISO 8601 formatted string
   * The "timezone" attribute value should be set to a valid "Windows Time Zone Identifier" string.
@@ -3384,9 +3453,11 @@ resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes
     communication_style = "Kubernetes"
   }
 
+  # NEVER leave these empty. The health check container cannot be pulled from the built-in feed,
+  # so the target's container block MUST point at the anonymous "Docker Hub" feed.
   container {
-    feed_id = ""
-    image   = ""
+    feed_id = "${length(data.octopusdeploy_feeds.feed_docker_hub.feeds) != 0 ? data.octopusdeploy_feeds.feed_docker_hub.feeds[0].id : octopusdeploy_docker_container_registry.feed_docker_hub[0].id}"
+    image   = "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04"
   }
 
   authentication {
@@ -3556,8 +3627,9 @@ resource "octopusdeploy_channel" "channel_lambda_hotfixing_hotfix" {
         action_package {
           deployment_action = "deploy-trading-site"
         }
-        tag           = "^hotfix$"
-        version_range = ""
+        tag = "^hotfix$"
+        # NOTE: there is deliberately no `version_range` line here. A rule that filters on a tag
+        # only must OMIT `version_range` entirely — writing `version_range = ""` aborts the apply.
     }
   lifecycle {
     prevent_destroy = true
@@ -3595,7 +3667,24 @@ resource "octopusdeploy_channel" "channel_every_step_project_hotfix" {
 
 * **ABSOLUTE RULE — every `rule` block in an `octopusdeploy_channel` resource MUST have at least one `action_package` block**: The Octopus API enforces this requirement and rejects channels with `rule` blocks that have no `action_package` entries, returning the error "Version rules must specify a package step". If there are no package-based deployment steps to reference (e.g., all steps are `Octopus.KubernetesDeployRawYaml` without package blocks), do NOT add any `rule` block to the channel at all. A channel without a `rule` block is valid and serves as a named channel for triggers.
 * **CRITICAL — `octopusdeploy_channel` resources with `rule` blocks MUST include `depends_on` referencing `octopusdeploy_process_steps_order`**: When a channel has a `rule` block with `action_package` entries that reference deployment action slugs, the slugs must already exist before the channel is created. You MUST add `depends_on = [octopusdeploy_process_steps_order.process_step_order_<project>]` to any channel with a `rule` block to ensure the step slugs are available. You will be penalized for omitting `depends_on` from a channel that has `rule` blocks.
-* You will be penalized for defining a "octopusdeploy_channel" resource with a "rule" block with an empty version, for example: 
+* **⚠️ CRITICAL — an `octopusdeploy_channel` `rule` block MUST NEVER set `version_range = ""` (or `tag = ""`). OMIT the attribute instead.** Octopus stores an empty version range as `null`, so the provider compares what it sent against what came back, sees the value change, and aborts the apply:
+
+```
+Error: Provider produced inconsistent result after apply
+
+When applying changes to octopusdeploy_channel.channel_fraud_scoring_lambda_hotfix[0], provider
+"provider[\"registry.opentofu.org/octopusdeploy/octopusdeploy\"]" produced an unexpected new value:
+.rule[0].version_range: was cty.StringVal(""), but now null.
+```
+
+  * This failure is **fatal and late**: channels are created near the end of the apply, so the project, its steps and its variables are created first and then the run is reported as a failure with the channel — and everything ordered after it — missing.
+  * A rule that filters on a tag only is written with `tag` and NO `version_range` line at all. A rule that filters on a version only is written with `version_range` and NO `tag` line at all.
+  * `version_range = ""` is NOT a way of saying "any version". Omitting the attribute is how you say "any version".
+  * The same reasoning applies to every optional string attribute on a channel `rule`: an attribute you have no real value for is omitted, never set to `""`. This is the same failure mode as an empty `parameters` entry on `octopusdeploy_process_templated_step`.
+
+**MANDATORY SELF-CHECK — no empty channel rule attributes**: before finalizing output, search every `octopusdeploy_channel` resource for `= ""` inside a `rule` block. Delete every line you find. You will be penalized for each `version_range = ""` or `tag = ""` in the output.
+
+* You will be penalized for defining a "octopusdeploy_channel" resource with a "rule" block with an empty version, for example:
 
 ```
 resource "octopusdeploy_channel" "channel_dev_deployment_application" {
@@ -4089,7 +4178,11 @@ resource "octopusdeploy_process_step" "process_step_deploy_helm_chart" {
     "Octopus.Action.Helm.ReleaseName"               = "my-release"
     "Octopus.Action.RunOnServer"                    = "true"
     "OctopusUseBundledTooling"                      = "False"
-    "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+    # "False"/"NoWait"/"False" because this project uses the "Mock K8s" target. Only a project
+    # deployed against a real cluster may use "True" here.
+    "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
+    "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
+    "Octopus.Action.Kubernetes.ServerSideApply.Enabled"  = "False"
     "Octopus.Action.Script.ScriptSource"            = "Package"
   }
 }
@@ -4826,10 +4919,12 @@ git_dependencies = { "" = { default_branch = "master", file_path_filters = null,
   * `"Octopus.Action.KubernetesContainers.CustomResourceYaml"` — the inline YAML content (or a `# TODO:` placeholder)
   * `"Octopus.Action.RunOnServer" = "true"`
   * `"OctopusUseBundledTooling" = "False"`
-  * `"Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"`
+  * `"Octopus.Action.Kubernetes.ServerSideApply.Enabled"` — see the override below
   * `"Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"`
-  * `"Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"`
+  * `"Octopus.Action.Kubernetes.ResourceStatusCheck"` — see the override below
   * `"Octopus.Action.Kubernetes.DeploymentTimeout" = "180"`
+
+  **⚠️ The values of `ServerSideApply.Enabled` and `ResourceStatusCheck` are `"False"`, not `"True"`, in every project that uses the "Mock K8s" target — which is every new project creation prompt that does not supply a real cluster URL.** The `"True"` values shown in the example configurations belong to projects deployed against a real cluster. When the project uses "Mock K8s", the step MUST carry all three of `"Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"`, `"Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"` and `"Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"`, exactly as the CRITICAL rule at the top of this file requires. If you are unsure which applies, use the "Mock K8s" values — the target cannot support the features the `"True"` values turn on, and a deployment against it fails at runtime.
 * **CRITICAL — `Octopus.KubernetesDeployRawYaml` MUST include a `container` block** referencing the GitHub Container Registry feed and the `ghcr.io/octopusdeploylabs/k8s-workertools` image. This applies to BOTH enabled and disabled (TODO placeholder) steps and applies to both Inline script and scripts sources from a git repository:
 ```hcl
 container = {
@@ -4970,6 +5065,14 @@ container = {
 ```
 
 * You will be penalized for omitting the `container` block from any step of the types listed above.
+
+**⚠️ CRITICAL — the `container` block is the WORKER TOOLING image. It is NEVER the application image the prompt asks you to deploy.** When the prompt says "add a Docker container registry feed called 'Portal Images' and use it for the image 'customer/portal'", that image is the thing being DEPLOYED. It belongs in the step's `packages` block (or the step's package properties), with `feed_id` pointing at the prompt's feed. Putting it in the `container` block instead — `container = { feed_id = <prompt feed>, image = "customer/portal" }` — makes Octopus try to RUN the deployment step inside the application image, which has none of the tooling the step needs, and quietly means the application image is never deployed at all.
+
+* The `image` value in a `container` block is ALWAYS one of the `ghcr.io/octopusdeploylabs/*-workertools` images listed above (or `octopusdeploy/worker-tools:...` for a deployment target's health check container). It is never an image name taken from the prompt.
+* The `feed_id` in a `container` block is ALWAYS the GitHub Container Registry feed (or the anonymous "Docker Hub" feed for a target's container). It is never the Docker feed the prompt asked you to create for its application images.
+* A prompt-specified Docker feed and image therefore appear as a `packages` entry; the GHCR feed and worker-tools image appear in `container`. Both feeds exist in the same output, and mixing them up is always wrong.
+
+**MANDATORY SELF-CHECK — container images**: before finalizing output, read the `image` value of every `container` block. If any of them is not a `*-workertools` image (or the target's `octopusdeploy/worker-tools:6.5.0-ubuntu.22.04`), you have put an application image in a container block — move it to `packages` and restore the correct worker-tools image. You will be penalized for each `container` block holding an application image from the prompt.
 * When any Terraform, Azure PowerShell, AWS CLI, or GCP step is present, the Terraform configuration MUST include both a `data "octopusdeploy_feeds" "feed_github_container_registry"` data source AND an `octopusdeploy_docker_container_registry "feed_github_container_registry"` resource with the full idempotency pattern (same requirement as for Kubernetes steps).
 
 * A step of type "Octopus.KubernetesDeployRawYaml" must have property indented YAML content in the "Octopus.Action.KubernetesContainers.CustomResourceYaml" property if the YAML source is set to "Inline YAML".
@@ -5030,9 +5133,12 @@ resource "octopusdeploy_process_step" "process_step_my_project_run_job_manifest"
     "Octopus.Action.Script.ScriptSource"                       = "Inline"
     "Octopus.Action.RunOnServer"                               = "true"
     "OctopusUseBundledTooling"                                 = "False"
-    "Octopus.Action.Kubernetes.ServerSideApply.Enabled"        = "True"
+    # "False"/"NoWait"/"False" because this project uses the "Mock K8s" target. Only a project
+    # deployed against a real cluster may use "True" here.
+    "Octopus.Action.Kubernetes.ServerSideApply.Enabled"        = "False"
     "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-    "Octopus.Action.Kubernetes.ResourceStatusCheck"            = "True"
+    "Octopus.Action.Kubernetes.ResourceStatusCheck"            = "False"
+    "Octopus.Action.KubernetesContainers.DeploymentWait"       = "NoWait"
     "Octopus.Action.Kubernetes.DeploymentTimeout"              = "180"
   }
 }
@@ -5294,6 +5400,31 @@ resource "octopusdeploy_process_step" "process_step_deploy_products_war" {
   * `"Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([])`
 
 ## Octopus step template instructions
+
+**⚠️ CRITICAL — the "Scan for Vulnerabilities" community step template REQUIRES its `Sbom.Package` package parameter. Omitting it aborts the apply.** The template declares a package parameter, and Octopus rejects the step when it is absent:
+
+```
+Error: Unable to create process step
+
+  with octopusdeploy_process_templated_step.process_step_compliance_evidence_collector_v2_scan_evidence_bundle[0],
+
+Octopus API error: There was a problem with your request. [Package parameter 'Sbom.Package' is missing]
+```
+
+Always give the step a `parameters` map containing `Sbom.Package`, exactly as the example configurations do:
+
+```hcl
+  parameters = {
+    "Sbom.Package" = jsonencode({
+      "PackageId" = "com.octopus:octopub-frontend-sbom"
+      "FeedId"    = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id : octopusdeploy_maven_feed.feed_octopus_maven_feed[0].id}"
+    })
+  }
+```
+
+* The referenced feed MUST exist in the output — either the template's `feed_octopus_maven_feed`, or a feed the prompt asked for. The package id may be the project's own SBOM package when the prompt names one.
+* This applies whenever the step is added, including when the prompt renames it (for example "Add a 'Scan for Vulnerabilities' step called 'Scan Evidence Bundle'") and when the project has no other packages at all — a Script project that adds this step still needs the `Sbom.Package` parameter and therefore still needs a feed.
+* The general rule: before adding ANY community step template, check the example configurations for the `parameters` that template requires, and supply every required one. Note that this is the exact opposite of optional parameters, which MUST be omitted rather than set to `""`.
 
 * When the prompt includes instructions to create a community step template and includes a url to https://library.octopus.com/step-templates, you must create both a resource "octopusdeploy_community_step_template" and a data "octopusdeploy_community_step_template" to check for the existence of the community step template before creating it.
 * You will be penalized for creating a "octopusdeploy_process_step" resource instead of a "octopusdeploy_community_step_template" resource when the prompt includes instructions to create a community step template.
@@ -6089,6 +6220,47 @@ git_dependencies {
 
 ## Prompted Variable Select Options Instructions
 
+**⚠️ CRITICAL — a PROMPTED VARIABLE is an `octopusdeploy_variable` with a `prompt` block. It is NEVER a `template` block on the `octopusdeploy_project` resource.** These two things look similar in the Octopus UI and are completely different: a `prompt` block asks the person creating a release for a value; a `template` block declares a per-tenant variable that only tenants can fill in. Emitting a `template` block for a prompted variable produces a project where the variable can never be supplied at release time, and — on an untenanted project — can never be supplied at all.
+
+* Any of these wordings means a `prompt` block on an `octopusdeploy_variable`: "add a prompted variable called 'X'", "prompt for 'X' when a release is created", "'X' must be prompted for", "add a prompt variable", "ask the user for 'X'". None of them is a request for a tenant variable template.
+* A `template` block belongs on the project ONLY when the prompt uses tenant wording: "project tenant variable template", "tenant variable template", "variable template for each tenant", "per-tenant variable".
+* Natural-language option lists count as select options. "with the options 'true' and 'false'", "which can be 'staging' or 'production'", "one of 'blue' or 'green'" all mean `control_type = "Select"` plus one `select_option` block per option — the literal sentence `The variable must have the following selectable options:` is NOT required.
+* A prompted variable still needs a `value` (use the first option, or an empty-string-free sensible default) and still needs its `count` attribute like every other variable.
+
+**Example — the natural-language form "Add a prompted variable called 'Fraud.DryRun' with the options 'true' and 'false'"**:
+
+```hcl
+resource "octopusdeploy_variable" "fraud_scoring_lambda_fraud_dryrun_1" {
+  count    = "${length(data.octopusdeploy_projects.project_fraud_scoring_lambda.projects) != 0 ? 0 : 1}"
+  owner_id = "${length(data.octopusdeploy_projects.project_fraud_scoring_lambda.projects) != 0 ? data.octopusdeploy_projects.project_fraud_scoring_lambda.projects[0].id : octopusdeploy_project.project_fraud_scoring_lambda[0].id}"
+  name     = "Fraud.DryRun"
+  type     = "String"
+  value    = "false"
+  prompt {
+    label       = "Fraud.DryRun"
+    description = "Run the fraud scoring deployment without making changes."
+    is_required = false
+    display_settings {
+      control_type = "Select"
+      select_option {
+        display_name = "true"
+        value        = "true"
+      }
+      select_option {
+        display_name = "false"
+        value        = "false"
+      }
+    }
+  }
+  lifecycle {
+    ignore_changes = [sensitive_value]
+  }
+  depends_on = []
+}
+```
+
+**MANDATORY SELF-CHECK — prompted variables**: for every variable the prompt described as prompted, confirm it appears as an `octopusdeploy_variable` with a `prompt` block, and confirm it does NOT appear as a `template` block on the `octopusdeploy_project` resource. You will be penalized for each prompted variable emitted as a project template block.
+
 * When the prompt includes `The variable must have the following selectable options: <option1>, <option2>, ...` for a project variable, the corresponding `octopusdeploy_variable` resource MUST use `control_type = "Select"` in its `display_settings` block and MUST include one `select_option` block for each option.
 * Each `select_option` block must set both `display_name` and `value` to the option string from the prompt.
 
@@ -6810,6 +6982,57 @@ You will be penalized for omitting environments that were explicitly named in th
 
 **NOTE**: Template environments (such as "Security") may still be created if they are required by a template lifecycle (e.g., DevSecOps). However, these must NOT replace or rename the explicitly requested environments.
 
+**⚠️ CRITICAL — `partial_name` is a SUBSTRING match, so the standard `count` pattern SILENTLY SKIPS an environment whose name is contained in an existing one.** This is the single most common way a correctly named environment still fails to appear. `data "octopusdeploy_environments"` with `partial_name = "Dev"` returns the existing "Development" environment, so `length(...environments) != 0` is true, `count` evaluates to 0, and the `octopusdeploy_environment` resource named "Dev" is NEVER CREATED. Every ternary that references it then resolves to "Development" instead. The apply succeeds, so nothing looks wrong — but the lifecycle phase, the variable scopes and the tenant links all point at the wrong environment, and the environment the prompt asked for does not exist.
+
+Observed instances — each of these prompt names collides with an environment that already exists in most spaces:
+
+| Prompt asks for | `partial_name` also matches | Result without the fix |
+| --- | --- | --- |
+| `Dev` | `Development`, `DevSecOps` | "Dev" never created; phases bind to "Development" |
+| `Prod` | `Production` | "Prod" never created; phases bind to "Production" |
+| `Stage` | `Staging` | "Stage" never created |
+| `Prod 10` | `Prod 100` | "Prod 10" never created when "Prod 100" already exists |
+| `Test` | `Testing`, `Test Automation` | "Test" never created if a longer name exists |
+
+**The fix — filter the data source down to an EXACT name match with a `locals` block**, and use that local in the `count` and in every ternary that references the environment:
+
+```hcl
+data "octopusdeploy_environments" "environment_dev" {
+  ids          = null
+  partial_name = "Dev"
+  skip         = 0
+  take         = 100     # take 100, not 1: the exact match may not be the first substring match
+}
+
+locals {
+  # partial_name = "Dev" also returns "Development" and "DevSecOps", so filter to an exact match.
+  environment_dev_matches = [for env in data.octopusdeploy_environments.environment_dev.environments : env if env.name == "Dev"]
+}
+
+resource "octopusdeploy_environment" "environment_dev" {
+  count = "${length(local.environment_dev_matches) != 0 ? 0 : 1}"
+  name  = "Dev"
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
+Every reference to that environment then uses the same local:
+
+```hcl
+"${length(local.environment_dev_matches) != 0 ? local.environment_dev_matches[0].id : octopusdeploy_environment.environment_dev[0].id}"
+```
+
+* **Use this exact-match form for EVERY environment in the output, unconditionally.** Do not try to judge whether a collision is likely: you cannot see which environments the target space already contains, and the collision is invisible when it happens. A space that already holds "Ledger Live" silently swallows a request for an environment called "Live"; a space holding "Prod 100" swallows "Prod 10". The exact-match form behaves identically when there is no collision, so it is always the correct choice and never costs anything.
+* This applies whether the environment is named in a "Create environments called ..." instruction or merely referenced by a lifecycle phase, a variable scope, a step scope, or a tenant link.
+* **It applies to EVERY prompt type, not just new project creation.** A prompt that only adds a runbook to an existing project ("Create a runbook called 'Rotate Warehouse Credentials' in the project 'Warehouse Sync Service' … the runbook must only run in the 'Stage' and 'Prod' environments") resolves those environment names the same way, and has the same collision. This has been observed: the runbook was scoped to the pre-existing "Production" environment instead of the project's own "Prod" environment, because `partial_name = "Prod"` returned "Production" first. Any lookup of an environment by name — in a runbook's `environments` list, a step's `environments`/`excluded_environments`, a scheduled trigger, or a tenant project link — uses the exact-match form.
+* Do NOT solve the collision by renaming the environment to the one that already exists. "Dev" and "Development" are different environments, and the prompt asked for "Dev".
+* Do NOT solve it by dropping the `count` attribute — every `octopusdeploy_environment` still needs `count`, as described above.
+* A single `locals` block may hold the filtered lists for every environment in the output; do not emit one `locals` block per environment.
+
+**MANDATORY SELF-CHECK — environment substring collisions**: before finalizing output, list every environment name the prompt asked for. For each one, check whether it is a substring of any other environment name in your output or of `Development`, `Production`, `Staging`, `Security` or `DevSecOps`. For every name where it is, confirm the environment uses the `locals` exact-match pattern above in its `count` and in EVERY ternary that references it. You will be penalized for each prompt-named environment that is absent from the created resources because a substring match suppressed it.
+
 ## Security Environment Exclusion for Kubernetes Steps
 
 **MANDATORY — Kubernetes deploy steps must exclude the Security environment when the project uses the DevSecOps lifecycle**: When a project uses the DevSecOps lifecycle (which includes a Security environment used for daily security scanning), Kubernetes deployment steps (`Octopus.KubernetesDeployRawYaml`, `Octopus.KubernetesRunScript`, `Octopus.HelmChartUpgrade`, `Octopus.Kubernetes.Kustomize`, etc.) MUST set `excluded_environments` to include the Security environment ID. The Security environment is only used for vulnerability scanning (the "Scan for Vulnerabilities" step), not for actual Kubernetes deployments.
@@ -6877,10 +7100,30 @@ resource "octopusdeploy_variable" "my_project_connection_string_production" {
 
 **When a variable has NO scope restriction**, do NOT include a `scope` block at all — omit it entirely rather than including an empty `scope {}` block.
 
+**⚠️ CRITICAL — NEVER scope a variable to the project's built-in "Default" channel, and NEVER let ANY scope list contain an empty string.** A project's "Default" channel is created by Octopus as a side effect of creating the project, so a `data "octopusdeploy_channels"` lookup for it returns nothing while the same apply is running. The usual ternary then resolves to `""`, and the variable is submitted with `channels = [""]`. Octopus silently drops the empty channel from the scope, the provider retries the create, and the second attempt collides with the first:
+
+```
+Error: create variable failed
+
+  with octopusdeploy_variable.telemetry_collector_service_telemetry_endpoint_1[0],
+
+Octopus API error: There was a problem with your request. [These variables have the same name and
+scope. Remove the duplicates before saving: 'Telemetry.Endpoint' scoped to [Environment = (Environments-11032)]]
+```
+
+This kills the apply, so the variable AND everything ordered after it is lost. Therefore:
+
+* When the prompt scopes a variable to the **"Default" channel**, IGNORE the channel part of the scope and scope the variable to the environments, tenant tags or target tags it also names. If the channel was the only scope, emit the variable with NO `scope` block. The Default channel applies to every release anyway, so nothing is lost.
+* Scope a variable to a channel ONLY when that channel is a named `octopusdeploy_channel` resource created in the same output (for example a "Hotfix" or "Canary" channel the prompt asked for), and reference it as `channels = ["${octopusdeploy_channel.channel_my_project_hotfix[0].id}"]`.
+* More generally: every list inside a `scope` block — `environments`, `channels`, `tenant_tags`, `roles`, `machines` — MUST contain only non-empty values. If a ternary you are about to write could resolve to `""`, drop that scope dimension instead.
+
+**MANDATORY SELF-CHECK — no empty scope entries**: before finalizing output, read every `scope` block. Confirm no list contains `""`, and confirm no `channels` entry resolves through a `data.octopusdeploy_channels` lookup for a channel named "Default". You will be penalized for each variable scoped to the Default channel and for each empty string in a scope list.
+
 **You will be penalized for**:
 - Defining a `scope {}` block with no attributes inside it (empty scope)
 - Omitting the `scope` block when the prompt specifies that a variable should be scoped to specific environments
 - Including incorrect or non-existent environment names in the `scope` block
+- Scoping a variable to the built-in "Default" channel, or emitting any scope list containing an empty string
 
 ## Kubernetes Step Worker Pool for New Project Creation Prompts
 
@@ -6998,6 +7241,10 @@ You will be penalized for generating a project containing Kubernetes steps with 
     ```
     * You will be penalized for using any other account type (e.g., AWS, Azure, username/password) for the "Mock K8s" target.
     * YOU MUST link the token account to any tenants.
+    * **⚠️ NAME THE TARGET AFTER THE TARGET TAG IT SERVES when the project uses any target tag other than plain "Kubernetes".** Call it `Mock K8s <target tag>` — for example a project whose steps target `llm-cluster` gets a target named "Mock K8s llm-cluster". Naming every mock target "Mock K8s" breaks the moment a space already contains one: the `data "octopusdeploy_deployment_targets"` lookup finds the existing "Mock K8s", `count` evaluates to 0, no target is created, and the target that DOES exist carries some other project's tags. The apply succeeds and the new project is left with no target that matches its steps at all — the exact failure the whole pattern exists to prevent. This has been observed: a project deploying to `llm-cluster` reused a "Mock K8s" target whose roles were `["Kubernetes", "storefront-cluster"]`.
+      * The `roles` list still contains EVERY target tag the project's Kubernetes steps use, plus `"Kubernetes"`.
+      * The data source paired with the target uses the same tag-qualified `partial_name`, so re-running the same prompt is still idempotent.
+      * Use the bare name "Mock K8s" only when the project's Kubernetes steps use no target tag other than "Kubernetes".
     * YOU MUST create a feed called "Docker Hub" pointing to "https://index.docker.io" using anonymous authentication.
     * You will be penalized for defining any authentication credentials for the "Docker Hub" feed. It must be anonymous.
     * YOU MUST add a target called "Mock K8s", with the tag "Kubernetes", using the token account, pointing to "https://mockk8s.octopusdemos.com", using the health check image "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04" from the "Docker Hub" feed, using the worker pool "Hosted Ubuntu".
