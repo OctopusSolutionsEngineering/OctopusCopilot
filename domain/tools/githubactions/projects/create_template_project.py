@@ -14,7 +14,10 @@ from domain.octopus.authorization import get_auth
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.escape_messages import escape_message
 from domain.sanitizers.markdown_remove import remove_markdown_code_block
-from domain.sanitizers.sanitize_strings import empty_if_none
+from domain.sanitizers.sanitize_strings import (
+    empty_if_none,
+    to_lower_case_strip_or_none,
+)
 from domain.sanitizers.terraform import (
     sanitize_kubernetes_yaml_step_config,
     sanitize_account_type,
@@ -240,6 +243,7 @@ def create_template_project_callback(
 
     :param octopus_details: A function to get the Octopus server URL and credentials
     :param github_user: The github user id
+    :param region: The region name (US, Europe, or None/empty)
     :param connection_string: The connection string to the storage account
     :param log_query: A logging function
     :param general_examples: The RowKeys that contain general examples of Octopus projects in Terraform. This can be an empty list when using an LLM that has been fine-tuned on Octopus Deploy projects.
@@ -491,9 +495,11 @@ def get_project_gen_purpose(region=None):
     :param region: The region name (US_REGION, EUROPE_REGION, or None/empty)
     :return: The purpose string for the LLM
     """
-    if region == US_REGION:
+    fixed_region = to_lower_case_strip_or_none(region)
+
+    if fixed_region == US_REGION.lower():
         purpose = os.getenv("PROJECT_GEN_US_SERVICE")
-    elif region == EUROPE_REGION:
+    elif fixed_region == EUROPE_REGION.lower():
         purpose = os.getenv("PROJECT_GEN_EUROPE_SERVICE")
     else:
         purpose = os.getenv("PROJECT_GEN_SERVICE")
