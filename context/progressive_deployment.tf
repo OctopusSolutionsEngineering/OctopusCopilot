@@ -281,10 +281,10 @@ resource "octopusdeploy_process_step" "process_step_progressive_deployment_deplo
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "echo \"Deploying app\""
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptBody" = "echo \"Deploying app\""
       }
 }
 
@@ -307,7 +307,6 @@ resource "octopusdeploy_process_step" "process_step_progressive_deployment_simul
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = <<EOT
@@ -316,6 +315,7 @@ if ($OctopusParameters["Project.SimulateFail"] -eq "True") {
   exit 1
 }
 EOT
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -342,21 +342,21 @@ resource "octopusdeploy_process_templated_step" "process_step_progressive_deploy
         "Octopus.Action.RunOnServer" = "true"
       }
   parameters            = {
-        "Run.Runbook.Environment.Name" = "#{if Octopus.Environment.Name == \"Prod 10\"}Prod 50#{/if}#{if Octopus.Environment.Name == \"Prod 50\"}Prod 100#{/if}"
-        "Run.Runbook.Waitforfinish" = "False"
-        "Run.Runbook.Project.Name" = "#{Octopus.Project.Name}"
-        "Run.Runbook.Base.Url" = "#{Octopus.Web.ServerUri}"
-        "Run.Runbook.Machines" = "N/A"
+        "Run.Runbook.PromptedVariables" = "Project.Release.Id::#{Octopus.Release.Id}"
         "Run.Runbook.CustomNotes.Toggle" = "False"
-        "Run.Runbook.DateTime" = "N/A"
-        "Run.Runbook.Name" = "Deploy Release"
-        "Run.Runbook.Api.Key" = "#{Project.Octopus.Api.Key}"
         "Run.Runbook.ManualIntervention.EnvironmentToUse" = "#{Octopus.Environment.Name}"
         "Run.Runbook.CancelInSeconds" = "1800"
-        "Run.Runbook.Space.Name" = "#{Octopus.Space.Name}"
-        "Run.Runbook.UsePublishedSnapShot" = "False"
+        "Run.Runbook.Waitforfinish" = "False"
+        "Run.Runbook.Base.Url" = "#{Octopus.Web.ServerUri}"
+        "Run.Runbook.Project.Name" = "#{Octopus.Project.Name}"
+        "Run.Runbook.Api.Key" = "#{Project.Octopus.Api.Key}"
+        "Run.Runbook.DateTime" = "N/A"
         "Run.Runbook.AutoApproveManualInterventions" = "No"
-        "Run.Runbook.PromptedVariables" = "Project.Release.Id::#{Octopus.Release.Id}"
+        "Run.Runbook.Name" = "Deploy Release"
+        "Run.Runbook.UsePublishedSnapShot" = "False"
+        "Run.Runbook.Environment.Name" = "#{if Octopus.Environment.Name == \"Prod 10\"}Prod 50#{/if}#{if Octopus.Environment.Name == \"Prod 50\"}Prod 100#{/if}"
+        "Run.Runbook.Space.Name" = "#{Octopus.Space.Name}"
+        "Run.Runbook.Machines" = "N/A"
       }
 }
 
@@ -364,25 +364,6 @@ resource "octopusdeploy_process_steps_order" "process_step_order_progressive_dep
   count      = "${length(data.octopusdeploy_projects.project_progressive_deployment.projects) != 0 ? 0 : 1}"
   process_id = "${length(data.octopusdeploy_projects.project_progressive_deployment.projects) != 0 ? null : octopusdeploy_process.process_progressive_deployment[0].id}"
   steps      = ["${length(data.octopusdeploy_projects.project_progressive_deployment.projects) != 0 ? null : octopusdeploy_process_step.process_step_progressive_deployment_deploy_app[0].id}", "${length(data.octopusdeploy_projects.project_progressive_deployment.projects) != 0 ? null : octopusdeploy_process_step.process_step_progressive_deployment_simulate_failure[0].id}", "${length(data.octopusdeploy_projects.project_progressive_deployment.projects) != 0 ? null : octopusdeploy_process_templated_step.process_step_progressive_deployment_run_octopus_deploy_runbook[0].id}"]
-}
-
-resource "octopusdeploy_variable" "progressive_deployment_project_release_id_1" {
-  count        = "${length(data.octopusdeploy_projects.project_progressive_deployment.projects) != 0 ? 0 : 1}"
-  owner_id     = "${length(data.octopusdeploy_projects.project_progressive_deployment.projects) == 0 ?octopusdeploy_project.project_progressive_deployment[0].id : data.octopusdeploy_projects.project_progressive_deployment.projects[0].id}"
-  name         = "Project.Release.Id"
-  type         = "String"
-  is_sensitive = false
-
-  prompt {
-    description = ""
-    label       = ""
-    is_required = true
-  }
-  lifecycle {
-    ignore_changes  = [sensitive_value]
-    prevent_destroy = true
-  }
-  depends_on = []
 }
 
 data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {
@@ -444,6 +425,35 @@ resource "octopusdeploy_variable" "progressive_deployment_project_simulatefail_1
     display_settings {
       control_type = "Checkbox"
     }
+  }
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
+resource "octopusdeploy_variable" "progressive_deployment_project_release_id_1" {
+  count        = "${length(data.octopusdeploy_projects.project_progressive_deployment.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_progressive_deployment.projects) == 0 ?octopusdeploy_project.project_progressive_deployment[0].id : data.octopusdeploy_projects.project_progressive_deployment.projects[0].id}"
+  name         = "Project.Release.Id"
+  type         = "String"
+  is_sensitive = false
+
+  prompt {
+    description = ""
+    label       = ""
+    is_required = false
+  }
+
+  scope {
+    actions      = null
+    channels     = null
+    environments = null
+    machines     = null
+    roles        = null
+    tenant_tags  = null
+    processes    = ["${length(data.octopusdeploy_projects.project_progressive_deployment.projects) != 0 ? null : octopusdeploy_runbook.runbook_progressive_deployment_deploy_release[0].id}"]
   }
   lifecycle {
     ignore_changes  = [sensitive_value]
