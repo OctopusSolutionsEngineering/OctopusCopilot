@@ -1790,6 +1790,13 @@ phase {
 * Octopus retention is a property of the LIFECYCLE, not of the project, and `retention_policy` on `octopusdeploy_project` is forbidden. So when several projects in one prompt share a lifecycle and the prompt asks for retention on one of them, write the requested policy onto that shared lifecycle. Applying it once is correct — do not create a duplicate lifecycle, and do not drop the instruction because the lifecycle is shared.
 * Only when the project's lifecycle is the Default Lifecycle is dropping the retention instruction correct.
 
+**⚠️ CRITICAL — "the project's lifecycle" means the lifecycle in `octopusdeploy_project.lifecycle_id`, NOT a channel's lifecycle.** When the output contains more than one `octopusdeploy_lifecycle` resource — which is the norm as soon as the prompt adds a channel — the retention instruction belongs on the one the PROJECT resource points at. Putting it on a channel's lifecycle leaves the project itself running the template default, so the instruction is effectively lost.
+
+* **Observed failure**: a Lambda prompt said `Set the retention policy of the project's lifecycle to keep 17 releases and 34 days of files` and also asked for `a channel called "HighRes" that uses a new lifecycle called "HighRes Lifecycle"`. The project was bound to the template's `DevSecOps` lifecycle, but `17 Items` / `34 Days` was written onto `HighRes Lifecycle`, and `DevSecOps` was given an invented `5 Days` / `5 Days`.
+* **Do NOT invent retention values for a lifecycle the prompt said nothing about.** A lifecycle with no retention instruction keeps the values from the example configuration it came from. Inventing `5 Days` or any other figure silently changes behaviour the prompt never asked to change.
+
+**MANDATORY SELF-CHECK — retention lands on the right lifecycle**: before finalizing output, read `lifecycle_id` on the `octopusdeploy_project` resource and note which `octopusdeploy_lifecycle` it names. Confirm the prompt's retention figures appear on THAT lifecycle. Then check every other `octopusdeploy_lifecycle` in the output and confirm its retention blocks match the example configuration rather than a value you chose. You will be penalized for writing the retention policy onto a lifecycle other than the project's, and for inventing retention figures the prompt did not give.
+
 **⚠️ CRITICAL — do NOT default to 30 Days when the prompt specifies items**: If the prompt says "Set the retention policy to 5 items", the lifecycle MUST use `quantity_to_keep = 5` and `unit = "Items"`. Setting `quantity_to_keep = 30` and `unit = "Days"` is WRONG — it ignores the prompt instruction.
 
 **⚠️ CRITICAL — a two-part retention prompt sets the two policies INDEPENDENTLY**: A prompt of the form "retain N releases and M days of files", "keep N releases and M days of packages", or "retention of N releases and M days" describes TWO separate policies with TWO different units, and each must be resolved on its own:
@@ -4548,6 +4555,52 @@ to run. Providing a package is not valid for inline scripts.]
 A step matching neither shape — in particular one with no `ScriptSource` property at all — will fail the apply. You will be penalized for each script step that carries a package without stating its `ScriptSource`, and for each `ScriptSource = "Package"` step that omits `Octopus.Action.Script.ScriptFileName`.
 
 * Steps of type "Octopus.AzureAppService" must have at least one item in the "target_roles" attribute.
+
+**⚠️ CRITICAL — TARGET-BASED step types MUST carry a non-empty `"Octopus.Action.TargetRoles"` in their STEP-LEVEL `properties` block. Omitting it aborts the apply**, abandoning every resource ordered after the step:
+
+```
+Error: Unable to create process step
+
+  with octopusdeploy_process_step.process_step_reporting_app_stage_archive[0],
+
+Octopus API error: There was a problem with your request. [Please select one or more target
+tags that 'Stage Archive' step will apply to.]
+```
+
+These step types run ON a deployment target and ALWAYS require a target tag (every occurrence in the `everystep.tf` example configuration has one):
+
+* `Octopus.IIS`
+* `Octopus.WindowsService`
+* `Octopus.JavaArchive`
+* `Octopus.TentaclePackage`
+* `Octopus.AzureWebApp`
+* `Octopus.KubernetesDeployRawYaml`
+* `Octopus.KubernetesRunScript`
+* `Octopus.HelmChartUpgrade`
+* `Octopus.Kubernetes.Kustomize`
+* `Octopus.TomcatDeploy`
+* `Octopus.TransferPackage`
+
+* **A worker pool is NOT a substitute for a target tag on these step types.** **Observed failure**: the prompt `Add a "Deploy Java Archive" step called "Stage Archive" … * Create a worker pool called "Reporting Pool" and run the "Stage Archive" step on it` produced a `Octopus.JavaArchive` step with a worker pool and no target roles, and the apply aborted with the error above.
+
+**⚠️ CRITICAL — do NOT put a worker pool on a target-based step. It runs ON THE TARGET, and assigning a worker pool aborts the apply.** None of the target-based steps in any example configuration set `worker_pool_id` or `worker_pool_variable`. When one is assigned anyway, Octopus flips `Octopus.Action.RunOnServer` to reflect running on a worker, the value the provider reads back differs from the one it sent, and OpenTofu aborts:
+
+```
+Error: Provider produced inconsistent result after apply
+
+When applying changes to octopusdeploy_process_step.process_step_reporting_app_stage_archive[0],
+provider "provider[\"registry.opentofu.org/octopusdeploy/octopusdeploy\"]" produced an
+unexpected new value: .execution_properties: new element "Octopus.Action.RunOnServer" has
+appeared.
+```
+
+* **When a prompt asks for a target-based step to run on a named worker pool, that instruction cannot be satisfied — IGNORE the worker pool for that step** and keep the target tag. Still create the `octopusdeploy_static_worker_pool` resource if the prompt asked for the pool to exist, and still apply it to steps that legitimately run on a worker (`Octopus.Script` with `RunOnServer = "true"`, `Octopus.Aws*`, `Octopus.Terraform*`, `Octopus.AzurePowerShell`, Kubernetes steps using `worker_pool_variable`). Note this instruction in the step's `notes` the same way you would any other feature that has no Octopus equivalent.
+* If a target-based step must nevertheless carry a worker pool, `"Octopus.Action.RunOnServer"` MUST be stated explicitly in its `execution_properties` so the submitted and read-back values agree.
+* When the prompt names one target tag for the project (for example "deploy to targets tagged `reporting-tomcat`"), apply that same tag to EVERY target-based step in the process unless the prompt gives a different tag for a particular step.
+* The target tag goes in the step-level `properties` block, NOT in `execution_properties`, and NOT in a `target_roles` attribute on the step resource.
+* Step types that run on the server or a worker — `Octopus.Manual`, `Octopus.Email`, `Octopus.DeployRelease`, `Octopus.Terraform*`, `Octopus.Aws*`, `Octopus.AzurePowerShell`, `Octopus.ArgoCD*`, `Octopus.Claude` — must NOT be given a target tag unless the prompt asks for one. `Octopus.Script` takes one only when the prompt says it runs against targets.
+
+**MANDATORY SELF-CHECK — target tags on target-based steps**: before finalizing output, find every step whose `type` appears in the list above. For EACH one, confirm its step-level `properties` block contains a non-empty `"Octopus.Action.TargetRoles"`. An empty `properties = {}` on such a step is ALWAYS wrong. You will be penalized for each target-based step with no target tag.
 * Steps of type "Octopus.AwsUploadS3" must have a "Octopus.Action.AwsAccount.Variable" property in the "execution_properties" block.
 * Steps of the following types must have a "primary_package" block:
    * "Octopus.IIS"
@@ -5916,12 +5969,17 @@ parameters      = [{ default_sensitive_value = null,, display_settings = { "Octo
 
 **⚠️ CRITICAL — an Octostache expression QUOTED IN THE PROMPT must be copied through verbatim. NEVER resolve it to a literal value.** `#{...}` is evaluated by Octopus at deployment time; substituting what you think it will evaluate to hard-codes one environment's value into the project and destroys the behaviour the prompt asked for. The apply succeeds, so the loss is silent.
 
+**⚠️ `#{Octopus.Environment.Name}` IS THE SINGLE MOST FREQUENTLY BROKEN EXPRESSION. It is substituted with the literal string `Production`.** This has been observed three separate times, in three different properties, in three different project types. `#{Octopus.Environment.Name}` is a system variable that resolves to a DIFFERENT value in every environment — that is the entire point of using it — so replacing it with `Production` is never a valid simplification. Whenever the prompt contains the characters `#{Octopus.Environment.Name}`, the output must contain those same characters.
+
 **Observed failures**:
 
 | Prompt said | What was generated | Why it is wrong |
 | --- | --- | --- |
+| `the subject "Ledger Service deployed to #{Octopus.Environment.Name}"` | `"Octopus.Action.Email.Subject" = "Ledger Service deployed to Production"` | every environment's email now claims it deployed to Production |
 | `the Terraform variable "region" with the value "#{Octopus.Environment.Name}"` | `"region" = "Production"` | the variable is now pinned to Production in every environment |
 | `only runs when the variable expression "#{unless Octopus.Deployment.Error}True#{/unless}"` | `"Octopus.Step.ConditionVariableExpression" = "True"` | the step now always runs, including after a failure |
+
+The failures are NOT caused by an inability to emit Octostache — the same responses correctly emit `#{Octopus.Release.Number}`, `#{Octopus.Version.LastMajor}`, `#{Client.SiteName}` and `#{Octopus.Action[My Step].Output.Foo}`. They happen specifically where the expression is one whose value you can guess. Guessing is exactly what must not happen.
 
 * This applies everywhere a prompt quotes an expression: step properties, Terraform template parameters, script bodies, variable values, package IDs, image tags, YAML content, email subjects, and channel and step names. If the prompt put `#{` and `}` around something, the output must contain the same characters.
 * It applies equally to expressions containing helpers — `#{if ...}`, `#{unless ...}`, `#{each ...}`, `#{ ... | Contains "x"}` — and to output-variable references such as `#{Octopus.Action[My Step].Output.Foo}`.

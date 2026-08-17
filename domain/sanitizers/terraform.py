@@ -1,5 +1,6 @@
 import os
 import re
+import uuid
 
 from lxml.html.diff import fixup_ins_del_tags
 
@@ -188,6 +189,19 @@ def replace_passwords(config):
     return re.sub(
         r'password\s*=\s*".*?"',
         'password = "CHANGE ME"',
+        config,
+    )
+
+
+def replace_secrets(config):
+    """
+    Replace the value of any property called "secret" with a GUID. Properties like "secret_key" or
+    "client_secret" are left alone, as is any text that happens to contain the word "secret".
+    """
+
+    return re.sub(
+        r'(?<![\w.])secret\s*=\s*".*?"',
+        lambda match: f'secret = "{uuid.uuid4()}"',
         config,
     )
 

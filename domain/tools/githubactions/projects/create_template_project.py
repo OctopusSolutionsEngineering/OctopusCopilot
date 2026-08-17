@@ -59,6 +59,7 @@ from domain.sanitizers.terraform import (
     has_mock_git_resources,
     set_mock_git_credential,
     replace_token, set_mock_certificate,
+    replace_secrets,
 )
 from domain.tools.debug import get_params_message
 from domain.url.hostname import get_hostname_from_url
@@ -758,6 +759,8 @@ def sanitize_configuration(configuration):
     configuration = replace_passwords(configuration)
     # Replace anything that looks like a token
     configuration = replace_token(configuration)
+    # Replace anything that looks like a secret
+    configuration = replace_secrets(configuration)
     # Fix up invalid resource and data names
     configuration = replace_resource_names_with_digit(configuration)
     # The certificate data needs to be valid but generic to prevent leaking sensitive information
