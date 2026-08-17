@@ -504,7 +504,53 @@ resource "octopusdeploy_community_step_template" "communitysteptemplate_scan_for
   * **A prompt-supplied variable masks the missing template variables.** The same prompt asked for `Claims.AppPool`, so the variable list was non-empty while `Project.WorkerPool` was gone. "The project has variables" is not the check; "every template variable is present" is.
 * The correct output for that prompt is FIVE deployment steps — the three template steps plus the two the prompt named — not three.
 
-**MANDATORY SELF-CHECK — template baseline present**: Before finalizing output, identify the project type template for this prompt and **write out the list of its step names**. Then, for EACH template step name in that list, confirm a corresponding `octopusdeploy_process_step` or `octopusdeploy_process_templated_step` resource exists in your output. This is a name-by-name check, not a count: a step is only accounted for by a resource that plays the same role in the process, and one template step cannot satisfy two entries in the list. Do the same for the template's variables and its scheduled trigger. If the ONLY template step you can account for is the deploy step, you have dropped the baseline — STOP and add the missing template steps, environments, variables and trigger before responding. You will be penalized for each template step, template environment, template variable and template trigger that is missing from a new project creation prompt that named its own steps.
+* **⚠️ Observed output, a fourth time — ZERO template steps survived, so the project cannot deploy the thing it is named after.** A prompt reading `Create a Windows service project called "Telemetry Collector" ...`, naming a `Stop Collector` script step and a `Start Collector` script step, produced a deployment process of EXACTLY TWO steps: `Stop Collector` and `Start Collector`. All three Windows Service template steps — `Deploy a Windows Service`, `Print Message when No Targets`, `Scan for Vulnerabilities` — were absent. The result is a "Windows service project" containing no `Octopus.WindowsService` step: it stops a service and starts it again, and never installs one.
+* **This is the extreme form of the failure, and the earlier tells do NOT catch it.** The characteristic pattern described above is "the prompt's own named steps PLUS EXACTLY ONE template step (the deploy step)". Here even the deploy step was dropped, so a check looking for "only one template step remaining" finds zero and reads as inapplicable. Note also that the template's `Project.WorkerPool` variable WAS created — so a check on template *variables* passed while every template *step* was missing. Passing the variable check tells you nothing about the step check.
+
+* **⚠️ ABSOLUTE STRUCTURAL RULE — every project type's DEFINING STEP TYPE must appear in the finished deployment process.** This is the cheapest possible check and it catches the total-loss case above. A project of a given type MUST contain at least one step of that type's defining `ActionType`:
+
+| Prompt says | The process MUST contain a step of type |
+| --- | --- |
+| Windows service project | `Octopus.WindowsService` |
+| IIS project | `Octopus.IIS` |
+| Tomcat project | `Octopus.TomcatDeploy` |
+| Azure Web App project | `Octopus.AzureWebApp` |
+| Kubernetes / canary / wave / progressive project | `Octopus.KubernetesDeployRawYaml` (or `Octopus.HelmChartUpgrade`) |
+| AWS Lambda project | `Octopus.AwsUploadS3` + `Octopus.AwsRunCloudFormation` |
+| Terraform project | `Octopus.TerraformApply` |
+| Script project | `Octopus.Script` |
+
+* Script steps the prompt asked for NEVER satisfy this. `Stop Collector` and `Start Collector` are `Octopus.Script`; neither is an `Octopus.WindowsService` step, and two of them do not add up to one. A prompt that says "stop the service" and "start the service" is describing steps that go AROUND the deployment, not steps that REPLACE it.
+* The only exception is a prompt that explicitly asks for a project with no steps ("an empty project", "a blank project", "with no steps" and no subsequent "Add a step" instructions).
+
+**MANDATORY SELF-CHECK — defining step type present**: before finalizing output, read the project type from the first line of the prompt, look up its defining `ActionType` in the table above, and search your output for a step of that type. If there is no match, you have dropped the template baseline entirely — STOP and add the template's steps before responding. Do this check FIRST, before the name-by-name check below, because it is a single lookup and it catches the most damaging version of this failure.
+
+**THE TEMPLATE BASELINE STEP LISTS. Do not reconstruct these from memory — copy the row for your project type and tick every name off.** These are the complete step lists of the project type templates, in order. A new project creation prompt MUST produce EVERY step in its row, PLUS every step the prompt itself named.
+
+| Project type | Template steps that MUST ALL be present |
+| --- | --- |
+| Script | `Hello World` |
+| IIS | `Deploy to IIS`, `Print Message when No Targets`, `Scan for Vulnerabilities` |
+| Windows Service | `Deploy a Windows Service`, `Print Message when No Targets`, `Scan for Vulnerabilities` |
+| Terraform | `Plan to apply a Terraform template`, `Approve Plan`, `Apply a Terraform template` |
+| Kubernetes | `Approve Production Deployment`, `Octopus - Check Targets Available`, `Deploy a Kubernetes Web App via YAML`, `Scan for Vulnerabilities` |
+| Kubernetes LLM | `Approve Production Deployment`, `Deploy a Kubernetes LLM Web App via YAML`, `Smoke Test`, `Print Message When no Targets`, `Scan for Vulnerabilities` |
+| Tomcat | `Approve Production Deployment`, `Octopus - Check Targets Available`, `Octopus - Check SMTP Server Configured`, `Deploy to Tomcat via Manager`, `Scan for Vulnerabilities`, `Deployment Success Notification` |
+| Azure Web App | `Manual Intervention Required`, `Validate setup`, `Octopus - Check SMTP Server Configured`, `Deploy Azure Web App Container`, `Smoke test`, `Scan for Vulnerabilities`, `Send deployment failure notification` |
+| Azure Function | `Manual Intervention Required`, `Validate setup`, `Octopus - Check SMTP Server Configured`, `Deploy the Function App`, `Smoke test`, `Scan for Vulnerabilities`, `Send deployment failure notification` |
+| AWS Lambda | `Approve Production Deployment`, `Octopus - Check SMTP Server Configured`, `Attempt Login`, `Validate Setup`, `Upload Lambda`, `Deploy Lambda SAM template`, `Scan for Vulnerabilities`, `Deployment Success Notification` |
+| Argo CD Modify/Update Manifest | `Approve Production Deployment`, `Octopus - Check SMTP Server Configured`, `Octopus - Check for Argo CD Instances`, `Update Argo CD Application Manifests`, `Link to repo`, `Scan for Vulnerabilities`, `Send an Email on Deployment Failed` |
+| Argo CD Image Tag Update | `Approve Production Deployment`, `Octopus - Check for Argo CD Instances`, `Octopus - Check SMTP Server Configured`, `Update Argo CD Application Image Tags`, `Scan for Vulnerabilities`, `Send an Email (Deployment failed)` |
+| VM Blue/Green | `Octopus - Check Blue Green Deployment`, `Approve Production Deployment`, `Octopus - Check Targets Available`, `Octopus - Check SMTP Server Configured`, `Transfer a Package`, `Block Release Progression`, `Send an Email on Success` |
+| Progressive / canary / wave | `Deploy App`, `Simulate Failure`, `Run Octopus Deploy Runbook`, `Sleep` |
+| Orchestration | `Run a Script`, `Deploy a Release` |
+| Claude | `List Commits`, `Run Claude Agent`, `Extract JSON`, `Manual Intervention Required`, `Perform Deployment` |
+
+* **The steps the prompt names are ADDED to this list, never SUBSTITUTED for entries in it.** A prompt naming two script steps for a Windows Service project yields FIVE steps: the three above plus the two named.
+* **Observed after the defining-step-type rule was added**: the same Windows Service prompt then produced `Stop Collector`, `Deploy a Windows Service`, `Start Collector` — the deploy step was correctly restored, but `Print Message when No Targets` and `Scan for Vulnerabilities` were STILL missing. Restoring the defining step is necessary and NOT sufficient; the whole row must be present. Do not stop once the project "can deploy something".
+* `Scan for Vulnerabilities` and `Print Message when No Targets` are the two most frequently dropped steps across every template, because neither deploys anything and both look like optional extras. They are not optional.
+
+**MANDATORY SELF-CHECK — template baseline present**: Before finalizing output, identify the project type template for this prompt and **write out the list of its step names** (copy the row from the table above). Then, for EACH template step name in that list, confirm a corresponding `octopusdeploy_process_step` or `octopusdeploy_process_templated_step` resource exists in your output. This is a name-by-name check, not a count: a step is only accounted for by a resource that plays the same role in the process, and one template step cannot satisfy two entries in the list. Do the same for the template's variables and its scheduled trigger. If the ONLY template step you can account for is the deploy step, you have dropped the baseline — STOP and add the missing template steps, environments, variables and trigger before responding. You will be penalized for each template step, template environment, template variable and template trigger that is missing from a new project creation prompt that named its own steps.
 
 * The phrase "with no steps" in a project creation prompt is a **template placeholder** that is always present in migration prompts. When the prompt lists explicit "Add a step" instructions after the project creation line, those explicit step instructions take **absolute precedence** and ALL listed steps MUST be created — even if the project creation line says "with no steps". The phrase "with no steps" should only be interpreted literally when there are **zero** subsequent "Add a step" instructions in the entire prompt. **CRITICAL: Do NOT use the presence of "with no steps" to suppress step creation when explicit "Add a step" instructions follow it.** You will be penalized for creating a project with no `octopusdeploy_process_step` resources when the prompt contains one or more "Add a step" instructions.
 
@@ -2609,7 +2655,23 @@ resource "octopusdeploy_tag" "tagset_geo_tag_eu" {
 * **Every `octopusdeploy_tenant` that sets `tenant_tags` MUST also set `depends_on` listing every `octopusdeploy_tag` resource whose canonical name it references.** Without it the tenant can be created before the tag exists, producing the same "Unable to find matching tag" failure even when the tag set name does not collide.
 * The same substring hazard applies to every `partial_name` lookup for a resource the prompt names — tag sets, project groups, feeds, accounts, lifecycles and tenants. When the requested name could be contained in another name, use the exact-match `locals` form.
 
-**MANDATORY SELF-CHECK — tenant tags**: for every string in every `tenant_tags` list, confirm the output contains an `octopusdeploy_tag_set` whose `name` is exactly the part before the `/`, an `octopusdeploy_tag` whose `name` is exactly the part after it, that both use the exact-match `locals` count, and that the tenant `depends_on` the tag.
+* **⚠️ CRITICAL — THE THIRD AND MOST COMMON CAUSE OF THIS ERROR IS A TAG YOU INVENTED. If the prompt did not ask for tenant tags, the tenant's `tenant_tags` MUST be `[]`.** The two causes above (a colliding tag set name, a missing `depends_on`) both assume the tag set is at least *being created*. The failure below is different and worse: the canonical tag string names a tag set that appears NOWHERE in the output, because nothing ever asked for it.
+
+```
+Error: unable to create tenant
+
+  with octopusdeploy_tenant.tenant_contoso_retail[0],
+
+Octopus API error: There was a problem with your request. [Unable to find matching tag from
+canonical tag name or id `Default/Warehouse`]
+```
+
+* **Observed output.** A Tomcat prompt said `Make the project tenanted and untenanted, and create a tenant called "Contoso Retail" linked to the project` and, separately, `Add a project tenant variable template called "Inventory.Tenant.Warehouse"`. It mentioned NO tenant tag and NO tag set. The output gave the tenant `tenant_tags = ["Default/Warehouse"]` — the tag name lifted out of the *variable template's* name, dropped into a tag set called `Default` that was never created. The apply died on the tenant, and the project, its steps and its variables were all abandoned.
+* **A tenant variable TEMPLATE is not a tenant TAG, and its name is not a source of tag names.** `Inventory.Tenant.Warehouse` is a variable name; the word `Warehouse` inside it means nothing. This is the same class of confusion as the target-tag rule elsewhere in this file: three different things (target tags, tenant tags, tenant variable templates) share loose English wording and MUST NOT be converted into one another.
+* **There is no default tag set called `Default`.** A tag set named `Default` never exists unless the prompt asked for it. If you find yourself writing a canonical tag whose tag-set half is `Default`, you have invented the tag — delete it.
+* **The cost is total.** Tenants are created early, so this single invented string abandons every resource ordered after the tenant. An untagged tenant is completely correct and costs nothing: a tenant linked to a project via `octopusdeploy_tenant_project` needs no tags at all.
+
+**MANDATORY SELF-CHECK — tenant tags**: for every string in every `tenant_tags` list, confirm the output contains an `octopusdeploy_tag_set` whose `name` is exactly the part before the `/`, an `octopusdeploy_tag` whose `name` is exactly the part after it, that both use the exact-match `locals` count, and that the tenant `depends_on` the tag. **If ANY of those resources is absent from your output, do NOT add them to make the reference valid — DELETE the tag string instead and leave `tenant_tags = []`, because a tag the prompt never requested must not be created either.** Before writing any non-empty `tenant_tags`, point at the exact words in the prompt that asked for that tag; if you cannot, the list must be empty.
 
 * The "tenant_tags" attribute must be an array with strings that looks like "<tag set name>/<tag name>", for example "Cities/Sydney" or "BU/Sales".
 * You will be penalized for defining an item in the "tenant_tags" array as a single string like "Sydney".
@@ -6957,6 +7019,74 @@ resource "octopusdeploy_process_step" "process_step_my_project_approve_productio
   ...
 }
 ```
+
+## Step Retry Instructions
+
+**There is no Terraform attribute, block or argument for step retries. The step retry feature is enabled ONLY by adding `"Octopus.Action.AutoRetry.MaximumCount"` to that step's `execution_properties` map.** A prompt that says "enable retries on the step", "the step must retry on failure", "retry the step three times", "turn on the step retry feature", or "the step should be retried automatically" is asking for this property and nothing else.
+
+* `"Octopus.Action.AutoRetry.MaximumCount"` — a quoted integer, the number of retry attempts. It MUST be greater than `"0"`, because Octopus treats an absent property and `"0"` identically: retries OFF. Use `"3"` when the prompt does not name a count.
+* `"Octopus.Action.AutoRetry.MinimumBackoff"` — a quoted integer, the seconds to wait between attempts. Include it alongside `MaximumCount`. Use `"15"` when the prompt does not name a value.
+* **Both are ACTION properties, so both belong in `execution_properties`, NEVER in the step-level `properties` map.** This is the silent version of the failure: putting them in `properties` applies cleanly, Terraform reports success, and the retry feature stays off because the property was stored against the step instead of against its action.
+* There is NO `retry`, `auto_retry`, `retry_count`, `max_retries` or `retry_on_failure` attribute or block on `octopusdeploy_process_step`. Inventing one fails the plan and the retry configuration is then lost in the retry pass.
+
+* **"Enable retries on the script step" is an instruction to MODIFY a template step, not to add a new one.** When the project type template already contains the step the prompt is talking about — the `Hello World` step of a Script project, the deploy step of an IIS, Windows Service, Tomcat, Azure or Kubernetes project — the retry properties are added to that copied resource. Do NOT reproduce the template step verbatim and do NOT create a second step to carry the retries. The rule that template steps must all be present is about which steps EXIST; it never overrides an explicit instruction to change one of them.
+
+* **⚠️ Observed output.** A prompt reading `Create a Script project called "04. Script App with Retries", and then: * Enable retries on the script step. * Replace the script with one that randomly fails ...` produced a deployment process with the expected `Octopus.Script` step, but its action had no `Octopus.Action.AutoRetry.MaximumCount` property at all. The template's `Hello World` step had been copied through with only its script body touched, so the project was named after a feature it did not have.
+
+**Negative example — prompt says "Enable retries on the script step" and no retry property is emitted (FORBIDDEN)**:
+```hcl
+resource "octopusdeploy_process_step" "process_step_script_hello_world" {
+  name                 = "Hello World"
+  type                 = "Octopus.Script"
+  ...
+  properties           = {}
+  execution_properties = {
+    "Octopus.Action.RunOnServer"         = "true"
+    "Octopus.Action.Script.ScriptBody"   = "..."
+    "Octopus.Action.Script.ScriptSource" = "Inline"
+    "Octopus.Action.Script.Syntax"       = "PowerShell"
+    "OctopusUseBundledTooling"           = "False"
+  }                                        ← WRONG: the prompt asked for retries and no AutoRetry property exists
+}
+```
+
+**Negative example — retry properties in the step-level `properties` map (FORBIDDEN — this applies successfully and leaves retries disabled)**:
+```hcl
+resource "octopusdeploy_process_step" "process_step_script_hello_world" {
+  name       = "Hello World"
+  type       = "Octopus.Script"
+  ...
+  properties = {
+    "Octopus.Action.AutoRetry.MaximumCount"  = "3"    ← WRONG: action property placed in the step `properties` map
+    "Octopus.Action.AutoRetry.MinimumBackoff" = "15"  ← WRONG: same
+  }
+  execution_properties = {
+    "Octopus.Action.Script.ScriptBody" = "..."
+    ...
+  }
+}
+```
+
+**Correct output** (retry properties in `execution_properties` on the step the prompt named):
+```hcl
+resource "octopusdeploy_process_step" "process_step_script_hello_world" {
+  name                 = "Hello World"
+  type                 = "Octopus.Script"
+  ...
+  properties           = {}
+  execution_properties = {
+    "Octopus.Action.AutoRetry.MaximumCount"   = "3"    ← CORRECT: greater than zero, in execution_properties
+    "Octopus.Action.AutoRetry.MinimumBackoff" = "15"   ← CORRECT: companion backoff property
+    "Octopus.Action.RunOnServer"              = "true"
+    "Octopus.Action.Script.ScriptBody"        = "..."
+    "Octopus.Action.Script.ScriptSource"      = "Inline"
+    "Octopus.Action.Script.Syntax"            = "PowerShell"
+    "OctopusUseBundledTooling"                = "False"
+  }
+}
+```
+
+**MANDATORY SELF-CHECK — step retries**: If the prompt contains the word "retry" or "retries" in relation to a step, identify the single step resource it refers to (the template step, if the template already provides one of that kind) and confirm that `"Octopus.Action.AutoRetry.MaximumCount"` appears inside THAT resource's `execution_properties` map, that its value is a quoted integer greater than zero, and that `"Octopus.Action.AutoRetry.MinimumBackoff"` sits beside it. If you cannot point at the property, retries are off — STOP and add it before responding. You will be penalized for a prompt that asks for retries and produces a step with no `Octopus.Action.AutoRetry.MaximumCount` in its `execution_properties`.
 
 ## Space ID Variable Instructions
 
