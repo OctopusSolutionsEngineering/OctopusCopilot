@@ -5,7 +5,7 @@ provider "octopusdeploy" {
 terraform {
 
   required_providers {
-    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.19.0" }
+    octopusdeploy = { source = "OctopusDeploy/octopusdeploy", version = "1.19.2" }
   }
   required_version = ">= 1.6.0"
 }
@@ -89,11 +89,11 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_example_r
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptBody" = "echo \"This is an example script step\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "echo \"This is an example script step\""
       }
 }
 
@@ -151,8 +151,10 @@ resource "octopusdeploy_runbook" "runbook_every_step_project_example_runbook" {
   description                 = "This is an example of a runbook"
   multi_tenancy_mode          = "TenantedOrUntenanted"
 
-  retention_policy {
-    should_keep_forever = true
+  retention_policy_with_strategy {
+    strategy         = "Default"
+    quantity_to_keep = 0
+    unit             = "Items"
   }
 
   connectivity_policy {
