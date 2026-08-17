@@ -1,3 +1,4 @@
+import re
 import unittest
 from domain.sanitizers.terraform import (
     sanitize_kubernetes_yaml_step_config,
@@ -15,6 +16,7 @@ from domain.sanitizers.terraform import (
     fix_empty_strings,
     replace_certificate_data,
     replace_passwords,
+    replace_secrets,
     replace_token,
     sanitize_slugs,
     sanitize_primary_package,
@@ -921,6 +923,51 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = replace_passwords(input)
 
         self.assertNotIn("A leaked password", result)
+
+    def test_replace_secrets(self):
+        input = """resource "octopusdeploy_azure_service_principal" "account" {
+          name   = "Azure Account"
+          secret = "a leaked secret"
+        }"""
+
+        result = replace_secrets(input)
+
+        self.assertNotIn("a leaked secret", result)
+        self.assertRegex(
+            result,
+            r'secret = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"',
+        )
+
+    def test_replace_secrets_ignores_other_properties(self):
+        input = """resource "octopusdeploy_aws_account" "account" {
+          secret_key    = "secretgoeshere"
+          client_secret = "another secret"
+          description   = "The secret variable value associated with the account"
+        }"""
+
+        result = replace_secrets(input)
+
+        self.assertEqual(result, input)
+
+    def test_replace_secrets_multiple(self):
+        input = """resource "octopusdeploy_azure_service_principal" "account1" {
+          secret = "secret1"
+        }
+        resource "octopusdeploy_azure_service_principal" "account2" {
+          secret    = "secret2"
+        }"""
+
+        result = replace_secrets(input)
+
+        self.assertNotIn("secret1", result)
+        self.assertNotIn("secret2", result)
+        # Every secret gets its own GUID
+        guids = re.findall(
+            r'secret = "([0-9a-f-]{36})"',
+            result,
+        )
+        self.assertEqual(len(guids), 2)
+        self.assertEqual(len(set(guids)), 2)
 
     def test_replace_token(self):
         input = """resource "octopusdeploy_github_repository_feed" "feed_github_feed" {
