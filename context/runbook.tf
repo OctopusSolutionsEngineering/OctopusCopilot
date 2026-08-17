@@ -89,11 +89,11 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_example_r
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"This is an example script step\""
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
       }
 }
 
@@ -152,9 +152,7 @@ resource "octopusdeploy_runbook" "runbook_every_step_project_example_runbook" {
   multi_tenancy_mode          = "TenantedOrUntenanted"
 
   retention_policy_with_strategy {
-    strategy         = "Default"
-    quantity_to_keep = 0
-    unit             = "Items"
+    strategy = "Forever"
   }
 
   connectivity_policy {

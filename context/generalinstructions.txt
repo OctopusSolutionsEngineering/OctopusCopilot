@@ -176,6 +176,25 @@ provider "registry.opentofu.org/octopusdeploy/octopusdeploy" produced an unexpec
 * Therefore: do not emit a `retention_policy` block on a runbook at all. If you judge one to be unavoidable, use `should_keep_forever = true` ALONE, with no `quantity_to_keep` line.
 * A retention instruction in the prompt applies to the LIFECYCLE (`octopusdeploy_lifecycle`), never to runbooks — do not copy the lifecycle's `quantity_to_keep` onto a runbook.
 
+**When the prompt explicitly asks to keep a number of RUNBOOK RUNS, express it with `run_retention_policy_with_strategy` — never with the deprecated `retention_policy` block.** A prompt such as `Add a runbook called "Recycle Claims App Pool" ... and keep the last 100 runbook runs` is asking about runbook runs specifically, not about releases, so redirecting it to the lifecycle would be wrong. The strategy block is the current, non-deprecated form and has been observed to apply cleanly:
+
+```hcl
+resource "octopusdeploy_runbook" "runbook_recycle_claims_app_pool" {
+  count = "..."
+  name  = "Recycle Claims App Pool"
+
+  run_retention_policy_with_strategy {
+    strategy         = "Count"
+    quantity_to_keep = 100
+    unit             = "Items"
+  }
+}
+```
+
+* `unit` is `"Items"` when the prompt counts RUNS, and `"Days"` only when the prompt counts days.
+* Never write both `run_retention_policy_with_strategy` and `retention_policy` on the same runbook.
+* This does NOT relax the rule above: an unrequested retention setting still belongs nowhere, and the deprecated `retention_policy` block remains forbidden in every case. If you are unsure of the strategy block's syntax, omit retention from the runbook entirely rather than risk the apply.
+
 **⚠️ CRITICAL — `minimum_environments_before_promotion` MUST NEVER exceed the number of environments in its OWN `phase` block, and a "deployments" count in the prompt NEVER sets it.** This is repeated here, at the top of the file, because it is the single cheapest way to lose an entire project: the lifecycle is created early, so when Octopus rejects it the apply aborts before the project, its steps, its variables and its feeds are ever created, and the prompt produces NOTHING.
 
 ```
@@ -250,7 +269,11 @@ A community step template usually declares a dozen or more optional parameters. 
 * Do NOT drop the variable, and do NOT substitute a `roles` scope you invented.
 * This rule has ABSOLUTE PRIORITY over the prompt's scoping instruction. Losing the step scope is expected and correct; losing the variable is not.
 
-**MANDATORY SELF-CHECK — no action scopes**: search your output for `actions` inside every `scope` block. Every occurrence MUST be `null` or absent. If any `scope` block references a step resource's `id`, delete that `actions` line.
+* **⚠️ `processes` IS NOT AN ESCAPE HATCH FOR THE STEP SCOPE YOU WERE JUST TOLD TO DROP.** Having accepted that `actions` cannot carry a step id, the next move is to write that same step id into `processes` instead — the attribute is permitted, the plan is clean, the apply succeeds, and the result is the identical dangling scope. `processes` scopes a variable to a PROCESS OWNER, so its only legal values are a PROJECT id (`octopusdeploy_project.<name>[0].id`) or a RUNBOOK id (`octopusdeploy_runbook.<name>[0].id`). An `octopusdeploy_process_step` id is neither.
+* **Observed output.** A prompt saying `Create a variable called "Claims.AppPool.Name" with the value "ClaimsAppPool" scoped to the "Stop Claims App Pool" step` produced `scope { processes = ["${octopusdeploy_process_step.process_step_claims_intake_site_stop_claims_app_pool.id}"] }`. The apply reported success and the stored variable came back as `"Scope": { "ProcessOwner": ["e311ba10-1e9b-4471-b83e-8fc7cd49751a"] }` — the step's own GUID sitting in a field Octopus resolves against project and runbook ids, matching nothing. The variable can never apply to any deployment, and nothing in the apply output says so.
+* The general rule: NO scope attribute may hold an `octopusdeploy_process_step` or `octopusdeploy_process_templated_step` id. Not `actions`, not `processes`, not `machines`, not `roles`. A step-scoped variable is simply not expressible — emit the variable unscoped (or scoped only by the environments/channels/tenant tags the prompt also gave) and move on.
+
+**MANDATORY SELF-CHECK — no step ids in any scope**: search your output for every `scope` block. Confirm `actions` is `null` or absent in every one. Then read every `processes` value and confirm each entry references an `octopusdeploy_project` or `octopusdeploy_runbook` resource id — if any entry references an `octopusdeploy_process_step` or `octopusdeploy_process_templated_step`, delete the `processes` line (and the whole `scope` block if that leaves it empty). Do the same for `machines` and `roles`. A `scope` block left with no non-null attribute MUST be removed entirely.
 
 **⚠️ CRITICAL — a tenant variable TEMPLATE is not a tenant variable VALUE; do not emit `octopusdeploy_tenant_project_variable` without a value from the prompt**: An `octopusdeploy_tenant_project_variable` whose `value` is empty aborts the apply at create time with `Error: Failed to get variable ID … Variable was created but ID not returned in response`, and every resource ordered after it is abandoned. When the prompt says only "add a project tenant variable template called 'X'" it is asking for a `template` block on the `octopusdeploy_project` resource and NOTHING ELSE. Create `octopusdeploy_tenant_project_variable` only when the prompt states an actual value for a named tenant. This rule has ABSOLUTE PRIORITY over any template.
 
@@ -1978,6 +2001,55 @@ resource "octopusdeploy_certificate" "certificate_my_cert" {
 Note that `certificate_data` and `password` are single-line string attributes at the top level of the resource. Do not wrap them in a nested block, do not use a heredoc, do not spread the value across lines, and do not move them into a `variable`. Any deviation from this shape prevents the fixture substitution and the apply fails with "Unable to parse certificate".
 
 **MANDATORY SELF-CHECK — certificates**: for every `octopusdeploy_certificate` resource in your output, confirm the resource line is unindented, confirm a `certificate_data` line and a `password` line are both present as single-line string attributes, and confirm neither contains `${var.`. This check applies to EVERY project type, including IIS, Tomcat, Azure Function, and Windows Service projects whose example configuration contains no certificate at all — having no example to copy is exactly when you must fall back to the shape above.
+
+## Binding an Octopus Certificate to an IIS HTTPS Site
+
+**⚠️ CRITICAL — an HTTPS binding consumes a certificate through `certificateVariable`, NEVER through `thumbprint`.** The two fields inside an `Octopus.Action.IISWebSite.Bindings` entry are not interchangeable:
+
+* `certificateVariable` holds the NAME of a project variable of type `Certificate` — a plain string such as `"Project.Certificate"`. This is the ONLY way to bind a certificate that Octopus manages.
+* `thumbprint` holds the SHA-1 thumbprint of a certificate already installed in the machine's certificate store. It is a hex string, and Octopus does not resolve it against the certificate library.
+
+**Observed output.** A prompt saying `Create a certificate called "Claims TLS" and use it in the IIS deploy step to bind the HTTPS site` produced a binding of `{ "protocol" = "https", "port" = "443", "certificateVariable" = null, "thumbprint" = "Certificates-588" }`. The apply succeeded and the result is broken three ways at once:
+
+1. `Certificates-588` is a certificate ID, not a thumbprint. At deployment time IIS is asked for a certificate whose thumbprint is literally the text `Certificates-588`, which no store contains, so the binding fails.
+2. The ID is hardcoded, so the configuration is not portable — re-applied against any other space it points at a different certificate or at nothing.
+3. Because the only reference to the certificate is a string buried inside a `jsonencode` blob, the project has NO link to the certificate resource, so the certificate is not exported with the project. The prompt's certificate silently disappears from the project.
+
+The template only ever shows an `http` binding with `thumbprint = null`, so there is no example to copy from — that absence is exactly why `thumbprint` gets filled in with whatever certificate reference is at hand. Emit ALL THREE pieces instead:
+
+```hcl
+# 1. the certificate itself (see the canonical shape above)
+resource "octopusdeploy_certificate" "certificate_claims_tls" { ... }
+
+# 2. a Certificate-typed project variable pointing at it
+resource "octopusdeploy_variable" "project_certificate_1" {
+  count    = "..."
+  owner_id = "..."
+  name     = "Project.Certificate"
+  type     = "Certificate"
+  value    = "${length(data.octopusdeploy_certificates.certificate_claims_tls.certificates) != 0 ? data.octopusdeploy_certificates.certificate_claims_tls.certificates[0].id : octopusdeploy_certificate.certificate_claims_tls[0].id}"
+}
+```
+```hcl
+# 3. the binding, naming that variable and leaving thumbprint null
+"Octopus.Action.IISWebSite.Bindings" = jsonencode([
+  {
+    "certificateVariable" = "Project.Certificate"
+    "requireSni"          = "False"
+    "enabled"             = "True"
+    "protocol"            = "https"
+    "port"                = "443"
+    "host"                = ""
+    "thumbprint"          = null
+  },
+])
+```
+
+* Keep the template's existing `http` binding entry as well unless the prompt says to remove it; add the `https` entry alongside it.
+* `Octopus.Action.EnabledFeatures` does not need a certificate feature — the binding is part of `Octopus.Features.IISWebSite`.
+* The same rule holds for any step property that names a certificate: reference a `Certificate`-typed variable by name, never a `Certificates-NNN` id and never a resource id interpolation inside a JSON string.
+
+**MANDATORY SELF-CHECK — HTTPS bindings**: search your output for `"thumbprint"`. Every occurrence MUST be `null`. If any holds a value, and especially if that value starts with `Certificates-`, move the certificate to a `Certificate`-typed variable and put that variable's NAME in `certificateVariable` instead. Then confirm that every certificate named in the prompt is referenced by at least one `Certificate`-typed variable — a certificate reachable only from inside a `jsonencode` blob is an orphaned certificate.
 
 ## Data and Resource pairing instructions
 
@@ -5782,6 +5854,7 @@ resource "octopusdeploy_variable" "scoped_to_deployment_process" {
   }
 }
 ```
+* You will be penalized for putting an "octopusdeploy_process_step" or "octopusdeploy_process_templated_step" id in the "processes" attribute. The ONLY legal values are a project id or a runbook id — "processes" identifies the process OWNER, not a step within a process. A step id here produces a variable whose stored scope is `"ProcessOwner": ["<step guid>"]`, which resolves to nothing at deployment time while the apply reports success. When the prompt scopes a variable to a named STEP, that scope is NOT expressible: emit the variable with no "processes" attribute at all. See the CRITICAL rule on `actions` scopes at the top of this file — writing the step id into "processes" instead of "actions" is the same mistake with the same silent outcome.
 * You will be penalized for defining "tenants" in the "scope" block for a "octopusdeploy_variable" resource.
 * The "tenant_tags" attribute in the "scope" block for a "octopusdeploy_variable" resource must be in the format "Tag Set Name/Tag Name", with two phrases separated by a forward slash, where the first phrase is the tag set name, and the second phrase is the tag name, for example "Region/West". Here is an example of a tenant tag defined for a variable:
 
