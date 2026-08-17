@@ -1784,6 +1784,12 @@ phase {
    - When the prompt says "N days" → use `unit = "Days"` and `quantity_to_keep = N`
    - When the prompt says "N items" or "keep N releases" → use `unit = "Items"` and `quantity_to_keep = N`
 
+**⚠️ CRITICAL — "the project uses a custom lifecycle" includes the TEMPLATE-DEFAULT lifecycles, and includes lifecycles shared by several projects in the same prompt.** The only lifecycle exempt from a retention instruction is the Default Lifecycle, because it is looked up through a data source and cannot be modified. Every other lifecycle — `Application`, `DevSecOps`, `Progressive`, `Blue Green`, or any lifecycle the prompt named — IS emitted as an `octopusdeploy_lifecycle` resource, so a retention instruction MUST be written onto it.
+
+* **Observed failure**: a multi-project prompt created "Cart Service", "Search Service" and an orchestration project "Retail Release Train" all bound to the template's `Application` lifecycle, and asked for the orchestration project's retention policy to keep 10 releases. The lifecycle was emitted with the template's default `30 Days` / `30 Days` and the instruction was silently dropped.
+* Octopus retention is a property of the LIFECYCLE, not of the project, and `retention_policy` on `octopusdeploy_project` is forbidden. So when several projects in one prompt share a lifecycle and the prompt asks for retention on one of them, write the requested policy onto that shared lifecycle. Applying it once is correct — do not create a duplicate lifecycle, and do not drop the instruction because the lifecycle is shared.
+* Only when the project's lifecycle is the Default Lifecycle is dropping the retention instruction correct.
+
 **⚠️ CRITICAL — do NOT default to 30 Days when the prompt specifies items**: If the prompt says "Set the retention policy to 5 items", the lifecycle MUST use `quantity_to_keep = 5` and `unit = "Items"`. Setting `quantity_to_keep = 30` and `unit = "Days"` is WRONG — it ignores the prompt instruction.
 
 **⚠️ CRITICAL — a two-part retention prompt sets the two policies INDEPENDENTLY**: A prompt of the form "retain N releases and M days of files", "keep N releases and M days of packages", or "retention of N releases and M days" describes TWO separate policies with TWO different units, and each must be resolved on its own:
@@ -3236,6 +3242,45 @@ resource "octopusdeploy_project_versioning_strategy" "project_my_project" {
 
 You will be penalized for adding `lifecycle { prevent_destroy = true }` to an `octopusdeploy_project_versioning_strategy` resource.
 
+**⚠️ CRITICAL — release versioning based on a package MUST use a `donor_package` block; it is NOT a `template` string and MUST NOT be silently dropped.** When the prompt says the release version comes from a package — "version releases using the package version", "set the release versioning template to use the package version of the package in the 'Warm Cache' step", "base the release number on the package in the deploy step", "use the package version as the release version" — Octopus resolves the version from a *donor package*, not from an Octostache template. The `octopusdeploy_project_versioning_strategy` resource expresses this with a `donor_package` block, and `template` is then omitted entirely:
+
+```hcl
+resource "octopusdeploy_project_versioning_strategy" "project_my_project" {
+  count      = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? data.octopusdeploy_projects.project_my_project.projects[0].id : octopusdeploy_project.project_my_project[0].id}"
+
+  donor_package {
+    # The NAME of the step (which is also the name of its first deployment action), exactly as it
+    # appears in the step's "name" attribute.
+    deployment_action = "Warm Cache"
+    # The empty string means the step's primary_package. For a named package in a "packages" map,
+    # use that package's key, for example "octopub-frontend".
+    package_reference = ""
+  }
+
+  # MANDATORY whenever donor_package is used — see below.
+  depends_on = [octopusdeploy_process_step.process_step_my_project_warm_cache]
+}
+```
+
+* **⚠️ A `donor_package` block REQUIRES `depends_on` naming the step it points at.** Octopus resolves `deployment_action` by name the moment the versioning strategy is applied, and without an explicit dependency Terraform applies the versioning strategy alongside the project — before any step exists. The apply then aborts and the whole project is lost:
+
+```
+Error: Error updating associated project
+
+  with octopusdeploy_project_versioning_strategy.project_checkout_canary[0],
+
+Octopus API error: The resource 'Warm Cache' was not found. []
+```
+
+  There is no interpolation between the two resources (the name is a literal string), so Terraform cannot infer the ordering — `depends_on = [octopusdeploy_process_step.process_step_<project>_<step>]` is the only thing that establishes it, and it MUST be present on every versioning strategy that uses `donor_package`. A versioning strategy that uses `template` instead needs no `depends_on`.
+* `deployment_action` and `package_reference` are matched by NAME, not by ID. **Do NOT set `donor_package_step_id`** — despite its name the Octopus API expects a deployment *action* ID there, and the only ID Terraform can produce is `octopusdeploy_process_step.<name>.id`, which is a step ID and a different GUID. This is the same trap as the `actions` attribute of an `octopusdeploy_variable` `scope` block.
+* `donor_package` and `template` are mutually exclusive. When the prompt asks for a package-based version, emit `donor_package` and omit `template`; when the prompt asks for a date-based or incrementing version, emit `template` and omit `donor_package`.
+* The step named in `deployment_action` MUST be a step that actually has a package — a `primary_package` block or an entry in its `packages` map. Naming a step with no package produces a project that cannot create a release.
+* **Observed failure**: the prompt `Set the release versioning template to use the package version of the package in the "Warm Cache" step` produced a project whose versioning strategy was left at the template default `"#{Octopus.Version.LastMajor}.#{Octopus.Version.LastMinor}.#{Octopus.Version.NextPatch}"`. The apply succeeded, so nothing looked wrong, but the prompt's versioning instruction was silently lost.
+
+You will be penalized for leaving `template` at its default when the prompt asked for package-based release versioning, for setting `donor_package_step_id` to a `octopusdeploy_process_step` id, and for emitting a `donor_package` block without the matching `depends_on`.
+
 * Every project tenant variable must have a "template" block in the "octopusdeploy_project" resource defining the variable. If the prompt requests tenant variables but the project has no existing `template` blocks, you MUST add `template` blocks to the project resource BEFORE creating `octopusdeploy_tenant_project_variable` resources. **The number of `template` blocks must equal or exceed the number of `octopusdeploy_tenant_project_variable` resources.** Each template block defines ONE variable (with `name`, `label`, `help_text`, `default_value`, `display_settings`). Each tenant variable's `template_id` must reference `template[N].id` where N is 0-indexed. You will be penalized if you create tenant variable resources without sufficient template blocks.
 * You will be penalized for creating a resource of type "octopusdeploy_project_deployment_settings".
 * You will be penalized for adding whitespace to the "description" attribute of a resource "octopusdeploy_project", for example:
@@ -3628,6 +3673,32 @@ resource "octopusdeploy_channel" "channel_k8s_web_app_with_ephemeral_environment
 
 * Parent environments `octopusdeploy_parent_environment` resources must create a `octopusdeploy_parent_environments` data source for their lookup.
 * You will be penalized for creating a `octopusdeploy_environments` data source associated with a parent environment.
+
+**⚠️ CRITICAL — a parent environment and a regular environment SHARE ONE NAME SPACE. Never emit both with the same name; the apply ABORTS.** Octopus stores parent environments alongside regular environments, so an `octopusdeploy_environment` whose `name` matches an `octopusdeploy_parent_environment` in the same output is rejected and every resource ordered after it is lost:
+
+```
+Error: unable to create environment
+
+  with octopusdeploy_environment.environment_previews[0],
+
+Octopus API error: There was a problem with your request. [An environment with this name
+already exists in this space. Please choose a different name.]
+```
+
+* **Observed failure**: the prompt `Add support for ephemeral environments, with the Parent Environment and the Ephemeral Environment channel both called "Previews"` … `Add a runbook called "Provision Preview" … runnable in the "Previews" environment only` produced BOTH an `octopusdeploy_parent_environment` named "Previews" and an `octopusdeploy_environment` named "Previews". The regular environment was emitted purely so the runbook's `environments` list had something to reference. The apply aborted and no project was created.
+* **When a runbook, step, target or trigger must be scoped to the parent environment, reference the PARENT environment's id** — the same ternary you already use for `parent_environment_id`:
+
+```hcl
+resource "octopusdeploy_runbook" "runbook_my_project_provision_preview" {
+  environment_scope = "Specified"
+  environments      = ["${length(data.octopusdeploy_parent_environments.parent_environment_previews.parent_environments) != 0 ? data.octopusdeploy_parent_environments.parent_environment_previews.parent_environments[0].id : octopusdeploy_parent_environment.parent_environment_previews[0].id}"]
+  ...
+}
+```
+
+* Do NOT rename either resource to dodge the collision, and do NOT drop the parent environment. The prompt named one environment; emit exactly one resource for it, and make it the `octopusdeploy_parent_environment`.
+
+**MANDATORY SELF-CHECK — parent environment name collisions**: before finalizing output, list the `name` of every `octopusdeploy_parent_environment` and the `name` of every `octopusdeploy_environment`. If any name appears in both lists, delete the `octopusdeploy_environment` and repoint every reference to it at the parent environment's ternary. You will be penalized for each name that appears as both a parent environment and a regular environment.
 * When the prompt indicates that a target is scoped to a parent environment, both the `octopusdeploy_parent_environment` resource and the `octopusdeploy_parent_environments` data source must be created for that parent environment.
 
 ```
@@ -3970,6 +4041,15 @@ resource "octopusdeploy_channel" "channel_dev_deployment_application" {
 
 ## Octopus Global Deployment Freeze Instructions
 
+**⚠️ CRITICAL — a deployment freeze the prompt asks for MUST be created; it is a real Octopus resource and must not be silently dropped.** When the prompt says "add a deployment freeze called X", "block deployments to <environment> between <dates>", or "freeze deployments over <period>", emit an `octopusdeploy_deployment_freeze` resource. Dropping it produces a project that looks complete but is missing a control the prompt explicitly asked for, and the apply succeeds so nothing flags it.
+
+* **Observed failure**: the prompt `Add a deployment freeze called "Change Freeze" that blocks deployments to "Prod" for the whole of December 2026` produced a complete, valid project with no freeze resource at all.
+* Scope the freeze to the project and environments the prompt names using the resource's `project_scope` block; a freeze with no scope applies to everything, which is almost never what the prompt asked for.
+* Deployment freezes are GLOBAL — they are not scoped to a space. Create exactly the freezes the prompt names and no others.
+* A freeze that has already ended is rejected, so the `end` property must be in the future (see below).
+
+**MANDATORY SELF-CHECK — deployment freezes**: before finalizing output, re-read the prompt for the words "freeze", "blackout", "change window" or "no deployments between". For each one, confirm the output contains a matching `octopusdeploy_deployment_freeze`. You will be penalized for each requested freeze that is absent.
+
 * You will be penalized for adding the "description" property to the "octopusdeploy_deployment_freeze" resource.
 * You will be penalized for adding the "space_id" property to the "octopusdeploy_deployment_freeze" resource.
 * The "end" property of the "octopusdeploy_deployment_freeze" resource must be in the future.
@@ -4132,6 +4212,30 @@ resource "octopusdeploy_process_steps_order" "process_step_order_my_project" {
 ```
 * When the "condition"attribute is set to "Variable", the "properties" block must include the "Octopus.Step.ConditionVariableExpression" property.
 * You will be penalized for setting the "condition" attribute to "Variable" without defining the "Octopus.Step.ConditionVariableExpression" property in the "properties" block.
+
+**⚠️ CRITICAL — when the prompt supplies the run-condition expression, copy it VERBATIM into `Octopus.Step.ConditionVariableExpression`; never replace it with a constant.** A prompt such as `Add a script step called "Purge CDN" that only runs when the variable expression "#{unless Octopus.Deployment.Error}True#{/unless}" evaluates to true` gives you the exact Octostache to write. Reducing it to `"True"` produces a step whose condition is always satisfied — the gate the prompt asked for silently disappears. The apply succeeds, so nothing looks wrong.
+
+**Negative example — prompt expression replaced by a constant (FORBIDDEN)**:
+```hcl
+# Prompt says: only runs when the variable expression "#{unless Octopus.Deployment.Error}True#{/unless}" evaluates to true
+properties = {
+  "Octopus.Step.ConditionVariableExpression" = "True"   ← WRONG: the step now always runs
+}
+```
+
+**Correct output — the prompt's expression reproduced exactly**:
+```hcl
+properties = {
+  "Octopus.Step.ConditionVariableExpression" = "#{unless Octopus.Deployment.Error}True#{/unless}"
+}
+```
+
+* The same applies to any other Octostache the prompt quotes for a condition — `#{if ...}`, `#{unless ...}`, `#{Variable == "value"}`, or a bare `#{MyVariable}`. Reproduce the characters between the quotes.
+* Only invent an expression when the prompt describes the condition in prose without quoting one (for example "run this step only when the deployment has failed" → `#{if Octopus.Deployment.Error}True#{/if}`).
+* **`"True"` is never a valid condition expression, and it is NOT a harmless simplification of one.** `condition = "Variable"` with the expression `"True"` means *always run*, including after a previous step has failed — the opposite of what `#{unless Octopus.Deployment.Error}…#{/unless}` asks for. If you find yourself about to write a constant, either write the prompt's expression or change the step to `condition = "Success"` and drop the property; never write `condition = "Variable"` with `"True"`.
+* You will be penalized for every `Octopus.Step.ConditionVariableExpression` whose value is a constant such as `"True"` or `"False"` when the prompt quoted an expression.
+
+**MANDATORY SELF-CHECK — condition expressions are not constants**: before finalizing output, search your output for the literal text `Octopus.Step.ConditionVariableExpression`. For EACH occurrence, read its value. If the value does not contain `#{`, it is a constant and is wrong — replace it with the expression the prompt quoted for that step, or, if the prompt quoted none, remove the property and set the step's `condition` to `"Success"` (or `"Failure"` / `"Always"` as the prompt requires). Perform this search literally; do not assume the values are correct because they came from a template.
 * Adding a step requires a new "octopusdeploy_process_step" resource to be defined and then added to the "octopusdeploy_process_steps_order" resource in the "steps" array. For example, if this is the initial set of steps:
 
 ```
@@ -4417,6 +4521,32 @@ resource "octopusdeploy_process_step" "my_step" {
     * Exclude the "Octopus.Action.Script.Syntax" property in the "execution_properties" block
 
 * You will be penalized for defining a script step with no script.
+
+**⚠️ CRITICAL — a "run a script from a package" step MUST set `"Octopus.Action.Script.ScriptSource" = "Package"`; omitting the property attaches a package to an inline script and the apply FAILS.** `Octopus.Action.Script.ScriptSource` defaults to `Inline` when it is absent from `execution_properties`, so a script step that carries a package but does not state its `ScriptSource` is submitted as an inline script with a package and no body. Octopus rejects it, the apply aborts, and every resource ordered after the step is lost:
+
+```
+Error: Unable to create process step
+
+  with octopusdeploy_process_step.process_step_checkout_canary_warm_cache[0],
+
+Octopus API error: There was a problem with your request. [Please provide the script body
+to run. Providing a package is not valid for inline scripts.]
+```
+
+* **Observed failure**: the prompt `Add a script step called "Warm Cache" that runs a script from the package "com.octopus:octopub-frontend" retrieved from the "Octopub Maven" feed` produced an `Octopus.Script` step with the Maven package attached but with neither `Octopus.Action.Script.ScriptSource` nor `Octopus.Action.Script.ScriptBody` set. The apply aborted partway through, leaving the project with an incomplete deployment process.
+* A step that runs a script **from a package** requires ALL THREE of the following, and the phrase "runs a script from the package", "run a script from a package", "execute the script in the package", or "script from a package" in a prompt ALWAYS means this shape:
+  1. `"Octopus.Action.Script.ScriptSource" = "Package"` in `execution_properties`
+  2. `"Octopus.Action.Script.ScriptFileName"` naming the script file inside the package. Invent a plausible name (for example `deploy.sh` for a Bash script or `Deploy.ps1` for PowerShell) when the prompt does not give one — this property is mandatory and must never be omitted or left empty.
+  3. a `primary_package` block — NOT a named `packages` map — giving the `feed_id` and `package_id`
+  and it MUST NOT define `"Octopus.Action.Script.ScriptBody"` or `"Octopus.Action.Script.Syntax"`.
+* A step that runs an **inline** script and merely *references* a package (the "add a reference package to the script step" shape) is the mirror image: it uses a named `packages` map, sets `"Octopus.Action.Script.ScriptSource" = "Inline"`, and MUST still define a non-empty `"Octopus.Action.Script.ScriptBody"`. A package of either kind attached to a step with no script body is always rejected with the error above.
+
+**MANDATORY SELF-CHECK — every script step carries a script**: before finalizing output, find every step of type `Octopus.Script`, `Octopus.AwsRunScript`, `Octopus.AzurePowerShell`, `Octopus.KubernetesRunScript` or `Octopus.GcpRunScript` that has a `primary_package` block or a `packages` map. For EACH one, read its `execution_properties` and confirm that exactly one of these two shapes holds:
+1. `ScriptSource = "Package"` **and** `ScriptFileName` is set **and** there is no `ScriptBody`; or
+2. `ScriptSource = "Inline"` **and** `ScriptBody` is non-empty.
+
+A step matching neither shape — in particular one with no `ScriptSource` property at all — will fail the apply. You will be penalized for each script step that carries a package without stating its `ScriptSource`, and for each `ScriptSource = "Package"` step that omits `Octopus.Action.Script.ScriptFileName`.
+
 * Steps of type "Octopus.AzureAppService" must have at least one item in the "target_roles" attribute.
 * Steps of type "Octopus.AwsUploadS3" must have a "Octopus.Action.AwsAccount.Variable" property in the "execution_properties" block.
 * Steps of the following types must have a "primary_package" block:
@@ -4475,6 +4605,24 @@ resource "octopusdeploy_process_step" "process_step_deploy_helm_chart" {
 You will be penalized for including `"Octopus.Action.Script.ScriptFileName"` in the `execution_properties` of an `Octopus.HelmChartUpgrade` step when no script file was specified in the prompt.
 * You will be penalized for adding the property "Octopus.Action.Azure.AccountId" to steps of type "Octopus.AzureWebApp".
 * You will be penalized for defining a "version" attribute on the "primary_package" block.
+
+**⚠️ CRITICAL — `primary_package.acquisition_location` MUST be `"Server"`. `"NotAcquired"` belongs ONLY in a named `packages` map.** Octopus normalises a primary package's acquisition location to `Server`, so writing `NotAcquired` makes the value the provider reads back differ from the value it sent, and OpenTofu aborts the whole apply:
+
+```
+Error: Provider produced inconsistent result after apply
+
+When applying changes to
+octopusdeploy_process_step.process_step_marketing_site_deploy_azure_web_app_container[0],
+provider "provider[\"registry.opentofu.org/octopusdeploy/octopusdeploy\"]"
+produced an unexpected new value: .primary_package.acquisition_location: was
+cty.StringVal("NotAcquired"), but now cty.StringVal("Server").
+```
+
+* `"NotAcquired"` is correct ONLY for a **container image reference** inside a named `packages` map — the shape used by `Octopus.KubernetesDeployRawYaml`, `Octopus.AzureWebApp` (container deployments) and `Octopus.ArgoCDUpdateImageTags`, where the entry also carries `properties = { Extract = "False", Purpose = "DockerImageReference", SelectionMode = "immediate" }`.
+* **Observed failure**: an Azure Web App project whose template step uses `packages = { octopub-selfcontained = { acquisition_location = "NotAcquired", … } }` was rewritten into a `primary_package` block that kept `NotAcquired`. The apply aborted and no project was created. When you convert a named container-image package into a `primary_package`, you MUST also change the acquisition location to `"Server"` — or, better, leave the template's `packages` map as it is.
+* Do not "fix" this by removing the package. A step type listed above as requiring a `primary_package` still requires one.
+
+**MANDATORY SELF-CHECK — primary package acquisition location**: before finalizing output, search for `primary_package`. For EACH occurrence, confirm `acquisition_location = "Server"`. Any `primary_package` carrying `"NotAcquired"` or `"ExecutionTarget"` will abort the apply. You will be penalized for each one.
 * The "start_trigger" attribute must only be defined once.
 * You will be penalized for defining an empty "properties" block, for example "properties = {}".
 * You will be penalized for defining a "properties_additional" block.
@@ -5549,6 +5697,25 @@ resource "octopusdeploy_process_step" "process_step_my_project_notify_deployment
 
 ## ArgoCD Step Instructions
 
+**⚠️ CRITICAL — a deployment process may contain AT MOST ONE ENABLED Argo CD update action.** Octopus rejects the second one at step-creation time and the apply aborts, abandoning every resource ordered after it:
+
+```
+Error: Unable to create process step
+
+  with octopusdeploy_process_step.process_step_storefront_manifests_update_argo_cd_application_image_tags[0],
+
+Octopus API error: There was a problem with your request. [A deployment process cannot have
+more than one enabled Argo CD related Action.]
+```
+
+* The step types this limit counts are `Octopus.ArgoCDUpdateManifests` and `Octopus.ArgoCDUpdateImageTags`. Exactly ONE of them may be enabled in a given deployment process.
+* `Octopus.VerifyArgoCDApplicationHealthy` ("Wait for Argo CD Applications") is NOT subject to the limit and may be enabled alongside the single enabled update action.
+* **When the prompt asks for both a manifest-update step and an image-tag-update step** — for example `Add an "Update Argo CD Application Image Tags" step immediately after the manifest update step` — still create BOTH steps, but set `is_disabled = true` on all but one of them. Keep the step the project type is named after enabled: an "Argo CD Modify/Update Manifest" project keeps `Octopus.ArgoCDUpdateManifests` enabled and disables `Octopus.ArgoCDUpdateImageTags`; an "Argo CD Image Tag Update" project does the reverse. This is the shape the `everystep.tf` example uses, where three of its four Argo CD steps are present and only one update action is enabled.
+* Dropping the requested step entirely is worse than including it disabled — the prompt asked for it, and a disabled step is visible in the process and can be enabled by hand.
+* Note that `is_disabled = true` here is REQUIRED by the Octopus API and is NOT covered by the rule elsewhere in this file that forbids disabling steps the prompt did not ask to disable.
+
+**MANDATORY SELF-CHECK — Argo CD action count**: before finalizing output, count the steps of type `Octopus.ArgoCDUpdateManifests` plus the steps of type `Octopus.ArgoCDUpdateImageTags` in each deployment process. If more than one of them lacks `is_disabled = true`, add `is_disabled = true` to all but one. You will be penalized for every deployment process containing two or more enabled Argo CD update actions.
+
 **⚠️ CRITICAL — `"Octopus.Action.ArgoCD.CommitMethod" = "PullRequest"` REQUIRES `"Octopus.Action.ArgoCD.PullRequest.Environments"`.** Omitting it aborts the apply at step-creation time, so every resource ordered after the step is abandoned:
 
 ```
@@ -5662,6 +5829,24 @@ resource "octopusdeploy_process_step" "process_step_deploy_products_war" {
 
 **MANDATORY SELF-CHECK — Tomcat credential properties**: Before finalizing Terraform output, find every `octopusdeploy_process_step` with `type = "Octopus.TomcatDeploy"`. For EACH one, verify that `execution_properties` contains both `Tomcat.Deploy.User` and `Tomcat.Deploy.Password` with non-empty values. If either is missing, add it now — the apply WILL fail otherwise. A placeholder value such as `Change Me!` satisfies this check, because sensitive values are deliberately replaced with placeholders.
 
+## Kustomize Step Instructions
+
+**⚠️ CRITICAL — an `Octopus.Kubernetes.Kustomize` step MUST set `"Octopus.Action.Kubernetes.Kustomize.OverlayPath"`.** Octopus rejects the step at creation time when the overlay path is missing or empty, and the apply aborts, abandoning every resource ordered after it:
+
+```
+Error: Unable to create process step
+
+  with octopusdeploy_process_step.process_step_analytics_platform_apply_overlays[0],
+
+Octopus API error: There was a problem with your request. [Overlay path can not be empty.]
+```
+
+* When the prompt does not name an overlay directory, use the canonical value from the example configuration: `"Octopus.Action.Kubernetes.Kustomize.OverlayPath" = "overlays/#{Octopus.Environment.Name}"`. Never omit the property and never set it to an empty string.
+* A Kustomize step reads its files from Git, so it also needs `"Octopus.Action.Script.ScriptSource" = "GitRepository"`, `"Octopus.Action.GitRepository.Source" = "External"` and a `git_dependencies` block naming the repository, branch and Git credential.
+* Like every Kubernetes step, it needs a target — see the "Kubernetes target" pattern — and its target tag goes in the STEP-LEVEL `properties` block as `"Octopus.Action.TargetRoles"`.
+
+**MANDATORY SELF-CHECK — Kustomize overlay path**: before finalizing output, find every step of type `Octopus.Kubernetes.Kustomize` and confirm each one has a non-empty `Octopus.Action.Kubernetes.Kustomize.OverlayPath` in its `execution_properties`. You will be penalized for each Kustomize step without one.
+
 ## Transfer Package Step Instructions
 
 * Steps of type "Octopus.TransferPackage" transfer a package to a target machine without deploying it.
@@ -5728,6 +5913,21 @@ parameters      = [{ default_sensitive_value = null,, display_settings = { "Octo
 * Octopus variable syntax must be defined as "#{<variable name>}"
 * You will be penalized for using the syntax "${<variable name>}" for Octopus variables.
 * You will be penalized for using the syntax "$<variable name>" for Octopus variables.
+
+**⚠️ CRITICAL — an Octostache expression QUOTED IN THE PROMPT must be copied through verbatim. NEVER resolve it to a literal value.** `#{...}` is evaluated by Octopus at deployment time; substituting what you think it will evaluate to hard-codes one environment's value into the project and destroys the behaviour the prompt asked for. The apply succeeds, so the loss is silent.
+
+**Observed failures**:
+
+| Prompt said | What was generated | Why it is wrong |
+| --- | --- | --- |
+| `the Terraform variable "region" with the value "#{Octopus.Environment.Name}"` | `"region" = "Production"` | the variable is now pinned to Production in every environment |
+| `only runs when the variable expression "#{unless Octopus.Deployment.Error}True#{/unless}"` | `"Octopus.Step.ConditionVariableExpression" = "True"` | the step now always runs, including after a failure |
+
+* This applies everywhere a prompt quotes an expression: step properties, Terraform template parameters, script bodies, variable values, package IDs, image tags, YAML content, email subjects, and channel and step names. If the prompt put `#{` and `}` around something, the output must contain the same characters.
+* It applies equally to expressions containing helpers — `#{if ...}`, `#{unless ...}`, `#{each ...}`, `#{ ... | Contains "x"}` — and to output-variable references such as `#{Octopus.Action[My Step].Output.Foo}`.
+* Do NOT "simplify" an expression you judge redundant, and do NOT evaluate one because only one environment exists today.
+
+**MANDATORY SELF-CHECK — Octostache preserved**: before finalizing output, list every `#{...}` expression that appears between quotes in the prompt. For EACH one, search your output for the same text. If it is absent, find the property that should have carried it and restore it. You will be penalized for each prompt-quoted Octostache expression that was replaced with a literal value.
 
 ## Octopus Variable Instructions
 
@@ -7068,6 +7268,46 @@ resource "octopusdeploy_process_step" "process_step_my_project_wait_20_min" {
 }
 ```
 
+**⚠️ CRITICAL — a project type's deployment step MUST keep the step TYPE its template uses.** Each project type template is built around one step that performs the deployment. Configuring that deployment is done by editing that step — never by deleting it and substituting a step of a different type. These are the types the templates actually use; the deployment process MUST contain the listed type:
+
+| Project type | Template | The deployment step type that MUST be present |
+| --- | --- | --- |
+| Azure Web App | `azurewebapp.tf` | `Octopus.AzurePowerShell` (deploys with the `az` CLI) |
+| Azure Function | `azurefunction.tf` | `Octopus.AzurePowerShell` (deploys with the `az` CLI) |
+| IIS | `windowsiis.tf` | `Octopus.IIS` |
+| Windows Service | `windowsservice.tf` | `Octopus.WindowsService` |
+| Tomcat | `apachetomcat.tf` | `Octopus.TomcatDeploy` |
+| Kubernetes | `k8s.tf` | `Octopus.KubernetesDeployRawYaml` |
+| Kubernetes LLM | `llm.tf` | `Octopus.KubernetesDeployRawYaml` |
+| AWS Lambda | `awslambda.tf` | `Octopus.AwsUploadS3` plus `Octopus.AwsRunCloudFormation` |
+| Terraform | `terraform.tf` | `Octopus.TerraformApply` (plus `Octopus.TerraformPlan`) |
+| Argo CD Modify Manifest | `argoupdatemanifest.tf` | `Octopus.ArgoCDUpdateManifests` |
+| Argo CD Image Tag Update | `argoupdatetags.tf` | `Octopus.ArgoCDUpdateImageTags` |
+| Claude | `claude.tf` | `Octopus.Claude` |
+| Orchestration | `deploymentorchestration.tf` | `Octopus.DeployRelease` |
+| VM Blue/Green | `vmbluegreen.tf` | `Octopus.TransferPackage` |
+| Script / Progressive deployment | `script.tf`, `progressive_deployment.tf` | `Octopus.Script` |
+
+**Note the two Azure rows.** The Azure Web App and Azure Function templates deploy with an `Octopus.AzurePowerShell` step that shells out to `az`; that IS the canonical shape for those project types, and it must not be "upgraded" to `Octopus.AzureWebApp` or `Octopus.AzureAppService` unless the prompt explicitly asks for that step type. Conversely, do not rewrite a typed step (`Octopus.IIS`, `Octopus.TomcatDeploy`, `Octopus.KubernetesDeployRawYaml`, `Octopus.TerraformApply`, …) into a script that shells out to a CLI.
+
+**Where deployment configuration goes depends on the step type.** When the prompt gives a web app name, resource group or deployment slot:
+
+* On the template's `Octopus.AzurePowerShell` step, they belong in the `az` command in `Octopus.Action.Script.ScriptBody` (and in the project variables the script interpolates, such as `Project.Azure.WebApp.Octopub.Name` and `Project.Azure.ResourceGroup.Name`). Update those, do not add `Octopus.Action.Azure.WebAppName` to a PowerShell step.
+* On an `Octopus.AzureWebApp` step — only when the prompt explicitly asks for that step type — they are execution properties:
+
+```hcl
+execution_properties = {
+  "Octopus.Action.Azure.WebAppName"                   = "marketing-prod"
+  "Octopus.Action.Azure.ResourceGroupName"            = "marketing-rg"
+  "Octopus.Action.Azure.DeploymentSlot"               = "staging"
+  "Octopus.Action.Azure.SwapDeploymentSlot"           = "True"
+  "Octopus.Action.Azure.SwapDeploymentSlotTargetSlot" = "production"
+  ...
+}
+```
+
+**MANDATORY SELF-CHECK — the deployment step survives**: before finalizing output, identify the project type from the prompt, look up its deployment step type in the table above, and confirm at least one `octopusdeploy_process_step` in the deployment process has that `type`. If the template's typed deployment step has been replaced by a CLI script, restore it. You will be penalized for every project whose deployment step type differs from its template's.
+
 **MANDATORY — step `name` attribute values must be unique across ALL `octopusdeploy_process_step` and `octopusdeploy_process_templated_step` resources in a project**: Two steps cannot share the same `name` value. If a prompt-specified step has the same name as a template-included step, they must be merged into a single resource — do NOT generate two separate resources with the same `name` value. You will be penalized for creating two step resources with the same `name` attribute.
 
 **Negative example — two step resources with the same name (FORBIDDEN)**:
@@ -7162,6 +7402,20 @@ resource "octopusdeploy_process_step" "process_step_script_hello_world" {
 **MANDATORY SELF-CHECK — step retries**: If the prompt contains the word "retry" or "retries" in relation to a step, identify the single step resource it refers to (the template step, if the template already provides one of that kind) and confirm that `"Octopus.Action.AutoRetry.MaximumCount"` appears inside THAT resource's `execution_properties` map, that its value is a quoted integer greater than zero, and that `"Octopus.Action.AutoRetry.MinimumBackoff"` sits beside it. If you cannot point at the property, retries are off — STOP and add it before responding. You will be penalized for a prompt that asks for retries and produces a step with no `Octopus.Action.AutoRetry.MaximumCount` in its `execution_properties`.
 
 ## Space ID Variable Instructions
+
+**⚠️ CRITICAL — the `octopus_space_id` variable block MUST ALWAYS be declared, in EVERY response, even when nothing in the configuration interpolates it.** The space ID is supplied to the plan on the command line as `-var=octopus_space_id=Spaces-NNNN`. OpenTofu refuses a value for a variable the root module does not declare, so a response that omits the `variable "octopus_space_id"` block fails at PLAN time — before a single resource is created — with:
+
+```
+Error: Value for undeclared variable
+
+A variable named "octopus_space_id" was assigned on the command line, but the
+root module does not declare a variable of that name. To use this value, add
+a "variable" block to the configuration.
+```
+
+This is a total failure: no project, no environments, no accounts, nothing. It is also easy to miss, because the block looks like dead code — most configurations reference `var.octopus_space_id` only from the `provider` block or from a `space_id` attribute, and an output that happens to use neither still MUST declare it. Declare the variable unconditionally, alongside `octopus_server` and `octopus_apikey`.
+
+**MANDATORY SELF-CHECK — scaffolding variables**: before finalizing output, confirm the response contains all three of `variable "octopus_server"`, `variable "octopus_apikey"` and `variable "octopus_space_id"`. You will be penalized for omitting any of them, and most heavily for omitting `octopus_space_id`.
 
 **MANDATORY — `octopus_space_id` variable must NOT have a default value**: The `octopus_space_id` Terraform variable must be declared without a `default` attribute. In particular, you must NEVER add `default = "Spaces-1"` or any other space ID as the default. The canonical example is:
 
@@ -7453,6 +7707,18 @@ resource "octopusdeploy_variable" "my_project_connection_string_production" {
 
 **When a variable has NO scope restriction**, do NOT include a `scope` block at all — omit it entirely rather than including an empty `scope {}` block.
 
+**⚠️ CRITICAL — do NOT scope a variable to a runbook (`processes`) unless the prompt says the variable belongs to that runbook.** A prompt that is otherwise about a runbook does not make its variables runbook-scoped. "Add a project variable X with the value Y" means an unscoped PROJECT variable, available to deployments and to every runbook; scoping it to one runbook hides it from the deployment process, which is a silent change of meaning.
+
+* **Observed failure**: the prompt `Create a runbook called "Restart Server" in the project "Web App" … * Add a project variable "Project.Restart.Timeout" with the value "120"` produced
+  ```hcl
+  scope {
+    processes = ["${octopusdeploy_runbook.runbook_web_app_restart_server.id}"]
+  }
+  ```
+  The variable was invisible to the project's deployment process. The correct output has no `scope` block at all.
+* Set `processes` ONLY when the prompt explicitly ties the variable to a runbook — "a variable used only by the 'Restart Server' runbook", "scoped to the runbook", or similar.
+* The same applies to `environments`, `channels`, `roles` and `tenant_tags`: a scope dimension appears only when the prompt asks for it.
+
 **⚠️ CRITICAL — NEVER scope a variable to the project's built-in "Default" channel, and NEVER let ANY scope list contain an empty string.** A project's "Default" channel is created by Octopus as a side effect of creating the project, so a `data "octopusdeploy_channels"` lookup for it returns nothing while the same apply is running. The usual ternary then resolves to `""`, and the variable is submitted with `channels = [""]`. Octopus silently drops the empty channel from the scope, the provider retries the create, and the second attempt collides with the first:
 
 ```
@@ -7580,7 +7846,17 @@ The following instructions provide default guidance on how to implement common d
 
 A "specific target configuration" means the prompt gives an actual cluster URL (or explicitly says to use an existing named target). Only then may you skip the pattern.
 
-You will be penalized for generating a project containing Kubernetes steps with no Kubernetes target, and for leaving `Octopus.Action.Kubernetes.ResourceStatusCheck`, `Octopus.Action.KubernetesContainers.DeploymentWait`, and `Octopus.Action.Kubernetes.ServerSideApply.Enabled` at their template defaults on an `Octopus.KubernetesDeployRawYaml` step when the "Mock K8s" target is in use. The three defaults that MUST be overridden are `ResourceStatusCheck = "False"`, `DeploymentWait = "NoWait"`, and `ServerSideApply.Enabled = "False"`; a raw-YAML step left with `ResourceStatusCheck = "True"` or `ServerSideApply.Enabled = "True"` will fail against "Mock K8s". You will equally be penalized for writing any of these three properties onto an `Octopus.KubernetesRunScript` or `Octopus.HelmChartUpgrade` step, where they do not belong.
+You will be penalized for generating a project containing Kubernetes steps with no Kubernetes target, and for leaving `Octopus.Action.Kubernetes.ResourceStatusCheck`, `Octopus.Action.KubernetesContainers.DeploymentWait`, and `Octopus.Action.Kubernetes.ServerSideApply.Enabled` at their template defaults on an `Octopus.KubernetesDeployRawYaml` step when the "Mock K8s" target is in use. The three defaults that MUST be overridden are `ResourceStatusCheck = "False"`, `DeploymentWait = "NoWait"`, and `ServerSideApply.Enabled = "False"`; a raw-YAML step left with `ResourceStatusCheck = "True"` or `ServerSideApply.Enabled = "True"` will fail against "Mock K8s". You will equally be penalized for writing any of these three properties onto an `Octopus.KubernetesRunScript` step, where none of them belong.
+
+**Which of the three properties each Kubernetes step type accepts** (taken from the `everystep.tf` example configuration — do not add a property to a step type that is not ticked here):
+
+| Property | `KubernetesDeployRawYaml` | `Kubernetes.Kustomize` | `HelmChartUpgrade` | `KubernetesRunScript` |
+| --- | --- | --- | --- | --- |
+| `Octopus.Action.Kubernetes.ResourceStatusCheck` | yes | yes | yes | no |
+| `Octopus.Action.Kubernetes.ServerSideApply.Enabled` (and `.ForceConflicts`) | yes | yes | no | no |
+| `Octopus.Action.KubernetesContainers.DeploymentWait` | yes | no | no | no |
+
+* So when a prompt says "use client side apply" or "disable verification checks" for a project whose steps include Kustomize or Helm, set `ResourceStatusCheck = "False"` on the raw-YAML, Kustomize AND Helm steps, and `ServerSideApply.Enabled = "False"` on the raw-YAML and Kustomize steps only. Leave all three off `Octopus.KubernetesRunScript`.
 
 **MANDATORY SELF-CHECK — Kubernetes target and step properties**: Before finalizing Terraform output, ask: does this project contain any Kubernetes step? If YES, verify that (1) an `octopusdeploy_kubernetes_cluster_deployment_target` resource exists — this is required by EVERY Kubernetes step type, `Octopus.KubernetesRunScript` and `Octopus.HelmChartUpgrade` included — and (2) every step of type `Octopus.KubernetesDeployRawYaml`, and no other step type, sets `Octopus.Action.Kubernetes.ResourceStatusCheck = "False"`, `Octopus.Action.KubernetesContainers.DeploymentWait = "NoWait"`, and `Octopus.Action.Kubernetes.ServerSideApply.Enabled = "False"` in `execution_properties`. Add whatever is missing from the raw-YAML steps, and remove any of the three that has leaked into a kubectl script or Helm step.
 
