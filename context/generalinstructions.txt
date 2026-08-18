@@ -5879,6 +5879,32 @@ unexpected new value: .execution_properties: inconsistent values for sensitive a
 1. Still create the `octopusdeploy_username_password_account` resource named `X`, because prompt-specified accounts are always created.
 2. Still set `Tomcat.Deploy.User` and `Tomcat.Deploy.Password` on the step — the account does NOT satisfy them.
 3. Set `Tomcat.Deploy.User` to the username named in the prompt (here `"U"`), or to a variable reference holding it.
+4. **When the prompt names the account but gives NO username, bind the step to the account through a `UsernamePasswordAccount` project variable — do NOT invent a literal placeholder.** A prompt such as `Create a username/password account called "Tomcat Manager Account" and the Tomcat step must reference it` names no username, so rule 3 has nothing to copy. The observed output filled the gap with `"Tomcat.Deploy.User" = "CHANGEME"` and a separate sensitive variable for the password, which leaves the account referenced by nothing at all: the prompt's account is created, exports with nothing, and the step deploys with a username that is plainly not a username. Instead, create the account, point a project variable of type `UsernamePasswordAccount` at it, and read both credentials off that variable:
+
+```hcl
+resource "octopusdeploy_variable" "project_tomcat_manager_account_1" {
+  count        = "..."
+  owner_id     = "..."
+  name         = "Project.Tomcat.Manager.Account"
+  type         = "UsernamePasswordAccount"
+  value        = "${length(data.octopusdeploy_accounts.account_tomcat_manager_account.accounts) != 0 ? data.octopusdeploy_accounts.account_tomcat_manager_account.accounts[0].id : octopusdeploy_username_password_account.account_tomcat_manager_account[0].id}"
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+```
+```hcl
+"Tomcat.Deploy.User"     = "#{Project.Tomcat.Manager.Account.Username}"
+"Tomcat.Deploy.Password" = "#{Project.Tomcat.Manager.Account.Password}"
+```
+
+* An account-typed variable exposes the account's fields as `#{<variable name>.Username}` and `#{<variable name>.Password}`, so both step properties are still Octostache references — rule 2 and the "no literal secrets" self-check are satisfied — and the account the prompt asked for is genuinely used, not merely created.
+* This is the ONLY way a username/password account reaches a Tomcat step. It does not contradict "the step has no account field": the binding is through a variable, not through the step.
+* `#{Tomcat.User}` / `#{Tomcat.Password}` with plain `String` and `Sensitive` variables remains correct when the prompt names NO account. Reach for the account variable only when an account exists to point at.
+* Never write `CHANGEME`, `changeme`, `TODO`, or any similar literal into `Tomcat.Deploy.User`. When you have no username and no account, use `#{Tomcat.User}` with a `String` variable whose value is `tomcat`.
 
 Failing to set the two properties because an account was created is the single most common cause of the API error above. You will be penalized for treating a username/password account as a substitute for `Tomcat.Deploy.User` and `Tomcat.Deploy.Password`.
 
