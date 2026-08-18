@@ -3149,9 +3149,11 @@ resource "octopusdeploy_runbook" "runbook_my_script_app_4_retrieve_logs" {
 * You must include the "lifecycle_id" attribute for every "octopusdeploy_project" resource.
 * **⚠️ CRITICAL — The "is_version_controlled" attribute must ALWAYS be "false", even when the prompt explicitly asks for a version-controlled, Config-as-Code, GitOps, or Git-stored project.** New project creation must NEVER produce a Config-as-Code (VCS) project. When a project is converted to VCS, the Octopus API immediately attempts to authenticate against and write to the real Git repository named in the prompt. Because the LLM cannot supply valid Git credentials or a reachable repository, this conversion fails at `terraform apply` with an error such as `Error converting project to VCS: The username or token used to authenticate with the Git Repository is invalid`, which aborts the ENTIRE apply so NO project is created. This violates the rule that every prompt must create a project.
   * Set `is_version_controlled = false` and do NOT emit any `git_library_persistence_settings` block, `git_anonymous_persistence_settings` block, `git_username_password_persistence_settings` block, or any other VCS/Git persistence configuration on the `octopusdeploy_project` resource.
-  * Do NOT create an `octopusdeploy_git_credential` resource for the project, and do NOT reference one. The only exception is a Platform Hub prompt that explicitly requests it (see the platform hub instructions); a standard project creation prompt must never create a git credential.
+  * Do NOT reference an `octopusdeploy_git_credential` from the project's persistence settings, and do NOT create one *in order to* version control the project. The only exception is a Platform Hub prompt that explicitly requests it (see the platform hub instructions).
+  * **This does NOT forbid a git credential the prompt asked for in its own right.** A prompt that says `Create a Git Connection called "Config Git" with … the allowed repository "…"` is requesting a space-level resource, and the rule elsewhere in this file that explicitly requested resources MUST be created still applies — create the `octopusdeploy_git_credential`, just do not attach it to the project. The same is true of git credentials consumed by STEPS rather than by the project: `Octopus.ArgoCDUpdateManifests`, `Octopus.Kubernetes.Kustomize`, `Octopus.CommitToGit` and `Octopus.KubernetesDeployRawYaml` steps sourced from `GitRepository` all reference a git credential through `git_dependencies` or their execution properties, and those references are correct and required.
+  * Say so in the project description when you decline the version control request, in the same way you note any other requested feature that has no equivalent — for example "This project remains a standard database-backed project rather than a version-controlled (Config-as-Code) project."
   * Create the project as a normal, database-backed project. The rest of the prompt (steps, variables, lifecycle, accounts, feeds, etc.) is created exactly as it would be for a non-VCS project.
-  * **MANDATORY SELF-CHECK — VCS exclusion**: Before finalizing Terraform output, verify `is_version_controlled = false`, that no Git persistence settings blocks exist on the project, and that no `octopusdeploy_git_credential` resource is present. You will be penalized for each occurrence of `is_version_controlled = true`, a Git persistence settings block, or a project `octopusdeploy_git_credential`, because they abort the apply and prevent the project from being created.
+  * **MANDATORY SELF-CHECK — VCS exclusion**: Before finalizing Terraform output, verify `is_version_controlled = false` and that the `octopusdeploy_project` resource contains NO Git persistence settings block of any kind (`git_library_persistence_settings`, `git_anonymous_persistence_settings`, `git_username_password_persistence_settings`). You will be penalized for each occurrence of `is_version_controlled = true` or of a Git persistence settings block on a project, because they abort the apply and prevent the project from being created. An `octopusdeploy_git_credential` that the prompt asked for by name, or that a step consumes through `git_dependencies`, is NOT a violation — only a credential wired into the project's persistence settings is.
 * You will be penalized for setting the "auto_create_release" attribute to "true".
 * The name of the data source much also match the name used when referencing a "project_id" attribute. For example, this data source:
 
@@ -4096,6 +4098,15 @@ container = { dockerfile = <<-EOT
 * You will be penalized for using asterisks, for example "*****", as placeholders in step properties.
 * The "Octopus.Step.ConditionVariableExpression" property can only be defined in the "properties" block.
 * You will be penalized for defining the "Octopus.Step.ConditionVariableExpression" property in the "execution_properties" block.
+
+**⚠️ When the prompt scopes a STEP to a named channel, do not silently drop the instruction.** A step's `channels` attribute takes channel IDs, and Octopus accepts a step scoped to any channel including an `EphemeralEnvironment` channel (verified against the API). **Observed failure**: the prompt `Add a script step called "Seed Test Data" that only runs in the ephemeral "PR Builds" channel` produced the step with `channels = null`, so it runs in every channel.
+
+* When the channel ALREADY EXISTS (a data source lookup), set `channels = ["${data.octopusdeploy_channels.<name>.channels[0].id}"]` on the step.
+* When the channel is CREATED IN THE SAME OUTPUT, watch the dependency direction. A channel carrying a `rule` block must `depends_on` the `octopusdeploy_process_steps_order` (its `action_package` entries name deployment actions), so a step referencing that channel's id creates a Terraform cycle. In that case either:
+  * give the channel NO `rule` block, drop its `depends_on`, and reference `octopusdeploy_channel.<name>.id` from the step; or
+  * if the channel needs its rules, leave `channels = null` on the step and record the limitation in the step's `notes`, the same way you would any other instruction with no expressible form.
+* Never scope a step to the project's built-in "Default" channel — the same reasoning as for variables applies, and it is a no-op.
+* You will be penalized for dropping a prompt-specified channel scope without saying so in the step's `notes`.
 * The "condition" attribute on an "octopusdeploy_process_step" block must be set to one of the following:
   * "Always"
   * "Failure"
@@ -5847,6 +5858,22 @@ Tomcat Manager username. Please provide the Tomcat Manager password.]
 * Both properties MUST be set to a non-empty value even when the prompt says nothing about Tomcat manager credentials. When the prompt gives no credentials, default to `"Tomcat.Deploy.User" = "#{Tomcat.User}"` and `"Tomcat.Deploy.Password" = "#{Tomcat.Password}"` and create the matching project variables — a `String` variable named `Tomcat.User` with the value `"tomcat"` and a `Sensitive` variable named `Tomcat.Password`.
 * You will be penalized for creating an `Octopus.TomcatDeploy` step without both `Tomcat.Deploy.User` and `Tomcat.Deploy.Password` in `execution_properties`.
 
+**⚠️ CRITICAL — `Tomcat.Deploy.Password` MUST be a VARIABLE REFERENCE, never a literal password. A literal aborts the apply.** Octopus treats this property as sensitive and returns a masked value when the provider reads the step back, so the value it sent and the value it reads differ and OpenTofu fails:
+
+```
+Error: Provider produced inconsistent result after apply
+
+When applying changes to
+octopusdeploy_process_step.process_step_statements_app_deploy_to_tomcat_via_manager[0],
+provider "provider[\"registry.opentofu.org/octopusdeploy/octopusdeploy\"]" produced an
+unexpected new value: .execution_properties: inconsistent values for sensitive attribute.
+```
+
+* Always write `"Tomcat.Deploy.Password" = "#{Tomcat.Password}"` and create the matching sensitive project variable. Never write an invented password, and never write a placeholder such as `"changeme"` or `"Change Me!"` directly into the property — the value must be an Octostache reference so that what is stored is the reference, not a secret.
+* **This applies to every sensitive `execution_properties` value, not just Tomcat.** Any step property that Octopus stores as a secret — Tomcat manager passwords, IIS or service account passwords, API keys, webhook URLs treated as secrets — must be an Octostache reference to a sensitive project variable. Put the secret in an `octopusdeploy_variable` with `is_sensitive = true` and reference it from the step.
+
+**MANDATORY SELF-CHECK — no literal secrets in step properties**: before finalizing output, search `execution_properties` for any key containing `Password`, `Secret`, `ApiKey`, `Token` or `Credential`. Each one's value must start with `#{`. You will be penalized for every sensitive step property set to a literal, because it aborts the apply.
+
 **⚠️ CRITICAL — an `Octopus.TomcatDeploy` step CANNOT use a username/password account**: The step has no account field, and `octopusdeploy_username_password_account` resources cannot be attached to it. When a prompt says "create a username/password account called 'X' with the username 'U' and use it in the deploy step", you MUST:
 
 1. Still create the `octopusdeploy_username_password_account` resource named `X`, because prompt-specified accounts are always created.
@@ -5922,6 +5949,25 @@ Octopus API error: There was a problem with your request. [Overlay path can not 
   * `"Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([])`
 
 ## Octopus step template instructions
+
+**⚠️ CRITICAL — the `parameters` map of an `octopusdeploy_process_templated_step` may contain ONLY the step template's OWN parameter names. Putting an `Octopus.Action.*` property there aborts the apply.** Octopus discards keys that are not declared parameters of the template, so the value the provider reads back no longer matches what it sent and OpenTofu fails:
+
+```
+Error: Provider produced inconsistent result after apply
+
+When applying changes to
+octopusdeploy_process_templated_step.process_step_release_guard_calculate_deployment_mode[0],
+provider "provider[\"registry.opentofu.org/octopusdeploy/octopusdeploy\"]" produced an
+unexpected new value: .parameters: element "Octopus.Action.RunOnServer" has vanished.
+```
+
+* **Observed failure**: a "Calculate Deployment Mode" community step template step was emitted with `Octopus.Action.RunOnServer`, `Octopus.Action.Script.ScriptSource` and `Octopus.Action.Script.ScriptBody` inside its `parameters` map. All three "vanished" on read-back and the apply aborted.
+* Step template parameter names are prefixed by the template, not by `Octopus.Action` — for example `ssn_Color`, `Sbom.Package`, `CheckTargets.Octopus.Role`, `Block.Octopus.Reason`, `Run.Runbook.Project.Name`, `OctopusAI.Prompt`, `BlueGreen.Environment.Blue.Name`. If a key starts with `Octopus.Action.` or `Octopus.Step.`, it is NOT a template parameter.
+* Every `Octopus.Action.*` property belongs in `execution_properties` instead. On a templated step that normally means just `"Octopus.Action.RunOnServer" = "true"` (plus `OctopusUseBundledTooling` where the example uses it).
+* **A templated step must NOT define a script.** The template supplies the script; `Octopus.Action.Script.ScriptSource` and `Octopus.Action.Script.ScriptBody` must not appear anywhere on it, in either map. A step template step whose behaviour you cannot express through its parameters should be an ordinary `octopusdeploy_process_step` of type `Octopus.Script` instead.
+* If you do not know a template's parameter names, emit the step with an EMPTY `parameters = {}` map rather than inventing keys — the "Calculate Deployment Mode" step in the example configuration does exactly that.
+
+**MANDATORY SELF-CHECK — templated step parameters**: before finalizing output, find every `octopusdeploy_process_templated_step` and read its `parameters` map. If any key begins with `Octopus.Action.` or `Octopus.Step.`, move it to `execution_properties`, or delete it if it is a script property. You will be penalized for each `Octopus.*` key left in a `parameters` map.
 
 **⚠️ CRITICAL — the "Scan for Vulnerabilities" community step template REQUIRES its `Sbom.Package` package parameter. Omitting it aborts the apply.** The template declares a package parameter, and Octopus rejects the step when it is absent:
 
