@@ -100,7 +100,13 @@ def sanitize_name_attributes(config):
         # name: "Blue/Green deployment"
         # with
         # name: "Blue_Green deployment"
-        line = re.sub(r'[^a-zA-Z0-9.,:_#"\'= \-${}\[\]]', r"_", yaml_config)
+        #
+        # Brackets and ampersands are left alone. The Octopus API accepts them in
+        # the name of a project, environment, lifecycle, channel, project group,
+        # runbook and worker pool, so replacing them corrupts a name the prompt
+        # asked for. Forward and back slashes are still replaced, because the API
+        # rejects a name containing a slash.
+        line = re.sub(r'[^a-zA-Z0-9.,:_#&()"\'= \-${}\[\]]', r"_", yaml_config)
 
         fixed_config = fixed_config.replace(yaml_config, line)
 

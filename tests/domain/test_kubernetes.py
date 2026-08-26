@@ -208,6 +208,36 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = sanitize_name_attributes(input_config)
         self.assertEqual(result, expected_output)
 
+    def test_sanitize_name_attributes_keeps_brackets_and_ampersands(self):
+        # The Octopus API accepts brackets and ampersands in resource names, so
+        # they must survive sanitization. Only the slash is replaced.
+        input_config = """
+        resource "octopusdeploy_environment" "environment" {
+          name = "Prod & DR [Hot]"
+        }
+        resource "octopusdeploy_lifecycle" "lifecycle" {
+          name = "Ledger Lifecycle (Regional)"
+        }
+        resource "octopusdeploy_environment" "environment2" {
+          name = "Staging (EU-West-1) / Primary"
+        }
+        """
+
+        expected_output = """
+        resource "octopusdeploy_environment" "environment" {
+          name = "Prod & DR [Hot]"
+        }
+        resource "octopusdeploy_lifecycle" "lifecycle" {
+          name = "Ledger Lifecycle (Regional)"
+        }
+        resource "octopusdeploy_environment" "environment2" {
+          name = "Staging (EU-West-1) _ Primary"
+        }
+        """
+
+        result = sanitize_name_attributes(input_config)
+        self.assertEqual(result, expected_output)
+
     def test_sanitize_name_attributes_allow_interpolation(self):
         # Input with slashes in name
         input_config = """
