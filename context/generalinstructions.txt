@@ -1414,9 +1414,9 @@ spec:
 * If the prompt contains a step name with parentheses or square brackets that were replaced by dashes (e.g., `Deploy -Manifest-`), use the dash-replaced form exactly as written in the prompt. Do NOT re-introduce parentheses or other special characters.
 * Do NOT normalize prompt-provided dash replacements into underscores. For example, `Manual Judgment -Canary-` must stay `Manual Judgment -Canary-`, never `Manual Judgment _Canary_`.
 * You will be penalized for creating steps with parentheses or square brackets in their names.
-* The Terraform provider is stricter about step and project names than the Octopus API. This is why parentheses and square brackets are not supported.
+* The Terraform provider is stricter about STEP names than the Octopus API. This is why parentheses and square brackets are not supported in step names. This extra strictness does NOT extend to project names or to any other resource — see the project name rules below.
 
-**⚠️ CRITICAL — the SAME character restrictions apply to PROJECT names, and an invalid project name aborts the apply at the very first resource that matters.** Octopus rejects the project outright:
+**⚠️ CRITICAL — project names have their OWN, much narrower restriction, and an invalid project name aborts the apply at the very first resource that matters.** A project name containing a forward slash is rejected outright:
 
 ```
 Error: Error creating project
@@ -1429,12 +1429,25 @@ Telemetry / Ingest (EU)' contains invalid characters.]
 
 Because the project is created before its process, steps, variables and runbooks, an invalid name costs everything downstream — the environments, lifecycle, accounts and targets are created and then orphaned.
 
-* **When the prompt supplies a project name containing characters outside letters, numbers, periods, commas, dashes, underscores and hashes, replace each invalid character with a dash.** Forward slashes, parentheses, square brackets, colons, ampersands and similar all fall in this group. `33. Telemetry / Ingest (EU)` becomes `33. Telemetry - Ingest -EU-`.
-* This is the ONE case where the project name deliberately differs from the prompt. Everywhere else the name must match the prompt exactly — see the Project Uniqueness Instructions. Sanitising an otherwise-illegal name is not the same as renaming a legal one, and a project created under a sanitised name is far better than no project at all.
-* Apply the same substitution to step names, and keep any dash-replaced form the prompt already uses rather than converting it back.
+* **The forward slash `/` is the ONLY character the Octopus API rejects in a project name. Replace it with a dash, and change nothing else.** `33. Telemetry / Ingest (EU)` becomes `33. Telemetry - Ingest (EU)` — the slash goes, the parentheses stay.
+* **Do NOT strip or substitute any other character from a project name.** Parentheses `()`, square brackets `[]`, colons `:`, ampersands `&` and backslashes `\` are all ACCEPTED by the Octopus API in a project name and MUST be passed through verbatim. This has been verified directly against the API: `Charset Project (EU)`, `Charset Project [X]: Y & Z` and `Charset Backslash \ Project` were all created successfully, while `Charset Slash / Project` was rejected with `Name 'Charset Slash / Project' contains invalid characters.` The generic wording of that error message lists only letters, numbers, periods, commas, dashes, underscores and hashes, but the message is misleading — the validator only actually rejects the slash. Do not widen the substitution on the strength of the error text.
+* The slash substitution is the ONE case where the project name deliberately differs from the prompt. Everywhere else the name must match the prompt exactly — see the Project Uniqueness Instructions. Sanitising an otherwise-illegal name is not the same as renaming a legal one, and a project created under a sanitised name is far better than no project at all.
+* Keep any dash-replaced form the prompt already uses rather than converting it back. The separate, stricter restrictions in this section on parentheses and square brackets apply to STEP names only, because the Terraform provider validates step names more tightly than the API validates project names. Never carry the step-name restrictions across to a project name.
+
+**⚠️ CRITICAL — the step-name restrictions apply to STEP names ONLY. Never apply them to environments, lifecycles, channels, tenants, project groups, accounts, feeds, worker pools or any other resource.** Those resources take the same API rule as projects: the forward slash `/` is the only rejected character, and everything else must be reproduced from the prompt character for character.
+
+* An environment name containing parentheses, square brackets, colons or ampersands is legal and MUST be created verbatim. Verified directly against the API: `Probe Paren (One)` and `Probe Amp & Three` were both created successfully; only `Probe Slash / Two` was rejected.
+* When you do have to replace a slash, replace it with a **dash**, never an underscore. Converting punctuation to underscores is forbidden everywhere in this document.
+* Worked examples: `Create an environment called "Staging (EU-West-1) / Primary"` must produce `Staging (EU-West-1) - Primary`; `"Env Amp & Three"` must produce `Env Amp & Three`; `"Production [Failover]"` must produce `Production [Failover]`. Only the slash ever changes, and it becomes a dash.
+* This conflicts with nothing. The rule that environment names must match the prompt exactly still holds — it is only ever suspended for a forward slash.
+
+**MANDATORY SELF-CHECK — non-project, non-step names**: before finalizing output, read the `name` attribute of every `octopusdeploy_environment`, `octopusdeploy_lifecycle`, `octopusdeploy_channel`, `octopusdeploy_tenant` and `octopusdeploy_project_group` resource, and every lifecycle `phase` name. Compare each one character by character against the name the prompt asked for. The ONLY permitted difference is a forward slash replaced by a dash. You will be penalized for every other difference, and especially for any underscore that appears where the prompt had a parenthesis, bracket, colon or ampersand.
 * **Observed failure**: the prompt `Create a Kubernetes project called "33. Telemetry / Ingest (EU)"` passed the name through verbatim. The apply aborted on the project resource, and the project, its process, all its steps, its variables and its runbook were lost, leaving an orphaned lifecycle, three environments, a token account and a Kubernetes target behind.
 
-**MANDATORY SELF-CHECK — names**: before finalizing output, read the `name` attribute of the `octopusdeploy_project` resource and of every step resource. Confirm each contains only letters, numbers, spaces, periods, commas, dashes, underscores and hashes. Replace anything else with a dash. You will be penalized for emitting a project or step name containing a character Octopus rejects, because it aborts the apply.
+**MANDATORY SELF-CHECK — names**: before finalizing output, read the `name` attribute of the `octopusdeploy_project` resource and of every step resource.
+* For the PROJECT name: confirm it contains no forward slash. Replace a slash with a dash and leave every other character exactly as the prompt wrote it, including parentheses, square brackets, colons and ampersands.
+* For every STEP name: confirm it contains only letters, numbers, spaces, periods, commas, dashes, underscores and hashes, and replace anything else with a dash.
+You will be penalized for emitting a name containing a character Octopus rejects, because it aborts the apply. You will equally be penalized for stripping a legal character out of a project name that the prompt supplied.
 
 ## Step Description Property
 
@@ -3202,9 +3215,33 @@ resource "octopusdeploy_runbook" "runbook_my_script_app_4_retrieve_logs" {
   * The "octopusdeploy_project" resource must be omitted.
   * The "project_id" attribute on the "octopusdeploy_runbook" resource must be set to the ID of the existing project.
 
+## Environment, Lifecycle and Other Resource Name Characters
+
+* The "name" attribute of a "octopusdeploy_environment", "octopusdeploy_lifecycle", "octopusdeploy_channel", "octopusdeploy_tenant", "octopusdeploy_project_group", "octopusdeploy_runbook" or "octopusdeploy_worker_pool" resource, and the "name" of every lifecycle "phase" block, MUST be copied from the prompt character for character.
+* Brackets `()`, square brackets `[]`, colons `:`, ampersands `&` and backslashes `\` are all ACCEPTED by the Octopus API in these names. Verified directly against the API: `Probe Paren (One)` and `Probe Amp & Three` were both created successfully.
+* The forward slash `/` is the ONLY character rejected in these names. Replace a forward slash with a dash and change nothing else.
+
+Correct results for each of these prompts:
+
+| Prompt asked for | Correct name |
+| --- | --- |
+| `Create an environment called "Staging (EU-West-1) / Primary"` | `Staging (EU-West-1) - Primary` |
+| `Create an environment called "Prod & DR [Hot]"` | `Prod & DR [Hot]` |
+| `Create a lifecycle called "Ledger Lifecycle (Regional)"` | `Ledger Lifecycle (Regional)` |
+| `Add a channel called "Hotfix (Urgent)"` | `Hotfix (Urgent)` |
+| `Create a project group called "Payments (Core) & Ledger"` | `Payments (Core) & Ledger` |
+
+* Every one of those names keeps its brackets and ampersands. Only the slash in the first row changed, and it became a dash.
+* You will be penalized for altering a name the prompt supplied when that name contains no forward slash.
+* You will be penalized for emitting an underscore in any of these names where the prompt did not write an underscore. Brackets and ampersands are legal — leave them in place. Never substitute an underscore for punctuation in a `name` attribute anywhere in this document.
+* The stricter step name rules — where parentheses and square brackets ARE forbidden — apply ONLY to "octopusdeploy_process_step" and "octopusdeploy_process_child_step". Never carry them across to an environment, lifecycle, channel, tenant, project group, runbook or worker pool. Even there, the replacement character is a DASH: `Reconcile (Ledger)` becomes `Reconcile -Ledger-`.
+* Remember that the Terraform resource LABEL is not the name. A label such as `environment_staging_eu_west_1_primary` is built by lowercasing and replacing punctuation with underscores, and that transformation applies to the LABEL ONLY. The `name` attribute keeps the prompt's original punctuation untouched.
+
+**MANDATORY SELF-CHECK — punctuation in names**: before finalizing output, read the `name` attribute of every `octopusdeploy_environment`, `octopusdeploy_lifecycle`, `octopusdeploy_channel`, `octopusdeploy_tenant`, `octopusdeploy_project_group` and `octopusdeploy_runbook` resource, and every lifecycle `phase` name. For each one, find the name the prompt asked for and compare them character by character. If they differ anywhere other than a forward slash that became a dash, restore the prompt's character. Then read every `octopusdeploy_process_step` name and confirm that any parenthesis or square bracket from the prompt became a DASH, not an underscore.
+
 ## Octopus Project Instructions
 
-* The "name" attribute in a "octopusdeploy_project" resource can only contain letters, numbers, periods, commas, dashes, underscores, brackets, square brackets, or hashes.
+* The "name" attribute in a "octopusdeploy_project" resource can only contain letters, numbers, periods, commas, dashes, underscores, brackets, square brackets, colons, ampersands or hashes. The forward slash `/` is the only character Octopus rejects; replace it with a dash and leave everything else alone.
 * The "slug" attribute in a "octopusdeploy_project" resource can only contain lower case letters, numbers, or dashes. The slug must NOT start or end with a dash; strip any leading or trailing dashes after generating it.
 * You will be penalized for replacing brackets with underscores in the "name" attribute of a "octopusdeploy_project" resource.
 * Retention policies do not apply to resource "octopusdeploy_project".
