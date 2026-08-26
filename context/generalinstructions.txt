@@ -1416,6 +1416,26 @@ spec:
 * You will be penalized for creating steps with parentheses or square brackets in their names.
 * The Terraform provider is stricter about step and project names than the Octopus API. This is why parentheses and square brackets are not supported.
 
+**⚠️ CRITICAL — the SAME character restrictions apply to PROJECT names, and an invalid project name aborts the apply at the very first resource that matters.** Octopus rejects the project outright:
+
+```
+Error: Error creating project
+
+  with octopusdeploy_project.project_telemetry_ingest_eu[0],
+
+Octopus API error: There was a problem with your request. [Name '33.
+Telemetry / Ingest (EU)' contains invalid characters.]
+```
+
+Because the project is created before its process, steps, variables and runbooks, an invalid name costs everything downstream — the environments, lifecycle, accounts and targets are created and then orphaned.
+
+* **When the prompt supplies a project name containing characters outside letters, numbers, periods, commas, dashes, underscores and hashes, replace each invalid character with a dash.** Forward slashes, parentheses, square brackets, colons, ampersands and similar all fall in this group. `33. Telemetry / Ingest (EU)` becomes `33. Telemetry - Ingest -EU-`.
+* This is the ONE case where the project name deliberately differs from the prompt. Everywhere else the name must match the prompt exactly — see the Project Uniqueness Instructions. Sanitising an otherwise-illegal name is not the same as renaming a legal one, and a project created under a sanitised name is far better than no project at all.
+* Apply the same substitution to step names, and keep any dash-replaced form the prompt already uses rather than converting it back.
+* **Observed failure**: the prompt `Create a Kubernetes project called "33. Telemetry / Ingest (EU)"` passed the name through verbatim. The apply aborted on the project resource, and the project, its process, all its steps, its variables and its runbook were lost, leaving an orphaned lifecycle, three environments, a token account and a Kubernetes target behind.
+
+**MANDATORY SELF-CHECK — names**: before finalizing output, read the `name` attribute of the `octopusdeploy_project` resource and of every step resource. Confirm each contains only letters, numbers, spaces, periods, commas, dashes, underscores and hashes. Replace anything else with a dash. You will be penalized for emitting a project or step name containing a character Octopus rejects, because it aborts the apply.
+
 ## Step Description Property
 
 * When the prompt says `Set the step description to "..."`, the description must be set as the top-level `notes` attribute on the `octopusdeploy_process_step` resource, NOT inside the `execution_properties` map.
