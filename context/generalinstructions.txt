@@ -2190,6 +2190,22 @@ resource "octopusdeploy_project" "project_<name>" {
 }
 ```
 
+## Resources Are Created, Never Updated
+
+**⚠️ FOUNDATIONAL — the Terraform you generate only ever CREATES resources. There is no mechanism for editing, updating, renaming or reconfiguring a resource that already exists in the space.** Every resource is guarded by a `count` that resolves to `0` when a matching resource is already present, so an existing resource is left exactly as it is. This is deliberate and correct — it is what makes the configuration safe to re-apply — and it is the reason the `count` patterns below exist.
+
+The consequences follow directly, and you MUST NOT try to work around any of them:
+
+* If the prompt asks you to change something about a project that already exists — add a variable to it, change its lifecycle, alter its retention policy, rename or modify one of its steps, link a library variable set to it — **that instruction cannot be carried out.** The guarded resource evaluates to `count = 0`, nothing is created, and the existing project is left untouched. That is the expected outcome, not a failure.
+* **NEVER remove, weaken or re-key a `count` guard in order to force a change onto an existing resource.** Stripping the guard does not "update" anything; it attempts a second create, which either duplicates the resource or aborts the apply. Do not replace a project-existence `count` with `count = 1`, and do not drop the `count` attribute so that a variable or step "will definitely be created".
+* Do not treat a resource that is absent after an apply as a defect when the thing it belongs to already existed. A prompt-requested variable that does not appear because its project was already present is the create-only model working as designed.
+
+**The ONE exception is runbooks.** A runbook may be added to a project that already exists, together with the resources that make up that runbook — its `octopusdeploy_process`, its `octopusdeploy_process_step` resources, and its `octopusdeploy_process_steps_order`. For this to be possible those resources must be guarded by a lookup for the RUNBOOK, not for the project: keying them to the project's existence would resolve to `0` and the runbook would silently never be created. Nothing else about the project may be changed in the same output — a prompt that asks for a runbook AND a new project variable produces the runbook only.
+
+* The runbook's own attributes must still be correct and compatible with the project it is joining. In particular its `multi_tenancy_mode` must match the existing project's `tenanted_deployment_participation`, and its `environment_scope` must not narrow the runbook to environments the prompt never named.
+
+**MANDATORY SELF-CHECK — no attempted edits**: before finalizing output, ask whether any resource you have written is intended to modify something that already exists. If it is, and it is not a runbook or part of a runbook, remove the attempt rather than removing the `count` that blocks it. You will be penalized for any change to a `count` guard made in order to overwrite or edit an existing resource.
+
 ## Count Properties Instructions
 
 * The "count" parameter for any "octopusdeploy_process" resources must be the same as the "count" resource for the "octopusdeploy_project" resource.
@@ -3108,6 +3124,11 @@ You will be penalized for creating a data source of type "octopusdeploy_token_ac
   * project `tenanted_deployment_participation = "Untenanted"` → runbook `multi_tenancy_mode = "Untenanted"`
   * project `tenanted_deployment_participation = "Tenanted"` → runbook `multi_tenancy_mode = "Tenanted"` (or `"TenantedOrUntenanted"`)
   * project `tenanted_deployment_participation = "TenantedOrUntenanted"` → runbook `multi_tenancy_mode = "TenantedOrUntenanted"`
+
+  * **⚠️ This is the single most likely thing to get wrong when the prompt is of the form `Create a runbook called "X" in the project "Y"`, because the project is NOT in the output you are generating — its tenanted mode has to be looked up before you can choose the runbook's.** Do not default to `"Untenanted"` because the runbook resource is the only project-related thing in front of you. Read the existing project's `tenanted_deployment_participation` first and map it with the table above.
+  * **Observed failure**: the project `15. Warehouse Sync` was created with `tenanted_deployment_participation = "Tenanted"` (two tenants linked, tenanted deployments required). A follow-up prompt, `Create a runbook called "Rebuild Catalog Index" in the project "15. Warehouse Sync" …`, produced `multi_tenancy_mode = "Untenanted"`. The apply succeeded and the runbook is visible in the project, but it can never be run: the project permits only tenanted runs and the runbook permits only untenanted ones. An earlier runbook added to the SAME project in the same session was correctly given `"TenantedOrUntenanted"`, so this is intermittent — verify it every time rather than assuming.
+
+**MANDATORY SELF-CHECK — runbook tenancy against an existing project**: when the prompt adds a runbook to a project you are not creating, state to yourself what that project's `tenanted_deployment_participation` is before writing `multi_tenancy_mode`. If you could not determine it, use `"TenantedOrUntenanted"`, which is runnable under a tenanted project — never fall back to `"Untenanted"`. You will be penalized for every runbook whose mode makes it unrunnable in its project.
   * When in doubt, `"TenantedOrUntenanted"` is the safe choice because it is runnable under every project mode. Never emit `"Untenanted"` for a tenanted project.
   * The same consistency requirement applies across sibling runbooks: do not give one runbook in a project `"Untenanted"` while the others are `"TenantedOrUntenanted"` unless the prompt explicitly asks for that.
 * You will be penalized for defining the "unit" property in a "retention_policy" block in a "octopusdeploy_runbook" resource, for example, this resource "octopusdeploy_runbook" is invalid because it includes the "unit" property in the "retention_policy" block:
@@ -4105,6 +4126,71 @@ container = { dockerfile = <<-EOT
 * Steps are defined in the "octopusdeploy_process_step" and "octopusdeploy_process_child_step" resources.
 * The order of the steps are defined in the "octopusdeploy_process_steps_order" resource.
 * The order of child steps are defined in the "octopusdeploy_process_child_steps_order" resource.
+
+**⚠️ CRITICAL — canonical shape for rolling deployments and child steps. No example configuration contains a child step, so this is the ONLY reference; copy it exactly.** `octopusdeploy_process_child_steps_order` requires BOTH `process_id` AND `parent_id`, and lists the children in `children` (NOT `steps`). Omitting `process_id` fails at PLAN time, which means **nothing at all is created** — not the project, not the feed, not the environments:
+
+```
+Error: Missing required argument
+
+  on terraformInput.tf line 294, in resource "octopusdeploy_process_child_steps_order" "process_child_step_order_portal_site_deploy_to_iis":
+
+The argument "process_id" is required, but no definition was found.
+```
+
+* **Observed failure**: an IIS prompt asking for `a rolling deployment with a window size of 2` and `a child step ... called "Drain Connections"` emitted `octopusdeploy_process_child_steps_order` with `parent_id` and `children` but no `process_id`. The plan aborted and the entire prompt produced zero resources.
+
+**The rolling deployment window size is `Octopus.Action.MaxParallelism` in the PARENT step's `properties` block** (not `execution_properties`, and not on the children).
+
+```hcl
+# The parent step carries the target roles and the rolling window
+resource "octopusdeploy_process_step" "process_step_my_project_deploy_to_iis" {
+  count      = "..."
+  name       = "Deploy to IIS"
+  type       = "Octopus.IIS"
+  process_id = "..."
+  properties = {
+    "Octopus.Action.MaxParallelism"           = "2"
+    "Octopus.Action.TargetRoles"              = "iis-server"
+    "Octopus.Action.ExecutionTimeout.Enabled" = "False"
+  }
+  execution_properties = { ... }
+}
+
+# Each child step names BOTH the process and its parent step.
+# Child steps have NO start_trigger, NO package_requirement and NO notes attribute.
+resource "octopusdeploy_process_child_step" "process_child_step_my_project_drain_connections" {
+  count                 = "..."
+  name                  = "Drain Connections"
+  type                  = "Octopus.Script"
+  process_id            = "..."
+  parent_id             = "${octopusdeploy_process_step.process_step_my_project_deploy_to_iis[0].id}"
+  channels              = null
+  condition             = "Success"
+  environments          = null
+  excluded_environments = null
+  slug                  = "drain-connections"
+  tenant_tags           = null
+  execution_properties  = {
+    "Octopus.Action.RunOnServer"         = "true"
+    "Octopus.Action.Script.ScriptSource" = "Inline"
+    "Octopus.Action.Script.Syntax"       = "PowerShell"
+    "OctopusUseBundledTooling"           = "False"
+  }
+}
+
+# The child order names the process, the parent, and the children in order
+resource "octopusdeploy_process_child_steps_order" "process_child_step_order_my_project_deploy_to_iis" {
+  count      = "..."
+  process_id = "..."
+  parent_id  = "${octopusdeploy_process_step.process_step_my_project_deploy_to_iis[0].id}"
+  children   = ["${octopusdeploy_process_child_step.process_child_step_my_project_drain_connections[0].id}"]
+}
+```
+
+* The parent step appears in `octopusdeploy_process_steps_order.steps` as normal. Child steps do NOT appear there — they belong only to `children`.
+* Never use `steps` on an `octopusdeploy_process_child_steps_order`; the attribute is `children`.
+
+**MANDATORY SELF-CHECK — child steps**: for every `octopusdeploy_process_child_steps_order` in your output, confirm it sets `process_id`, `parent_id` and `children`. For every `octopusdeploy_process_child_step`, confirm it sets `process_id` and `parent_id`. A missing `process_id` costs the entire prompt, because it fails during plan rather than apply.
 * If the prompt says `The step must be disabled.` because a stage was hard-disabled, you MUST still create the corresponding step resource, set `is_disabled = true`, and include the step in the `octopusdeploy_process_steps_order` resource. Hard-disabled stages are preserved placeholders, not omitted stages.
 * When a skipped or ignored stage is removed from the dependency graph, the Terraform step order must reflect the rewritten dependency chain from the prompt. Do not preserve an order that still assumes the skipped stage exists.
 * You will be penalized for using asterisks, for example "*****", as placeholders in step properties.
