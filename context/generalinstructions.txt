@@ -6299,6 +6299,16 @@ resource "octopusdeploy_process_step" "my_step" {
 }
 ```
 
+**⚠️ CRITICAL — the rule above forbids CREATING an unrequested worker pool variable. It does NOT license IGNORING one the example configuration already defines.** Most project templates ship a `Project.WorkerPool` (or `Project.Octopus.WorkerPool`) variable of type `WorkerPool`, and every step they contain sets `worker_pool_variable` to it. When that variable is already present in the output:
+
+* Steps the prompt ADDS MUST use `worker_pool_variable = "Project.WorkerPool"` (matching the exact name the template uses), the same as every step around them. Do NOT hardcode `worker_pool_id` on the new step.
+* Hardcoding the pool on one step defeats the entire point of the variable — its own description says the pool "can be easily changed in a central location" — and leaves a process where changing the variable silently misses one step.
+* `worker_pool_id` remains correct in exactly two cases: the prompt names a worker pool for that specific step, or the project has no worker pool variable at all.
+
+* **Observed failure**: a canary prompt that named NO worker pool added a `Check Canary Metrics` script step to a project whose template variable `Project.WorkerPool` was already present and used by every other step. The new step was emitted with `worker_pool_id = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"` instead of `worker_pool_variable = "Project.WorkerPool"`. This is intermittent — the same shape of prompt produced the correct `worker_pool_variable` in Terraform and Claude projects — so check it explicitly rather than assuming it was handled.
+
+**MANDATORY SELF-CHECK — worker pool consistency**: before finalizing output, check whether a `WorkerPool`-typed project variable exists. If it does, confirm that EVERY `octopusdeploy_process_step` and `octopusdeploy_process_templated_step` in the deployment process references it through `worker_pool_variable` and that none sets `worker_pool_id`, unless the prompt named a pool for that step. You will be penalized for each prompt-added step that hardcodes `worker_pool_id` in a project that defines a worker pool variable.
+
 * You will be penalized for creating a `Project.WorkerPool` variable of type "WorkerPool" when the prompt does not explicitly request a worker pool variable.
 
 * **CRITICAL — `worker_pool_id` MUST NEVER be set to a hardcoded ID string** like `"WorkerPools-1234"`. Hardcoded resource IDs are not portable across Octopus spaces or instances. Always use the data source ternary lookup pattern. The same rule applies to `lifecycle_id` on project resources — NEVER hardcode a lifecycle ID like `"Lifecycles-7411"`. Always use `"${data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles[0].id}"` for the default lifecycle. You will be penalized for any hardcoded `WorkerPools-*` or `Lifecycles-*` ID in your Terraform output.

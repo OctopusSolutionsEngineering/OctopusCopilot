@@ -763,8 +763,6 @@ def sanitize_configuration(configuration):
     configuration = replace_secrets(configuration)
     # Fix up invalid resource and data names
     configuration = replace_resource_names_with_digit(configuration)
-    # The certificate data needs to be valid but generic to prevent leaking sensitive information
-    configuration = replace_certificate_data(configuration)
     # Deal with the LLM returning code in markdown code blocks
     configuration = remove_markdown_code_block(configuration)
     # Deal with the LLM adding asterisks as placeholders in K8s configuration
