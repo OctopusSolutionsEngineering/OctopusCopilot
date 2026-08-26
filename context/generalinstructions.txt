@@ -4197,6 +4197,20 @@ resource "octopusdeploy_channel" "channel_dev_deployment_application" {
 * You will be penalized for adding the "description" property to the "octopusdeploy_deployment_freeze" resource.
 * You will be penalized for adding the "space_id" property to the "octopusdeploy_deployment_freeze" resource.
 * The "end" property of the "octopusdeploy_deployment_freeze" resource must be in the future.
+* **The "end" property MUST also be strictly AFTER the "start" property. Octopus rejects an inverted range and the apply dies:**
+
+```
+Error: error while creating deployment freeze
+
+  with octopusdeploy_deployment_freeze.deploymentfreeze_change_window[0],
+
+Octopus API error: There was a problem with your request. [The end date must
+be after the start date]
+```
+
+* Being in the future is NOT sufficient — a freeze running from `2026-12-01` to `2026-11-01` has an end date in the future and is still rejected.
+* **When the prompt supplies the two dates the wrong way round, SWAP them** so the earlier date becomes `start` and the later becomes `end`, and note the correction in the project description. A prompt that says "from 2026-12-01 to 2026-11-01" plainly means the window between those two dates; do not pass the inversion through, and do not drop the freeze.
+* **Observed failure**: the prompt `Create a deployment freeze called "Change Window" that runs from "2026-12-01" to "2026-11-01"` emitted `start` and `end` exactly as written. The freeze was rejected and the apply aborted, taking the rest of the configuration with it.
 
 ## Octopus Deployment Process Instructions
 
@@ -6100,6 +6114,29 @@ unexpected new value: .execution_properties: inconsistent values for sensitive a
 
 **MANDATORY SELF-CHECK — no literal secrets in step properties**: before finalizing output, search `execution_properties` for any key containing `Password`, `Secret`, `ApiKey`, `Token` or `Credential`. Each one's value must start with `#{`. You will be penalized for every sensitive step property set to a literal, because it aborts the apply.
 
+**⚠️ CRITICAL — a literal secret is NOT the only cause of `inconsistent values for sensitive attribute`. Setting a RESERVED, provider-managed package property by hand produces the identical error.** When a step carries a `primary_package` block, the provider owns the `Octopus.Action.Package.*` properties and writes them itself. Writing one of them into `execution_properties` as well makes the planned and applied values differ, and the apply dies:
+
+```
+Warning: Process step execution property "Octopus.Action.Package.DownloadOnTentacle" is reserved
+
+ 488:     "Octopus.Action.Package.DownloadOnTentacle" = "False"
+
+This property managed automatically by the Octopus Deploy provider.
+Consider to use 'primary_package' attribute to configure it's value
+
+Error: Provider produced inconsistent result after apply
+
+produced an unexpected new value: .execution_properties: inconsistent values
+for sensitive attribute.
+```
+
+* **NEVER put `Octopus.Action.Package.DownloadOnTentacle`, `Octopus.Action.Package.PackageId` or `Octopus.Action.Package.FeedId` in `execution_properties` on a step that has a `primary_package` block.** Delete them. The provider derives all three from `primary_package`, and Octopus populates them server-side — verified against the API, where submitting only an unnamed primary package caused `Octopus.Action.Package.PackageId`, `Octopus.Action.Package.FeedId` and `Octopus.Action.Package.DownloadOnTentacle` to be filled in automatically.
+* Treat the provider's `... is reserved` warning as fatal, not advisory. It is emitted at validate time and the apply fails immediately afterwards.
+* **Observed failure**: a Tomcat project whose deploy steps each carried a `primary_package` AND `"Octopus.Action.Package.DownloadOnTentacle" = "False"` in `execution_properties`. Every earlier resource was created, the apply then aborted on the first deploy step, and the project was left with only its template steps.
+* These properties remain CORRECT on a step that has no `primary_package` and instead sources a package through the named `packages` map — for example a script step with `"Octopus.Action.Script.ScriptSource" = "Package"`. The rule is about the combination with `primary_package`, not about the properties in isolation.
+
+**MANDATORY SELF-CHECK — reserved package properties**: before finalizing output, find every `octopusdeploy_process_step` containing a `primary_package` block. In each one, search its `execution_properties` for any key beginning `Octopus.Action.Package.` and delete every match. You will be penalized for each reserved package property left alongside a `primary_package`, because the provider reports it as reserved and the apply fails.
+
 **⚠️ CRITICAL — an `Octopus.TomcatDeploy` step CANNOT use a username/password account**: The step has no account field, and `octopusdeploy_username_password_account` resources cannot be attached to it. When a prompt says "create a username/password account called 'X' with the username 'U' and use it in the deploy step", you MUST:
 
 1. Still create the `octopusdeploy_username_password_account` resource named `X`, because prompt-specified accounts are always created.
@@ -6218,6 +6255,17 @@ unexpected new value: .parameters: element "Octopus.Action.RunOnServer" has vani
 * Every `Octopus.Action.*` property belongs in `execution_properties` instead. On a templated step that normally means just `"Octopus.Action.RunOnServer" = "true"` (plus `OctopusUseBundledTooling` where the example uses it).
 * **A templated step must NOT define a script.** The template supplies the script; `Octopus.Action.Script.ScriptSource` and `Octopus.Action.Script.ScriptBody` must not appear anywhere on it, in either map. A step template step whose behaviour you cannot express through its parameters should be an ordinary `octopusdeploy_process_step` of type `Octopus.Script` instead.
 * If you do not know a template's parameter names, emit the step with an EMPTY `parameters = {}` map rather than inventing keys — the "Calculate Deployment Mode" step in the example configuration does exactly that.
+* **This holds even when the PROMPT explicitly asks for the parameter.** A step template's parameters are fixed by the template; you cannot add one to it. A prompt such as `Add a step template parameter called "Fabric.Region" to the "Scan for Vulnerabilities" community step template and set it to "eu-west-1"` is asking for something Octopus does not support. Putting the key in `parameters` anyway produces the same fatal "has vanished" error, because Octopus drops the undeclared key on write:
+
+```
+Error: Provider produced inconsistent result after apply
+
+produced an unexpected new value: .parameters: element "Fabric.Region" has
+vanished.
+```
+
+* When the prompt names a parameter the template does not declare, DO NOT add it to `parameters`. Record the request in the step's `notes` instead, and — if the value is genuinely needed at deployment time — create an ordinary project variable holding it. The step keeps only the parameters the template actually declares.
+* A parameter name looking plausible for the template is not evidence that the template declares it. `Fabric.Region` follows the same `Prefix.Name` shape as real parameters such as `Sbom.Package` and `CheckTargets.Octopus.Role`, and is still not a parameter of "Scan for Vulnerabilities".
 
 **MANDATORY SELF-CHECK — templated step parameters**: before finalizing output, find every `octopusdeploy_process_templated_step` and read its `parameters` map. If any key begins with `Octopus.Action.` or `Octopus.Step.`, move it to `execution_properties`, or delete it if it is a script property. You will be penalized for each `Octopus.*` key left in a `parameters` map.
 
