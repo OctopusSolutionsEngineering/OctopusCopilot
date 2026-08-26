@@ -4887,6 +4887,25 @@ cty.StringVal("NotAcquired"), but now cty.StringVal("Server").
 * Do not "fix" this by removing the package. A step type listed above as requiring a `primary_package` still requires one.
 
 **MANDATORY SELF-CHECK — primary package acquisition location**: before finalizing output, search for `primary_package`. For EACH occurrence, confirm `acquisition_location = "Server"`. Any `primary_package` carrying `"NotAcquired"` or `"ExecutionTarget"` will abort the apply. You will be penalized for each one.
+
+**⚠️ CRITICAL — a package-deployment step accepts EXACTLY ONE package, supplied as `primary_package`. It REJECTS the named `packages` map outright, and the apply dies at that step.** Verified directly against the Octopus API for `Octopus.TomcatDeploy` and `Octopus.IIS`; a single unnamed primary package was accepted, while two named references were refused:
+
+```
+Error: Unable to create process step
+
+  with octopusdeploy_process_step.process_step_billing_portal_deploy_billing[0],
+
+Octopus API error: There was a problem with your request. [This deployment
+step does not support named package references]
+```
+
+* This applies to the package-deployment family — `Octopus.TomcatDeploy`, `Octopus.IIS`, `Octopus.WindowsService`, `Octopus.AzureWebApp` (non-container) and similar steps that install a single artefact onto a target. They have a single package slot, so a named reference has nowhere to go.
+* **When the prompt asks for several packages on ONE such step, that step cannot express it.** Keep the FIRST package the prompt lists as the step's `primary_package`, and give each remaining package its OWN step of the same type. Record in the step `notes` that the packages were split because the step type supports only one.
+* Do NOT resolve it by converting the step to `Octopus.Script` just to hold several packages — that silently discards the deployment behaviour the project type exists to provide.
+* Do NOT resolve it by dropping the extra packages silently. The prompt named them; they must appear somewhere in the process.
+* **Observed failure**: the prompt `Add a single step called "Deploy Billing" that deploys ALL THREE of these packages together on that one step` produced one `Octopus.TomcatDeploy` step carrying three entries in its `packages` map. The apply aborted on that step, and the project was left with only its template steps — no deploy step, no channel, and no runbook.
+* Steps that DO support the named `packages` map are the script and container-oriented types — `Octopus.Script`, `Octopus.KubernetesDeployRawYaml`, `Octopus.ArgoCDUpdateImageTags` and the like. Only those may carry more than one package.
+* Note that the restriction is on the package *reference name*, not the package id. A Maven coordinate containing a colon, such as `com.octopus:billing-portal`, is a perfectly valid `package_id` on a primary package — it is only the reference NAME that must be omitted.
 * The "start_trigger" attribute must only be defined once.
 * You will be penalized for defining an empty "properties" block, for example "properties = {}".
 * You will be penalized for defining a "properties_additional" block.
