@@ -4307,6 +4307,38 @@ resource "octopusdeploy_process_child_steps_order" "process_child_step_order_my_
 * Never use `steps` on an `octopusdeploy_process_child_steps_order`; the attribute is `children`.
 
 **MANDATORY SELF-CHECK — child steps**: for every `octopusdeploy_process_child_steps_order` in your output, confirm it sets `process_id`, `parent_id` and `children`. For every `octopusdeploy_process_child_step`, confirm it sets `process_id` and `parent_id`. A missing `process_id` costs the entire prompt, because it fails during plan rather than apply.
+
+**⚠️ CRITICAL — action names must be unique across the WHOLE deployment process, counting parent steps and child steps together. A child step may NOT reuse its parent's name.** Octopus rejects the duplicate and the apply dies:
+
+```
+Error: Unable to create process child step
+
+  with octopusdeploy_process_child_step.process_child_step_60__storefront_edge_deploy_to_iis[0],
+
+Octopus API error: There was a problem with your request. [Action name
+'Deploy to IIS' is already in use by another action in this deployment
+process. Action names must be unique.]
+```
+
+* The existing rule that two steps sharing a name get a numeric suffix (` 2`) applies ACROSS the parent/child boundary too. A parent named `Deploy to IIS` and a child named `Deploy to IIS` are two actions with one name, exactly like two top-level steps would be.
+* **When the prompt names a rolling step and one of its children the same thing, keep the name on the PARENT and rename the child.** A prompt such as `Make "Deploy to IIS" a rolling deployment … give that rolling step three child steps: "Drain Node", "Deploy to IIS" and "Rejoin Node"` is describing the rolling step performing the deployment itself. Emit the child as `Deploy to IIS 2`, or better, fold it into the parent and emit only the other two children.
+* **Observed failure**: that exact prompt produced a parent `Deploy to IIS` and a child `Deploy to IIS`. The parent and two other children were created, the duplicate child was rejected, and the apply aborted.
+
+**⚠️ CRITICAL — child steps nest exactly ONE level deep. A child step can NEVER be the parent of another child step.** `parent_id` must always reference a top-level `octopusdeploy_process_step`, never an `octopusdeploy_process_child_step`. Pointing it at a child produces:
+
+```
+Error: Error creating process child step
+
+  with octopusdeploy_process_child_step.process_child_step_60__storefront_edge_rejoin_node[0],
+
+unable to find a parent step with id 'e3bfea9a-0c5e-428b-b046-cf9b4c9df618'
+```
+
+* **When the prompt asks for a child of a child, attach it to the top-level ancestor instead** and note the flattening in the step's `notes`. A prompt such as `Make "Rejoin Node" a child of "Drain Node"`, where `Drain Node` is already a child of the rolling step, means both belong to the rolling step; emit `Rejoin Node` with the ROLLING step's id as its `parent_id`.
+* **When the prompt names a parent step that does not exist**, do not invent a `parent_id` and do not emit the child against a dangling reference. Create the child as an ordinary top-level `octopusdeploy_process_step` instead, and record in its `notes` that the named parent was not found. A prompt such as `Add a child step called "Verify Node" to a parent step called "Nonexistent Parent"` produces a normal step called `Verify Node`.
+* Every `parent_id` you emit must textually match an `octopusdeploy_process_step.<label>.id` that exists in the same output. If it matches an `octopusdeploy_process_child_step.<label>.id`, it is wrong.
+
+**MANDATORY SELF-CHECK — child step nesting and names**: before finalizing output, list every `octopusdeploy_process_child_step`. For each one, confirm its `parent_id` resolves to an `octopusdeploy_process_step` and NOT to another `octopusdeploy_process_child_step`. Then collect the `name` of every `octopusdeploy_process_step` AND every `octopusdeploy_process_child_step` into one list and confirm there are no duplicates; append ` 2`, ` 3` … to any repeat. You will be penalized for each child parented to a child and for each duplicated action name, because both abort the apply.
 * If the prompt says `The step must be disabled.` because a stage was hard-disabled, you MUST still create the corresponding step resource, set `is_disabled = true`, and include the step in the `octopusdeploy_process_steps_order` resource. Hard-disabled stages are preserved placeholders, not omitted stages.
 * When a skipped or ignored stage is removed from the dependency graph, the Terraform step order must reflect the rewritten dependency chain from the prompt. Do not preserve an order that still assumes the skipped stage exists.
 * You will be penalized for using asterisks, for example "*****", as placeholders in step properties.
