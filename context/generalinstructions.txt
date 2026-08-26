@@ -1416,6 +1416,19 @@ spec:
 * You will be penalized for creating steps with parentheses or square brackets in their names.
 * The Terraform provider is stricter about STEP names than the Octopus API. This is why parentheses and square brackets are not supported in step names. This extra strictness does NOT extend to project names or to any other resource — see the project name rules below.
 
+**Measured step-name charset (verified directly against the Octopus API by submitting deployment processes):**
+
+| Character | Step name | Project / environment / lifecycle / channel name |
+| --- | --- | --- |
+| `(` `)` | accepted by the API | accepted |
+| `&` | accepted by the API | accepted |
+| `[` `]` | **REJECTED — hard failure** | accepted |
+| `/` | rejected | rejected |
+
+* **Square brackets are the character that actually kills a step.** `'Zeta Bracket [Y]' contains invalid characters. Names can only contain letters, numbers, periods, commas, dashes, underscores or hashes.` ALWAYS replace `[` and `]` in a step name with a dash. This rule must never be relaxed.
+* Parentheses and ampersands are accepted by the API in a step name, so a step named `Drain (Blue)` will not be rejected by the server. Continue to replace parentheses in step names with dashes anyway, as the rest of this section instructs — the conservative form always applies, and a step created as `Drain -Blue-` is never a failure, whereas guessing wrong about the Terraform provider's own validation risks losing the whole apply.
+* Note that the API's error message lists a much narrower character set than it actually enforces. The message is identical for step, project and environment names, but the three are validated differently — do not infer the allowed set from the message text.
+
 **⚠️ CRITICAL — project names have their OWN, much narrower restriction, and an invalid project name aborts the apply at the very first resource that matters.** A project name containing a forward slash is rejected outright:
 
 ```
