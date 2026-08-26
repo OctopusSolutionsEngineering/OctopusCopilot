@@ -8583,6 +8583,19 @@ The following instructions provide default guidance on how to implement common d
 * The prompt only names a target tag or role, for example "deploy to targets tagged `Kubernetes`" or "using targets tagged `octopub/frontend`". A tag names *which* target to use; it does not configure one.
 * The prompt says "deploy to a Kubernetes cluster", "deploy to EKS/AKS/GKE", or names a cluster without giving its URL.
 * The prompt asks for an account — a Token, AWS, Azure, or username/password account — but gives no cluster URL. Creating the account does NOT remove the need for a target. When the prompt names its own account (for example a Token account called "K8s"), use THAT account on the "Mock K8s" target instead of creating "Mock Token", and skip creating "Mock Token" entirely.
+
+**⚠️ CRITICAL — `cluster_url` on an `octopusdeploy_kubernetes_cluster_deployment_target` MUST be a syntactically valid absolute URL. Octopus validates it and the apply dies:**
+
+```
+Error: Octopus API error: There was a problem with your request. [The cluster
+URL must be a valid URL e.g. https://mycluster]
+
+  with octopusdeploy_kubernetes_cluster_deployment_target.target_fleet_k8s[0],
+```
+
+* **When the prompt supplies a cluster URL that is not a URL, substitute a valid placeholder** — use `https://mockk8s.octopusdemos.com`, the same value the "Mock K8s" pattern uses — and record the prompt's original text in the target's description. Do NOT pass the invalid text through, and do NOT drop the target.
+* **Observed failure**: the prompt `Create a Kubernetes target called "fleet-k8s" with the cluster URL "not a url"` emitted `cluster_url = "not a url"`. The machine policy, three other targets, the project and its whole process were created, and the apply then aborted on the Kubernetes target.
+* Note the contrast with feed URIs: `octopusdeploy_docker_container_registry.feed_uri` is NOT validated and accepts arbitrary text, so the same defensive substitution is not needed there. Cluster URLs are checked; feed URIs are not.
 * The prompt is a canary, blue/green, progressive, wave, or rollout prompt that implies a cluster.
 
 A "specific target configuration" means the prompt gives an actual cluster URL (or explicitly says to use an existing named target). Only then may you skip the pattern.
