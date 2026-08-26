@@ -55,6 +55,10 @@ MOCK_CERTIFICATE_DATA = (
     "yLUH7Geh6nw2S5eZA1qoTgQI4ezCrgN0h8cCAggA"
 )
 MOCK_CERTIFICATE_PASSWORD = "Password01!"
+# Matches the start of a heredoc, capturing the string that marks the end of the heredoc
+HEREDOC_START_REGEX = re.compile(r"<<-?\s*([A-Za-z_][A-Za-z0-9_]*)\s*$")
+OCTOPUS_RESOURCE_PREFIX = 'resource "octopusdeploy_'
+OCTOPUS_DATA_PREFIX = 'data "octopusdeploy_'
 
 
 def sanitize_kubernetes_yaml_step_config(config):
@@ -662,14 +666,34 @@ def process_resource_blocks(config, process_resource, resource_prefix="resource 
     This relies on resource blocks starting with an unindented line beginning with resource_prefix and
     ending with an unindented closing bracket. Where those assumptions do not hold, the original
     configuration is returned unprocessed.
+
+    Heredocs hold scripts and Terraform templates rather than HCL2, and their contents are frequently
+    unindented, so they are treated as part of the surrounding block rather than scanned for brackets.
     """
 
     output = []
 
     in_resource = False
     resource_lines = []
+    heredoc_terminator = None
 
     for line in config.splitlines():
+        if heredoc_terminator is not None:
+            # We are inside a heredoc, so the line is content rather than HCL2
+            if line.strip() == heredoc_terminator:
+                heredoc_terminator = None
+
+            if in_resource:
+                resource_lines.append(line)
+            else:
+                output.append(line)
+
+            continue
+
+        heredoc_start = HEREDOC_START_REGEX.search(line)
+        if heredoc_start:
+            heredoc_terminator = heredoc_start.group(1)
+
         if not in_resource and line.startswith(resource_prefix):
             # We entered a resource block
             in_resource = True
@@ -688,6 +712,52 @@ def process_resource_blocks(config, process_resource, resource_prefix="resource 
         return config
 
     return "\n".join(output)
+
+
+def remove_non_octopus_resources(config):
+    """
+    LLMs would sometimes define resources belonging to other providers, like aws_s3_bucket, which can
+    not be applied to an Octopus space. This function removes any top level resource that is not an
+    Octopus resource.
+    """
+
+    if not config:
+        return ""
+
+    # A quick out if there were no resources
+    if "resource " not in config:
+        return config
+
+    def process_resource(resource_lines):
+        if resource_lines[0].startswith(OCTOPUS_RESOURCE_PREFIX):
+            return resource_lines
+
+        return []
+
+    return process_resource_blocks(config, process_resource)
+
+
+def remove_non_octopus_data_sources(config):
+    """
+    LLMs would sometimes define data sources belonging to other providers, like aws_s3_bucket, which
+    can not be read from an Octopus space. This function removes any top level data source that is not
+    an Octopus data source.
+    """
+
+    if not config:
+        return ""
+
+    # A quick out if there were no data sources
+    if "data " not in config:
+        return config
+
+    def process_data_source(data_source_lines):
+        if data_source_lines[0].startswith(OCTOPUS_DATA_PREFIX):
+            return data_source_lines
+
+        return []
+
+    return process_resource_blocks(config, process_data_source, "data ")
 
 
 def fix_script_source(config):
