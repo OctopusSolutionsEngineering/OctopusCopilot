@@ -750,60 +750,35 @@ def fix_yaml_source(config):
     if "Octopus.KubernetesDeployRawYaml" not in config:
         return config
 
-    splits = config.splitlines()
+    def process_resource(resource_lines):
+        # Detect if this is a script resource
+        is_script = any(
+            resource_line
+            for resource_line in resource_lines
+            if resource_line.strip().startswith('"Octopus.Action.Script.ScriptSource"')
+        )
 
-    output = []
+        if not is_script:
+            return resource_lines
 
-    in_resource = False
-    resource_lines = []
-
-    for line in splits:
-        if not in_resource and line.startswith("resource "):
-            # We entered a resource block
-            in_resource = True
-            resource_lines = [line]
-        elif in_resource:
-            resource_lines.append(line)
-
-            if line == "}":
-                in_resource = False
-
-                # Detect if this is a script resource
-                is_script = any(
-                    resource_line
-                    for resource_line in resource_lines
-                    if resource_line.strip().startswith(
-                        '"Octopus.Action.Script.ScriptSource"'
-                    )
+        script_type = next(
+            (
+                resource_line.split("=").pop().strip()
+                for resource_line in resource_lines
+                if resource_line.strip().startswith(
+                    '"Octopus.Action.Script.ScriptSource"'
                 )
+            ),
+            None,
+        )
 
-                if is_script:
-                    script_type = next(
-                        (
-                            resource_line.split("=").pop().strip()
-                            for resource_line in resource_lines
-                            if resource_line.strip().startswith(
-                                '"Octopus.Action.Script.ScriptSource"'
-                            )
-                        ),
-                        None,
-                    )
+        if script_type == '"GitRepository"':
+            return [sanitize_git_script(resource_lines)]
 
-                    if script_type == '"GitRepository"':
-                        output.append(sanitize_git_script(resource_lines))
-                    else:
-                        # Unknown script type, just output the resource as-is
-                        output.extend(resource_lines)
-                else:
-                    output.extend(resource_lines)
-        else:
-            output.append(line)
+        # Unknown script type, just output the resource as-is
+        return resource_lines
 
-    # Our assumptions about the indents of brackets failed, so do no processing
-    if in_resource:
-        return config
-
-    return "\n".join(output)
+    return process_resource_blocks(config, process_resource)
 
 
 def sanitize_git_script(lines):
@@ -872,37 +847,19 @@ def set_mock_certificate(config):
             return f'  password = "{MOCK_CERTIFICATE_PASSWORD}"'
         return line
 
-    splits = config.splitlines()
-    output = []
-    in_resource = False
-    resource_lines = []
+    def process_resource(resource_lines):
+        return list(
+            map(
+                lambda resource_line: replace_certificate_data(
+                    replace_password(resource_line)
+                ),
+                resource_lines,
+            )
+        )
 
-    for line in splits:
-        if not in_resource and line.startswith('resource "octopusdeploy_certificate"'):
-            in_resource = True
-            resource_lines = [line]
-        elif in_resource:
-            resource_lines.append(line)
-
-            if line == "}":
-                in_resource = False
-                resource_lines = list(
-                    map(
-                        lambda resource_line: replace_certificate_data(
-                            replace_password(resource_line)
-                        ),
-                        resource_lines,
-                    )
-                )
-                output.extend(resource_lines)
-        else:
-            output.append(line)
-
-    # Our assumptions about the indents of brackets failed, so do no processing
-    if in_resource:
-        return config
-
-    return "\n".join(output)
+    return process_resource_blocks(
+        config, process_resource, 'resource "octopusdeploy_certificate"'
+    )
 
 
 def set_mock_git_server(config, username, password):
@@ -930,44 +887,19 @@ def set_mock_git_server(config, username, password):
             return f'  password = "{password}"'
         return line
 
-    splits = config.splitlines()
+    def process_resource(resource_lines):
+        return list(
+            map(
+                lambda resource_line: replace_username(replace_password(resource_line)),
+                resource_lines,
+            )
+        )
 
-    output = []
-
-    in_resource = False
-    resource_lines = []
-
-    for line in splits:
-        if not in_resource and line.startswith(
-            'resource "octopusdeploy_platform_hub_version_control_username_password_settings"'
-        ):
-            # We entered a resource block
-            in_resource = True
-            resource_lines = [line]
-        elif in_resource:
-            resource_lines.append(line)
-
-            if line == "}":
-                in_resource = False
-
-                resource_lines = list(
-                    map(
-                        lambda resource_line: replace_username(
-                            replace_password(resource_line)
-                        ),
-                        resource_lines,
-                    )
-                )
-
-                output.extend(resource_lines)
-        else:
-            output.append(line)
-
-    # Our assumptions about the indents of brackets failed, so do no processing
-    if in_resource:
-        return config
-
-    return "\n".join(output)
+    return process_resource_blocks(
+        config,
+        process_resource,
+        'resource "octopusdeploy_platform_hub_version_control_username_password_settings"',
+    )
 
 
 def set_mock_git_credential(config, username, password):
@@ -992,43 +924,17 @@ def set_mock_git_credential(config, username, password):
             return f'  password                = "{password}"'
         return line
 
-    splits = config.splitlines()
+    def process_resource(resource_lines):
+        return list(
+            map(
+                lambda resource_line: replace_username(replace_password(resource_line)),
+                resource_lines,
+            )
+        )
 
-    output = []
-
-    in_resource = False
-    resource_lines = []
-
-    for line in splits:
-        if not in_resource and line.startswith(
-            'resource "octopusdeploy_git_credential"'
-        ):
-            in_resource = True
-            resource_lines = [line]
-        elif in_resource:
-            resource_lines.append(line)
-
-            if line == "}":
-                in_resource = False
-
-                resource_lines = list(
-                    map(
-                        lambda resource_line: replace_username(
-                            replace_password(resource_line)
-                        ),
-                        resource_lines,
-                    )
-                )
-
-                output.extend(resource_lines)
-        else:
-            output.append(line)
-
-    # Our assumptions about the indents of brackets failed, so do no processing
-    if in_resource:
-        return config
-
-    return "\n".join(output)
+    return process_resource_blocks(
+        config, process_resource, 'resource "octopusdeploy_git_credential"'
+    )
 
 
 def set_mock_git_user_variable(config, username):
@@ -1043,46 +949,27 @@ def set_mock_git_user_variable(config, username):
     if "Project.MockGit.Username" not in config:
         return config
 
-    splits = config.splitlines()
+    def process_resource(resource_lines):
+        # The resource declaration itself is not searched for the variable name
+        is_target_variable = any(
+            '"Project.MockGit.Username"' in resource_line and "name" in resource_line
+            for resource_line in resource_lines[1:]
+        )
 
-    output = []
+        if not is_target_variable:
+            return resource_lines
 
-    in_resource = False
-    is_target_variable = False
-    resource_lines = []
+        return list(
+            map(
+                lambda resource_line: (
+                    f'  value        = "{username}"'
+                    if resource_line.strip().startswith("value")
+                    else resource_line
+                ),
+                resource_lines,
+            )
+        )
 
-    for line in splits:
-        if not in_resource and line.startswith('resource "octopusdeploy_variable"'):
-            in_resource = True
-            is_target_variable = False
-            resource_lines = [line]
-        elif in_resource:
-            resource_lines.append(line)
-
-            if '"Project.MockGit.Username"' in line and "name" in line:
-                is_target_variable = True
-
-            if line == "}":
-                in_resource = False
-
-                if is_target_variable:
-                    resource_lines = list(
-                        map(
-                            lambda resource_line: (
-                                f'  value        = "{username}"'
-                                if resource_line.strip().startswith("value")
-                                else resource_line
-                            ),
-                            resource_lines,
-                        )
-                    )
-
-                output.extend(resource_lines)
-        else:
-            output.append(line)
-
-    # Our assumptions about the indents of brackets failed, so do no processing
-    if in_resource:
-        return config
-
-    return "\n".join(output)
+    return process_resource_blocks(
+        config, process_resource, 'resource "octopusdeploy_variable"'
+    )

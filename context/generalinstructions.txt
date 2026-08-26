@@ -2493,6 +2493,36 @@ resource "octopusdeploy_tenant_project" "tenant_project_acme_corp_my_project" {
 }
 ```
 
+**⚠️ CRITICAL — TENANT NAMES ARE UNIQUE IN A SPACE. A tenant mentioned more than once in a prompt is ONE tenant, not several.** Octopus rejects a second tenant with the same name and the apply dies:
+
+```
+Error: unable to create tenant
+
+  with octopusdeploy_tenant.tenant_contoso_bronze[0],
+
+Octopus API error: There was a problem with your request. [A tenant with this
+name already exists. Please choose a different name.]
+```
+
+* **When the prompt names the same tenant twice with different tags, emit ONE `octopusdeploy_tenant` resource carrying ALL of those tags.** Tags are a list, so they combine — nothing is lost.
+* **Observed failure**: the prompt `Create a tenant called "Contoso" tagged Gold, a tenant called "Fabrikam" tagged Silver, and a tenant called "Contoso" tagged Bronze` produced two separate resources, `tenant_contoso_gold` and `tenant_contoso_bronze`, both with `name = "Contoso"`. The first was created, the second was rejected, and the apply aborted — losing the tenant project links and every tenant project variable ordered after it. The correct output is a SINGLE tenant:
+
+```hcl
+resource "octopusdeploy_tenant" "tenant_contoso" {
+  count       = "${length(data.octopusdeploy_tenants.tenant_contoso.tenants) != 0 ? 0 : 1}"
+  name        = "Contoso"
+  tenant_tags = ["Tier/Gold", "Tier/Bronze"]
+  depends_on  = [octopusdeploy_tag.tagset_tier_tag_gold, octopusdeploy_tag.tagset_tier_tag_bronze]
+  lifecycle { prevent_destroy = true }
+}
+```
+
+* Do NOT resolve the collision by renaming one of the tenants. `Contoso` and `Contoso Bronze` are two different customers as far as Octopus is concerned, and the prompt asked for one. Inventing a name is worse than merging the tags.
+* Do NOT emit a second `data "octopusdeploy_tenants"` block for the same tenant name either. One data source per distinct tenant name, matching the one resource.
+* The same one-resource-per-name rule applies to every `octopusdeploy_tenant_project` and `octopusdeploy_tenant_project_variable` that references the merged tenant — they must all point at the single tenant resource.
+
+**MANDATORY SELF-CHECK — duplicate tenant names**: before finalizing output, list the `name` of every `octopusdeploy_tenant` resource. If any name appears more than once, merge those resources into one, union their `tenant_tags`, union their `depends_on`, and repoint every `octopusdeploy_tenant_project` and `octopusdeploy_tenant_project_variable` at the survivor. You will be penalized for each duplicated tenant name, because Octopus rejects the second one and the apply dies at that resource.
+
 **You will be penalized for**:
 - Creating a tenant without an `octopusdeploy_tenant_project` resource linking it to the project
 - Setting `tenanted_deployment_participation = "Untenanted"` when the prompt requests TenantedOrUntenanted or Tenanted
@@ -8181,6 +8211,26 @@ This kills the apply, so the variable AND everything ordered after it is lost. T
 * More generally: every list inside a `scope` block — `environments`, `channels`, `tenant_tags`, `roles`, `machines` — MUST contain only non-empty values. If a ternary you are about to write could resolve to `""`, drop that scope dimension instead.
 
 **MANDATORY SELF-CHECK — no empty scope entries**: before finalizing output, read every `scope` block. Confirm no list contains `""`, and confirm no `channels` entry resolves through a `data.octopusdeploy_channels` lookup for a channel named "Default". You will be penalized for each variable scoped to the Default channel and for each empty string in a scope list.
+
+**⚠️ CRITICAL — two variables with the same NAME and the same SCOPE are rejected by Octopus, and the apply dies. When the prompt asks for the same variable twice at the same scope, emit it ONCE.** Octopus enforces uniqueness across the combination of variable name and scope, so a prompt that asks for two values at one scope is asking for something impossible. Keep the LAST value the prompt gives and drop the earlier one — a later instruction in a prompt supersedes an earlier one.
+
+```
+Error: create variable failed
+
+  with octopusdeploy_variable.tenanted_checkout_checkout_timeout_gold_1[0],
+
+Octopus API error: There was a problem with your request. [These variables
+have the same name and scope. Remove the duplicates before saving:
+'Checkout.Timeout' scoped to [TenantTag = (TagSets-3957/Tags-6185)]]
+```
+
+* **Observed failure**: the prompt `Add a variable called "Checkout.Timeout" with value "30" scoped to the Gold tag, and another with value "60" also scoped to the Gold tag` produced two `octopusdeploy_variable` resources, `..._checkout_timeout_gold_1` and `..._checkout_timeout_gold_2`, both with `tenant_tags = ["Tier/Gold"]`. The second was created, the first was rejected, and the apply aborted. The correct output is a SINGLE variable named `Checkout.Timeout` with the value `60`.
+* This applies to EVERY scope dimension, not just `tenant_tags`. Two variables of the same name are duplicates when their `environments`, `channels`, `tenant_tags`, `roles`, `machines` and `processes` lists are all equal — including when all of them are absent, which is the unscoped case.
+* Two variables that share a name but differ in ANY scope dimension are legitimate and MUST both be emitted. `Checkout.Timeout` scoped to Gold and `Checkout.Timeout` scoped to Silver are not duplicates. This rule only collapses variables whose scopes are identical.
+* Do NOT try to preserve both values by inventing a scope the prompt did not ask for. Adding an environment or a channel to one of them to make the pair unique changes the meaning of the variable and is worse than dropping the superseded value.
+* Do NOT try to preserve both values by renaming one of them. The prompt named the variable; the name must match.
+
+**MANDATORY SELF-CHECK — duplicate variable name and scope**: before finalizing output, list every `octopusdeploy_variable` resource as a pair of its `name` and its fully resolved scope (every `environments`, `channels`, `tenant_tags`, `roles`, `machines` and `processes` entry, sorted; absent lists count as empty). If any two pairs are identical, delete all but the one carrying the value that appears LAST in the prompt. You will be penalized for each pair of variables sharing a name and an identical scope, because Octopus rejects the whole variable set and the apply dies at that resource.
 
 **You will be penalized for**:
 - Defining a `scope {}` block with no attributes inside it (empty scope)
