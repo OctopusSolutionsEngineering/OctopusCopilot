@@ -228,6 +228,21 @@ This is one of the most damaging failures in this file, because process steps ar
 * **"runs on a worker" means `"true"`, NOT `"false"`.** When a prompt says a step should run "on a worker", "on a worker rather than the target", "off the target", or "on the Octopus Server", set `"Octopus.Action.RunOnServer" = "true"` and select the worker via `worker_pool_id`/`worker_pool_variable`. Worker execution IS server-orchestrated execution. Reading "worker" as "not the server" and writing `"false"` is the single most common way this error is introduced.
 * **A step may only use `"false"` if that same step also declares `Octopus.Action.TargetRoles`.** If you are about to write `"false"` on a step with no target roles, the value is wrong — change it to `"true"`. Do not copy a `"false"` from one step onto another step; each step's value depends on that step's own roles.
 * Use `"false"` ONLY on a package-deployment step type — `Octopus.TentaclePackage`, `Octopus.WindowsService`, `Octopus.IIS`, `Octopus.TomcatDeploy` — that also has target roles. When in doubt, prefer `"true"`.
+* **A step that has a `worker_pool_id` or `worker_pool_variable` MUST use `"true"`, even when it is a package-deployment step type WITH target roles.** Assigning a worker pool to a step makes it server-orchestrated, so Octopus rewrites `RunOnServer` to `"true"` when it stores the action, and the provider aborts on the mismatch. This is the one case where the "package-deployment step + target roles" allowance above does NOT apply — the worker pool overrides it.
+
+  * **Observed failure**: the prompt `Create a worker pool called "Freight Pool" and run the deploy step on it` ... `Deploy to targets with the tag "freight"` produced an `Octopus.WindowsService` step carrying BOTH `worker_pool_id` and `Octopus.Action.TargetRoles = "freight"`, with `"Octopus.Action.RunOnServer" = "false"`. The apply aborted:
+
+```
+Error: Provider produced inconsistent result after apply
+
+When applying changes to
+octopusdeploy_process_step.process_step_30__freight_agent_deploy_a_windows_service[0],
+provider produced an unexpected new value:
+.execution_properties["Octopus.Action.RunOnServer"]: was cty.StringVal("false"), but now cty.StringVal("true").
+```
+
+  * The deployment process was left with the deploy step but WITHOUT the steps ordered after it, and the whole apply failed.
+  * **Decision order**: if the step sets a worker pool → `"true"`. Otherwise, if it is a package-deployment step type with target roles → `"false"`. Otherwise → `"true"`.
 
 **⚠️ CRITICAL — OMITTING `Octopus.Action.RunOnServer` from a script step aborts the apply just as surely as setting it to `"false"`. Never leave it out.** Octopus adds the property itself when it stores a server-orchestrated action, so a step whose `execution_properties` never mentioned it comes back carrying it, and the provider rejects the extra key:
 
