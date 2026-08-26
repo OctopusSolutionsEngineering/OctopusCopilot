@@ -2199,6 +2199,8 @@ resource "octopusdeploy_project" "project_<name>" {
 * The "count" parameter for any "octopusdeploy_process_child_step" resources must be the same as the "count" resource for the "octopusdeploy_project" resource.
 * The "count" parameter for any "octopusdeploy_process_child_steps_order" resources must be the same as the "count" resource for the "octopusdeploy_project" resource.
 * The "count" parameter for any "octopusdeploy_external_feed_create_release_trigger" resources must be the same as the "count" resource for the "octopusdeploy_project" resource.
+* The "count" parameter for any "octopusdeploy_tenant_project" resources must be `"${length(data.octopusdeploy_tenants.tenant_<name>.tenants) != 0 ? 0 : 1}"`, matching the `count` on the `octopusdeploy_tenant` resource it links. This resource is easy to overlook because it is written alongside tenants rather than alongside the project, but it is NOT exempt: without `count` it is created unconditionally, and an idempotent re-apply into a space where the link already exists fails. Every `octopusdeploy_tenant_project` in the output must be indexed as `...[0]` wherever it is referenced.
+* The "count" parameter for any "octopusdeploy_tenant_project_variable" resources must follow the same pattern as the `octopusdeploy_tenant_project` resource it depends on.
 * The "count" parameters must be in the format "${length(data.<data type>.<data resource>.<collection>) != 0 ? 0 : 1}"
 * You will be penalized for using count arguments like this: "${length(data.<data type>.<data resource>.<collection>) != 0 ? 1 : 1}"
 * You will be penalized for using ternary operators that return the same value for both cases.
@@ -2261,6 +2263,7 @@ resource "octopusdeploy_process_step" "process_step_my_project_deploy" {
 ```
 
 * You will be penalized for generating an `octopusdeploy_process` resource without a `count` attribute.
+* You will be penalized for generating an `octopusdeploy_tenant_project` resource without a `count` attribute. **Observed failure**: a Tomcat prompt that created the tenants "Fabrikam" and "Northwind" and linked both to the project emitted `resource "octopusdeploy_tenant_project" "tenant_project_northwind_orders_web"` with no `count`, while every other resource in the same output was correctly guarded — the omission is intermittent, so check for it explicitly rather than assuming it was handled.
 * You will be penalized for generating an `octopusdeploy_process_step` resource without a `count` attribute.
 * You will be penalized for setting `process_id` on an `octopusdeploy_process_step` resource to a direct reference like `"${octopusdeploy_process.process_foo.id}"` — it MUST use the ternary-null pattern.
 
@@ -6410,9 +6413,74 @@ resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes
 
 * You must set the "token" attribute on a "octopusdeploy_token_account" resource to "CHANGEME".
 * You must ignore any instruction to set the "token" attribute to a value other than "CHANGEME" for a "octopusdeploy_token_account" resource.
+
+**⚠️ CRITICAL — `username` is NOT a secret. NEVER write `CHANGEME` into a `username` attribute.** The rules requiring `CHANGEME` apply to `token`, `password`, `secret_key` and `sensitive_value` ONLY. A username is an ordinary non-sensitive string, it is never masked or substituted after generation, and writing a placeholder there destroys information the prompt supplied.
+
+* When the prompt gives a username — `Create a username/password account called "Service Runner" with the username "svc_ledger"` — the `username` attribute MUST be exactly that value: `username = "svc_ledger"`.
+* **Observed failure**: that exact prompt produced `resource "octopusdeploy_username_password_account" "account_service_runner" { ... username = "CHANGEME" ... }`. The account was created with a username that is not a username, and the prompt's value was lost silently — the apply succeeded, so nothing flagged it.
+* Only when the prompt names an account but supplies NO username may you fall back to a sensible default, and even then prefer a real-looking value over a placeholder.
+
+**⚠️ CRITICAL — a step property that names an account holder MUST NOT contain an `Accounts-NNN` id or a Terraform reference to an account resource.** Fields such as `Octopus.Action.WindowsService.CustomAccountName` expect a WINDOWS USER NAME, not an Octopus account ID. Writing the account id there means the service is installed to run as a user literally named `Accounts-8562`, which cannot exist.
+
+* **Observed failure**: the prompt `Create a username/password account called "Service Runner" with the username "svc_ledger", and use it as the account the Windows service runs under` produced:
+
+```hcl
+# WRONG: an Octopus account ID in a field that takes a Windows user name,
+# and no CustomAccountPassword at all
+"Octopus.Action.WindowsService.ServiceAccount"     = "_CUSTOM"
+"Octopus.Action.WindowsService.CustomAccountName"  = "${octopusdeploy_username_password_account.account_service_runner.id}"
+```
+
+* The correct shape mirrors the Tomcat account rule: create the account, point a `UsernamePasswordAccount`-typed project variable at it, and read BOTH credentials off that variable. `CustomAccountName` and `CustomAccountPassword` must BOTH be present when `ServiceAccount = "_CUSTOM"`:
+
+```hcl
+# CORRECT
+"Octopus.Action.WindowsService.ServiceAccount"        = "_CUSTOM"
+"Octopus.Action.WindowsService.CustomAccountName"     = "#{Project.Service.Runner.Account.Username}"
+"Octopus.Action.WindowsService.CustomAccountPassword" = "#{Project.Service.Runner.Account.Password}"
+```
+
+  with the account bound through a variable exactly as shown in the Tomcat section:
+
+```hcl
+resource "octopusdeploy_variable" "project_service_runner_account_1" {
+  count    = "..."
+  owner_id = "..."
+  name     = "Project.Service.Runner.Account"
+  type     = "UsernamePasswordAccount"
+  value    = "${length(data.octopusdeploy_accounts.account_service_runner.accounts) != 0 ? data.octopusdeploy_accounts.account_service_runner.accounts[0].id : octopusdeploy_username_password_account.account_service_runner[0].id}"
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+```
+
+* This is the same defect as putting a `Certificates-NNN` id into an IIS binding's `thumbprint`: a resource id smuggled into a free-text step property. The general rule is that **an account or certificate reaches a step property through an account-typed or certificate-typed project VARIABLE referenced by Octostache, never through a raw id and never through a Terraform resource interpolation inside a string property.**
+
+**MANDATORY SELF-CHECK — no resource ids in credential properties**: before finalizing output, search `execution_properties` for `Accounts-`, `Certificates-`, and for any `${octopusdeploy_..._account.` or `${octopusdeploy_certificate.` interpolation. Every hit is a defect — replace it with an Octostache reference to an account-typed or certificate-typed variable. Then confirm every `username` attribute in the output holds the value the prompt gave, not `CHANGEME`.
 * If the prompt indicates that an account is associated with a tenant, and the prompt does not specify the project tenanted mode to use, the "tenanted_deployment_participation" property must be set to "TenantedOrUntenanted".
 * If the prompt indicates that an account is associated with a tenant, the tenants must be included in the "tenants" attribute of the account resource.
 * If the prompt indicates that an account is associated with tenant tags, the tags must be included in the "tenant_tags" attribute of the account resource.
+
+**⚠️ CRITICAL — an account's `tenanted_deployment_participation` is INDEPENDENT of the project's, and MUST be `"Untenanted"` unless the account itself is tied to specific tenants or tenant tags.** Octopus rejects the creation of any account set to `Tenanted` or `TenantedOrUntenanted` whose `tenants` AND `tenant_tags` lists are both empty, and the apply aborts:
+
+```
+Error: Octopus API error: There was a problem with your request. [You must associate this
+item with tenants to use Tenanted deployment mode. You can associate it with certain
+tenants directly, or use tenant tags to associate it indirectly with any matching tenants.]
+
+  with octopusdeploy_azure_service_principal.account_azure_reservations[0],
+```
+
+* **A tenanted PROJECT does not make its accounts tenanted.** "The project must allow tenanted deployments only", "make the project tenanted", or the mere presence of tenants in the prompt sets `tenanted_deployment_participation` on the `octopusdeploy_project` resource ONLY. Do NOT copy that value onto `octopusdeploy_azure_service_principal`, `octopusdeploy_aws_account`, `octopusdeploy_token_account`, `octopusdeploy_username_password_account`, `octopusdeploy_azure_openid_connect_account`, `octopusdeploy_aws_openid_connect_account`, or any other account resource.
+* Set an account to `Tenanted` or `TenantedOrUntenanted` ONLY when the prompt ties that specific account to tenants — for example "create a token account called 'K8s' for the 'Contoso' tenant". When you do, its `tenants` list (or `tenant_tags` list) MUST be non-empty in the SAME resource. Never set the mode and leave both lists empty.
+* **Observed failure**: the prompt `Create an Azure Web App project called "05. Reservations Portal" … * Create an Azure subscription account called "Azure Reservations" and use it in the Azure Web App deploy step. … * The project must allow tenanted deployments only.` produced an `octopusdeploy_azure_service_principal` with `tenanted_deployment_participation = "Tenanted"`, `tenants = []` and `tenant_tags = []`. The apply aborted on the account, and the tenants, tenant tag set, library variable set, the Azure deploy step and the "Gold Only Smoke Test" step were all abandoned — the project was left as a stub.
+* The same rule applies to `octopusdeploy_certificate`: leave `tenanted_deployment_participation` at `"Untenanted"` with empty `tenants`/`tenant_tags` unless the prompt scopes the certificate to tenants.
+
+**MANDATORY SELF-CHECK — account tenant mode**: before finalizing output, find every account resource and every `octopusdeploy_certificate`. For each one whose `tenanted_deployment_participation` is not `"Untenanted"`, confirm that `tenants` or `tenant_tags` in that same resource is non-empty. If both are empty, change the mode to `"Untenanted"`. You will be penalized for every account that carries the project's tenanted mode without its own tenant association, because it aborts the apply and costs the whole project.
 * You must create one distinct "octopusdeploy_aws_openid_connect_account" resource for each AWS OIDC account specified in the prompt.
 * You must create one distinct "octopusdeploy_accounts" data source for each "octopusdeploy_aws_openid_connect_account" resource.
 
@@ -7793,7 +7861,41 @@ resource "octopusdeploy_process_step" "process_step_my_project_deploy_app" {
 ```
 
 You will be penalized for setting `excluded_environments = null` on Kubernetes deployment steps when the project uses the DevSecOps lifecycle.
+
+## Never Anonymize Ordinary Technical Words
+
+**⚠️ CRITICAL — do NOT replace any part of a resource name, package ID, image name, script body, URL or property value with asterisks (`*****`) or any other anonymization placeholder.** Anonymization is only ever appropriate for a genuine secret VALUE, and secret values are already handled by writing `Change Me!` — never by masking part of a longer string.
+
 * Words such as `api`, `server`, `worker`, `web`, `auth`, `gateway`, `proxy`, `backend`, `frontend`, `key`, `token`, `service`, `manager`, `scheduler`, `cache`, `queue`, `db` are NOT secrets, API keys, or credentials and MUST NOT be replaced with asterisks (`*****`) or any other anonymization placeholder.
+* This applies with equal force when such a word appears as a SUFFIX or an embedded fragment of a longer identifier. `payments-api`, `auth-service`, `redis-cache`, `job-scheduler` and `orders-db` are ordinary names, and masking the trailing word corrupts the identifier.
+* A masked identifier is not a redaction — it is a broken value that is silently written into Octopus and only discovered when the deployment fails to resolve it.
+
+**⚠️ Observed failure — a derived SBOM package ID had its suffix masked.** The prompt `Create a Kubernetes project called "01. Payments API" …` produced a "Scan for Vulnerabilities" step whose `Sbom.Package` parameter was written as:
+
+```hcl
+# WRONG: the "api" suffix of the package name was replaced with asterisks
+parameters = {
+  "Sbom.Package" = jsonencode({
+    "FeedId"    = "${octopusdeploy_maven_feed.feed_octopus_maven_feed.id}"
+    "PackageId" = "com.octopus:payments-*****"
+  })
+}
+```
+
+The example configuration this step came from uses `com.octopus:octopub-sbom`. Renaming the package to match the project is fine; masking `api` is not, and it left an unresolvable package ID in the deployment process. The correct output is either the unchanged example value or a fully spelled-out name:
+
+```hcl
+# CORRECT
+parameters = {
+  "Sbom.Package" = jsonencode({
+    "FeedId"    = "${octopusdeploy_maven_feed.feed_octopus_maven_feed.id}"
+    "PackageId" = "com.octopus:payments-api-sbom"
+  })
+}
+```
+
+**MANDATORY SELF-CHECK — no asterisk masking**: before finalizing output, search it for the literal sequence `***`. Every occurrence is a defect unless it is inside prose the prompt itself supplied. Restore the real word. You will be penalized for each name, package ID, image, URL or property value containing an anonymization placeholder.
+
 ## Variable Scoping for New Project Creation Prompts
 
 **⚠️ CRITICAL — `actions` in an `octopusdeploy_variable` `scope` block MUST always be `null`; a variable scoped to a step is silently DISCARDED**: Octopus requires `Scope.Actions` to contain deployment *action* IDs, but the only ID available in Terraform is `octopusdeploy_process_step.<name>.id`, which is the *step* ID — a different GUID. When you write `actions = [octopusdeploy_process_step.process_step_drain_connections.id]`, the apply reports `Creation complete` and `Apply complete!` with no error, yet the variable never appears in the project's variable set at all. The value is lost with no diagnostic of any kind, which is far worse than a variable with a wider scope than requested.
