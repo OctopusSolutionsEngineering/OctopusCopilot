@@ -208,6 +208,28 @@ Blocks of type "run_retention_policy_with_strategy" are not expected here.
 * Never write both `retention_policy_with_strategy` and `retention_policy` on the same runbook.
 * This does NOT relax the rule above: an unrequested retention setting still belongs nowhere, and the deprecated `retention_policy` block remains forbidden in every case. If you are unsure of the strategy block's syntax, omit retention from the runbook entirely rather than risk the apply.
 
+**CRITICAL — `quantity_to_keep` belongs ONLY with `strategy = "Count"`. Writing it alongside `strategy = "Default"` or `"Forever"` fails at PLAN time, before anything is created:**
+
+```
+Error: Invalid Attribute Value
+
+  with octopusdeploy_runbook.runbook_checkout_canary_deploy_release,
+  on terraformInput.tf line 567, in resource "octopusdeploy_runbook" "runbook_checkout_canary_deploy_release":
+ 567:     quantity_to_keep = 0
+
+Attribute retention_policy_with_strategy[0].quantity_to_keep value must be at least 1, got: 0
+
+Error: Invalid Field
+
+Attribute retention_policy_with_strategy[0].quantity_to_keep must not be set
+when the strategy is '"Default"'.
+```
+
+* `strategy = "Default"` and `strategy = "Forever"` take NO other attributes. Write `retention_policy_with_strategy { strategy = "Default" }` and nothing else - no `quantity_to_keep`, no `unit`.
+* `strategy = "Count"` REQUIRES `quantity_to_keep`, and that value must be 1 or greater. `quantity_to_keep = 0` is rejected under every strategy.
+* **This is a case where the EXPORTED Terraform is NOT valid input.** Exporting an existing space emits runbooks as `retention_policy_with_strategy { strategy = "Default", quantity_to_keep = 0, unit = "Items" }`, because the export prints the server default values. Feeding that shape back in fails with the errors above. NEVER copy a `strategy = "Default"` block that carries `quantity_to_keep` or `unit` - drop those two lines.
+* **Observed failure**: a progressive deployment prompt produced the template `Deploy Release` runbook with `strategy = "Default"` and `quantity_to_keep = 0`. The plan aborted with BOTH errors above, so the project, the step template, the account and every step were never created.
+
 **⚠️ CRITICAL — `minimum_environments_before_promotion` MUST NEVER exceed the number of environments in its OWN `phase` block, and a "deployments" count in the prompt NEVER sets it.** This is repeated here, at the top of the file, because it is the single cheapest way to lose an entire project: the lifecycle is created early, so when Octopus rejects it the apply aborts before the project, its steps, its variables and its feeds are ever created, and the prompt produces NOTHING.
 
 ```
@@ -6181,6 +6203,23 @@ parameters = {
   "ssn_Channel" = "my-channel"
 }
 ```
+**⚠️ CRITICAL — the rule above applies just as strongly when the prompt names NO `ssn_` parameter at all and describes the step in PROSE.** Every example above shows a prompt that spells out `Set the "ssn_HookUrl" property to "..."`, which makes the rule read as though it only governs prompts written that way. It does not. A prompt such as:
+
+```
+Add a community step template step called "Slack - Detailed Notification - Bash" as the final step, with the channel "#storefront-deploys"
+```
+
+names exactly ONE parameter value — the channel — even though it never writes the string `ssn_Channel`. The `parameters` map must therefore contain `ssn_Channel` and `ssn_HookUrl` and NOTHING else.
+
+* **Observed failure**: the prose prompt above produced all five parameters from the example configuration — `ssn_Channel`, `ssn_HookUrl`, `ssn_IconUrl`, `ssn_Username` and `ssn_Color`. The apply succeeded, so the three unrequested cosmetic parameters were created silently.
+* **The cause is copying the example configuration wholesale.** `everystep.tf` contains a Slack step with all five parameters set, because it exists to demonstrate every property. The example shows you the SHAPE and the SPELLING of the parameters — it is NOT a list of parameters to reproduce. Take from it only the parameters the prompt asked for.
+* `ssn_IconUrl`, `ssn_Username` and `ssn_Color` are cosmetic and always optional. Omit all three unless the prompt names an icon, a sender name, or a colour. Do not "helpfully" carry over the example's `https://octopus.com/content/resources/favicon.png`, `Octopus Deploy` or `good`.
+* `ssn_HookUrl` is the exception, and the ONLY exception: a Slack step cannot notify anything without a webhook, so include it even when the prompt does not mention one, set to an Octostache reference such as `"#{Project.Slack.WebhookUrl}"` with a matching sensitive project variable. Never write a literal webhook URL.
+* The same reasoning generalizes to every community step template: a prompt that describes a parameter's VALUE in prose has specified that parameter, and a parameter the prompt is silent about stays out of the map unless the template requires it to be created at all (as `Sbom.Package` does for "Scan for Vulnerabilities").
+
+**MANDATORY SELF-CHECK — Slack parameters**: before finalizing output, find every `octopusdeploy_process_templated_step` built on the "Slack - Send Simple Notification" template and read its `parameters` map. Delete `ssn_IconUrl`, `ssn_Username` and `ssn_Color` unless the prompt named an icon, a username, or a colour respectively. The map should normally hold only `ssn_HookUrl`, `ssn_Channel`, and `ssn_Message` when a message was given. You will be penalized for each cosmetic parameter copied from the example configuration.
+
+**Substituting a community step template the prompt named but that does not exist**: when the prompt asks for a community step template that is not among the templates in the example configurations, do NOT abandon the step — substitute the closest available template, record the substitution in the step's `notes`, and keep the step's `name` exactly as the prompt wrote it. A prompt asking for `"Slack - Detailed Notification - Bash"` correctly produces a step named `Slack - Detailed Notification - Bash` whose `template_id` points at `communitysteptemplate_slack___send_simple_notification`, with a note saying so. The step name comes from the prompt; only the template binding falls back.
 * It is CRITICAL that the order of the steps in the prompt is maintained in the Terraform configurations. You MUST add each step, one by one, from top to bottom and left to right, as defined in the prompt.
 * The following prompt must define the "Slack Notification - Start" step first, then the "Deploy user-profile worker -dev-" step, and then the "Deploy user-track worker -dev-" step, in that specific order, in the "octopusdeploy_process_steps_order" resource:
 
