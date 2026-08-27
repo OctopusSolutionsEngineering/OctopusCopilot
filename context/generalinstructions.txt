@@ -3831,6 +3831,21 @@ resource "octopusdeploy_external_feed_create_release_trigger" "project_trigger" 
 * You will be penalized for creating resources of type "octopusdeploy_project_automatic_release_trigger".
 * When creating a "octopusdeploy_external_feed_create_release_trigger" resource, but none of the project's steps define a "primary_package" or "packages" block, do not define the "package" block in the "octopusdeploy_external_feed_create_release_trigger" resource. This creates a placeholder trigger.
 
+**MANDATORY SELF-CHECK — trigger `package` block against the step it names**: before finalizing output, for every `octopusdeploy_external_feed_create_release_trigger` that has a `package` block, find the step named in its `deployment_action` and read that step's actual contents. Then confirm ONE of these holds:
+
+* the step has a `primary_package` block, and the trigger's `package_reference` is `""`; or
+* the step has a `packages` map, and the trigger's `package_reference` is the exact key from that map.
+
+If NEITHER holds — the step has no packages at all — DELETE the `package` block entirely and emit the trigger as a placeholder. Do not guess a package name, and do not leave `package_reference = ""` in place hoping it resolves.
+
+```
+Error: octopus deploy api returned an error on endpoint /api/Spaces-6670/projecttriggers -
+[The specified package reference '' for trigger 'Automatic Release Creation' does not exist on the action 'Deploy Azure Web App'.]
+```
+
+* **Observed failure**: a prompt asked for automatic release creation on an Azure Web App project. The deploy step was emitted as an `Octopus.AzurePowerShell` script step running inline `az` CLI commands — a step type with no packages — while the trigger still carried `package_reference = ""`. The apply died at the trigger, after both projects, their steps, the library variable set, the git credential, the channel and the deployment target trigger had all been created.
+* **The step's TYPE is what decides this, so check the type you actually emitted, not the type the prompt implies.** A prompt saying "deploys the Azure Web App" may legitimately be satisfied by an `Octopus.AzurePowerShell` step, and that step has no package even though the phrase "web app deployment" suggests one.
+
 **CRITICAL — placeholder triggers (no `package` block) MUST still follow ALL resource conventions**: A placeholder `octopusdeploy_external_feed_create_release_trigger` (created without a `package` block because the steps have no package references) is still a full Octopus resource and must include all required attributes. The absence of a `package` block does NOT exempt a trigger from the `lifecycle { prevent_destroy = true }` requirement, the ternary lookup requirement for `project_id` and `channel_id`, the `count` convention, or the `depends_on` requirement.
 
 **Negative example — placeholder trigger missing required attributes (VERY COMMON MISTAKE)**:
