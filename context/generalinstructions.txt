@@ -3733,6 +3733,35 @@ resource "octopusdeploy_external_feed_create_release_trigger" "example" {
 }
 ```
 
+**⚠️ CRITICAL — when the prompt names NO channel, look up the project's "Default" channel; do NOT fall back to a literal ID.** Every correct example above points the ternary at a channel the prompt asked for by name. A prompt that asks for a release-creation trigger but never mentions a channel has no such resource to reference, and that is exactly when the hard-coded `"Channels-1"` gets written — it is the value that appears in the example configurations, so it looks like a safe default. It is not: `Channels-1` belongs to a different space and the API rejects it.
+
+Every project has a `Default` channel created implicitly with the project. Resolve it with a `data "octopusdeploy_channels"` block filtered by BOTH `partial_name = "Default"` and the project, then reference `.channels[0].id` directly — there is no `octopusdeploy_channel` resource to fall back to, so this lookup takes no ternary:
+
+```hcl
+data "octopusdeploy_channels" "channel_project_foo_default" {
+  ids          = []
+  partial_name = "Default"
+  project_id   = "${length(data.octopusdeploy_projects.project_foo.projects) != 0 ? data.octopusdeploy_projects.project_foo.projects[0].id : octopusdeploy_project.project_foo[0].id}"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_external_feed_create_release_trigger" "example" {
+  count      = "${length(data.octopusdeploy_projects.project_foo.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_foo.projects) != 0 ? data.octopusdeploy_projects.project_foo.projects[0].id : octopusdeploy_project.project_foo[0].id}"
+  channel_id = "${data.octopusdeploy_channels.channel_project_foo_default.channels[0].id}"
+  name       = "External Feed Trigger"
+  depends_on = [octopusdeploy_process_steps_order.process_step_order_project_foo]
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
+* The `project_id` filter on the data source is REQUIRED. `partial_name = "Default"` alone matches the `Default` channel of every project in the space and returns the wrong one.
+* **Observed failure**: a prompt reading `Enable automatic release creation on "79. Billing API" whenever a new package is pushed` named no channel. The generated trigger used `channel_id = "Channels-1"`, copied from the example configuration, and the apply died with `Trigger 'Automatic Release Creation' references a channel with identifier 'Channels-1' which does not exist.` Seventeen resources — both projects, their steps, the library variable set, the freeze, the git credential and the deployment target trigger — had already been created, and all of them were left behind by the aborted apply.
+* This applies to `octopusdeploy_built_in_trigger` too, whose `channel_id` has the same requirement and whose example configuration carries the same `"Channels-1"` literal.
+
 * The `project_id` attribute on an `octopusdeploy_external_feed_create_release_trigger` resource MUST use the ternary lookup pattern, just like the `project_id` on any other resource. You will be penalized for setting `project_id` to a direct resource reference such as `octopusdeploy_project.project_foo.id` without the ternary guard.
 
 **Negative example — `project_id` set to a direct resource reference WITHOUT ternary guard (COMMON MISTAKE)**:
@@ -4996,6 +5025,32 @@ appeared.
    * "Octopus.JavaArchive"
    * "Octopus.HelmChartUpgrade"
    * "Octopus.AzureAppService"
+
+**⚠️ CRITICAL — a prompt that names no package is NOT permission to omit `primary_package` from these step types.** Octopus rejects the step outright and the apply dies:
+
+```
+Error: Unable to create process step
+
+  with octopusdeploy_process_step.process_step_billing_api_deploy_azure_web_app[0],
+  on terraformInput.tf line 288, in resource "octopusdeploy_process_step" "process_step_billing_api_deploy_azure_web_app":
+
+Octopus API error: There was a problem with your request. [Please select a package]
+```
+
+* **Observed failure**: a prompt reading `Add a step to each project that deploys the Azure Web App using the "Billing Azure" account` named an account but no package. Both projects' `Octopus.AzureWebApp` steps were emitted without a `primary_package` block, and BOTH failed with `Please select a package`, aborting an apply that had already created the projects, the library variable set, the git credential and the deployment target trigger.
+* **When the prompt names no package, supply one — do not leave the block out.** Prefer the package the project type's example configuration already uses. If there is none, use the built-in feed with a package id derived from the project name:
+
+```hcl
+primary_package = {
+  acquisition_location = "Server"
+  feed_id              = "${data.octopusdeploy_feeds.feed_octopus_server__built_in_.feeds[0].id}"
+  id                   = null
+  package_id           = "BillingApi"
+  properties           = { SelectionMode = "immediate" }
+}
+```
+
+* A package invented this way is correct behaviour, not a fabrication: these step types cannot exist without one, so the choice is between a sensible placeholder package and no step at all.
 * You will be penalized for defining a "packages" block in steps with the types:
    * "Octopus.IIS"
    * "Octopus.AzureWebApp"
