@@ -2433,6 +2433,44 @@ resource "octopusdeploy_external_feed_create_release_trigger" "projecttrigger_my
 }
 ```
 
+**⚠️ CRITICAL — `channel_id` on a trigger MUST NEVER be a literal Octopus ID such as `"Channels-1"`. The apply succeeds and the trigger is silently wired to another space's channel.** The rule above says `channel_id` must use the ternary lookup, but it only shows the case where the prompt asked for a NAMED channel that exists as an `octopusdeploy_channel` resource. The failure happens in the other case: the trigger belongs to a project whose only channel is the built-in `Default`, so there is no channel resource to point at, and the gap gets filled with a hardcoded ID.
+
+```hcl
+# WRONG: a literal channel ID. Channels-1 is the first channel ever created on the server and
+# belongs to a completely different space, so this trigger can never fire.
+resource "octopusdeploy_external_feed_create_release_trigger" "projecttrigger_ledger_service_new_release_trigger" {
+  project_id = "..."
+  name       = "New Release Trigger"
+  channel_id = "Channels-1"
+}
+```
+
+* **Observed failure**: a prompt asking for `a project trigger that runs the deployment whenever a new release is created in "03a. Ledger Service"` produced exactly the resource above. Octopus does not validate that the channel belongs to the project or even to the space, so the apply reported success and the broken trigger was created.
+* **When the project has no named channel, reference its `Default` channel through a data source.** Emit `data "octopusdeploy_channels" "channel_<project>_default"` scoped with `project_id`, and use `data.octopusdeploy_channels.channel_<project>_default.channels[0].id`. There is no `octopusdeploy_channel` resource for `Default`, so this is a plain data-source reference, not a ternary:
+
+```hcl
+data "octopusdeploy_channels" "channel_ledger_service_default" {
+  ids          = []
+  partial_name = "Default"
+  project_id   = "..."
+  skip         = 0
+  take         = 1
+}
+
+  channel_id = "${data.octopusdeploy_channels.channel_ledger_service_default.channels[0].id}"
+```
+
+* Emitting the `Default` channel data source and then NOT using it is the specific shape of this mistake — the observed output contained the correct data source and wrote the literal anyway.
+* This applies to EVERY literal Octopus ID, not just channels: `Channels-N`, `Projects-N`, `Environments-N`, `Feeds-N`, `Accounts-N` and `Lifecycles-N` must never appear as string literals in the output. Every one of them is resolved through a data source or a resource reference.
+
+**⚠️ CRITICAL — a "when a new release is created in project X" trigger belongs on the project that DEPLOYS, not on X.** An `octopusdeploy_external_feed_create_release_trigger` fires when a new version appears in a feed that ITS OWN project consumes. An orchestration project consumes its children through the built-in `Octopus Server Releases` feed, so a new release of a child is a new package version for the PARENT.
+
+* `project_id` must therefore be the orchestration project — the one whose deployment the prompt wants to run — and `channel_id` must be a channel of that same project.
+* **Observed failure**: for `Add a project trigger [to the release train] that runs the deployment whenever a new release is created in "03a. Ledger Service"`, the trigger was created with `project_id` pointing at `03a. Ledger Service`. The Ledger Service does not consume itself as a package, so the trigger could never fire, and the release train — the project the prompt actually wanted triggered — got no trigger at all.
+* Read the sentence as "deploy THIS project when a release appears in THAT project". The project named after "in" is the SOURCE and never owns the trigger.
+
+**MANDATORY SELF-CHECK — trigger project and channel**: before finalizing output, find every trigger resource. Confirm `channel_id` is a data-source or resource reference and contains no literal `Channels-` string, and confirm `project_id` names the project the prompt wants deployed rather than the project the prompt named as the source of the change. You will be penalized for every hardcoded Octopus ID in a trigger.
+
 * You will be penalized for defining a "session_token" attribute on a "octopusdeploy_aws_account" resource.
 
 ## Tenant Instructions
@@ -4368,6 +4406,22 @@ resource "octopusdeploy_channel" "channel_dev_deployment_application" {
 * Scope the freeze to the project and environments the prompt names using the resource's `project_scope` block; a freeze with no scope applies to everything, which is almost never what the prompt asked for.
 * Deployment freezes are GLOBAL — they are not scoped to a space. Create exactly the freezes the prompt names and no others.
 * A freeze that has already ended is rejected, so the `end` property must be in the future (see below).
+**⚠️ CRITICAL — a freeze the prompt names but gives NO DATES for must STILL be created, with an invented future window.** `start` and `end` are mandatory attributes, so a dateless request feels un-emittable and gets dropped. It is not: pick a window and record the choice.
+
+* **Observed failure**: the bullet `Add a deployment freeze called "Freeze" covering every environment and every project` supplied no dates and produced no `octopusdeploy_deployment_freeze` at all. Every other instruction in that prompt was satisfied, so the missing freeze was the only gap and nothing flagged it.
+* Emit the freeze with a plausible future window — a week beginning at the start of the next calendar year is a safe default — and say in the project description that the dates were chosen because the prompt gave none:
+
+```hcl
+resource "octopusdeploy_deployment_freeze" "deploymentfreeze_freeze" {
+  count = "..."
+  name  = "Freeze"
+  start = "2027-01-01T00:00:00.000+00:00"
+  end   = "2027-01-08T00:00:00.000+00:00"
+}
+```
+
+* **A freeze the prompt says covers "every environment and every project" is the one case where OMITTING `project_scope` is correct.** An unscoped freeze applies to everything, which is exactly what that wording asks for. Do not invent a scope listing every project, and do not treat the absence of named projects as a reason to drop the freeze.
+* The same reasoning applies to any resource whose mandatory attributes the prompt leaves unspecified: choose a defensible value, create the resource, and document the choice. Never let a missing attribute turn into a missing resource.
 
 **MANDATORY SELF-CHECK — deployment freezes**: before finalizing output, re-read the prompt for the words "freeze", "blackout", "change window" or "no deployments between". For each one, confirm the output contains a matching `octopusdeploy_deployment_freeze`. You will be penalized for each requested freeze that is absent.
 
@@ -6320,6 +6374,15 @@ more than one enabled Argo CD related Action.]
 
 **MANDATORY SELF-CHECK — Argo CD action count**: before finalizing output, count the steps of type `Octopus.ArgoCDUpdateManifests` plus the steps of type `Octopus.ArgoCDUpdateImageTags` in each deployment process. If more than one of them lacks `is_disabled = true`, add `is_disabled = true` to all but one. You will be penalized for every deployment process containing two or more enabled Argo CD update actions.
 
+**⚠️ `Octopus.Action.ArgoCD.InputPath` holds ONE manifest path. When the prompt names several, the extras MUST be recorded in `notes`, never dropped in silence.** This is the same principle as the multi-branch rule above: one step, first value wins, remainder documented.
+
+* **Observed failure**: `Point the manifest update step at the repository ... updating the files "k8s/quote-api/deployment.yaml" and "k8s/quote-api/service.yaml"` produced `"Octopus.Action.ArgoCD.InputPath" = "k8s/quote-api/deployment.yaml"` and no mention of `service.yaml` anywhere in the output. Half the instruction disappeared with no trace, and because the apply succeeded there was nothing to notice.
+* Put the FIRST path the prompt lists in `Octopus.Action.ArgoCD.InputPath`. Add the remaining paths to the step's `notes`, for example: `Also requested: k8s/quote-api/service.yaml. This step type takes a single input path, so only the first file is configured.`
+* Do NOT create a second `Octopus.ArgoCDUpdateManifests` step for the second file — that trips the "at most one enabled Argo CD action" limit above and aborts the apply.
+* Do NOT concatenate the paths into one string (`"a.yaml,b.yaml"` or `"a.yaml b.yaml"`). The property takes one path and a concatenated value resolves to nothing at deployment time.
+* **The general rule: when a prompt supplies a list and the target property accepts one value, the shortfall goes in `notes`.** Silently keeping the first item makes an incomplete project indistinguishable from a complete one. This applies to manifest paths, branches, repositories and Argo CD applications alike.
+
+
 **⚠️ CRITICAL — `"Octopus.Action.ArgoCD.CommitMethod" = "PullRequest"` REQUIRES `"Octopus.Action.ArgoCD.PullRequest.Environments"`.** Omitting it aborts the apply at step-creation time, so every resource ordered after the step is abandoned:
 
 ```
@@ -7467,6 +7530,46 @@ I can't generate that configuration. Creating an `octopusdeploy_github_connectio
 
 ## Git Repository Branch Instructions
 
+**⚠️ CRITICAL — every `git_dependencies` entry MUST set `github_connection_id` and `git_credential_id` to the EMPTY STRING `""`, never null and never omitted. Leaving either one out aborts the apply and destroys the whole prompt.** The provider sends null and Octopus returns `""`, so the value planned and the value read back differ:
+
+```
+Error: Provider produced inconsistent result after apply
+
+When applying changes to
+octopusdeploy_process_step.process_step_payments_release_train_run_train_script[0],
+provider "provider[\"registry.opentofu.org/octopusdeploy/octopusdeploy\"]"
+produced an unexpected new value: .git_dependencies[""].github_connection_id:
+was null, but now cty.StringVal("").
+
+This is a bug in the provider, which should be reported in the provider's own
+issue tracker.
+```
+
+* **This is a fatal error, not the advisory note the last line makes it sound like.** OpenTofu stops the apply at that vertex, so every resource ordered after it is abandoned.
+* **Observed failure**: a prompt creating four projects, two lifecycles, two channels, two triggers, a deployment freeze and two prompted variables asked one step to `Read the deployment script from the file "scripts/train.sh" in the repository https://github.com/OctopusSolutionsEngineering/Octopub.git on the branch "release/2026.12"`. The step's `git_dependencies` omitted `github_connection_id`. The ONLY resource created by the entire prompt was the project group — no projects at all.
+* **The abbreviated `git_dependencies` examples in THIS file are not complete resources.** Several examples in this section and in the Kubernetes YAML sections write `git_dependencies = { "" = { default_branch = "master", ... } }` or a short `git_dependencies { ... }` block that names only the attributes under discussion. The `...` stands for the remaining attributes — it does NOT mean they may be dropped. Take the complete attribute set from the example configurations, which always spell out all six.
+
+**This is the canonical `git_dependencies` shape. Every entry has all six attributes.**
+
+Anonymous access (no credential):
+
+```hcl
+  git_dependencies = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "", git_credential_type = "Anonymous", github_connection_id = "", repository_uri = "https://github.com/OctopusSolutionsEngineering/Octopub.git" } }
+```
+
+Library credential (a `octopusdeploy_git_credential` the prompt asked for):
+
+```hcl
+  git_dependencies = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "${length(data.octopusdeploy_git_credentials.gitcredential_github.git_credentials) != 0 ? data.octopusdeploy_git_credentials.gitcredential_github.git_credentials[0].id : octopusdeploy_git_credential.gitcredential_github[0].id}", git_credential_type = "Library", github_connection_id = "", repository_uri = "https://example.invalid/url-0978" } }
+```
+
+* `github_connection_id` is `""` in BOTH forms. There is no case in which it carries a value — GitHub connections are not created by these configurations at all, so the attribute exists only to be pinned to the empty string.
+* `git_credential_id` is `""` when `git_credential_type = "Anonymous"`, and the data-source/resource ternary when `git_credential_type = "Library"`. It is never null.
+* `file_path_filters` is genuinely nullable: `null` when the step reads the whole repository, `["path/to/file"]` when the prompt names a file path.
+* `default_branch` and `repository_uri` always carry values.
+
+**MANDATORY SELF-CHECK — git_dependencies completeness**: before finalizing output, find every `git_dependencies` attribute in the configuration. For EACH entry, confirm all six attributes are present and that `github_connection_id = ""` and `git_credential_id` is either `""` or a credential ternary — never null, never absent. You will be penalized for each missing `github_connection_id`, because it aborts the apply and can cost the entire prompt.
+
 * When the prompt says `Set the Repository Branch to "<branch>"` for a "Deploy Kubernetes YAML" step, the `git_dependencies` block of the corresponding `octopusdeploy_process_step` resource MUST set `default_branch = "<branch>"` using the exact branch name from the prompt.
 * If the prompt does NOT include a `Set the Repository Branch to` instruction for a step, use `default_branch = "main"` as the default value.
 * You will be penalized for setting `default_branch = "main"` when the prompt explicitly specifies a different branch.
@@ -8117,6 +8220,20 @@ resource "octopusdeploy_process_step" "process_step_my_project_wait_20_min" {
 
 **Note the two Azure rows.** The Azure Web App and Azure Function templates deploy with an `Octopus.AzurePowerShell` step that shells out to `az`; that IS the canonical shape for those project types, and it must not be "upgraded" to `Octopus.AzureWebApp` or `Octopus.AzureAppService` unless the prompt explicitly asks for that step type. Conversely, do not rewrite a typed step (`Octopus.IIS`, `Octopus.TomcatDeploy`, `Octopus.KubernetesDeployRawYaml`, `Octopus.TerraformApply`, …) into a script that shells out to a CLI.
 
+**⚠️ CRITICAL — the table above is violated by DELETION as often as by substitution. Steps the prompt ADDS are added ALONGSIDE the template's process; they never replace it.** A prompt of the shape `Create an <X> project called "..." , and then: * Add a step ... * Add a step ...` asks for the template's whole deployment process PLUS the new steps. The template steps are not a first draft to be discarded once you have steps of your own.
+
+* **Observed failure**: `Create an Azure Web App project called "05. Booking Frontend" ... * Add a rolling deployment step called "Rolling Restart" ... * Add three steps that all run in parallel ... * Add a step called "Notify"` produced a project whose deployment process contained EXACTLY the five added steps. All seven template steps — including `Deploy Azure Web App Container`, the `Octopus.AzurePowerShell` step the table above requires — were gone. The project was called an Azure Web App project and could not deploy an Azure Web App at all.
+* The same prompt asked for `an Azure OIDC account called "Travel Azure Prod" ... use it in the deploy step`. With the deploy step deleted, the account was created and then referenced by nothing: it exported with nothing and configured nothing. **An orphaned account is the tell-tale sign that the deploy step it belonged to was dropped.**
+
+**⚠️ "the deploy step" in a prompt ALWAYS means the template's deployment step, never a step the same prompt just added.** Bullets such as `use it in the deploy step`, `Set the deploy step to run on the "Hosted Windows" worker pool`, or `Set the deploy step to use ... mode` are instructions to configure the step named in the table above for that project type.
+
+* **Observed failure**: in the prompt above, `Set the deploy step to run on the "Hosted Windows" worker pool inside the container image ...` was applied to the newly added `Rolling Restart` step. Because a target-based package step cannot take a worker pool, the instruction was then recorded as un-implementable in that step's `notes` — when the real deploy step, an `Octopus.AzurePowerShell` step that runs on a worker and accepts both a pool and a container, would have satisfied it exactly.
+* When a prompt bullet about "the deploy step" appears un-implementable, the most likely cause is that you have identified the wrong step. Re-read the table above, find the step of the template's deployment type, and apply the instruction there before concluding it cannot be done.
+* A newly added step is referred to by its NAME (`the "Rolling Restart" step`). Only the template's deployment step is referred to by the bare phrase "the deploy step".
+
+**MANDATORY SELF-CHECK — template deployment step survives**: before finalizing output, look up the project type in the table above and confirm the deployment process contains a step of the required type. Then confirm the template's other steps are still present: adding steps must INCREASE the step count, never reduce it. Finally, confirm every account, certificate and feed the prompt asked for is referenced by at least one step or variable — an orphaned account means an instruction landed on a step that no longer exists. You will be penalized for every template step silently dropped from a project that only asked for steps to be added.
+
+
 **Where deployment configuration goes depends on the step type.** When the prompt gives a web app name, resource group or deployment slot:
 
 * On the template's `Octopus.AzurePowerShell` step, they belong in the `az` command in `Octopus.Action.Script.ScriptBody` (and in the project variables the script interpolates, such as `Project.Azure.WebApp.Octopub.Name` and `Project.Azure.ResourceGroup.Name`). Update those, do not add `Octopus.Action.Azure.WebAppName` to a PowerShell step.
@@ -8467,6 +8584,21 @@ Every reference to that environment then uses the same local:
 
 **MANDATORY SELF-CHECK — environment substring collisions**: before finalizing output, list every environment name the prompt asked for. For each one, check whether it is a substring of any other environment name in your output or of `Development`, `Production`, `Staging`, `Security` or `DevSecOps`. For every name where it is, confirm the environment uses the `locals` exact-match pattern above in its `count` and in EVERY ternary that references it. You will be penalized for each prompt-named environment that is absent from the created resources because a substring match suppressed it.
 
+**⚠️ CRITICAL — an environment the prompt names ONLY as a scope target still MUST be created, and the resource that referenced it MUST still be created.** The rules above are written in terms of a prompt that says "Create environments called ...". The failure happens when the prompt never says "create" at all and instead names a new environment in passing, as the scope of a variable, a step, a lifecycle phase or a runbook. Naming an environment anywhere in the prompt is a request for that environment.
+
+* **Observed failure**: the bullet `Add a variable called "Claims.Timeout" with the value "not-a-number" scoped to an environment called "Pre-Prod" that does not exist yet` produced NEITHER the `Pre-Prod` environment NOR the `Claims.Timeout` variable. The entire instruction vanished from the output, and because the apply succeeded there was no signal that anything had been skipped.
+* The correct output is BOTH resources: an `octopusdeploy_environment` named `Pre-Prod` in the canonical data-source/`count` shape, and the `octopusdeploy_variable` whose `scope.environments` resolves it through the usual ternary.
+* **"that does not exist yet" is an instruction to create it, not a warning to skip it.** The prompt is telling you the environment is new so that you create it rather than expecting a data source to find one.
+* **A value the prompt supplies is never a reason to drop the resource either.** `"not-a-number"` is a perfectly valid string for an Octopus variable — Octopus does not type-check variable values, and a timeout variable holding a non-numeric string is the project the prompt asked for. Never silently discard a variable because its value looks wrong for its name. If a value is genuinely unusable, still create the resource and record the concern in a `description`.
+
+**MANDATORY SELF-CHECK — every named environment exists**: before finalizing output, list every environment name that appears ANYWHERE in the prompt, including those appearing only inside a scope, a phase, a step scope or a runbook scope. For each one, confirm the output contains either a data source that resolves it or an `octopusdeploy_environment` resource that creates it. Then confirm that every variable, step and runbook the prompt asked for is present in the output, whatever its scope referenced. You will be penalized for each prompt instruction that produced no resource at all.
+
+**⚠️ CRITICAL — a step's environment scope from the prompt MUST be written to `environments`, and is easy to lose on a manual intervention step.** A prompt that names a scope in the same sentence as the step — `Add a manual intervention step called "Approve Blue/Green Swap" scoped to Production` — sets that step's `environments` attribute.
+
+* **Observed failure**: that exact bullet produced a correct `Octopus.Manual` step with correct instructions, and `environments = null`, so the approval gate ran in every environment instead of only Production.
+* The scope belongs on the step even when the rest of the bullet is satisfied. Getting the step type, the name and the instructions right is not the whole instruction.
+* Write the allowlist form: `environments = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]`. Never use `excluded_environments` to express a scope the prompt stated as an allowlist.
+
 ## Security Environment Exclusion for Kubernetes Steps
 
 **MANDATORY — Kubernetes deploy steps must exclude the Security environment when the project uses the DevSecOps lifecycle**: When a project uses the DevSecOps lifecycle (which includes a Security environment used for daily security scanning), Kubernetes deployment steps (`Octopus.KubernetesDeployRawYaml`, `Octopus.KubernetesRunScript`, `Octopus.HelmChartUpgrade`, `Octopus.Kubernetes.Kustomize`, etc.) MUST set `excluded_environments` to include the Security environment ID. The Security environment is only used for vulnerability scanning (the "Scan for Vulnerabilities" step), not for actual Kubernetes deployments.
@@ -8524,6 +8656,70 @@ parameters = {
 ```
 
 **MANDATORY SELF-CHECK — no asterisk masking**: before finalizing output, search it for the literal sequence `***`. Every occurrence is a defect unless it is inside prose the prompt itself supplied. Restore the real word. You will be penalized for each name, package ID, image, URL or property value containing an anonymization placeholder.
+## Backslashes in Account Usernames and Other Values
+
+**⚠️ CRITICAL — a backslash in a value from the prompt MUST survive into the created resource. `DOMAIN\user` is a valid Windows username and MUST NOT be rewritten.** Converting the backslash to an underscore, a forward slash, or a double underscore silently corrupts the value; the apply succeeds and the account is left unusable.
+
+```hcl
+# Prompt says: Create a username/password account called "Claims Service Account" with the username "SVC\claims"
+# WRONG: the backslash became a double underscore
+resource "octopusdeploy_username_password_account" "account_claims_service_account" {
+  name     = "Claims Service Account"
+  username = "SVC__claims"
+}
+```
+
+```hcl
+# CORRECT: the backslash is preserved, escaped for HCL as \\
+resource "octopusdeploy_username_password_account" "account_claims_service_account" {
+  name     = "Claims Service Account"
+  username = "SVC\\claims"
+}
+```
+
+* **Observed failure**: the prompt `Create a username/password account called "Claims Service Account" with the username "SVC\claims", and use it as the IIS application pool identity` produced `username = "SVC__claims"`. `DOMAIN\user` is the normal form of an IIS application pool identity, so the one value the step most depends on was the value that got mangled.
+* In HCL a literal backslash is written `\\` inside a double-quoted string. The need to escape it is NOT a reason to replace it — write `"SVC\\claims"`, which stores `SVC\claims`.
+* **The Step Name Character Rules do NOT apply here.** Those rules exist because the Octopus API rejects certain characters in STEP NAMES. They say nothing about account usernames, variable values, script bodies, instructions text, or any other value, and must never be generalized into a licence to sanitise other fields. A username, a UNC path such as `\\fileserver\share`, a Windows path such as `C:\inetpub\wwwroot`, and a regex containing `\d` all keep their backslashes exactly as the prompt wrote them.
+* This is the same principle as "Never Anonymize Ordinary Technical Words": rewriting a character you found awkward produces a broken value that Octopus accepts without complaint.
+
+**MANDATORY SELF-CHECK — backslashes preserved**: before finalizing output, find every value the prompt supplied that contained a `\`. Confirm each one still contains a backslash (written `\\` in HCL) and has not become `_`, `__` or `/`. You will be penalized for each backslash silently rewritten.
+
+## Placeholder Literals Are Never Valid Field Values
+
+**⚠️ CRITICAL — `CHANGEME`, `changeme`, `TODO`, `TBD`, `xxx`, `placeholder` and similar literals MUST NEVER be written into any resource attribute.** When the prompt does not supply a value for a required field, the answer is a real defensible default or an Octostache reference to a variable — never a word that stands in for a value. Octopus accepts the literal without complaint, so the apply succeeds and the broken value is only discovered when something tries to use it.
+
+```hcl
+# Prompt says: Create a Git Connection called "Dispatcher Git" with the allowed repository "https://github.com/acme/dispatcher.git"
+# WRONG: the prompt named no username, so a placeholder was invented
+resource "octopusdeploy_git_credential" "gitcredential_dispatcher_git" {
+  name     = "Dispatcher Git"
+  type     = "UsernamePassword"
+  username = "CHANGEME"
+  password = "Change Me!"
+}
+```
+
+```hcl
+# CORRECT: a real, conventional username for a Git bot credential
+resource "octopusdeploy_git_credential" "gitcredential_dispatcher_git" {
+  name     = "Dispatcher Git"
+  type     = "UsernamePassword"
+  username = "x-access-token"
+  password = "Change Me!"
+}
+```
+
+* **Observed failure**: the bullet above produced `username = "CHANGEME"`. Every other part of the credential was correct, including `repository_restrictions = { allowed_repositories = ["https://github.com/acme/dispatcher.git"], enabled = true }`.
+* **`Change Me!` in a SECRET field is the one exception, and it is not a placeholder in the same sense.** Sensitive values are deliberately replaced with `Change Me!` by design — that rule is stated elsewhere in this file and stands. It applies ONLY to secret attributes such as `password`, `secret_key`, `sensitive_value`, `certificate_data` and account tokens. It does NOT license a placeholder in a non-secret field beside them.
+* Sensible defaults for common non-secret fields when the prompt is silent:
+  * Git credential `username` → `x-access-token` (the conventional value for a token-based Git credential), or `octopus` for a generic service account.
+  * Tomcat manager user → `#{Tomcat.User}` with a `String` variable whose value is `tomcat`.
+  * A Windows service or IIS application pool user → bind it through an account-typed project variable and read `#{<variable>.Username}`, never a literal.
+  * An AWS region → `us-east-1` unless the prompt names one.
+* When no defensible default exists, prefer an Octostache reference to a project variable you also create. A `#{...}` reference is a working indirection; `CHANGEME` is not.
+
+**MANDATORY SELF-CHECK — no placeholder literals**: before finalizing output, search it case-insensitively for `changeme`, `todo`, `tbd` and `placeholder`. Every hit outside prose the prompt itself supplied is a defect — replace it with a real default or an Octostache reference. `Change Me!` in a secret attribute is the only permitted match. You will be penalized for each placeholder literal left in a non-secret field.
+
 
 ## Variable Scoping for New Project Creation Prompts
 
