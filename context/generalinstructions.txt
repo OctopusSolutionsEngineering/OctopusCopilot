@@ -3846,6 +3846,23 @@ Error: octopus deploy api returned an error on endpoint /api/Spaces-6670/project
 * **Observed failure**: a prompt asked for automatic release creation on an Azure Web App project. The deploy step was emitted as an `Octopus.AzurePowerShell` script step running inline `az` CLI commands — a step type with no packages — while the trigger still carried `package_reference = ""`. The apply died at the trigger, after both projects, their steps, the library variable set, the git credential, the channel and the deployment target trigger had all been created.
 * **The step's TYPE is what decides this, so check the type you actually emitted, not the type the prompt implies.** A prompt saying "deploys the Azure Web App" may legitimately be satisfied by an `Octopus.AzurePowerShell` step, and that step has no package even though the phrase "web app deployment" suggests one.
 
+**⚠️ CRITICAL — `octopusdeploy_git_trigger` has the SAME requirement, against git dependencies instead of packages.** A git trigger's `sources` list names a deployment action by slug, and that action MUST actually declare a git dependency. Pointing it at a package-deployment step fails the apply:
+
+```
+Error: unable to create Git trigger
+
+octopus deploy api returned an error on endpoint /api/Spaces-6673/projecttriggers -
+[The specified Git dependency '' for trigger 'Git Trigger' does not exist on the action 'Deploy to IIS'.]
+```
+
+* **Observed failure**: a prompt reading `Create a git trigger on this project that creates a release whenever the "main" branch of "https://github.com/example/portal.git" changes` produced a trigger whose `sources` entry used `deployment_action_slug = "deploy-to-iis"`. That step is an `Octopus.IIS` package deployment with no git dependency, so the apply died at the trigger after the project, all four steps, the worker pool, the S3 feed and the deployment freeze had been created.
+* **A step has a git dependency only if it is sourced from a Git repository.** In practice that means its `execution_properties` set `"Octopus.Action.Script.ScriptSource" = "GitRepository"`, or it is one of the step types that reads manifests from Git (`Octopus.ArgoCDUpdateManifests`, `Octopus.Kubernetes.Kustomize`, `Octopus.CommitToGit`, `Octopus.KubernetesDeployRawYaml` sourced from Git). A package-deployment step — `Octopus.IIS`, `Octopus.AzureWebApp`, `Octopus.TentaclePackage`, `Octopus.WindowsService` — never has one.
+* `git_dependency_name = ""` refers to the step's UNNAMED git dependency, exactly as `package_reference = ""` refers to its primary package.
+* **The template's `Scan for Vulnerabilities` step is usually the only action with a git dependency**, because it runs `octopus/DirectorySbomScan.ps1` from a Git repository. If the prompt asks for a git trigger and that is the only such step, point the trigger's `deployment_action_slug` at it.
+* **If NO step in the process has a git dependency, do NOT emit the `octopusdeploy_git_trigger` at all** — record the request in the project's `description` as not implemented. A git trigger cannot be created against a process that never reads from Git.
+
+**MANDATORY SELF-CHECK — git triggers**: before finalizing output, for every `octopusdeploy_git_trigger`, take each `sources` entry's `deployment_action_slug`, find the step with that slug, and confirm that step declares a git dependency. If it does not, either repoint the slug at a step that does, or delete the trigger and note it in the description. You will be penalized for each git trigger naming an action with no git dependency, because it aborts the apply.
+
 **CRITICAL — placeholder triggers (no `package` block) MUST still follow ALL resource conventions**: A placeholder `octopusdeploy_external_feed_create_release_trigger` (created without a `package` block because the steps have no package references) is still a full Octopus resource and must include all required attributes. The absence of a `package` block does NOT exempt a trigger from the `lifecycle { prevent_destroy = true }` requirement, the ternary lookup requirement for `project_id` and `channel_id`, the `count` convention, or the `depends_on` requirement.
 
 **Negative example — placeholder trigger missing required attributes (VERY COMMON MISTAKE)**:
