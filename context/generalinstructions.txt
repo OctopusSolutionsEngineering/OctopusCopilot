@@ -176,14 +176,14 @@ provider "registry.opentofu.org/octopusdeploy/octopusdeploy" produced an unexpec
 * Therefore: do not emit a `retention_policy` block on a runbook at all. If you judge one to be unavoidable, use `should_keep_forever = true` ALONE, with no `quantity_to_keep` line.
 * A retention instruction in the prompt applies to the LIFECYCLE (`octopusdeploy_lifecycle`), never to runbooks — do not copy the lifecycle's `quantity_to_keep` onto a runbook.
 
-**When the prompt explicitly asks to keep a number of RUNBOOK RUNS, express it with `run_retention_policy_with_strategy` — never with the deprecated `retention_policy` block.** A prompt such as `Add a runbook called "Recycle Claims App Pool" ... and keep the last 100 runbook runs` is asking about runbook runs specifically, not about releases, so redirecting it to the lifecycle would be wrong. The strategy block is the current, non-deprecated form and has been observed to apply cleanly:
+**When the prompt explicitly asks to keep a number of RUNBOOK RUNS, express it with `retention_policy_with_strategy` — never with the deprecated `retention_policy` block.** A prompt such as `Add a runbook called "Recycle Claims App Pool" ... and keep the last 100 runbook runs` is asking about runbook runs specifically, not about releases, so redirecting it to the lifecycle would be wrong. The strategy block is the current, non-deprecated form:
 
 ```hcl
 resource "octopusdeploy_runbook" "runbook_recycle_claims_app_pool" {
   count = "..."
   name  = "Recycle Claims App Pool"
 
-  run_retention_policy_with_strategy {
+  retention_policy_with_strategy {
     strategy         = "Count"
     quantity_to_keep = 100
     unit             = "Items"
@@ -191,8 +191,21 @@ resource "octopusdeploy_runbook" "runbook_recycle_claims_app_pool" {
 }
 ```
 
+* **⚠️ CRITICAL — the block is called `retention_policy_with_strategy`, NOT `run_retention_policy_with_strategy`.** The runbook resource stores this setting under a field named "run retention policy", and "keep the last N runbook RUNS" makes `run_` feel like part of the name, but no such block exists and the plan dies before anything is created:
+
+```
+Error: Unsupported block type
+
+  on terraformInput.tf line 142, in resource "octopusdeploy_runbook" "runbook_78__mesh_gateway_restore_gateway":
+ 142:   run_retention_policy_with_strategy {
+
+Blocks of type "run_retention_policy_with_strategy" are not expected here.
+```
+
+* **Observed failure**: a prompt reading `Add a second runbook called "Restore Gateway" that runs only in the Production environment and keeps the last 5 runs` produced `run_retention_policy_with_strategy`, and the plan failed with the error above. Nothing at all was created — not the other runbook in the same prompt, not any other resource.
+* The example configurations settle the spelling: `octopusdeploy_runbook` resources use `retention_policy_with_strategy { strategy = "Forever" }`. Copy that block name exactly and change only the strategy fields.
 * `unit` is `"Items"` when the prompt counts RUNS, and `"Days"` only when the prompt counts days.
-* Never write both `run_retention_policy_with_strategy` and `retention_policy` on the same runbook.
+* Never write both `retention_policy_with_strategy` and `retention_policy` on the same runbook.
 * This does NOT relax the rule above: an unrequested retention setting still belongs nowhere, and the deprecated `retention_policy` block remains forbidden in every case. If you are unsure of the strategy block's syntax, omit retention from the runbook entirely rather than risk the apply.
 
 **⚠️ CRITICAL — `minimum_environments_before_promotion` MUST NEVER exceed the number of environments in its OWN `phase` block, and a "deployments" count in the prompt NEVER sets it.** This is repeated here, at the top of the file, because it is the single cheapest way to lose an entire project: the lifecycle is created early, so when Octopus rejects it the apply aborts before the project, its steps, its variables and its feeds are ever created, and the prompt produces NOTHING.
