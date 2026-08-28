@@ -10,12 +10,9 @@
     <script src=" https://cdn.jsdelivr.net/npm/dompurify@3.1.5/dist/purify.min.js"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
-        /* The login button and its warning share a row under the header. */
-        .login-row {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 12px;
+        /* The warning sits under the header and carries its own spacing, so it
+           leaves no gap while hidden. */
+        .notice {
             margin-top: 18px;
         }
 
@@ -232,6 +229,7 @@
         </span>
         <h1 class="brand-title"><a href="/api/form">Octopus AI Assistant</a></h1>
         <span class="header-actions">
+            <button id="github_login" name="github_login" type="button" class="btn btn-ghost btn-sm">Login</button>
             <a href="javascript:void(0)" id="debug" title="Toggle debug output">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                     <path d="M4.978.855a.5.5 0 1 0-.956.29l.41 1.352A5 5 0 0 0 3 6h10a5 5 0 0 0-1.432-3.503l.41-1.352a.5.5 0 1 0-.956-.29l-.291.956A5 5 0 0 0 8 1a5 5 0 0 0-2.731.811l-.29-.956z"/>
@@ -246,12 +244,9 @@
         </span>
     </header>
 
-    <div class="login-row">
-        <button id="github_login" name="github_login" type="button" class="btn btn-ghost btn-sm">GitHub Login</button>
-        <span id="github_login_warning" class="chip chip-amber shake">
-            You must log in to GitHub to continue.
-        </span>
-    </div>
+    <span id="github_login_warning" class="chip chip-amber shake notice">
+        You must log in to GitHub to continue.
+    </span>
 
     <form id="form" class="needs-validation" novalidate>
         <div class="section">
@@ -272,6 +267,18 @@
             <div class="invalid-feedback">
                 Please provide a valid query.
             </div>
+        </div>
+
+        <div class="section">
+            <p class="section-label">Response</p>
+            <div id="markdown" class="panel markdown"></div>
+            <small class="help-text">This response is powered by AI, so mistakes are possible. Review output carefully
+                before use.</small>
+        </div>
+
+        <div class="actions" id="confirmation">
+            <button id="accept" name="accept" type="button" class="btn btn-success">Accept</button>
+            <button id="dismiss" name="dismiss" type="button" class="btn btn-danger">Dismiss</button>
         </div>
 
         <div class="section" id="suggestions" style="display: none">
@@ -314,18 +321,6 @@
         <div class="section">
             <p class="section-label">History</p>
             <ul id="historyList" class="row-list"></ul>
-        </div>
-
-        <div class="section">
-            <p class="section-label">Response</p>
-            <div id="markdown" class="panel markdown"></div>
-            <small class="help-text">This response is powered by AI, so mistakes are possible. Review output carefully
-                before use.</small>
-        </div>
-
-        <div class="actions" id="confirmation">
-            <button id="accept" name="accept" type="button" class="btn btn-success">Accept</button>
-            <button id="dismiss" name="dismiss" type="button" class="btn btn-danger">Dismiss</button>
         </div>
 
         <div id="debuggingParent" class="section" style="display: none">
@@ -481,13 +476,13 @@
 
         if (loggedIn) {
             githubLoginButton.onclick = githubLogout
-            githubLoginButton.innerText = "GitHub Logout"
+            githubLoginButton.innerText = "Logout"
             submitButton.style.display = ""
             queryTextArea.readOnly = false
             suggestionsSection.style.display = ""
             githubLoginButtonWarning.style.display = "none"
         } else {
-            githubLoginButton.innerText = "GitHub Login"
+            githubLoginButton.innerText = "Login"
             githubLoginButton.onclick = githubLogin
             // The arrow, and the suggestions, are hidden and the query is read only
             // until the user logs in.
