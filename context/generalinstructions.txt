@@ -9038,6 +9038,18 @@ resource "octopusdeploy_process_step" "process_step_my_project_deploy_app" {
 
 You will be penalized for setting `worker_pool_id` directly on a Kubernetes step instead of using `worker_pool_variable = "Octopus.Project.WorkerPool"` with a corresponding `Octopus.Project.WorkerPool` project variable.
 
+## Trigger Type Is Set by the Resource, Not by the Description
+
+A trigger's `description` is decorative text. It does NOT change what the trigger does. The trigger kind is determined by the Terraform resource used (and, for scheduled triggers, by the schedule block such as `once_daily_schedule`). Writing a CI / package-push intent into the `description` of a scheduled trigger creates a trigger that will NOT fire on a package push — a silent discrepancy between the prompt and the created trigger.
+
+**Observed failure (Terraform iteration 10):** the prompt requested a CI trigger that deploys when a new package matching the pattern `*-ci.*` is pushed to the feed. The AI emitted an `octopusdeploy_project_scheduled_trigger` with `once_daily_schedule` (09:00 UTC, all seven `days_of_week`) and wrote the CI intent into the trigger `description`: `"CI/CD trigger — deploys when a new package matching the pattern *-ci.* is pushed to the feed."` The created trigger (API `FilterType: OnceDailySchedule`) fires on a daily schedule, not on a package push. The description describes an intent the trigger does not have.
+
+**Rule:** match the trigger resource to the trigger kind the prompt asks for:
+- **Package push / CI** ("deploy when a new package is pushed", "on a new package matching *pattern*") → use `octopusdeploy_external_feed_create_release_trigger` with a `package { deployment_action_slug, package_reference }` block (plus `channel_id`; if the prompt names no channel, create an `Application` channel and link it). Do NOT fall back to `once_daily_schedule` for a package-push request.
+- **Time-based** ("nightly", "every Monday at 6am") → `octopusdeploy_project_scheduled_trigger` with `once_daily_schedule`.
+
+Whichever resource you use, the `description` must state what the trigger ACTUALLY does (its kind and cadence), never an ideal the trigger does not implement. If the requested behavior cannot be expressed (for example a package-push trigger against a project that has no package-consumption step to attach `deployment_action_slug` to), pick the closest valid trigger, and say in the `description` exactly what it does and how it approximates the request — the same normalise-and-disclose approach used for unparseable cron expressions and for inventable-but-invalid retention values. Never silently record a request in the `description` while wiring a different trigger.
+
 # Bash Instructions
 
 * You must use loops like this in bash:
