@@ -318,7 +318,7 @@
             </ul>
         </div>
 
-        <div class="section">
+        <div class="section" id="history">
             <p class="section-label">History</p>
             <ul id="historyList" class="row-list"></ul>
         </div>
@@ -467,30 +467,36 @@
         }
     }
 
+    function updateSuggestionsAndHistory() {
+        // The suggestions and history are only useful between queries: they are hidden
+        // until the user logs in, and again while a response is being processed.
+        const display = loggedIn && !processing ? "" : "none"
+        document.getElementById('suggestions').style.display = display
+        document.getElementById('history').style.display = display
+    }
+
     function checkLogin() {
         const githubLoginButton = document.getElementById('github_login')
         const githubLoginButtonWarning = document.getElementById('github_login_warning')
         const queryTextArea = document.getElementById('query')
         const submitButton = document.getElementById('submit')
-        const suggestionsSection = document.getElementById('suggestions')
 
         if (loggedIn) {
             githubLoginButton.onclick = githubLogout
             githubLoginButton.innerText = "Logout"
             submitButton.style.display = ""
             queryTextArea.readOnly = false
-            suggestionsSection.style.display = ""
             githubLoginButtonWarning.style.display = "none"
         } else {
             githubLoginButton.innerText = "Login"
             githubLoginButton.onclick = githubLogin
-            // The arrow, and the suggestions, are hidden and the query is read only
-            // until the user logs in.
+            // The arrow is hidden and the query is read only until the user logs in.
             submitButton.style.display = "none"
             queryTextArea.readOnly = true
-            suggestionsSection.style.display = "none"
             githubLoginButtonWarning.style.display = "inline-flex"
         }
+
+        updateSuggestionsAndHistory()
     }
 
     function githubLogin() {
@@ -598,6 +604,7 @@
         submit.disabled = false
         github_login.disabled = false
         processing = false
+        updateSuggestionsAndHistory()
     }
 
     async function processQuery(event) {
@@ -636,6 +643,7 @@
         submit.disabled = true
         github_login.disabled = true
         processing = true
+        updateSuggestionsAndHistory()
 
         debugging.innerHTML = ""
         const startTime = new Date().getTime()
