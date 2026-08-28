@@ -571,7 +571,8 @@
 
         historyList.innerHTML = ''
 
-        queryHistory.forEach((h) => {
+        // queryHistory is stored oldest first, but the newest query is rendered at the top.
+        queryHistory.slice().reverse().forEach((h) => {
             const li = document.createElement("li")
             const link = document.createElement("a")
             link.setAttribute("href", "#")
