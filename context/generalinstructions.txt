@@ -8956,6 +8956,31 @@ A runbook with `RunRetentionPolicy: {Strategy:"Default", QuantityToKeep:0, Unit:
 
 **Observed failure (Argo CD iteration 8):** the prompt required the Argo CD Rollback runbook to keep 5 runs. The AI set `RunRetentionPolicy.Strategy = "Default"` with `ShouldKeepForever: true` instead of `Strategy = "Quantity"` with `QuantityToKeep = 5`. This is a silent discrepancy that must be checked every time a runbook retention is verified.
 
+## Channel "Properties" = CustomFieldDefinitions, Not Description
+
+When a prompt asks for a channel to have a "property" (e.g. `PromotionLevel = manual`), this maps to the `custom_field_definitions` array on the `octopusdeploy_channel` resource — each element is a field definition that applies to releases deployed through that channel.
+
+**Observed failure (Progressive Deploy iteration 9):** the prompt requested a channel property `PromotionLevel = manual`. The AI wrote the IMPLAUSIBLE note into the channel `Description` field and left `custom_field_definitions: []`. The correct behavior is to create a `custom_field_definitions` with ``[{ description = "The promotion level", field_name = "PromotionLevel" }]``. Never substitute a channel property with a Description text — the Description field does not create a functional channel property. Note, however, that custom_field_definitions elements do not have fixed values, so the value of `manual` in the previous example is not persisted.
+
+## `tentacle_retention_with_strategy` Ambiguity: "0 Days" Does Not Mean Immediate Deletion in the Way Intended
+
+When a prompt requests tentacle retention of "0 days" or "delete immediately", the AI's interpretation of the `tentacle_retention_with_strategy` block varies:
+
+- Observed behavior: the AI wrote `strategy = "Default"` with `quantity_to_keep = 0` — which in practice means **keep forever**, the exact opposite of the request.
+- The literal `strategy = "Count"` with `unit = "Days"` and `quantity_to_keep = 0` is ambiguous in Octopus (it may be rejected or treated as "no limit").
+
+**Rule:** If a prompt asks for a very short or "immediate" tentacle retention, the closest valid Octopus representation keeps files for one day, the practical minimum:
+
+```hcl
+tentacle_retention_with_strategy {
+  strategy         = "Count"
+  quantity_to_keep = 1
+  unit             = "Days"
+}
+```
+
+Verify that `strategy = "Count"` is set whenever the prompt asks for a finite retention value. `strategy = "Default"` and `strategy = "Forever"` both retain files indefinitely no matter what `quantity_to_keep` says, so pairing either with a finite `quantity_to_keep` is a silent opposite-behavior bug.
+
 ## Kubernetes Step Worker Pool for New Project Creation Prompts
 
 **CRITICAL — for Kubernetes steps (`Octopus.KubernetesDeployRawYaml`, `Octopus.KubernetesRunScript`, `Octopus.HelmChartUpgrade`, `Octopus.Kubernetes.Kustomize`, etc.) in Kubernetes project creation prompts, the canonical pattern is to use `worker_pool_variable = "Octopus.Project.WorkerPool"` with an associated `Octopus.Project.WorkerPool` variable**:
