@@ -6669,6 +6669,26 @@ Always give the step a `parameters` map containing `Sbom.Package`, exactly as th
 # This is invalid because there are two commas after the default_sensitive_value property
 parameters      = [{ default_sensitive_value = null,, display_settings = { "Octopus.ControlType" = "MultiLineText" }, help_text = "The array to sort", id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890", label = "Array", name = "Array" }]
 ```
+* **⚠️ CRITICAL — a step template parameter with `"Octopus.ControlType" = "Select"` MUST also carry `"Octopus.SelectOptions"` in the same `display_settings` map. A Select control with no options cannot be filled in at all.** The apply succeeds, so the broken parameter is only discovered when someone opens the step and finds an empty dropdown.
+
+```hcl
+# Prompt says: parameters ... "Ops.Severity" (select with options "info", "warn", "error")
+# WRONG: Select control with no options — the dropdown is empty and the parameter is unusable
+parameters = [{ default_sensitive_value = null, default_value = "info", display_settings = { "Octopus.ControlType" = "Select" }, help_text = "The severity of the notification", id = "3f4a5b6c-7d8e-49f0-a1b2-c3d4e5f6a7b8", label = "Ops Severity", name = "Ops.Severity" }]
+```
+
+```hcl
+# CORRECT: the option list is supplied alongside the control type
+parameters = [{ default_sensitive_value = null, default_value = "info", display_settings = { "Octopus.ControlType" = "Select", "Octopus.SelectOptions" = "info|info\nwarn|warn\nerror|error" }, help_text = "The severity of the notification", id = "3f4a5b6c-7d8e-49f0-a1b2-c3d4e5f6a7b8", label = "Ops Severity", name = "Ops.Severity" }]
+```
+
+  * **Observed failure**: `Create a step template called "Notify Encoder Ops" with parameters "Ops.Channel" (single line text) and "Ops.Severity" (select with options "info", "warn", "error")` produced the `Select` control type with no `Octopus.SelectOptions` key. Every other part of the step template — the GUID `id` values, the `properties` map, the `action_type` — was correct.
+  * The format is `"<value>|<display name>"` per option, separated by literal `\n`: `"info|info\nwarn|warn\nerror|error"`. This is the same encoding used by a `template` block's `display_settings` on an `octopusdeploy_library_variable_set` or `octopusdeploy_project`, where the correct shape `"Octopus.SelectOptions" = "A|A\nB|B"` is routinely produced — copy that shape onto step template parameters too.
+  * `default_value` must be one of the declared options. If the prompt's default is not in the list, add it to the list rather than dropping it.
+  * This applies to EVERY place a `Select` control type appears: `octopusdeploy_step_template` parameters, `octopusdeploy_library_variable_set` templates, and `octopusdeploy_project` templates. Only an `octopusdeploy_variable` `prompt` block uses the different `select_option { display_name = ... value = ... }` sub-block syntax instead.
+
+**MANDATORY SELF-CHECK — Select controls have options**: before finalizing output, search for every `"Octopus.ControlType" = "Select"`. Confirm each one has an `"Octopus.SelectOptions"` key in the same `display_settings` map, holding one `value|display` pair per option separated by `\n`. You will be penalized for each Select control emitted without its options.
+
 
 ## Octopus Variable Syntax Instructions
 
@@ -7641,6 +7661,15 @@ git_dependencies {
 * A `template` block belongs on the project ONLY when the prompt uses tenant wording: "project tenant variable template", "tenant variable template", "variable template for each tenant", "per-tenant variable".
 * Natural-language option lists count as select options. "with the options 'true' and 'false'", "which can be 'staging' or 'production'", "one of 'blue' or 'green'" all mean `control_type = "Select"` plus one `select_option` block per option — the literal sentence `The variable must have the following selectable options:` is NOT required.
 * A prompted variable still needs a `value` (use the first option, or an empty-string-free sensible default) and still needs its `count` attribute like every other variable.
+**⚠️ CRITICAL — when the prompt assigns a value that is NOT among the declared select options, ADD the value as an option. Never silently drop the assignment.** A prompt can declare an option list in one bullet and then use a value outside it in another. The two bullets are both instructions; the value one is the more specific, and discarding it loses a resource the prompt explicitly asked for.
+
+* **Observed failure**: `... a tenant variable template "Portal.Tenant.Id" of type select with the options "A" and "B"` followed by `Create two tenants "Alpha" and "Beta", link them, and set "Portal.Tenant.Id" to "A" for Alpha and "C" for Beta` produced the template with options `A` and `B`, one `octopusdeploy_tenant_common_variable` for Alpha with value `A`, and **nothing at all for Beta**. Beta was created and linked to the project but left with no value, and the apply succeeded, so nothing flagged the omission.
+* The correct output declares three options — `A`, `B` and `C` — and creates a tenant variable for EVERY tenant the prompt gave a value for. Note the addition in the template's `label` or in the project description: `The prompt listed options A and B but assigned C to Beta; C has been added to the option list.`
+* This applies equally to a prompted variable: if the prompt says `with the options "Yes" and "No"` and later `defaulting to "Maybe"`, the option list becomes `Yes`, `No`, `Maybe` rather than the default being dropped or silently rewritten to an existing option.
+* **Never rewrite the assigned value to make it fit the list** — changing Beta's `C` to `B` invents data the prompt never gave. Widen the list instead.
+* The general principle matches the tenant-variable rule elsewhere in this file: count the tenants the prompt gives values for and expect one resource per tenant. A tenant named with a value and left without one is a dropped instruction, whatever the reason.
+
+**MANDATORY SELF-CHECK — select option coverage**: before finalizing output, find every `Octopus.SelectOptions` display setting and every `select_option` list. For each, collect every value the prompt assigns to that variable — defaults, per-tenant values, and per-environment values — and confirm each assigned value appears in the option list. Add any that are missing. Then confirm one `octopusdeploy_tenant_common_variable` or `octopusdeploy_tenant_project_variable` exists for every tenant the prompt gave a value to. You will be penalized for each assigned value missing from its option list, and for each tenant value dropped.
 
 **Example — the natural-language form "Add a prompted variable called 'Fraud.DryRun' with the options 'true' and 'false'"**:
 
@@ -8902,6 +8931,30 @@ have the same name and scope. Remove the duplicates before saving:
 - Omitting the `scope` block when the prompt specifies that a variable should be scoped to specific environments
 - Including incorrect or non-existent environment names in the `scope` block
 - Scoping a variable to the built-in "Default" channel, or emitting any scope list containing an empty string
+
+## Environment-Scoped Variables — API GET Response Shape
+
+When a variable has different values per environment, the Octopus API `GET /projects/{id}/variables` response returns **two or more separate entries** in the `Variables` array. Each entry has:
+- Its own unique `Id` (UUID)
+- The same `Name`
+- A different `Scope.Environment` (e.g. `["Environments-12163"]` vs `["Environments-12164"]`)
+- Its own `Value`
+
+This is the **standard Octopus variable model** and is NOT a duplication error. Example observed in Argo CD iteration 8: `RefineQw.ReleaseEnv` appears as two entries — one with `Value:"staging"` scoped to `Environments-12163` (Argo Staging) and one with `Value:"production"` scoped to `Environments-12164` (Argo Prod). When verifying prompt vs. actual configuration via the API, count these as one logical variable spanning multiple environment scopes.
+
+## Phase-Level Retention Policy Null = Inherit from Lifecycle
+
+When a lifecycle phase's `ReleaseRetentionPolicy` or `TentacleRetentionPolicy` is `null`, the phase **inherits the lifecycle-level retention policy** — it does NOT mean "keep forever" and it does NOT mean "no retention".
+
+**Observed failure (Argo CD iteration 8):** the prompt required Argo Staging = 30 items/30 days and Argo Prod = 50 items/180 days. The AI correctly set the lifecycle-level retention to 60 days (as specified) but left both phases' per-phase `ReleaseRetentionPolicy` and `TentacleRetentionPolicy` as `null`, causing both phases to inherit the 60-day lifecycle-level policy. The per-phase values were silently lost.
+
+**Rule:** whenever a prompt specifies different retention values per phase, each phase MUST have an explicit non-null `ReleaseRetentionPolicy` (and `TentacleRetentionPolicy` if applicable). A null per-phase policy means "inherit the lifecycle-level value", which is almost always a bug when the lifecycle-level value doesn't match the per-phase requirements.
+
+## Runbook RunRetentionPolicy Strategy "Default" = Keep Forever
+
+A runbook with `RunRetentionPolicy: {Strategy:"Default", QuantityToKeep:0, Unit:"Items", ShouldKeepForever:true}` retains **unlimited run history** — this is NOT the same as 5 runs, 10 runs, or any finite count.
+
+**Observed failure (Argo CD iteration 8):** the prompt required the Argo CD Rollback runbook to keep 5 runs. The AI set `RunRetentionPolicy.Strategy = "Default"` with `ShouldKeepForever: true` instead of `Strategy = "Quantity"` with `QuantityToKeep = 5`. This is a silent discrepancy that must be checked every time a runbook retention is verified.
 
 ## Kubernetes Step Worker Pool for New Project Creation Prompts
 
