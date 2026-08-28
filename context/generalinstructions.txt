@@ -8711,6 +8711,10 @@ resource "octopusdeploy_git_credential" "gitcredential_dispatcher_git" {
 
 * **Observed failure**: the bullet above produced `username = "CHANGEME"`. Every other part of the credential was correct, including `repository_restrictions = { allowed_repositories = ["https://github.com/acme/dispatcher.git"], enabled = true }`.
 * **`Change Me!` in a SECRET field is the one exception, and it is not a placeholder in the same sense.** Sensitive values are deliberately replaced with `Change Me!` by design — that rule is stated elsewhere in this file and stands. It applies ONLY to secret attributes such as `password`, `secret_key`, `sensitive_value`, `certificate_data` and account tokens. It does NOT license a placeholder in a non-secret field beside them.
+* **⚠️ The sanctioned secret placeholder is the EXACT string `Change Me!` — capital `C`, capital `M`, a space, and a trailing exclamation mark. `CHANGEME` is NOT a variant of it and is never acceptable, not even in a secret field.** The exception above is narrow: it permits one specific string, not any word that means "change me".
+  * **Observed failure**: the bullet `Create a library variable set called "Network Common" with a sensitive variable "Network.ApiToken" and link it to the project` gave no value, and produced a `Sensitive` variable whose value was `CHANGEME`. The correct value is `Change Me!`.
+  * A sensitive variable the prompt names but gives no value for is still created — with `sensitive_value = "Change Me!"`. Do not omit the variable, and do not invent a different placeholder spelling.
+  * When in doubt, copy the string character-for-character from the examples in this file. Downstream post-processing looks for `Change Me!`; `CHANGEME` is not recognised and survives into the created resource.
 * Sensible defaults for common non-secret fields when the prompt is silent:
   * Git credential `username` → `x-access-token` (the conventional value for a token-based Git credential), or `octopus` for a generic service account.
   * Tomcat manager user → `#{Tomcat.User}` with a `String` variable whose value is `tomcat`.
@@ -8718,7 +8722,7 @@ resource "octopusdeploy_git_credential" "gitcredential_dispatcher_git" {
   * An AWS region → `us-east-1` unless the prompt names one.
 * When no defensible default exists, prefer an Octostache reference to a project variable you also create. A `#{...}` reference is a working indirection; `CHANGEME` is not.
 
-**MANDATORY SELF-CHECK — no placeholder literals**: before finalizing output, search it case-insensitively for `changeme`, `todo`, `tbd` and `placeholder`. Every hit outside prose the prompt itself supplied is a defect — replace it with a real default or an Octostache reference. `Change Me!` in a secret attribute is the only permitted match. You will be penalized for each placeholder literal left in a non-secret field.
+**MANDATORY SELF-CHECK — no placeholder literals**: before finalizing output, search it case-insensitively for `changeme`, `todo`, `tbd` and `placeholder`. Every hit outside prose the prompt itself supplied is a defect — replace it with a real default or an Octostache reference. The ONLY permitted matches are the exact string `Change Me!` in a secret attribute, and `certificate_data = "placeholder"`. In particular, a hit on `CHANGEME` is ALWAYS a defect: in a secret field correct it to `Change Me!`, and in any other field replace it with a real value. You will be penalized for each placeholder literal left in a non-secret field, and for each secret placeholder not spelled exactly `Change Me!`.
 
 
 ## Variable Scoping for New Project Creation Prompts
