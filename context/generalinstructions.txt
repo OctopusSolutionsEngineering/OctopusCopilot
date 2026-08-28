@@ -8488,6 +8488,26 @@ resource "octopusdeploy_project" "project_my_script_project_6174" { ... }   ← 
 ```
 
 You will be penalized for creating `octopusdeploy_project` resources not explicitly requested in the prompt.
+**⚠️ CRITICAL — two project names that differ only by CASE or by LEADING/TRAILING WHITESPACE are the SAME project. Creating both aborts the apply and produces nothing:**
+
+```
+Error: Error creating project
+
+  with octopusdeploy_project.project_intranet_portal_trailing[0],
+  on terraformInput.tf line 738, in resource "octopusdeploy_project" "project_intranet_portal_trailing":
+ 738: resource "octopusdeploy_project" "project_intranet_portal_trailing" {
+
+Octopus API error: There was a problem with your request. [A project with
+this name already exists. Please choose a different name.]
+```
+
+* **Observed failure**: a prompt that first said `Create the "12. Intranet Portal" project as an IIS project` and later said `Add a runbook called "Rotate Logs" in a project called "12. Intranet Portal " (with a trailing space)` emitted TWO `octopusdeploy_project` resources — `project_intranet_portal` and `project_intranet_portal_trailing`. Octopus trims the trailing space, so the second name collided with the first, the apply aborted on it, and **the entire prompt produced nothing at all**.
+* **Trim every name taken from the prompt** before using it, and compare names case-insensitively after trimming. `"12. Intranet Portal"`, `"12. Intranet Portal "` and `"12. intranet portal"` are one project.
+* A prompt that spells the same name two slightly different ways is describing ONE resource and adding to it — here, a second runbook on the existing project. Create the project once and attach both runbooks to it.
+* An explicit aside such as `(with a trailing space)` is a description of the string, not a licence to create a second resource. Treat it as the same name.
+* This rule is the project-scoped instance of the general case-insensitivity rule in the "Environment Uniqueness and Naming Instructions" section, which applies to EVERY named Octopus resource type — projects, project groups, environments, lifecycles, channels, tenants, accounts, feeds, certificates, worker pools and library variable sets alike.
+
+**MANDATORY SELF-CHECK — project name collisions**: before finalizing output, take the `name` of every `octopusdeploy_project` resource, trim leading and trailing whitespace, lowercase it, and check for duplicates. Any duplicate pair is fatal: keep one project resource and repoint every runbook, variable, channel, trigger and process at it. You will be penalized for every pair of projects whose names match after trimming and lowercasing.
 
 ## Environment Uniqueness and Naming Instructions
 
@@ -8584,7 +8604,7 @@ Every reference to that environment then uses the same local:
 
 **MANDATORY SELF-CHECK — environment substring collisions**: before finalizing output, list every environment name the prompt asked for. For each one, check whether it is a substring of any other environment name in your output or of `Development`, `Production`, `Staging`, `Security` or `DevSecOps`. For every name where it is, confirm the environment uses the `locals` exact-match pattern above in its `count` and in EVERY ternary that references it. You will be penalized for each prompt-named environment that is absent from the created resources because a substring match suppressed it.
 
-**⚠️ CRITICAL — Octopus resource names are CASE-INSENSITIVE for uniqueness. Two names in the prompt that differ only by case are ONE resource, and trying to create both aborts the apply, destroying the whole prompt:**
+**⚠️ CRITICAL — Octopus resource names are CASE-INSENSITIVE and are TRIMMED of surrounding whitespace. Two names in the prompt that differ only by case, or only by leading/trailing spaces, are ONE resource, and trying to create both aborts the apply, destroying the whole prompt:**
 
 ```
 Error: unable to create environment

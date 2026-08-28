@@ -10,6 +10,15 @@
     <script src=" https://cdn.jsdelivr.net/npm/dompurify@3.1.5/dist/purify.min.js"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
+        /* The login button and its warning share a row under the header. */
+        .login-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
         /* Suggestion and history rows: a stack of tappable cards with a trailing chevron. */
         .row-list {
             margin: 0;
@@ -237,13 +246,21 @@
         </span>
     </header>
 
+    <div class="login-row">
+        <button id="github_login" name="github_login" type="button" class="btn btn-ghost btn-sm">GitHub Login</button>
+        <span id="github_login_warning" class="chip chip-amber shake">
+            You must log in to GitHub to continue.
+        </span>
+    </div>
+
     <form id="form" class="needs-validation" novalidate>
         <div class="section">
             <div class="field-frame">
                 <div class="field-frame__inner">
                     <textarea id="query" name="query" rows="3" class="field field--textarea"
-                              placeholder="Ask about your builds and deployments..." required></textarea>
-                    <button id="submit" name="submit" type="button" class="btn btn-send" title="Submit query">
+                              placeholder="Ask about your builds and deployments..." required readonly></textarea>
+                    <button id="submit" name="submit" type="button" class="btn btn-send" title="Submit query"
+                            style="display: none">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                              stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M4 12h14"/>
@@ -255,15 +272,9 @@
             <div class="invalid-feedback">
                 Please provide a valid query.
             </div>
-            <div class="actions">
-                <button id="github_login" name="github_login" type="button" class="btn btn-ghost">GitHub Login</button>
-                <span id="github_login_warning" class="chip chip-amber shake">
-                    You must log in to GitHub to continue.
-                </span>
-            </div>
         </div>
 
-        <div class="section">
+        <div class="section" id="suggestions" style="display: none">
             <p class="section-label">Suggestions</p>
             <ul class="row-list">
                 <li>
@@ -298,8 +309,6 @@
                     </a>
                 </li>
             </ul>
-            <small id="queryHelp" class="help-text">This is a plain text query. Pick a suggestion or describe what you
-                need in your own words.</small>
         </div>
 
         <div class="section">
@@ -468,18 +477,23 @@
         const githubLoginButtonWarning = document.getElementById('github_login_warning')
         const queryTextArea = document.getElementById('query')
         const submitButton = document.getElementById('submit')
+        const suggestionsSection = document.getElementById('suggestions')
 
         if (loggedIn) {
             githubLoginButton.onclick = githubLogout
             githubLoginButton.innerText = "GitHub Logout"
-            submitButton.disabled = false
-            queryTextArea.disabled = false
+            submitButton.style.display = ""
+            queryTextArea.readOnly = false
+            suggestionsSection.style.display = ""
             githubLoginButtonWarning.style.display = "none"
         } else {
             githubLoginButton.innerText = "GitHub Login"
             githubLoginButton.onclick = githubLogin
-            submitButton.disabled = true
-            queryTextArea.disabled = true
+            // The arrow, and the suggestions, are hidden and the query is read only
+            // until the user logs in.
+            submitButton.style.display = "none"
+            queryTextArea.readOnly = true
+            suggestionsSection.style.display = "none"
             githubLoginButtonWarning.style.display = "inline-flex"
         }
     }

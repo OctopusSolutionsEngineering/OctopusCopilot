@@ -89,6 +89,7 @@ a:hover {
 
 .app-header {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 14px;
     padding-bottom: 8px;
@@ -245,6 +246,11 @@ a:hover {
     background: linear-gradient(90deg, #62aaff, #a877ff);
 }
 
+.btn-sm {
+    padding: 7px 14px;
+    font-size: 13.5px;
+}
+
 .btn-ghost {
     border-color: var(--border);
     color: var(--text-muted);
@@ -362,12 +368,14 @@ a:hover {
     background: linear-gradient(90deg, #7c3742, #a1424f);
 }
 
-/* Dim the accent while a field is disabled. */
-.field-frame:has(.field:disabled) {
+/* Dim the accent while a field cannot be edited. */
+.field-frame:has(.field:disabled),
+.field-frame:has(.field:read-only) {
     background: linear-gradient(90deg, #2a3441, #333c4d);
 }
 
-.field-frame:has(.field:disabled) .field-frame__inner {
+.field-frame:has(.field:disabled) .field-frame__inner,
+.field-frame:has(.field:read-only) .field-frame__inner {
     background: #131a22;
 }
 
