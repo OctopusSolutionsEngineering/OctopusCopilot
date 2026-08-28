@@ -98,14 +98,12 @@
         octopus_submit.disabled = false
         octopus_url.disabled = false
         octopus_api.disabled = false
-        octopus_samples.disabled = false
     }
 
     function disable_octopus_inputs() {
         octopus_submit.disabled = true
         octopus_url.disabled = true
         octopus_api.disabled = true
-        octopus_samples.disabled = true
     }
 
     function validateApiKey(apiKey) {
@@ -214,7 +212,6 @@
     }
 
     octopus_submit.onclick = processOctopusSubmit
-    octopus_samples.onclick = () => octopus_login("https://samples.octopus.app", "API-GUEST")
 
 </script>
 
