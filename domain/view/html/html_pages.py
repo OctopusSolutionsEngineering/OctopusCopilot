@@ -1,3 +1,5 @@
+import os
+
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from domain.config.users import get_admin_users
@@ -39,3 +41,10 @@ def get_query_page(logged_in, req, search_path="html/templates"):
     )
     template = env.get_template("query.html")
     return template.render(loggedIn=bool(logged_in))
+
+
+def get_theme_css(search_path="html/templates"):
+    # The stylesheet shared by the pages above. It is served as a static file rather than
+    # inlined into each page so browsers can cache it.
+    with open(os.path.join(search_path, "theme.css"), encoding="utf-8") as stylesheet:
+        return stylesheet.read()

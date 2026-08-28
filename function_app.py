@@ -55,6 +55,7 @@ from domain.view.html.html_pages import (
     get_redirect_page,
     get_login_page,
     get_query_page,
+    get_theme_css,
 )
 from infrastructure.callbacks import (
     load_callback,
@@ -190,6 +191,26 @@ def health_internal():
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to process health check", status_code=500)
+
+
+@app.route(route="theme.css", auth_level=func.AuthLevel.ANONYMOUS)
+def theme_css(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    Serve the stylesheet shared by the HTML pages.
+    :param req: The HTTP request
+    :return: The stylesheet
+    """
+    try:
+        return func.HttpResponse(
+            get_theme_css(),
+            headers={
+                "Content-Type": "text/css",
+                "Cache-Control": "public, max-age=3600",
+            },
+        )
+    except Exception as e:
+        handle_error(e)
+        return func.HttpResponse("Failed to read stylesheet", status_code=500)
 
 
 @app.route(route="octopus", auth_level=func.AuthLevel.ANONYMOUS)

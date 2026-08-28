@@ -8584,6 +8584,29 @@ Every reference to that environment then uses the same local:
 
 **MANDATORY SELF-CHECK — environment substring collisions**: before finalizing output, list every environment name the prompt asked for. For each one, check whether it is a substring of any other environment name in your output or of `Development`, `Production`, `Staging`, `Security` or `DevSecOps`. For every name where it is, confirm the environment uses the `locals` exact-match pattern above in its `count` and in EVERY ternary that references it. You will be penalized for each prompt-named environment that is absent from the created resources because a substring match suppressed it.
 
+**⚠️ CRITICAL — Octopus resource names are CASE-INSENSITIVE for uniqueness. Two names in the prompt that differ only by case are ONE resource, and trying to create both aborts the apply, destroying the whole prompt:**
+
+```
+Error: unable to create environment
+
+  with octopusdeploy_environment.environment_canary_lower[0],
+  on terraformInput.tf line 165, in resource "octopusdeploy_environment" "environment_canary_lower":
+ 165: resource "octopusdeploy_environment" "environment_canary_lower" {
+
+Octopus API error: There was a problem with your request. [An environment
+with this name already exists in this space. Please choose a different name.]
+```
+
+* **Observed failure**: the bullet `Create environments called "Canary" and "canary" and add both to the "Bake" phase` produced `octopusdeploy_environment.environment_canary` (name `Canary`) AND `octopusdeploy_environment.environment_canary_lower` (name `canary`). The first was created, the second was rejected, and the apply died there. Only the token account, the deployment freeze and one environment survived — **no project, no lifecycle, no steps, no variables**.
+* **The `count` data-source guard does NOT protect against this.** Both resources are planned before either exists, so both data sources return empty, both `count` expressions evaluate to 1, and both creations are attempted. The collision is only detected by the Octopus API at apply time, when it is already fatal.
+* **Create the resource ONCE, using the casing the prompt used FIRST**, and record the collapse in the project description: `The prompt asked for environments "Canary" and "canary"; Octopus environment names are case-insensitive, so a single environment named "Canary" was created.`
+* Every reference that would have pointed at the second name must point at the single resource instead. In the example above, the `Bake` phase lists that one environment once — never the same environment id twice.
+* **This applies to EVERY named Octopus resource, not just environments**: projects, project groups, environments, lifecycles, channels, tenants, tenant tag sets, accounts, feeds, certificates, worker pools, library variable sets, machine policies and runbooks all treat names case-insensitively for uniqueness. `Prod` and `prod`, `Web App` and `web app`, `AWS` and `aws` are each one resource.
+* Names that differ only by leading or trailing whitespace collapse the same way — `"Canary"` and `"Canary "` are one name. Trim whitespace from every name taken from the prompt.
+* This is distinct from the substring rule above. `Dev` vs `Development` are two DIFFERENT names that a `partial_name` lookup confuses; `Canary` vs `canary` are the SAME name and cannot coexist at all.
+
+**MANDATORY SELF-CHECK — case-only name collisions**: before finalizing output, collect the `name` attribute of every resource of each type you are creating, lowercase them all, and look for duplicates within each type. Every duplicate pair is a fatal collision: delete one resource, repoint its references at the survivor, and note the collapse in the project description. You will be penalized for every pair of same-type resources whose names differ only by case, because the second one aborts the apply and can cost the entire project.
+
 **⚠️ CRITICAL — an environment the prompt names ONLY as a scope target still MUST be created, and the resource that referenced it MUST still be created.** The rules above are written in terms of a prompt that says "Create environments called ...". The failure happens when the prompt never says "create" at all and instead names a new environment in passing, as the scope of a variable, a step, a lifecycle phase or a runbook. Naming an environment anywhere in the prompt is a request for that environment.
 
 * **Observed failure**: the bullet `Add a variable called "Claims.Timeout" with the value "not-a-number" scoped to an environment called "Pre-Prod" that does not exist yet` produced NEITHER the `Pre-Prod` environment NOR the `Claims.Timeout` variable. The entire instruction vanished from the output, and because the apply succeeded there was no signal that anything had been skipped.
@@ -8724,6 +8747,37 @@ resource "octopusdeploy_git_credential" "gitcredential_dispatcher_git" {
 
 **MANDATORY SELF-CHECK — no placeholder literals**: before finalizing output, search it case-insensitively for `changeme`, `todo`, `tbd` and `placeholder`. Every hit outside prose the prompt itself supplied is a defect — replace it with a real default or an Octostache reference. The ONLY permitted matches are the exact string `Change Me!` in a secret attribute, and `certificate_data = "placeholder"`. In particular, a hit on `CHANGEME` is ALWAYS a defect: in a secret field correct it to `Change Me!`, and in any other field replace it with a real value. You will be penalized for each placeholder literal left in a non-secret field, and for each secret placeholder not spelled exactly `Change Me!`.
 
+## Prompt-Requested Resources With No Expressible Usage
+
+**⚠️ CRITICAL — when the prompt says to USE a resource in a way Octopus cannot express, create the resource, bind it to the project through a typed VARIABLE, and record the unsupported usage in `notes` or the project description. Never leave it referenced by nothing.** A created-but-unreferenced resource is the signature of a half-executed instruction: the resource shows up in the space, the prompt's actual intent was dropped, and because the apply succeeded nothing flags it. It also means the resource does not export with the project, so it silently disappears from any exported module.
+
+* **Observed failure**: `Create a certificate called "Ledger Signing" and use it to sign the service binaries` on a Windows Service project created the `octopusdeploy_certificate` and nothing else. Octopus has no binary-signing feature on an `Octopus.WindowsService` step, so the "use it" half of the instruction was simply abandoned — no variable, no step property, and no note anywhere saying signing was not implemented.
+* The fix is the pattern already documented for Tomcat username/password accounts: point a typed project variable at the resource so the project genuinely references it, then explain the shortfall.
+
+```hcl
+resource "octopusdeploy_variable" "project_certificate_1" {
+  count       = "..."
+  owner_id    = "..."
+  name        = "Project.Certificate"
+  type        = "Certificate"
+  value       = "${length(data.octopusdeploy_certificates.certificate_ledger_signing.certificates) != 0 ? data.octopusdeploy_certificates.certificate_ledger_signing.certificates[0].id : octopusdeploy_certificate.certificate_ledger_signing[0].id}"
+  description = "The Ledger Signing certificate. The prompt asked for it to sign the service binaries; Octopus has no binary-signing feature on a Windows Service step, so the certificate is exposed as a variable for use by a custom script instead."
+}
+```
+
+* The typed variable to use depends on the resource: `Certificate` for a certificate, `AmazonWebServicesAccount` / `AzureServicePrincipal` / `UsernamePasswordAccount` / `Token` for the matching account type, `WorkerPool` for a worker pool. These are real Octopus variable types and each makes the resource a genuine project dependency.
+* **This applies to every space-level resource the prompt asks to be used**: certificates, accounts, feeds, worker pools and git credentials. A feed is used by being named in a step's `primary_package` or `packages`; an account by a step property or an account variable; a certificate by a `Certificate` variable or an IIS binding.
+
+**MANDATORY SELF-CHECK — no orphaned resources**: before finalizing output, list every `octopusdeploy_certificate`, `octopusdeploy_*_account`, `octopusdeploy_*_feed` and `octopusdeploy_git_credential` the prompt asked for. For EACH one, find at least one other place in the output that references it — a step property, a `primary_package`, a `git_dependencies` entry, or a typed `octopusdeploy_variable`. Any resource with no inbound reference means an instruction was dropped: add the variable binding and the explanatory note. You will be penalized for each prompt-requested resource that nothing in the project references.
+
+**⚠️ A WORKER the prompt asks for has no example configuration except the SSH form. Create what you safely can and say what you could not.** The example configurations contain only `octopusdeploy_ssh_connection_worker` and `octopusdeploy_static_worker_pool`. A Windows worker is a Tentacle worker, whose resource requires a thumbprint and a URI that cannot be known when generating a configuration.
+
+* **Observed failure**: `Create a Windows worker called "Ledger Worker" in a worker pool called "Ledger Pool"` created the `octopusdeploy_static_worker_pool` named `Ledger Pool` and nothing for the worker — no resource and no explanation.
+* **Do create the worker pool** — that part is fully expressible and the model already gets it right.
+* **Do NOT invent a Tentacle worker resource type or its attribute names.** Guessing a resource name or a required attribute risks an `Unsupported block type` or missing-attribute failure at PLAN time, which costs the entire project. A missing worker is a small shortfall; a failed plan produces nothing at all.
+* **Do record the shortfall** in the project description, for example: `The prompt asked for a Windows worker called "Ledger Worker" in the "Ledger Pool" worker pool. The worker pool has been created; the worker itself requires a Tentacle thumbprint and URI that cannot be known here, so it must be registered against the pool by hand.`
+* An `octopusdeploy_ssh_connection_worker` remains correct when the prompt asks for an SSH or Linux worker, because that shape IS in the example configurations — and per the Worker Instructions it must then carry non-empty `account_id`, `fingerprint` and `host`.
+
 
 ## Variable Scoping for New Project Creation Prompts
 
@@ -8741,6 +8795,10 @@ unexpected new value: .scope: block count changed from 1 to 0.
 ```
 
   A variable with no scope is written as the resource attributes followed by the `lifecycle` and `depends_on` blocks and nothing else. Still create the variable — an unscoped variable is correct output here; dropping it is not.
+* **⚠️ When the prompt gives ONE VALUE PER STEP for the same variable name, create ONE variable holding the FIRST value and record the rest in its `description`.** Step scoping cannot be expressed, so several same-named unscoped variables would be an ambiguous set that Octopus resolves arbitrarily — and creating just one without saying so hides the loss.
+  * **Observed output**: `Add a project variable "Canary.Weight" with the value "10" scoped to the "Shift 10%" step, "50" scoped to "Shift 50%", and "100" scoped to "Shift 100%"` produced a single unscoped `Canary.Weight` whose value was `100`, the LAST value. The handling was correct in substance and clearly explained in the description, but the value chosen was the last rather than the first.
+  * Use the FIRST value for consistency with the rule elsewhere in this file that a list shortfall keeps the first item and documents the remainder. Here that means `value = "10"` with a description such as `The prompt also asked for 50 on "Shift 50%" and 100 on "Shift 100%". Octopus cannot scope a variable to a step, so a single unscoped variable holding the first value is created; per-step values must be set inside each step's script instead.`
+  * NEVER create two or more `octopusdeploy_variable` resources with the same `name`, the same owner and no distinguishing scope. Octopus accepts them and then resolves the name unpredictably.
 * NEVER invent or interpolate a value for `actions`. NEVER reference a step resource's `id` from a variable `scope` block.
 * You will be penalized for any `octopusdeploy_variable` whose `scope` block sets `actions` to anything other than `null`, for any `scope` block whose attributes are all `null`, and equally for dropping a prompt-requested variable because its requested scope could not be expressed.
 

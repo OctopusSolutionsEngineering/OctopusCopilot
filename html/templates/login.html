@@ -4,79 +4,90 @@
 <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Octopus AI Assistant</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
-        integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.slim.min.js"
-        integrity="sha384-5AkRS45j4ukf+JbWAfHL8P4onPA9p0KwwP7pUdjSQA3ss9edbJUJc/XcYAiheSSz"
-        crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js"
-        integrity="sha384-w1Q4orYjBQndcko6MimVbzY0tgp4pWB4lZ7lr30WKz0vr/aWKhXdBNmNb5D92v7s"
-        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="theme.css">
 </head>
 
 <body>
-    <nav class="navbar mb-4 navbar-dark" style="background-color: #0D80D8;">
-        <span class="navbar-brand text-center col-12 h1"><a href="/api/form" style="color: white">Octopus AI
-                Assistant</a></span>
-    </nav>
-    <div class="container">
-        <form id="octopus_form" class="mt-5 needs-validation" novalidate>
-            <div class="form-group row">
-                <label for="octopus_url" class="col-2 offset-2 col-form-label">Octopus URL</label>
-                <div class="col-6">
-                    <input id="octopus_url" name="octopus_url" type="text" class="form-control" required>
-                    <small class="form-text text-muted">This is the public URL to your Octopus instance e.g.
-                        https://myinstance.octopus.app.</small>
-                    <div class="invalid-feedback">
-                        Please provide a valid Octopus URL.
+    <div class="app app--narrow">
+        <header class="app-header">
+            <span class="brand-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="sparkle" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0" stop-color="#9ecbff"/>
+                            <stop offset="1" stop-color="#c4a6ff"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M14 2.5 Q15 9.5 22 11 Q15 12.5 14 19.5 Q13 12.5 6 11 Q13 9.5 14 2.5 Z" fill="url(#sparkle)"/>
+                    <path d="M5.5 14 Q6 17 9 17.75 Q6 18.5 5.5 21.5 Q5 18.5 2 17.75 Q5 17 5.5 14 Z" fill="url(#sparkle)"/>
+                </svg>
+            </span>
+            <h1 class="brand-title"><a href="/api/form">Octopus AI Assistant</a></h1>
+            <span class="header-actions">
+                <a href="https://octopus.com/docs/administration/copilot" title="Documentation">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.496 6.033h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286a.237.237 0 0 0 .241.247m2.325 6.443c.61 0 1.029-.394 1.029-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94 0 .533.425.927 1.01.927z"/>
+                    </svg>
+                </a>
+            </span>
+        </header>
+
+        <form id="octopus_form" class="needs-validation section panel" novalidate>
+            <div>
+                <label for="octopus_url" class="label">Octopus URL</label>
+                <div class="field-frame">
+                    <div class="field-frame__inner">
+                        <input id="octopus_url" name="octopus_url" type="text" class="field"
+                               placeholder="https://myinstance.octopus.app" required>
                     </div>
                 </div>
-            </div>
-            <div class="form-group row">
-                <label for="octopus_api" class="col-2 offset-2 col-form-label">Octopus API Key</label>
-                <div class="col-6">
-                    <input id="octopus_api" name="octopus_api" type="password" class="form-control" required>
-                    <small class="form-text text-muted">This is the <a
-                            href="https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key">API
-                            key</a> used to
-                        interact with your Octopus
-                        instance e.g. API-ABCDEFGHIJKLMNOPQRSTUVWXYZ</small>
-                    <div class="invalid-feedback">
-                        Please provide a valid Octopus API key.
-                    </div>
-                </div>
-            </div>
-            <div class="form-group row">
-                <div class="offset-4 col-8">
-                    <button id="octopus_submit" name="octopus_submit" type="button" class="btn btn-primary">Submit</button>
+                <small class="help-text">This is the public URL to your Octopus instance e.g.
+                    https://myinstance.octopus.app.</small>
+                <div class="invalid-feedback">
+                    Please provide a valid Octopus URL.
                 </div>
             </div>
 
-            <div class="form-group row">
-                <div class="offset-4 col-6">
-                    <div class="spinner-border text-primary" role="status" id="octopus_loading" style="display: none">
-                        <span class="sr-only">Loading...</span>
+            <div class="section">
+                <label for="octopus_api" class="label">Octopus API Key</label>
+                <div class="field-frame">
+                    <div class="field-frame__inner">
+                        <input id="octopus_api" name="octopus_api" type="password" class="field"
+                               placeholder="API-ABCDEFGHIJKLMNOPQRSTUVWXYZ" required>
                     </div>
-                    <div id="octopus_invalid_api_key_or_url" class="alert alert-danger" role="alert" style="display: none">
-                        The Login Token, API key or URL you provided is invalid.
-                    </div>
-                    <div id="octopus_too_old" class="alert alert-danger" role="alert" style="display: none">
-                        The Octopus instance is too old. Please upgrade your Octopus instance to the latest version.
-                    </div>
-                    <div id="octopus_response_error" class="alert alert-danger" role="alert" style="display: none">
-                        There was an error logging in. Please try again later.
-                    </div>
-                    <div id="validation" class="alert alert-danger" role="alert" style="display: none">
-                        The request to this page was not well-formed. You can not log in.
-                    </div>
-                    <div id="octopus_success" class="alert alert-success" role="alert" style="display: none">
-                        You have logged into Octopus successfully. You may close this window and resume chatting with Copilot.
-                    </div>
+                </div>
+                <small class="help-text">This is the <a
+                        href="https://octopus.com/docs/octopus-rest-api/how-to-create-an-api-key">API key</a> used to
+                    interact with your Octopus instance e.g. API-ABCDEFGHIJKLMNOPQRSTUVWXYZ</small>
+                <div class="invalid-feedback">
+                    Please provide a valid Octopus API key.
                 </div>
             </div>
 
+            <div class="actions">
+                <button id="octopus_submit" name="octopus_submit" type="button" class="btn btn-gradient">Submit</button>
+            </div>
+
+            <div class="spinner" role="status" id="octopus_loading" style="display: none">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <div id="octopus_invalid_api_key_or_url" class="alert alert-danger" role="alert" style="display: none">
+                The Login Token, API key or URL you provided is invalid.
+            </div>
+            <div id="octopus_too_old" class="alert alert-danger" role="alert" style="display: none">
+                The Octopus instance is too old. Please upgrade your Octopus instance to the latest version.
+            </div>
+            <div id="octopus_response_error" class="alert alert-danger" role="alert" style="display: none">
+                There was an error logging in. Please try again later.
+            </div>
+            <div id="validation" class="alert alert-danger" role="alert" style="display: none">
+                The request to this page was not well-formed. You can not log in.
+            </div>
+            <div id="octopus_success" class="alert alert-success" role="alert" style="display: none">
+                You have logged into Octopus successfully. You may close this window and resume chatting with Copilot.
+            </div>
         </form>
     </div>
 </body>
@@ -201,7 +212,6 @@
             octopus_success.style.display = 'block'
         }
     }
-
 
     octopus_submit.onclick = processOctopusSubmit
     octopus_samples.onclick = () => octopus_login("https://samples.octopus.app", "API-GUEST")
