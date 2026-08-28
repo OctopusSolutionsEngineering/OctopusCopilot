@@ -1,8 +1,8 @@
-The Octopus Extension for GitHub Copilot brings real-time information and control over your builds and deployments into your Copilot chat. This keeps developers in the flow by allowing them to complete their entire CI/CD workflow without leaving their IDE.
+The Octopus AI Assistant brings real-time information and control over your builds and deployments into your Copilot chat. This keeps developers in the flow by allowing them to complete their entire CI/CD workflow without leaving their IDE.
 
-The extension queries the state of your Octopus server, combines GitHub issues and Git diffs captured in [build information](https://octopus.com/docs/packaging-applications/build-servers/build-information), and passes the information to a GPT-4o LLM to summarize your deployments and provide assistance.
+The assistant queries the state of your Octopus server, combines GitHub issues and Git diffs captured in [build information](https://octopus.com/docs/packaging-applications/build-servers/build-information), and passes the information to a GPT-4o LLM to summarize your deployments and provide assistance.
 
-The extension also interacts directly with the Octopus API to create releases, deploy releases, and run runbooks.
+The assistant also interacts directly with the Octopus API to create releases, deploy releases, and run runbooks.
 
 This allows you to:
 
@@ -15,7 +15,7 @@ This allows you to:
 * Provide help on failed deployments - `Help me fix release "1.2.3" of the "Audits" project to the "Production" environment`
 * Generate customized reports - `Given release "1.2.3" of project "Audits" to the "Production" environment, provide a one sentence summary of the Git Diff for each file changed as part of the release.`
 
-To get started with the extension, enter the prompt `hi` to receive a list of available commands.
+To get started with the assistant, enter the prompt `hi` to receive a list of available commands.
 
 # Architecture diagram
 
