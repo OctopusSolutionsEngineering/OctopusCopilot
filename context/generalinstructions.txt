@@ -4403,7 +4403,29 @@ resource "octopusdeploy_channel" "channel_dev_deployment_application" {
 **⚠️ CRITICAL — a deployment freeze the prompt asks for MUST be created; it is a real Octopus resource and must not be silently dropped.** When the prompt says "add a deployment freeze called X", "block deployments to <environment> between <dates>", or "freeze deployments over <period>", emit an `octopusdeploy_deployment_freeze` resource. Dropping it produces a project that looks complete but is missing a control the prompt explicitly asked for, and the apply succeeds so nothing flags it.
 
 * **Observed failure**: the prompt `Add a deployment freeze called "Change Freeze" that blocks deployments to "Prod" for the whole of December 2026` produced a complete, valid project with no freeze resource at all.
-* Scope the freeze to the project and environments the prompt names using the resource's `project_scope` block; a freeze with no scope applies to everything, which is almost never what the prompt asked for.
+* **⚠️ Scoping a freeze to a project is a SEPARATE RESOURCE — there is NO `project_scope` block.** `octopusdeploy_deployment_freeze` accepts only `name`, `start`, `end` (and an optional `recurring_schedule`). To scope the freeze, emit one `octopusdeploy_deployment_freeze_project` resource per project the prompt names. A freeze with no such resource applies to everything, which is almost never what the prompt asked for.
+
+```hcl
+resource "octopusdeploy_deployment_freeze" "deploymentfreeze_data_freeze" {
+  count = "..."
+  name  = "Data Freeze"
+  start = "2027-07-01T00:00:00.000+00:00"
+  end   = "2027-07-08T00:00:00.000+00:00"
+}
+
+resource "octopusdeploy_deployment_freeze_project" "deploymentfreeze_data_freeze_cafe_ingestor" {
+  count               = "..."
+  deploymentfreeze_id = "${octopusdeploy_deployment_freeze.deploymentfreeze_data_freeze[0].id}"
+  project_id          = "${length(data.octopusdeploy_projects.project_cafe_ingestor.projects) != 0 ? data.octopusdeploy_projects.project_cafe_ingestor.projects[0].id : octopusdeploy_project.project_cafe_ingestor[0].id}"
+  environment_ids     = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]
+}
+```
+
+  * `deploymentfreeze_id` and `project_id` are BOTH required. `environment_ids` is optional but, when present, must contain at least one id — never write `environment_ids = []`.
+  * **Observed failure**: `Add a deployment freeze called "Data Freeze" from 2027-07-01 to 2027-07-08 covering only the "15. Cafe Ingestor" project` created the freeze with the correct dates and NO scope resource, so the freeze applies to every project in the space — the opposite of "only this project". The same omission occurred in every earlier prompt that scoped a freeze, because this file previously named a `project_scope` block that does not exist in the provider.
+  * There is also an `octopusdeploy_deployment_freeze_tenant` resource for tenant-scoped freezes, and a separate `octopusdeploy_project_deployment_freeze` resource (a project-OWNED freeze taking `owner_id`, `name`, `start`, `end`, `environment_ids`). Prefer the `octopusdeploy_deployment_freeze` + `octopusdeploy_deployment_freeze_project` pair for the "global freeze scoped to some projects" wording that prompts normally use.
+
+**MANDATORY SELF-CHECK — freeze scoping**: before finalizing output, for every `octopusdeploy_deployment_freeze` whose prompt named one or more projects or environments, confirm a matching `octopusdeploy_deployment_freeze_project` resource exists for each named project. Confirm no output anywhere contains the string `project_scope`. You will be penalized for each scoped freeze left unscoped, and for any use of a `project_scope` block.
 * Deployment freezes are GLOBAL — they are not scoped to a space. Create exactly the freezes the prompt names and no others.
 * A freeze that has already ended is rejected, so the `end` property must be in the future (see below).
 **⚠️ CRITICAL — a freeze the prompt names but gives NO DATES for must STILL be created, with an invented future window.** `start` and `end` are mandatory attributes, so a dateless request feels un-emittable and gets dropped. It is not: pick a window and record the choice.
@@ -4420,7 +4442,7 @@ resource "octopusdeploy_deployment_freeze" "deploymentfreeze_freeze" {
 }
 ```
 
-* **A freeze the prompt says covers "every environment and every project" is the one case where OMITTING `project_scope` is correct.** An unscoped freeze applies to everything, which is exactly what that wording asks for. Do not invent a scope listing every project, and do not treat the absence of named projects as a reason to drop the freeze.
+* **A freeze the prompt says covers "every environment and every project" is the one case where emitting NO `octopusdeploy_deployment_freeze_project` resource is correct.** An unscoped freeze applies to everything, which is exactly what that wording asks for. Do not invent a scope resource per project, and do not treat the absence of named projects as a reason to drop the freeze.
 * The same reasoning applies to any resource whose mandatory attributes the prompt leaves unspecified: choose a defensible value, create the resource, and document the choice. Never let a missing attribute turn into a missing resource.
 
 **MANDATORY SELF-CHECK — deployment freezes**: before finalizing output, re-read the prompt for the words "freeze", "blackout", "change window" or "no deployments between". For each one, confirm the output contains a matching `octopusdeploy_deployment_freeze`. You will be penalized for each requested freeze that is absent.
@@ -8942,19 +8964,54 @@ When a variable has different values per environment, the Octopus API `GET /proj
 
 This is the **standard Octopus variable model** and is NOT a duplication error. Example observed in Argo CD iteration 8: `RefineQw.ReleaseEnv` appears as two entries — one with `Value:"staging"` scoped to `Environments-12163` (Argo Staging) and one with `Value:"production"` scoped to `Environments-12164` (Argo Prod). When verifying prompt vs. actual configuration via the API, count these as one logical variable spanning multiple environment scopes.
 
-## Phase-Level Retention Policy Null = Inherit from Lifecycle
+## Phase-Level Retention Policy Omitted = Inherit from Lifecycle
 
-When a lifecycle phase's `ReleaseRetentionPolicy` or `TentacleRetentionPolicy` is `null`, the phase **inherits the lifecycle-level retention policy** — it does NOT mean "keep forever" and it does NOT mean "no retention".
+An `octopusdeploy_lifecycle` `phase` block accepts its OWN `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks, exactly like the lifecycle itself. When a phase omits them, the phase **inherits the lifecycle-level retention policy** — it does NOT mean "keep forever" and it does NOT mean "no retention".
 
-**Observed failure (Argo CD iteration 8):** the prompt required Argo Staging = 30 items/30 days and Argo Prod = 50 items/180 days. The AI correctly set the lifecycle-level retention to 60 days (as specified) but left both phases' per-phase `ReleaseRetentionPolicy` and `TentacleRetentionPolicy` as `null`, causing both phases to inherit the 60-day lifecycle-level policy. The per-phase values were silently lost.
+**Observed failure (Argo CD iteration 8):** the prompt required Argo Staging = 30 items/30 days and Argo Prod = 50 items/180 days. The AI correctly set the lifecycle-level retention to 60 days (as specified) but wrote no retention blocks inside either `phase`, so both phases inherited the 60-day lifecycle-level policy. The per-phase values were silently lost.
 
-**Rule:** whenever a prompt specifies different retention values per phase, each phase MUST have an explicit non-null `ReleaseRetentionPolicy` (and `TentacleRetentionPolicy` if applicable). A null per-phase policy means "inherit the lifecycle-level value", which is almost always a bug when the lifecycle-level value doesn't match the per-phase requirements.
+**Rule:** whenever a prompt specifies different retention values per phase, each `phase` block MUST contain its own explicit `release_retention_with_strategy` (and `tentacle_retention_with_strategy` if applicable). Omitting them means "inherit the lifecycle-level value", which is almost always a bug when the lifecycle-level value doesn't match the per-phase requirements.
 
-## Runbook RunRetentionPolicy Strategy "Default" = Keep Forever
+```hcl
+  phase {
+    name                                  = "Argo Prod"
+    optional_deployment_targets           = ["..."]
+    automatic_deployment_targets          = []
+    is_optional_phase                     = false
+    minimum_environments_before_promotion = 0
 
-A runbook with `RunRetentionPolicy: {Strategy:"Default", QuantityToKeep:0, Unit:"Items", ShouldKeepForever:true}` retains **unlimited run history** — this is NOT the same as 5 runs, 10 runs, or any finite count.
+    release_retention_with_strategy {
+      strategy         = "Count"
+      quantity_to_keep = 50
+      unit             = "Items"
+    }
 
-**Observed failure (Argo CD iteration 8):** the prompt required the Argo CD Rollback runbook to keep 5 runs. The AI set `RunRetentionPolicy.Strategy = "Default"` with `ShouldKeepForever: true` instead of `Strategy = "Quantity"` with `QuantityToKeep = 5`. This is a silent discrepancy that must be checked every time a runbook retention is verified.
+    tentacle_retention_with_strategy {
+      strategy         = "Count"
+      quantity_to_keep = 180
+      unit             = "Days"
+    }
+  }
+```
+
+## Runbook `retention_policy_with_strategy` `strategy = "Default"` = Keep Forever
+
+A runbook whose `retention_policy_with_strategy` block uses `strategy = "Default"` retains **unlimited run history** — this is NOT the same as 5 runs, 10 runs, or any finite count.
+
+**Observed failure (Argo CD iteration 8):** the prompt required the Argo CD Rollback runbook to keep 5 runs. The AI emitted `strategy = "Default"` instead of a counted policy, so the "keep 5 runs" instruction was silently lost. Check this every time a runbook retention is verified.
+
+**The only valid `strategy` values are `Default`, `Count` and `Forever`** — this is enforced by the provider (`stringvalidator.OneOf`), so any other word fails at plan time and costs the whole project. In particular there is NO `"Quantity"` strategy. To keep a finite number of runs, use `strategy = "Count"` with `quantity_to_keep`:
+
+```hcl
+  retention_policy_with_strategy {
+    strategy         = "Count"
+    quantity_to_keep = 5
+    unit             = "Items"
+  }
+```
+
+* `unit` is `"Items"` when the prompt counts RUNS and `"Days"` only when it counts days.
+* `strategy = "Default"` and `strategy = "Forever"` take NO other attributes — see the rule near the top of this file, which the plan enforces with `quantity_to_keep must not be set when the strategy is '"Default"'`.
 
 ## Channel "Properties" = CustomFieldDefinitions, Not Description
 
