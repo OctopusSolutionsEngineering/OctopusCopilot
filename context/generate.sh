@@ -1,4 +1,4 @@
-PULL=always
+PULL=never
 IMAGE=ghcr.io/octopussolutionsengineering/octoterra:latest
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-docker}
 RUNTIME_VERSION=$("$CONTAINER_RUNTIME" -v 2>&1) || {
