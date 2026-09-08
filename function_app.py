@@ -43,7 +43,6 @@ from domain.requests.github.copilot_request_context import (
 )
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitize_logs import sanitize_message
-from domain.sanitizers.sanitize_prompt import sanitize_prompt
 from domain.sanitizers.url_sanitizer import quote_safe
 from domain.tools.wrapper.function_call import FunctionCall
 from domain.transformers.sse_transformers import convert_to_sse_response
