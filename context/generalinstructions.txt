@@ -86,7 +86,7 @@ resource "octopusdeploy_aws_openid_connect_account" "account_aws_deploy_account"
 2. An `octopusdeploy_docker_container_registry` feed called "Docker Hub" pointing at `https://index.docker.io` with NO credentials.
 3. An `octopusdeploy_kubernetes_cluster_deployment_target` called "Mock K8s" with `cluster_url = "https://mockk8s.octopusdemos.com"`, `roles` containing EVERY target tag used by the project's Kubernetes steps plus `"Kubernetes"`, `environments` listing every environment in the project's lifecycle, an `endpoint { communication_style = "Kubernetes" }` block, an `authentication { account_id = … }` block referencing the token account, and the "Hosted Ubuntu" worker pool as `default_worker_pool_id`.
 
-**MANDATORY SELF-CHECK — Kubernetes target:** before finalizing output, search your Terraform for `Octopus.Kubernetes` and `Octopus.HelmChartUpgrade`. If there is even one match, confirm all three items above are present, then confirm `octopusdeploy_kubernetes_cluster_deployment_target` appears exactly once. If it does not appear, STOP and add it before responding. Then confirm its `environments` and `roles` lists and its `endpoint` block are each NON-EMPTY — the provider validates all three with `MinItems: 1`, so an empty one fails the plan with `Not enough list items` and nothing at all is created. The full pattern, including the canonical HCL, is under `## Kubernetes target` in the `# Patterns` section.
+**MANDATORY SELF-CHECK — Kubernetes target:** before finalizing output, search your Terraform for `Octopus.Kubernetes` and `Octopus.HelmChartUpgrade`. If there is even one match, confirm all three items above are present, then confirm `octopusdeploy_kubernetes_cluster_deployment_target` appears exactly once. If it does not appear, STOP and add it before responding. Then confirm its `environments` and `roles` lists and its `endpoint` block are each NON-EMPTY — the provider validates all three with `MinItems: 1`, so an empty one fails the plan with `Not enough list items` and nothing at all is created. Finally confirm each entry in `environments` is a real environment id resolved from a `data.octopusdeploy_environments.*` / `octopusdeploy_environment.*` pair — `environments = [""]` counts as one item and passes the plan, but the apply is rejected with `The EnvironmentIds field is required.` The full pattern, including the canonical HCL, is under `## Kubernetes target` in the `# Patterns` section.
 
 **⚠️ CRITICAL — EVERY raw-YAML Kubernetes step MUST set all three "Mock K8s" compatibility properties. This is a SEPARATE requirement from creating the target, and it is the one most often forgotten.** Whenever the project uses the "Mock K8s" target, add ALL THREE of these entries to the `execution_properties` of EVERY step whose type is `Octopus.KubernetesDeployRawYaml`:
 
@@ -7051,6 +7051,33 @@ worker_pool_id = ${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubun
 * By contrast `tenant_tags = []` and `tenants = []` have NO minimum and MUST stay empty on an untenanted target. Do not invent tags or tenants to fill them.
 
 **MANDATORY SELF-CHECK — target lists are never empty**: before finalizing output, find every deployment target resource. For EACH one confirm `environments` has at least one entry, `roles` has at least one entry, and an `endpoint` block with at least one attribute is present. Fix any that are empty before responding — you will be penalized for each empty list, because the plan is rejected and the entire prompt yields no resources at all.
+
+**⚠️ CRITICAL — every entry in `environments` MUST be a real environment ID resolved from an environment data source or resource. An empty string, a placeholder, or an interpolation that evaluates to `""` satisfies the `MinItems: 1` check but is REJECTED by the Octopus API at APPLY time:**
+
+```
+[ERROR] provider.terraform-provider-octopusdeploy_v1.18.2: Response contains error diagnostic:
+  tf_resource_type=octopusdeploy_kubernetes_cluster_deployment_target
+  diagnostic_summary="Octopus API error: There was a problem with your request. [The EnvironmentIds field is required.] "
+  tf_rpc=ApplyResourceChange
+```
+
+* **Observed failure**: the prompt `Add a target called "Mock K8s", with the tag "Kubernetes", using the token account, pointing to "https://mockk8s.octopusdemos.com", using the health check image ... from the "Docker Hub" feed, using the worker pool "Hosted Ubuntu".` never named an environment, so the model invented a filler expression:
+
+```
+environments = ["${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id != "" ? "" : ""}"]
+```
+
+  Both branches of that ternary return `""`, so the list was `[""]` — one item, so the plan passed validation and printed `environments = [""]`, and only then did the apply fail with `The EnvironmentIds field is required.` The token account and the Docker feed had already been created, so the space was left half-populated with no target at all. Filling `environments` with a blank string is NOT satisfying the rule.
+* NEVER write `environments = [""]`, and NEVER hard-code a literal id such as `environments = ["Environments-1"]`. NEVER derive an environment id from a data source of another type — `octopusdeploy_machine_policies`, `octopusdeploy_worker_pools`, `octopusdeploy_feeds` and `octopusdeploy_accounts` contain NO environment ids. A ternary whose two branches are identical, and above all one where both branches are `""`, is always a mistake: delete it and resolve a real environment instead.
+* Every entry MUST use the standard environment ternary, and the `data "octopusdeploy_environments"` it reads (plus the matching `resource "octopusdeploy_environment"` fallback) MUST be present in the same output:
+
+```
+environments = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+```
+
+* **When the prompt does not say which environments a target belongs to, you MUST still choose real ones.** List every environment that is defined or looked up elsewhere in the output. If the output contains no environments at all — for example a prompt that only asks for an account, a feed and a target — emit the data source and resource pair for "Development", "Test" and "Production" and list all three on the target. A prompt that omits the environment is never permission to leave the value blank.
+
+**MANDATORY SELF-CHECK — environment ids are real**: before finalizing output, read the `environments` value of every deployment target resource. Confirm each entry is an interpolation over a matching `data.octopusdeploy_environments.*` / `octopusdeploy_environment.*` pair that exists in the output, and that NO entry is `""`, a literal `Environments-n` string, or an expression whose branches both yield the same value. You will be penalized for every blank or placeholder environment id, because the target is never created and everything created before it is left orphaned in the space.
 * Each resource "octopusdeploy_kubernetes_cluster_deployment_target" must have an associated data "octopusdeploy_deployment_targets". For example, if the following resource is defined:
 
 ```
