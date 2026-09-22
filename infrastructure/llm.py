@@ -7,7 +7,7 @@ from anthropic import OverloadedError
 from langchain_anthropic import ChatAnthropic
 from langchain_classic.agents import create_openai_tools_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_openai import AzureChatOpenAI
+from langchain_openai import AzureChatOpenAI, ChatOpenAI
 from openai import RateLimitError
 from retry import retry
 
@@ -35,6 +35,7 @@ NO_FUNCTION_RESPONSE = (
 
 AZURE_PROJECT_SERVICE = "azure_project"
 AZURE_PROJECT_ANTHROPIC_SERVICE = "azure_project_anthropic"
+AZURE_PROJECT_OLLAMA_SERVICE = "azure_project_ollama"
 AZURE_GENERAL_SERVICE = "azure_general"
 AZURE_GENERAL_QUERY_SMALL_LLM = "azure_general_query_small"
 EUROPE_REGION = "Europe"
@@ -129,6 +130,38 @@ def get_endpoint_and_key(region=None):
         return os.environ["AISERVICES_ENDPOINT"], os.environ["AISERVICES_KEY"]
 
 
+def get_ollama_endpoint():
+    """Get the Ollama host root, falling back to the localhost default."""
+    return os.getenv("OLLAMA_ENDPOINT", "http://localhost:11434").rstrip("/")
+
+
+def get_ollama_base_url():
+    """Get the Ollama OpenAI-compatible base URL (the host root with a /v1 suffix)."""
+    endpoint = get_ollama_endpoint()
+    if not endpoint.endswith("/v1"):
+        endpoint += "/v1"
+    return endpoint
+
+
+def get_ollama_model():
+    """Get the Ollama model to query, falling back to the default model."""
+    return os.getenv("OLLAMA_MODEL", "qwen3.8:27b-mlx")
+
+
+def get_ollama_api_key():
+    """Get the Ollama API key. Ollama ignores it, but the OpenAI client requires a value."""
+    return os.getenv("OLLAMA_API_KEY", "ollama")
+
+
+def get_ollama_temperature():
+    """Get the Ollama temperature, following the string_to_int convention used by the other builders."""
+    return (
+        None
+        if os.getenv("OLLAMA_TEMPERATURE", "") == "None"
+        else string_to_int(os.getenv("OLLAMA_TEMPERATURE", "0"), 0)
+    )
+
+
 def build_llm(purpose, region=None, prompt=None):
     if purpose == AZURE_PROJECT_SERVICE:
         return build_azure_project_llm(region, prompt)
@@ -139,7 +172,23 @@ def build_llm(purpose, region=None, prompt=None):
     # Anthropic LLMs only offer global standard
     if purpose == AZURE_PROJECT_ANTHROPIC_SERVICE:
         return build_azure_anthropic_project_llm(prompt)
+
+    # Ollama serves a local model on localhost, so it likewise has no regional variants.
+    if purpose == AZURE_PROJECT_OLLAMA_SERVICE:
+        return build_ollama_llm()
+
     return build_azure_general_llm(region)
+
+
+def build_ollama_llm():
+    # Ollama exposes an OpenAI-compatible API, so we point the standard ChatOpenAI
+    # client at its /v1 endpoint instead of introducing a separate Ollama dependency.
+    return ChatOpenAI(
+        temperature=get_ollama_temperature(),
+        model=get_ollama_model(),
+        base_url=get_ollama_base_url(),
+        api_key=get_ollama_api_key(),
+    )
 
 
 def build_azure_anthropic_project_llm(prompt=None):
