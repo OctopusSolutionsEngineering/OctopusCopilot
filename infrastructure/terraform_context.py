@@ -142,6 +142,12 @@ def cache_terraform(sha, template, connection_string):
 @logging_wrapper
 def delete_old_cached_items(connection_string):
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+
+    try:
+        blob_service_client.create_container(terraform_context_container_name)
+    except ResourceExistsError as e:
+        pass
+
     container_client = blob_service_client.get_container_client(
         terraform_context_container_name
     )

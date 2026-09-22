@@ -716,7 +716,7 @@ def delete_old_user_details(connection_string):
         table_service_client = TableServiceClient.from_connection_string(
             conn_str=connection_string
         )
-        table_client = table_service_client.get_table_client(table_name="users")
+        table_client = table_service_client.create_table_if_not_exists("users")
 
         old_records = (datetime.now() - timedelta(days=TOKEN_LIFETIME)).strftime(
             "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -753,7 +753,7 @@ def delete_old_slack_user_details(connection_string):
         table_service_client = TableServiceClient.from_connection_string(
             conn_str=connection_string
         )
-        table_client = table_service_client.get_table_client(table_name="slackusers")
+        table_client = table_service_client.create_table_if_not_exists("slackusers")
 
         old_records = (datetime.now() - timedelta(hours=8)).strftime(
             "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -791,9 +791,7 @@ def delete_old_codefresh_user_details(connection_string):
         table_service_client = TableServiceClient.from_connection_string(
             conn_str=connection_string
         )
-        table_client = table_service_client.get_table_client(
-            table_name="codefreshusers"
-        )
+        table_client = table_service_client.create_table_if_not_exists("codefreshusers")
 
         old_records = (datetime.now() - timedelta(hours=8)).strftime(
             "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -834,7 +832,7 @@ def delete_user_details(username, connection_string):
         table_service_client = TableServiceClient.from_connection_string(
             conn_str=connection_string
         )
-        table_client = table_service_client.get_table_client(table_name="users")
+        table_client = table_service_client.create_table_if_not_exists("users")
         table_client.delete_entity("github.com", username)
 
         logger.info(f"Logged out user {username}")
@@ -855,8 +853,8 @@ def delete_slack_user_details(username, connection_string):
         table_service_client = TableServiceClient.from_connection_string(
             conn_str=connection_string
         )
-        slack_table_client = table_service_client.get_table_client(
-            table_name="slackusers"
+        slack_table_client = table_service_client.create_table_if_not_exists(
+            "slackusers"
         )
 
         slack_table_client.delete_entity("github.com", username)
@@ -890,8 +888,8 @@ def delete_codefresh_user_details(username, connection_string):
             conn_str=connection_string
         )
 
-        cf_table_client = table_service_client.get_table_client(
-            table_name="codefreshusers"
+        cf_table_client = table_service_client.create_table_if_not_exists(
+            "codefreshusers"
         )
         cf_table_client.delete_entity("github.com", username)
 
