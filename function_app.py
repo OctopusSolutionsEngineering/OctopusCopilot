@@ -578,7 +578,7 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     except UserNotLoggedIn as e:
-        return handle_user_not_logged_in(e, req)
+        return handle_user_not_logged_in(e)
     except OctopusRequestFailed as e:
         return handle_octopus_request_failed(e)
     except GitHubRequestFailed as e:
