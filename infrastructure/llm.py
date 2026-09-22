@@ -1,13 +1,12 @@
 import os
 
+import ollama
 import openai
-# Note this is the exception raised on a 529 response, not the identically named
-# anthropic.types.OverloadedError, which is the Pydantic model of the response body.
-from anthropic import OverloadedError
 from langchain_anthropic import ChatAnthropic
 from langchain_classic.agents import create_openai_tools_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_openai import AzureChatOpenAI, ChatOpenAI
+from langchain_ollama import ChatOllama
+from langchain_openai import AzureChatOpenAI
 from openai import RateLimitError
 from retry import retry
 
@@ -132,15 +131,10 @@ def get_endpoint_and_key(region=None):
 
 def get_ollama_endpoint():
     """Get the Ollama host root, falling back to the localhost default."""
-    return os.getenv("OLLAMA_ENDPOINT", "http://localhost:11434").rstrip("/")
-
-
-def get_ollama_base_url():
-    """Get the Ollama OpenAI-compatible base URL (the host root with a /v1 suffix)."""
-    endpoint = get_ollama_endpoint()
-    if not endpoint.endswith("/v1"):
-        endpoint += "/v1"
-    return endpoint
+    endpoint = os.getenv("OLLAMA_ENDPOINT", "http://localhost:11434").rstrip("/")
+    # The native Ollama API is served from the host root. Strip any OpenAI-compatible /v1 suffix
+    # so endpoints configured for the OpenAI client continue to work.
+    return endpoint.removesuffix("/v1")
 
 
 def get_ollama_model():
@@ -148,9 +142,9 @@ def get_ollama_model():
     return os.getenv("OLLAMA_MODEL", "qwen3.8:27b-mlx")
 
 
-def get_ollama_api_key():
-    """Get the Ollama API key. Ollama ignores it, but the OpenAI client requires a value."""
-    return os.getenv("OLLAMA_API_KEY", "ollama")
+def get_ollama_context_length():
+    """Get the Ollama context window in tokens, defaulting to 256K."""
+    return string_to_int(os.getenv("OLLAMA_CONTEXT_LENGTH", "262144"), 262144)
 
 
 def get_ollama_temperature():
@@ -181,13 +175,14 @@ def build_llm(purpose, region=None, prompt=None):
 
 
 def build_ollama_llm():
-    # Ollama exposes an OpenAI-compatible API, so we point the standard ChatOpenAI
-    # client at its /v1 endpoint instead of introducing a separate Ollama dependency.
-    return ChatOpenAI(
+    # We use the native Ollama API rather than the OpenAI-compatible /v1 endpoint, because
+    # only the native API allows the context window (num_ctx) to be set with each request.
+    # The Ollama default context window is too small for the project generation prompts.
+    return ChatOllama(
         temperature=get_ollama_temperature(),
         model=get_ollama_model(),
-        base_url=get_ollama_base_url(),
-        api_key=get_ollama_api_key(),
+        base_url=get_ollama_endpoint(),
+        num_ctx=get_ollama_context_length(),
     )
 
 
@@ -357,11 +352,11 @@ def llm_message_query(
             lambda: chain.invoke(context).content, "Query with " + purpose
         )
     except openai.BadRequestError as e:
-        return handle_openai_exception(e)
-    except openai.APITimeoutError as e:
-        return handle_openai_exception(e)
-    except OverloadedError:
-        return "The system reported it is currently overloaded. Please try again later."
+        # Errors must be raised rather than returned, as callers can't distinguish an error message from a
+        # genuine response. For example, project creation would treat the error as a Terraform configuration.
+        raise_bad_request_exception(e, log_query)
+    except ollama.ResponseError as e:
+        raise_ollama_exception(e, log_query)
 
     # The response might be text or an array depending on the model and settings. GPT 5 codex for example returns an array of items.
     if isinstance(response, list):
@@ -375,12 +370,39 @@ def llm_message_query(
     return client_response.strip()
 
 
-def handle_openai_exception(exception):
+def raise_bad_request_exception(exception, log_query=None):
     # This will be something like:
     # {'error': {'message': "This model's maximum context length is 16384 tokens. However, your messages resulted in 17570 tokens. Please reduce the length of the messages.", 'type': 'invalid_request_error', 'param': 'messages', 'code': 'context_length_exceeded'}}
-    if exception.body and "message" in exception.body:
-        return exception.body.get("message")
-    return exception.message
+    # {'error': {'message': "The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766", 'type': None, 'param': 'prompt', 'code': 'content_filter', 'status': 400, 'innererror': {'code': 'ResponsibleAIPolicyViolation', 'content_filter_result': {'hate': {'filtered': True, 'severity': 'high'}, 'self_harm': {'filtered': False, 'severity': 'safe'}, 'sexual': {'filtered': False, 'severity': 'safe'}, 'violence': {'filtered': True, 'severity': 'medium'}}}}}
+    # Other providers, like Ollama, may not return a code, so the message is also checked for errors like:
+    # input length (20000 tokens) exceeds the model's maximum context length (16384 tokens)
+
+    if log_query:
+        log_query("OpenAI Exception", str(exception))
+
+    body = exception.body if isinstance(exception.body, dict) else {}
+    code = body.get("code")
+    message = str(body.get("message") or exception.message)
+
+    if code == "content_filter":
+        raise OpenAIContentFilter(exception)
+    if code == "context_length_exceeded" or "maximum context length" in message:
+        raise OpenAITokenLengthExceeded(exception)
+
+    raise OpenAIBadRequest(exception)
+
+
+def raise_ollama_exception(exception, log_query=None):
+    # The native Ollama API reports errors like:
+    # input length (20000 tokens) exceeds the model's maximum context length (16384 tokens)
+
+    if log_query:
+        log_query("Ollama Exception", str(exception))
+
+    if "maximum context length" in str(exception.error):
+        raise OpenAITokenLengthExceeded(exception)
+
+    raise exception
 
 
 def llm_tool_query(
@@ -443,20 +465,7 @@ def llm_tool_query(
         if isinstance(action, list):
             action = action[-1]
     except openai.BadRequestError as e:
-        # This will be something like:
-        # {'error': {'message': "This model's maximum context length is 16384 tokens. However, your messages resulted in 17570 tokens. Please reduce the length of the messages.", 'type': 'invalid_request_error', 'param': 'messages', 'code': 'context_length_exceeded'}}
-        # {'error': {'message': "The response was filtered due to the prompt triggering Azure OpenAI's content management policy. Please modify your prompt and retry. To learn more about our content filtering policies please read our documentation: https://go.microsoft.com/fwlink/?linkid=2198766", 'type': None, 'param': 'prompt', 'code': 'content_filter', 'status': 400, 'innererror': {'code': 'ResponsibleAIPolicyViolation', 'content_filter_result': {'hate': {'filtered': True, 'severity': 'high'}, 'self_harm': {'filtered': False, 'severity': 'safe'}, 'sexual': {'filtered': False, 'severity': 'safe'}, 'violence': {'filtered': True, 'severity': 'medium'}}}}}
-
-        if log_query:
-            log_query("OpenAI Exception", str(e))
-
-        if e.body and "code" in e.body:
-            if e.body.get("code") == "content_filter":
-                raise OpenAIContentFilter(e)
-            if e.body.get("code") == "context_length_exceeded":
-                raise OpenAITokenLengthExceeded(e)
-
-        raise OpenAIBadRequest(e)
+        raise_bad_request_exception(e, log_query)
     except Exception as e:
         raise e
 

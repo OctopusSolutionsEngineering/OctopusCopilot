@@ -14,7 +14,7 @@ def none_on_exception(function):
     try:
         return function()
     except Exception as e:
-        logger.error(e)
+        logger.exception(e)
         return None
 
 
@@ -28,7 +28,7 @@ async def none_on_exception_async(function):
     try:
         return await function()
     except Exception as e:
-        logger.error(e)
+        logger.exception(e)
         return None
 
 

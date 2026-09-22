@@ -6,6 +6,10 @@ from http.cookies import SimpleCookie
 import requests
 
 import azure.functions as func
+import openai
+# Note this is the exception raised on a 529 response, not the identically named
+# anthropic.types.OverloadedError, which is the Pydantic model of the response body.
+from anthropic import OverloadedError
 from domain.config.codefresh import get_codefresh_url
 from domain.config.database import get_functions_connection_string
 from domain.config.octopus import min_octopus_version, GUEST_API_KEY, TOKEN_LIFETIME
@@ -14,6 +18,7 @@ from domain.encryption.encryption import generate_password
 from domain.errors.error_handling import handle_error
 from domain.exceptions.not_authorized import NotAuthorized
 from domain.exceptions.oauth_failure import ExpectedParamMissing
+from domain.exceptions.openai_error import OpenAITokenLengthExceeded
 from domain.exceptions.request_failed import (
     GitHubRequestFailed,
     OctopusRequestFailed,
@@ -593,12 +598,31 @@ def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
         # This exception means there is no Octopus instance configured for the GitHub user making the request.
         # The Octopus instance is supplied via a chat message.
         return request_config_details()
+    except OpenAITokenLengthExceeded as e:
+        return handle_llm_error(
+            e,
+            "The request was too large for the configured model to process. Please try a shorter or simpler request.",
+        )
+    except openai.APITimeoutError as e:
+        return handle_llm_error(
+            e, "The request to the model timed out. Please try again later."
+        )
+    except OverloadedError as e:
+        return handle_llm_error(
+            e,
+            "The system reported it is currently overloaded. Please try again later.",
+        )
     except ValueError as e:
         # Assume this is the error "Azure has not provided the response due to a content filter being triggered"
         # from azure_openai.py in langchain.
         return handle_value_error(e)
     except Exception as e:
         return handle_exception(e)
+
+
+def handle_llm_error(e, message):
+    handle_error(e)
+    return func.HttpResponse(convert_to_sse_response(message), headers=get_sse_headers())
 
 
 def handle_value_error(e):
