@@ -129,7 +129,6 @@ def build_github_url(path, query=None):
     return urlunsplit((parsed.scheme, parsed.netloc, path, query, ""))
 
 
-@logging_wrapper
 def get_github_user(token):
     """
     Gets the GitHub username from the supplied token
