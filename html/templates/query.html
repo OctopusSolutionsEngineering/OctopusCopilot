@@ -343,13 +343,14 @@
         updateHistory()
     }
 
+    // Don't display the confirmation buttons by default. This must happen before
+    // checkLogin(), which hides the suggestions and history while they are shown.
+    confirmation.style.display = "none"
+
     // Enable or disable fields based on login state
     checkLogin()
 
     updateHistoryLinkState()
-
-    // Don't display the confirmation buttons by default
-    confirmation.style.display = "none"
 
     // Track the response stream
     let response = ""
@@ -384,7 +385,7 @@
             if (parsedLine.type && parsedLine.type === "action") {
                 // Add a newline to separate the actions
                 response += "\n"
-                confirmation.style.display = "flex"
+                showConfirmation()
                 accept.onclick = approveConfirmation(parsedLine.confirmation.id)
                 response += parsedLine.title + "\n\n"
                 response += parsedLine.message
@@ -407,8 +408,18 @@
         }
     }
 
-    function dismissConfirmation() {
+    function showConfirmation() {
+        confirmation.style.display = "flex"
+        updateSuggestionsAndHistory()
+    }
+
+    function hideConfirmation() {
         confirmation.style.display = "none"
+        updateSuggestionsAndHistory()
+    }
+
+    function dismissConfirmation() {
+        hideConfirmation()
         response = ""
         markdown.innerText = "Request was denied."
         enableInput()
@@ -417,7 +428,7 @@
     function approveConfirmation(id) {
         return () => {
             response = ""
-            confirmation.style.display = "none"
+            hideConfirmation()
             markdown.innerText = "Request was approved."
 
              // Keep the form locked for the duration of the approved prompt so a
@@ -484,8 +495,10 @@
 
     function updateSuggestionsAndHistory() {
         // The suggestions and history are only useful between queries: they are hidden
-        // until the user logs in, and again while a response is being processed.
-        const display = loggedIn && !processing ? "" : "none"
+        // until the user logs in, and again while a response is being processed or
+        // a confirmation is waiting to be approved or dismissed.
+        const confirmationPending = confirmation.style.display !== "none"
+        const display = loggedIn && !processing && !confirmationPending ? "" : "none"
         document.getElementById('suggestions').style.display = display
         document.getElementById('history').style.display = display
     }
@@ -636,7 +649,7 @@
         response = ""
 
         // Hide the confirmation buttons when starting a new query
-        confirmation.style.display = "none"
+        hideConfirmation()
 
         // Prompt to log in again.
         if (!loggedIn) {
