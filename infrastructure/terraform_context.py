@@ -47,6 +47,7 @@ def load_terraform_context(filename, connection_string):
         return str(configuration_file.decode("utf-8"))
 
     except HttpResponseError as e:
+        logger.error(e)
         return None
 
 
