@@ -541,7 +541,7 @@ def generate_terraform_configuration(
 
     # These are the general examples of projects, feeds, accounts etc
     base_messages = generate_base_messages(
-        general_examples_values, general_system_message_values
+        general_system_message_values, general_examples_values
     )
 
     # These are examples of specific project types, like Kubernetes, Azure Web Apps etc
@@ -566,13 +566,15 @@ def generate_terraform_configuration(
     )
 
 
-def generate_base_messages(general_examples, general_system_message_values):
+def generate_base_messages(general_system_message_values, general_examples = None):
+    fixed_general_examples = general_examples if general_examples else []
+
     general_examples_messages = [
         (
             "system",
             "# Example Octopus Terraform Configuration:\n" + escape_message(example),
         )
-        for example in general_examples
+        for example in fixed_general_examples
     ]
 
     return [
@@ -676,8 +678,10 @@ async def retry_terraform_plan(
         "Initial plan failed, attempting to rectify with a second pass",
     )
 
+    # Only include the system message, which should contain details on edge cases.
+    # Avoid the example terraform, as this went beyond the 256k context window size.
     base_messages = generate_base_messages(
-        general_examples_values, general_system_message_values
+        general_system_message_values
     )
 
     new_messages = generate_retry_messages(base_messages, configuration, error)
