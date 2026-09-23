@@ -39,21 +39,23 @@ AZURE_GENERAL_SERVICE = "azure_general"
 AZURE_GENERAL_QUERY_SMALL_LLM = "azure_general_query_small"
 EUROPE_REGION = "Europe"
 US_REGION = "US"
+GLOBAL_REGION = "Global"
 SIMPLE_PROMPT = 100
 DETAILED_PROJECT_PROMPT_LENGTH = 2000
 VERY_DETAILED_PROJECT_PROMPT_LENGTH = 5000
 
 
 def validate_region(region):
-    """Validate that region is None, empty string, EUROPE_REGION, or US_REGION."""
+    """Validate that region is None, empty string, GLOBAL_REGION, EUROPE_REGION, or US_REGION."""
     if (
         region is not None
         and region != ""
+        and region.lower() != GLOBAL_REGION.lower()
         and region.lower() != EUROPE_REGION.lower()
         and region.lower() != US_REGION.lower()
     ):
         raise ValueError(
-            f"Invalid region specified: {region}. Must be either {EUROPE_REGION}, {US_REGION}, empty string, or None."
+            f"Invalid region specified: {region}. Must be either {EUROPE_REGION}, {US_REGION}, {GLOBAL_REGION}, empty string, or None."
         )
 
 
