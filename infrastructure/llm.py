@@ -34,7 +34,7 @@ NO_FUNCTION_RESPONSE = (
 
 AZURE_PROJECT_SERVICE = "azure_project"
 AZURE_PROJECT_ANTHROPIC_SERVICE = "azure_project_anthropic"
-AZURE_PROJECT_OLLAMA_SERVICE = "azure_project_ollama"
+OLLAMA_PROJECT_SERVICE = "ollama_project"
 AZURE_GENERAL_SERVICE = "azure_general"
 AZURE_GENERAL_QUERY_SMALL_LLM = "azure_general_query_small"
 EUROPE_REGION = "Europe"
@@ -185,7 +185,7 @@ def build_llm(purpose, region=None, prompt=None):
         return build_azure_anthropic_project_llm(prompt)
 
     # Ollama serves a local model on localhost, so it likewise has no regional variants.
-    if purpose == AZURE_PROJECT_OLLAMA_SERVICE:
+    if purpose == OLLAMA_PROJECT_SERVICE:
         return build_ollama_llm()
 
     return build_azure_general_llm(region)

@@ -4,7 +4,7 @@ from unittest import mock
 
 from langchain_ollama import ChatOllama
 
-from infrastructure.llm import AZURE_PROJECT_OLLAMA_SERVICE, build_llm
+from infrastructure.llm import OLLAMA_PROJECT_SERVICE, build_llm
 
 
 class TestOllamaBuild(unittest.TestCase):
@@ -16,7 +16,7 @@ class TestOllamaBuild(unittest.TestCase):
     """
 
     def test_default_builds_local_ollama(self):
-        llm = build_llm(AZURE_PROJECT_OLLAMA_SERVICE)
+        llm = build_llm(OLLAMA_PROJECT_SERVICE)
 
         self.assertIsInstance(llm, ChatOllama)
         self.assertEqual(llm.model, "qwen3.8:27b-mlx")
@@ -28,14 +28,14 @@ class TestOllamaBuild(unittest.TestCase):
         for endpoint in ["http://10.0.0.5:11434/", "http://10.0.0.5:11434/v1"]:
             env = {"OLLAMA_ENDPOINT": endpoint, "OLLAMA_MODEL": "phi3"}
             with mock.patch.dict(os.environ, env):
-                llm = build_llm(AZURE_PROJECT_OLLAMA_SERVICE)
+                llm = build_llm(OLLAMA_PROJECT_SERVICE)
 
             self.assertEqual(llm.model, "phi3")
             self.assertEqual(llm.base_url, "http://10.0.0.5:11434")
 
     def test_context_length_env_override(self):
         with mock.patch.dict(os.environ, {"OLLAMA_CONTEXT_LENGTH": "32768"}):
-            llm = build_llm(AZURE_PROJECT_OLLAMA_SERVICE)
+            llm = build_llm(OLLAMA_PROJECT_SERVICE)
 
         self.assertEqual(llm.num_ctx, 32768)
 
@@ -47,7 +47,7 @@ class TestOllamaBuild(unittest.TestCase):
             ("None", None),
         ]:
             with mock.patch.dict(os.environ, {"OLLAMA_REASONING": value}):
-                llm = build_llm(AZURE_PROJECT_OLLAMA_SERVICE)
+                llm = build_llm(OLLAMA_PROJECT_SERVICE)
 
             self.assertEqual(llm.reasoning, expected)
 
