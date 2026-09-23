@@ -203,6 +203,18 @@ def replace_passwords(config):
     )
 
 
+def replace_access_and_secret_keys(config):
+    """
+    Replace any access_key or secret_key properties with a placeholder value.
+    """
+
+    return re.sub(
+        r'(access_key|secret_key)\s*=\s*".*?"',
+        r'\1 = "CHANGE ME"',
+        config,
+    )
+
+
 def replace_secrets(config):
     """
     Replace the value of any property called "secret" with a GUID. Properties like "secret_key" or

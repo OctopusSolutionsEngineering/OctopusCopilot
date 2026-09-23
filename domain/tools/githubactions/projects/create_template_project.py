@@ -60,6 +60,7 @@ from domain.sanitizers.terraform import (
     set_mock_git_credential,
     replace_token, set_mock_certificate,
     replace_secrets,
+    replace_access_and_secret_keys,
     remove_non_octopus_resources,
     remove_non_octopus_data_sources,
 )
@@ -641,7 +642,9 @@ def generate_retry_messages(base_messages, configuration, errors):
 
     user_message = (
         "user",
-        "Based on the errors above, fix the Previous Terraform Configuration and return a new Terraform configuration that will not produce the same errors. Only return the Terraform configuration without any additional explanation or text",
+        "Based on the errors above, fix the Previous Terraform Configuration and return a new Terraform configuration that will not produce the same errors. " +
+        "You must return the fixed Terraform HCL configuration without any additional explanation or text. " +
+        "You will be penalized for describing the errors or returning the same configuration again. ",
     )
 
     return [*base_messages, retry_message, user_message]
@@ -767,6 +770,8 @@ def sanitize_configuration(configuration):
     configuration = replace_token(configuration)
     # Replace anything that looks like a secret
     configuration = replace_secrets(configuration)
+    # Replace access_key and secret_key properties
+    configuration = replace_access_and_secret_keys(configuration)
     # Fix up invalid resource and data names
     configuration = replace_resource_names_with_digit(configuration)
     # Deal with the LLM returning code in markdown code blocks
