@@ -22,6 +22,7 @@ class TestOllamaBuild(unittest.TestCase):
         self.assertEqual(llm.model, "qwen3.8:27b-mlx")
         self.assertEqual(llm.base_url, "http://localhost:11434")
         self.assertEqual(llm.num_ctx, 262144)
+        self.assertEqual(llm.reasoning, "medium")
 
     def test_endpoint_env_honours_root_and_v1(self):
         for endpoint in ["http://10.0.0.5:11434/", "http://10.0.0.5:11434/v1"]:
@@ -37,6 +38,18 @@ class TestOllamaBuild(unittest.TestCase):
             llm = build_llm(AZURE_PROJECT_OLLAMA_SERVICE)
 
         self.assertEqual(llm.num_ctx, 32768)
+
+    def test_reasoning_env_override(self):
+        for value, expected in [
+            ("high", "high"),
+            ("True", True),
+            ("false", False),
+            ("None", None),
+        ]:
+            with mock.patch.dict(os.environ, {"OLLAMA_REASONING": value}):
+                llm = build_llm(AZURE_PROJECT_OLLAMA_SERVICE)
+
+            self.assertEqual(llm.reasoning, expected)
 
 
 if __name__ == "__main__":

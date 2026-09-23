@@ -156,6 +156,23 @@ def get_ollama_temperature():
     )
 
 
+def get_ollama_reasoning():
+    """
+    Get the Ollama reasoning mode, defaulting to "medium".
+    "True" and "False" toggle reasoning, "None" uses the model default, and any other value
+    (e.g. "low", "medium", "high") is passed through as the reasoning level.
+    """
+    reasoning = os.getenv("OLLAMA_REASONING", "medium").strip()
+    lower = reasoning.lower()
+    if lower == "none":
+        return None
+    if lower == "true":
+        return True
+    if lower == "false":
+        return False
+    return reasoning
+
+
 def build_llm(purpose, region=None, prompt=None):
     if purpose == AZURE_PROJECT_SERVICE:
         return build_azure_project_llm(region, prompt)
@@ -183,6 +200,7 @@ def build_ollama_llm():
         model=get_ollama_model(),
         base_url=get_ollama_endpoint(),
         num_ctx=get_ollama_context_length(),
+        reasoning=get_ollama_reasoning(),
     )
 
 
