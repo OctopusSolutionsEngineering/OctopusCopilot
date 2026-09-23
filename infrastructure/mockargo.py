@@ -3,7 +3,7 @@ import os
 
 from domain.logging.app_logging import configure_logging
 from infrastructure.http_pool import http
-from infrastructure.octopus import logging_wrapper
+from infrastructure.octopus import logging_wrapper, get_access_token
 
 logger = configure_logging(__name__)
 
@@ -15,7 +15,7 @@ def create_mock_argocd_gateway(
     """
     Creates a new Argo CD Gateway. See https://github.com/OctopusDeploy/octopus-argocd-gateway/tree/mattc/mockedargo.
     :param url: The URL of the Argo CD server
-    :param access_token: The Mock git access token
+    :param access_token: The Argo CD service access token
     :param space_id: The Argo CD space ID
     :param environments: The list of environments
     :param project_slug: The project slug
@@ -25,6 +25,9 @@ def create_mock_argocd_gateway(
     try:
         if access_token is None:
             return None
+
+        # An API key must be exchanged for an access token before it is passed to the gateway
+        access_token = get_access_token(access_token, url)
 
         api = os.getenv("MOCKARGO_API_URL") + "/api/applications"
 

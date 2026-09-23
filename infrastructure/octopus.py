@@ -36,7 +36,10 @@ from domain.validation.argument_validation import (
     ensure_string_not_empty,
     ensure_api_key,
 )
-from domain.validation.octopus_validation import is_manual_intervention_valid
+from domain.validation.octopus_validation import (
+    is_manual_intervention_valid,
+    is_api_key,
+)
 from infrastructure.http_pool import http, TAKE_ALL
 
 logger = configure_logging()
@@ -928,6 +931,44 @@ def create_unlimited_api_key(user, api_key, octopus_url):
 
     json = resp.json()
     return json["ApiKey"]
+
+
+@logging_wrapper
+def create_access_token(api_key, octopus_url):
+    """
+    This function exchanges an API key for an access token for the same user.
+    :param api_key: The API key
+    :param octopus_url: The Octopus URL
+    :return: The access token
+    """
+
+    ensure_string_not_empty(
+        octopus_url,
+        "my_octopus_api must be the Octopus Url (create_access_token).",
+    )
+    ensure_api_key(
+        api_key, "my_api_key must be the Octopus Api key (create_access_token)."
+    )
+
+    api, headers = build_url(octopus_url, api_key, "/api/users/access-token")
+    resp = handle_response(lambda: http.request("POST", api, headers=headers))
+
+    json = resp.json()
+    return json["AccessToken"]
+
+
+def get_access_token(api_key_or_access_token, octopus_url):
+    """
+    This function returns an access token, exchanging the supplied credential for one if it is an API key.
+    :param api_key_or_access_token: The API key or access token
+    :param octopus_url: The Octopus URL
+    :return: The access token
+    """
+
+    if is_api_key(api_key_or_access_token):
+        return create_access_token(api_key_or_access_token, octopus_url)
+
+    return api_key_or_access_token
 
 
 @retry(HTTPError, tries=3, delay=2)

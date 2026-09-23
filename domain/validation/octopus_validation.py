@@ -23,6 +23,18 @@ def is_hosted_octopus(octopus_url):
     )
 
 
+def is_api_key(api_key_or_access_token):
+    """
+    Tests if a credential is an API key rather than an access token
+    :param api_key_or_access_token: The value to test
+    :return: True if the string is an API key, False otherwise
+    """
+    if not isinstance(api_key_or_access_token, str):
+        return False
+
+    return api_key_or_access_token.startswith("API-")
+
+
 def is_api_key_or_jwt(api_key):
     """
     Tests if a string is an API key

@@ -2,6 +2,7 @@ import unittest
 import json
 
 from domain.validation.octopus_validation import (
+    is_api_key,
     is_api_key_or_jwt,
     is_manual_intervention_valid,
     is_hosted_octopus,
@@ -246,6 +247,19 @@ class ApiKeyTest(unittest.TestCase):
         self.assertFalse(is_api_key_or_jwt(None))
         self.assertFalse(is_api_key_or_jwt([]))
         self.assertFalse(is_api_key_or_jwt({}))
+
+    def test_is_api_key(self):
+        self.assertTrue(is_api_key("API-XXXXXXXXX"))
+        self.assertTrue(is_api_key("API-ABCDEFG1234"))
+        self.assertTrue(is_api_key("API-GUEST"))
+        self.assertFalse(is_api_key("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature"))
+        self.assertFalse(is_api_key("api-ABCDEFG1234"))
+        self.assertFalse(is_api_key(" API-ABCDEFG1234"))
+        self.assertFalse(is_api_key("blah"))
+        self.assertFalse(is_api_key(""))
+        self.assertFalse(is_api_key(None))
+        self.assertFalse(is_api_key([]))
+        self.assertFalse(is_api_key({}))
 
     def test_interruption_validation_no_interruptions(self):
         valid, error_response = is_manual_intervention_valid(
