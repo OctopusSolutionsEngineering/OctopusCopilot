@@ -766,6 +766,8 @@ def sanitize_configuration(configuration):
     """Apply all sanitization fixes to a raw LLM-generated Terraform configuration."""
     # Replace anything that looks like a password
     configuration = replace_passwords(configuration)
+    # Replace anything that looks like a certificate
+    configuration = replace_certificate_data(configuration)
     # Replace anything that looks like a token
     configuration = replace_token(configuration)
     # Replace anything that looks like a secret

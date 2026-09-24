@@ -182,8 +182,6 @@ resource "octopusdeploy_project" "project_my_project" {
   project_group_id                 = "${length(data.octopusdeploy_project_groups.project_group_kubernetes.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_kubernetes.project_groups[0].id : octopusdeploy_project_group.project_group_kubernetes[0].id}"
   tenanted_deployment_participation = "Untenanted"
   # ...
-  default_worker_pool_id          = "${length(data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id : octopusdeploy_worker_pool.workerpool_default_worker_pool[0].id}"
-  default_tool_version            = "ToolVersionLatest"
 }
 
 resource "octopusdeploy_process" "process_my_project" {
@@ -1205,6 +1203,7 @@ resource "octopusdeploy_tag" "tagset_geo_tag_eu" {
 
 ## Lifecycle Instructions
 
+* **CRITICAL — two "Create a lifecycle" instructions with the IDENTICAL name (e.g. two "Custom Lifecycle") MUST get different `name` attributes**, e.g. `"Custom Lifecycle"` and `"Custom Lifecycle 2"` — never the same literal `name` string on both `octopusdeploy_lifecycle` resources even if their resource labels differ (`lifecycle_custom_lifecycle_1` / `lifecycle_custom_lifecycle_2`). Two lifecycles sharing a `name` race at apply time and one fails with `Octopus API error: There was a problem with your request. [A lifecycle with this name already exists. Please choose a different name.]` (observed: `lifecycle_custom_lifecycle_1` failed while `lifecycle_custom_lifecycle_2` — created after it, same name — succeeded). See the general duplicate-name rule earlier in this document, which applies to every space-unique-named resource type, not just steps.
 * A lifecycle other than the "Default Lifecycle" needs a data "octopusdeploy_lifecycles" and a resource "octopusdeploy_lifecycle":
 
 ```
@@ -1352,6 +1351,9 @@ resource "octopusdeploy_docker_container_registry" "feed_google_container_regist
 
 **Self-check**: compare each such `name` to the prompt character by character; restore anything other than `/` → dash.
 
+* **CRITICAL — `octopusdeploy_environment` `name` has a server-enforced 50 character limit, and `octopusdeploy_project` `name` has a server-enforced 200 character limit.** Exceeding either is a BLANK apply failure that aborts the whole configuration, not a graceful rejection (`Octopus API error: There was a problem with your request. [Name must be less than 50 characters.]` / `[Name is too long. Maximum length is 200 characters.]`, both observed). **Do not attempt to count characters or truncate at an exact position** (LLMs count characters unreliably and an off-by-one still fails the exact same way). Instead, when a prompt-supplied environment or project name is obviously very long (visibly longer than a short phrase — several words strung together with no spaces, or a full sentence), shorten it to a short, clearly-under-the-limit name that preserves the key identifying words (e.g. keep the first 4-6 words, or the most specific noun phrase), and note in the project description that the prompt's name was shortened because it exceeded Octopus's length limit. When in doubt about whether a name is short enough, err on the side of a shorter name — a name well under the limit always succeeds; a name merely close to the limit risks the exact same failure.
+* Do not guess a length limit for other resource types not documented here; these limits are confirmed only for `octopusdeploy_environment` (50) and `octopusdeploy_project` (200).
+
 ## Octopus Project Instructions
 
 * "name" of "octopusdeploy_project" may contain letters, numbers, periods, commas, dashes, underscores, brackets, square brackets, colons, ampersands or hashes. Only `/` is rejected: replace it with a dash, change nothing else; never replace brackets with underscores.
@@ -1360,7 +1362,8 @@ resource "octopusdeploy_docker_container_registry" "feed_google_container_regist
 * If the prompt specifies a project name, use it for "name".
 * Retention policies do not apply to "octopusdeploy_project": ignore any mention of them and never add a "retention_policy" block.
 * Never create "octopusdeploy_project_deployment_settings" or "octopusdeploy_project_retention_policy" resources.
-* "skip_machine_behavior": "None" or "SkipUnavailableMachines".
+* **CRITICAL — `octopusdeploy_project` has NO `default_worker_pool_id` and NO `default_tool_version` attribute.** Both fail apply with `Error: Unsupported argument ... An argument named "default_worker_pool_id"/"default_tool_version" is not expected here.` A project's default worker pool is set via a `WorkerPool`-typed `octopusdeploy_variable` (e.g. `Octopus.Project.WorkerPool`, see the canonical variable value using `data.octopusdeploy_worker_pools...`), referenced by steps via `worker_pool_variable`, never as a direct `octopusdeploy_project` attribute.
+* **CRITICAL — `skip_machine_behavior` (value `"None"` or `"SkipUnavailableMachines"`) is NOT a top-level `octopusdeploy_project` attribute** — placing it there fails apply with `Error: Unsupported argument ... An argument named "skip_machine_behavior" is not expected here.` It belongs ONLY inside the project's `connectivity_policy { ... }` block, alongside `allow_deployments_to_no_targets`, `exclude_unhealthy_targets` and `target_roles`.
 * Every "octopusdeploy_project" must include "lifecycle_id".
 * **CRITICAL — always `is_version_controlled = false`, even if the prompt asks for a version-controlled, Config-as-Code, GitOps, or Git-stored project.** VCS conversion tries to authenticate to the real repo and fails at `terraform apply` (`Error converting project to VCS: The username or token used to authenticate with the Git Repository is invalid`), aborting the ENTIRE apply so no project is created.
   * Emit no `git_library_persistence_settings`, `git_anonymous_persistence_settings`, `git_username_password_persistence_settings` or other VCS/Git persistence block on `octopusdeploy_project`.
@@ -1902,6 +1905,7 @@ properties = {
 * Only invent an expression when the condition is described in prose without a quote (e.g. "run this step only when the deployment has failed" → `#{if Octopus.Deployment.Error}True#{/if}`).
 * `"True"` (or `"False"`) is never a valid expression — `"True"` means always run, even after failure. Either write the prompt's expression or use `condition = "Success"` without the property.
 * Self-check: literally search output for `Octopus.Step.ConditionVariableExpression`; any value not containing `#{` is wrong — replace with the prompt's expression, or if none quoted, remove the property and set `condition` to `"Success"` (or `"Failure"` / `"Always"` per prompt). Don't assume template-derived values are correct.
+* **CRITICAL — adding a run condition to ONE step must not disturb another step's existing `condition = "Variable"`.** Several project templates already ship a step with `condition = "Variable"` and a non-empty `Octopus.Step.ConditionVariableExpression` (e.g. Azure Function's "Send deployment failure notification": `"#{if Octopus.Deployment.Error}#{if Octopus.Action[Octopus - Check SMTP Server Configured].Output.SmtpConfigured == \"True\"}true#{/if}#{/if}"`). When the prompt asks you to add a DIFFERENT run condition to a DIFFERENT named step, copy every other template step — especially any with `condition = "Variable"` — through unchanged; emitting `condition = "Variable"` with a missing or blanked `Octopus.Step.ConditionVariableExpression` on an untouched template step fails apply with `Octopus API error: There was a problem with your request. [Please add a variable expression for your variable run condition.]`.
 
 * Adding a step needs a new "octopusdeploy_process_step" resource plus its ID added to the "steps" array of "octopusdeploy_process_steps_order". E.g. adding "Deploy an Azure Web App (Web Deploy)" after "Validate setup":
 
@@ -2096,13 +2100,13 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
     acquisition_location = "NotAcquired",
     feed_id = "${data.octopusdeploy_feeds.feed_octopus_server_releases__built_in_.feeds[0].id}",
     id = null,
-    package_id = "${data.octopusdeploy_projects.project_child_project.projects[0].id}",
+    package_id = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}",
     properties = null
   }
   execution_properties  = {
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.DeployRelease.DeploymentCondition" = "Always"
-        "Octopus.Action.DeployRelease.ProjectId" = "${data.octopusdeploy_projects.project_child_project.projects[0].id}"
+        "Octopus.Action.DeployRelease.ProjectId" = "${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"
       }
   # ...
 }
@@ -2116,7 +2120,7 @@ resource "octopusdeploy_process_step" "process_step_every_step_project_deploy_a_
 
 **CRITICAL — one `data "octopusdeploy_projects"` lookup per child project** (N steps → N data sources, `partial_name` = child project name); never share one lookup across children.
 
-* Never set "Octopus.Action.DeployRelease.ProjectId" or "package_id" to a data/resource ternary like `length(data.octopusdeploy_projects.project_reporting_microservice.projects) != 0 ? ... : octopusdeploy_project.project_reporting_microservice[0].id`, or ProjectId to fixed values like "Projects-8916", "Projects-8915", "Projects-8917". Never set `primary_package` "feed_id" to fixed values like "Feeds-5936", "Feeds-5678", "Feeds-91011".
+* **CRITICAL — when the named child project is created BY THIS SAME configuration** (per the "create each child project" rule above — the common case, since the child project does not yet exist in the space), "Octopus.Action.DeployRelease.ProjectId" and `primary_package` "package_id" MUST use the full ternary WITH the resource fallback, exactly matching the child project's own resource label: `"${length(data.octopusdeploy_projects.project_child_project.projects) != 0 ? data.octopusdeploy_projects.project_child_project.projects[0].id : octopusdeploy_project.project_child_project[0].id}"`. A bare `data.octopusdeploy_projects.project_child_project.projects[0].id` with no fallback fails at apply with `Invalid index ... the collection has no elements` the moment the child project is being created rather than already existing (observed). The bare data-source-only form is correct ONLY when the prompt or context confirms the child project already exists and is never created by this configuration. Never set ProjectId to fixed values like "Projects-8916", "Projects-8915", "Projects-8917". Never set `primary_package` "feed_id" to fixed values like "Feeds-5936", "Feeds-5678", "Feeds-91011".
 * Do not recreate the demo-only data "octopusdeploy_projects" "project_child_project" or resource "octopusdeploy_project" "project_child_project".
 * Always include `data "octopusdeploy_feeds" "feed_octopus_server_releases__built_in_"`; every "Octopus.DeployRelease" `primary_package` "feed_id" must use it.
 
@@ -2140,12 +2144,12 @@ resource "octopusdeploy_process_step" "process_step_deploy_child_a" {
     acquisition_location = "NotAcquired",
     feed_id    = "${data.octopusdeploy_feeds.feed_octopus_server_releases__built_in_.feeds[0].id}",
     id         = null,
-    package_id = "${data.octopusdeploy_projects.project_child_a.projects[0].id}",
+    package_id = "${length(data.octopusdeploy_projects.project_child_a.projects) != 0 ? data.octopusdeploy_projects.project_child_a.projects[0].id : octopusdeploy_project.project_child_a[0].id}",
     properties = null
   }
   start_trigger        = "StartAfterPrevious"
   execution_properties = {
-    "Octopus.Action.DeployRelease.ProjectId"            = "${data.octopusdeploy_projects.project_child_a.projects[0].id}"
+    "Octopus.Action.DeployRelease.ProjectId"            = "${length(data.octopusdeploy_projects.project_child_a.projects) != 0 ? data.octopusdeploy_projects.project_child_a.projects[0].id : octopusdeploy_project.project_child_a[0].id}"
     "Octopus.Action.DeployRelease.DeploymentCondition"  = "Always"
     "Octopus.Action.DeployRelease.WaitForDeployment"    = "True"
     "Octopus.Action.RunOnServer"                        = "true"
@@ -2157,11 +2161,11 @@ resource "octopusdeploy_process_step" "process_step_deploy_child_b" {
   # ... same as above, but:
   primary_package = {
     # ...
-    package_id = "${data.octopusdeploy_projects.project_child_b.projects[0].id}",   # separate data source
+    package_id = "${length(data.octopusdeploy_projects.project_child_b.projects) != 0 ? data.octopusdeploy_projects.project_child_b.projects[0].id : octopusdeploy_project.project_child_b[0].id}",   # separate data source
   }
   start_trigger        = "StartAfterPrevious"   # or "StartWithPrevious" if parallel
   execution_properties = {
-    "Octopus.Action.DeployRelease.ProjectId"            = "${data.octopusdeploy_projects.project_child_b.projects[0].id}"
+    "Octopus.Action.DeployRelease.ProjectId"            = "${length(data.octopusdeploy_projects.project_child_b.projects) != 0 ? data.octopusdeploy_projects.project_child_b.projects[0].id : octopusdeploy_project.project_child_b[0].id}"
     # ...
   }
 }
