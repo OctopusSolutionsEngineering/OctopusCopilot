@@ -25,4 +25,10 @@ def configure_logging(name=__name__):
     log = logging.getLogger(name)
     log.setLevel(os.environ.get("LOGLEVEL", "DEBUG"))
     log.addHandler(handler)
+
+    # The Azure SDK's HTTP logging policy logs the method, URL, and headers of every
+    # request/response at INFO level, which is noisy and was ending up in the function
+    # logs. Silence it regardless of the level configured for our own loggers.
+    logging.getLogger("azure").setLevel(logging.WARNING)
+
     return log
