@@ -31,4 +31,9 @@ def configure_logging(name=__name__):
     # logs. Silence it regardless of the level configured for our own loggers.
     logging.getLogger("azure").setLevel(logging.WARNING)
 
+    # Presidio warns at WARNING level whenever spaCy tags an entity (e.g. WORK_OF_ART,
+    # CARDINAL) that it has no PII mapping for, even though it keeps the entity anyway.
+    # That warning is noise, not an actionable error, so silence it too.
+    logging.getLogger("presidio-analyzer").setLevel(logging.ERROR)
+
     return log
