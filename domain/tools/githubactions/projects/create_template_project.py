@@ -195,6 +195,7 @@ def create_general_resources_callback(
     general_system_message,
     redirections,
     redirector_api_key,
+    ollama_model = None,
 ):
     """
     This function is used to create general resources in Octopus Deploy, such as feeds, accounts, lifecycles etc.
@@ -223,6 +224,7 @@ def create_general_resources_callback(
         project_system_message=None,
         redirections=redirections,
         redirector_api_key=redirector_api_key,
+        ollama_model=ollama_model
     )
 
 
@@ -239,12 +241,14 @@ def create_template_project_callback(
     project_system_message,
     redirections,
     redirector_api_key,
+    ollama_model=None
 ):
     """
     This function is used to create a template project in Octopus Deploy. This function is generic and can be used
     to build any type of project in Octopus Deploy. All the sample Terraform and LLM messages are stored in the
     database to make it easy to add and edit examples.
 
+    :param ollama_model: The Ollama model to use
     :param octopus_details: A function to get the Octopus server URL and credentials
     :param github_user: The github user id
     :param region: The region name (US, Europe, or None/empty)
@@ -358,6 +362,7 @@ def create_template_project_callback(
                     context,
                     log_query,
                     region,
+                    ollama_model,
                 )
 
             # Apply all fixes to fresh and cached configurations
@@ -524,10 +529,12 @@ def generate_terraform_configuration(
     context,
     log_query,
     region=None,
+    ollama_model=None,
 ):
     """
     Build the LLM message chain and query it to produce a raw Terraform configuration string.
 
+    :param ollama_model: The Ollama model to use
     :param general_examples_values: General Terraform example strings
     :param general_system_message_values: The general system message for the LLM
     :param project_example_values: An example Terraform configuration for the specific project type
@@ -564,6 +571,7 @@ def generate_terraform_configuration(
         log_query,
         purpose=purpose,
         region=region,
+        ollama_model=ollama_model,
     )
 
 

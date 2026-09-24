@@ -175,7 +175,7 @@ def get_ollama_reasoning():
     return reasoning
 
 
-def build_llm(purpose, region=None, prompt=None):
+def build_llm(purpose, region=None, prompt=None, ollama_model=None):
     if purpose == AZURE_PROJECT_SERVICE:
         return build_azure_project_llm(region, prompt)
 
@@ -188,18 +188,18 @@ def build_llm(purpose, region=None, prompt=None):
 
     # Ollama serves a local model on localhost, so it likewise has no regional variants.
     if purpose == OLLAMA_PROJECT_SERVICE:
-        return build_ollama_llm()
+        return build_ollama_llm(ollama_model)
 
     return build_azure_general_llm(region)
 
 
-def build_ollama_llm():
+def build_ollama_llm(ollama_model=None):
     # We use the native Ollama API rather than the OpenAI-compatible /v1 endpoint, because
     # only the native API allows the context window (num_ctx) to be set with each request.
     # The Ollama default context window is too small for the project generation prompts.
     return ChatOllama(
         temperature=get_ollama_temperature(),
-        model=get_ollama_model(),
+        model=ollama_model or get_ollama_model(),
         base_url=get_ollama_endpoint(),
         num_ctx=get_ollama_context_length(),
         reasoning=get_ollama_reasoning(),
@@ -358,10 +358,10 @@ def build_azure_general_llm(region=None):
 
 @retry(RateLimitError, tries=3, delay=5)
 def llm_message_query(
-    message_prompt, context, log_query=None, purpose=AZURE_GENERAL_SERVICE, region=None
+    message_prompt, context, log_query=None, purpose=AZURE_GENERAL_SERVICE, region=None, ollama_model=None
 ):
 
-    llm = build_llm(purpose, region, prompt=message_prompt)
+    llm = build_llm(purpose, region, prompt=message_prompt, ollama_model=ollama_model)
 
     prompt = ChatPromptTemplate.from_messages(message_prompt)
 
