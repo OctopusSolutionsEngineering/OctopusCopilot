@@ -970,6 +970,7 @@ resource "octopusdeploy_external_feed_create_release_trigger" "projecttrigger_my
 **CRITICAL:** Every tenant-related data source needs its resource block (`octopusdeploy_tenant`, `octopusdeploy_tenant_project`, `octopusdeploy_tenant_project_variable`, `octopusdeploy_tag_set`, `octopusdeploy_tag`); e.g. `data "octopusdeploy_tenants"` needs `resource "octopusdeploy_tenant"`.
 
 * If the prompt says tenants are created/added, create "octopusdeploy_tenant" resources in addition to the "octopusdeploy_project" resource; never "octopusdeploy_tenant" without an associated "octopusdeploy_project".
+* **CRITICAL — "Create two separate tenants, both called 'X'" (or similar) MUST produce TWO `octopusdeploy_tenant` resources**, e.g. `name = "X"` and `name = "X 2"` (distinct resource labels too), never silently collapsed into one tenant (observed failure: a prompt asking for two tenants both named "East Region" produced only one). See the general duplicate-name rule earlier in this document, which applies to every space-unique-named resource type.
 * Each resource "octopusdeploy_tenant" has an associated data "octopusdeploy_tenants":
 
 ```
@@ -1346,6 +1347,8 @@ resource "octopusdeploy_docker_container_registry" "feed_google_container_regist
 
 * "name" of "octopusdeploy_environment", "octopusdeploy_lifecycle", "octopusdeploy_channel", "octopusdeploy_tenant", "octopusdeploy_project_group", "octopusdeploy_runbook", "octopusdeploy_worker_pool" and every lifecycle "phase" MUST be copied from the prompt character for character. `()`, `[]`, `:` and `&` are accepted (verified: `Probe Paren (One)`, `Probe Amp & Three`).
 * Only `/` is rejected: replace it with a DASH (never underscore), nothing else — `Staging (EU-West-1) / Primary` → `Staging (EU-West-1) - Primary`. Never alter a name without `/`.
+* Non-emoji Unicode (accented Latin, non-Latin scripts, quotation marks, etc.) must still be copied through exactly as written in the prompt.
+* **KNOWN PLATFORM LIMITATION — emoji in a prompt-supplied name are silently replaced with underscores by the Octopus server itself**, not something the generated Terraform controls: a tenant named `Nordics 🇸🇪 Region` was created as `Nordics __ Region` even when the Terraform `name` attribute contained the emoji verbatim (confirmed unchanged across repeated attempts with different instruction wording, and no client-side sanitization exists in the Terraform provider source). Put the emoji in the `name` attribute exactly as given regardless — do not attempt to work around this by transliterating, describing, or omitting the emoji — and do not treat the resulting underscores as an AI Assistant generation bug if observed again.
 * Stricter step-name rules (no parentheses/square brackets) apply ONLY to "octopusdeploy_process_step" and "octopusdeploy_process_child_step"; replacement is still a DASH: `Reconcile (Ledger)` → `Reconcile -Ledger-`.
 * The Terraform LABEL (e.g. `environment_staging_eu_west_1_primary`: lowercased, punctuation → underscores) is not the `name`.
 
