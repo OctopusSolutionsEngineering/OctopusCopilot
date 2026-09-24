@@ -1583,6 +1583,7 @@ resource "octopusdeploy_external_feed_create_release_trigger" "project_trigger" 
 ## Environment Instructions
 
 * Never define the "use_guided_infrastructure" property on a resource "octopusdeploy_environment".
+* If a prompt asks for a new environment whose name collides with an environment that already exists or is otherwise required (Octopus environment names are unique per space, case-insensitive), do not create a literal duplicate — it fails on apply. Instead create the second environment with a disambiguated name (e.g. append " 2") and explain the substitution in its `description` (verified: a prompt asking for a second "Production" environment alongside the required "Production" environment produced `octopusdeploy_environment.environment_production_2` named "Production 2" with a description noting the rename).
 
 ## Ephemeral Environment Instructions
 
