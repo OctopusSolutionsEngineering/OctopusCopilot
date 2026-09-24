@@ -1198,6 +1198,7 @@ resource "octopusdeploy_tag" "tagset_geo_tag_eu" {
 * Never create "octopusdeploy_project_tenant_tag".
 * E.g. "Cities/Sydney" requires data "octopusdeploy_tag_sets" "tagset_cities", resource "octopusdeploy_tag_set" "tagset_cities" and resource "octopusdeploy_tag" "tagset_cities_tag_sydney" (`name = "Sydney"`, random `color`, `description = ""`), one tag resource per tag.
 * "count" on "octopusdeploy_tag" must be `length(try([for item in data.octopusdeploy_tag_sets.<tagset data name>.tag_sets[0].tags : item if item.name == "<tag name>"], [])) != 0 ? 0 : 1` (written out in full, never with underscores replacing brackets, `?` and `!`).
+* **CRITICAL — do NOT backslash-escape the quotes around `<tag name>` (or any other native Terraform string literal) inside a `${...}` interpolation.** `item.name == "Prod"` is correct; `item.name == \"Prod\"` is invalid HCL and OpenTofu fails the whole file with `Invalid character` / `Invalid multi-line string` errors that cascade through every resource declared after it (observed: a `count` on `octopusdeploy_tag` written as `item.name == \"Prod\"` aborted the entire apply). Backslash-escaping is only for a string that is itself a literal value being reproduced verbatim inside another string (SpEL/JSON snippets in `notes`, `ssn_Message`, script bodies — see "Take EXTREME CARE escaping quotes" below); it must NEVER be applied to native Terraform expression syntax such as `for` filters, `if` conditions, or `==` comparisons inside `${...}`.
 * **CRITICAL — any resource referencing a canonical `<tag set>/<tag>` (tenant `tenant_tags`, variable `scope { tenant_tags = [...] }`, step `tenant_tags`) MUST `depends_on` BOTH the `octopusdeploy_tag_set` AND each referenced `octopusdeploy_tag`**, even without a name collision, else `"There was a problem with your request. [Unable to find matching tag from canonical tag name or id '<tag set>/<tag>']"`. E.g. for `"region/emea"`: `depends_on = [octopusdeploy_tag_set.tagset_region, octopusdeploy_tag.tagset_region_tag_emea]`.
 
 ## Lifecycle Instructions
@@ -2834,10 +2835,11 @@ variable "octopus_space_id" {
 EOT
 ```
 * Define "Octopus.Action.TargetRoles" in "properties" for steps that deploy to targets, including "Octopus.TentaclePackage", "Octopus.TomcatDeploy", "Octopus.AzureAppService", "Octopus.IIS", "Octopus.WindowsService", "Octopus.AzureWebApp", "Octopus.JavaArchive", "Octopus.HelmChartUpgrade", "Octopus.KubernetesDeployRawYaml", "Octopus.Kubernetes.Kustomize", "Octopus.TransferPackage".
-* Take EXTREME CARE escaping quotes; escape every inner quote:
+* Take EXTREME CARE escaping quotes; escape every inner quote **when that quote belongs to a literal value being reproduced verbatim** (SpEL expressions, JSON snippets, script text) inside a larger string such as `ssn_Message`, `notes`, or a script body:
  ```
  "ssn_Message" = "Image: $${trigger[\"artifacts\"].?[name == _\"registry.example.invalid_image-0095_\"][0][_\"version_\"]}"
  ```
+  * **CRITICAL — this does NOT apply to native Terraform expression syntax.** A string literal that is part of the Terraform language itself (a `for` filter, an `if` condition, a `==` comparison, a function argument) inside `${...}` uses a plain unescaped quote, e.g. `item.name == "Prod"` in an `octopusdeploy_tag` `count` expression — never `item.name == \"Prod\"`. Escaping native Terraform quotes produces invalid HCL that aborts the entire apply (see the `octopusdeploy_tag` `count` instruction above).
 
 
 ## Terraform Variable Instructions
