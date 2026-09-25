@@ -408,6 +408,8 @@ def create_template_project_callback(
                         redirector_api_key,
                     )
                 except SpaceBuilderRequestFailed as e:
+                    log_query(create_template_project_callback.__name__, str(e))
+
                     # This is our agentic loop where we get the LLM to try and fix its own problems based
                     # on the error messages from the Terraform plan creation.
                     # We'll do this once to try and produce valid Terraform
