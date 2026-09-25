@@ -2634,6 +2634,16 @@ resource "octopusdeploy_runbook" "runbook_my_runbook" {
 ```
 * "runbook_id" of "octopusdeploy_runbook_process" is "${length(data.octopusdeploy_projects.<project>.projects) != 0 ? null : octopusdeploy_runbook.<runbook>[0].id}"
 * "octopusdeploy_runbook" / "octopusdeploy_runbooks" data sources do not exist; never create them.
+* **CRITICAL — a runbook's `octopusdeploy_process` MUST set BOTH `project_id` AND `runbook_id`, never `runbook_id` alone.** Observed failure: a runbook's process resource omitted `project_id`, causing a hard `tofu plan` failure (`Missing required argument: The argument "project_id" is required, but no definition was found`) that aborted the ENTIRE apply — not just the runbook, the whole project and every other resource in the same plan failed to create. This is a much more severe failure mode than a cosmetic content mismatch: the AI Assistant's own error message was "The Octopus resources could not be generated from the prompt," i.e. nothing at all was created. Canonical shape (mirrors the main-process `project_id` ternary, plus `runbook_id`):
+```hcl
+resource "octopusdeploy_process" "process_my_project_my_runbook" {
+  count      = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
+  project_id = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? data.octopusdeploy_projects.project_my_project.projects[0].id : octopusdeploy_project.project_my_project[0].id}"
+  runbook_id = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? null : octopusdeploy_runbook.runbook_my_runbook[0].id}"
+  depends_on = []
+}
+```
+Self-check: every `octopusdeploy_process` resource that has a `runbook_id` attribute ALSO has a `project_id` attribute — never one without the other.
 
 ## Worker Pool Instructions
 
