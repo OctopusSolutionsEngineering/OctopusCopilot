@@ -14,7 +14,10 @@ from domain.sanitizers.terraform import (
     fix_empty_properties_block,
     fix_empty_execution_properties_block,
     fix_empty_strings,
+    MOCK_CERTIFICATE_DATA,
+    MOCK_CERTIFICATE_PASSWORD,
     replace_certificate_data,
+    replace_private_key_data,
     replace_passwords,
     replace_secrets,
     replace_token,
@@ -954,6 +957,21 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = replace_passwords(input)
 
         self.assertNotIn("A leaked password", result)
+
+    def test_replace_private_key_file(self):
+        input = """resource "octopusdeploy_ssh_key_account" "account_ssh" {
+          name                    = "SSH"
+          username                = "admin"
+          private_key_file        = "a leaked private key"
+          private_key_passphrase  = "a leaked passphrase"
+        }"""
+
+        result = replace_private_key_data(input)
+
+        self.assertNotIn("a leaked private key", result)
+        self.assertNotIn("a leaked passphrase", result)
+        self.assertIn(f'private_key_file = "{MOCK_CERTIFICATE_DATA}"', result)
+        self.assertIn(f'private_key_passphrase = "{MOCK_CERTIFICATE_PASSWORD}"', result)
 
     def test_replace_secrets(self):
         input = """resource "octopusdeploy_azure_service_principal" "account" {

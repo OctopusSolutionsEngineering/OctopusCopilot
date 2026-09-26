@@ -275,6 +275,23 @@ def replace_certificate_data(config):
     )
 
 
+def replace_private_key_data(config):
+    """
+    Replace any private key file and passphrase data with placeholder values.
+    """
+
+    config = re.sub(
+        r'private_key_file\s*=\s*".*?"',
+        f'private_key_file = "{MOCK_CERTIFICATE_DATA}"',
+        config,
+    )
+    return re.sub(
+        r'private_key_passphrase\s*=\s*".*?"',
+        f'private_key_passphrase = "{MOCK_CERTIFICATE_PASSWORD}"',
+        config,
+    )
+
+
 def fix_single_line_lifecycle(config):
     """
     The LLM kept insisting on using a single line lifecycle block. This is not valid HCL2 syntax.

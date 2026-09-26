@@ -36,6 +36,7 @@ from domain.sanitizers.terraform import (
     fix_empty_strings,
     replace_passwords,
     replace_certificate_data,
+    replace_private_key_data,
     sanitize_slugs,
     sanitize_primary_package,
     replace_resource_names_with_digit,
@@ -778,6 +779,8 @@ def sanitize_configuration(configuration):
     configuration = replace_passwords(configuration)
     # Replace anything that looks like a certificate
     configuration = replace_certificate_data(configuration)
+    # Replace private key file and passphrase data
+    configuration = replace_private_key_data(configuration)
     # Replace anything that looks like a token
     configuration = replace_token(configuration)
     # Replace anything that looks like a secret
