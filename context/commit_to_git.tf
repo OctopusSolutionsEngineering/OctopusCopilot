@@ -255,7 +255,7 @@ resource "octopusdeploy_git_credential" "gitcredential_mock" {
   count                   = "${length(data.octopusdeploy_git_credentials.gitcredential_mock.git_credentials) != 0 ? 0 : 1}"
   name                    = "Mock"
   type                    = "UsernamePassword"
-  username                = "blah"
+  username                = "changeme"
   password                = "${var.gitcredential_mock_sensitive_value}"
   repository_restrictions = { allowed_repositories = ["https://mockgit.octopusdemos.com/*"], enabled = true }
   lifecycle {
@@ -302,10 +302,10 @@ resource "octopusdeploy_process_step" "process_step_commit_to_git_image_referenc
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.Script.ScriptBody" = "echo \"Images obtained\""
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -327,10 +327,17 @@ resource "octopusdeploy_process_step" "process_step_commit_to_git_commit_to_git"
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Git.TargetRepositoryBranch" = "main"
         "Octopus.Action.Git.StepVerification.Method" = "CommitCreated"
         "Octopus.Action.Git.TargetRepositoryCredentialId" = "${length(data.octopusdeploy_git_credentials.gitcredential_mock.git_credentials) != 0 ? data.octopusdeploy_git_credentials.gitcredential_mock.git_credentials[0].id : octopusdeploy_git_credential.gitcredential_mock[0].id}"
         "Octopus.Action.Git.CommitMethod" = "DirectCommit"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Git.CommitMessageSummary" = "Updated files with Release: #{Octopus.Release.Number}"
+        "Octopus.Action.Git.PushRetryAttempts" = "2"
+        "Octopus.Action.Git.CommitMessageDescription" = <<EOT
+Project: #{Octopus.Project.Slug}
+Environment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }
+Tenant: #{Octopus.Deployment.Tenant.Slug}#{/if}
+EOT
         "Octopus.Action.Git.InputFileSources" = jsonencode([
         {
         "Type" = "GitRepository"
@@ -341,17 +348,10 @@ resource "octopusdeploy_process_step" "process_step_commit_to_git_commit_to_git"
         "GitDependencyName" = "InputGit-1"
                 },
         ])
+        "Octopus.Action.Git.TargetRepositoryBranch" = "main"
         "Octopus.Action.Git.StepVerification.Timeout" = "180"
-        "Octopus.Action.Git.CommitMessageDescription" = <<EOT
-Project: #{Octopus.Project.Slug}
-Environment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }
-Tenant: #{Octopus.Deployment.Tenant.Slug}#{/if}
-EOT
-        "Octopus.Action.Git.TargetRepositoryCredentialType" = "Library"
-        "Octopus.Action.Git.PushRetryAttempts" = "2"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Git.CommitMessageSummary" = "Updated files with Release: #{Octopus.Release.Number}"
         "Octopus.Action.Git.TargetRepositoryUrl" = "https://mockgit.octopusdemos.com/repo/gittemplate"
+        "Octopus.Action.Git.TargetRepositoryCredentialType" = "Library"
       }
 }
 
@@ -373,10 +373,10 @@ resource "octopusdeploy_process_step" "process_step_commit_to_git_link_to_repo" 
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.Script.ScriptBody" = "Write-Highlight \"[Browse Git Repository](https://mockgit.octopusdemos.com/browse/$($OctopusParameters[\"Project.MockGit.Username\"])/gittemplate)\""
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.Script.ScriptBody" = "Write-Highlight \"[Browse Git Repository](https://mockgit.octopusdemos.com/browse/$($OctopusParameters[\"Project.MockGit.Username\"])/gittemplate)\""
       }
 }
 

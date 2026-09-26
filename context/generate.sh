@@ -463,3 +463,23 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > commit_to_git.tf
 
 ./generate_instructions.py commit_to_git.tf "Commit to Git" > instructions_commit_to_git.md
+
+"$CONTAINER_RUNTIME" run --pull "$PULL" -v "$PWD:/tmp/octoexport$VOLUME_SUFFIX" --rm "$IMAGE" \
+    -url https://mattc.octopus.app \
+    -space Spaces-3368 \
+    -apiKey $OCTOPUS_CLI_API_KEY \
+    -projectName "Argo CD Rollouts" \
+    -stepTemplate \
+    -stepTemplateName "Space Context" \
+    -stepTemplateKey "SpaceContext" \
+    -dummySecretVariableValues \
+    -includeProviderServerDetails=false \
+    -ignoreCacManagedValues=false \
+    -excludeCaCProjectSettings=true \
+    -includeOctopusOutputVars=false \
+    -inlineVariableValues \
+    -excludeAllRunbooks=false \
+    -dest /tmp/octoexport
+cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > argocdrollouts.tf
+
+./generate_instructions.py argo_cd_rollouts.tf "Argo CD Rollouts" > instructions_argocdrollouts.md

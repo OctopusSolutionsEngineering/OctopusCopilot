@@ -279,7 +279,7 @@ resource "octopusdeploy_git_credential" "gitcredential_mock" {
   count                   = "${length(data.octopusdeploy_git_credentials.gitcredential_mock.git_credentials) != 0 ? 0 : 1}"
   name                    = "Mock"
   type                    = "UsernamePassword"
-  username                = "blah"
+  username                = "changeme"
   password                = "${var.gitcredential_mock_sensitive_value}"
   repository_restrictions = { allowed_repositories = ["https://mockgit.octopusdemos.com/*"], enabled = true }
   lifecycle {
@@ -351,9 +351,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_app
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Manual.BlockConcurrentDeployments" = "True"
         "Octopus.Action.Manual.Instructions" = "Do you approve the deployment?"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -432,19 +432,19 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_upd
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
         "Octopus.Action.ArgoCD.Sync.Mode" = "Disabled"
-        "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
+        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
+        "Octopus.Action.ArgoCD.CommitWhenStale" = "True"
         "Octopus.Action.ArgoCD.CommitMessageDescription" = <<EOT
 Project: #{Octopus.Project.Slug}
 Environment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }
 Tenant: #{Octopus.Deployment.Tenant.Slug}#{/if}
 EOT
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "Octopus.Action.ArgoCD.StepVerification.Method" = "CommitCreated"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.ArgoCD.CommitMessageSummary" = "Updated Manifests with Release: #{Octopus.Release.Number}"
-        "Octopus.Action.ArgoCD.CommitWhenStale" = "True"
-        "Octopus.Action.ArgoCD.CommitMethod" = "DirectCommit"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
         "Octopus.Action.ArgoCD.StepVerification.Timeout" = "180"
         "Octopus.Action.ArgoCD.InputPath" = "octopub-manifest/template/octopub.yml"
       }
@@ -468,10 +468,10 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_lin
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "Write-Highlight \"[Browse Git Repository](https://mockgit.octopusdemos.com/browse/$($OctopusParameters[\"Project.MockGit.Username\"])/argocd)\""
-        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 

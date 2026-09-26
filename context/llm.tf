@@ -404,6 +404,13 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_deploy_a_k
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
+        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
+        "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.KubernetesContainers.CustomResourceYaml" = <<EOT
 apiVersion: v1
@@ -464,13 +471,6 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
 EOT
-        "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
-        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "True"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "True"
       }
 }
 
@@ -522,6 +522,7 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_print_mess
   properties            = {
       }
   execution_properties  = {
+        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.RunOnServer" = "true"
@@ -533,7 +534,6 @@ if ("#{Octopus.Step[Deploy a Kubernetes Web App via YAML].Status.Code}" -eq "Aba
   Write-Highlight "We recommend the [Kubernetes Agent](https://octopus.com/docs/kubernetes/targets/kubernetes-agent)."
 }
 EOT
-        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -557,11 +557,11 @@ resource "octopusdeploy_process_step" "process_step_llm_in_kubernetes_scan_for_v
   properties            = {
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.GitRepository.Source" = "External"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptFileName" = "octopus/DockerImageSbomScan.ps1"
         "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.GitRepository.Source" = "External"
       }
 }
 
