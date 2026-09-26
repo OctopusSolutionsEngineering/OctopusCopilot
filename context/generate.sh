@@ -482,4 +482,4 @@ cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"'
     -dest /tmp/octoexport
 cat step_template.json | jq -r '.Properties."Octopus.Action.Terraform.Template"' > argocdrollouts.tf
 
-./generate_instructions.py argo_cd_rollouts.tf "Argo CD Rollouts" > instructions_argocdrollouts.md
+./generate_instructions.py argocdrollouts.tf "Argo CD Rollouts" > instructions_argocdrollouts.md

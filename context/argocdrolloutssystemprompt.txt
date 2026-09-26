@@ -8,36 +8,71 @@
 ## Argo CD Rollouts Environment Instructions
 
 You must include all the following environment resources from the "Example Octopus Argo CD Rollouts Terraform Configuration" once unless the prompt explicitly states that environments should be removed or modified:
-Error: File 'argo_cd_rollouts.tf' not found.
+* data "octopusdeploy_environments" "environment_development"
+* resource "octopusdeploy_environment" "environment_development"
+* data "octopusdeploy_environments" "environment_prod_10"
+* resource "octopusdeploy_environment" "environment_prod_10"
+* data "octopusdeploy_environments" "environment_prod_50"
+* resource "octopusdeploy_environment" "environment_prod_50"
+* data "octopusdeploy_environments" "environment_prod_100"
+* resource "octopusdeploy_environment" "environment_prod_100"
+* data "octopusdeploy_environments" "environment_security"
+* resource "octopusdeploy_environment" "environment_security"
 
 ## Argo CD Rollouts Feed Instructions
 
 You must include all the following feed resources from the "Example Octopus Argo CD Rollouts Terraform Configuration" once unless the prompt explicitly states that feeds should be removed or modified:
-Error: File 'argo_cd_rollouts.tf' not found.
+* data "octopusdeploy_feeds" "feed_octopus_server__built_in_"
+* data "octopusdeploy_feeds" "feed_ghcr_anonymous"
+* resource "octopusdeploy_docker_container_registry" "feed_ghcr_anonymous"
+* data "octopusdeploy_feeds" "feed_github_container_registry"
+* resource "octopusdeploy_docker_container_registry" "feed_github_container_registry"
 
 ## Argo CD Rollouts Project Instructions
 
 You must include all the following project resources from the "Example Octopus Argo CD Rollouts Terraform Configuration" once:
-Error: File 'argo_cd_rollouts.tf' not found.
-Error: File 'argo_cd_rollouts.tf' not found.
+* data "octopusdeploy_projects" "project_argo_cd_rollouts"
+* resource "octopusdeploy_project" "project_argo_cd_rollouts"
 
 ## Argo CD Rollouts Project Deployment Process Instructions
 
 You must include all the following project deployment process resources from the "Example Octopus Argo CD Rollouts Terraform Configuration" once:
-Error: File 'argo_cd_rollouts.tf' not found.
+* resource "octopusdeploy_process" "process_argo_cd_rollouts"
 
 ## Argo CD Rollouts Project Deployment Process Steps Instructions
 
 You must include all the following step resources from the "Example Octopus Argo CD Rollouts Terraform Configuration" once unless the prompt explicitly states that steps should be removed or modified:
-Error: File 'argo_cd_rollouts.tf' not found.
-Error: File 'argo_cd_rollouts.tf' not found.
-Error: File 'argo_cd_rollouts.tf' not found.
+* resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_deploy_rollout"
+* resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_get_rollout"
+* resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_link_to_repo"
+* resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_promote_rollout"
+You MUST ensure that 4 steps are included unless the prompt explicitly states that steps should be removed or modified.
+
+You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
+
+## Argo CD Rollouts Package Instructions
+
+You must use the following packages from the "Example Octopus Argo CD Rollouts Terraform Configuration" once unless the prompt explicitly states that different packages are to be used:
+* octopussolutionsengineering/rollouts-demo
+
 
 ## Argo CD Rollouts Project Deployment Process Step Order Instructions
 
 You must include all the following project deployment process step order resources from the "Example Octopus Argo CD Rollouts Terraform Configuration" once:
-Error: File 'argo_cd_rollouts.tf' not found.
-Error: File 'argo_cd_rollouts.tf' not found.
-Error: File 'argo_cd_rollouts.tf' not found.
-Error: File 'argo_cd_rollouts.tf' not found.
-Error: File 'argo_cd_rollouts.tf' not found.
+* resource "octopusdeploy_process_steps_order" "process_step_order_argo_cd_rollouts"
+## Argo CD Rollouts Project Variable Instructions
+
+You must include all the following variables from the "Example Octopus Argo CD Rollouts Terraform Configuration" once unless the prompt explicitly states that variables should be removed or modified:
+* resource "octopusdeploy_variable" "argo_cd_rollouts_project_image_1"
+* resource "octopusdeploy_variable" "argo_cd_rollouts_project_workerpool_1" (set the value to "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}")
+* resource "octopusdeploy_variable" "argo_cd_rollouts_project_mockgit_username_1"
+* resource "octopusdeploy_variable" "argo_cd_rollouts_octopusprintvariables_1"
+
+## Argo CD Rollouts Lifecycle Instructions
+
+You must include all the following lifecycle resources from the "Example Octopus Argo CD Rollouts Terraform Configuration" once unless the prompt explicitly states that lifecycles should be removed or modified:
+* data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle"
+* data "octopusdeploy_lifecycles" "lifecycle_progressive"
+* resource "octopusdeploy_lifecycle" "lifecycle_progressive"
+* data "octopusdeploy_lifecycles" "lifecycle_default_lifecycle"
+
