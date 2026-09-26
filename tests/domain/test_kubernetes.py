@@ -1009,9 +1009,10 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
         result = replace_access_and_secret_keys(input)
 
-        self.assertNotIn("AKIAEXAMPLE", result)
+        # access_key is an AWS access key ID, not a secret - it must be left as-is
+        self.assertIn("AKIAEXAMPLE", result)
         self.assertNotIn("a leaked secret key", result)
-        self.assertIn('access_key = "CHANGE ME"', result)
+        self.assertIn('access_key = "AKIAEXAMPLE"', result)
         self.assertIn('secret_key = "CHANGE ME"', result)
 
     def test_replace_access_and_secret_keys_ignores_other_properties(self):
@@ -1037,11 +1038,11 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
         result = replace_access_and_secret_keys(input)
 
-        self.assertNotIn("key1", result)
+        self.assertIn("key1", result)
         self.assertNotIn("secret1", result)
-        self.assertNotIn("key2", result)
+        self.assertIn("key2", result)
         self.assertNotIn("secret2", result)
-        self.assertEqual(result.count('"CHANGE ME"'), 4)
+        self.assertEqual(result.count('"CHANGE ME"'), 2)
 
     def test_replace_token(self):
         input = """resource "octopusdeploy_github_repository_feed" "feed_github_feed" {

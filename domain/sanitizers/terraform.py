@@ -92,8 +92,14 @@ def sanitize_name_attributes(config):
     Sanitize the names assigned to resources.
     """
 
+    # \b requires "name" to start at a word boundary, so "username", "hostname",
+    # "servicename" etc. are excluded — only a standalone "name" attribute matches.
+    # Observed failure: without the boundary, this regex also matched inside
+    # "username = ..." lines and stripped backslashes from Windows-style
+    # DOMAIN\user account usernames (e.g. "SVC\\telemetry" became "SVC__telemetry"),
+    # corrupting a value the prompt supplied verbatim.
     yaml_configs = re.findall(
-        r"name\s*=\s*.*",
+        r"\bname\s*=\s*.*",
         config,
     )
 
@@ -205,11 +211,16 @@ def replace_passwords(config):
 
 def replace_access_and_secret_keys(config):
     """
-    Replace any access_key or secret_key properties with a placeholder value.
+    Replace any secret_key properties with a placeholder value.
+    access_key is an AWS access key ID, not a secret, so it is left as the
+    literal value the prompt supplied. Observed failure: this function used
+    to also replace access_key, which meant a correctly-named AWS account
+    still ended up with a "CHANGE ME" access_key instead of the prompt's
+    literal value.
     """
 
     return re.sub(
-        r'(access_key|secret_key)\s*=\s*".*?"',
+        r'(secret_key)\s*=\s*".*?"',
         r'\1 = "CHANGE ME"',
         config,
     )
