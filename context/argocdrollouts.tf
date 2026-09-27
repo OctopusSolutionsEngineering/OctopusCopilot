@@ -24,22 +24,22 @@ data "octopusdeploy_lifecycles" "system_lifecycle_firstlifecycle" {
   take         = 1
 }
 
-data "octopusdeploy_project_groups" "project_group_argo_cd" {
+data "octopusdeploy_project_groups" "project_group_rollouts" {
   ids          = null
-  partial_name = "${var.project_group_argo_cd_name}"
+  partial_name = "${var.project_group_rollouts_name}"
   skip         = 0
   take         = 1
 }
-variable "project_group_argo_cd_name" {
+variable "project_group_rollouts_name" {
   type        = string
   nullable    = false
   sensitive   = false
   description = "The name of the project group to lookup"
-  default     = "Argo CD"
+  default     = "Rollouts"
 }
-resource "octopusdeploy_project_group" "project_group_argo_cd" {
-  count = "${length(data.octopusdeploy_project_groups.project_group_argo_cd.project_groups) != 0 ? 0 : 1}"
-  name  = "${var.project_group_argo_cd_name}"
+resource "octopusdeploy_project_group" "project_group_rollouts" {
+  count = "${length(data.octopusdeploy_project_groups.project_group_rollouts.project_groups) != 0 ? 0 : 1}"
+  name  = "${var.project_group_rollouts_name}"
   lifecycle {
     prevent_destroy = true
   }
@@ -99,7 +99,7 @@ resource "octopusdeploy_environment" "environment_prod_10" {
   servicenow_extension_settings {
     is_enabled = false
   }
-  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_security]
+  depends_on = [octopusdeploy_environment.environment_development]
   lifecycle {
     prevent_destroy = true
   }
@@ -129,7 +129,7 @@ resource "octopusdeploy_environment" "environment_prod_50" {
   servicenow_extension_settings {
     is_enabled = false
   }
-  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_prod_10,octopusdeploy_environment.environment_security]
+  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_prod_10]
   lifecycle {
     prevent_destroy = true
   }
@@ -159,7 +159,7 @@ resource "octopusdeploy_environment" "environment_prod_100" {
   servicenow_extension_settings {
     is_enabled = false
   }
-  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_prod_10,octopusdeploy_environment.environment_prod_50,octopusdeploy_environment.environment_security]
+  depends_on = [octopusdeploy_environment.environment_development,octopusdeploy_environment.environment_prod_10,octopusdeploy_environment.environment_prod_50]
   lifecycle {
     prevent_destroy = true
   }
@@ -300,36 +300,6 @@ data "octopusdeploy_worker_pools" "workerpool_hosted_windows" {
   take         = 1
 }
 
-data "octopusdeploy_environments" "environment_security" {
-  ids          = null
-  partial_name = "Security"
-  skip         = 0
-  take         = 1
-}
-resource "octopusdeploy_environment" "environment_security" {
-  count                        = "${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? 0 : 1}"
-  name                         = "Security"
-  description                  = ""
-  allow_dynamic_infrastructure = true
-  use_guided_failure           = false
-
-  jira_extension_settings {
-    environment_type = "unmapped"
-  }
-
-  jira_service_management_extension_settings {
-    is_enabled = false
-  }
-
-  servicenow_extension_settings {
-    is_enabled = false
-  }
-  depends_on = [octopusdeploy_environment.environment_development]
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
 data "octopusdeploy_git_credentials" "gitcredential_mock" {
   name = "Mock"
   skip = 0
@@ -375,7 +345,7 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_deploy_roll
   process_id            = "${length(data.octopusdeploy_projects.project_argo_cd_rollouts.projects) != 0 ? null : octopusdeploy_process.process_argo_cd_rollouts[0].id}"
   channels              = null
   condition             = "Success"
-  environments          = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+  environments          = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}", "${length(data.octopusdeploy_environments.environment_prod_10.environments) != 0 ? data.octopusdeploy_environments.environment_prod_10.environments[0].id : octopusdeploy_environment.environment_prod_10[0].id}"]
   excluded_environments = null
   git_dependencies      = { "" = { default_branch = "main", file_path_filters = null, git_credential_id = "${length(data.octopusdeploy_git_credentials.gitcredential_mock.git_credentials) != 0 ? data.octopusdeploy_git_credentials.gitcredential_mock.git_credentials[0].id : octopusdeploy_git_credential.gitcredential_mock[0].id}", git_credential_type = "Library", github_connection_id = "", repository_uri = "https://mockgit.octopusdemos.com/repo/argorollout" } }
   package_requirement   = "LetOctopusDecide"
@@ -387,18 +357,19 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_deploy_roll
         "Octopus.Action.TargetRoles" = "Mock"
       }
   execution_properties  = {
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
-        "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.AutoRetry.MaximumCount" = "3"
         "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" = "template/rollout.yaml"
-        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Project.K8s.Namespace}"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
         "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.AutoRetry.MaximumCount" = "3"
+        "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"
       }
 }
 
@@ -409,17 +380,22 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_get_rollout
   process_id            = "${length(data.octopusdeploy_projects.project_argo_cd_rollouts.projects) != 0 ? null : octopusdeploy_process.process_argo_cd_rollouts[0].id}"
   channels              = null
   condition             = "Success"
-  environments          = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
+  environments          = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}", "${length(data.octopusdeploy_environments.environment_prod_10.environments) != 0 ? data.octopusdeploy_environments.environment_prod_10.environments[0].id : octopusdeploy_environment.environment_prod_10[0].id}"]
   excluded_environments = null
+  notes                 = "Get the YAML that was sent to the Kubernetes server."
   package_requirement   = "LetOctopusDecide"
   slug                  = "get-rollout"
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
+  worker_pool_variable  = "Project.Workerpool"
   depends_on            = [octopusdeploy_process_step.process_step_argo_cd_rollouts_deploy_rollout]
   properties            = {
         "Octopus.Action.TargetRoles" = "Mock"
       }
   execution_properties  = {
+        "Octopus.Action.Script.Syntax" = "Bash"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Project.K8s.Namespace}"
         "Octopus.Action.Script.ScriptBody" = <<EOT
 # The mock server can have many instances,
 # and they do not sync state.
@@ -436,8 +412,6 @@ echo "Didn't find the rollout resource"
 exit 0
 EOT
         "Octopus.Action.Script.ScriptSource" = "Inline"
-        "Octopus.Action.Script.Syntax" = "Bash"
-        "Octopus.Action.RunOnServer" = "true"
       }
 }
 
@@ -450,6 +424,7 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_link_to_rep
   condition             = "Success"
   environments          = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}"]
   excluded_environments = null
+  notes                 = "Add a link to the Git repo where the Kubernetes manifests were sourced from."
   package_requirement   = "LetOctopusDecide"
   slug                  = "link-to-repo"
   start_trigger         = "StartAfterPrevious"
@@ -459,10 +434,10 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_link_to_rep
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptBody" = "Write-Highlight \"[Browse Git Repository](https://mockgit.octopusdemos.com/browse/$($OctopusParameters[\"Project.MockGit.Username\"])/argorollout)\""
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "PowerShell"
         "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.Script.ScriptBody" = "Write-Highlight \"[Browse Git Repository](https://mockgit.octopusdemos.com/browse/$($OctopusParameters[\"Project.MockGit.Username\"])/argorollout)\""
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -474,8 +449,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_promote_rol
   channels              = null
   condition             = "Success"
   container             = { dockerfile = null, feed_id = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id : octopusdeploy_docker_container_registry.feed_github_container_registry[0].id}", git_url = null, image = "octopusdeploylabs/argocd-workertools" }
-  environments          = null
-  excluded_environments = ["${length(data.octopusdeploy_environments.environment_development.environments) != 0 ? data.octopusdeploy_environments.environment_development.environments[0].id : octopusdeploy_environment.environment_development[0].id}", "${length(data.octopusdeploy_environments.environment_security.environments) != 0 ? data.octopusdeploy_environments.environment_security.environments[0].id : octopusdeploy_environment.environment_security[0].id}"]
+  environments          = ["${length(data.octopusdeploy_environments.environment_prod_50.environments) != 0 ? data.octopusdeploy_environments.environment_prod_50.environments[0].id : octopusdeploy_environment.environment_prod_50[0].id}", "${length(data.octopusdeploy_environments.environment_prod_100.environments) != 0 ? data.octopusdeploy_environments.environment_prod_100.environments[0].id : octopusdeploy_environment.environment_prod_100[0].id}"]
+  excluded_environments = null
+  notes                 = "Promote the rollout through the production environments."
   package_requirement   = "LetOctopusDecide"
   slug                  = "run-a-kubectl-script"
   start_trigger         = "StartAfterPrevious"
@@ -486,10 +462,10 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_promote_rol
         "Octopus.Action.TargetRoles" = "Mock"
       }
   execution_properties  = {
-        "Octopus.Action.Script.ScriptSource" = "Inline"
         "Octopus.Action.Script.Syntax" = "Bash"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.AutoRetry.MaximumCount" = "0"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Project.K8s.Namespace}"
         "Octopus.Action.Script.ScriptBody" = <<EOT
 # The mock server can have many instances,
 # and they do not sync state.
@@ -505,6 +481,7 @@ done
 echo "Didn't find the rollout resource"
 exit 0
 EOT
+        "Octopus.Action.Script.ScriptSource" = "Inline"
       }
 }
 
@@ -578,6 +555,21 @@ resource "octopusdeploy_variable" "argo_cd_rollouts_octopusprintvariables_1" {
   depends_on = []
 }
 
+resource "octopusdeploy_variable" "argo_cd_rollouts_project_k8s_namespace_1" {
+  count        = "${length(data.octopusdeploy_projects.project_argo_cd_rollouts.projects) != 0 ? 0 : 1}"
+  owner_id     = "${length(data.octopusdeploy_projects.project_argo_cd_rollouts.projects) == 0 ?octopusdeploy_project.project_argo_cd_rollouts[0].id : data.octopusdeploy_projects.project_argo_cd_rollouts.projects[0].id}"
+  value        = "#{Octopus.Environment.Name | ToLower | Replace \"[^a-z]\" \"\"}"
+  name         = "Project.K8s.Namespace"
+  type         = "String"
+  description  = "The K8s namespace where the deployment will take place. This is based on the environment name with any non-alpha characters removed."
+  is_sensitive = false
+  lifecycle {
+    ignore_changes  = [sensitive_value]
+    prevent_destroy = true
+  }
+  depends_on = []
+}
+
 variable "project_argo_cd_rollouts_name" {
   type        = string
   nullable    = false
@@ -628,7 +620,7 @@ resource "octopusdeploy_project" "project_argo_cd_rollouts" {
   is_disabled                          = false
   is_version_controlled                = false
   lifecycle_id                         = "${length(data.octopusdeploy_lifecycles.lifecycle_progressive.lifecycles) != 0 ? data.octopusdeploy_lifecycles.lifecycle_progressive.lifecycles[0].id : octopusdeploy_lifecycle.lifecycle_progressive[0].id}"
-  project_group_id                     = "${length(data.octopusdeploy_project_groups.project_group_argo_cd.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_argo_cd.project_groups[0].id : octopusdeploy_project_group.project_group_argo_cd[0].id}"
+  project_group_id                     = "${length(data.octopusdeploy_project_groups.project_group_rollouts.project_groups) != 0 ? data.octopusdeploy_project_groups.project_group_rollouts.project_groups[0].id : octopusdeploy_project_group.project_group_rollouts[0].id}"
   included_library_variable_sets       = []
   tenanted_deployment_participation    = "${var.project_argo_cd_rollouts_tenanted}"
 
