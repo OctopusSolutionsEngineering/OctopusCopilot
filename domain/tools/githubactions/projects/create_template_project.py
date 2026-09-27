@@ -196,7 +196,7 @@ def create_general_resources_callback(
     general_system_message,
     redirections,
     redirector_api_key,
-    ollama_model = None,
+    ollama_model=None,
 ):
     """
     This function is used to create general resources in Octopus Deploy, such as feeds, accounts, lifecycles etc.
@@ -578,7 +578,7 @@ def generate_terraform_configuration(
     )
 
 
-def generate_base_messages(general_system_message_values, general_examples = None):
+def generate_base_messages(general_system_message_values, general_examples=None):
     fixed_general_examples = general_examples if general_examples else []
 
     general_examples_messages = [
@@ -653,9 +653,9 @@ def generate_retry_messages(base_messages, configuration, errors):
 
     user_message = (
         "user",
-        "Based on the errors above, fix the Previous Terraform Configuration and return a new Terraform configuration that will not produce the same errors. " +
-        "You must return the fixed Terraform HCL configuration without any additional explanation or text. " +
-        "You will be penalized for describing the errors or returning the same configuration again. ",
+        "Based on the errors above, fix the Previous Terraform Configuration and return a new Terraform configuration that will not produce the same errors. "
+        + "You must return the fixed Terraform HCL configuration without any additional explanation or text. "
+        + "You will be penalized for describing the errors or returning the same configuration again. ",
     )
 
     return [*base_messages, retry_message, user_message]
