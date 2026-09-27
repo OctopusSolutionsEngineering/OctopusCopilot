@@ -1,0 +1,36 @@
+def create_argocdrollouts_project_wrapper(query, callback, logging):
+    def create_argocdrollouts_project(
+        space_name=None,
+        project_name=None,
+        **kwargs,
+    ):
+        """
+        Creates an Argo CD Rollouts project in Octopus Deploy, in addition to any supporting resources.
+
+        Example prompts include:
+        * Create a Argo CD Rollouts project in the space "My Space" called "My Project"
+        * Create a Rollouts project deploying rollouts a war file called "My Project" in the space "My Space"
+        * Create a Argo CD Rollouts project called "My Project"
+
+        Args:
+        space_name: The name of the space
+        project_name: The name of the project
+        """
+
+        if logging:
+            logging("Enter:", create_argocdrollouts_project.__name__)
+
+        for key, value in kwargs.items():
+            if logging:
+                logging(f"Unexpected Key: {key}", f"Value: f{value}")
+
+        # This is just a passthrough to the original callback
+        return callback(
+            create_argocdrollouts_project.__name__,
+            query,
+            space_name,
+            project_name,
+            False,
+        )
+
+    return create_argocdrollouts_project
