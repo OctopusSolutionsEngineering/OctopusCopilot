@@ -1333,10 +1333,10 @@ resource "octopusdeploy_docker_container_registry" "feed_google_container_regist
 * Account resource types: "octopusdeploy_aws_openid_connect_account", "octopusdeploy_azure_openid_connect", "octopusdeploy_gcp_account", "octopusdeploy_azure_service_principal", "octopusdeploy_ssh_key_account", "octopusdeploy_token_account", "octopusdeploy_username_password_account".
 * "octopusdeploy_aws_openid_connect_account" "role_arn" is mandatory: "arn:aws:iam::123456789012:role/MyRole".
 * "octopusdeploy_azure_openid_connect" "azure_environment": "AzureCloud" unless the prompt says otherwise; one of "AzureCloud", "AzureChinaCloud", "AzureGermanCloud", "AzureUSGovernment".
-* "octopusdeploy_azure_service_principal": "application_id", "subscription_id", "tenant_id" = "00000000-0000-0000-0000-000000000000".
+* **CRITICAL** "octopusdeploy_azure_service_principal" requires `application_id`, `subscription_id`, `tenant_id` = `"00000000-0000-0000-0000-000000000000"`, **AND `password`** — `password` is a REQUIRED schema attribute (not optional), and omitting it aborts the ENTIRE apply at `tofu plan` with `Error: Missing required argument ... The argument "password" is required, but no definition was found`, even when the account was never named in the prompt (e.g. the template-baseline `account_octopussamples_azure_account`). Set `password = "${var.<account_label>}"` and declare a matching `sensitive = true` variable with `default = "Change Me!"` (same ternary/placeholder pattern as other account secrets), never a literal value. Self-check: every `octopusdeploy_azure_service_principal` resource has a `password` line referencing a variable.
 * **CRITICAL — Azure account type**: "OIDC", "OpenID Connect", "Workload Identity Federation" → `octopusdeploy_azure_openid_connect`; "Service Principal", "SP", "client secret" → `octopusdeploy_azure_service_principal`; unspecified → `octopusdeploy_azure_service_principal`.
 * Never create data source "octopusdeploy_token_account".
-* `octopusdeploy_azure_openid_connect` requires `name` (verbatim), `azure_environment` (`"AzureCloud"` default), and placeholders `subscription_id`, `client_id`, `tenant_id` = `"00000000-0000-0000-0000-000000000000"` (configured post-deploy).
+* **CRITICAL** `octopusdeploy_azure_openid_connect` requires `name` (verbatim), `azure_environment` (`"AzureCloud"` default), and placeholders `subscription_id`, `application_id`, `tenant_id` = `"00000000-0000-0000-0000-000000000000"` (configured post-deploy). The attribute is `application_id`, **NEVER `client_id`** — `client_id` is not a valid argument on this resource and aborts the apply (`Error: Missing required argument` for `application_id` plus `Error: Unsupported argument` for `client_id`). Do not confuse this with `octopusdeploy_azure_service_principal` (line above), which also uses `application_id` — both Azure account resources use the same attribute name.
 
 ## Octopus Runbook Instructions
 
@@ -1500,6 +1500,31 @@ resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_aws_lambda_da
   }
 }
 ```
+
+**CRITICAL — scheduling a RUNBOOK (not a deployment) needs `run_runbook_action`, never `deploy_latest_release_action`.** For "schedule the runbook 'X' to run...", "Add a scheduled trigger that runs the runbook 'X'..." on an `octopusdeploy_project_scheduled_trigger`, use a `run_runbook_action` block with BOTH `runbook_id` (ternary reference to the `octopusdeploy_runbook` resource) and a NON-EMPTY `target_environment_ids` list. Observed failure: a trigger was created with `run_runbook_action` but no `target_environment_ids` (or an empty list), which aborts the apply with `Octopus API error: There was a problem with your request. [Please select at least one environment for this runbook trigger]` — the project, account, library variable set and runbook all get created successfully first, so this crash is easy to miss as "just the trigger failed" when it actually aborts the whole apply. If the prompt gives no environment for the runbook schedule, use the environment the runbook's purpose implies (e.g. Production for a key rotation, Security for a scan).
+
+```hcl
+resource "octopusdeploy_project_scheduled_trigger" "projecttrigger_ledger_sync_rotate_signing_key_monthly" {
+  space_id    = "${trimspace(var.octopus_space_id)}"
+  name        = "Rotate Signing Key Monthly"
+  description = "Runs the Rotate Signing Key runbook on a schedule."
+  timezone    = "Pacific Standard Time"
+  is_disabled = false
+  project_id  = "${octopusdeploy_project.project_ledger_sync[0].id}"
+  tenant_ids  = []
+
+  once_daily_schedule {
+    start_time   = "2025-05-08T09:00:00"
+    days_of_week = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+  }
+
+  run_runbook_action {
+    runbook_id              = "${octopusdeploy_runbook.runbook_ledger_sync_rotate_signing_key[0].id}"
+    target_environment_ids  = ["${octopusdeploy_environment.environment_production[0].id}"]
+  }
+}
+```
+Self-check: every `octopusdeploy_project_scheduled_trigger` whose purpose is to run a runbook has `run_runbook_action` (not `deploy_latest_release_action`), and its `target_environment_ids` list is non-empty.
 
 **External feed triggers (`octopusdeploy_external_feed_create_release_trigger`):**
 
