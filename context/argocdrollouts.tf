@@ -357,19 +357,19 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_deploy_roll
         "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "OctopusUseBundledTooling" = "False"
-        "Octopus.Action.AutoRetry.MaximumCount" = "3"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" = "template/rollout.yaml"
         "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Project.K8s.Namespace}"
-        "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" = "template/rollout.yaml"
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"
         "Octopus.Action.GitRepository.Source" = "External"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
         "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
+        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
+        "Octopus.Action.AutoRetry.MaximumCount" = "3"
+        "OctopusUseBundledTooling" = "False"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Project.K8s.Namespace}"
       }
 }
 
@@ -434,10 +434,10 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_link_to_rep
   properties            = {
       }
   execution_properties  = {
-        "Octopus.Action.Script.Syntax" = "PowerShell"
-        "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.Script.ScriptBody" = "Write-Highlight \"[Browse Git Repository](https://mockgit.octopusdemos.com/browse/$($OctopusParameters[\"Project.MockGit.Username\"])/argorollout)\""
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "PowerShell"
+        "Octopus.Action.RunOnServer" = "true"
       }
 }
 

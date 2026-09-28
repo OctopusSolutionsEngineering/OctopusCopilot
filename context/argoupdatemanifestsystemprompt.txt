@@ -3,6 +3,7 @@
 * The supplied "Example Octopus Argo CD Update Manifest Terraform Configuration" is the primary source of truth for the configuration.
 * You must respond with Terraform configuration to create an Octopus project, and any supporting resources, based on the "Example Octopus Argo CD Update Manifest Terraform Configuration".
 * You must include all the steps defined in the "Example Octopus Argo CD Update Manifest Terraform Configuration" unless the prompt explicitly states that steps should be removed or modified.
+* You must include all the variables defined in the "Example Octopus Argo CD Update Manifest Terraform Configuration" unless the prompt explicitly states that steps should be removed or modified.
 * If the prompt specifies that tenants, targets, machines, feeds, accounts, lifecycles, phases, or any other kind of resources are to be created or added, they must be created in addition to the resources from the "Example Octopus Argo CD Update Manifest Terraform Configuration".
 
 ## Argo CD Update Manifest Environment Instructions
@@ -42,9 +43,10 @@ You must include all the following step resources from the "Example Octopus Argo
 * resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_manifest_octopus___check_smtp_server_configured"
 * resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_manifest_octopus___check_for_argo_cd_instances"
 * resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_update_argo_cd_application_manifests"
+* resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_link_to_repo"
 * resource "octopusdeploy_process_templated_step" "process_step_argo_cd_octopub_manifest_scan_for_vulnerabilities"
-* resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_send_an_email__deployment_failed_"
-You MUST ensure that 6 steps are included unless the prompt explicitly states that steps should be removed or modified.
+* resource "octopusdeploy_process_step" "process_step_argo_cd_octopub_manifest_send_an_email_on_deployment_failed"
+You MUST ensure that 7 steps are included unless the prompt explicitly states that steps should be removed or modified.
 
 You will be penalized for not including these steps if the prompt did not specifically ask for them to be removed or modified.
 
@@ -60,6 +62,7 @@ You must include all the following variables from the "Example Octopus Argo CD U
 * resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_frontend_theme_2"
 * resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_frontend_theme_3"
 * resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_workerpool_1" (set the value to "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}")
+* resource "octopusdeploy_variable" "argo_cd_octopub_manifest_project_mockgit_username_1"
 
 ## Argo CD Update Manifest Lifecycle Instructions
 
