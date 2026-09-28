@@ -64,6 +64,7 @@ from domain.sanitizers.terraform import (
     replace_access_and_secret_keys,
     remove_non_octopus_resources,
     remove_non_octopus_data_sources,
+    fix_stale_project_resource_label,
 )
 from domain.tools.debug import get_params_message
 from domain.url.hostname import get_hostname_from_url
@@ -861,6 +862,8 @@ def sanitize_configuration(configuration):
     configuration = remove_non_octopus_resources(configuration)
     # Remove data sources from other providers
     configuration = remove_non_octopus_data_sources(configuration)
+    # Fix stale references to an example file's generic project label left undeclared
+    configuration = fix_stale_project_resource_label(configuration)
     return configuration
 
 

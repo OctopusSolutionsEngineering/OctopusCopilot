@@ -1047,6 +1047,54 @@ def set_mock_git_credential(config, username, password):
     )
 
 
+def fix_stale_project_resource_label(config):
+    """
+    LLMs building from an example configuration file (progressive_deployment.tf, argoupdatemanifest.tf,
+    deploymentorchestration.tf, etc.) sometimes declare the new project's octopusdeploy_project resource
+    under a fresh, project-specific label, but leave many other resources (variables, the process, the
+    channel data source, a runbook) referencing the EXAMPLE FILE's own generic label (e.g.
+    "project_progressive_deployment"), which is never declared anywhere in the output as either a
+    resource or a data source. This produces 15-20+ cascading "Reference to undeclared resource" errors
+    at plan time and creates ZERO resources - a total failure, not merely a content mismatch. Observed
+    3 times across different project types (Argo CD, Progressive Deployment, wave deployment) despite a
+    documentation-only instruction to keep labels consistent, so this deterministic fix was added.
+
+    This only rewrites labels when there is EXACTLY ONE declared "octopusdeploy_project" resource in the
+    file, since with multiple projects (e.g. an orchestration project's parent + child) we cannot safely
+    guess which one a stale reference was meant to point at.
+    """
+    if not config or 'resource "octopusdeploy_project"' not in config:
+        return config
+
+    declared_labels = set(
+        re.findall(r'resource\s+"octopusdeploy_project"\s+"([a-zA-Z0-9_]+)"', config)
+    )
+
+    if len(declared_labels) != 1:
+        return config
+
+    correct_label = next(iter(declared_labels))
+
+    declared_data_labels = set(
+        re.findall(r'data\s+"octopusdeploy_projects"\s+"([a-zA-Z0-9_]+)"', config)
+    )
+
+    referenced_labels = set(re.findall(r"octopusdeploy_project\.([a-zA-Z0-9_]+)\[0\]", config))
+    referenced_labels.update(
+        re.findall(r"data\.octopusdeploy_projects\.([a-zA-Z0-9_]+)\.", config)
+    )
+
+    stale_labels = referenced_labels - declared_labels - declared_data_labels
+
+    fixed_config = config
+    for stale_label in stale_labels:
+        fixed_config = re.sub(
+            rf"\b{re.escape(stale_label)}\b", correct_label, fixed_config
+        )
+
+    return fixed_config
+
+
 def set_mock_git_user_variable(config, username):
     """
     Finds a resource of type octopusdeploy_variable with the name
