@@ -354,22 +354,22 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_deploy_roll
   start_trigger         = "StartAfterPrevious"
   tenant_tags           = null
   properties            = {
-        "Octopus.Action.TargetRoles" = "Mock"
+        "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" = "template/rollout.yaml"
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Project.K8s.Namespace}"
-        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
-        "Octopus.Action.Script.ScriptSource" = "GitRepository"
-        "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
-        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
-        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
-        "Octopus.Action.GitRepository.Source" = "External"
         "OctopusUseBundledTooling" = "False"
         "Octopus.Action.AutoRetry.MaximumCount" = "3"
+        "Octopus.Action.Kubernetes.ResourceStatusCheck" = "False"
+        "Octopus.Action.Script.ScriptSource" = "GitRepository"
+        "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" = "template/rollout.yaml"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Project.K8s.Namespace}"
+        "Octopus.Action.AutoRetry.MinimumBackoff" = "15"
         "Octopus.Action.Kubernetes.ServerSideApply.Enabled" = "False"
+        "Octopus.Action.GitRepository.Source" = "External"
+        "Octopus.Action.Kubernetes.DeploymentTimeout" = "180"
+        "Octopus.Action.KubernetesContainers.DeploymentWait" = "NoWait"
+        "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts" = "True"
       }
 }
 
@@ -390,12 +390,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_get_rollout
   worker_pool_variable  = "Project.Workerpool"
   depends_on            = [octopusdeploy_process_step.process_step_argo_cd_rollouts_deploy_rollout]
   properties            = {
-        "Octopus.Action.TargetRoles" = "Mock"
+        "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.Script.Syntax" = "Bash"
-        "Octopus.Action.RunOnServer" = "true"
-        "Octopus.Action.KubernetesContainers.Namespace" = "#{Project.K8s.Namespace}"
         "Octopus.Action.Script.ScriptBody" = <<EOT
 # The mock server can have many instances,
 # and they do not sync state.
@@ -412,6 +409,9 @@ echo "Didn't find the rollout resource"
 exit 0
 EOT
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "Bash"
+        "Octopus.Action.RunOnServer" = "true"
+        "Octopus.Action.KubernetesContainers.Namespace" = "#{Project.K8s.Namespace}"
       }
 }
 
@@ -459,10 +459,9 @@ resource "octopusdeploy_process_step" "process_step_argo_cd_rollouts_promote_rol
   worker_pool_variable  = "Project.Workerpool"
   depends_on            = [octopusdeploy_process_step.process_step_argo_cd_rollouts_link_to_repo]
   properties            = {
-        "Octopus.Action.TargetRoles" = "Mock"
+        "Octopus.Action.TargetRoles" = "Kubernetes"
       }
   execution_properties  = {
-        "Octopus.Action.Script.Syntax" = "Bash"
         "Octopus.Action.RunOnServer" = "true"
         "Octopus.Action.AutoRetry.MaximumCount" = "0"
         "Octopus.Action.KubernetesContainers.Namespace" = "#{Project.K8s.Namespace}"
@@ -482,6 +481,7 @@ echo "Didn't find the rollout resource"
 exit 0
 EOT
         "Octopus.Action.Script.ScriptSource" = "Inline"
+        "Octopus.Action.Script.Syntax" = "Bash"
       }
 }
 
@@ -638,7 +638,7 @@ resource "octopusdeploy_project" "project_argo_cd_rollouts" {
 resource "octopusdeploy_project_versioning_strategy" "project_argo_cd_rollouts" {
   count      = "${length(data.octopusdeploy_projects.project_argo_cd_rollouts.projects) != 0 ? 0 : 1}"
   project_id = "${length(data.octopusdeploy_projects.project_argo_cd_rollouts.projects) != 0 ? data.octopusdeploy_projects.project_argo_cd_rollouts.projects[0].id : octopusdeploy_project.project_argo_cd_rollouts[0].id}"
-  template   = "#{Octopus.Version.LastMajor}.#{Octopus.Version.LastMinor}.#{Octopus.Version.NextPatch}"
+  template   = "#{Octopus.Date.Year}.#{Octopus.Date.Month}.#{Octopus.Date.Day}.i"
 }
 
 

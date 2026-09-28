@@ -1975,9 +1975,10 @@ resource "octopusdeploy_process_step" "process_step_azure_web_app_deploy_web_app
 }
 ```
 
-* For "octopusdeploy_process_step" / "octopusdeploy_process_child_step":
+* For "octopusdeploy_process_step" / "octopusdeploy_process_child_step" (this "slug" rule applies EQUALLY to `octopusdeploy_process_templated_step` / `octopusdeploy_process_templated_child_step` — same server-side validation, same failure mode):
   * "name": only letters, numbers, periods, commas, dashes, underscores, or hashes; unique across the project.
   * "slug": only lower case letters, numbers, or dashes; unique across the project; derived from "name" as "step-name" (lowercase, spaces → dashes), collapse consecutive dashes, and strip leading/trailing dashes (never e.g. "start-" or "-deploy"). `"Start (main)"` → `"start--main-"` → `"start-main"`; `"Deploy (Manifest)"` → `"deploy-manifest"`.
+  * **CRITICAL — this collapsing is not optional for names containing a literal " - " separator, including community step template baseline names.** Observed failure: the community step template step named `"Octopus - Check Targets Available"` was given the slug `octopus---check-targets-available` (the space-hyphen-space produced THREE consecutive dashes, none collapsed) — `Octopus API error: [Invalid slug 'octopus---check-targets-available', slugs can only contain lowercase letters, numbers, and dashes.]`, which aborted the entire apply after several resources had already been created. The correct slug for this exact baseline step name is `octopus-check-targets-available` (single dash throughout); the same applies to `"Octopus - Check SMTP Server Configured"` → `octopus-check-smtp-server-configured`. Self-check: for every step whose name contains " - ", verify its `slug` has no run of 2+ consecutive dashes anywhere.
   * No asterisk placeholders (e.g. "*****") in "slug" or "name".
 * **CRITICAL:** A numeric deduplication suffix (` 2`, ` 3`) in a step name must appear in both the Terraform resource name (`_2`) and the `slug` (`-2`): "Rollback -internal- 2" → resource suffix `rollback_internal_2`, slug `rollback-internal-2`. Omitting it causes duplicate resource names/slugs.
 
