@@ -314,6 +314,7 @@ resource "octopusdeploy_community_step_template" "communitysteptemplate_scan_for
 
 **CRITICAL: project names, step names and step notes/descriptions from the prompt are identifiers — reproduce verbatim.** Words like `api`, `key`, `token`, `service`, `auth`, `credential` do NOT make them sensitive; never omit, shorten or replace any part with `*` or a placeholder (e.g. keep `"[PROD] api-syncer canary"`, `"Deploy api-syncer"`, `"Scale Down Canary"`, and `api-syncer` in `"Original stage type: undoRolloutManifest. This step rolls back deployment/api-syncer to the previous revision in namespace app-0004-prod."`).
 * Self-check: scan all `name`, `notes`, `description` and `execution_properties` values (esp. `Octopus.Action.Script.ScriptBody` — kubectl namespaces, resource names, label selectors are never redacted) for `*****`; replace any not literally `*****` in the prompt with the verbatim original.
+* **A leading list number in a prompt's project name is part of the name, not prompt formatting to strip.** "Create a project called '21. Argo CD Rollouts'" → `name = "21. Argo CD Rollouts"`, never `"Argo CD Rollouts"`. Self-check: if the prompt's project name starts with a number and a period/colon, confirm that exact prefix is still present in the `octopusdeploy_project` `name` value.
 ## Step Execution Order and Parallel Steps
 
 * `Set the start trigger to "Run in parallel with the previous step"` → the `octopusdeploy_process_step` / `octopusdeploy_process_templated_step` MUST have `start_trigger = "StartWithPrevious"`.
