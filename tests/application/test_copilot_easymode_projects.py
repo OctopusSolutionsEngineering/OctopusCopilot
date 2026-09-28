@@ -1602,6 +1602,80 @@ Create an Orchestration project called "{orchestration_project_name}" managing t
                 f'The orchestration project should deploy "{child_project["Name"]}".',
             )
 
+    @retry((AssertionError, RateLimitError), tries=2, delay=2)
+    def test_21_argo_cd_rollouts(self):
+        """
+        Verifies the project created by a prompt that triggers the Argo CD Rollouts project
+        wrapper (create_argocdrollouts_project_wrapper).
+        """
+
+        project_name = "21. Argo CD Rollouts"
+        run_prompt(self, f'Create an Argo CD Rollouts project called "{project_name}".')
+
+        space_id, space_name = get_space_id_and_name_from_name(
+            Space_Name, get_active_api_key(), get_active_octopus_url()
+        )
+
+        project = get_project_by_name(self, space_id, project_name)
+
+        # An environment for each stage of the rollout.
+        environments = get_environments(get_active_api_key(), get_active_octopus_url(), space_id)
+        for environment_name in ["Development", "Prod 10", "Prod 50", "Prod 100"]:
+            self.assertIsNotNone(
+                find_by_name(environments, environment_name),
+                f'There should be a "{environment_name}" environment. '
+                f"The environments are: {names(environments)}",
+            )
+
+        # A Git credential restricted to the mock Git repository backs the "Link to Repo" step.
+        git_credentials = get_space_collection(space_id, "Git-Credentials")
+        git_credential = find_by_name(git_credentials, "Mock")
+        self.assertIsNotNone(
+            git_credential,
+            f'There should be a Git credential called "Mock". '
+            f"The Git credentials are: {names(git_credentials)}",
+        )
+
+        # The deployment process deploys the rollout, reads back its status, links to the source
+        # repository, and promotes the rollout through production, in that order.
+        steps = get_deployment_process_steps(space_name, project_name)
+        self.assertEqual(
+            [
+                "Octopus.KubernetesDeployRawYaml",
+                "Octopus.KubernetesRunScript",
+                "Octopus.Script",
+                "Octopus.KubernetesRunScript",
+            ],
+            [get_action_type(step) for step in steps],
+            f"The deployment process should deploy, inspect, link, and promote the rollout in "
+            f"order. Its steps are: {step_names(steps)}",
+        )
+
+        # The rollout is deployed from the "rollouts-demo" package.
+        packages = [
+            package
+            for step in steps
+            for action in step["Actions"]
+            for package in action.get("Packages", [])
+        ]
+        self.assertTrue(
+            any(
+                package["PackageId"] == "octopussolutionsengineering/rollouts-demo"
+                for package in packages
+            ),
+            f'A step should reference the "octopussolutionsengineering/rollouts-demo" package. '
+            f"The packages are: {packages}",
+        )
+
+        # The worker pool and package image used by the steps are exposed as project variables.
+        variables = get_project_variables(project)
+        for variable_name in ["Project.Workerpool", "Project.Image"]:
+            self.assertTrue(
+                any(variable["Name"] == variable_name for variable in variables),
+                f"The project should define {variable_name}. "
+                f"It defines: {variable_names(variables)}",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
