@@ -169,6 +169,7 @@ async def create_terraform_apply(
     octopus_url,
     plan_id,
     prompt,
+    configuration,
     redirections,
     redirections_apikey,
 ):
@@ -218,7 +219,7 @@ async def create_terraform_apply(
                     )
                     body = await response.text()
                     raise SpaceBuilderRequestFailed(
-                        f"SpaceBuilder apply request to {api} failed with {body} and code {response.status}"
+                        f"SpaceBuilder apply request to {api} failed with {body} and code {response.status} for configuration {configuration}"
                     )
                 return await response.json()
 

@@ -161,6 +161,7 @@ def create_template_project_confirm_callback_wrapper(
                     url,
                     plan_id,
                     original_prompt,
+                    configuration,
                     redirections,
                     redirector_api_key,
                 )
