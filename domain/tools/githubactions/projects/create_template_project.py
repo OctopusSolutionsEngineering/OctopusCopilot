@@ -181,6 +181,11 @@ def create_template_project_confirm_callback_wrapper(
             ]
 
             response_text.extend(debug_text)
+
+            if is_enhanced_logging_enabled(url):
+                response_text.append("The generated Terraform configuration was:")
+                response_text.append("```\n" + configuration + "\n```")
+
             return CopilotResponse("\n\n".join(response_text))
 
         return asyncio.run(inner_function())
@@ -711,6 +716,11 @@ async def retry_terraform_plan(
             region=region,
         )
     )
+
+    # The second pass output has the same problems as the first (masked values like slug = "02-ledger-*****",
+    # placeholder credentials, and so on), so it must go through the same sanitization.
+    configuration = sanitize_configuration(configuration)
+    configuration = configure_mock_git_server(configuration)
 
     response = await create_terraform_plan(
         api_key,
