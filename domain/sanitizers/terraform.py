@@ -81,6 +81,11 @@ def sanitize_kubernetes_yaml_step_config(config):
         # name: placeholder
         line = re.sub(r':\s*(")\*+(.*?")', r": \1placeholder\2", yaml_config)
         line = re.sub(r":\s*\*+", r": placeholder", line)
+        # replace masks that follow part of a value, like
+        # name: ledger-*****
+        # with
+        # name: ledger-placeholder
+        line = re.sub(r"(?<=[\w-])\*{3,}", "placeholder", line)
 
         fixed_config = fixed_config.replace(yaml_config, line)
 

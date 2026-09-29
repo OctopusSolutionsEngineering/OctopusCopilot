@@ -102,6 +102,19 @@ class TestKubernetesSanitizer(unittest.TestCase):
         self.assertIn("name: placeholder", result)
         self.assertNotIn("name: *****", result)
 
+    def test_sanitize_kubernetes_yaml_step_config_trailing_mask(self):
+        input_config = """
+        resource "octopusdeploy_process_step" "test" {
+          "Octopus.Action.KubernetesContainers.CustomResourceYaml" = "apiVersion: apps/v1\\nkind: Deployment\\nmetadata:\\n  name: ledger-*****\\n  labels:\\n    app: ledger-*****"
+        }
+        """
+
+        result = sanitize_kubernetes_yaml_step_config(input_config)
+
+        self.assertIn("name: ledger-placeholder", result)
+        self.assertIn("app: ledger-placeholder", result)
+        self.assertNotIn("*****", result)
+
     def test_no_yaml_configs(self):
         # Sample with no YAML configs
         input_config = """
