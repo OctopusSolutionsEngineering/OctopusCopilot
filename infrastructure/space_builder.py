@@ -157,7 +157,7 @@ async def create_terraform_plan(
                     )
                     body = await response.text()
                     raise SpaceBuilderRequestFailed(
-                        f"SpaceBuilder plan request to {api} failed with {body} and code {response.status}"
+                        f"SpaceBuilder plan request to {api} failed with {body} and code {response.status} for configuration {configuration}"
                     )
                 return await response.json()
 
