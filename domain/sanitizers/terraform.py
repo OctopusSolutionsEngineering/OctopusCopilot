@@ -183,9 +183,19 @@ def sanitize_primary_package(config):
     don't know the feed that the package is coming from - but at least it makes the terraform configuration valid.
     """
 
-    return re.sub(
+    replacement = r'      primary_package = { acquisition_location = "Server", feed_id = "data.octopusdeploy_feeds.feed_octopus_server__built_in_.feeds[0].id", id = null, package_id = "\1", properties = { SelectionMode = "immediate" } }'
+
+    config = re.sub(
         r'^\s*", id = null, package_id = "(.*?)", properties = { SelectionMode = "immediate" } }',
-        r'      primary_package = { acquisition_location = "Server", feed_id = "data.octopusdeploy_feeds.feed_octopus_server__built_in_.feeds[0].id", id = null, package_id = "\1", properties = { SelectionMode = "immediate" } }',
+        replacement,
+        config,
+        flags=re.MULTILINE,
+    )
+
+    # The same truncated block, with each attribute on its own line
+    return re.sub(
+        r'^[ \t]*"[ \t]*\n\s*id\s*=\s*null\s*\n\s*package_id\s*=\s*"(.*?)"\s*\n\s*properties\s*=\s*{ SelectionMode = "immediate" }\s*\n\s*}',
+        replacement,
         config,
         flags=re.MULTILINE,
     )
@@ -449,6 +459,176 @@ def fix_bad_maven_feed_resource(config):
     )
 
 
+def fix_maven_feed_acquisition_options(config):
+    """
+    Maven feeds do not support the NotAcquired package acquisition location. The LLM copies the
+    Docker feed value, and the provider returns:
+    When applying changes to octopusdeploy_maven_feed.feed_octopus_maven_feed[0],
+    produced an unexpected new value: .package_acquisition_location_options[0]:
+    was cty.StringVal("ExecutionTarget"), but now cty.StringVal("Server").
+    """
+
+    lines = config.split("\n")
+    in_maven_feed = False
+    depth = 0
+    for i, line in enumerate(lines):
+        if not in_maven_feed and re.match(
+            r'\s*resource\s+"octopusdeploy_maven_feed"\s+"[^"]*"\s*\{', line
+        ):
+            in_maven_feed = True
+            depth = 0
+        if in_maven_feed:
+            lines[i] = re.sub(
+                r"^(\s*package_acquisition_location_options\s*=\s*)\[.*?\]",
+                r'\1["Server", "ExecutionTarget"]',
+                line,
+            )
+            depth += line.count("{") - line.count("}")
+            if depth <= 0:
+                in_maven_feed = False
+    return "\n".join(lines)
+
+
+CHECK_TARGETS_AVAILABLE_TEMPLATE_URL = (
+    "https://library.octopus.com/step-templates/81444e7f-d77a-47db-b287-0f1ab5793880"
+)
+
+
+def fix_check_targets_available_template_url(config):
+    """
+    The LLM confuses the Check Targets Available community step template with the Block Release
+    Progression template (78a182b3-5369-4e13-9292-b7f991295ad1). The wrong template does not declare
+    the CheckTargets.Octopus.Role parameter, which then fails with:
+    .parameters: element "CheckTargets.Octopus.Role" has vanished.
+    """
+
+    return re.sub(
+        r'(data\s+"octopusdeploy_community_step_template"\s+"[^"]*check_targets_available"\s*\{[^}]*?website\s*=\s*")[^"]*(")',
+        r"\g<1>" + CHECK_TARGETS_AVAILABLE_TEMPLATE_URL + r"\g<2>",
+        config,
+        flags=re.DOTALL,
+    )
+
+
+VALID_GUIDED_FAILURE_MODES = ["EnvironmentDefault", "On", "Off"]
+
+
+def fix_default_guided_failure_mode(config):
+    """
+    The project default_guided_failure_mode must be EnvironmentDefault, On or Off. The LLM sometimes returns
+    "Default", which fails with:
+    Error converting value "Default" to type
+    'Octopus.Server.MessageContracts.Features.Projects.GuidedFailureMode'. Path 'DefaultGuidedFailureMode'
+    """
+
+    def replace_mode(match):
+        if match.group(2) in VALID_GUIDED_FAILURE_MODES:
+            return match.group(0)
+        return f'{match.group(1)}"EnvironmentDefault"'
+
+    return re.sub(
+        r'(default_guided_failure_mode\s*=\s*)"([^"]*)"',
+        replace_mode,
+        config,
+    )
+
+
+def fix_underscore_quoted_strings(config):
+    """
+    The LLM sometimes surrounds a quoted string in a comparison with underscores, like
+    item.name == _"Gold_", which is invalid HCL2:
+    Error: Invalid 'for' expression
+    """
+
+    return re.sub(
+        r'(==|!=)\s*_"([^"\n]*?)_"',
+        r'\1 "\2"',
+        config,
+    )
+
+
+def fix_community_step_template_count(config):
+    """
+    A community step template is only created when the space does not already have the step template, so the
+    count must test the space's octopusdeploy_step_template data source. The LLM sometimes tests the community
+    step template data source instead. That is non-empty whenever the template exists in the community library,
+    which sets the count to 0 and breaks the [0] reference in the step:
+    Error: Invalid index ... octopusdeploy_community_step_template.communitysteptemplate_x is empty tuple
+    """
+
+    def fix_count(match):
+        suffix = match.group(2)
+        if not re.search(
+            rf'data\s+"octopusdeploy_step_template"\s+"steptemplate_{re.escape(suffix)}"',
+            config,
+        ):
+            return match.group(0)
+
+        return (
+            f"{match.group(1)}"
+            f'count = "${{data.octopusdeploy_step_template.steptemplate_{suffix}.step_template != null ? 0 : 1}}"'
+        )
+
+    return re.sub(
+        r'(resource\s+"octopusdeploy_community_step_template"\s+"communitysteptemplate_(\w+)"\s*\{\s*\n\s*)count\s*=\s*"[^\n]*"',
+        fix_count,
+        config,
+    )
+
+
+BARE_INTERPOLATION_REGEX = re.compile(r"(?<!\$)\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
+
+
+def escape_bare_interpolations(config):
+    """
+    A Terraform template held in a string, like the Terraform step's template or a project variable, sometimes
+    contains ${TF_VAR_region}. A bare identifier is not a valid Terraform reference, so the whole file fails with:
+    Error: Invalid reference ... A reference to a resource type must be followed by at least one attribute access
+    Escape it as $${TF_VAR_region}. A bare identifier is left alone where it is the iterator of a for expression.
+    """
+
+    def escape(match):
+        name = match.group(1)
+        if re.search(rf"\bfor\s+(?:\w+\s*,\s*)?{re.escape(name)}\s+in\b", config):
+            return match.group(0)
+        return "$" + match.group(0)
+
+    return BARE_INTERPOLATION_REGEX.sub(escape, config)
+
+
+def remove_worker_pool_from_target_steps(config):
+    """
+    A step that runs on deployment targets cannot also have a worker pool or a worker container image. Octopus flips
+    RunOnServer and the apply fails with: Provider produced inconsistent result after apply ...
+    "Octopus.Action.RunOnServer": was cty.StringVal("false"), but now cty.StringVal("true")
+    or is rejected outright: A step can't have a worker container image when the execution location is a
+    deployment target (when property Octopus.Action.RunOnServer set to false)
+    """
+
+    if not config or '"Octopus.Action.RunOnServer"' not in config:
+        return config
+
+    def process_resource(resource_lines):
+        if not resource_lines[0].startswith('resource "octopusdeploy_process_step"'):
+            return resource_lines
+
+        block = "\n".join(resource_lines)
+        if not re.search(r'"Octopus\.Action\.RunOnServer"\s*=\s*"false"', block):
+            return resource_lines
+
+        lines = [
+            line
+            for line in resource_lines
+            if not re.match(r"^\s*worker_pool_(variable|id)\s*=", line)
+        ]
+
+        return remove_balanced_attribute(
+            "\n".join(lines), CONTAINER_START_REGEX
+        ).split("\n")
+
+    return process_resource_blocks(config, process_resource)
+
+
 def fix_single_line_tentacle_retention_policy(config):
     """
     The LLM kept insisting on using a single line tentacle_retention_policy block. This is not valid HCL2 syntax.
@@ -657,14 +837,46 @@ def sanitize_inline_script(lines):
     resource_combined = "\n".join(lines)
 
     # There is no primary package for inline scripts
-    resource_combined = re.sub(
-        r"primary_package\s*=\s*\{.*?}",
-        "",
-        resource_combined,
-        flags=re.DOTALL,
-    )
+    resource_combined = remove_primary_package(resource_combined)
 
     return resource_combined
+
+
+PRIMARY_PACKAGE_START_REGEX = re.compile(r"primary_package\s*=\s*\{")
+CONTAINER_START_REGEX = re.compile(r"(?<![\w])container\s*=\s*\{")
+
+
+def remove_balanced_attribute(text, start_regex):
+    """
+    Remove every attribute whose value is an object starting at start_regex, matching the closing bracket by
+    counting brackets. Stopping at the first closing bracket is wrong, as that is often the end of a ${...}
+    interpolation or of a nested object, which left behind fragments like:
+    ", id = null, package_id = "storefront.web", properties = { SelectionMode = "immediate" } }
+    """
+
+    while True:
+        match = start_regex.search(text)
+        if not match:
+            return text
+
+        depth = 1
+        end = match.end()
+        while end < len(text) and depth > 0:
+            if text[end] == "{":
+                depth += 1
+            elif text[end] == "}":
+                depth -= 1
+            end += 1
+
+        if depth > 0:
+            # The brackets are unbalanced, so there is no safe way to remove the block
+            return text
+
+        text = text[: match.start()] + text[end:]
+
+
+def remove_primary_package(text):
+    return remove_balanced_attribute(text, PRIMARY_PACKAGE_START_REGEX)
 
 
 def sanitize_package_script(lines):

@@ -48,6 +48,13 @@ from domain.sanitizers.terraform import (
     fix_empty_teams,
     fix_bad_feed_data,
     fix_bad_maven_feed_resource,
+    fix_maven_feed_acquisition_options,
+    fix_default_guided_failure_mode,
+    fix_underscore_quoted_strings,
+    fix_community_step_template_count,
+    escape_bare_interpolations,
+    remove_worker_pool_from_target_steps,
+    fix_check_targets_available_template_url,
     fix_single_line_connectivity_policy,
     trim_descriptions,
     fix_single_line_lifecycle2,
@@ -841,6 +848,20 @@ def sanitize_configuration(configuration):
     configuration = trim_descriptions(configuration)
     # Deal with the LLM returning feed resources with unmatched opening and closing brackets
     configuration = fix_bad_maven_feed_resource(configuration)
+    # Maven feeds do not support the NotAcquired acquisition location
+    configuration = fix_maven_feed_acquisition_options(configuration)
+    # Project default_guided_failure_mode only accepts EnvironmentDefault, On, or Off
+    configuration = fix_default_guided_failure_mode(configuration)
+    # Deal with the LLM wrapping quoted comparison strings in underscores
+    configuration = fix_underscore_quoted_strings(configuration)
+    # Community step templates must only be created when the space has no step template of the same name
+    configuration = fix_community_step_template_count(configuration)
+    # Escape bare ${NAME} references inside Terraform templates held in strings
+    configuration = escape_bare_interpolations(configuration)
+    # Steps that run on targets must not have a worker pool
+    configuration = remove_worker_pool_from_target_steps(configuration)
+    # Deal with the LLM using the Block Release Progression URL for the Check Targets Available template
+    configuration = fix_check_targets_available_template_url(configuration)
     # Deal with bad count attributes
     configuration = fix_bad_logic_characters(configuration)
     # Remove lifecycle blocks
