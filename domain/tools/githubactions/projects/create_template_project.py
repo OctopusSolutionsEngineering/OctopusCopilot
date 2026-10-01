@@ -35,6 +35,10 @@ from domain.sanitizers.terraform import (
     fix_script_source,
     fix_empty_strings,
     replace_passwords,
+    replace_invalid_azure_guids,
+    convert_prompt_named_project_group_lookup,
+    add_missing_project_group_resources,
+    remove_postcondition_from_created_project_groups,
     replace_certificate_data,
     replace_private_key_data,
     sanitize_slugs,
@@ -55,6 +59,7 @@ from domain.sanitizers.terraform import (
     escape_bare_interpolations,
     remove_worker_pool_from_target_steps,
     fix_check_targets_available_template_url,
+    fix_check_smtp_server_configured_template_url,
     fix_single_line_connectivity_policy,
     trim_descriptions,
     fix_single_line_lifecycle2,
@@ -806,6 +811,14 @@ def sanitize_configuration(configuration):
     configuration = replace_secrets(configuration)
     # Replace access_key and secret_key properties
     configuration = replace_access_and_secret_keys(configuration)
+    # Azure account IDs must be UUIDs, even when the prompt supplies malformed values
+    configuration = replace_invalid_azure_guids(configuration)
+    # Prompt-named project groups emitted as lookup-only data sources must be created
+    configuration = convert_prompt_named_project_group_lookup(configuration)
+    # Recreate project group resources the LLM referenced but did not declare
+    configuration = add_missing_project_group_resources(configuration)
+    # Project groups the configuration creates must not be looked up with a postcondition
+    configuration = remove_postcondition_from_created_project_groups(configuration)
     # Fix up invalid resource and data names
     configuration = replace_resource_names_with_digit(configuration)
     # Deal with the LLM returning code in markdown code blocks
@@ -862,6 +875,8 @@ def sanitize_configuration(configuration):
     configuration = remove_worker_pool_from_target_steps(configuration)
     # Deal with the LLM using the Block Release Progression URL for the Check Targets Available template
     configuration = fix_check_targets_available_template_url(configuration)
+    # Deal with the LLM inventing a GUID for the Check SMTP Server Configured template
+    configuration = fix_check_smtp_server_configured_template_url(configuration)
     # Deal with bad count attributes
     configuration = fix_bad_logic_characters(configuration)
     # Remove lifecycle blocks

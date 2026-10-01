@@ -3,6 +3,8 @@ import unittest
 from domain.sanitizers.terraform import (
     fix_maven_feed_acquisition_options,
     fix_check_targets_available_template_url,
+    fix_check_smtp_server_configured_template_url,
+    CHECK_SMTP_SERVER_CONFIGURED_TEMPLATE_URL,
     fix_default_guided_failure_mode,
     fix_underscore_quoted_strings,
     sanitize_primary_package,
@@ -117,6 +119,31 @@ data "octopusdeploy_community_step_template" "communitysteptemplate_scan_for_vul
         self.assertIn(CHECK_TARGETS_AVAILABLE_TEMPLATE_URL, result)
         self.assertIn("a38bfff8-8dde-4dd6-9fd0-c90bb4709d5a", result)
         self.assertNotIn("78a182b3-5369-4e13-9292-b7f991295ad1", result)
+
+
+class TestCheckSmtpServerConfiguredTemplateUrl(unittest.TestCase):
+    def test_replaces_invented_guid(self):
+        config = """data "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_smtp_server_configured" {
+  website = "https://library.octopus.com/step-templates/ad8126be-3f3b-4b3b-8b3b-3b3b3b3b3b3b"
+}"""
+        result = fix_check_smtp_server_configured_template_url(config)
+        self.assertIn(f'website = "{CHECK_SMTP_SERVER_CONFIGURED_TEMPLATE_URL}"', result)
+        self.assertNotIn("3b3b3b3b3b3b", result)
+
+    def test_leaves_correct_url_unchanged(self):
+        config = f"""data "octopusdeploy_community_step_template" "communitysteptemplate_octopus___check_smtp_server_configured" {{
+  website = "{CHECK_SMTP_SERVER_CONFIGURED_TEMPLATE_URL}"
+}}"""
+        self.assertEqual(fix_check_smtp_server_configured_template_url(config), config)
+
+    def test_leaves_other_templates_unchanged(self):
+        config = """data "octopusdeploy_community_step_template" "communitysteptemplate_scan_for_vulnerabilities" {
+  website = "https://library.octopus.com/step-templates/a38bfff8-8dde-4dd6-9fd0-c90bb4709d5a"
+}
+data "octopusdeploy_step_template" "steptemplate_octopus___check_smtp_server_configured" {
+  name = "Octopus - Check SMTP Server Configured"
+}"""
+        self.assertEqual(fix_check_smtp_server_configured_template_url(config), config)
 
 
 class TestDefaultGuidedFailureMode(unittest.TestCase):

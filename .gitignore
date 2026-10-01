@@ -13,3 +13,15 @@ context/step_template.json
 .DS_Store
 tmp
 .claude
+
+# Claude adds all these files
+.bash_profile
+.bashrc.git
+.gitconfig
+.gitmodules
+.mcp.json
+.profile
+.ripgreprc
+.zprofile
+.zshrc
+.bashrc

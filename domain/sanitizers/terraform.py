@@ -241,6 +241,214 @@ def replace_access_and_secret_keys(config):
     )
 
 
+def replace_invalid_azure_guids(config):
+    """
+    The provider validates application_id, subscription_id and tenant_id on Azure service principal and
+    OpenID Connect accounts as UUIDs. Prompts like `subscription ID "not-a-guid"` or `tenant ID "12345"`
+    make the plan fail, so any literal value that is not a UUID is replaced with the all-zero placeholder.
+    Only literal values inside those two resource types are touched; interpolations are left alone.
+    """
+
+    placeholder = "00000000-0000-0000-0000-000000000000"
+    uuid_pattern = re.compile(r"^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$")
+    attribute_pattern = re.compile(r'^(\s*(?:application_id|subscription_id|tenant_id)\s*=\s*)"([^"\n]*)"', re.MULTILINE)
+    header_pattern = re.compile(r'resource\s+"octopusdeploy_azure_(?:service_principal|openid_connect)"\s+"[^"]*"\s*\{')
+
+    def fix_block(block):
+        def fix_attribute(match):
+            value = match.group(2)
+            if "$" in value or uuid_pattern.match(value):
+                return match.group(0)
+            return f'{match.group(1)}"{placeholder}"'
+
+        return attribute_pattern.sub(fix_attribute, block)
+
+    result = []
+    position = 0
+    for header in header_pattern.finditer(config):
+        if header.start() < position:
+            continue
+        depth = 1
+        end = header.end()
+        while end < len(config) and depth > 0:
+            if config[end] == "{":
+                depth += 1
+            elif config[end] == "}":
+                depth -= 1
+            end += 1
+        result.append(config[position:header.start()])
+        result.append(fix_block(config[header.start():end]))
+        position = end
+    result.append(config[position:])
+    return "".join(result)
+
+
+def add_missing_project_group_resources(config):
+    """
+    The project group lookup pattern is a data source plus a count-guarded resource, with the project referencing
+    `octopusdeploy_project_group.<label>[0].id` as the fallback. LLMs sometimes emit the data source and the
+    reference but drop the resource, which fails the plan with "Reference to undeclared resource". The missing
+    resource is recreated from the `project_group_<label>_name` variable default.
+    """
+
+    referenced = set(re.findall(r"octopusdeploy_project_group\.(\w+)\[0\]", config))
+    declared = set(re.findall(r'resource\s+"octopusdeploy_project_group"\s+"(\w+)"', config))
+
+    additions = []
+    for label in sorted(referenced - declared):
+        variable_match = re.search(
+            rf'variable\s+"{re.escape(label)}_name"\s*\{{[^}}]*?default\s*=\s*"([^"]*)"',
+            config,
+            re.DOTALL,
+        )
+        if not variable_match or f'data "octopusdeploy_project_groups" "{label}"' not in config:
+            continue
+        additions.append(
+            f'resource "octopusdeploy_project_group" "{label}" {{\n'
+            f'  count = "${{length(data.octopusdeploy_project_groups.{label}.project_groups) != 0 ? 0 : 1}}"\n'
+            f'  name  = "${{var.{label}_name}}"\n'
+            f"}}\n"
+        )
+
+    if not additions:
+        return config
+
+    return config.rstrip("\n") + "\n" + "\n".join(additions)
+
+
+def remove_postcondition_from_created_project_groups(config):
+    """
+    Only the "Default Project Group" lookup may carry a postcondition, because it must already exist. A lookup
+    for a group the configuration creates (a matching octopusdeploy_project_group resource exists) would fail
+    the plan with "Failed to resolve a project group" on a space that does not have the group yet, so the
+    lifecycle block is removed from that data source.
+    """
+
+    declared = set(re.findall(r'resource\s+"octopusdeploy_project_group"\s+"(\w+)"', config))
+    result = config
+
+    for label in declared:
+        header = re.search(rf'data\s+"octopusdeploy_project_groups"\s+"{re.escape(label)}"\s*\{{', result)
+        if not header:
+            continue
+
+        depth = 1
+        block_end = header.end()
+        while block_end < len(result) and depth > 0:
+            if result[block_end] == "{":
+                depth += 1
+            elif result[block_end] == "}":
+                depth -= 1
+            block_end += 1
+        if depth > 0:
+            continue
+
+        block = result[header.start():block_end]
+        lifecycle = re.search(r"\n[ \t]*lifecycle\s*\{", block)
+        if not lifecycle:
+            continue
+
+        depth = 1
+        lifecycle_end = lifecycle.end()
+        while lifecycle_end < len(block) and depth > 0:
+            if block[lifecycle_end] == "{":
+                depth += 1
+            elif block[lifecycle_end] == "}":
+                depth -= 1
+            lifecycle_end += 1
+        if depth > 0:
+            continue
+
+        block = block[:lifecycle.start()] + block[lifecycle_end:]
+        result = result[:header.start()] + block + result[block_end:]
+
+    return result
+
+
+def convert_prompt_named_project_group_lookup(config):
+    """
+    Only the "Default Project Group" lookup may be a lookup-only data source with a postcondition. When the LLM
+    emits that form for a group the prompt named, the group does not exist in a new space and the plan fails
+    with "Failed to resolve a project group". Such lookups are converted to the create pattern: the postcondition
+    is removed, a count-guarded resource is added, and a direct `project_groups[0].id` reference becomes the
+    lookup-or-create expression.
+    """
+
+    result = config
+
+    for header in list(re.finditer(r'data\s+"octopusdeploy_project_groups"\s+"(\w+)"\s*\{', config)):
+        label = header.group(1)
+        start = result.find(header.group(0))
+        if start == -1:
+            continue
+
+        depth = 1
+        end = start + len(header.group(0))
+        while end < len(result) and depth > 0:
+            if result[end] == "{":
+                depth += 1
+            elif result[end] == "}":
+                depth -= 1
+            end += 1
+        if depth > 0:
+            continue
+
+        block = result[start:end]
+        if "postcondition" not in block:
+            continue
+
+        name = None
+        partial_name = re.search(r'partial_name\s*=\s*"([^"]*)"', block)
+        if partial_name:
+            variable_reference = re.fullmatch(r"\$\{var\.(\w+)\}", partial_name.group(1))
+            if variable_reference:
+                variable_match = re.search(
+                    rf'variable\s+"{re.escape(variable_reference.group(1))}"\s*\{{[^}}]*?default\s*=\s*"([^"]*)"',
+                    result,
+                    re.DOTALL,
+                )
+                if variable_match:
+                    name = variable_match.group(1)
+            else:
+                name = partial_name.group(1)
+
+        if not name or name.strip().casefold() == "default project group":
+            continue
+
+        lifecycle = re.search(r"\n[ \t]*lifecycle\s*\{", block)
+        if lifecycle:
+            depth = 1
+            lifecycle_end = lifecycle.end()
+            while lifecycle_end < len(block) and depth > 0:
+                if block[lifecycle_end] == "{":
+                    depth += 1
+                elif block[lifecycle_end] == "}":
+                    depth -= 1
+                lifecycle_end += 1
+            if depth == 0:
+                block = block[:lifecycle.start()] + block[lifecycle_end:]
+
+        result = result[:start] + block + result[end:]
+
+        lookup = f"data.octopusdeploy_project_groups.{label}.project_groups"
+        if not re.search(rf'resource\s+"octopusdeploy_project_group"\s+"{re.escape(label)}"', result):
+            name_expression = f"${{var.{variable_reference.group(1)}}}" if partial_name and variable_reference else name
+            result = (
+                result.rstrip("\n")
+                + f'\nresource "octopusdeploy_project_group" "{label}" {{\n'
+                + f'  count = "${{length({lookup}) != 0 ? 0 : 1}}"\n'
+                + f'  name  = "{name_expression}"\n'
+                + "}\n"
+            )
+
+        result = result.replace(
+            f'"${{{lookup}[0].id}}"',
+            f'"${{length({lookup}) != 0 ? {lookup}[0].id : octopusdeploy_project_group.{label}[0].id}}"',
+        )
+
+    return result
+
+
 def replace_secrets(config):
     """
     Replace the value of any property called "secret" with a GUID. Properties like "secret_key" or
@@ -505,6 +713,27 @@ def fix_check_targets_available_template_url(config):
     return re.sub(
         r'(data\s+"octopusdeploy_community_step_template"\s+"[^"]*check_targets_available"\s*\{[^}]*?website\s*=\s*")[^"]*(")',
         r"\g<1>" + CHECK_TARGETS_AVAILABLE_TEMPLATE_URL + r"\g<2>",
+        config,
+        flags=re.DOTALL,
+    )
+
+
+CHECK_SMTP_SERVER_CONFIGURED_TEMPLATE_URL = (
+    "https://library.octopus.com/step-templates/ad8126be-37af-4297-b46e-fce02ba3987a"
+)
+
+
+def fix_check_smtp_server_configured_template_url(config):
+    """
+    The LLM sometimes invents a GUID (e.g. ad8126be-3f3b-4b3b-8b3b-3b3b3b3b3b3b) for the Check SMTP Server
+    Configured community step template website. The lookup then returns no steps, community_action_template_id
+    evaluates to null, and the plan fails with:
+    Error: Missing Configuration for Required Attribute ... community_action_template_id
+    """
+
+    return re.sub(
+        r'(data\s+"octopusdeploy_community_step_template"\s+"[^"]*check_smtp_server_configured"\s*\{[^}]*?website\s*=\s*")[^"]*(")',
+        r"\g<1>" + CHECK_SMTP_SERVER_CONFIGURED_TEMPLATE_URL + r"\g<2>",
         config,
         flags=re.DOTALL,
     )
