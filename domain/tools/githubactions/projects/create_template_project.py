@@ -64,6 +64,7 @@ from domain.sanitizers.terraform import (
     fix_lifecycle_phase_without_environments,
     fix_package_pre_deploy_script_property,
     fix_manual_intervention_templated_step,
+    replace_unverified_community_templated_step,
     remove_unsupported_trigger_description,
     replace_slash_in_project_name,
     remove_unused_step_template_data,
@@ -903,6 +904,7 @@ def sanitize_configuration(configuration):
     configuration = fix_for_expression_over_empty_lookup(configuration)
     # A manual intervention is a built in step type, not a templated step
     configuration = fix_manual_intervention_templated_step(configuration)
+    configuration = replace_unverified_community_templated_step(configuration)
     configuration = remove_unused_step_template_data(configuration)
     # The create release trigger has no description argument
     configuration = remove_unsupported_trigger_description(configuration)

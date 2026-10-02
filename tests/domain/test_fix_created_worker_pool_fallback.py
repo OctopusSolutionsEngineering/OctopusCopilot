@@ -26,6 +26,7 @@ from domain.sanitizers.terraform import (  # noqa: E402
     remove_unused_step_template_data,
     replace_json_key,
     replace_slash_in_project_name,
+    replace_unverified_community_templated_step,
 )
 
 CREATED_POOL = """resource "octopusdeploy_static_worker_pool" "workerpool_dns_workers" {
@@ -641,6 +642,59 @@ class TestFixEmptyUsername(unittest.TestCase):
     def test_keeps_populated_and_prefixed_usernames(self):
         config = 'username = "feeduser"\nregistry_username = ""'
         self.assertEqual(fix_empty_strings(config), config)
+
+ARGO_CONFIG = """resource "octopusdeploy_process_templated_step" "process_step_wait_for_argo" {
+  name = "Wait For Argo"
+  template_id = "${data.octopusdeploy_step_template.steptemplate_verify_argo.step_template != null ? data.octopusdeploy_step_template.steptemplate_verify_argo.step_template.id : octopusdeploy_community_step_template.communitysteptemplate_verify_argo[0].id}"
+  template_version = "1"
+  notes = "Waits"
+  parameters = {
+    "ArgoCD.ApplicationName" = "gateway"
+  }
+  execution_properties = {
+    "Octopus.Action.RunOnServer" = "true"
+  }
+}
+data "octopusdeploy_step_template" "steptemplate_verify_argo" {
+  name = "Verify Argo CD Application Healthy"
+}
+data "octopusdeploy_community_step_template" "communitysteptemplate_verify_argo" {
+  website = "https://library.octopus.com/step-templates/WEBSITE_GUID"
+}
+resource "octopusdeploy_community_step_template" "communitysteptemplate_verify_argo" {
+  count = "${data.octopusdeploy_step_template.steptemplate_verify_argo.step_template != null ? 0 : 1}"
+  community_action_template_id = "${data.octopusdeploy_community_step_template.communitysteptemplate_verify_argo.steps[0].id}"
+}
+"""
+
+
+class TestReplaceUnverifiedCommunityTemplatedStep(unittest.TestCase):
+    def test_fabricated_guid_becomes_script_step(self):
+        config = ARGO_CONFIG.replace("WEBSITE_GUID", "8f3e3e3e-3e3e-3e3e-3e3e-3e3e3e3e3e3e")
+        result = remove_unused_step_template_data(replace_unverified_community_templated_step(config))
+        self.assertIn('resource "octopusdeploy_process_step" "process_step_wait_for_argo"', result)
+        self.assertIn('type                  = "Octopus.Script"', result)
+        self.assertIn('notes = "Waits"', result)
+        self.assertNotIn("process_templated_step", result)
+        self.assertNotIn("template_id", result)
+        self.assertNotIn("ArgoCD.ApplicationName", result)
+        self.assertNotIn("community_step_template", result)
+        self.assertNotIn("octopusdeploy_step_template", result)
+        self.assertEqual(result.count("{"), result.count("}"))
+
+    def test_real_guid_is_left_alone(self):
+        config = ARGO_CONFIG.replace("WEBSITE_GUID", "78a182b3-5369-4e13-9292-b7f991295ad1")
+        self.assertEqual(replace_unverified_community_templated_step(config), config)
+
+    def test_other_templated_steps_are_left_alone(self):
+        config = ARGO_CONFIG.replace("WEBSITE_GUID", "8f3e3e3e-3e3e-3e3e-3e3e-3e3e3e3e3e3e")
+        other = config + config.split("data ")[0].replace("verify_argo", "slack").replace("wait_for_argo", "slack")
+        result = replace_unverified_community_templated_step(other)
+        self.assertIn('resource "octopusdeploy_process_templated_step" "process_step_slack"', result)
+        self.assertIn('resource "octopusdeploy_process_step" "process_step_wait_for_argo"', result)
+
+    def test_empty_config(self):
+        self.assertEqual(replace_unverified_community_templated_step(""), "")
 
 
 if __name__ == "__main__":

@@ -365,6 +365,57 @@ def remove_postcondition_from_created_project_groups(config):
     return result
 
 
+def _find_closing_brace(text, position):
+    """
+    Returns the index just past the brace that closes a block whose opening brace precedes `position`, or None if
+    the block is unterminated.
+    """
+
+    depth = 1
+    while position < len(text) and depth > 0:
+        if text[position] == "{":
+            depth += 1
+        elif text[position] == "}":
+            depth -= 1
+        position += 1
+    return position if depth == 0 else None
+
+
+def _remove_lifecycle_block(block):
+    lifecycle = re.search(r"\n[ \t]*lifecycle\s*\{", block)
+    if not lifecycle:
+        return block
+
+    lifecycle_end = _find_closing_brace(block, lifecycle.end())
+    if lifecycle_end is None:
+        return block
+
+    return block[:lifecycle.start()] + block[lifecycle_end:]
+
+
+def _resolve_project_group_name(block, config):
+    """
+    Returns the (name, variable_name) of a project group data source's partial_name. variable_name is set when the
+    name is a reference to a variable.
+    """
+
+    partial_name = re.search(r'partial_name\s*=\s*"([^"]*)"', block)
+    if not partial_name:
+        return None, None
+
+    variable_reference = re.fullmatch(r"\$\{var\.(\w+)\}", partial_name.group(1))
+    if not variable_reference:
+        return partial_name.group(1), None
+
+    variable_name = variable_reference.group(1)
+    variable_match = re.search(
+        rf'variable\s+"{re.escape(variable_name)}"\s*\{{[^}}]*?default\s*=\s*"([^"]*)"',
+        config,
+        re.DOTALL,
+    )
+    return (variable_match.group(1) if variable_match else None), variable_name
+
+
 def convert_prompt_named_project_group_lookup(config):
     """
     Only the "Default Project Group" lookup may be a lookup-only data source with a postcondition. When the LLM
@@ -382,57 +433,23 @@ def convert_prompt_named_project_group_lookup(config):
         if start == -1:
             continue
 
-        depth = 1
-        end = start + len(header.group(0))
-        while end < len(result) and depth > 0:
-            if result[end] == "{":
-                depth += 1
-            elif result[end] == "}":
-                depth -= 1
-            end += 1
-        if depth > 0:
+        end = _find_closing_brace(result, start + len(header.group(0)))
+        if end is None:
             continue
 
         block = result[start:end]
         if "postcondition" not in block:
             continue
 
-        name = None
-        partial_name = re.search(r'partial_name\s*=\s*"([^"]*)"', block)
-        if partial_name:
-            variable_reference = re.fullmatch(r"\$\{var\.(\w+)\}", partial_name.group(1))
-            if variable_reference:
-                variable_match = re.search(
-                    rf'variable\s+"{re.escape(variable_reference.group(1))}"\s*\{{[^}}]*?default\s*=\s*"([^"]*)"',
-                    result,
-                    re.DOTALL,
-                )
-                if variable_match:
-                    name = variable_match.group(1)
-            else:
-                name = partial_name.group(1)
-
+        name, variable_name = _resolve_project_group_name(block, result)
         if not name or name.strip().casefold() == "default project group":
             continue
 
-        lifecycle = re.search(r"\n[ \t]*lifecycle\s*\{", block)
-        if lifecycle:
-            depth = 1
-            lifecycle_end = lifecycle.end()
-            while lifecycle_end < len(block) and depth > 0:
-                if block[lifecycle_end] == "{":
-                    depth += 1
-                elif block[lifecycle_end] == "}":
-                    depth -= 1
-                lifecycle_end += 1
-            if depth == 0:
-                block = block[:lifecycle.start()] + block[lifecycle_end:]
-
-        result = result[:start] + block + result[end:]
+        result = result[:start] + _remove_lifecycle_block(block) + result[end:]
 
         lookup = f"data.octopusdeploy_project_groups.{label}.project_groups"
         if not re.search(rf'resource\s+"octopusdeploy_project_group"\s+"{re.escape(label)}"', result):
-            name_expression = f"${{var.{variable_reference.group(1)}}}" if partial_name and variable_reference else name
+            name_expression = f"${{var.{variable_name}}}" if variable_name else name
             result = (
                 result.rstrip("\n")
                 + f'\nresource "octopusdeploy_project_group" "{label}" {{\n'
@@ -1421,6 +1438,93 @@ def fix_manual_intervention_templated_step(config):
             result,
         )
         position = header.start() + len(block)
+
+
+COMMUNITY_TEMPLATE_DATA_REGEX = re.compile(
+    r'data\s+"octopusdeploy_community_step_template"\s+"communitysteptemplate_(?P<suffix>\w+)"\s*\{'
+)
+COMMUNITY_TEMPLATE_WEBSITE_REGEX = re.compile(
+    r'website\s*=\s*"https://library\.octopus\.com/step-templates/(?P<guid>[0-9a-fA-F-]{36})"'
+)
+FABRICATED_GUID_TAIL_REGEX = re.compile(r"^(?:([0-9a-fA-F]{2})\1{5}|([0-9a-fA-F]{4})\2{2})$")
+UNVERIFIED_COMMUNITY_STEP_SCRIPT = (
+    'echo "The community step template could not be verified, so this script step stands in for it."'
+)
+
+
+def is_fabricated_guid(guid):
+    """A GUID the LLM made up ends in a repeating pattern like 3e3e3e3e3e3e or 3b3b3b3b3b3b."""
+
+    return bool(FABRICATED_GUID_TAIL_REGEX.match(guid.split("-")[-1]))
+
+
+def replace_unverified_community_templated_step(config):
+    """
+    The LLM invents the GUID in the website of a community step template (e.g. 8f3e3e3e-3e3e-3e3e-3e3e-3e3e3e3e3e3e
+    for Verify Argo CD Application Healthy). The lookup returns no steps, community_action_template_id is null and the
+    plan fails with:
+    Error: Missing Configuration for Required Attribute ... community_action_template_id
+    The templated step that uses the template becomes a script step, which the later cleanup of unused step template
+    lookups then leaves without the template resources.
+    """
+
+    if not config or "octopusdeploy_community_step_template" not in config:
+        return config
+
+    suffixes = []
+    for data_match in COMMUNITY_TEMPLATE_DATA_REGEX.finditer(config):
+        end = find_block_end(config, data_match.end())
+        website = COMMUNITY_TEMPLATE_WEBSITE_REGEX.search(config[data_match.end() : end]) if end else None
+        if website and is_fabricated_guid(website.group("guid")):
+            suffixes.append(data_match.group("suffix"))
+
+    result = config
+    for suffix in suffixes:
+        position = 0
+        while True:
+            header = TEMPLATED_STEP_HEADER_REGEX.search(result, position)
+            if not header:
+                break
+            end = find_block_end(result, header.end())
+            block = result[header.start() : end] if end else ""
+            if not end or not re.search(rf"_{re.escape(suffix)}(?!\w)", block):
+                position = header.end()
+                continue
+
+            label = header.group("label")
+            block = block.replace(
+                'resource "octopusdeploy_process_templated_step"', 'resource "octopusdeploy_process_step"', 1
+            )
+            block = re.sub(r"^[ \t]*template_(?:id|version)[ \t]*=.*\n", "", block, flags=re.MULTILINE)
+            block = remove_balanced_attribute(block, TEMPLATED_STEP_PARAMETERS_REGEX)
+            block = re.sub(r"^[ \t]*type[ \t]*=.*\n", "", block, flags=re.MULTILINE)
+            block = re.sub(
+                r"^([ \t]*)(name[ \t]*=.*\n)",
+                rf'\1\2\1type                  = "Octopus.Script"\n',
+                block,
+                count=1,
+                flags=re.MULTILINE,
+            )
+            block = re.sub(r"^[ \t]*execution_properties\s*=\s*\{[^}]*\}[ \t]*\n", "", block, flags=re.MULTILINE)
+            block = block.rstrip()
+            block = (
+                block[:-1].rstrip()
+                + "\n  execution_properties = {\n"
+                + '    "Octopus.Action.Script.ScriptSource" = "Inline"\n'
+                + '    "Octopus.Action.Script.Syntax" = "Bash"\n'
+                + f'    "Octopus.Action.Script.ScriptBody" = "{UNVERIFIED_COMMUNITY_STEP_SCRIPT.replace(chr(34), chr(92) + chr(34))}"\n'
+                + '    "Octopus.Action.RunOnServer" = "true"\n'
+                + "  }\n}"
+            )
+            result = result[: header.start()] + block + result[end:]
+            result = re.sub(
+                rf"octopusdeploy_process_templated_step\.{re.escape(label)}(?!\w)",
+                f"octopusdeploy_process_step.{label}",
+                result,
+            )
+            position = header.start() + len(block)
+
+    return result
 
 
 def fix_package_pre_deploy_script_property(config):
