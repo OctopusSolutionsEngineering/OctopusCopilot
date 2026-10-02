@@ -14,6 +14,16 @@ HCL_BLOCK_REGEX = re.compile(
 )
 
 
+# The start of a top level Terraform block. Stricter than HCL_BLOCK_REGEX so prose beginning with a word like
+# "data" or "variable" is not mistaken for configuration.
+HCL_BLOCK_START_REGEX = re.compile(
+    r'^(?:(?:resource|data|variable|provider|output|module)[ \t]+"|(?:terraform|locals)[ \t]*\{)',
+    re.MULTILINE,
+)
+
+COMMENT_OR_BLANK_LINE_REGEX = re.compile(r"^[ \t]*(?:#.*|//.*)?$")
+
+
 def remove_markdown_code_block(text: str) -> str:
     stripped_text = text.strip()
     if stripped_text.startswith("```") and stripped_text.endswith("```"):
@@ -32,7 +42,7 @@ def remove_prose_around_code_block(text: str) -> str:
 
     first_fence = FENCE_LINE_REGEX.search(text)
     if not first_fence:
-        return text
+        return remove_leading_prose(text)
 
     prose = text[: first_fence.start()]
     if not prose.strip() or HCL_BLOCK_REGEX.search(prose):
@@ -46,3 +56,21 @@ def remove_prose_around_code_block(text: str) -> str:
         return text
 
     return "\n".join(non_empty_blocks)
+
+
+def remove_leading_prose(text: str) -> str:
+    """
+    When the model explains itself before unfenced configuration, e.g. "Looking at the error, the issue is...",
+    tofu init fails with: Error: Unsupported block type ... Blocks of type "Looking" are not expected here.
+    Everything before the first top level block is removed unless it is only blank lines and comments.
+    """
+
+    first_block = HCL_BLOCK_START_REGEX.search(text)
+    if not first_block:
+        return text
+
+    prefix = text[: first_block.start()]
+    if all(COMMENT_OR_BLANK_LINE_REGEX.match(line) for line in prefix.splitlines()):
+        return text
+
+    return text[first_block.start() :]

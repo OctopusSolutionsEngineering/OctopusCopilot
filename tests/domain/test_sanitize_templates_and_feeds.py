@@ -339,6 +339,17 @@ class TestEscapeBareInterpolations(unittest.TestCase):
         config = 'x = "#{Octopus.Environment.Name}" y = "#{TF_VAR_region}"'
         self.assertEqual(escape_bare_interpolations(config), config)
 
+    def test_converts_octopus_variable_to_octostache(self):
+        config = 'name = "www.${DNS.Zone}" other = "${Project.Db.Host}"'
+        self.assertEqual(
+            escape_bare_interpolations(config),
+            'name = "www.#{DNS.Zone}" other = "#{Project.Db.Host}"',
+        )
+
+    def test_octopus_variable_conversion_leaves_terraform_references(self):
+        config = 'a = "${var.zone}" b = "${local.name}" c = "${octopusdeploy_environment.e.id}" d = "$${DNS.Zone}"'
+        self.assertEqual(escape_bare_interpolations(config), config)
+
 
 class TestRemoveWorkerPoolFromTargetSteps(unittest.TestCase):
     TARGET_STEP = """resource "octopusdeploy_process_step" "s" {
@@ -445,6 +456,19 @@ class TestRemoveBalancedAttribute(unittest.TestCase):
     def test_worker_pool_removal_handles_empty_config(self):
         self.assertEqual(remove_worker_pool_from_target_steps(""), "")
         self.assertIsNone(remove_worker_pool_from_target_steps(None))
+
+
+class TestEscapeCloudFormationPseudoParameters(unittest.TestCase):
+    def test_escapes_aws_pseudo_parameter(self):
+        config = "BucketName: !Sub '$${BucketPrefix}-logs-${AWS::AccountId}'"
+        result = escape_bare_interpolations(config)
+        self.assertEqual(
+            result, "BucketName: !Sub '$${BucketPrefix}-logs-$${AWS::AccountId}'"
+        )
+
+    def test_already_escaped_pseudo_parameter_unchanged(self):
+        config = "Region: $${AWS::Region}"
+        self.assertEqual(escape_bare_interpolations(config), config)
 
 
 if __name__ == "__main__":

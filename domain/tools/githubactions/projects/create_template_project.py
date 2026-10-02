@@ -36,6 +36,7 @@ from domain.sanitizers.terraform import (
     fix_empty_strings,
     replace_passwords,
     replace_invalid_azure_guids,
+    replace_json_key,
     convert_prompt_named_project_group_lookup,
     add_missing_project_group_resources,
     remove_postcondition_from_created_project_groups,
@@ -53,7 +54,23 @@ from domain.sanitizers.terraform import (
     fix_bad_feed_data,
     fix_bad_maven_feed_resource,
     fix_maven_feed_acquisition_options,
+    add_missing_project_description_default,
+    fix_bare_data_lookup_reference,
+    fix_created_worker_pool_fallback,
+    fix_lookup_worker_pool_default_fallback,
+    fix_process_step_container_block,
+    fix_arm_template_source,
+    fix_for_expression_over_empty_lookup,
+    fix_lifecycle_phase_without_environments,
+    fix_package_pre_deploy_script_property,
+    fix_manual_intervention_templated_step,
+    remove_unsupported_trigger_description,
+    replace_slash_in_project_name,
+    remove_unused_step_template_data,
+    fix_project_description_heredoc,
     fix_default_guided_failure_mode,
+    fix_invalid_octopus_variable_type,
+    fix_literal_variable_template_id,
     fix_underscore_quoted_strings,
     fix_community_step_template_count,
     escape_bare_interpolations,
@@ -809,6 +826,8 @@ def sanitize_configuration(configuration):
     configuration = replace_token(configuration)
     # Replace anything that looks like a secret
     configuration = replace_secrets(configuration)
+    # Replace the Google Cloud account json_key
+    configuration = replace_json_key(configuration)
     # Replace access_key and secret_key properties
     configuration = replace_access_and_secret_keys(configuration)
     # Azure account IDs must be UUIDs, even when the prompt supplies malformed values
@@ -865,12 +884,38 @@ def sanitize_configuration(configuration):
     configuration = fix_maven_feed_acquisition_options(configuration)
     # Project default_guided_failure_mode only accepts EnvironmentDefault, On, or Off
     configuration = fix_default_guided_failure_mode(configuration)
+    # The project description variable needs a default, even when the LLM only wrote a description
+    configuration = add_missing_project_description_default(configuration)
     # Deal with the LLM wrapping quoted comparison strings in underscores
     configuration = fix_underscore_quoted_strings(configuration)
     # Community step templates must only be created when the space has no step template of the same name
     configuration = fix_community_step_template_count(configuration)
     # Escape bare ${NAME} references inside Terraform templates held in strings
     configuration = escape_bare_interpolations(configuration)
+    # A newly created worker pool must fall back to itself, not to a Default Worker Pool that may not exist
+    configuration = fix_created_worker_pool_fallback(configuration)
+    configuration = fix_lookup_worker_pool_default_fallback(configuration)
+    # A step's worker container is an attribute, not a block, and must be one before target steps are stripped of it
+    configuration = fix_process_step_container_block(configuration)
+    # A heredoc project description ends with a newline that Octopus drops, which fails the apply
+    configuration = fix_project_description_heredoc(configuration)
+    # A for expression over an element of an empty lookup fails the plan in a fresh space
+    configuration = fix_for_expression_over_empty_lookup(configuration)
+    # A manual intervention is a built in step type, not a templated step
+    configuration = fix_manual_intervention_templated_step(configuration)
+    configuration = remove_unused_step_template_data(configuration)
+    # The create release trigger has no description argument
+    configuration = remove_unsupported_trigger_description(configuration)
+    # The server rejects a project name with a forward slash
+    configuration = replace_slash_in_project_name(configuration)
+    # A lifecycle phase with no environments means all remaining environments, and only one phase may
+    configuration = fix_lifecycle_phase_without_environments(configuration)
+    # An inline ARM template step must say its template source
+    configuration = fix_arm_template_source(configuration)
+    # The server drops a PreDeployPackageOnWorker property
+    configuration = fix_package_pre_deploy_script_property(configuration)
+    # A data source lookup that has a creating resource must not be referenced on its own
+    configuration = fix_bare_data_lookup_reference(configuration)
     # Steps that run on targets must not have a worker pool
     configuration = remove_worker_pool_from_target_steps(configuration)
     # Deal with the LLM using the Block Release Progression URL for the Check Targets Available template
@@ -889,6 +934,10 @@ def sanitize_configuration(configuration):
     configuration = fix_double_comma(configuration)
     # Fix the variable type
     configuration = fix_variable_type(configuration)
+    # Account types the provider has no octopusdeploy_variable type for, like Token, become String
+    configuration = fix_invalid_octopus_variable_type(configuration)
+    # A tenant variable must reference the template it sets rather than a hard-coded GUID
+    configuration = fix_literal_variable_template_id(configuration)
     # Deal with the LLM returning a execution_properties blocks
     configuration = fix_execution_properties_block(configuration)
     # Deal with the LLM returning an empty execution_properties blocks

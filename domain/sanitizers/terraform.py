@@ -474,6 +474,19 @@ def replace_token(config):
     )
 
 
+def replace_json_key(config):
+    """
+    The Google Cloud account json_key is a sensitive value. The OPA policy rejects the whole plan when a sensitive
+    value is not a placeholder, so a service account key supplied in the prompt is replaced.
+    """
+
+    return re.sub(
+        r'(?<![\w.])json_key\s*=\s*"(?:[^"\\]|\\.)*"',
+        'json_key = "Change Me!"',
+        config,
+    )
+
+
 def replace_resource_names_with_digit(config):
     """
     LLMs seemed to struggle with the rule to build resources that start with a character rather than a digit.
@@ -762,6 +775,32 @@ def fix_default_guided_failure_mode(config):
     )
 
 
+def add_missing_project_description_default(config):
+    """
+    The LLM sometimes writes the project description into the description attribute of the
+    project_<name>_description variable and omits the default, which fails the plan with:
+    Error: No value for required variable ... "project_<name>_description" is not set, and has no default value.
+    Reuse the description text as the default.
+    """
+
+    def add_default(match):
+        body = match.group(2)
+        if re.search(r"^\s*default\s*=", body, re.MULTILINE):
+            return match.group(0)
+        description = re.search(
+            r'^\s*description\s*=\s*"((?:[^"\\]|\\.)*)"', body, re.MULTILINE
+        )
+        default = description.group(1) if description else "Project description"
+        return f'{match.group(1)}{body}\n  default     = "{default}"\n}}'
+
+    return re.sub(
+        r'(variable\s+"project_[A-Za-z0-9_-]+_description"\s*\{)(.*?)\n\}',
+        add_default,
+        config,
+        flags=re.DOTALL,
+    )
+
+
 def fix_underscore_quoted_strings(config):
     """
     The LLM sometimes surrounds a quoted string in a comparison with underscores, like
@@ -806,6 +845,12 @@ def fix_community_step_template_count(config):
 
 
 BARE_INTERPOLATION_REGEX = re.compile(r"(?<!\$)\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
+# An Octopus variable name written as ${DNS.Zone}: Terraform references never start with a capital letter
+OCTOPUS_VARIABLE_INTERPOLATION_REGEX = re.compile(
+    r"(?<!\$)\$\{([A-Z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_-]+)+)\}"
+)
+# A CloudFormation pseudo parameter written as ${AWS::AccountId} in an inline template
+CLOUDFORMATION_PSEUDO_PARAMETER_REGEX = re.compile(r"(?<!\$)\$\{(AWS::[A-Za-z]+)\}")
 
 
 def escape_bare_interpolations(config):
@@ -814,6 +859,8 @@ def escape_bare_interpolations(config):
     contains ${TF_VAR_region}. A bare identifier is not a valid Terraform reference, so the whole file fails with:
     Error: Invalid reference ... A reference to a resource type must be followed by at least one attribute access
     Escape it as $${TF_VAR_region}. A bare identifier is left alone where it is the iterator of a for expression.
+    A capitalised dotted name like ${DNS.Zone} is an Octopus variable (fails with: Reference to undeclared resource),
+    so it becomes the Octostache template #{DNS.Zone}.
     """
 
     def escape(match):
@@ -822,7 +869,116 @@ def escape_bare_interpolations(config):
             return match.group(0)
         return "$" + match.group(0)
 
+    config = OCTOPUS_VARIABLE_INTERPOLATION_REGEX.sub(
+        lambda match: "#{" + match.group(1) + "}", config
+    )
+    config = CLOUDFORMATION_PSEUDO_PARAMETER_REGEX.sub(r"$${\1}", config)
     return BARE_INTERPOLATION_REGEX.sub(escape, config)
+
+
+def fix_created_worker_pool_fallback(config):
+    """
+    When the prompt asks for a new worker pool, the LLM sometimes falls back to the Default Worker Pool data source
+    when the lookup finds nothing. A fresh space has no pool called Default Worker Pool, so the plan fails with:
+    Error: Invalid index ... data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools is empty list
+    The pool the configuration creates is the correct fallback.
+    """
+
+    def replace_fallback(match):
+        name = match.group(2)
+        if not re.search(
+            rf'resource\s+"octopusdeploy_static_worker_pool"\s+"{re.escape(name)}"', config
+        ):
+            return match.group(0)
+        return f"{match.group(1)}octopusdeploy_static_worker_pool.{name}[0].id}}"
+
+    return re.sub(
+        r"(\$\{length\(data\.octopusdeploy_worker_pools\.(\w+)\.worker_pools\)\s*!=\s*0\s*\?\s*"
+        r"data\.octopusdeploy_worker_pools\.\2\.worker_pools\[0\]\.id\s*:\s*)"
+        r"data\.octopusdeploy_worker_pools\.(?!\2\.)\w+\.worker_pools\[0\]\.id\}",
+        replace_fallback,
+        config,
+    )
+
+
+HOSTED_UBUNTU_WORKER_POOL_DATA = """data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {
+  ids          = null
+  partial_name = "Hosted Ubuntu"
+  skip         = 0
+  take         = 1
+  lifecycle {
+    postcondition {
+      error_message = "Failed to resolve a worker pool called \\"Hosted Ubuntu\\". This resource must exist in the space before this Terraform configuration is applied."
+      condition     = length(self.worker_pools) != 0
+    }
+  }
+}
+"""
+
+
+def fix_lookup_worker_pool_default_fallback(config):
+    """
+    When the prompt asks to look up an existing worker pool that does not exist, the LLM falls back to the Default
+    Worker Pool data source. A fresh space has no pool called Default Worker Pool, so the plan fails with:
+    Error: Invalid index ... data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools is empty list
+    Hosted Ubuntu is the pool that always exists, so use it as the fallback for lookup-only pools.
+    """
+
+    hosted_ubuntu = "workerpool_hosted_ubuntu"
+
+    def replace_fallback(match):
+        name = match.group(2)
+        if re.search(
+            rf'resource\s+"octopusdeploy_\w*worker_pool"\s+"{re.escape(name)}"', config
+        ):
+            return match.group(0)
+        return f"{match.group(1)}data.octopusdeploy_worker_pools.{hosted_ubuntu}.worker_pools[0].id}}"
+
+    result = re.sub(
+        r"(\$\{length\(data\.octopusdeploy_worker_pools\.(\w+)\.worker_pools\)\s*!=\s*0\s*\?\s*"
+        r"data\.octopusdeploy_worker_pools\.\2\.worker_pools\[0\]\.id\s*:\s*)"
+        r"data\.octopusdeploy_worker_pools\.workerpool_default_worker_pool\.worker_pools\[0\]\.id\}",
+        replace_fallback,
+        config,
+    )
+
+    if result != config and not re.search(
+        rf'data\s+"octopusdeploy_worker_pools"\s+"{hosted_ubuntu}"', result
+    ):
+        result = result.rstrip("\n") + "\n" + HOSTED_UBUNTU_WORKER_POOL_DATA
+
+    return result
+
+
+BARE_DATA_REFERENCE_REGEX = re.compile(
+    r"\$\{data\.(octopusdeploy_\w+)\.(\w+)\.(\w+)\[0\]\.id\}"
+)
+
+
+def fix_bare_data_lookup_reference(config):
+    """
+    The LLM declares a lookup data source plus a counted resource that creates the thing when the lookup finds
+    nothing, then references only the data source, like feed_id = "${data.octopusdeploy_feeds.x.feeds[0].id}".
+    In a fresh space the lookup is empty and the plan fails with:
+    Error: Invalid index ... data.octopusdeploy_feeds.x.feeds is empty list of object
+    Where a counted resource with the same label exists, use the lookup-or-create form.
+    """
+
+    def replace(match):
+        data_type, label, collection = match.groups()
+        resource = re.search(
+            rf'resource\s+"(octopusdeploy_\w+)"\s+"{re.escape(label)}"\s*\{{\s*\n\s*count\b',
+            config,
+        )
+        if not resource:
+            return match.group(0)
+        return (
+            f"${{length(data.{data_type}.{label}.{collection}) != 0 ? "
+            f"data.{data_type}.{label}.{collection}[0].id : "
+            f"{resource.group(1)}.{label}[0].id}}"
+        )
+
+    return BARE_DATA_REFERENCE_REGEX.sub(replace, config)
 
 
 def remove_worker_pool_from_target_steps(config):
@@ -963,6 +1119,81 @@ def fix_variable_type(config):
     )
 
 
+VALID_VARIABLE_TYPES = [
+    "AmazonWebServicesAccount",
+    "AzureAccount",
+    "GoogleCloudAccount",
+    "UsernamePasswordAccount",
+    "Certificate",
+    "Sensitive",
+    "String",
+    "WorkerPool",
+    "GenericOidcAccount",
+]
+
+
+def fix_invalid_octopus_variable_type(config):
+    """
+    The LLM sometimes gives an octopusdeploy_variable a type for an account the provider has no variable type
+    for, like "Token", which fails with:
+    Error: Invalid Attribute Value Match ... Attribute type value must be one of: ["AmazonWebServicesAccount" ...]
+    A token, SSH or other account is referenced by its ID in a String variable.
+    """
+
+    def process_resource(lines):
+        fixed = []
+        for line in lines:
+            match = re.match(r'^(\s*type\s*=\s*)"([^"]*)"\s*$', line)
+            if match and match.group(2) not in VALID_VARIABLE_TYPES:
+                line = f'{match.group(1)}"String"'
+            fixed.append(line)
+        return fixed
+
+    return process_resource_blocks(
+        config, process_resource, 'resource "octopusdeploy_variable"'
+    )
+
+
+def fix_literal_variable_template_id(config):
+    """
+    A tenant variable resource must reference the template it sets. The LLM sometimes hard-codes a GUID, which
+    fails the apply with: Error: Template not found ... Template <guid> not found in library variable set ...
+    A tenant common variable gets the first template of its library variable set, and a tenant project variable
+    the first template of its project.
+    """
+
+    def process_resource(owner_regex, owner_type):
+        def process(lines):
+            text = "\n".join(lines)
+            owner = re.search(owner_regex, text)
+            literal = re.search(r'(template_id\s*=\s*)"([^"$]*)"', text)
+            if not owner or not literal:
+                return lines
+            reference = f"${{{owner_type}.{owner.group(1)}[0].template[0].id}}"
+            return text.replace(
+                literal.group(0), f'{literal.group(1)}"{reference}"'
+            ).split("\n")
+
+        return process
+
+    config = process_resource_blocks(
+        config,
+        process_resource(
+            r"library_variable_set_id\s*=\s*\"[^\"\n]*?octopusdeploy_library_variable_set\.(\w+)",
+            "octopusdeploy_library_variable_set",
+        ),
+        'resource "octopusdeploy_tenant_common_variable"',
+    )
+    return process_resource_blocks(
+        config,
+        process_resource(
+            r"project_id\s*=\s*\"[^\"\n]*?octopusdeploy_project\.(\w+)",
+            "octopusdeploy_project",
+        ),
+        'resource "octopusdeploy_tenant_project_variable"',
+    )
+
+
 def fix_empty_properties_block(config):
     """
     The LLM kept trying to define empty properties blocks like properties {}
@@ -995,6 +1226,9 @@ def fix_empty_strings(config):
     properties = ["help_text", "default_value", "label"]
     for prop in properties:
         config = re.sub(rf'\s*{prop}\s*=\s*""', "", config)
+    # An empty feed or account username fails the provider with:
+    # Attribute username string length must be at least 1, got: 0
+    config = re.sub(r'\s*(?<![\w.])username\s*=\s*""', "", config)
     return config
 
 
@@ -1106,6 +1340,518 @@ def remove_balanced_attribute(text, start_regex):
 
 def remove_primary_package(text):
     return remove_balanced_attribute(text, PRIMARY_PACKAGE_START_REGEX)
+
+
+TEMPLATED_STEP_HEADER_REGEX = re.compile(
+    r'resource\s+"octopusdeploy_process_templated_step"\s+"(?P<label>\w+)"\s*\{'
+)
+# Built in step types the LLM looks up as if they were step templates, by a word in the data source label
+BUILT_IN_STEP_TEMPLATE_TYPES = (
+    ("manual", "Octopus.Manual"),
+    ("cloudformation", "Octopus.AwsRunCloudFormation"),
+)
+STEP_TEMPLATE_REFERENCE_REGEX = re.compile(r"data\.octopusdeploy_step_template\.(\w+)\.")
+TEMPLATED_STEP_PARAMETERS_REGEX = re.compile(r"(?m)^[ \t]*parameters[ \t]*=[ \t]*\{")
+
+
+def built_in_step_type(block):
+    """Returns the built in step type that the step templates a templated step block looks up stand for, if any."""
+
+    for reference in STEP_TEMPLATE_REFERENCE_REGEX.finditer(block):
+        for word, step_type in BUILT_IN_STEP_TEMPLATE_TYPES:
+            if word in reference.group(1).lower():
+                return step_type
+    return None
+
+
+def fix_manual_intervention_templated_step(config):
+    """
+    The LLM writes a manual intervention or an AWS CloudFormation step as an octopusdeploy_process_templated_step that
+    looks its template up with an invented data source, which fails the plan with:
+    Error: Reference to undeclared resource ... There is no data resource "octopusdeploy_step_template"
+    These are built in step types, so they are an octopusdeploy_process_step of type Octopus.Manual or
+    Octopus.AwsRunCloudFormation, without the template attributes or the template parameters.
+    """
+
+    if not config or "octopusdeploy_process_templated_step" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = TEMPLATED_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+
+        depth = 1
+        end = header.end()
+        while end < len(result) and depth > 0:
+            if result[end] == "{":
+                depth += 1
+            elif result[end] == "}":
+                depth -= 1
+            end += 1
+
+        block = result[header.start() : end]
+        step_type = built_in_step_type(block) if depth == 0 else None
+        if not step_type:
+            position = header.end()
+            continue
+
+        label = header.group("label")
+        block = block.replace(
+            'resource "octopusdeploy_process_templated_step"',
+            'resource "octopusdeploy_process_step"',
+            1,
+        )
+        block = re.sub(r"^[ \t]*template_(?:id|version)[ \t]*=.*\n", "", block, flags=re.MULTILINE)
+        block = remove_balanced_attribute(block, TEMPLATED_STEP_PARAMETERS_REGEX)
+        if not re.search(r"^[ \t]*type[ \t]*=", block, re.MULTILINE):
+            block = re.sub(
+                r"^([ \t]*)(name[ \t]*=.*\n)",
+                rf'\1\2\1type                  = "{step_type}"\n',
+                block,
+                count=1,
+                flags=re.MULTILINE,
+            )
+        result = result[: header.start()] + block + result[end:]
+        result = re.sub(
+            rf"octopusdeploy_process_templated_step\.{re.escape(label)}(?!\w)",
+            f"octopusdeploy_process_step.{label}",
+            result,
+        )
+        position = header.start() + len(block)
+
+
+def fix_package_pre_deploy_script_property(config):
+    """
+    The LLM writes the pre-deployment script of a package step as Octopus.Action.Script.PreDeployPackageOnWorker, which
+    the server drops, so the apply fails and the retry loses the lifecycle, steps and variables:
+    Error: Provider produced inconsistent result after apply ... .execution_properties: element
+    "Octopus.Action.Script.PreDeployPackageOnWorker" has vanished.
+    The server keeps the script as Octopus.Action.Script.PrePackageOnWorker.
+    """
+
+    return config.replace(
+        '"Octopus.Action.Script.PreDeployPackageOnWorker"',
+        '"Octopus.Action.Script.PrePackageOnWorker"',
+    )
+
+
+PROCESS_STEP_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_process_step"\s+"\w+"\s*\{')
+EXECUTION_PROPERTIES_REGEX = re.compile(r"^([ \t]*)execution_properties\s*=\s*\{[ \t]*\n", re.MULTILINE)
+
+
+def fix_arm_template_source(config):
+    """
+    An Azure Resource Manager template step with an inline template needs Octopus.Action.Azure.TemplateSource, and
+    the LLM sometimes leaves it out, which fails the apply and drops the step:
+    Octopus API error: There was a problem with your request. [Please provide the template source.]
+    """
+
+    if not config or "Octopus.AzureResourceGroup" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        block = result[header.start() : end]
+        if (
+            re.search(r'type\s*=\s*"Octopus\.AzureResourceGroup"', block)
+            and '"Octopus.Action.Azure.ResourceGroupTemplate"' in block
+            and '"Octopus.Action.Azure.TemplateSource"' not in block
+        ):
+            properties = EXECUTION_PROPERTIES_REGEX.search(block)
+            if properties:
+                indent = properties.group(1) + "  "
+                block = (
+                    block[: properties.end()]
+                    + f'{indent}"Octopus.Action.Azure.TemplateSource" = "Inline"\n'
+                    + block[properties.end() :]
+                )
+                result = result[: header.start()] + block + result[end:]
+                end = header.start() + len(block)
+
+        position = end
+
+
+LIFECYCLE_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_lifecycle"\s+"\w+"\s*\{')
+PHASE_HEADER_REGEX = re.compile(r"\bphase\s*\{")
+EMPTY_PHASE_TARGETS_REGEX = re.compile(
+    r"(?P<automatic>automatic_deployment_targets\s*=\s*\[\s*\])|(?P<optional>optional_deployment_targets\s*=\s*\[\s*\])"
+)
+
+
+def environment_reference_for_name(config, environment_name):
+    """
+    Returns the expression for the id of the octopusdeploy_environment resource called environment_name, using the
+    lookup-or-create form when the configuration declares a local with the matches, or None where no resource matches.
+    """
+
+    for header in re.finditer(
+        r'resource\s+"octopusdeploy_environment"\s+"(?P<label>\w+)"\s*\{', config
+    ):
+        end = find_block_end(config, header.end())
+        if end is None:
+            continue
+        body = config[header.end() : end]
+        if not re.search(
+            rf'^[ \t]*name[ \t]*=[ \t]*"{re.escape(environment_name)}"[ \t]*$', body, re.MULTILINE
+        ):
+            continue
+
+        label = header.group("label")
+        if re.search(rf"\b{re.escape(label)}_matches\b", config):
+            return (
+                f"${{length(local.{label}_matches) != 0 ? local.{label}_matches[0].id : "
+                f"octopusdeploy_environment.{label}[0].id}}"
+            )
+        if re.search(r"^[ \t]*count[ \t]*=", body, re.MULTILINE):
+            return f"${{octopusdeploy_environment.{label}[0].id}}"
+        return f"${{octopusdeploy_environment.{label}.id}}"
+
+    return None
+
+
+def fix_lifecycle_phase_without_environments(config):
+    """
+    The LLM names the phases of a lifecycle but leaves both the automatic and the optional environment lists empty.
+    Octopus reads a phase with no environments as "all remaining environments", and a lifecycle with more than one
+    of them fails to create, which also loses the custom lifecycle from the project:
+    Octopus API error: [Only one phase in the deployment process can be configured to use all remaining environments.]
+    A phase called like a declared environment gets that environment as its optional target.
+    """
+
+    if not config or "octopusdeploy_lifecycle" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        lifecycle = LIFECYCLE_HEADER_REGEX.search(result, position)
+        if not lifecycle:
+            return result
+        lifecycle_end = find_block_end(result, lifecycle.end())
+        if lifecycle_end is None:
+            return result
+
+        block = result[lifecycle.start() : lifecycle_end]
+        new_block = block
+        phase_position = 0
+        while True:
+            phase = PHASE_HEADER_REGEX.search(new_block, phase_position)
+            if not phase:
+                break
+            phase_end = find_block_end(new_block, phase.end())
+            if phase_end is None:
+                break
+
+            phase_text = new_block[phase.start() : phase_end]
+            name = re.search(r'^[ \t]*name[ \t]*=[ \t]*"([^"\n]*)"', phase_text, re.MULTILINE)
+            empties = {
+                key: match for match in EMPTY_PHASE_TARGETS_REGEX.finditer(phase_text)
+                for key in ("automatic", "optional") if match.group(key)
+            }
+            reference = (
+                environment_reference_for_name(result, name.group(1))
+                if name and len(empties) == 2
+                else None
+            )
+            if reference:
+                optional = empties["optional"]
+                phase_text = (
+                    phase_text[: optional.start()]
+                    + f'optional_deployment_targets = ["{reference}"]'
+                    + phase_text[optional.end() :]
+                )
+                new_block = new_block[: phase.start()] + phase_text + new_block[phase_end:]
+                phase_end = phase.start() + len(phase_text)
+            phase_position = phase_end
+
+        result = result[: lifecycle.start()] + new_block + result[lifecycle_end:]
+        position = lifecycle.start() + len(new_block)
+
+
+PROJECT_NAME_VARIABLE_REGEX = re.compile(
+    r'(variable\s+"project_(?!group_)\w+_name"\s*\{[^{}]*?\bdefault\s*=\s*")([^"\n]*)(")'
+)
+PROJECT_RESOURCE_NAME_REGEX = re.compile(
+    r'(resource\s+"octopusdeploy_project"\s+"\w+"\s*\{(?:(?!\n\}).)*?\n[ \t]*name[ \t]*=[ \t]*")([^"\n$]*)(")',
+    re.DOTALL,
+)
+
+
+def replace_slash_in_project_name(config):
+    """
+    The Octopus server rejects a project name with a forward slash, which aborts the apply at the project resource and
+    loses its process, steps and variables:
+    Octopus API error: There was a problem with your request. [Name 'Shop (EU/US) v3' contains invalid characters.]
+    A slash is replaced with a dash, which the instructions already ask for but a weaker model does not always do.
+    """
+
+    def dash(match):
+        return match.group(1) + match.group(2).replace("/", "-") + match.group(3)
+
+    config = PROJECT_NAME_VARIABLE_REGEX.sub(dash, config)
+    return PROJECT_RESOURCE_NAME_REGEX.sub(dash, config)
+
+
+def find_block_end(text, open_brace_end):
+    """
+    Return the index just past the bracket that closes the block whose opening bracket ends at open_brace_end,
+    or None where the brackets are unbalanced.
+    """
+
+    depth = 1
+    end = open_brace_end
+    while end < len(text) and depth > 0:
+        if text[end] == "{":
+            depth += 1
+        elif text[end] == "}":
+            depth -= 1
+        end += 1
+    return end if depth == 0 else None
+
+
+UNUSED_STEP_TEMPLATE_DATA_REGEX = re.compile(
+    r'(?:^|\n)[ \t]*data\s+"octopusdeploy_step_template"\s+"(?P<label>\w+)"\s*\{'
+)
+
+
+COMMUNITY_STEP_TEMPLATE_BLOCK_REGEX = re.compile(
+    r'(?:^|\n)[ \t]*(?P<kind>resource|data)\s+"octopusdeploy_community_step_template"\s+"(?P<label>\w+)"\s*\{'
+)
+
+
+def remove_block(text, match):
+    """Removes the block that starts at match, or returns None where its brackets are unbalanced."""
+
+    end = find_block_end(text, match.end())
+    return None if end is None else text[: match.start()] + text[end:]
+
+
+def remove_unused_step_template_data(config):
+    """
+    The LLM declares a data source for a step template it then does not use (or that is no longer used after a manual
+    intervention or CloudFormation step is made a built in step). octopusdeploy_step_template is not a data source the
+    provider has. The community step template resource and data source that were declared for it go too.
+    """
+
+    # Community step templates that no step references any more go first, as they refer to the step template data source
+    result = remove_unused_community_step_templates(config)
+    return remove_unused_step_template_lookups(result)
+
+
+def remove_unused_step_template_lookups(config):
+    result = config
+    position = 0
+    while True:
+        match = UNUSED_STEP_TEMPLATE_DATA_REGEX.search(result, position)
+        if not match:
+            return result
+        end = find_block_end(result, match.end())
+        label = match.group("label")
+        if end is None or re.search(
+            rf"data\.octopusdeploy_step_template\.{re.escape(label)}(?!\w)", result[:match.start()] + result[end:]
+        ):
+            position = match.end()
+            continue
+        result = result[: match.start()] + result[end:]
+        position = match.start()
+
+
+def remove_unused_community_step_templates(config):
+    result = config
+    position = 0
+    while True:
+        match = next(
+            (
+                found
+                for found in COMMUNITY_STEP_TEMPLATE_BLOCK_REGEX.finditer(result, position)
+                if found.group("kind") == "resource"
+            ),
+            None,
+        )
+        if not match:
+            return result
+        label = match.group("label")
+        end = find_block_end(result, match.end())
+        outside = result[: match.start()] + (result[end:] if end else "")
+        if end is None or re.search(
+            rf"(?<!data\.)octopusdeploy_community_step_template\.{re.escape(label)}(?!\w)", outside
+        ):
+            position = match.end()
+            continue
+        result = remove_block(result, match)
+        for data_match in COMMUNITY_STEP_TEMPLATE_BLOCK_REGEX.finditer(result):
+            if data_match.group("kind") == "data" and data_match.group("label") == label:
+                data_end = find_block_end(result, data_match.end())
+                if data_end is not None and not re.search(
+                    rf"data\.octopusdeploy_community_step_template\.{re.escape(label)}(?!\w)",
+                    result[: data_match.start()] + result[data_end:],
+                ):
+                    result = remove_block(result, data_match)
+                break
+        position = max(match.start() - 1, 0)
+
+
+EXTERNAL_FEED_TRIGGER_HEADER_REGEX = re.compile(
+    r'resource\s+"octopusdeploy_external_feed_create_release_trigger"\s+"\w+"\s*\{'
+)
+
+
+def remove_unsupported_trigger_description(config):
+    """
+    octopusdeploy_external_feed_create_release_trigger has no description argument, and the LLM adds one:
+    Error: Unsupported argument ... An argument named "description" is not expected here.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = EXTERNAL_FEED_TRIGGER_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        depth = 1
+        kept = []
+        for line in result[header.end() : end].split("\n"):
+            if depth == 1 and re.match(r"\s*description\s*=", line):
+                continue
+            depth += line.count("{") - line.count("}")
+            kept.append(line)
+        body = "\n".join(kept)
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+
+FOR_OVER_INDEXED_LOOKUP_REGEX = re.compile(
+    r"(\bin\s+)(data\.octopusdeploy_\w+\.\w+\.\w+\[0\]\.\w+)(\s*:)"
+)
+
+
+def fix_for_expression_over_empty_lookup(config):
+    """
+    A for expression that loops over an element of a lookup, like
+    [for item in data.octopusdeploy_tag_sets.x.tag_sets[0].tags : item if item.name == "EU"]
+    fails the plan when the lookup finds nothing in a fresh space:
+    Error: Invalid index ... data.octopusdeploy_tag_sets.x.tag_sets is empty list of object
+    An empty list is the correct result for a lookup that found nothing.
+    """
+
+    return FOR_OVER_INDEXED_LOOKUP_REGEX.sub(r"\1try(\2, [])\3", config)
+
+
+PROJECT_DESCRIPTION_HEREDOC_REGEX = re.compile(
+    r"^(?P<indent>[ \t]*)description[ \t]*=[ \t]*<<(?P<dash>-?)(?P<tag>[A-Za-z_][A-Za-z0-9_]*)[ \t]*\n"
+    r"(?P<body>.*?)\n[ \t]*(?P=tag)[ \t]*$",
+    re.MULTILINE | re.DOTALL,
+)
+
+
+def fix_project_description_heredoc(config):
+    """
+    A multi line markdown project description written as a heredoc ends with a newline that Octopus does not keep, so
+    the apply fails with:
+    Error: Provider produced inconsistent result after apply ... .description was cty.StringVal("# ...\\n"), but now ...
+    Write it as a quoted string with the trailing whitespace removed instead.
+    """
+
+    if not config or "<<" not in config:
+        return config
+
+    def convert(match):
+        lines = match.group("body").split("\n")
+        if match.group("dash"):
+            indents = [len(line) - len(line.lstrip()) for line in lines if line.strip()]
+            strip = min(indents) if indents else 0
+            lines = [line[strip:] for line in lines]
+        text = "\n".join(lines).rstrip()
+        text = (
+            text.replace("\\", "\\\\")
+            .replace('"', '\\"')
+            .replace("${", "$${")
+            .replace("%{", "%%{")
+            .replace("\n", "\\n")
+        )
+        return f'{match.group("indent")}description = "{text}"'
+
+    def convert_in_project(match):
+        # The nearest resource header above the heredoc says which resource it belongs to. Indentation is not
+        # relied on, as the LLM often leaves nested blocks unindented.
+        headers = list(
+            re.finditer(r'^[ \t]*(?:resource|data)[ \t]+"[^"]+"', config[: match.start()], re.MULTILINE)
+        )
+        if not headers or not re.fullmatch(
+            r'resource\s+"octopusdeploy_project"', headers[-1].group(0).strip()
+        ):
+            return match.group(0)
+        return convert(match)
+
+    return PROJECT_DESCRIPTION_HEREDOC_REGEX.sub(convert_in_project, config)
+
+
+CONTAINER_BLOCK_START_REGEX = re.compile(r"(?m)^([ \t]*)container[ \t]*\{")
+CONTAINER_FIELD_REGEX = re.compile(r"\s*(dockerfile|feed_id|git_url|image)\s*=\s*(.+?)\s*$")
+
+
+def fix_process_step_container_block(config):
+    """
+    The LLM writes the worker container image of a step as a block:
+    container { feed_id = "..." image = "..." }
+    octopusdeploy_process_step takes an attribute, and a block fails the plan with:
+    Error: Unsupported block type ... Blocks of type "container" are not expected here.
+    Brackets are counted rather than indents, as the LLM leaves the indents of nested blocks inconsistent.
+    """
+
+    if not config or "container" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        block = result[header.start() : end]
+        search_from = 0
+        while True:
+            container = CONTAINER_BLOCK_START_REGEX.search(block, search_from)
+            if not container:
+                break
+            container_end = find_block_end(block, container.end())
+            if container_end is None:
+                break
+
+            fields = {"dockerfile": "null", "feed_id": "null", "git_url": "null", "image": "null"}
+            for line in block[container.end() : container_end - 1].split("\n"):
+                field = CONTAINER_FIELD_REGEX.match(line)
+                if field:
+                    fields[field.group(1)] = field.group(2)
+            replacement = (
+                f"{container.group(1)}container = {{ "
+                + ", ".join(f"{key} = {value}" for key, value in fields.items())
+                + " }"
+            )
+            block = block[: container.start()] + replacement + block[container_end:]
+            search_from = container.start() + len(replacement)
+
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
 
 
 def sanitize_package_script(lines):

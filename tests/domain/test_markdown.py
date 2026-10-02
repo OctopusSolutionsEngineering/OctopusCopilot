@@ -77,6 +77,24 @@ class TestRemoveProseAroundCodeBlock(unittest.TestCase):
         text = "Some prose\n```\n```"
         self.assertEqual(remove_markdown_code_block(text), text)
 
+    def test_removes_prose_before_unfenced_configuration(self):
+        text = (
+            "Looking at the error, the issue is that the `container` blocks are wrong.\n\n"
+            "Let me also check for other issues.\n\n"
+            'provider "octopusdeploy" {\n}\n'
+        )
+        self.assertEqual(
+            remove_markdown_code_block(text), 'provider "octopusdeploy" {\n}\n'
+        )
+
+    def test_keeps_leading_comments_before_unfenced_configuration(self):
+        text = '# Provider\n\nterraform {\n}\n'
+        self.assertEqual(remove_markdown_code_block(text), text)
+
+    def test_ignores_prose_that_starts_with_a_block_keyword(self):
+        text = "data sources are not needed here\nand neither is this"
+        self.assertEqual(remove_markdown_code_block(text), text)
+
 
 if __name__ == "__main__":
     unittest.main()
