@@ -643,7 +643,8 @@ class TestFixEmptyUsername(unittest.TestCase):
         config = 'username = "feeduser"\nregistry_username = ""'
         self.assertEqual(fix_empty_strings(config), config)
 
-ARGO_CONFIG = """resource "octopusdeploy_process_templated_step" "process_step_wait_for_argo" {
+
+ARGO_CONFIG ="""resource "octopusdeploy_process_templated_step" "process_step_wait_for_argo" {
   name = "Wait For Argo"
   template_id = "${data.octopusdeploy_step_template.steptemplate_verify_argo.step_template != null ? data.octopusdeploy_step_template.steptemplate_verify_argo.step_template.id : octopusdeploy_community_step_template.communitysteptemplate_verify_argo[0].id}"
   template_version = "1"
