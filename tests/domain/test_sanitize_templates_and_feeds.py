@@ -43,7 +43,6 @@ resource "octopusdeploy_docker_container_registry" "feed_docker_hub" {
             1,
         )
 
-
     def test_leaves_maven_feed_without_option_unchanged(self):
         config = """resource "octopusdeploy_maven_feed" "feed_octopus_maven_feed" {
   name     = "Octopus Maven"
