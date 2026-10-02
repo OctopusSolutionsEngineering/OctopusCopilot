@@ -53,7 +53,10 @@ class TestFixCreatedWorkerPoolFallback(unittest.TestCase):
         self.assertEqual(fix_created_worker_pool_fallback(config), config)
 
     def test_leaves_created_pool_without_default_fallback(self):
-        config = CREATED_POOL + 'value = "${octopusdeploy_static_worker_pool.workerpool_dns_workers[0].id}"'
+        config = (
+            CREATED_POOL
+            + 'value = "${octopusdeploy_static_worker_pool.workerpool_dns_workers[0].id}"'
+        )
         self.assertEqual(fix_created_worker_pool_fallback(config), config)
 
 
@@ -118,7 +121,7 @@ class TestFixProcessStepContainerBlock(unittest.TestCase):
         result = fix_process_step_container_block(self.STEP)
         self.assertIn(
             '  container = { dockerfile = null, feed_id = "${length(data.octopusdeploy_feeds.f.feeds) != 0 ? '
-            "data.octopusdeploy_feeds.f.feeds[0].id : octopusdeploy_docker_container_registry.f[0].id}\", "
+            'data.octopusdeploy_feeds.f.feeds[0].id : octopusdeploy_docker_container_registry.f[0].id}", '
             'git_url = null, image = "ghcr.io/octopusdeploylabs/gcp-workertools" }',
             result,
         )
@@ -133,10 +136,12 @@ class TestFixProcessStepContainerBlock(unittest.TestCase):
         )
         result = fix_process_step_container_block(config)
         self.assertIn(
-            'container = { dockerfile = null, feed_id = "f", git_url = null, image = "i" }', result
+            'container = { dockerfile = null, feed_id = "f", git_url = null, image = "i" }',
+            result,
         )
         self.assertIn(
-            'container = { dockerfile = null, feed_id = "g", git_url = null, image = "j" }', result
+            'container = { dockerfile = null, feed_id = "g", git_url = null, image = "j" }',
+            result,
         )
         self.assertNotIn("container {", result)
         self.assertIn('"k" = "v"', result)
@@ -177,9 +182,7 @@ class TestFixProjectDescriptionHeredoc(unittest.TestCase):
         self.assertIn("prevent_destroy = true", result)
 
     def test_unindented_heredoc(self):
-        config = (
-            'resource "octopusdeploy_project" "p" {\n  description = <<EOT\nLine one\nLine two\nEOT\n}\n'
-        )
+        config = 'resource "octopusdeploy_project" "p" {\n  description = <<EOT\nLine one\nLine two\nEOT\n}\n'
         self.assertIn(
             'description = "Line one\\nLine two"',
             fix_project_description_heredoc(config),
@@ -188,7 +191,7 @@ class TestFixProjectDescriptionHeredoc(unittest.TestCase):
     def test_unindented_nested_blocks(self):
         config = (
             'resource "octopusdeploy_project" "p" {\ncount = 1\nconnectivity_policy {\ntarget_roles = []\n}\n'
-            'description = <<-EOT\n# Title\nBody\nEOT\nlifecycle {\nprevent_destroy = true\n}\n}\n'
+            "description = <<-EOT\n# Title\nBody\nEOT\nlifecycle {\nprevent_destroy = true\n}\n}\n"
             'resource "octopusdeploy_project_group" "g" {\ndescription = <<EOT\nKeep\nEOT\n}\n'
         )
         result = fix_project_description_heredoc(config)
@@ -217,11 +220,13 @@ class TestFixForExpressionOverEmptyLookup(unittest.TestCase):
         )
 
     def test_unindexed_for_unchanged(self):
-        config = "x = [for ts in data.octopusdeploy_tag_sets.t.tag_sets : ts if ts.name == \"Market\"]"
+        config = 'x = [for ts in data.octopusdeploy_tag_sets.t.tag_sets : ts if ts.name == "Market"]'
         self.assertEqual(fix_for_expression_over_empty_lookup(config), config)
 
     def test_already_wrapped_unchanged(self):
-        config = "x = [for i in try(data.octopusdeploy_tag_sets.t.tag_sets[0].tags, []) : i]"
+        config = (
+            "x = [for i in try(data.octopusdeploy_tag_sets.t.tag_sets[0].tags, []) : i]"
+        )
         self.assertEqual(fix_for_expression_over_empty_lookup(config), config)
 
 
@@ -245,13 +250,14 @@ steps = ["${octopusdeploy_process_templated_step.process_step_x_promote_check[0]
     def test_becomes_manual_process_step(self):
         result = fix_manual_intervention_templated_step(self.STEP)
         self.assertIn(
-            'resource "octopusdeploy_process_step" "process_step_x_promote_check"', result
+            'resource "octopusdeploy_process_step" "process_step_x_promote_check"',
+            result,
         )
         self.assertIn('type                  = "Octopus.Manual"', result)
         self.assertNotIn("template_id", result)
         self.assertNotIn("template_version", result)
         self.assertNotIn("step_template", result)
-        self.assertIn('execution_properties   = {', result)
+        self.assertIn("execution_properties   = {", result)
 
     def test_updates_references(self):
         result = fix_manual_intervention_templated_step(self.STEP)
@@ -299,7 +305,8 @@ parameters = {
             fix_manual_intervention_templated_step(self.CONFIG)
         )
         self.assertIn(
-            'resource "octopusdeploy_process_step" "process_step_x_create_bucket_stack"', result
+            'resource "octopusdeploy_process_step" "process_step_x_create_bucket_stack"',
+            result,
         )
         self.assertIn('type                  = "Octopus.AwsRunCloudFormation"', result)
         self.assertIn('"Octopus.Action.Aws.Region" = "eu-west-2"', result)
@@ -377,17 +384,13 @@ name = "Manual Intervention"
 
 class TestReplaceSlashInProjectName(unittest.TestCase):
     def test_variable_default_slash_becomes_dash(self):
-        config = (
-            'variable "project_unicode_shop_name" {\n  type = string\n  default = "Shop (EU/US) v3"\n}\n'
-        )
+        config = 'variable "project_unicode_shop_name" {\n  type = string\n  default = "Shop (EU/US) v3"\n}\n'
         self.assertIn(
             'default = "Shop (EU-US) v3"', replace_slash_in_project_name(config)
         )
 
     def test_literal_resource_name_slash_becomes_dash(self):
-        config = (
-            'resource "octopusdeploy_project" "p" {\n  count = 1\n  name = "A/B Project"\n  description = "x/y"\n}\n'
-        )
+        config = 'resource "octopusdeploy_project" "p" {\n  count = 1\n  name = "A/B Project"\n  description = "x/y"\n}\n'
         result = replace_slash_in_project_name(config)
         self.assertIn('name = "A-B Project"', result)
         self.assertIn('description = "x/y"', result)
@@ -457,12 +460,10 @@ is_optional_phase                       = false
 
     def test_phase_with_environment_unchanged(self):
         lifecycle = self.LIFECYCLE.replace(
-            "automatic_deployment_targets            = []\noptional_deployment_targets             = []\nis_optional_phase                       = false\n}\nphase {\nname                                    = \"Corp\"",
+            'automatic_deployment_targets            = []\noptional_deployment_targets             = []\nis_optional_phase                       = false\n}\nphase {\nname                                    = "Corp"',
             'automatic_deployment_targets            = ["${octopusdeploy_environment.environment_sandbox[0].id}"]\noptional_deployment_targets             = []\nis_optional_phase                       = false\n}\nphase {\nname                                    = "Corp"',
         )
-        result = fix_lifecycle_phase_without_environments(
-            self.ENVIRONMENTS + lifecycle
-        )
+        result = fix_lifecycle_phase_without_environments(self.ENVIRONMENTS + lifecycle)
         self.assertIn(
             'automatic_deployment_targets            = ["${octopusdeploy_environment.environment_sandbox[0].id}"]',
             result,
@@ -475,7 +476,8 @@ is_optional_phase                       = false
 
     def test_no_lifecycle_unchanged(self):
         self.assertEqual(
-            fix_lifecycle_phase_without_environments(self.ENVIRONMENTS), self.ENVIRONMENTS
+            fix_lifecycle_phase_without_environments(self.ENVIRONMENTS),
+            self.ENVIRONMENTS,
         )
 
 
@@ -495,13 +497,14 @@ execution_properties = {
     def test_adds_inline_template_source(self):
         result = fix_arm_template_source(self.STEP)
         self.assertIn(
-            'execution_properties = {\n  "Octopus.Action.Azure.TemplateSource" = "Inline"\n', result
+            'execution_properties = {\n  "Octopus.Action.Azure.TemplateSource" = "Inline"\n',
+            result,
         )
         self.assertEqual(result.count("TemplateSource"), 1)
 
     def test_existing_template_source_unchanged(self):
         config = self.STEP.replace(
-            'execution_properties = {\n',
+            "execution_properties = {\n",
             'execution_properties = {\n"Octopus.Action.Azure.TemplateSource" = "Inline"\n',
         )
         self.assertEqual(fix_arm_template_source(config), config)
@@ -512,7 +515,8 @@ execution_properties = {
 
     def test_step_without_template_unchanged(self):
         config = self.STEP.replace(
-            '"Octopus.Action.Azure.ResourceGroupTemplate"', '"Octopus.Action.Azure.Other"'
+            '"Octopus.Action.Azure.ResourceGroupTemplate"',
+            '"Octopus.Action.Azure.Other"',
         )
         self.assertEqual(fix_arm_template_source(config), config)
 
@@ -522,7 +526,9 @@ class TestFixPackagePreDeployScriptProperty(unittest.TestCase):
         config = '"Octopus.Action.Script.PreDeployPackageOnWorker" = "echo pre"\n"Octopus.Action.Script.PostDeployPackageOnWorker" = "echo post"'
         result = fix_package_pre_deploy_script_property(config)
         self.assertIn('"Octopus.Action.Script.PrePackageOnWorker" = "echo pre"', result)
-        self.assertIn('"Octopus.Action.Script.PostDeployPackageOnWorker" = "echo post"', result)
+        self.assertIn(
+            '"Octopus.Action.Script.PostDeployPackageOnWorker" = "echo post"', result
+        )
         self.assertNotIn("PreDeployPackageOnWorker", result)
 
     def test_unrelated_config_unchanged(self):
@@ -597,9 +603,7 @@ class TestFixLiteralVariableTemplateId(unittest.TestCase):
             '"92734dee-9480-4f4f-8c58-f2c8f9c221ef"',
             '"${octopusdeploy_library_variable_set.doctor_shared[0].template[1].id}"',
         )
-        self.assertEqual(
-            fix_literal_variable_template_id(config), config.rstrip("\n")
-        )
+        self.assertEqual(fix_literal_variable_template_id(config), config.rstrip("\n"))
 
 
 class TestFixBareDataLookupReference(unittest.TestCase):
@@ -610,7 +614,10 @@ class TestFixBareDataLookupReference(unittest.TestCase):
 """
 
     def test_bare_reference_becomes_lookup_or_create(self):
-        config = self.FEED + 'feed_id = "${data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id}"'
+        config = (
+            self.FEED
+            + 'feed_id = "${data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds[0].id}"'
+        )
         result = fix_bare_data_lookup_reference(config)
         self.assertIn(
             'feed_id = "${length(data.octopusdeploy_feeds.feed_octopus_maven_feed.feeds) != 0 ? '
@@ -644,7 +651,7 @@ class TestFixEmptyUsername(unittest.TestCase):
         self.assertEqual(fix_empty_strings(config), config)
 
 
-ARGO_CONFIG ="""resource "octopusdeploy_process_templated_step" "process_step_wait_for_argo" {
+ARGO_CONFIG = """resource "octopusdeploy_process_templated_step" "process_step_wait_for_argo" {
   name = "Wait For Argo"
   template_id = "${data.octopusdeploy_step_template.steptemplate_verify_argo.step_template != null ? data.octopusdeploy_step_template.steptemplate_verify_argo.step_template.id : octopusdeploy_community_step_template.communitysteptemplate_verify_argo[0].id}"
   template_version = "1"
@@ -671,9 +678,15 @@ resource "octopusdeploy_community_step_template" "communitysteptemplate_verify_a
 
 class TestReplaceUnverifiedCommunityTemplatedStep(unittest.TestCase):
     def test_fabricated_guid_becomes_script_step(self):
-        config = ARGO_CONFIG.replace("WEBSITE_GUID", "8f3e3e3e-3e3e-3e3e-3e3e-3e3e3e3e3e3e")
-        result = remove_unused_step_template_data(replace_unverified_community_templated_step(config))
-        self.assertIn('resource "octopusdeploy_process_step" "process_step_wait_for_argo"', result)
+        config = ARGO_CONFIG.replace(
+            "WEBSITE_GUID", "8f3e3e3e-3e3e-3e3e-3e3e-3e3e3e3e3e3e"
+        )
+        result = remove_unused_step_template_data(
+            replace_unverified_community_templated_step(config)
+        )
+        self.assertIn(
+            'resource "octopusdeploy_process_step" "process_step_wait_for_argo"', result
+        )
         self.assertIn('type                  = "Octopus.Script"', result)
         self.assertIn('notes = "Waits"', result)
         self.assertNotIn("process_templated_step", result)
@@ -684,15 +697,26 @@ class TestReplaceUnverifiedCommunityTemplatedStep(unittest.TestCase):
         self.assertEqual(result.count("{"), result.count("}"))
 
     def test_real_guid_is_left_alone(self):
-        config = ARGO_CONFIG.replace("WEBSITE_GUID", "78a182b3-5369-4e13-9292-b7f991295ad1")
+        config = ARGO_CONFIG.replace(
+            "WEBSITE_GUID", "78a182b3-5369-4e13-9292-b7f991295ad1"
+        )
         self.assertEqual(replace_unverified_community_templated_step(config), config)
 
     def test_other_templated_steps_are_left_alone(self):
-        config = ARGO_CONFIG.replace("WEBSITE_GUID", "8f3e3e3e-3e3e-3e3e-3e3e-3e3e3e3e3e3e")
-        other = config + config.split("data ")[0].replace("verify_argo", "slack").replace("wait_for_argo", "slack")
+        config = ARGO_CONFIG.replace(
+            "WEBSITE_GUID", "8f3e3e3e-3e3e-3e3e-3e3e-3e3e3e3e3e3e"
+        )
+        other = config + config.split("data ")[0].replace(
+            "verify_argo", "slack"
+        ).replace("wait_for_argo", "slack")
         result = replace_unverified_community_templated_step(other)
-        self.assertIn('resource "octopusdeploy_process_templated_step" "process_step_slack"', result)
-        self.assertIn('resource "octopusdeploy_process_step" "process_step_wait_for_argo"', result)
+        self.assertIn(
+            'resource "octopusdeploy_process_templated_step" "process_step_slack"',
+            result,
+        )
+        self.assertIn(
+            'resource "octopusdeploy_process_step" "process_step_wait_for_argo"', result
+        )
 
     def test_empty_config(self):
         self.assertEqual(replace_unverified_community_templated_step(""), "")
